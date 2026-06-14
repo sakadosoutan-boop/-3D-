@@ -2,7 +2,23 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="description" content="平安貴族の寝殿造りを3Dで歩いて学ぶ学習シミュレーター。建物・建具・調度品をタップすると解説が読め、名称当てクイズ・貴族の一日・垣間見ミッション・平安ものしり図鑑を収録。">
+<meta name="author" content="寝殿造り3D探訪">
+<meta name="theme-color" content="#1b130d">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="寝殿造り探訪">
+<!-- Open Graph / SNS共有 -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="寝殿造り3D探訪 〜平安貴族の住まいを歩く〜">
+<meta property="og:description" content="平安貴族の住まいを3Dで歩いて学ぶ学習シミュレーター。名称当てクイズ・貴族の一日・垣間見・図鑑を収録。">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%231b130d'/%3E%3Cg fill='%23b3402a'%3E%3Crect x='9' y='15' width='46' height='7' rx='1'/%3E%3Crect x='13' y='25' width='38' height='4'/%3E%3Crect x='17' y='22' width='6' height='30'/%3E%3Crect x='41' y='22' width='6' height='30'/%3E%3C/g%3E%3C/svg%3E">
 <title>寝殿造り3D探訪 〜平安貴族の住まいを歩く〜</title>
 <script>
 /* Three.js r128 embedded for offline file:// use */
@@ -56,7 +72,8 @@ h1.t-main .shu{color:var(--shu-bright)}
 
 /* ===== 上部バー ===== */
 #topbar{position:fixed;top:0;left:0;right:0;z-index:40;display:none;align-items:center;gap:8px;
-  padding:8px 10px;background:linear-gradient(180deg,rgba(20,13,8,.92),rgba(20,13,8,.78));
+  padding:8px 10px;padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right));
+  background:linear-gradient(180deg,rgba(20,13,8,.92),rgba(20,13,8,.78));
   border-bottom:1px solid rgba(201,162,63,.4)}
 #topbar .brand{color:var(--kin);font-size:13px;letter-spacing:.2em;margin-right:6px;white-space:nowrap}
 .tb-btn{background:rgba(60,38,22,.8);color:var(--gofun);border:1px solid rgba(201,162,63,.5);
@@ -144,6 +161,13 @@ h1.t-main .shu{color:var(--shu-bright)}
   max-width:min(480px,92vw);font-size:13px;line-height:2;font-family:var(--sans);max-height:80vh;overflow-y:auto}
 .h-card h3{font-family:var(--serif);color:var(--kin);letter-spacing:.25em;margin-bottom:10px;font-size:16px}
 .h-card b{color:var(--shu-bright)}
+.h-card code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:var(--kin);background:rgba(201,162,63,.12);padding:1px 5px;border-radius:3px}
+
+/* ===== クレジット・ライセンス ===== */
+#credits{position:fixed;z-index:67;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,6,4,.78)}
+.t-credit{margin-top:14px;background:none;border:0;color:#8d8068;font-size:11px;letter-spacing:.12em;
+  font-family:var(--sans);text-decoration:underline;text-underline-offset:3px;opacity:.85}
+.t-credit:hover{color:var(--kin)}
 
 /* ===== [Learning] ITEMS連動図鑑 ===== */
 #codex{position:fixed;z-index:66;inset:0;display:none;align-items:center;justify-content:center;
@@ -170,15 +194,20 @@ h1.t-main .shu{color:var(--shu-bright)}
   background:rgba(255,255,255,.48);font-family:var(--sans);font-size:13px;line-height:1.85}
 #codexDetail.show{display:block}#codexDetail h3{font-family:var(--serif);font-size:20px;color:var(--shu);margin-bottom:4px}
 
-@media (prefers-reduced-motion:reduce){#info,#info.open{transition:none}}
+/* 動きを減らす設定の利用者向け:UIアニメーションを抑制(既定の見た目・3D演出は不変) */
+@media (prefers-reduced-motion:reduce){
+  #info,#info.open,#title,.t-btn,.codex-entry,.codex-entry:hover,#kaimamiEye .pupil,#kaimamiEye .fill{transition:none!important}
+  .t-btn:hover{transform:none}
+  .seal,.seal.go{animation:none!important;opacity:1;transform:rotate(-12deg) scale(1)}
+}
 
 /* ===== 仮想ジョイスティック ===== */
-#joy{position:fixed;z-index:44;left:24px;bottom:24px;width:118px;height:118px;border-radius:50%;
+#joy{position:fixed;z-index:44;left:max(24px,env(safe-area-inset-left));bottom:max(24px,env(safe-area-inset-bottom));width:118px;height:118px;border-radius:50%;
   background:rgba(244,236,220,.07);border:1.5px solid rgba(201,162,63,.5);display:none;touch-action:none}
 #joyKnob{position:absolute;left:50%;top:50%;width:52px;height:52px;border-radius:50%;
   background:radial-gradient(circle at 35% 30%,#d4502f,#7e1d10);border:1.5px solid var(--kin);
   transform:translate(-50%,-50%);box-shadow:0 3px 10px rgba(0,0,0,.5)}
-#interactBtn{position:fixed;z-index:44;right:26px;bottom:34px;width:74px;height:74px;border-radius:50%;display:none;
+#interactBtn{position:fixed;z-index:44;right:max(26px,env(safe-area-inset-right));bottom:max(34px,env(safe-area-inset-bottom));width:74px;height:74px;border-radius:50%;display:none;
   background:radial-gradient(circle at 35% 30%,rgba(201,162,63,.95),rgba(140,105,30,.95));
   border:2px solid var(--gofun);color:#241806;font-size:13px;font-weight:700;letter-spacing:.1em;
   box-shadow:0 4px 14px rgba(0,0,0,.5)}
@@ -217,6 +246,7 @@ h1.t-main .shu{color:var(--shu-bright)}
     </div>
     <div class="t-note">推奨:タブレット横向き / PC<br>建物・建具・調度品をタップ(クリック)すると解説が読めます</div>
     <div id="loading">— 邸宅を造営中 —</div>
+    <button id="creditsLink" class="t-credit">ⓘ クレジット・ライセンス</button>
   </div>
 </div>
 
@@ -288,6 +318,15 @@ h1.t-main .shu{color:var(--shu-bright)}
   <b>図鑑</b>…解説を読んだ項目が記録され、次回起動後も解放状態を保持<br><br>
   <b>動かせる建具:</b> 格子(半蔀)=タップで跳ね上げ / 御簾=巻き上げ / 妻戸=開閉 / 灯台=夜に近づいて点火<br>
   <button class="tb-btn" id="helpClose" style="margin-top:8px">閉じる</button>
+</div></div>
+
+<div id="credits"><div class="h-card">
+  <h3>クレジット・ライセンス</h3>
+  <b>3D描画エンジン:</b> Three.js r128（MIT License）© 2010–2021 three.js authors<br>
+  <b>環境音・効果音:</b> 同梱の <code>sounds/CREDITS.md</code> に各音源の出典・権利者を記載<br>
+  <b>本作:</b> 寝殿造り3D探訪 — 平安貴族の住まいを歩く学習シミュレーター<br><br>
+  建物・建具・調度品・人物・自然・四神はすべてプログラムによる手続き的生成です。外部3Dモデルは使用していません。
+  <button class="tb-btn" id="creditsClose" style="margin-top:10px">閉じる</button>
 </div></div>
 
 <div id="joy"><div id="joyKnob"></div></div>
@@ -3143,6 +3182,16 @@ const codexUnlocked=(()=>{try{
   return new Set(Array.isArray(saved)?saved.filter(id=>ITEMS[id]):[]);
 }catch(e){return new Set();}})();
 function saveCodex(){try{localStorage.setItem(CODEX_KEY,JSON.stringify([...codexUnlocked]));}catch(e){}}
+/* ユーザーの表示設定(季節・時刻・札)を永続化。各モードのシナリオ起因の変更では保存しない */
+const PREFS_KEY="shinden3d-prefs-v1";
+const PREFS=(()=>{
+  let data={};
+  try{const o=JSON.parse(localStorage.getItem(PREFS_KEY)||"{}");if(o&&typeof o==="object")data=o;}catch(e){}
+  return {
+    get(k,def){return (k in data)?data[k]:def;},
+    set(k,v){data[k]=v;try{localStorage.setItem(PREFS_KEY,JSON.stringify(data));}catch(e){}}
+  };
+})();
 function updateCodexProgress(){
   const s=`図鑑 ${codexUnlocked.size} / ${Object.keys(ITEMS).length}`;
   $("codexProgress").textContent=s;$("titleCodexProgress").textContent=s;
@@ -3204,9 +3253,9 @@ const cur={sky:new THREE.Color(TIMES.day.sky),fog:new THREE.Color(TIMES.day.fog)
   ambC:new THREE.Color(TIMES.day.ambC),
   sunI:1.25,hemi:.62,amb:.18,moon:0,exp:1.05,int:.35,sunP:new THREE.Vector3(60,95,45)};
 function setTime(t){APP.time=t;$("tbTime").textContent={day:"☀ 昼",dusk:"🌇 夕",night:"🌙 夜"}[t];makeSkyEnv(t);if(typeof SFX!=="undefined")SFX.updateBed();/* [Phase1]IBL再生成 + [音]環境音を即時切替 */}
-$("tbTime").onclick=()=>{setTime(APP.time==="day"?"dusk":APP.time==="dusk"?"night":"day");beep(520,.06);};
+$("tbTime").onclick=()=>{setTime(APP.time==="day"?"dusk":APP.time==="dusk"?"night":"day");PREFS.set("time",APP.time);beep(520,.06);};
 $("tbSeason").onclick=()=>{const i=SEASON_ORDER.indexOf(APP.season);
-  applySeason(SEASON_ORDER[(i+1)%4]);beep(560,.06);};
+  applySeason(SEASON_ORDER[(i+1)%4]);PREFS.set("season",APP.season);beep(560,.06);};
 scene.background=cur.sky;
 
 /* ============================================================
@@ -3264,9 +3313,12 @@ function updateControlUI(){
 $("tbView").onclick=()=>{APP.view=APP.view==="fp"?"ov":"fp";updateControlUI();beep(600,.06);
   if(APP.view==="ov")toast("ドラッグで回転、ピンチ/ホイールで拡大縮小。タップで解説も読めます",3200);};
 $("tbLabel").onclick=()=>{APP.labelMode=(APP.labelMode+1)%3;
-  $("tbLabel").textContent="札:"+["なし","近く","すべて"][APP.labelMode];beep(600,.06);};
+  $("tbLabel").textContent="札:"+["なし","近く","すべて"][APP.labelMode];PREFS.set("label",APP.labelMode);beep(600,.06);};
 $("tbHelp").onclick=()=>$("help").style.display="flex";
 $("helpClose").onclick=()=>$("help").style.display="none";
+$("creditsLink").onclick=()=>$("credits").style.display="flex";
+$("creditsClose").onclick=()=>$("credits").style.display="none";
+$("credits").onclick=e=>{if(e.target===$("credits"))$("credits").style.display="none";};
 $("tbTitle").onclick=()=>{location.reload();};
 $("btnWalk").onclick=()=>{beep(660,.08);initAudio();enterMode("walk");};
 $("btnQuiz").onclick=()=>{beep(660,.08);initAudio();APP.quizTA=false;enterMode("quiz");};
@@ -3721,8 +3773,10 @@ function kaimamiUpdate(dt){
 ============================================================ */
 const clock=new THREE.Clock();
 const tmpV=new THREE.Vector3();
+let glLost=false;  /* WebGLコンテキスト喪失中フラグ(モバイルのスリープ復帰・GPUリセット対策) */
 function animate(){
   requestAnimationFrame(animate);
+  if(glLost){clock.getDelta();return;}  /* 喪失中は描画を休止。復帰後にdtが飛ばないよう時計だけ進める */
   const dt=Math.min(clock.getDelta(),.08);
   const t=clock.elapsedTime;
   __perf.tick(dt);  /* [Phase0] パフォーマンス計測 */
@@ -4049,6 +4103,12 @@ function toastPond(){if(performance.now()-pondToastT>2500){pondToastT=performanc
 addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
   renderer.setSize(innerWidth,innerHeight);});
 
+/* WebGLコンテキストの喪失/復帰に対応(タブレットのスリープ・タブ切替・GPUリセットで白画面化を防ぐ) */
+renderer.domElement.addEventListener("webglcontextlost",e=>{e.preventDefault();glLost=true;
+  if(typeof toast==="function")toast("描画を一時休止しました（自動で復帰します）",4000);},false);
+renderer.domElement.addEventListener("webglcontextrestored",()=>{glLost=false;
+  if(typeof toast==="function")toast("描画を復帰しました",1600);},false);
+
 /* 橋の歩行ゾーン(南庭⇄中島A⇄中島B⇄南庭の回遊動線) */
 addZone(-20,26.25,3.4,8.5,1.05);   // 南庭→中島A 反り橋
 addZone(-11.5,37,10,8,1.05);        // 中島A→中島B
@@ -4056,8 +4116,13 @@ addZone(-4,32.5,3.4,9,1.05);        // 中島B→南庭 反り橋
 /* 中島 */
 addZone(-20,34,8,8,1.15);addZone(-4,40,6,6,1.15);
 
-/* 初期季節 */
-applySeason("spring");
+/* 初期季節・時刻・札:前回のユーザー設定を復元(各モードは必要に応じて上書きする) */
+const _ssn=PREFS.get("season","spring");
+applySeason(SEASON_ORDER.includes(_ssn)?_ssn:"spring");
+const _tm=PREFS.get("time","day");
+if(_tm==="dusk"||_tm==="night")setTime(_tm);
+const _lbl=PREFS.get("label",1);
+if([0,1,2].includes(_lbl)&&_lbl!==APP.labelMode){APP.labelMode=_lbl;$("tbLabel").textContent="札:"+["なし","近く","すべて"][_lbl];}
 
 /* 全オブジェクトへの影（Cast & Receive）の自動適用 */
 scene.traverse((node) => {
