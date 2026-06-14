@@ -3774,12 +3774,54 @@ function kaimamiUpdate(dt){
 const clock=new THREE.Clock();
 const tmpV=new THREE.Vector3();
 let glLost=false;  /* WebGLコンテキスト喪失中フラグ(モバイルのスリープ復帰・GPUリセット対策) */
+
+/* ============================================================
+   適応的品質(ダイナミック解像度)
+   負荷が続くと描画解像度→影解像度を段階的に下げ、余裕が出れば自動復帰する。
+   L0は現状と完全に同一(高性能端末では一切変化しない)。?adaptive=0 で無効化。
+   ※完全可逆な2レバー(pixelRatio / shadow.mapSize)のみ。シーングラフは改変しない。
+============================================================ */
+const QUALITY=(()=>{
+  const basePR=Math.min(devicePixelRatio,IS_TOUCH?1.6:2);   // 現状の上限PRを基準にする
+  const baseShadow=sun.shadow.mapSize.width;                // 現状の影解像度(2048)
+  const levels=[
+    {pr:1.00, shadow:baseShadow},                 // L0: 現状そのまま
+    {pr:0.83, shadow:Math.min(1024,baseShadow)},
+    {pr:0.68, shadow:1024},
+    {pr:0.56, shadow:512},                        // L3: 下限(可読性を保つ床)
+  ];
+  const enabled=!/[?&]adaptive=0/.test(location.search);
+  let lvl=0, ema=60, warmup=0, accDown=0, accUp=0;
+  function apply(){
+    const L=levels[lvl];
+    renderer.setPixelRatio(basePR*L.pr);
+    renderer.setSize(innerWidth,innerHeight);               // CSSサイズは全画面のまま、描画バッファのみ変更
+    if(sun.shadow.mapSize.width!==L.shadow){
+      sun.shadow.mapSize.set(L.shadow,L.shadow);
+      if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}  // 次フレームで新解像度に再生成
+    }
+  }
+  return {
+    get level(){return lvl;},
+    get info(){return `Q${lvl} pr${(basePR*levels[lvl].pr).toFixed(2)} sh${levels[lvl].shadow}`;},
+    update(dt){
+      if(!enabled||dt<=0)return;
+      if(warmup<2.5){warmup+=dt;return;}                    // 起動直後(シェーダ初回コンパイル等)は無視
+      ema+=(1/Math.min(dt,0.25)-ema)*0.08;                  // FPSをEMA平滑し単発ヒッチに反応しない
+      if(ema<42 && lvl<levels.length-1){accDown+=dt;accUp=0;if(accDown>1.2){lvl++;accDown=0;apply();}}
+      else if(ema>57 && lvl>0){accUp+=dt;accDown=0;if(accUp>5){lvl--;accUp=0;apply();}}
+      else{accDown=Math.max(0,accDown-dt*0.5);accUp=Math.max(0,accUp-dt*0.5);}
+    }
+  };
+})();
+
 function animate(){
   requestAnimationFrame(animate);
   if(glLost){clock.getDelta();return;}  /* 喪失中は描画を休止。復帰後にdtが飛ばないよう時計だけ進める */
   const dt=Math.min(clock.getDelta(),.08);
   const t=clock.elapsedTime;
   __perf.tick(dt);  /* [Phase0] パフォーマンス計測 */
+  QUALITY.update(dt);  /* 適応的品質: 負荷に応じ描画解像度を自動調整(L0=現状) */
 
   /* --- 時間遷移とフォグカラーの自動同期 --- */
   const tg=TIMES[APP.time];
@@ -4161,7 +4203,8 @@ const __perf=(()=>{
           `FPS ${emaFps.toFixed(0)}  (${(1000/Math.max(emaFps,.001)).toFixed(1)} ms)\n`+
           `min ${minFps.toFixed(0)} / max ${maxFps.toFixed(0)}\n`+
           `draw ${r.calls}  tri ${(r.triangles/1000).toFixed(1)}k\n`+
-          `geo ${m.geometries}  tex ${m.textures}  prog ${prog}`;
+          `geo ${m.geometries}  tex ${m.textures}  prog ${prog}\n`+
+          `quality ${QUALITY.info}`;
         if(now-winStart>1000){winStart=now;minFps=999;maxFps=0;}
       }
     }
