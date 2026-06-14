@@ -115,6 +115,16 @@ h1.t-main .shu{color:var(--shu-bright)}
 #questHud .qs-title{font-size:13px;color:var(--kin);letter-spacing:.15em;border-bottom:1px solid rgba(201,162,63,.4);padding-bottom:6px;margin-bottom:8px}
 #questHud .qs-text{font-size:13.5px;line-height:1.8;font-family:var(--sans)}
 #questHud .qs-prog{font-size:11px;color:#cdbf9f;margin-top:6px;font-family:var(--sans)}
+#kaimamiEye{display:none;align-items:center;gap:9px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(201,162,63,.28)}
+#kaimamiEye .eye{position:relative;width:42px;height:23px;border:2px solid #9db8c7;border-radius:55% 45%;overflow:hidden;
+  background:rgba(190,216,226,.12);transform:rotate(-2deg);box-shadow:0 0 8px rgba(115,183,204,.12)}
+#kaimamiEye .pupil{position:absolute;left:50%;top:50%;width:11px;height:11px;margin:-5.5px;border-radius:50%;background:#66889a;
+  box-shadow:0 0 0 3px rgba(205,229,237,.22);transition:background .12s,box-shadow .12s,transform .12s}
+#kaimamiEye.watched .eye{border-color:#e46b54;background:rgba(180,38,25,.22);box-shadow:0 0 13px rgba(225,63,38,.55)}
+#kaimamiEye.watched .pupil{background:#ffcf70;box-shadow:0 0 0 4px rgba(207,40,25,.55);transform:scale(1.18)}
+#kaimamiEye .meter{flex:1;height:8px;border:1px solid rgba(220,205,174,.45);background:rgba(0,0,0,.38);overflow:hidden;border-radius:5px}
+#kaimamiEye .fill{height:100%;width:0;background:linear-gradient(90deg,#6d9caf,#e1b74f,#d74831);transition:width .08s linear}
+#kaimamiEye .eye-label{font-size:10px;color:#b8c8cf;min-width:56px;font-family:var(--sans)}
 
 /* ===== 結果モーダル ===== */
 #result{position:fixed;z-index:58;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,6,4,.78)}
@@ -200,8 +210,9 @@ h1.t-main .shu{color:var(--shu-bright)}
       <button class="t-btn" id="btnWalk">自由散策<small>邸内と庭を歩き回る</small></button>
       <button class="t-btn gold" id="btnQuiz">名称当てクイズ<small>部位・調度品を探せ</small></button>
       <button class="t-btn gold" id="btnQuizTA">⏱ タイムアタック<small>10問を最速タイムで答えよ</small></button>
-      <button class="t-btn" id="btnQuest">貴族の一日体験<small>牛車の到着〜夜の設え</small></button>
-      <button class="t-btn gold" id="btnKaimami">垣間見ミッション<small>几帳の隙間から姫君を探す</small></button>
+      <button class="t-btn" id="btnQuest">男性貴族の一日<small>朝廷への出仕・教養・管弦</small></button>
+      <button class="t-btn" id="btnQuestF">女性貴族の一日<small>文・御簾越しの応対・管弦</small></button>
+      <button class="t-btn gold" id="btnKaimami">垣間見ミッション<small>女房と侍従の目を避けて忍ぶ</small></button>
       <button class="t-btn" id="btnCodex">平安ものしり図鑑<small id="titleCodexProgress">図鑑 0 / 0</small></button>
     </div>
     <div class="t-note">推奨:タブレット横向き / PC<br>建物・建具・調度品をタップ(クリック)すると解説が読めます</div>
@@ -256,6 +267,7 @@ h1.t-main .shu{color:var(--shu-bright)}
   <div class="qs-title" id="questTitle"></div>
   <div class="qs-text" id="questText"></div>
   <div class="qs-prog" id="questProg"></div>
+  <div id="kaimamiEye"><div class="eye"><div class="pupil"></div></div><div class="meter"><div class="fill"></div></div><div class="eye-label">気配なし</div></div>
 </div>
 
 <div id="result"><div class="r-card">
@@ -330,6 +342,8 @@ nikaizushi:{n:"二階厨子",k:"にかいずし",cat:"c",d:"扉のついた二�
 karabitsu:{n:"唐櫃",k:"からびつ",cat:"c",d:"6本の脚がついた、ふた付きの大きな木箱。衣類や調度をしまう収納家具で、運搬にも使った。",t:"脚があるのは湿気とネズミから守るため。「唐」とつくが日本製。<b>大切な物は唐櫃へ</b>が貴族の常識。"},
 kyousoku:{n:"脇息",k:"きょうそく",cat:"c",d:"座ったとき脇に置き、ひじをのせて体をあずける肘掛け。貴人がゆったりと寄りかかるための調度。",t:"<b>「脇息にもたれて」</b>は物語で高貴な人がくつろぐ姿の定番表現。病に伏す人が寄りかかる場面にも使われる。"},
 takatsuki:{n:"高坏",k:"たかつき",cat:"c",d:"一本脚の上に浅い坏(つき=皿)をのせた食器台。果物や唐菓子(からくだもの)を盛って供した。",t:"「坏」は食べ物を盛る器。台が高いのは、床に座ったまま手を伸ばしやすくするため。儀式や饗宴(きょうえん)で並べられた。"},
+sokutai:{n:"出仕の装束",k:"そくたい・いかん",cat:"c",d:"朝廷へ出仕する男性貴族が身につける装束。冠、袍、袴、笏などを身分と儀式に応じて整えた。",t:"日常の直衣とは異なり、出仕では公的な装束に着替える。衣服は女房や従者が衣桁・唐櫃から用意した。"},
+juni:{n:"重ねの装束",k:"かさねのしょうぞく",cat:"c",d:"高貴な女性が朝の身支度で選ぶ袿などの重ね。何枚もの襟と袖口の配色で季節感と美意識を表した。",t:"いわゆる十二単は常に十二枚という意味ではない。季節や場面に応じた「襲の色目」が教養として重んじられた。"},
 kyouzukue:{n:"経机",k:"きょうづくえ",cat:"c",d:"経巻(きょうかん)を読むときに用いる、脚の低い机。写経や読経、書き物にも使われた。",t:"平安貴族は仏教を篤(あつ)く信仰し、写経も日常の務めだった。低いのは床に座って使うため。文机(ふづくえ)とも近い。"},
 kagaribi:{n:"篝火",k:"かがりび",cat:"c",d:"鉄のかご(籠)に薪を入れて燃やす屋外の照明。庭や池のほとり・門前で焚き、夜を照らした。",t:"<b>『源氏物語』篝火巻</b>に登場。ゆらめく篝火の灯は、夏の夜の風情として和歌にも詠まれた。夜になると庭で灯る。"},
 /* ---- 人物 ---- */
@@ -918,8 +932,9 @@ const SHISHIN_DATA={
     s.rotation.set(rnd(0,3),rnd(0,3),rnd(0,3));pond.add(s);}
   /* 中島 */
   function island(x,z,r){
-    const i1=new THREE.Mesh(new THREE.CylinderGeometry(r,r*1.25,1.2,18),MAT.grass.clone());
-    i1.material.map=TEX.grass;i1.position.set(x,.5,z);i1.receiveShadow=true;i1.castShadow=true;pond.add(i1);
+    // [fix] 中島の地面は共有MAT.grassを使用(複製だと冬の雪化粧=grass色変更が効かず緑のまま残る)
+    const i1=new THREE.Mesh(new THREE.CylinderGeometry(r,r*1.25,1.2,18),MAT.grass);
+    i1.position.set(x,.5,z);i1.receiveShadow=true;i1.castShadow=true;pond.add(i1);
     const t=tree(rnd(2.4,3.2),"normal");t.position.set(x+rnd(-1,1),1.1,z+rnd(-1,1));pond.add(t);
     [[r*.5,0],[-r*.4,r*.3]].forEach(o=>{const s=new THREE.Mesh(new THREE.DodecahedronGeometry(rnd(.5,.9)),MAT.stone);
       s.position.set(x+o[0],1.1,z+o[1]);s.castShadow=true;pond.add(s);});
@@ -1472,7 +1487,7 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
       h.rotation.x=0.95;h.visible=false;g.add(h);return h;};
     const hook1=mkHook(-bw/2+.3),hook2=mkHook(bw/2-.3);
     /* local +Z が屋外側。負のX回転で下端を屋外へ跳ね上げる。 */
-    const st={pivot,open:false,t:0,openDir:-1,hooks:[hook1,hook2]};
+    const st={pivot,root:g,open:false,t:0,openDir:-1,hooks:[hook1,hook2]};
     gimmicks.shitomi.push(st);
     register(g,"hajitomi");
     /* --- 御簾(同じ間口の内側) --- */
@@ -1484,7 +1499,7 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     mg.add(box(bw,.12,.12,MAT.woodDark,0,lintelY+.12,-.55));
     parent.add(mg);
     // 初期風力アニメ用の変数追加
-    gimmicks.misu.push({pivot:mp,up:false,t:0,swayPhase:Math.random()*100});
+    gimmicks.misu.push({pivot:mp,root:mg,up:false,t:0,swayPhase:Math.random()*100});
     register(mg,"misu");
     parent.add(g);
   }
@@ -1747,36 +1762,70 @@ kagaribi(-9,18);kagaribi(9,18);
    人物(姫君・女房・貴公子) — 平安貴族
 ============================================================ */
 const people=[];
+function makeStraightHairGeometry(){
+  const s=new THREE.Shape();
+  s.moveTo(-.145,.49);s.quadraticCurveTo(-.205,.34,-.205,.10);s.lineTo(-.18,-.46);
+  s.quadraticCurveTo(-.10,-.56,0,-.57);s.quadraticCurveTo(.10,-.56,.18,-.46);
+  s.lineTo(.205,.10);s.quadraticCurveTo(.205,.34,.145,.49);s.closePath();
+  const geo=new THREE.ExtrudeGeometry(s,{depth:.055,bevelEnabled:true,bevelThickness:.012,bevelSize:.01,bevelSegments:2,curveSegments:12});
+  geo.computeVertexNormals();return geo;
+}
+function makeHairTrainGeometry(){
+  const s=new THREE.Shape();
+  s.moveTo(-.17,0);s.bezierCurveTo(-.20,.36,-.18,.85,-.095,1.30);
+  s.quadraticCurveTo(0,1.48,.095,1.30);s.bezierCurveTo(.18,.85,.20,.36,.17,0);s.closePath();
+  const geo=new THREE.ExtrudeGeometry(s,{depth:.025,bevelEnabled:true,bevelThickness:.008,bevelSize:.008,bevelSegments:2,curveSegments:12});
+  geo.computeVertexNormals();return geo;
+}
 const HEIAN_GEO={
   sphere:new THREE.SphereGeometry(1,16,12),head:new THREE.SphereGeometry(1,20,16),
   hairCap:new THREE.SphereGeometry(1,20,12,0,Math.PI*2,0,Math.PI*.62),
   body:new THREE.CylinderGeometry(.66,1,1,16),sleeve:new THREE.SphereGeometry(1,14,10),
   drapeSleeve:new THREE.CylinderGeometry(.62,1,1,16),
+  armSleeve:new THREE.CylinderGeometry(.82,1,1,16),
   hair:new THREE.BoxGeometry(1,1,1),collar:new THREE.BoxGeometry(1,1,1),
-  cushion:new THREE.BoxGeometry(1,1,1),robe:new THREE.SphereGeometry(1,18,10)
+  cushion:new THREE.BoxGeometry(1,1,1),robe:new THREE.SphereGeometry(1,18,10),
+  straightHair:makeStraightHairGeometry(),hairTrain:makeHairTrainGeometry()
 };
 const HEIAN_MATS=new Map();
-function heianTextile(color,gold=false){
-  const key=color+":"+gold;if(HEIAN_MATS.has(key))return HEIAN_MATS.get(key);
+function heianTextile(color,gold=false,motif=0){
+  // [idea1] motif: 0=既定(小花+鉤) / 1=雲立涌(貴公子・晴明) / 2=桜(姫) / 3=花菱(女房)
+  const key=color+":"+gold+":"+motif;if(HEIAN_MATS.has(key))return HEIAN_MATS.get(key);
   const hex="#"+color.toString(16).padStart(6,"0");
   const tex=canv(192,192,(x,w,h)=>{
-    x.fillStyle=hex;x.fillRect(0,0,w,h);x.globalAlpha=.12;
+    x.fillStyle=hex;x.fillRect(0,0,w,h);x.globalAlpha=.07;
     for(let i=0;i<w;i+=4){x.fillStyle=i%8?"#fff":"#000";x.fillRect(i,0,1,h);}
-    x.globalAlpha=gold?.48:.16;x.strokeStyle=gold?"#d8b85b":"#f5ead5";x.lineWidth=2;
-    for(let y=18;y<h;y+=48)for(let xx=18;xx<w;xx+=48){x.beginPath();x.arc(xx+(y%96?12:0),y,7,0,Math.PI*2);x.stroke();
-      x.beginPath();x.moveTo(xx-10,y);x.quadraticCurveTo(xx,y-15,xx+10,y);x.stroke();}
+    const accent=gold?"#d8b85b":"#f5ead5";
+    x.globalAlpha=gold?.52:.32;x.strokeStyle=accent;x.fillStyle=accent;x.lineWidth=2.5;
+    if(motif===1){ // 雲立涌(うんたてわく):波打つ横線で格調ある地文
+      for(let y=10;y<h;y+=20){x.beginPath();for(let xx=0;xx<=w;xx+=6)x.lineTo(xx,y+Math.sin(xx/15+(y%40?0:Math.PI))*7);x.stroke();}
+    }else if(motif===2){ // 桜:五弁の小花を散らす
+      for(let y=22;y<h;y+=46)for(let xx=22;xx<w;xx+=46){const cx=xx+(y%92?16:0);for(let p=0;p<5;p++){const a=p/5*Math.PI*2-Math.PI/2;x.beginPath();x.arc(cx+Math.cos(a)*6,y+Math.sin(a)*6,3.6,0,Math.PI*2);x.fill();}}
+    }else if(motif===3){ // 花菱(はなびし):菱形に小花
+      for(let y=16;y<h;y+=38)for(let xx=16;xx<w;xx+=38){x.beginPath();x.moveTo(xx,y-9);x.lineTo(xx+9,y);x.lineTo(xx,y+9);x.lineTo(xx-9,y);x.closePath();x.stroke();x.beginPath();x.arc(xx,y,2.4,0,Math.PI*2);x.fill();}
+    }else{ // 既定:小花+鉤
+      for(let y=18;y<h;y+=48)for(let xx=18;xx<w;xx+=48){x.beginPath();x.arc(xx+(y%96?12:0),y,7,0,Math.PI*2);x.stroke();
+        x.beginPath();x.moveTo(xx-10,y);x.quadraticCurveTo(xx,y-15,xx+10,y);x.stroke();}
+    }
     x.globalAlpha=1;
-  });tex.repeat.set(2.5,2.5);
+  });tex.repeat.set(2.0,2.0);
   const mat=M({map:tex,roughness:.78,metalness:gold?.05:0,side:THREE.DoubleSide});HEIAN_MATS.set(key,mat);return mat;
 }
-const HEIAN_SKIN=M({color:0xf0d5bd,roughness:.72}),HEIAN_HAIR=M({color:0x0d0c0b,roughness:.46}),
+const HEIAN_SKIN=M({color:0xf0d5bd,roughness:.72}),HEIAN_HAIR=M({color:0x08080a,roughness:.46,metalness:.04}),
+  HEIAN_HAIRLIT=M({color:0x2b2733,roughness:.18,metalness:.15}), /* [idea4] 濡れ羽色の艶ハイライト */
   HEIAN_FACE=new THREE.MeshBasicMaterial({color:0x251914}),HEIAN_EYE=new THREE.MeshBasicMaterial({color:0xf7f2e8}),
   HEIAN_CHEEK=new THREE.MeshBasicMaterial({color:0xd89291,transparent:true,opacity:.48});
 function heianMesh(g,geo,mat,p,s,r){const m=new THREE.Mesh(geo,mat);m.position.set(...p);m.scale.set(...s);if(r)m.rotation.set(...r);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;}
+function heianSleeveBetween(g,mat,shoulder,wrist,width,depth=1){
+  const mid=shoulder.clone().add(wrist).multiplyScalar(.5),dir=shoulder.clone().sub(wrist),len=dir.length();
+  const m=new THREE.Mesh(HEIAN_GEO.armSleeve,mat);m.position.copy(mid);m.scale.set(width,len,width*depth);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());m.castShadow=true;m.receiveShadow=true;g.add(m);return m;
+}
 function noTinyShadow(o){o.userData.noAutoShadow=true;o.userData.heianDetail=true;o.castShadow=false;o.receiveShadow=false;return o;}
 function makeHeianFigure({role,palette,scale=1,prop}){
   const g=new THREE.Group(),male=role==="kikoshi",hime=role==="himegimi";
-  const outer=heianTextile(palette[0],male),inner=heianTextile(palette[1]),accent=heianTextile(palette[2]||palette[1]);
+  const motif=male?1:(hime?2:3);  // [idea1] 貴公子=雲立涌 / 姫=桜 / 女房=花菱
+  const outer=heianTextile(palette[0],male,motif),inner=heianTextile(palette[1],false,motif),accent=heianTextile(palette[2]||palette[1],false,motif);
   const white=heianTextile(0xf3eee1),gold=heianTextile(0xc59b42,true);
   // 座具と装束の裾。球体を扁平化し、柔らかな布の量感を出す。
   heianMesh(g,HEIAN_GEO.cushion,heianTextile(hime?0x8d5a45:0x80624b,true),[0,.055,.02],[1.12,.11,.78]);
@@ -1785,30 +1834,77 @@ function makeHeianFigure({role,palette,scale=1,prop}){
   if(!male){
     [0,1,2].forEach(i=>heianMesh(g,HEIAN_GEO.robe,i?white:inner,[0,.17-i*.015,-.48-i*.29],[.82-i*.08,.10,.64+i*.18]));
   }else heianMesh(g,HEIAN_GEO.robe,outer,[0,.19,-.58],[.82,.10,1.05]);
+  // [idea3] 前裾(膝前)に五衣の重ねを覗かせる / [idea2] 裳の引き裾に淡い色縁
+  if(!male){
+    const hemCols=[palette[0],palette[1],palette[2],palette[3]||0x77863f,0xf6f1e7];
+    hemCols.forEach((c,i)=>{const m=heianMesh(g,HEIAN_GEO.collar,heianTextile(c),[0,.085+i*.02,.47-i*.028],[.50-i*.05,.022,.03],[-.55,0,0]);noTinyShadow(m);});
+    [-1,1].forEach(side=>{const m=heianMesh(g,HEIAN_GEO.robe,heianTextile(palette[2],false,3),[side*.48,.13,-.92],[.16,.055,.52]);noTinyShadow(m);});
+  }
   heianMesh(g,HEIAN_GEO.body,outer,[0,.57,0],[.39,.55,.31]);
   heianMesh(g,HEIAN_GEO.body,inner,[0,.54,.02],[.31,.48,.25]);
-  // 重ね襟。参考資料の白・黄・緑・紅の細い層を胸元に見せる。
-  const collarCols=male?[0xf1ead9,0xc49b45,palette[2]]:[0xf6f1e7,0xd8b849,palette[2],palette[1]];
+  // 重ね襟(かさね):十二単の色目を胸元にV字(裾すぼまり=史実準拠)で重ねる。
+  // ※従来は rotation.z=+side*.48 で逆V(Λ)になっていた指摘を受け、符号を反転して修正。
+  // 配列は「外側の衣→内側」順。外側ほど前面・外寄り、内側ほど中央へ覗かせる。
+  const collarCols=male?[0xc49b45,palette[2],0xf1ead9]
+                       :[palette[0],palette[1],palette[2],palette[3]||0x77863f,0xf6f1e7];
   collarCols.forEach((c,i)=>[-1,1].forEach(side=>{
-    const m=heianMesh(g,HEIAN_GEO.collar,heianTextile(c),[side*(.065+i*.012),.79-i*.012,.278+i*.003],[.055,.26,.018],[0,0,side*.48]);noTinyShadow(m);
+    const m=heianMesh(g,HEIAN_GEO.collar,heianTextile(c),
+      [side*(.078-i*.013),.79,.252-i*.003],[.048,.235-i*.013,.009],[0,0,-side*.43]);
+    noTinyShadow(m);
   }));
-  // 大袖と手。
+  // 大袖と手。袖口には重ねの色目(かさね)を横縞で覗かせる。
+  const cuffCols=male?[palette[0],palette[2],0xf1ead9]
+                     :[palette[0],palette[1],palette[2],palette[3]||0x77863f,0xf6f1e7];
   [-1,1].forEach(side=>{
-    heianMesh(g,HEIAN_GEO.drapeSleeve,outer,[side*.43,.56,.035],[.34,.52,.34],[0,0,side*.16]);
-    heianMesh(g,HEIAN_GEO.drapeSleeve,accent,[side*.46,.46,.15],[.25,.36,.26],[0,0,side*.10]);
-    const hand=heianMesh(g,HEIAN_GEO.sphere,HEIAN_SKIN,[side*.19,.55,.37],[.052,.035,.082]);noTinyShadow(hand);
+    const scrollPose=prop==="scroll";
+    // 肩→肘→手首を別方向に結び、棒状だった腕に自然な屈曲をつける。
+    const shoulder=new THREE.Vector3(side*.275,.705,.015);
+    const elbow=scrollPose?new THREE.Vector3(side*.37,.565,.19)
+      :(male?new THREE.Vector3(side*.35,.535,.16):new THREE.Vector3(side*.325,.545,.19));
+    const wrist=scrollPose?new THREE.Vector3(side*.235,.575,.37)
+      :(male?new THREE.Vector3(side*.215,.515,.34):new THREE.Vector3(side*.20,.525,.35));
+    // 肩衣を胴へ重ね、肩から腕まで布が途切れず続くようにする。
+    const shoulderCap=heianMesh(g,HEIAN_GEO.sphere,outer,[side*.245,.695,.02],
+      male?[.145,.112,.135]:[.155,.120,.148],[0,0,side*.05]);
+    shoulderCap.castShadow=true;
+    heianSleeveBetween(g,outer,shoulder,elbow,male?.122:.132,.92);
+    // 前腕も紋様入りの外衣で包み、柄が肩から手首まで途切れず続くようにする。
+    heianSleeveBetween(g,outer,elbow,wrist,male?.103:.114,.90);
+    // 手首の丸みも同じ外衣で覆い、内衣はごく細い袖口だけを見せる。
+    const sleeveCover=heianMesh(g,HEIAN_GEO.sphere,outer,
+      [side*(Math.abs(wrist.x)+.012),wrist.y+.010,wrist.z-.006],
+      male?[.112,.070,.102]:[.124,.076,.112],[0,0,side*.12]);
+    noTinyShadow(sleeveCover);
+    // 重ね色は手の付け根に細く覗く程度。帯状に見えない幅まで抑える。
+    cuffCols.forEach((c,k)=>{const m=heianMesh(g,HEIAN_GEO.collar,heianTextile(c),
+      [side*(Math.abs(wrist.x)-.010),wrist.y-.010+k*.0035,wrist.z+.050],[.032,.003,.018],[0,0,side*.12]);noTinyShadow(m);});
+    const hand=heianMesh(g,HEIAN_GEO.sphere,HEIAN_SKIN,
+      [side*(scrollPose?.205:.19),scrollPose?.61:.55,scrollPose?.435:.385],
+      scrollPose?[.040,.060,.050]:[.047,.034,.070]);noTinyShadow(hand);
+    // 指は巻物の左右端をつまむ位置へ。その他の人物は従来の手前向きの指。
+    [0,1,2].forEach(f=>{const fin=heianMesh(g,new THREE.CylinderGeometry(.010,.008,.055,5),HEIAN_SKIN,
+      scrollPose?[side*(.190+f*.010),.585+f*.022,.455]:[side*(.165+f*.018),.565,.41],[1,1,1],
+      scrollPose?[0,0,side*.10]:[-1.15,0,(f-1)*.12]);noTinyShadow(fin);});
   });
   // 顔、耳、眉、目、口。
   heianMesh(g,HEIAN_GEO.head,HEIAN_SKIN,[0,1.01,.02],[.18,.22,.17]);
   [-1,1].forEach(side=>{
     const ear=heianMesh(g,HEIAN_GEO.sphere,HEIAN_SKIN,[side*.174,1.01,.02],[.025,.055,.025]);noTinyShadow(ear);
-    const eye=heianMesh(g,HEIAN_GEO.sphere,HEIAN_EYE,[side*.062,1.035,.171],[.032,.014,.009]);noTinyShadow(eye);
-    const pupil=heianMesh(g,HEIAN_GEO.sphere,HEIAN_FACE,[side*.062,1.035,.179],[.012,.012,.007]);noTinyShadow(pupil);
-    const brow=heianMesh(g,HEIAN_GEO.collar,HEIAN_FACE,[side*.06,1.078,.166],[.055,.008,.006],[0,0,side*.08]);noTinyShadow(brow);
-    if(!male){const cheek=heianMesh(g,HEIAN_GEO.sphere,HEIAN_CHEEK,[side*.095,.987,.169],[.026,.012,.006]);noTinyShadow(cheek);}
+    // 目:「引目」=細い墨線。姫はやや大きめ&柔らかな弧でかわいく、他は控えめ。
+    const eyeW=hime?.036:.030, eyeH=hime?.0085:.0055;
+    const eye=heianMesh(g,HEIAN_GEO.sphere,HEIAN_FACE,[side*(hime?.060:.062),hime?1.027:1.03,.172],[eyeW,eyeH,.010],[0,0,-side*.05]);noTinyShadow(eye);
+    // 姫は瞳に小さな潤み(キャッチライト)を入れて愛らしく(白目ではなく点のハイライト)
+    if(hime){const hi=heianMesh(g,HEIAN_GEO.sphere,new THREE.MeshBasicMaterial({color:0xfff4e6}),[side*.066,1.031,.180],[.0052,.0052,.003]);noTinyShadow(hi);}
+    // 眉:姫はやわらかく短く、やや高い位置(引眉風)
+    const brow=heianMesh(g,HEIAN_GEO.collar,HEIAN_FACE,[side*.06,hime?1.083:1.078,.166],[hime?.044:.055,.007,.006],[0,0,side*(hime?.05:.08)]);noTinyShadow(brow);
+    if(!male){const cheek=heianMesh(g,HEIAN_GEO.sphere,HEIAN_CHEEK,[side*(hime?.086:.095),hime?.981:.987,.170],[hime?.034:.026,hime?.018:.012,.006]);noTinyShadow(cheek);}
   });
   const nose=heianMesh(g,new THREE.ConeGeometry(.018,.055,6),HEIAN_SKIN,[0,1.005,.185],[1,1,1],[Math.PI/2,0,0]);noTinyShadow(nose);
-  const mouth=heianMesh(g,HEIAN_GEO.collar,new THREE.MeshBasicMaterial({color:male?0x8b554c:0xa86368}),[0,.957,.181],[.052,.007,.006]);noTinyShadow(mouth);
+  // 口:姫は小さく丸い紅(おちょぼ口)でかわいく。他は細い線。
+  const mouth=hime
+    ? heianMesh(g,HEIAN_GEO.sphere,new THREE.MeshBasicMaterial({color:0xc15863}),[0,.955,.183],[.015,.011,.006])
+    : heianMesh(g,HEIAN_GEO.collar,new THREE.MeshBasicMaterial({color:male?0x8b554c:0xa86368}),[0,.957,.181],[.050,.007,.006]);
+  noTinyShadow(mouth);
   // 垂髪または冠。女性は前髪・側髪・後方へ流れる髪を分ける。
   heianMesh(g,HEIAN_GEO.hairCap,HEIAN_HAIR,[0,1.075,-.02],[.19,.18,.18]);
   if(!male){
@@ -1817,23 +1913,47 @@ function makeHeianFigure({role,palette,scale=1,prop}){
       const fringe=heianMesh(g,HEIAN_GEO.sleeve,HEIAN_HAIR,[side*.045,1.105,.145],[.072,.105,.025],[0,0,side*.34]);noTinyShadow(fringe);
     });
     const part=heianMesh(g,HEIAN_GEO.collar,HEIAN_SKIN,[0,1.125,.171],[.008,.075,.004]);part.rotation.z=0;noTinyShadow(part);
-    [-1,1].forEach(side=>heianMesh(g,HEIAN_GEO.sleeve,HEIAN_HAIR,[side*.145,.79,-.06],[.075,.38,.075],[0,0,side*.04]));
-    heianMesh(g,HEIAN_GEO.hair,HEIAN_HAIR,[0,.58,-.17],[.31,.77,.09]);
-    [0,1,2].forEach(i=>heianMesh(g,HEIAN_GEO.sleeve,HEIAN_HAIR,[(i-1)*.10,.24,-.55-i*.25],[.085,.10,.52+i*.16],[0,0,(i-1)*.06]));
+    // [hair] 後頭部〜うなじを覆う黒髪(冠hairCapから垂髪へ連続)
+    heianMesh(g,HEIAN_GEO.sphere,HEIAN_HAIR,[0,.99,-.06],[.182,.21,.175]);
+    // 鬢(びん):顔の左右に垂れる髪
+    [-1,1].forEach(side=>heianMesh(g,HEIAN_GEO.sleeve,HEIAN_HAIR,[side*.15,.80,-.03],[.072,.40,.085],[0,0,side*.05]));
+    // 背へまっすぐ落ちる垂髪。節の見える球体列をやめ、頭から毛先まで一枚の滑らかな輪郭にする。
+    heianMesh(g,HEIAN_GEO.straightHair,HEIAN_HAIR,[0,.55,-.55],[1.05,1.08,1],[.90,0,0]);
+    // 床に触れた後だけ緩やかに伸びる引き髪。幅を抑え、一本の連続した毛束として見せる。
+    heianMesh(g,HEIAN_GEO.hairTrain,HEIAN_HAIR,[0,.285,-.58],[1.02,1.15,1],[-Math.PI/2,0,0]);
+    // 濡れ羽色の縦艶。左右対称にしすぎず、細い三本で髪の長さと直線感を強調。
+    [[-.082,.026,.39],[.012,.032,.43],[.090,.018,.34]].forEach(v=>{
+      const shine=heianMesh(g,HEIAN_GEO.hair,HEIAN_HAIRLIT,[v[0],.60,-.40],[v[1],v[2],.012],[.90,0,0]);noTinyShadow(shine);
+    });
   }else{
+    // 冠(かんむり):巾子(こじ)+ 額の縁
     heianMesh(g,new THREE.CylinderGeometry(.13,.15,.16,12),MAT.black,[0,1.19,0],[1,1,1]);
     heianMesh(g,HEIAN_GEO.collar,MAT.black,[0,1.35,-.06],[.13,.33,.055],[-.16,0,0]);
     const pin=heianMesh(g,new THREE.CylinderGeometry(.012,.012,.43,6),MAT.black,[0,1.23,.02],[1,1,1],[0,0,Math.PI/2]);noTinyShadow(pin);
+    // 纓(えい):冠後方から立ち上がって背へ垂れる細長い羽(参考イラスト準拠)
+    heianMesh(g,HEIAN_GEO.collar,MAT.black,[0,1.33,-.20],[.075,.34,.018],[.55,0,0]);
+    heianMesh(g,HEIAN_GEO.collar,MAT.black,[0,1.02,-.30],[.065,.42,.016],[1.15,0,0]);
   }
   // 持物: 姫君=檜扇、女房=巻物、貴公子=笏。
   if(prop==="fan"){
-    const fan=new THREE.Group(),leaf=new THREE.Mesh(new THREE.CircleGeometry(.25,24,0,Math.PI),gold);
-    leaf.position.y=.19;fan.add(leaf);
-    for(let i=0;i<7;i++){const rib=box(.012,.34,.009,MAT.kin,0,.17,.008,false);rib.rotation.z=-.48+i*.16;fan.add(rib);}
-    fan.position.set(0,.49,.43);fan.rotation.x=-.18;fan.scale.setScalar(scale);fan.traverse(noTinyShadow);g.add(fan);
+    // 檜扇(ひおうぎ):上が開く扇形。要(かなめ)から骨が放射し、扇面に淡彩。
+    const fan=new THREE.Group();
+    const span=Math.PI*0.62, a0=Math.PI/2-span/2;
+    const leaf=new THREE.Mesh(new THREE.CircleGeometry(.30,28,a0,span),heianTextile(0xeadfc6));
+    fan.add(leaf);
+    for(let i=0;i<10;i++){const a=a0+span*(i/9);
+      const rib=box(.009,.30,.006,MAT.kin,Math.cos(a)*.15,Math.sin(a)*.15,.006,false);rib.rotation.z=a-Math.PI/2;fan.add(rib);}
+    const kaname=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.02,10),MAT.kin);kaname.rotation.x=Math.PI/2;fan.add(kaname);
+    fan.position.set(0,.60,.40);fan.rotation.x=-.08;fan.scale.setScalar(scale);fan.traverse(noTinyShadow);g.add(fan);
   }else if(prop==="scroll"){
-    const paper=box(.42,.18,.012,white,0,.58,.43,false);paper.rotation.z=.06;noTinyShadow(paper);g.add(paper);
-    [-1,1].forEach(side=>{const roll=cyl(.025,.025,.2,white,side*.22,.58,.43,8);roll.rotation.z=Math.PI/2;noTinyShadow(roll);g.add(roll);});
+    const scroll=new THREE.Group(),paperMat=M({color:0xeee4c8,roughness:.92,side:THREE.DoubleSide});
+    const paper=box(.36,.22,.010,paperMat,0,0,0,false);scroll.add(paper);
+    [-1,1].forEach(side=>{const roll=cyl(.022,.022,.25,M({color:0xd8c69e,roughness:.85}),side*.195,0,0,8);scroll.add(roll);});
+    // 縦書きは女房が読む裏面へ置き、右列の上から左列へ進む。
+    [.10,.035,-.035,-.10].forEach((x,j)=>[0,1,2,3].forEach(i=>{
+      const mark=box(.010,.025+(i+j)%2*.010,.004,HEIAN_FACE,x,.065-i*.043,-.008,false);scroll.add(mark);
+    }));
+    scroll.position.set(0,.62,.445);scroll.rotation.x=-.22;scroll.rotation.z=.025;scroll.traverse(noTinyShadow);g.add(scroll);
   }else if(prop==="shaku"){
     const shaku=box(.075,.45,.035,M({color:0x9b7146,roughness:.7}),-.12,.67,.43,false);shaku.rotation.z=-.08;noTinyShadow(shaku);g.add(shaku);
   }
@@ -1879,72 +1999,158 @@ function addCharacterSlot({id,figure,position,yaw,labelPos}){
 const creatures={oni:[],shiki:[],seimei:null};
 function makeOni(){
   const g=new THREE.Group();
-  // 体(赤鬼)
-  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.65,1.5,10),
-    M({color:0x8a2a22,roughness:.8}));
-  body.position.y=1.3;body.castShadow=true;g.add(body);
-  // 頭
-  const head=new THREE.Mesh(new THREE.SphereGeometry(0.45,12,10),M({color:0x9a3026,roughness:.8}));
-  head.position.y=2.3;head.castShadow=true;g.add(head);
-  // 角(2本)
-  [-0.2,0.2].forEach(s=>{
-    const horn=new THREE.Mesh(new THREE.ConeGeometry(0.07,0.4,6),M({color:0xe8e0d0,roughness:.7}));
-    horn.position.set(s,2.7,0);horn.rotation.z=-s*0.6;g.add(horn);
-  });
-  // 光る眼
-  const eyeMat=new THREE.MeshBasicMaterial({color:0xffd000});
-  [-0.16,0.16].forEach(s=>{
-    const eye=new THREE.Mesh(new THREE.SphereGeometry(0.07,8,8),eyeMat);
-    eye.position.set(s,2.35,0.38);g.add(eye);
-  });
-  const eyeGlow=new THREE.PointLight(0xffaa00,0.6,6,2);eyeGlow.position.set(0,2.35,0.5);g.add(eyeGlow);
-  // 腕
+  const skin=M({color:0x4c100e,roughness:.75}),skin2=M({color:0x731d18,roughness:.70}),
+    skinDark=M({color:0x270807,roughness:.84}),ink=new THREE.MeshBasicMaterial({color:0x160404}),
+    fangMat=M({color:0xeadbb8,roughness:.48}),metal=M({color:0x4b4a4b,roughness:.48,metalness:.62});
+  // 逆三角形の胴と、別パーツの胸・肩・腹で筋肉の陰影を出す。
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.46,.60,1.35,14),skin);body.position.y=1.35;body.castShadow=true;g.add(body);
   [-1,1].forEach(s=>{
-    const arm=new THREE.Mesh(new THREE.CylinderGeometry(0.13,0.16,1.1,8),M({color:0x8a2a22,roughness:.8}));
-    arm.position.set(s*0.6,1.4,0);arm.rotation.z=s*0.5;arm.castShadow=true;g.add(arm);
+    const pec=new THREE.Mesh(new THREE.SphereGeometry(.29,14,10),skin2);pec.position.set(s*.22,1.77,.25);pec.scale.set(1,.68,.62);g.add(pec);
+    const shoulder=new THREE.Mesh(new THREE.SphereGeometry(.28,12,9),skin2);shoulder.position.set(s*.53,1.65,.04);shoulder.scale.set(1.06,.95,.92);g.add(shoulder);
   });
-  // 脚
+  [1.47,1.25,1.05].forEach((y,i)=>{const abs=new THREE.Mesh(new THREE.SphereGeometry(.19-i*.012,12,8),i%2?skin2:skin);abs.position.set(0,y,.30);abs.scale.set(1,.58,.42);g.add(abs);});
+  // 頭・頬骨・顎・突き出た鼻。正面から読める鬼面の輪郭にする。
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.45,18,14),skin2);head.position.set(0,2.27,0);head.scale.set(.96,1.03,.86);head.castShadow=true;g.add(head);
+  [-1,1].forEach(s=>{const cheek=new THREE.Mesh(new THREE.SphereGeometry(.14,10,8),skin);cheek.position.set(s*.24,2.20,.29);cheek.scale.set(.82,.64,.46);g.add(cheek);});
+  const jaw=new THREE.Mesh(new THREE.SphereGeometry(.27,12,8),skinDark);jaw.position.set(0,2.08,.20);jaw.scale.set(1,.48,.72);g.add(jaw);
+  const nose=new THREE.Mesh(new THREE.ConeGeometry(.070,.19,7),skinDark);nose.position.set(0,2.29,.40);nose.rotation.x=Math.PI/2;g.add(nose);
+  [-1,1].forEach(s=>{const nostril=new THREE.Mesh(new THREE.SphereGeometry(.015,7,6),ink);nostril.position.set(s*.025,2.25,.483);g.add(nostril);});
+  // 吊り上がった瞼、金色の虹彩、縦長の瞳孔。
   [-1,1].forEach(s=>{
-    const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.2,0.9,8),M({color:0x8a2a22,roughness:.8}));
-    leg.position.set(s*0.28,0.4,0);leg.castShadow=true;g.add(leg);
+    const socket=new THREE.Mesh(new THREE.SphereGeometry(.105,12,8),ink);socket.position.set(s*.17,2.39,.365);socket.scale.set(1,.52,.42);socket.rotation.z=-s*.18;g.add(socket);
+    const iris=new THREE.Mesh(new THREE.SphereGeometry(.066,10,8),new THREE.MeshBasicMaterial({color:0xe6a514}));iris.position.set(s*.17,2.39,.415);iris.scale.set(1,.60,.35);g.add(iris);
+    const pupil=new THREE.Mesh(new THREE.SphereGeometry(.022,8,6),ink);pupil.position.set(s*.17,2.39,.445);pupil.scale.set(.45,1,.35);g.add(pupil);
+    const brow=box(.22,.045,.055,skinDark,s*.17,2.49,.35);brow.rotation.z=s*.43;g.add(brow);
   });
-  // 金棒(かなぼう)
-  const club=new THREE.Group();
-  const shaft=cyl(0.08,0.1,1.6,M({color:0x3a3a40,roughness:.7,metalness:.4}),0,0,0,8);
-  club.add(shaft);
-  for(let i=0;i<6;i++){const sp=box(0.16,0.16,0.16,M({color:0x4a4a52,roughness:.6,metalness:.5}),
-    rnd(-0.1,0.1),0.5+i*0.12,rnd(-0.1,0.1));club.add(sp);}
-  club.position.set(0.95,1.5,0);club.rotation.z=0.3;g.add(club);
-  // 腰布(虎柄)
-  const cloth=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.55,0.5,10),
-    M({color:0xd0a020,roughness:.85}));
-  cloth.position.y=0.9;g.add(cloth);
-  g.userData.eyeGlow=eyeGlow;
+  // 開いた口、上下の歯列、外へ反る牙。
+  const mouth=new THREE.Mesh(new THREE.SphereGeometry(.24,12,8),ink);mouth.position.set(0,2.08,.39);mouth.scale.set(1,.43,.28);g.add(mouth);
+  [-1,1].forEach(s=>{
+    const fang=new THREE.Mesh(new THREE.ConeGeometry(.047,.18,7),fangMat);fang.position.set(s*.15,2.13,.46);fang.rotation.z=-s*.16;fang.rotation.x=Math.PI;g.add(fang);
+  });
+  for(let i=-2;i<=2;i++){const tooth=new THREE.Mesh(new THREE.ConeGeometry(.018,.07,5),fangMat);tooth.position.set(i*.055,2.13,.475);tooth.rotation.x=Math.PI;g.add(tooth);}
+  // 根元の節まで見える二本角。
+  [-1,1].forEach(s=>{
+    const base=new THREE.Mesh(new THREE.CylinderGeometry(.10,.13,.13,9),skinDark);base.position.set(s*.22,2.62,-.02);base.rotation.z=-s*.22;g.add(base);
+    const horn=new THREE.Mesh(new THREE.ConeGeometry(.085,.48,9),fangMat);horn.position.set(s*.25,2.88,-.03);horn.rotation.z=-s*.25;horn.castShadow=true;g.add(horn);
+    [0,1,2].forEach(i=>{const ring=new THREE.Mesh(new THREE.TorusGeometry(.065-i*.012,.010,5,9),skinDark);ring.position.set(s*(.22+i*.02),2.70+i*.10,-.03);ring.rotation.x=Math.PI/2;ring.rotation.z=-s*.25;g.add(ring);});
+  });
+  // 炎のように後方へ流れる赤黒い髪。
+  const hairMat=M({color:0x43100f,roughness:.64});
+  for(let i=0;i<18;i++){const a=(i/18)*Math.PI*2,back=.10+Math.max(0,-Math.sin(a))*.18;const tuft=new THREE.Mesh(new THREE.ConeGeometry(.055+(i%3)*.012,.38+(i%4)*.07,6),hairMat);
+    tuft.position.set(Math.cos(a)*(.32+back),2.50+Math.sin(a)*.24,Math.sin(a)*.25-.18-back);tuft.rotation.set(Math.sin(a)*.72,0,-Math.cos(a)*.72);g.add(tuft);}
+  const eyeGlow=new THREE.PointLight(0xff7a10,.55,6,2);eyeGlow.position.set(0,2.38,.5);g.add(eyeGlow);
+  // 腕、籠手、拳、三本の黒爪。
+  const arms=[];
+  [-1,1].forEach(s=>{
+    const upper=new THREE.Mesh(new THREE.CylinderGeometry(.19,.24,.64,10),skin2);upper.position.set(s*.66,1.45,.02);upper.rotation.z=s*.50;upper.castShadow=true;g.add(upper);
+    const fore=new THREE.Mesh(new THREE.CylinderGeometry(.14,.18,.58,10),skin);fore.position.set(s*.84,1.12,.05);fore.rotation.z=s*.32;g.add(fore);
+    const guard=new THREE.Mesh(new THREE.CylinderGeometry(.19,.22,.31,12),metal);guard.position.set(s*.83,1.18,.05);guard.rotation.z=s*.32;g.add(guard);
+    [0,1,2].forEach(i=>{const stud=new THREE.Mesh(new THREE.SphereGeometry(.025,6,5),fangMat);stud.position.set(s*(.78+i*.05),1.25,.22);g.add(stud);});
+    const fist=new THREE.Mesh(new THREE.SphereGeometry(.17,10,8),skin2);fist.position.set(s*1.00,.91,.09);fist.scale.set(1,.92,.86);g.add(fist);
+    [-1,0,1].forEach(i=>{const claw=new THREE.Mesh(new THREE.ConeGeometry(.018,.10,5),fangMat);claw.position.set(s*(1.10),.91+i*.045,.15);claw.rotation.z=-s*Math.PI/2;g.add(claw);});
+    arms.push({side:s,upper,fore,fist});
+  });
+  // 太い脚、草鞋、足先の爪。
+  const sandal=M({color:0x73552d,roughness:.95});
+  const legs=[];
+  [-1,1].forEach(s=>{const leg=new THREE.Mesh(new THREE.CylinderGeometry(.18,.23,.86,10),skin);leg.position.set(s*.29,.42,0);leg.castShadow=true;g.add(leg);
+    const foot=new THREE.Mesh(new THREE.BoxGeometry(.30,.13,.43),sandal);foot.position.set(s*.29,.06,.10);g.add(foot);
+    const claws=[];[-1,0,1].forEach(i=>{const claw=new THREE.Mesh(new THREE.ConeGeometry(.025,.13,5),fangMat);claw.position.set(s*.29+i*.075,.07,.34);claw.rotation.x=Math.PI/2;g.add(claw);claws.push(claw);});
+    legs.push({side:s,leg,foot,claws});});
+  // 金棒。乱数箱ではなく、先端へ向かって太くなる棍棒と放射状の鋲で輪郭を明瞭にする。
+  const club=new THREE.Group(),clubMat=M({color:0x343437,roughness:.58,metalness:.55});
+  club.add(cyl(.075,.14,1.65,clubMat,0,0,0,10));
+  const spikeGeo=new THREE.ConeGeometry(.040,.15,6),up=new THREE.Vector3(0,1,0);
+  for(let row=0;row<5;row++)for(let j=0;j<4;j++){const a=j*Math.PI/2+(row%2)*Math.PI/4,dir=new THREE.Vector3(Math.cos(a),0,Math.sin(a));
+    const sp=new THREE.Mesh(spikeGeo,metal);sp.position.set(dir.x*.145,.35+row*.25,dir.z*.145);sp.quaternion.setFromUnitVectors(up,dir);club.add(sp);}
+  club.position.set(.96,1.55,.02);club.rotation.z=.38;g.add(club);
+  // 虎皮の腰布、縞、革帯、破れた下衣。
+  const cloth=new THREE.Mesh(new THREE.CylinderGeometry(.58,.62,.52,14),M({color:0xc99728,roughness:.86}));cloth.position.y=.93;g.add(cloth);
+  const stripeMat=M({color:0x271707,roughness:.92});
+  for(let i=0;i<9;i++){const a=(i/9)*Math.PI*2;const st=new THREE.Mesh(new THREE.BoxGeometry(.055,.40,.025),stripeMat);st.position.set(Math.cos(a)*.60,.93,Math.sin(a)*.60);st.rotation.y=a+Math.PI/2;st.rotation.z=(i%2?1:-1)*.15;g.add(st);}
+  [-2,-1,0,1,2].forEach(i=>{const rag=new THREE.Mesh(new THREE.ConeGeometry(.20,.48,3),M({color:i%2?0x2b2527:0x3a2b2a,roughness:.95}));rag.position.set(i*.19,.58,-.05+Math.abs(i)*.025);rag.rotation.z=i*.07;g.add(rag);});
+  const belt=new THREE.Mesh(new THREE.TorusGeometry(.58,.055,8,18),M({color:0x5e3c1d,roughness:.82}));belt.position.y=1.14;belt.rotation.x=Math.PI/2;g.add(belt);
+  g.userData.eyeGlow=eyeGlow;g.userData.body=body;g.userData.legs=legs;g.userData.arms=arms;g.userData.club=club;
   return g;
 }
 function makeSeimei(){
   const g=new THREE.Group();
-  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.62,1.0,12),M({color:0xdadace,roughness:.85}));
-  skirt.position.y=0.5;skirt.castShadow=true;g.add(skirt);
-  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.34,0.44,0.9,12),M({color:0xf0f0e8,roughness:.85}));
-  body.position.y=1.3;body.castShadow=true;g.add(body);
+  const cloth=M({color:0xf4f3ea,roughness:.76}),cloth2=M({color:0xdfe4e5,roughness:.80}),
+    purple=M({color:0x4b315f,roughness:.68}),skin=M({color:0xefd2b7,roughness:.66}),ink=new THREE.MeshBasicMaterial({color:0x211914});
+  // 指貫袴(濃紫地に金菱)
+  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(0.40,0.66,1.05,14),heianTextile(0x34304c,false,3));
+  skirt.position.y=0.52;skirt.castShadow=true;g.add(skirt);
+  // 白衣(浄衣)の身頃
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.37,0.46,0.95,16),cloth);
+  body.position.y=1.32;body.castShadow=true;g.add(body);
+  [-1,1].forEach(s=>{const trim=box(.025,.72,.018,purple,s*.285,1.30,.335);trim.rotation.z=-s*.05;g.add(trim);});
+  // 狩衣の袖。肩衣、上腕、前腕を重ねて胴から滑らかにつなぐ。
   [-1,1].forEach(s=>{
-    const sleeve=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.5,0.42),M({color:0xe4e4da,roughness:.85}));
-    sleeve.position.set(s*0.46,1.32,0.04);sleeve.rotation.z=s*0.12;g.add(sleeve);
+    const shoulder=new THREE.Vector3(s*.30,1.49,.02),elbow=new THREE.Vector3(s*.46,1.27,.08),wrist=new THREE.Vector3(s*.43,1.02,.18);
+    const cap=new THREE.Mesh(HEIAN_GEO.sphere,cloth2);cap.position.set(s*.275,1.47,.025);cap.scale.set(.185,.135,.17);cap.castShadow=true;g.add(cap);
+    heianSleeveBetween(g,cloth2,shoulder,elbow,.165,.92);
+    heianSleeveBetween(g,cloth,elbow,wrist,.124,.88);
+    const cover=new THREE.Mesh(HEIAN_GEO.sphere,cloth2);cover.position.set(s*.435,1.055,.16);cover.scale.set(.13,.09,.115);g.add(cover);
+    const cuff=new THREE.Mesh(new THREE.TorusGeometry(.105,.016,6,14),purple);
+    cuff.position.set(s*.45,1.025,.17);cuff.rotation.x=Math.PI/2;cuff.rotation.z=s*.08;g.add(cuff);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(.065,10,8),skin);hand.position.set(s*.43,.96,.22);hand.scale.set(.82,1,.72);g.add(hand);
+    [0,1,2].forEach(i=>{const finger=new THREE.Mesh(new THREE.CylinderGeometry(.010,.008,.075,6),skin);finger.position.set(s*(.405+i*.018),.925,.255);finger.rotation.x=1.02;finger.rotation.z=s*.10;g.add(finger);});
   });
-  const collar=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.28,0.2,12),M({color:0xfafaf2,roughness:.9}));
-  collar.position.y=1.78;g.add(collar);
-  const head=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),M({color:0xf0d9c0,roughness:.7}));
-  head.position.y=2.02;head.castShadow=true;g.add(head);
-  const eboshi=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.15,0.5,10),MAT.black);
-  eboshi.position.y=2.36;g.add(eboshi);
-  const eboTop=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.1,0.18,8),MAT.black);
-  eboTop.position.set(0.02,2.64,0);g.add(eboTop);
-  const shaku=box(0.07,0.5,0.02,M({color:0xe8dcc0,roughness:.6}),0,1.5,0.4);
-  g.add(shaku);
+  // 首から胸へ丸く連続する内衣と、幅を抑えた打ち合わせ襟。
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(.082,.095,.20,14),skin);neck.position.set(0,1.84,.015);g.add(neck);
+  const chest=new THREE.Mesh(HEIAN_GEO.sphere,cloth2);chest.position.set(0,1.66,.12);chest.scale.set(.30,.20,.20);g.add(chest);
+  [-1,1].forEach(s=>{const c=box(.052,.31,.024,s<0?cloth2:cloth,s*.052,1.68,.225);c.rotation.z=-s*.31;g.add(c);});
+  const collarBack=new THREE.Mesh(new THREE.TorusGeometry(.105,.022,7,18,Math.PI),cloth2);collarBack.position.set(0,1.80,.10);collarBack.rotation.z=Math.PI;g.add(collarBack);
+  // 胸の菊綴(結び目+房)
+  const knot=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8),cloth);knot.position.set(0,1.5,0.25);g.add(knot);
+  [-1,1].forEach(s=>g.add(cyl(0.016,0.028,0.22,M({color:0xf0ead8,roughness:.85}),s*0.05,1.37,0.25,6)));
+  // 数珠は一粒ずつ連ね、首から胸へ垂れるU字を明瞭にする。
+  const beadMat=M({color:0x654526,roughness:.50});
+  for(let i=0;i<=16;i++){const a=i/16*Math.PI;const bead=new THREE.Mesh(new THREE.SphereGeometry(.031,8,6),beadMat);
+    bead.position.set(Math.cos(a)*.205,1.69-Math.sin(a)*.25,.205);g.add(bead);}
+  [-1,1].forEach(s=>{for(let i=0;i<4;i++){const bead=new THREE.Mesh(new THREE.SphereGeometry(.027,8,6),beadMat);bead.position.set(s*.18,1.47-i*.075,.22);g.add(bead);}});
+  // 顔: 卵形の輪郭、耳、髪際、白目を抑えた瞳、鼻梁、口元まで別形状で作る。
+  const head=new THREE.Mesh(new THREE.SphereGeometry(1,20,16),skin);head.position.set(0,2.04,0);head.scale.set(.18,.225,.16);head.castShadow=true;g.add(head);
+  const hairCap=new THREE.Mesh(new THREE.SphereGeometry(1,18,12,0,Math.PI*2,0,Math.PI*.53),HEIAN_HAIR);hairCap.position.set(0,2.13,-.015);hairCap.scale.set(.176,.15,.158);g.add(hairCap);
+  [-1,1].forEach(s=>{
+    const ear=new THREE.Mesh(new THREE.SphereGeometry(.034,9,7),skin);ear.position.set(s*.175,2.035,-.005);ear.scale.set(.55,1,.55);g.add(ear);
+    const whiteEye=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),new THREE.MeshBasicMaterial({color:0xf4eee2}));whiteEye.position.set(s*.060,2.055,.151);whiteEye.scale.set(.043,.016,.010);whiteEye.rotation.z=-s*.06;g.add(whiteEye);
+    const iris=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),new THREE.MeshBasicMaterial({color:0x392c25}));iris.position.set(s*.055,2.054,.161);iris.scale.set(.013,.014,.006);g.add(iris);
+    const lid=box(.092,.009,.009,ink,s*.060,2.064,.164);lid.rotation.z=-s*.07;g.add(lid);
+    const brow=box(.076,.010,.009,ink,s*.062,2.112,.153);brow.rotation.z=s*.10;g.add(brow);
+    const cheek=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),new THREE.MeshBasicMaterial({color:0xdba19a,transparent:true,opacity:.28}));cheek.position.set(s*.098,2.008,.151);cheek.scale.set(.032,.014,.006);g.add(cheek);
+    const sideburn=box(.035,.16,.025,HEIAN_HAIR,s*.145,2.065,.075);sideburn.rotation.z=s*.08;g.add(sideburn);
+  });
+  const noseBridge=new THREE.Mesh(new THREE.ConeGeometry(.022,.095,7),skin);noseBridge.position.set(0,2.035,.175);noseBridge.rotation.x=Math.PI/2;g.add(noseBridge);
+  const mouth=box(.068,.009,.008,new THREE.MeshBasicMaterial({color:0x8b554e}),0,1.972,.164);g.add(mouth);
+  const chin=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),skin);chin.position.set(0,1.945,.04);chin.scale.set(.095,.040,.105);g.add(chin);
+  // 立烏帽子: 前後に厚みを持つ三段構成と、布目を示す細い稜線。
+  const eboMat=M({color:0x10131a,roughness:.34,metalness:.08});
+  const eboshi=new THREE.Mesh(new THREE.CylinderGeometry(.085,.145,.52,12),eboMat);eboshi.position.set(0,2.43,-.025);eboshi.rotation.x=-.10;eboshi.scale.z=.76;eboshi.castShadow=true;g.add(eboshi);
+  const eboTop=new THREE.Mesh(new THREE.CylinderGeometry(.050,.080,.20,10),eboMat);eboTop.position.set(.018,2.76,-.075);eboTop.rotation.x=-.18;g.add(eboTop);
+  const eboCap=new THREE.Mesh(new THREE.SphereGeometry(.052,10,7),eboMat);eboCap.position.set(.035,2.86,-.105);eboCap.scale.set(1,.45,.72);g.add(eboCap);
+  const brim=new THREE.Mesh(new THREE.TorusGeometry(.155,.020,6,18),eboMat);brim.position.set(0,2.235,-.01);brim.rotation.x=Math.PI/2;g.add(brim);
+  [-1,1].forEach(s=>{const ridge=box(.012,.43,.012,M({color:0x2d3543,roughness:.35}),s*.055,2.48,.055);ridge.rotation.x=-.10;g.add(ridge);});
+  // 右手の笏、胸元の呪符。札には短い墨線を重ね、無地の板に見えないようにする。
+  const shaku=box(.075,.50,.025,M({color:0xd8c39d,roughness:.62}),.16,1.20,.34);shaku.rotation.z=-.08;g.add(shaku);
+  [-1,1].forEach(s=>{const fu=box(.085,.19,.007,M({color:0xf2eddb,roughness:.90}),s*.24,1.20,.31);fu.rotation.z=s*.10;g.add(fu);
+    [0,1,2].forEach(i=>{const mark=box(.050,.010,.004,ink,s*.24,1.255-i*.045,.318);mark.rotation.z=s*(.10+(i-1)*.08);g.add(mark);});});
+  // 参考画に合わせた陰陽扇。骨、五芒星、扇端の火焔を小さな立体で構成する。
+  const fan=new THREE.Group(),fanSpan=Math.PI*.78,fanA=Math.PI/2-fanSpan/2;
+  fan.add(new THREE.Mesh(new THREE.CircleGeometry(.32,28,fanA,fanSpan),M({color:0x466a91,roughness:.62,side:THREE.DoubleSide})));
+  for(let i=0;i<11;i++){const a=fanA+fanSpan*i/10,rib=box(.010,.31,.008,MAT.kin,Math.cos(a)*.155,Math.sin(a)*.155,.012);rib.rotation.z=a-Math.PI/2;fan.add(rib);}
+  const pts=[];for(let i=0;i<=5;i++){const a=-Math.PI/2+i*4*Math.PI/5;pts.push(new THREE.Vector3(Math.cos(a)*.10,.19+Math.sin(a)*.10,.022));}
+  fan.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x171417})));
+  const flameMat=M({color:0xf58b24,emissive:0xb83a08,emissiveIntensity:.45,roughness:.55});
+  for(let i=0;i<7;i++){const a=fanA+fanSpan*(i+.5)/7,flame=new THREE.Mesh(new THREE.ConeGeometry(.030,.13,6),flameMat);flame.position.set(Math.cos(a)*.33,Math.sin(a)*.33+.035,.01);flame.rotation.z=a-Math.PI/2;fan.add(flame);}
+  fan.position.set(-.52,.98,.36);fan.rotation.z=-.12;g.add(fan);
+  // 地面の霊光円(回転)= userData.star(animateが参照)。五芒星の星線を子に持たせ共に回転
   const star=new THREE.Mesh(new THREE.RingGeometry(0.9,1.0,5,1),
     new THREE.MeshBasicMaterial({color:0x9fb0ff,transparent:true,opacity:0.5,side:THREE.DoubleSide}));
-  star.rotation.x=-Math.PI/2;star.position.y=0.04;g.add(star);
+  star.rotation.x=-Math.PI/2;star.position.y=0.05;
+  const sp=[];for(let i=0;i<=5;i++){const a=-Math.PI/2+i*4*Math.PI/5;sp.push(new THREE.Vector3(Math.cos(a)*0.92,Math.sin(a)*0.92,0));}
+  const penta=new THREE.Line(new THREE.BufferGeometry().setFromPoints(sp),new THREE.LineBasicMaterial({color:0xb8ccff,transparent:true,opacity:0.7}));
+  star.add(penta);g.add(star);
   const aura=new THREE.PointLight(0xaab8ff,0.6,7,2);aura.position.y=1.0;g.add(aura);
   g.userData.aura=aura;g.userData.star=star;
   return g;
@@ -2322,8 +2528,13 @@ function setSnowCover(on){
   if(on){ MAT.roof.map=null; MAT.roof.color.setHex(0xedf1f3); }
   else  { MAT.roof.map=TEX.roof; MAT.roof.color.setHex(0xffffff); }
   MAT.roof.needsUpdate=true;
-  // 庭の草も冬は雪色
-  MAT.grass.color.setHex(on?0xdde0e4:(SEASONS[APP.season]?SEASONS[APP.season].grass:0x8aa04a));
+  // 庭の草・中島も冬は雪色。緑の草テクスチャ(TEX.grass)が残ると雪色colorに乗算されて
+  // [fix] 緑が透ける(中島地面が冬も緑に見える原因) → 屋根と同様に冬はmapをnullし雪面へ差し替え
+  if(on){ MAT.grass.map=null; MAT.grass.color.setHex(0xdde0e4); }
+  else  { MAT.grass.map=TEX.grass; MAT.grass.color.setHex(SEASONS[APP.season]?SEASONS[APP.season].grass:0x8aa04a); }
+  MAT.grass.needsUpdate=true;
+  // [fix] 前栽(せんざい)の植え込みも冬は雪化粧。MAT.leaf2は前栽専用なので直接切替
+  MAT.leaf2.color.setHex(on?0xe6ebef:0x6d8a46);
 }
 
 /* ============================================================
@@ -2801,7 +3012,7 @@ class AmbientAudio {
 /* ============================================================
    アプリ状態・操作系(マウス/キーボード+タッチ両対応)
 ============================================================ */
-const APP={mode:"title",view:"fp",time:"day",season:"spring",labelMode:1,quiz:null,quest:null,kaimami:null,codexOpen:false}; // labelMode 0:なし 1:近く 2:すべて
+const APP={mode:"title",view:"fp",time:"day",season:"spring",labelMode:1,quiz:null,quest:null,questRole:"male",kaimami:null,codexOpen:false}; // labelMode 0:なし 1:近く 2:すべて
 const player={pos:new THREE.Vector3(0,2.7,26),yaw:0,pitch:-.02};
 const orbit={yaw:.7,pitch:.95,r:120};
 const keys={};
@@ -3033,8 +3244,10 @@ function enterMode(m){
   $("topbar").style.display="flex";
   $("quizHud").style.display=m==="quiz"?"block":"none";
   $("questHud").style.display=(m==="quest"||m==="kaimami")?"block":"none";
+  $("kaimamiEye").style.display=m==="kaimami"?"flex":"none";
   closeInfo();closeCodex();
-  $("modeTag").textContent={walk:"自由散策",quiz:"名称当てクイズ",quest:"一日体験",kaimami:"垣間見"}[m];
+  $("modeTag").textContent=m==="quest"?(APP.questRole==="female"?"女性貴族の一日":"男性貴族の一日"):
+    {walk:"自由散策",quiz:"名称当てクイズ",kaimami:"垣間見"}[m];
   updateControlUI();
   if(m==="quiz")startQuiz();
   if(m==="quest")startQuest();
@@ -3058,7 +3271,8 @@ $("tbTitle").onclick=()=>{location.reload();};
 $("btnWalk").onclick=()=>{beep(660,.08);initAudio();enterMode("walk");};
 $("btnQuiz").onclick=()=>{beep(660,.08);initAudio();APP.quizTA=false;enterMode("quiz");};
 $("btnQuizTA").onclick=()=>{beep(720,.08);initAudio();APP.quizTA=true;enterMode("quiz");};
-$("btnQuest").onclick=()=>{beep(660,.08);initAudio();enterMode("quest");};
+$("btnQuest").onclick=()=>{beep(660,.08);initAudio();APP.questRole="male";enterMode("quest");};
+$("btnQuestF").onclick=()=>{beep(700,.08);initAudio();APP.questRole="female";enterMode("quest");};
 $("btnKaimami").onclick=()=>{beep(660,.08);initAudio();enterMode("kaimami");};
 $("resClose").onclick=()=>{$("result").style.display="none";enterMode("walk");};
 
@@ -3204,51 +3418,121 @@ const beacon=new THREE.Group();
   ring.rotation.x=Math.PI/2;ring.position.y=.25;beacon.add(ring);
   beacon.visible=false;scene.add(beacon);
 }
-const QUEST_STEPS=[
- {ph:"一、牛車にて到着",type:"tp"},
- {ph:"一、牛車にて到着",type:"goto",p:[44.5,14.5],r:5.5,txt:"東門のそばに停めてある牛車(ぎっしゃ)に近づこう。",bp:[48,17]},
- {ph:"一、牛車にて到着",type:"click",target:"gissha",txt:"牛車をタップして調べてみよう。",bp:[48,17]},
- {ph:"一、牛車にて到着",type:"goto",p:[35,20],r:4.5,txt:"中門まで歩こう。牛車は中門の前(車寄)につけ、客はそこで降りる作法。",bp:[35,20]},
- {ph:"一、牛車にて到着",type:"click",target:"chumon",txt:"中門をタップして確認しよう。",bp:[35,20]},
- {ph:"一、牛車にて到着",type:"goto",p:[0,9.2],r:4,txt:"白砂の南庭(なんてい)を渡り、寝殿正面の階(きざはし)の下へ。",bp:[0,7.0]},
- {ph:"一、牛車にて到着",type:"goto",p:[0,-2],r:5,hmin:1.15,txt:"階を上って寝殿に昇ろう。簀子→廂→母屋の順に格が上がる。",bp:[0,-2]},
- {ph:"二、夜の設え",type:"auto",act:"dusk",txt:"…日が暮れてきた。夜の支度(設え)を始めよう。"},
- {ph:"二、夜の設え",type:"shitomi",txt:"開いている格子(半蔀)をすべて閉めよう。",bp:[0,4.8]},
- {ph:"二、夜の設え",type:"auto",act:"night",txt:"格子を閉じると、月明かりだけの深い闇になった…。"},
- {ph:"二、夜の設え",type:"lamps",txt:"母屋の灯台(2つ)をタップして火をともそう。",bp:[1,-4.6]},
+function makeQuestRobe(id,colors,pos,label){
+  const g=new THREE.Group(),wood=M({color:0x6d4a2b,roughness:.86});
+  g.add(box(1.15,.10,.28,wood,0,1.62,0));
+  g.add(cyl(.045,.055,1.65,wood,-.50,.82,0,8));
+  g.add(cyl(.045,.055,1.65,wood,.50,.82,0,8));
+  colors.forEach((c,i)=>{
+    const robe=new THREE.Mesh(new THREE.CylinderGeometry(.28+i*.035,.46+i*.045,1.10-i*.035,12,1,true),heianTextile(c,false,i%3+1));
+    robe.position.set((i-1)*.025,1.02-i*.018,.02+i*.025);robe.scale.z=.46;robe.rotation.z=(i-1)*.018;g.add(robe);
+  });
+  const sash=box(.72,.075,.10,M({color:0xc7a45b,roughness:.72}),0,1.20,.20);g.add(sash);
+  g.position.set(pos[0],groundH(pos[0],pos[1]),pos[1]);g.visible=false;scene.add(g);
+  register(g,id,new THREE.Vector3(pos[0],g.position.y+2.25,pos[1]));
+  g.userData.questLabel=label;return g;
+}
+const questProps={
+  male:makeQuestRobe("sokutai",[0x2f3147,0xe7e3d8,0x6b405f],[-4.15,-1.25],"出仕の装束"),
+  female:makeQuestRobe("juni",[0x923342,0xd46b55,0xe5a15b,0x718a55],[4.65,-1.05],"重ねの装束")
+};
+function makeCourtScene(){
+  const g=new THREE.Group(),vermilion=M({color:0x8f2d25,roughness:.78}),gold=M({color:0xc7a34d,roughness:.62});
+  g.add(box(9,.35,5,M({color:0x5b3424,roughness:.82}),0,.18,0));
+  g.add(box(8,3.6,.30,vermilion,0,2.05,-2.15));
+  [-3.5,3.5].forEach(x=>g.add(cyl(.16,.19,3.8,vermilion,x,2.05,-1.75,12)));
+  const dais=box(2.8,.34,1.65,gold,0,.50,-1.15);g.add(dais);
+  [-2.4,0,2.4].forEach((x,i)=>{
+    const courtier=new THREE.Group(),robe=heianTextile([0x573747,0x394c3b,0x53436a][i],false,i+1);
+    const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.25,.45,1.0,12),robe);skirt.position.y=.55;courtier.add(skirt);
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(.25,.34,.62,12),robe);body.position.y=1.25;courtier.add(body);
+    const head=new THREE.Mesh(HEIAN_GEO.head,HEIAN_SKIN);head.position.y=1.72;head.scale.set(.15,.19,.145);courtier.add(head);
+    const cap=new THREE.Mesh(new THREE.CylinderGeometry(.07,.11,.34,10),MAT.black);cap.position.set(0,2.02,-.03);courtier.add(cap);
+    courtier.position.set(x,.34,-.70+(i%2)*.45);g.add(courtier);
+  });
+  g.position.set(54,0,-28);g.visible=false;scene.add(g);return g;
+}
+const questCourt=makeCourtScene();
+function questSetProps(role){
+  questProps.male.visible=role==="male";questProps.female.visible=role==="female";
+}
+function questHideModeProps(){questProps.male.visible=false;questProps.female.visible=false;questCourt.visible=false;}
+const QUEST_MALE=[
+ {ph:"一、早朝の身支度",type:"click",target:"sokutai",txt:"卯の刻ごろ、塗籠の寝所で目を覚ました。衣桁の出仕装束をクリックし、袍・袴・冠・笏を整えよう。",bpId:"sokutai"},
+ {ph:"一、早朝の身支度",type:"click",target:"takatsuki",txt:"高坏に整えられた朝食を確認しよう。貴族の食事は一日二回が基本だった。",bpId:"takatsuki"},
+ {ph:"二、朝廷へ出仕",type:"goto",p:[35,20],r:5,txt:"装束を整え、中門から車寄へ向かおう。",bp:[35,20]},
+ {ph:"二、朝廷へ出仕",type:"click",target:"gissha",txt:"牛車に乗って朝廷へ出仕する。牛車を調べよう。",bpId:"gissha"},
+ {ph:"二、朝廷へ出仕",type:"auto",act:"court",txt:"朝廷での勤務は明け方から数時間ほど。政務や儀式を終え、昼前には帰邸する。"},
+ {ph:"三、帰邸後の教養",type:"goto",p:[0,-2],r:5,hmin:1.15,txt:"帰邸した。寝殿の母屋へ戻ろう。",bp:[0,-2]},
+ {ph:"三、帰邸後の教養",type:"click",target:"kyouzukue",txt:"文机で漢詩文・記録・仏典に向き合う。経机を調べよう。",bpId:"kyouzukue"},
+ {ph:"三、帰邸後の教養",type:"click",target:"ryuteki",txt:"男性の教養として管弦をたしなむ。西の対で龍笛を奏でよう。",bpId:"ryuteki"},
+ {ph:"四、夜の設え",type:"auto",act:"dusk",txt:"酉の刻。夕食を終えるころ、邸内は急速に暗くなる。"},
+ {ph:"四、夜の設え",type:"shitomi",txt:"夜風を防ぐため、開いている半蔀をすべて閉めよう。",bp:[0,4.8]},
+ {ph:"四、夜の設え",type:"auto",act:"night",txt:"夜。灯りの乏しい邸内では、月光と灯台の火が頼りになる。"},
+ {ph:"四、夜の設え",type:"lamps",txt:"母屋の灯台に火をともして一日を終えよう。",bp:[1,-4.6]},
+];
+const QUEST_FEMALE=[
+ {ph:"一、朝の身支度",type:"auto",act:"day",txt:"姫君の一日は御帳台の内から始まる。女房たちが装束と朝の支度を整える。"},
+ {ph:"一、朝の身支度",type:"click",target:"juni",txt:"御帳台のそばに用意された重ねの装束を選ぼう。襟と袖の色目も朝の大切な身支度だ。",bpId:"juni"},
+ {ph:"一、朝の身支度",type:"click",target:"nyobo",txt:"女房に文と装束の用意を頼む。近くの女房に声をかけよう。",bpId:"nyobo"},
+ {ph:"一、朝の身支度",type:"dialogue",txt:"女房へ朝の用向きを伝える。",lines:[["姫君","今朝届いた文を。硯もこちらへ。"],["女房","かしこまりました。御衣の色目も整えてまいります。"]]},
+ {ph:"二、文と教養",type:"click",target:"nikaizushi",txt:"二階厨子から硯や物語の巻物を取り出す。女性にとって仮名文・和歌・物語は重要な教養だった。",bpId:"nikaizushi"},
+ {ph:"二、文と教養",type:"click",target:"misu",txt:"来客とは姿を直接見せず、御簾越しに応対する。巻き上がった御簾を下ろそう。",bpId:"misu"},
+ {ph:"三、管弦と余暇",type:"click",target:"koto",txt:"東の対で箏を奏でよう。楽器の技量は人物の教養と心情を伝えた。",bpId:"koto"},
+ {ph:"三、管弦と余暇",type:"click",target:"biwa",txt:"続いて琵琶を奏でる。女房たちと音を合わせ、夕暮れを迎えよう。",bpId:"biwa"},
+ {ph:"四、夜の設え",type:"auto",act:"dusk",txt:"日が傾いた。女房とともに夜の設えを始める。"},
+ {ph:"四、夜の設え",type:"shitomi",txt:"冷気と人目を遮るため、開いている半蔀をすべて閉めよう。",bp:[0,4.8]},
+ {ph:"四、夜の設え",type:"auto",act:"night",txt:"夜。御簾と几帳の奥は暗く、わずかな灯火だけが室内を照らす。"},
+ {ph:"四、夜の設え",type:"lamps",txt:"女房とともに母屋の灯台へ火をともそう。",bp:[1,-4.6]},
 ];
 function startQuest(){
-  APP.quest={i:0,clicked:null};
-  player.pos.set(50,2.7,8);player.yaw=2.9;player.pitch=0;
+  const role=APP.questRole||"male",steps=role==="female"?QUEST_FEMALE:QUEST_MALE;
+  APP.quest={i:0,clicked:null,role,steps};
+  const sx=role==="female"?3.25:-6.15,sz=role==="female"?-2.15:-2.0;
+  player.pos.set(sx,groundH(sx,sz)+1.62,sz);player.yaw=role==="female"?-.45:-1.45;player.pitch=-.05;
+  questSetProps(role);questCourt.visible=false;
   APP.view="fp";updateControlUI();setTime("day");
   /* 格子を4枚開けておく */
   gimmicks.shitomi.forEach((st,i)=>{st.open=i%2===0;});
+  if(role==="female")gimmicks.misu.forEach(st=>st.up=true);
   gimmicks.lamps.forEach(st=>st.lit=false);
   questAdvance(0);
 }
 function questAdvance(i){
   const q=APP.quest;q.i=i;
-  if(i>=QUEST_STEPS.length){questFinish();return;}
-  const s=QUEST_STEPS[i];
-  if(s.type==="tp"){questAdvance(i+1);return;}
+  if(i>=q.steps.length){questFinish();return;}
+  const s=q.steps[i];
   $("questTitle").textContent=s.ph;
   $("questText").textContent=s.txt;
-  $("questProg").textContent="進行 "+(i)+" / "+(QUEST_STEPS.length-1);
-  if(s.bp){beacon.visible=true;beacon.position.set(s.bp[0],groundH(s.bp[0],s.bp[1]),s.bp[1]);}
+  $("questProg").textContent="進行 "+(i)+" / "+(q.steps.length-1);
+  const label=s.bpId&&interactables[s.bpId]?interactables[s.bpId].labelPos:null;
+  if(label){beacon.visible=true;beacon.position.set(label.x,groundH(label.x,label.z),label.z);}
+  else if(s.bp){beacon.visible=true;beacon.position.set(s.bp[0],groundH(s.bp[0],s.bp[1]),s.bp[1]);}
   else beacon.visible=false;
   if(s.type==="auto"){
     beacon.visible=false;
+    if(s.act==="day")setTime("day");
     if(s.act==="dusk")setTime("dusk");
     if(s.act==="night"){setTime("night");}
-    setTimeout(()=>{if(APP.mode==="quest")questAdvance(i+1);},2400);
+    if(s.act==="court"){
+      questCourt.visible=true;player.pos.set(54,groundH(54,-20)+1.62,-20);player.yaw=0;player.pitch=-.04;
+      $("questText").textContent=s.txt+" 公卿の前で文書を受け取り、簡略な政務に列席している。";
+      setTimeout(()=>{if(APP.mode==="quest"&&APP.quest&&APP.quest.i===i){questCourt.visible=false;player.pos.set(45,groundH(45,17)+1.62,17);player.yaw=Math.PI/2;questAdvance(i+1);}},4300);
+    }else setTimeout(()=>{if(APP.mode==="quest"&&APP.quest&&APP.quest.i===i)questAdvance(i+1);},2400);
+  }else if(s.type==="dialogue"){
+    beacon.visible=false;let line=0;
+    const speak=()=>{if(APP.mode!=="quest"||!APP.quest||APP.quest.i!==i)return;
+      if(line>=s.lines.length){questAdvance(i+1);return;}
+      const l=s.lines[line++];$("questText").innerHTML=`<b>${l[0]}:</b>「${l[1]}」`;seOK();setTimeout(speak,1850);
+    };speak();
   }
 }
 function questNotifyClick(id){
-  const q=APP.quest;if(!q)return;const s=QUEST_STEPS[q.i];
+  const q=APP.quest;if(!q)return;const s=q.steps[q.i];
   if(s.type==="click"&&id===s.target){seOK();setTimeout(()=>questAdvance(q.i+1),400);}
 }
 function questUpdate(){
-  const q=APP.quest;if(!q)return;const s=QUEST_STEPS[q.i];if(!s)return;
+  const q=APP.quest;if(!q)return;const s=q.steps[q.i];if(!s)return;
   if(s.type==="goto"){
     const d=Math.hypot(player.pos.x-s.p[0],player.pos.z-s.p[1]);
     const hOK=s.hmin?groundH(player.pos.x,player.pos.z)>=s.hmin:true;
@@ -3264,12 +3548,13 @@ function questUpdate(){
   }
 }
 function questFinish(){
-  beacon.visible=false;
-  $("resTitle").textContent="一日体験 達成";
-  $("resRank").textContent="あっぱれ";
-  $("resDetail").innerHTML="牛車での到着から夜の設えまで、平安貴族の一日の動線を体験した。<br><br>"+
-   "格子を閉めきった寝殿は真っ暗。灯台の小さな火と火桶のぬくもりだけが頼り——<b>壁の少ない寝殿造りは夏向きの家</b>で、冬は底冷えした。"+
-   "『徒然草』の「家の作りやうは夏をむねとすべし」はこの住まいの感覚そのもの。<br><br>夜の邸内をそのまま散策してみよう。";
+  const role=APP.quest&&APP.quest.role||"male";
+  beacon.visible=false;questHideModeProps();
+  $("resTitle").textContent=role==="female"?"女性貴族の一日 達成":"男性貴族の一日 達成";
+  $("resRank").textContent=role==="female"?"才媛":"殿上人";
+  $("resDetail").innerHTML=role==="female"?
+   "御帳台での朝支度、女房を介した文、御簾越しの応対、文学と管弦、夜の設えを体験した。<br><br>高貴な女性は邸内で過ごす時間が長く、<b>和歌・仮名文・物語・楽器</b>が教養と交流の中心になった。姿を隠す御簾や几帳も生活作法の一部だった。":
+   "早朝の身支度と朝食、牛車での出仕、帰邸後の漢詩文と管弦、夜の設えを体験した。<br><br>男性貴族の朝廷勤務は早朝から数時間ほどで、帰邸後は<b>記録・漢詩文・管弦や遊び</b>に時間を使った。";
   $("result").style.display="flex";
   APP.quest=null;APP.mode="walk";$("questHud").style.display="none";
   $("modeTag").textContent="自由散策";
@@ -3279,34 +3564,155 @@ function questFinish(){
    [Learning] 垣間見ミッション
    通常時の描画負荷を増やさず、このモード中だけ中央視線を判定する。
 ============================================================ */
-const KAIMAMI_ZONE={x:1.1,z:4.0,r:3.3,hold:1.25};
-const kaimamiRay=new THREE.Raycaster(),kaimamiHits=[],KAIMAMI_CENTER={x:0,y:0};
+const KAIMAMI_ZONE={x:1.1,z:4.0,r:3.3,hold:1.25,start:[47.0,17.0]};
+const KAIMAMI_SECRETS=[
+  {id:"east",name:"東の格子",x:13.25,z:-4.05,r:1.65,color:0x53d8c0},
+  {id:"north",name:"北の壁代",x:3.0,z:-7.15,r:1.55,color:0xa58be3}
+];
+const KAIMAMI_ALERT=1.15;
+const kaimamiRay=new THREE.Raycaster(),kaimamiDetectRay=new THREE.Raycaster(),kaimamiHits=[],KAIMAMI_CENTER={x:0,y:0};
+function makeKaimamiGuard(){
+  const g=new THREE.Group(),robe=heianTextile(0x303b31,false,1),under=heianTextile(0x5b4931,false,3),skin=HEIAN_SKIN;
+  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.24,.38,.86,12),under);skirt.position.y=.45;g.add(skirt);
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.25,.34,.72,12),robe);body.position.y=1.14;g.add(body);
+  [-1,1].forEach(s=>{const cap=new THREE.Mesh(HEIAN_GEO.sphere,robe);cap.position.set(s*.25,1.38,0);cap.scale.set(.12,.13,.12);g.add(cap);
+    const arm=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,.55,8),robe);arm.position.set(s*.31,1.12,.03);arm.rotation.z=s*.18;g.add(arm);});
+  const head=new THREE.Mesh(HEIAN_GEO.head,skin);head.position.set(0,1.72,.01);head.scale.set(.145,.18,.14);g.add(head);
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.09,.12,.28,10),MAT.black);cap.position.set(0,1.99,-.02);cap.rotation.x=-.08;g.add(cap);
+  [-1,1].forEach(s=>{const eye=box(.032,.006,.006,HEIAN_FACE,s*.045,1.73,.145,false);g.add(eye);});
+  const staff=cyl(.025,.025,1.45,M({color:0x553a24,roughness:.85}),.40,.82,.04,7);staff.rotation.z=-.05;g.add(staff);
+  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});g.visible=false;scene.add(g);return g;
+}
+function makeKaimamiNyobo(color){
+  const g=new THREE.Group(),outer=heianTextile(color,false,3),inner=heianTextile(0xd6c28e,false,3);
+  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.26,.44,1.02,14),outer);skirt.position.y=.52;g.add(skirt);
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.24,.33,.72,12),outer);body.position.y=1.18;g.add(body);
+  [-1,1].forEach(s=>{const cap=new THREE.Mesh(HEIAN_GEO.sphere,outer);cap.position.set(s*.25,1.40,0);cap.scale.set(.13,.14,.13);g.add(cap);
+    const arm=new THREE.Mesh(new THREE.CylinderGeometry(.065,.085,.50,8),inner);arm.position.set(s*.30,1.18,.08);arm.rotation.z=s*.16;g.add(arm);});
+  const head=new THREE.Mesh(HEIAN_GEO.head,HEIAN_SKIN);head.position.set(0,1.76,.02);head.scale.set(.15,.19,.145);g.add(head);
+  const hair=new THREE.Mesh(HEIAN_GEO.hairCap,HEIAN_HAIR);hair.position.set(0,1.84,-.015);hair.scale.set(.158,.15,.15);g.add(hair);
+  const backHair=box(.24,.55,.07,HEIAN_HAIR,0,1.54,-.10);g.add(backHair);
+  [-1,1].forEach(s=>{const eye=box(.032,.006,.006,HEIAN_FACE,s*.045,1.76,.153,false);g.add(eye);});
+  const scroll=box(.24,.12,.018,M({color:0xe9dec3,roughness:.9}),0,1.10,.30,false);g.add(scroll);
+  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});g.visible=false;scene.add(g);return g;
+}
+const kaimamiGuards=[makeKaimamiGuard(),makeKaimamiGuard(),makeKaimamiGuard(),makeKaimamiGuard(),makeKaimamiGuard()];
+const kaimamiNyobo=[makeKaimamiNyobo(0x405f3a),makeKaimamiNyobo(0x40597a),makeKaimamiNyobo(0x6f455f)];
+function makeKaimamiMarker(s){
+  const g=new THREE.Group(),mat=new THREE.MeshBasicMaterial({color:s.color,transparent:true,opacity:.72,depthWrite:false});
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(.76,.055,8,28),mat);ring.rotation.x=Math.PI/2;ring.position.y=.07;g.add(ring);
+  const ray=new THREE.Mesh(new THREE.CylinderGeometry(.22,.58,3.2,16,1,true),new THREE.MeshBasicMaterial({color:s.color,transparent:true,opacity:.13,side:THREE.DoubleSide,depthWrite:false}));
+  ray.position.y=1.6;g.add(ray);g.position.set(s.x,groundH(s.x,s.z),s.z);g.visible=false;scene.add(g);g.userData.ring=ring;return g;
+}
+const kaimamiMarkers=KAIMAMI_SECRETS.map(makeKaimamiMarker);
+function makeNorthTear(){
+  const g=new THREE.Group(),y=SH.f3+1.28,z=SH.cz-SH.md/2+.13;
+  const addPanel=(w,h,x,yy)=>{const p=new THREE.Mesh(new THREE.PlaneGeometry(w,h),MAT.tobari);p.position.set(x,yy,z);p.castShadow=true;g.add(p);};
+  addPanel(5.4,2.45,-.30,y);addPanel(5.0,2.45,6.10,y);addPanel(1.20,.48,3.0,SH.f3+2.30);
+  const dark=M({color:0x302328,roughness:.95});
+  [-1,1].forEach(s=>{const edge=box(.08,1.72,.05,dark,3+s*.62,SH.f3+1.25,z+.015,false);edge.rotation.z=s*.10;g.add(edge);});
+  g.visible=false;scene.add(g);return g;
+}
+const kaimamiNorthTear=makeNorthTear();
+function kaimamiRestoreActors(k=APP.kaimami){
+  if(k&&k.restore)k.restore.forEach(r=>{r.g.position.copy(r.pos);r.g.rotation.copy(r.rot);r.g.visible=r.visible;if(r.base)r.base.copy(r.basePos);});
+  if(k&&k.shitomi)k.shitomi.forEach((v,i)=>gimmicks.shitomi[i].open=v);
+  if(k&&k.misu)k.misu.forEach((v,i)=>gimmicks.misu[i].up=v);
+  if(k&&k.kabeshiroCloth)k.kabeshiroCloth.visible=true;
+  [...kaimamiGuards,...kaimamiNyobo].forEach(g=>g.visible=false);kaimamiMarkers.forEach(g=>g.visible=false);kaimamiNorthTear.visible=false;
+  $("kaimamiEye").style.display="none";
+  if(k&&k.prevLabel!==undefined){APP.labelMode=k.prevLabel;$("tbLabel").textContent="札:"+["なし","近く","すべて"][APP.labelMode];}
+}
+function kaimamiPlaceWatcher(w,t){
+  const a=t*w.speed+w.phase,x=w.cx+Math.cos(a)*w.rx,z=w.cz+Math.sin(a)*w.rz;
+  const dx=-Math.sin(a)*w.rx,dz=Math.cos(a)*w.rz;
+  w.g.position.x=x;w.g.position.z=z;w.g.rotation.y=Math.atan2(dx,dz);w.g.visible=true;
+  if(w.guard)w.g.position.y=groundH(x,z);
+}
+function kaimamiOwns(root,o){for(let p=o;p;p=p.parent)if(p===root)return true;return false;}
+function kaimamiWatcherSees(w){
+  const origin=new THREE.Vector3(w.g.position.x,w.g.position.y+(w.guard?1.62:1.08),w.g.position.z);
+  const target=new THREE.Vector3(player.pos.x,player.pos.y-.22,player.pos.z),to=target.sub(origin),dist=to.length();
+  if(dist>w.range)return false;
+  const forward=new THREE.Vector3(0,0,1).applyQuaternion(w.g.getWorldQuaternion(new THREE.Quaternion()));forward.y=0;forward.normalize();
+  const flat=to.clone();flat.y=0;if(!flat.lengthSq()||forward.dot(flat.normalize())<Math.cos(w.fov*.5))return false;
+  kaimamiDetectRay.set(origin,to.normalize());kaimamiDetectRay.far=Math.max(0,dist-.42);
+  const hits=kaimamiDetectRay.intersectObjects(rayTargets,false);
+  return !hits.some(h=>!kaimamiOwns(w.g,h.object));
+}
+function kaimamiLookAtHime(){
+  kaimamiRay.setFromCamera(KAIMAMI_CENTER,camera);kaimamiHits.length=0;
+  kaimamiRay.intersectObjects(rayTargets,false,kaimamiHits);
+  const first=kaimamiHits.find(h=>isObjVisible(h.object));
+  return !!(first&&first.object.userData.iid==="himegimi");
+}
+function kaimamiEyeUpdate(watcher,k){
+  const eye=$("kaimamiEye"),pct=Math.min(100,Math.round(k.exposure/KAIMAMI_ALERT*100));
+  eye.classList.toggle("watched",!!watcher);eye.querySelector(".fill").style.width=pct+"%";
+  eye.querySelector(".eye-label").textContent=watcher?`${watcher.name}の視線`:pct?"視線が遠のく":"気配なし";
+}
 function startKaimami(){
-  APP.kaimami={hold:0,done:false};APP.quest=null;
-  APP.view="fp";player.pos.set(1.1,groundH(1.1,4.0)+1.62,4.0);player.yaw=.02;player.pitch=-.04;
-  gimmicks.misu.forEach(st=>st.up=false);setTime("dusk");updateControlUI();
-  $("questTitle").textContent="垣間見 — 姫君を探せ";
-  $("questText").textContent="几帳の正面からは姿が隠れている。脇へ静かに回り、隙間から姫君を視線の中央に収めよう。";
-  $("questProg").textContent="目印の近くで、中央の照準を姫君に合わせる";
-  beacon.visible=true;beacon.position.set(KAIMAMI_ZONE.x,groundH(KAIMAMI_ZONE.x,KAIMAMI_ZONE.z),KAIMAMI_ZONE.z);
+  scene.updateMatrixWorld(true);
+  const restore=[people[0],people[1],people[2]].map(p=>({g:p.g,pos:p.g.position.clone(),rot:p.g.rotation.clone(),visible:p.g.visible,base:p.base,basePos:p.base.clone()}));
+  const shitomi=gimmicks.shitomi.map(st=>st.open),misu=gimmicks.misu.map(st=>st.up);
+  const eastTarget=new THREE.Vector3(SH.cx+SH.hw/2,0,-4.05),tmp=new THREE.Vector3();let eastIndex=0,eastDist=Infinity;
+  gimmicks.shitomi.forEach((st,i)=>{st.root.getWorldPosition(tmp);const d=tmp.distanceToSquared(eastTarget);if(d<eastDist){eastDist=d;eastIndex=i;}});
+  const kabeshiroCloth=interactables.kabeshiro&&interactables.kabeshiro.roots[0]&&interactables.kabeshiro.roots[0].children[0];
+  APP.kaimami={hold:0,done:false,caught:0,exposure:0,grace:3.0,restore,watchers:[],prevLabel:APP.labelMode,
+    shitomi,misu,kabeshiroCloth,eastIndex,hintAt:performance.now()+18000,hintShown:false};APP.quest=null;
+  const k=APP.kaimami;
+  people[0].g.position.set(3.0,SH.f3+.02,-3.35);people[0].g.rotation.y=Math.PI/2;people[0].base.copy(people[0].g.position);people[0].g.visible=true;
+  people[1].g.visible=false;people[2].g.visible=false;APP.labelMode=0;$("tbLabel").textContent="札:なし";
+  gimmicks.shitomi.forEach(st=>st.open=false);gimmicks.misu.forEach(st=>st.up=false);
+  gimmicks.shitomi[eastIndex].open=true;if(gimmicks.misu[eastIndex])gimmicks.misu[eastIndex].up=true;
+  if(kabeshiroCloth)kabeshiroCloth.visible=false;kaimamiNorthTear.visible=true;kaimamiMarkers.forEach(g=>g.visible=false);
+  k.watchers.push(
+    {g:kaimamiNyobo[0],cx:-2.2,cz:1.4,rx:2.0,rz:.85,speed:.31,phase:.2,range:6.0,fov:.92,name:"女房",guard:true},
+    {g:kaimamiNyobo[1],cx:5.0,cz:-.8,rx:1.8,rz:1.05,speed:-.27,phase:1.7,range:6.2,fov:.94,name:"女房",guard:true},
+    {g:kaimamiNyobo[2],cx:2.5,cz:-6.7,rx:3.2,rz:.35,speed:.24,phase:3.0,range:6.0,fov:.90,name:"北廂の女房",guard:true},
+    {g:kaimamiGuards[0],cx:43.0,cz:17.5,rx:3.2,rz:1.5,speed:.20,phase:.8,range:6.8,fov:1.00,name:"従者",guard:true},
+    {g:kaimamiGuards[1],cx:32.5,cz:16.0,rx:4.0,rz:1.7,speed:-.18,phase:2.5,range:6.8,fov:1.00,name:"従者",guard:true},
+    {g:kaimamiGuards[2],cx:21.5,cz:10.0,rx:3.0,rz:2.6,speed:.17,phase:4.1,range:6.5,fov:.96,name:"従者",guard:true},
+    {g:kaimamiGuards[3],cx:13.8,cz:5.0,rx:2.2,rz:3.0,speed:-.19,phase:1.2,range:6.4,fov:.94,name:"東廊の従者",guard:true},
+    {g:kaimamiGuards[4],cx:-1.0,cz:-9.8,rx:5.0,rz:.55,speed:.16,phase:2.1,range:6.4,fov:.92,name:"北側の従者",guard:true}
+  );
+  k.watchers.forEach(w=>kaimamiPlaceWatcher(w,0));
+  APP.view="fp";player.pos.set(KAIMAMI_ZONE.start[0],groundH(...KAIMAMI_ZONE.start)+1.62,KAIMAMI_ZONE.start[1]);player.yaw=Math.PI/2;player.pitch=-.04;
+  setTime("dusk");updateControlUI();
+  $("questTitle").textContent="垣間見 — 人目を忍べ";
+  $("questText").textContent="牛車から邸へ忍ぶ。東の開いた格子、または北廂の破れた壁代から、画面中央に姫君を捉えよう。";
+  $("questProg").textContent="見張りの向きと眼の警戒ゲージを見て進む";
+  $("kaimamiEye").style.display="flex";beacon.visible=false;
 }
 function kaimamiUpdate(dt){
   const k=APP.kaimami;if(APP.mode!=="kaimami"||!k||k.done)return;
+  const t=performance.now()*.001;k.watchers.forEach(w=>kaimamiPlaceWatcher(w,t));
+  k.grace=Math.max(0,k.grace-dt);
+  const watcher=k.grace<=0?k.watchers.find(kaimamiWatcherSees):null;
+  k.exposure=watcher?Math.min(KAIMAMI_ALERT+.1,k.exposure+dt):Math.max(0,k.exposure-dt*2.8);
+  kaimamiEyeUpdate(watcher,k);
+  if(k.exposure>=KAIMAMI_ALERT){
+    k.caught++;k.exposure=0;k.hold=0;k.grace=2.6;seNG();
+    player.pos.set(KAIMAMI_ZONE.start[0],groundH(...KAIMAMI_ZONE.start)+1.62,KAIMAMI_ZONE.start[1]);player.yaw=Math.PI/2;player.pitch=-.04;
+    toast(`${watcher.name}に見つかった。物陰を使ってやり直そう`,3000);
+  }
+  if(!k.hintShown&&performance.now()>=k.hintAt){k.hintShown=true;kaimamiMarkers.forEach(g=>g.visible=true);toast("二つの覗き口が淡く光り始めた",2800);}
+  if(k.hintShown)kaimamiMarkers.forEach((g,i)=>{const pulse=1+Math.sin(performance.now()*.004+i)*.12;g.userData.ring.scale.setScalar(pulse);});
+  const secret=KAIMAMI_SECRETS.find(s=>Math.hypot(player.pos.x-s.x,player.pos.z-s.z)<s.r);
   const inZone=Math.hypot(player.pos.x-KAIMAMI_ZONE.x,player.pos.z-KAIMAMI_ZONE.z)<KAIMAMI_ZONE.r;
-  beacon.visible=!inZone;
-  if(!inZone){k.hold=0;$("questProg").textContent="まず光の目印の近くへ移動する";return;}
-  kaimamiRay.setFromCamera(KAIMAMI_CENTER,camera);kaimamiHits.length=0;
-  kaimamiRay.intersectObjects(rayTargets,false,kaimamiHits);
-  const first=kaimamiHits[0],seesHime=first&&first.object.userData.iid==="himegimi";
-  k.hold=seesHime?Math.min(KAIMAMI_ZONE.hold,k.hold+dt):Math.max(0,k.hold-dt*2.2);
+  if(!secret&&!inZone){k.hold=0;$("questProg").textContent=watcher?`見つかりそう… ${Math.round(k.exposure/KAIMAMI_ALERT*100)}% / 警戒 ${k.caught}回`:
+    `警戒 ${k.caught}回 / 開いた格子か、北廂の破れた壁代を探す`;return;}
+  const seesHime=kaimamiLookAtHime();
+  k.hold=seesHime&&!watcher?Math.min(KAIMAMI_ZONE.hold,k.hold+dt):Math.max(0,k.hold-dt*2.2);
   const pct=Math.round(k.hold/KAIMAMI_ZONE.hold*100);
-  $("questProg").textContent=seesHime?`姫君を見つけた… 視線を保つ ${pct}%`:
-    "几帳や御帳台に遮られている。少し横へ動いて角度を変える";
+  $("questProg").textContent=watcher?`視線を感じる… 隠れよ ${Math.round(k.exposure/KAIMAMI_ALERT*100)}% / 警戒 ${k.caught}回`:
+    seesHime?`姫君を見つけた… 視線を保つ ${pct}% / 警戒 ${k.caught}回`:
+    `${secret?secret.name:"正面"}から姫君を画面中央に捉える / 警戒 ${k.caught}回`;
   if(k.hold>=KAIMAMI_ZONE.hold){
     k.done=true;beacon.visible=false;seOK();
     $("resTitle").textContent="垣間見 達成";$("resRank").textContent="見初めたり";
-    $("resDetail").innerHTML="几帳の正面を避け、物の隙間から姫君の姿を捉えた。<br><br>平安文学の<b>垣間見</b>は、姿を公に見せない高貴な女性を男性が偶然、あるいは密かに見る重要な出会いの型。『源氏物語』若紫巻などで物語が動き始める。";
-    $("result").style.display="flex";APP.kaimami=null;APP.mode="walk";$("questHud").style.display="none";$("modeTag").textContent="自由散策";
+    $("resDetail").innerHTML=`牛車から邸へ忍び、従者と女房の巡回を避けて${secret?secret.name:"几帳の隙間"}から実際に姫君の姿を捉えた。見つかった回数: <b>${k.caught}回</b><br><br>平安文学の<b>垣間見</b>は、姿を公に見せない高貴な女性を男性が偶然、あるいは密かに見る重要な出会いの型。『源氏物語』若紫巻などで物語が動き始める。`;
+    kaimamiRestoreActors(k);$("result").style.display="flex";APP.kaimami=null;APP.mode="walk";$("questHud").style.display="none";$("modeTag").textContent="自由散策";
   }
 }
 
@@ -3429,8 +3835,9 @@ function animate(){
   // 四神: 四方の門/池に近づくとうっすら出現し図鑑に登録
   if(typeof SHISHIN!=="undefined")SHISHIN.forEach(s=>{
     const d=Math.hypot(player.pos.x-s.px, player.pos.z-s.pz);
-    const target=s.ready?Math.max(0,Math.min(1,(s.R-d)/(s.R-5)))*0.76:0;
-    s.base+=(target-s.base)*Math.min(1,dt*3);
+    const seiryuBlocked=s.id==="seiryu"&&(APP.mode==="quiz"||APP.mode==="quest"||APP.mode==="kaimami");
+    const target=s.ready&&!seiryuBlocked?Math.max(0,Math.min(1,(s.R-d)/(s.R-5)))*0.76:0;
+    if(seiryuBlocked)s.base=0;else s.base+=(target-s.base)*Math.min(1,dt*3);
     const vis=s.base>0.012;s.g.visible=vis;
     if(s.shadow)s.shadow.visible=vis;
     if(vis){
@@ -3450,7 +3857,7 @@ function animate(){
     }else{
       s.light.intensity=0;
     }
-    if(!s.revealed && d<s.R*0.6){                                 // 十分近づいたら登録
+    if(!seiryuBlocked&&!s.revealed && d<s.R*0.6){                  // 十分近づいたら登録
       s.revealed=true;unlockCodex(s.id);
       toast("四神『"+ITEMS[s.id].n+"』がうっすらと姿を現した…",3400);
       if(typeof beep==="function")beep(528,.2,"sine",.05);
@@ -3474,10 +3881,20 @@ function animate(){
   creatures.oni.forEach(o=>{
     o.g.visible=nightFade>0.05;
     if(o.g.visible){
-      const a=t*0.12+o.phase;
+      const a=t*.05+o.phase,step=t*1.48+o.phase*2.3;
       o.g.position.x=o.base.x+Math.cos(a)*4;
       o.g.position.z=o.base.y+Math.sin(a)*4;
-      o.g.rotation.y=-a+Math.PI/2;
+      const impact=Math.pow(Math.max(0,Math.cos(step*2)),10);
+      o.g.position.y=.035-impact*.028;o.g.rotation.y=-a+Math.PI/2;o.g.rotation.x=.025;o.g.rotation.z=Math.sin(step)*.035;
+      if(o.g.userData.body)o.g.userData.body.rotation.z=-Math.sin(step)*.025;
+      (o.g.userData.legs||[]).forEach(L=>{
+        const p=step+(L.side>0?Math.PI:0),swing=Math.sin(p),lift=Math.max(0,Math.cos(p))*.10;
+        L.leg.rotation.x=swing*.22;L.leg.position.y=.42+lift*.25;L.leg.position.z=-swing*.10;
+        L.foot.position.y=.06+lift;L.foot.position.z=.10-swing*.18;L.foot.rotation.x=-swing*.08;
+        L.claws.forEach(c=>{c.position.y=.07+lift;c.position.z=.34-swing*.18;});
+      });
+      (o.g.userData.arms||[]).forEach(A=>{const swing=Math.sin(step+(A.side>0?0:Math.PI));A.upper.rotation.x=-swing*.16;A.fore.rotation.x=-swing*.10;A.fist.position.z=.09-swing*.08;});
+      if(o.g.userData.club)o.g.userData.club.rotation.x=-Math.sin(step)*.08;
       if(o.g.userData.eyeGlow)o.g.userData.eyeGlow.intensity=(0.4+Math.sin(t*5)*0.2)*nightFade;
     }
   });
@@ -3511,7 +3928,7 @@ function animate(){
       b.g.position.x=b.base.x+Math.cos(a)*b.r;
       b.g.position.z=b.base.y+Math.sin(a)*b.r;
       b.g.position.y=0.12+Math.sin(t*2+b.phase)*0.02;
-      b.g.rotation.y=-a+Math.PI;
+      b.g.rotation.y=-a;
     }else if(b.kind==="crane"){
       b.g.rotation.y=Math.sin(t*0.3)*0.3; 
     }
@@ -3604,7 +4021,7 @@ function animate(){
       else if(APP.labelMode===1)vis=(APP.view==="ov")?ITEMS[L.id].cat==="b":d<13;
       if(APP.mode==="quiz")vis=false;
       if(!present)vis=false;
-      if(APP.mode!=="quiz"&&APP.view==="fp"&&present&&d<9&&ITEMS[L.id].cat!=="b"&&d<focusD){
+      if(APP.mode==="walk"&&APP.view==="fp"&&present&&d<9&&ITEMS[L.id].cat!=="b"&&d<focusD){
         focusD=d;focusPos=it.labelPos;
       }
       L.sp.visible=vis;
@@ -3612,7 +4029,7 @@ function animate(){
         const h=Math.max(.52,Math.min(3.25,d*.0475));
         L.sp.scale.set(h*L.aspect,h,1);}
     });
-    if(focusPos){
+    if(APP.mode==="walk"&&focusPos){
       itemFocus.visible=true;
       itemFocus.position.set(focusPos.x,groundH(focusPos.x,focusPos.z)+.05,focusPos.z);
       const pulse=1+Math.sin(t*4)*.08;itemFocus.scale.setScalar(pulse);
