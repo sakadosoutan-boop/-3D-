@@ -1205,6 +1205,12 @@ h1.t-main .shu{color:var(--shu-bright)}
 
 /* ===== クレジット・ライセンス ===== */
 #credits{position:fixed;z-index:67;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,6,4,.78)}
+#gfx{position:fixed;z-index:67;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,6,4,.78)}
+#gfx .h-card{min-width:min(420px,92vw)}
+.gfx-row{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.gfx-lbl{font-family:var(--serif);color:var(--kin);letter-spacing:.12em;font-size:13px}
+.gfx-opts{display:flex;flex-wrap:wrap;gap:6px}
+.gfx-note{font-size:11px;color:#cdbf9f;line-height:1.7;margin-top:6px}
 .t-credit{margin-top:14px;background:none;border:0;color:#8d8068;font-size:11px;letter-spacing:.12em;
   font-family:var(--sans);text-decoration:underline;text-underline-offset:3px;opacity:.85}
 .t-credit:hover{color:var(--kin)}
@@ -1304,6 +1310,7 @@ h1.t-main .shu{color:var(--shu-bright)}
   <button class="tb-btn" id="tbHome">開始位置</button>
   <button class="tb-btn" id="tbCodex">図鑑</button>
   <span class="spacer"></span>
+  <button class="tb-btn" id="tbGfx">⚙ 画質</button>
   <button class="tb-btn" id="tbHelp">?</button>
   <button class="tb-btn" id="tbTitle">表紙へ</button>
 </div>
@@ -1377,6 +1384,27 @@ h1.t-main .shu{color:var(--shu-bright)}
   <b>本作:</b> 寝殿造り3D探訪 — 平安貴族の住まいを歩く学習シミュレーター<br><br>
   建物・建具・調度品・人物・自然・四神はすべてプログラムによる手続き的生成です。外部3Dモデルは使用していません。
   <button class="tb-btn" id="creditsClose" style="margin-top:10px">閉じる</button>
+</div></div>
+
+<div id="gfx"><div class="h-card">
+  <h3>グラフィック設定</h3>
+  <div class="gfx-row"><span class="gfx-lbl">画質プリセット</span>
+    <span class="gfx-opts">
+      <button class="tb-btn" id="gfxP_auto">オート</button>
+      <button class="tb-btn" id="gfxP_high">高</button>
+      <button class="tb-btn" id="gfxP_medium">中</button>
+      <button class="tb-btn" id="gfxP_low">低</button>
+    </span>
+  </div>
+  <div class="gfx-row"><span class="gfx-lbl">夜の発光（ブルーム）</span>
+    <span class="gfx-opts">
+      <button class="tb-btn" id="gfxB_auto">自動（夜のみ）</button>
+      <button class="tb-btn" id="gfxB_on">入</button>
+      <button class="tb-btn" id="gfxB_off">切</button>
+    </span>
+  </div>
+  <p class="gfx-note">「オート」は端末性能に応じて自動調整します。動作が重いときは「中」「低」を、発光が強すぎるときは「切」をお試しください。</p>
+  <button class="tb-btn" id="gfxClose" style="margin-top:10px">閉じる</button>
 </div></div>
 
 <div id="joy"><div id="joyKnob"></div></div>
@@ -5178,7 +5206,7 @@ const QUALITY=(()=>{
     {pr:0.56, shadow:512},                        // L3: 下限(可読性を保つ床)
   ];
   const enabled=!/[?&]adaptive=0/.test(location.search);
-  let lvl=0, ema=60, warmup=0, accDown=0, accUp=0;
+  let lvl=0, ema=60, warmup=0, accDown=0, accUp=0, forced=null;  // forced!=null: プリセットで固定
   function apply(){
     const L=levels[lvl];
     renderer.setPixelRatio(basePR*L.pr);
@@ -5191,8 +5219,10 @@ const QUALITY=(()=>{
   }
   return {
     get level(){return lvl;},
-    get info(){return `Q${lvl} pr${(basePR*levels[lvl].pr).toFixed(2)} sh${levels[lvl].shadow}`;},
+    get info(){return `Q${lvl}${forced!==null?"*":""} pr${(basePR*levels[lvl].pr).toFixed(2)} sh${levels[lvl].shadow}`;},
+    setForced(f){forced=(f==null)?null:Math.max(0,Math.min(levels.length-1,f|0));if(forced!==null){lvl=forced;apply();}},
     update(dt){
+      if(forced!==null)return;                              // 画質プリセットで固定中は自動調整しない
       if(!enabled||dt<=0)return;
       if(warmup<2.5){warmup+=dt;return;}                    // 起動直後(シェーダ初回コンパイル等)は無視
       ema+=(1/Math.min(dt,0.25)-ema)*0.08;                  // FPSをEMA平滑し単発ヒッチに反応しない
@@ -5211,27 +5241,69 @@ const QUALITY=(()=>{
 ============================================================ */
 const BLOOM=(()=>{
   const off=/[?&]bloom=0/.test(location.search)||typeof THREE.EffectComposer!=="function";
-  if(off)return {enabled:false,resize(){},update(){},render(){renderer.render(scene,camera);}};
+  if(off)return {enabled:false,get mode(){return "off";},setMode(){},resize(){},update(){},render(){renderer.render(scene,camera);}};
   const composer=new THREE.EffectComposer(renderer);
   composer.addPass(new THREE.RenderPass(scene,camera));
-  const bp=new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),0.8,0.6,0.55); // strength,radius,threshold(高め=明部のみ滲む)
+  const bp=new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),0.55,0.5,0.62); // strength/radius/threshold:控えめ。閾値高めで白飛びを防ぐ
   composer.addPass(bp);
   function syncSize(){composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);}
   syncSize();
-  let active=false, wasActive=false, giveUp=false, strikes=0;
+  let active=false, wasActive=false, giveUp=false, strikes=0, mode="auto"; // auto(既定):夜のみ / on:夜+夕 / off
   return {
     enabled:true,
     get active(){return active;},
+    get mode(){return mode;},
+    setMode(m){mode=(m==="on"||m==="off")?m:"auto";},
     resize(){syncSize();},
     update(){
-      // ブルーム作動中に適応品質が下がった(=重すぎた)らストライク。2回でこの端末は以後無効化し振動を防ぐ。
+      if(mode==="off"){active=false;wasActive=false;return;}
+      // ブルーム作動中に適応品質が下がった(=重すぎた)らストライク。2回でこの端末は以後自動無効化し振動を防ぐ。
       if(wasActive && QUALITY.level>1 && ++strikes>=2)giveUp=true;
-      active=!giveUp && (APP.time==="night"||APP.time==="dusk") && QUALITY.level<=1; // 夜/夕かつ高品質時のみ
+      if(mode==="on"){
+        active=(APP.time==="night"||APP.time==="dusk");                    // 手動ON:夜+夕(白飛びしうるが利用者の選択)
+      }else{
+        active=!giveUp && APP.time==="night" && QUALITY.level<=1;          // 自動:夜のみ・高品質時のみ(夕方の白飛びを回避)
+      }
       wasActive=active;
     },
     render(){active?composer.render():renderer.render(scene,camera);}
   };
 })();
+
+/* ============================================================
+   グラフィック設定(画質プリセット & ブルーム)。上部バー「⚙ 画質」から操作。
+   preset: auto(端末性能に応じ自動調整) / high / medium / low
+   bloom:  auto(夜のみ自動) / on(夜+夕) / off
+   設定は localStorage(PREFS)に保存し、次回起動時に復元する。
+============================================================ */
+const GFX=(()=>{
+  let preset=PREFS.get("gfxPreset","auto");
+  let bloom=PREFS.get("gfxBloom","auto");
+  const presetLevel={high:0,medium:1,low:3};
+  function applyPreset(){ QUALITY.setForced(preset==="auto"?null:presetLevel[preset]); }
+  function applyBloom(){ BLOOM.setMode(bloom); }
+  function refresh(){
+    ["auto","high","medium","low"].forEach(p=>{const b=$("gfxP_"+p);if(b)b.classList.toggle("on",preset===p);});
+    ["auto","on","off"].forEach(m=>{const b=$("gfxB_"+m);if(b)b.classList.toggle("on",bloom===m);});
+  }
+  return {
+    get preset(){return preset;}, get bloom(){return bloom;},
+    setPreset(p){preset=["auto","high","medium","low"].includes(p)?p:"auto";PREFS.set("gfxPreset",preset);applyPreset();refresh();},
+    setBloom(m){bloom=["auto","on","off"].includes(m)?m:"auto";PREFS.set("gfxBloom",bloom);applyBloom();refresh();},
+    init(){applyPreset();applyBloom();refresh();}
+  };
+})();
+$("tbGfx").onclick=()=>{$("gfx").style.display="flex";};
+$("gfxClose").onclick=()=>{$("gfx").style.display="none";};
+$("gfx").onclick=e=>{if(e.target===$("gfx"))$("gfx").style.display="none";};
+$("gfxP_auto").onclick=()=>{GFX.setPreset("auto");beep(560,.05);};
+$("gfxP_high").onclick=()=>{GFX.setPreset("high");beep(560,.05);};
+$("gfxP_medium").onclick=()=>{GFX.setPreset("medium");beep(560,.05);};
+$("gfxP_low").onclick=()=>{GFX.setPreset("low");beep(560,.05);};
+$("gfxB_auto").onclick=()=>{GFX.setBloom("auto");beep(560,.05);};
+$("gfxB_on").onclick=()=>{GFX.setBloom("on");beep(560,.05);};
+$("gfxB_off").onclick=()=>{GFX.setBloom("off");beep(560,.05);};
+GFX.init();
 
 function animate(){
   requestAnimationFrame(animate);
