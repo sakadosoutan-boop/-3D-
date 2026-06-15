@@ -413,7 +413,7 @@ const QUIZ_POOL=["shinden","tai_e","tai_n","watadono","sukiwatadono","chumonro",
 ============================================================ */
 const TEX={};
 function canv(w,h,fn){const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");fn(x,w,h);
-  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;return t;}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t;}
 function rnd(a,b){return a+Math.random()*(b-a);}
 
 /* 檜皮葺(ひわだぶき)屋根 */
@@ -623,7 +623,7 @@ const MAT={
 /* ============================================================
    シーン基盤（影とフォグの設定を追加）
 ============================================================ */
-const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true});
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true,powerPreference:"high-performance"});
 const IS_TOUCH=("ontouchstart" in window)||navigator.maxTouchPoints>0;
 renderer.setPixelRatio(Math.min(devicePixelRatio,IS_TOUCH?1.6:2));
 renderer.setSize(innerWidth,innerHeight);
