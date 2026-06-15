@@ -5323,6 +5323,14 @@ function kaimamiUpdate(dt){
 const clock=new THREE.Clock();
 const tmpV=new THREE.Vector3();
 let glLost=false;  /* WebGLコンテキスト喪失中フラグ(モバイルのスリープ復帰・GPUリセット対策) */
+let bobPhase=0, bobAmp=0, footAccum=0;  /* ヘッドボブ位相/振幅・足音タイマー */
+const REDUCED_MOTION=!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches); /* 動きを減らす設定 */
+/* 床材に応じた足音(合成)。簀子/畳など床上=木の軽い音、地面=低く鈍い音。音源未配置のため合成音 */
+function footstep(){
+  if(typeof beep!=="function")return;
+  if(groundH(player.pos.x,player.pos.z)>0.05) beep(120+Math.random()*30,.045,"triangle",.045);
+  else beep(70+Math.random()*22,.06,"sine",.035);
+}
 
 /* ============================================================
    適応的品質(ダイナミック解像度)
@@ -5737,6 +5745,15 @@ function animate(){
       const targetY=groundH(player.pos.x,player.pos.z)+1.62;
       player.pos.y+=(targetY-player.pos.y)*Math.min(1,dt*9);
 
+      // ヘッドボブ + 足音(歩行時のみ。ボブの実適用はカメラ補間後)
+      const moving=(m>0.01);
+      if(moving){
+        bobPhase+=dt*(keys.shift?13:9);
+        footAccum+=dt*(keys.shift?2.3:1.6);
+        if(footAccum>=1){footAccum-=1;footstep();}
+      }else{footAccum=0.6;}
+      bobAmp+=((moving&&!REDUCED_MOTION?(keys.shift?.055:.038):0)-bobAmp)*Math.min(1,dt*8);
+
       // 目標の座標と回転角度をダミーカメラに設定
       window.dummyCam.position.copy(player.pos);
       window.dummyCam.rotation.order="YXZ";
@@ -5761,6 +5778,7 @@ function animate(){
     const lerpFactor = (APP.view === "fp") ? 0.22 : 0.08;
     camera.position.lerp(window.dummyCam.position, lerpFactor);
     camera.quaternion.slerp(window.dummyCam.quaternion, lerpFactor);
+    if(APP.view==="fp")camera.position.y+=Math.sin(bobPhase)*bobAmp;  // ヘッドボブ(補間後の最終位置に付与=くっきり)
 
     /* --- ラベル --- */
     let focusPos=null,focusD=999;
