@@ -1101,6 +1101,12 @@ h1.t-main .shu{color:var(--shu-bright)}
 #topbar .spacer{flex:1}
 #modeTag{color:var(--gofun);background:rgba(179,64,42,.85);border:1px solid var(--kin);
   font-size:12px;padding:6px 12px;letter-spacing:.2em;border-radius:2px;white-space:nowrap}
+#minimapWrap{position:fixed;z-index:39;right:14px;bottom:14px;width:176px;height:176px;
+  display:none;border:1px solid rgba(201,162,63,.65);border-radius:8px;overflow:hidden;
+  background:rgba(20,13,8,.38);box-shadow:0 4px 14px rgba(0,0,0,.22);pointer-events:none}
+#minimap{display:block;width:176px;height:176px}
+#minimapLabel{position:absolute;left:8px;top:6px;color:#f4ecdc;font:10px var(--sans);
+  letter-spacing:.16em;text-shadow:0 1px 2px #000}
 
 /* ===== 解説ポップアップ(巻物風) ===== */
 #info{position:fixed;z-index:45;right:14px;top:64px;width:min(360px,calc(100vw - 28px));
@@ -1152,6 +1158,9 @@ h1.t-main .shu{color:var(--shu-bright)}
 #questHud .qs-text{font-size:13.5px;line-height:1.8;font-family:var(--sans)}
 #questHud .qs-prog{font-size:11px;color:#cdbf9f;margin-top:6px;font-family:var(--sans)}
 #kaimamiEye{display:none;align-items:center;gap:9px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(201,162,63,.28)}
+#kaimamiEye{position:fixed;top:74px;right:16px;width:min(300px,calc(100vw - 32px));z-index:48;
+  margin:0;padding:12px 14px;border:1px solid rgba(225,183,79,.72);border-radius:7px;
+  background:rgba(18,12,9,.88);box-shadow:0 8px 26px rgba(0,0,0,.38);backdrop-filter:blur(4px)}
 #kaimamiEye .eye{position:relative;width:42px;height:23px;border:2px solid #9db8c7;border-radius:55% 45%;overflow:hidden;
   background:rgba(190,216,226,.12);transform:rotate(-2deg);box-shadow:0 0 8px rgba(115,183,204,.12)}
 #kaimamiEye .pupil{position:absolute;left:50%;top:50%;width:11px;height:11px;margin:-5.5px;border-radius:50%;background:#66889a;
@@ -1160,7 +1169,19 @@ h1.t-main .shu{color:var(--shu-bright)}
 #kaimamiEye.watched .pupil{background:#ffcf70;box-shadow:0 0 0 4px rgba(207,40,25,.55);transform:scale(1.18)}
 #kaimamiEye .meter{flex:1;height:8px;border:1px solid rgba(220,205,174,.45);background:rgba(0,0,0,.38);overflow:hidden;border-radius:5px}
 #kaimamiEye .fill{height:100%;width:0;background:linear-gradient(90deg,#6d9caf,#e1b74f,#d74831);transition:width .08s linear}
-#kaimamiEye .eye-label{font-size:10px;color:#b8c8cf;min-width:56px;font-family:var(--sans)}
+#kaimamiEye .eye-label{font-size:11px;color:#d9e5e9;min-width:92px;font-family:var(--sans);font-weight:700}
+
+/* ===== NPC会話 ===== */
+#dialogueBubble{position:fixed;z-index:54;left:50%;bottom:92px;transform:translate(-50%,18px);
+  width:min(560px,calc(100vw - 34px));display:none;opacity:0;color:#f7efdf;
+  background:rgba(25,17,12,.94);border:1px solid rgba(201,162,63,.72);border-radius:14px;
+  padding:13px 18px 15px;box-shadow:0 10px 34px rgba(0,0,0,.46);pointer-events:none;
+  transition:opacity .18s,transform .18s;font-family:var(--sans)}
+#dialogueBubble.show{display:block;opacity:1;transform:translate(-50%,0)}
+#dialogueBubble::after{content:"";position:absolute;left:50%;bottom:-10px;margin-left:-9px;
+  border:9px solid transparent;border-top-color:rgba(201,162,63,.72);border-bottom:0}
+#dialogueName{font-size:11px;color:var(--kin);letter-spacing:.18em;margin-bottom:5px}
+#dialogueText{font-size:15px;line-height:1.65;letter-spacing:.04em}
 
 /* ===== 結果モーダル ===== */
 #result{position:fixed;z-index:58;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,6,4,.78)}
@@ -1243,6 +1264,8 @@ h1.t-main .shu{color:var(--shu-bright)}
   #info{right:0;left:0;top:auto;bottom:0;width:100%;border-radius:12px 12px 0 0}
   .info-body{max-height:38vh}
   #topbar{flex-wrap:wrap}
+  #minimapWrap{right:10px;bottom:116px;width:142px;height:142px}
+  #minimap{width:142px;height:142px}
 }
 </style>
 </head>
@@ -1277,11 +1300,15 @@ h1.t-main .shu{color:var(--shu-bright)}
   <button class="tb-btn" id="tbSeason">🌸 春</button>
   <button class="tb-btn" id="tbLabel">札:近く</button>
   <button class="tb-btn" id="tbAudio">🔇 音:切</button>
+  <button class="tb-btn on" id="tbMap">地図:入</button>
+  <button class="tb-btn" id="tbHome">開始位置</button>
   <button class="tb-btn" id="tbCodex">図鑑</button>
   <span class="spacer"></span>
   <button class="tb-btn" id="tbHelp">?</button>
   <button class="tb-btn" id="tbTitle">表紙へ</button>
 </div>
+
+<div id="minimapWrap"><canvas id="minimap" width="352" height="352"></canvas><div id="minimapLabel">現在地: 邸内</div></div>
 
 <div id="codex" role="dialog" aria-modal="true" aria-labelledby="codexTitle">
   <div class="codex-scroll">
@@ -1316,8 +1343,10 @@ h1.t-main .shu{color:var(--shu-bright)}
   <div class="qs-title" id="questTitle"></div>
   <div class="qs-text" id="questText"></div>
   <div class="qs-prog" id="questProg"></div>
-  <div id="kaimamiEye"><div class="eye"><div class="pupil"></div></div><div class="meter"><div class="fill"></div></div><div class="eye-label">気配なし</div></div>
+  <div id="kaimamiEye"><div class="eye"><div class="pupil"></div></div><div class="meter"><div class="fill"></div></div><div class="eye-label">発見危険度 0%</div></div>
 </div>
+
+<div id="dialogueBubble"><div id="dialogueName"></div><div id="dialogueText"></div></div>
 
 <div id="result"><div class="r-card">
   <h2 id="resTitle">結果発表</h2>
@@ -1334,6 +1363,8 @@ h1.t-main .shu{color:var(--shu-bright)}
   <b>👁 俯瞰</b>…空から邸宅全体を見る(ドラッグ回転・ホイール/ピンチで拡大縮小)<br>
   <b>☀/🌙</b>…昼 → 夕 → 夜 と時間を切り替え<br>
   <b>札</b>…名称タグの表示(近く / すべて / なし)<br>
+  <b>地図</b>…右下のミニマップを表示 / 非表示<br>
+  <b>開始位置</b>…自由散策を始めた南庭の位置へ戻る<br>
   <b>図鑑</b>…解説を読んだ項目が記録され、次回起動後も解放状態を保持<br><br>
   <b>動かせる建具:</b> 格子(半蔀)=タップで跳ね上げ / 御簾=巻き上げ / 妻戸=開閉 / 灯台=夜に近づいて点火<br>
   <button class="tb-btn" id="helpClose" style="margin-top:8px">閉じる</button>
@@ -1408,14 +1439,18 @@ kagaribi:{n:"篝火",k:"かがりび",cat:"c",d:"鉄のかご(籠)に薪を入�
 himegimi:{n:"姫君",k:"ひめぎみ",cat:"p",d:"邸の主の娘。十二単(じゅうにひとえ)をまとい、御帳台や几帳の奥で過ごした。人前に姿を見せないのが上流女性の作法だった。",t:"十二単は実際には五枚重ね程度。色の重ね方(かさねの色目)で季節やセンスを競った。<b>『源氏物語』</b>の女君たちもこの姿。"},
 nyobo:{n:"女房",k:"にょうぼう",cat:"p",d:"姫君や北の方に仕えた教養ある女性たち。和歌・物語・楽器に通じ、主人の取り次ぎや教育を担った。",t:"清少納言や紫式部もこの<b>女房</b>。彼女たちの記録が『枕草子』『源氏物語』として残った。仕える家=「宮仕へ」。"},
 kikoshi:{n:"貴公子",k:"きこうし",cat:"p",d:"直衣(のうし)姿の若い貴族の男性。女性のもとへ通い、几帳や御簾越しに和歌を交わして恋を進めた。",t:"男性が女性の姿を物のすき間からのぞくのが<b>「垣間見(かいまみ)」</b>。『源氏物語』若紫巻の光源氏もこれで紫の上を見初めた。"},
+warawa:{n:"童",k:"わらわ",cat:"p",d:"邸で働く年少の子ども。庭へ降りた雀を夢中で追いかけている。",t:"平安貴族の邸には、身の回りの用をする童や童女も仕えていた。物語では使いや遊び相手として姿を見せる。"},
+monban:{n:"警備兵",k:"けいびへい",cat:"p",d:"門のそばで邸への出入りを見張る従者。杖を携え、夜間も警戒した。",t:"寝殿造りの門は身分や儀礼を示す場所でもあり、来訪者は門前で取り次ぎを待った。"},
 /* ---- 怪異(夜) ---- */
 oni:{n:"鬼",k:"おに",cat:"x",d:"闇に現れる異形のもの。平安の人々は、疫病や災い・物の怪(もののけ)を鬼の仕業と考えた。夜の闇は鬼の領域だった。",t:"<b>『伊勢物語』芥川</b>では、女が一口に鬼に食われてしまう。灯りの乏しい平安の夜は、本気で恐ろしいものだった。"},
 shikigami:{n:"式神",k:"しきがみ",cat:"x",d:"陰陽師(おんみょうじ)が使役したとされる霊的な存在。紙の人形(ひとがた)に宿らせ、占いや祓(はら)えに用いた。",t:"安倍晴明の式神が有名。<b>ひとがた</b>に穢(けが)れを移して川に流す「祓え」は、雛(ひな)流しの起源ともいわれる。"},
 /* ---- 生き物 ---- */
 oshidori:{n:"鴛鴦",k:"おしどり",cat:"a",d:"池に遊ぶ水鳥。雌雄が仲むつまじく寄り添うことから、夫婦仲のよいたとえとされた。",t:"「鴛鴦の契り」は仲のよい夫婦の象徴。秋冬の池の景物として和歌にもよく詠まれた。"},
 tsuru:{n:"鶴",k:"つる",cat:"a",d:"冬の水辺に訪れる大きな瑞鳥(ずいちょう)。長寿のしるしとして尊ばれた。",t:"「鶴は千年」。めでたい鳥として、晴れの調度の文様にも好んで使われた。"},
+neko:{n:"飼い猫",k:"かいねこ",cat:"a",d:"邸で人に飼われている猫。首輪と鈴をつけ、簀子や庭先でのんびり過ごしている。",t:"平安時代の猫は貴重な愛玩動物で、宮中でも大切に飼われた。<b>『枕草子』</b>には一条天皇の愛猫「命婦のおとど」が登場する。"},
 hotaru:{n:"蛍",k:"ほたる",cat:"a",d:"夏の夜、池や遣水(やりみず)のほとりに舞う光の虫。はかなくも美しい夏の風物詩。",t:"<b>『枕草子』</b>「夏は夜。…蛍の多く飛びちがひたる」。光源氏が蛍を放って女君の姿を見せる「蛍巻」も有名。"},
 uguisu:{n:"鶯",k:"うぐいす",cat:"a",d:"春を告げる鳥。梅の枝で鳴く姿が、春の代表的な景物とされた。",t:"「春告鳥(はるつげどり)」の別名も。梅に鶯の取り合わせは和歌・絵画の定番。"},
+suzume:{n:"雀",k:"すずめ",cat:"a",d:"庭先へ群れで降り、穀や草の実をついばむ身近な小鳥。童が追うと一斉に飛び立つ。",t:"『枕草子』にも雀の子をかわいがる場面があり、身近で愛らしい鳥として描かれた。"},
 seimei:{n:"安倍晴明",k:"あべのせいめい",cat:"x",d:"平安中期に実在した最も有名な陰陽師(おんみょうじ)。天文・暦・占いを司り、式神を自在に操ったと伝えられる。夜の闇を鎮める存在。",t:"陰陽寮(おんみょうりょう)の役人。数々の説話で鬼や物の怪を退け、式神を使う姿が描かれた。京都の<b>晴明神社</b>に祀られている。"},
 /* ---- 四神(霊獣・隠し) ---- */
 seiryu:{n:"青竜",k:"せいりゅう",cat:"s",d:"四神(しじん)の一つで、東の方角を守る青い竜。五行では春・木にあたる。東の門に近づくと、うっすらと姿を現す。",t:"平安京は<b>四神相応(しじんそうおう)</b>の地に営まれた。東を流れる<b>鴨川</b>が青竜にあたるとされる。"},
@@ -1826,7 +1861,21 @@ function railRing(g,w,d,topY,gaps){ // gaps: [{side:'S',from,to}] 切れ目(階�
 /* ====== 床高さマップ(歩行用) ====== */
 const floorZones=[]; // {x,z,w,d,h}
 function addZone(x,z,w,d,h){floorZones.push({x,z,w,d,h});}
-function groundH(x,z){let h=0;
+function bridgeGroundH(x,z){
+  if(!window.BRIDGES)return 0;
+  let h=0;
+  for(const b of window.BRIDGES){
+    const dx=b.x2-b.x1,dz=b.z2-b.z1,L2=dx*dx+dz*dz;
+    const t=((x-b.x1)*dx+(z-b.z1)*dz)/L2;
+    if(t<-.11||t>1.11)continue;
+    const tc=Math.max(0,Math.min(1,t));
+    const px=b.x1+dx*t,pz=b.z1+dz*t;
+    if(Math.hypot(x-px,z-pz)>b.W/2+.55)continue;
+    h=Math.max(h,b.y1+(b.y2-b.y1)*tc+Math.sin(tc*Math.PI)*b.PEAK+.11);
+  }
+  return h;
+}
+function groundH(x,z){let h=bridgeGroundH(x,z);
   for(const f of floorZones){if(Math.abs(x-f.x)<=f.w/2&&Math.abs(z-f.z)<=f.d/2)h=Math.max(h,f.h);}
   return h;}
 /* 池(円の合成で近似) */
@@ -1950,10 +1999,10 @@ const SHISHIN_DATA={
     });
   }
 
-  addImageShishin({id:"seiryu",data:SHISHIN_DATA.seiryu,color:0x32cfff,x:W-9,y:3.6,z:12,width:7.6,R:18});
-  addImageShishin({id:"byakko",data:SHISHIN_DATA.byakko,color:0xbda7ff,x:-W+9,y:2.25,z:0,width:7.2,R:18});
-  addImageShishin({id:"genbu",data:SHISHIN_DATA.genbu,color:0x54d7c7,x:0,y:2.15,z:-W+9,width:7.0,R:18});
-  addImageShishin({id:"suzaku",data:SHISHIN_DATA.suzaku,color:0xff643e,x:0,y:5.0,z:49,width:8.2,R:22});
+  addImageShishin({id:"seiryu",data:SHISHIN_DATA.seiryu,color:0x32cfff,x:W-9,y:3.6,z:12,width:7.6,R:9.5});
+  addImageShishin({id:"byakko",data:SHISHIN_DATA.byakko,color:0xbda7ff,x:-W+9,y:2.25,z:0,width:7.2,R:9.5});
+  addImageShishin({id:"genbu",data:SHISHIN_DATA.genbu,color:0x54d7c7,x:0,y:2.15,z:-W+9,width:7.0,R:9.5});
+  addImageShishin({id:"suzaku",data:SHISHIN_DATA.suzaku,color:0xff643e,x:0,y:5.0,z:49,width:8.2,R:11});
 }
 
 /* ============================================================
@@ -1984,9 +2033,12 @@ const SHISHIN_DATA={
   const wmesh=new THREE.Mesh(new THREE.ShapeGeometry(shape,24),MAT.water);
   wmesh.rotation.x=-Math.PI/2;wmesh.position.y=.06;wmesh.receiveShadow=true;pond.add(wmesh);
   /* 汀(みぎわ)の石 */
+  const bridgeClear=[[-20,22.5],[-20,29.6],[-15.8,35],[-7,39],[-4,36.8],[-4,28.5]];
   for(let i=0;i<N;i+=1){const p=ring[i];
     const s=new THREE.Mesh(new THREE.DodecahedronGeometry(rnd(.4,1.0)),MAT.stone);
-    s.position.set(p[0]+rnd(-.5,.5),rnd(0,.25),p[1]+rnd(-.5,.5));s.castShadow=true;s.receiveShadow=true;
+    const sx=p[0]+rnd(-.5,.5),sz=p[1]+rnd(-.5,.5);
+    if(bridgeClear.some(q=>Math.hypot(sx-q[0],sz-q[1])<3.0))continue;
+    s.position.set(sx,rnd(0,.25),sz);s.castShadow=true;s.receiveShadow=true;
     s.rotation.set(rnd(0,3),rnd(0,3),rnd(0,3));pond.add(s);}
   /* 中島 */
   function island(x,z,r){
@@ -2000,65 +2052,70 @@ const SHISHIN_DATA={
   }
   const isA=island(-20,34,4.6),isB=island(-4,40,3.4);  // 南庭寄りに配置(橋を短く美しく)
   /* 反り橋(朱塗りの太鼓橋) — 反りに沿った床板・桁・束・高欄 */
-  function bridge(x1,z1,x2,z2,W){
+  function bridge(x1,z1,x2,z2,W,y1,y2){
     W=W||2.2;
+    y1=y1==null?1.05:y1;y2=y2==null?1.05:y2;
     const g=new THREE.Group();
     const L=Math.hypot(x2-x1,z2-z1);
     const PEAK=Math.min(1.35,L*0.16);          // 反りの高さ
-    const baseY=1.0;
-    const arch=t=>Math.sin(t*Math.PI)*PEAK;     // t:0→1 中央で最大
-    const slope=t=>Math.cos(t*Math.PI)*Math.PI*PEAK/L; // 床勾配(局所)
+    const arch=t=>y1+(y2-y1)*t+Math.sin(t*Math.PI)*PEAK; // 両岸の高さを結び、中央で反る
     const seg=16;
+    function archBeam(t0,t1,yOff,h,d,mat,z){
+      const x0=-L/2+L*t0,x1=-L/2+L*t1,y0=arch(t0)+yOff,yEnd=arch(t1)+yOff;
+      const len=Math.hypot(x1-x0,yEnd-y0)+.035;
+      const beam=box(len,h,d,mat,(x0+x1)/2,(y0+yEnd)/2,z);
+      beam.rotation.z=Math.atan2(yEnd-y0,x1-x0);
+      return beam;
+    }
     // 床板(連続したスラブを勾配なりに)
     for(let i=0;i<seg;i++){
-      const t=(i+.5)/seg, x=-L/2+L*((i+.5)/seg);
-      const y=baseY+arch((i+.5)/seg);
-      const plank=box(L/seg+0.06,0.14,W,MAT.shuDark,x,y,0);
-      plank.rotation.z=-Math.atan(slope(t));
-      g.add(plank);
+      const t0=i/seg,t1=(i+1)/seg;
+      g.add(archBeam(t0,t1,0,.14,W,MAT.shuDark,0));
       // 床の朱の踏み板(上面)
-      const top=box(L/seg+0.04,0.04,W-0.2,MAT.shu,x,y+0.09,0);
-      top.rotation.z=-Math.atan(slope(t));g.add(top);
+      g.add(archBeam(t0,t1,.09,.04,W-.2,MAT.shu,0));
+    }
+    // 横桟を踏み板として重ね、太鼓橋らしい段のリズムを強調する
+    const treadCount=14;
+    for(let i=1;i<treadCount;i++){
+      const t=i/treadCount,ta=Math.max(0,t-.012),tb=Math.min(1,t+.012);
+      const tread=box(.16,.075,W-.08,MAT.shuDark,-L/2+L*t,arch(t)+.145,0);
+      tread.rotation.z=Math.atan2(arch(tb)-arch(ta),L*(tb-ta));g.add(tread);
     }
     // 桁(side stringers)
     [-W/2+0.12,W/2-0.12].forEach(zz=>{
       for(let i=0;i<seg;i++){
-        const t=(i+.5)/seg,x=-L/2+L*t,y=baseY+arch(t)-0.16;
-        const b=box(L/seg+0.06,0.2,0.16,MAT.shu,x,y,zz);
-        b.rotation.z=-Math.atan(slope(t));g.add(b);
+        g.add(archBeam(i/seg,(i+1)/seg,-.16,.2,.16,MAT.shu,zz));
       }
     });
     // 橋脚(束柱)を水中に
     [-L*0.3,0,L*0.3].forEach(px=>{
-      const tt=(px+L/2)/L,topY=baseY+arch(tt)-0.2;
+      const tt=(px+L/2)/L,topY=arch(tt)-0.2;
       [-W/2+0.2,W/2-0.2].forEach(zz=>{
         g.add(cyl(0.11,0.13,topY+0.8,MAT.shuDark,px,topY/2-0.4,zz,8));
       });
     });
     // 高欄(擬宝珠付き)
     [-W/2+0.1,W/2-0.1].forEach(zz=>{
-      const posts=8;
+      const posts=12;
       for(let i=0;i<=posts;i++){
-        const t=i/posts,x=-L/2+L*t,y=baseY+arch(t);
+        const t=i/posts,x=-L/2+L*t,y=arch(t);
         g.add(box(0.09,0.62,0.09,MAT.shuDark,x,y+0.31,zz));
         const gp=cyl(0.075,0.075,0.12,MAT.kin,x,y+0.66,zz,8);g.add(gp); // 擬宝珠
       }
-      // 手すり(笠木)を勾配なりに
+      // 手すり(笠木)は各区間の両端を結び、反りの接線に沿わせる
       for(let i=0;i<posts;i++){
-        const t=(i+.5)/posts,x=-L/2+L*t,y=baseY+arch(t)+0.6;
-        const rail=box(L/posts+0.05,0.07,0.09,MAT.shu,x,y,zz);
-        rail.rotation.z=-Math.atan(slope(t));g.add(rail);
+        g.add(archBeam(i/posts,(i+1)/posts,.6,.07,.09,MAT.shu,zz));
       }
     });
     g.position.set((x1+x2)/2,0,(z1+z2)/2);
     g.rotation.y=-Math.atan2(z2-z1,x2-x1);
     world.add(g);register(g,"niwa");
-    return {x1,z1,x2,z2,L,PEAK,cx:(x1+x2)/2,cz:(z1+z2)/2,ang:Math.atan2(z2-z1,x2-x1),W};
+    return {x1,z1,x2,z2,y1,y2,L,PEAK,cx:(x1+x2)/2,cz:(z1+z2)/2,ang:Math.atan2(z2-z1,x2-x1),W};
   }
   window.BRIDGES=[
-    bridge(-20,22.5,-20,29.6),  // 南庭(岸)→中島A : 短い反り橋
-    bridge(-15.8,35,-7,39),     // 中島A→中島B
-    bridge(-4,36.8,-4,28.5)     // 中島B→南庭(岸) : 短い反り橋
+    bridge(-20,22.5,-20,29.6,2.2,.06,1.05), // 南庭(岸)→中島A
+    bridge(-15.8,35,-7,39,2.2,1.05,1.05),   // 中島A→中島B
+    bridge(-4,36.8,-4,28.5,2.2,1.05,.06)    // 中島B→南庭(岸)
   ];
   world.add(pond);
   register(pond,"niwa",new THREE.Vector3(-12,3.2,41));
@@ -2437,10 +2494,27 @@ chumonWing(1);chumonWing(-1);
   g.add(box(.12,.12,5.6,MAT.woodDark,.7,1.15,-1.2));
   /* 牛 */
   const ox=new THREE.Group();
-  ox.add(box(1.1,1.0,1.9,MAT.ox,0,1.1,0));
-  ox.add(box(.62,.62,.8,MAT.ox,0,1.35,-1.25));
-  [[-.32],[.32]].forEach(s=>{const h=cyl(.05,.08,.5,MAT.stone,s[0],1.85,-1.35);h.rotation.z=s[0]*1.2;ox.add(h);});
-  [[-.4,-.6],[.4,-.6],[-.4,.6],[.4,.6]].forEach(p=>ox.add(box(.2,.9,.2,MAT.ox,p[0],.45,p[1])));
+  const oxHide=M({color:0x302622,roughness:.94}),oxMuzzle=M({color:0x756154,roughness:.9}),hoof=M({color:0x181515,roughness:.72});
+  const body=new THREE.Mesh(new THREE.SphereGeometry(1,18,13),oxHide);body.scale.set(.68,.62,1.18);body.position.set(0,1.12,0);body.castShadow=true;ox.add(body);
+  const chest=new THREE.Mesh(new THREE.SphereGeometry(.55,16,11),oxHide);chest.scale.set(1,.95,.78);chest.position.set(0,1.24,-.72);ox.add(chest);
+  const neck=cyl(.34,.43,.72,oxHide,0,1.33,-1.02,12);neck.rotation.x=-.48;ox.add(neck);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.42,16,12),oxHide);head.scale.set(.82,.78,1.05);head.position.set(0,1.53,-1.42);ox.add(head);
+  const muzzle=new THREE.Mesh(new THREE.SphereGeometry(.28,14,10),oxMuzzle);muzzle.scale.set(1.05,.62,.72);muzzle.position.set(0,1.39,-1.75);ox.add(muzzle);
+  [-1,1].forEach(s=>{
+    const ear=new THREE.Mesh(new THREE.SphereGeometry(.16,10,7),oxHide);ear.scale.set(1.25,.48,.72);ear.position.set(s*.34,1.70,-1.43);ear.rotation.z=s*.25;ox.add(ear);
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),new THREE.MeshBasicMaterial({color:0x090807}));eye.position.set(s*.25,1.61,-1.76);ox.add(eye);
+    const horn=cyl(.025,.075,.48,MAT.stone,s*.28,1.94,-1.42,9);horn.rotation.z=s*.70;horn.rotation.x=-.18;ox.add(horn);
+    const nostril=new THREE.Mesh(new THREE.SphereGeometry(.022,7,5),hoof);nostril.position.set(s*.10,1.42,-1.99);ox.add(nostril);
+  });
+  [[-.40,-.58],[.40,-.58],[-.40,.62],[.40,.62]].forEach((p,i)=>{
+    const upper=cyl(.12,.15,.58,oxHide,p[0],.72,p[1],10);upper.rotation.x=(i<2?-.05:.05);ox.add(upper);
+    const lower=cyl(.085,.105,.48,oxHide,p[0],.26,p[1]+(i<2?-.04:.04),9);ox.add(lower);
+    const foot=box(.20,.14,.28,hoof,p[0],.08,p[1]-.06);ox.add(foot);
+  });
+  const tail=cyl(.035,.055,.72,oxHide,0,1.15,.98,7);tail.rotation.x=-.55;ox.add(tail);
+  const tuft=new THREE.Mesh(new THREE.SphereGeometry(.10,9,6),hoof);tuft.scale.set(.8,1.5,.8);tuft.position.set(0,.78,1.18);ox.add(tuft);
+  const yoke=box(1.45,.12,.12,MAT.woodDark,0,1.53,-1.00);ox.add(yoke);
+  [-1,1].forEach(s=>{const strap=new THREE.Mesh(new THREE.TorusGeometry(.42,.035,7,22,Math.PI),M({color:0x6c3f24,roughness:.8}));strap.position.set(s*.32,1.40,-1.08);strap.rotation.y=Math.PI/2;strap.rotation.z=Math.PI/2;ox.add(strap);});
   ox.position.set(0,0,-3.6);g.add(ox);
   g.position.set(48,0,17);g.rotation.y=-Math.PI/2.3;
   world.add(g);register(g,"gissha",new THREE.Vector3(48,5.2,17));
@@ -3044,10 +3118,10 @@ function addCharacterSlot({id,figure,position,yaw,labelPos}){
   const ny2=makeHeianFigure({role:"nyobo",palette:[0x354f70,0x6d3f63,0x8a8953,0xe6ddcb],scale:.96,prop:"scroll"});
   addCharacterSlot({id:"nyobo",figure:ny2,position:new THREE.Vector3(S.cx+7.5,S.f2+0.02,S.cz+3.0),yaw:-1.4});
 
-  // 貴公子:南廂の簀子寄り(直衣=白)、几帳越しに姫の方を向く(垣間見)
+  // 貴公子:東側の簀子まで上がり、格子際から姫君を垣間見る
   const kik=makeHeianFigure({role:"kikoshi",palette:[0x171817,0x263e2c,0xb28b3e],scale:1.04,prop:"shaku"});
-  addCharacterSlot({id:"kikoshi",figure:kik,position:new THREE.Vector3(S.cx-5.0,S.f2+0.02,S.cz+2.2),yaw:.9,
-    labelPos:new THREE.Vector3(S.cx-5.0,S.f2+1.5,S.cz+2.2)});
+  addCharacterSlot({id:"kikoshi",figure:kik,position:new THREE.Vector3(S.cx+12.48,S.f1+.02,S.cz+1.9),yaw:-1.82,
+    labelPos:new THREE.Vector3(S.cx+12.48,S.f1+1.65,S.cz+1.9)});
   window.CHARACTER_MODEL_STATUS={loaded:4,total:4,procedural:true};
 })();
 
@@ -3193,6 +3267,7 @@ function makeSeimei(){
   const shaku=box(.075,.50,.025,M({color:0xd8c39d,roughness:.62}),.16,1.20,.34);shaku.rotation.z=-.08;g.add(shaku);
   [-1,1].forEach(s=>{const fu=box(.085,.19,.007,M({color:0xf2eddb,roughness:.90}),s*.24,1.20,.31);fu.rotation.z=s*.10;g.add(fu);
     [0,1,2].forEach(i=>{const mark=box(.050,.010,.004,ink,s*.24,1.255-i*.045,.318);mark.rotation.z=s*(.10+(i-1)*.08);g.add(mark);});});
+  [-1,1].forEach(s=>{const tabi=box(.22,.10,.36,M({color:0xf2eee2,roughness:.92}),s*.20,.055,.08);tabi.rotation.y=-s*.04;g.add(tabi);});
   // 参考画に合わせた陰陽扇。骨、五芒星、扇端の火焔を小さな立体で構成する。
   const fan=new THREE.Group(),fanSpan=Math.PI*.78,fanA=Math.PI/2-fanSpan/2;
   fan.add(new THREE.Mesh(new THREE.CircleGeometry(.32,28,fanA,fanSpan),M({color:0x466a91,roughness:.62,side:THREE.DoubleSide})));
@@ -3210,7 +3285,7 @@ function makeSeimei(){
   const penta=new THREE.Line(new THREE.BufferGeometry().setFromPoints(sp),new THREE.LineBasicMaterial({color:0xb8ccff,transparent:true,opacity:0.7}));
   star.add(penta);g.add(star);
   const aura=new THREE.PointLight(0xaab8ff,0.6,7,2);aura.position.y=1.0;g.add(aura);
-  g.userData.aura=aura;g.userData.star=star;
+  g.userData.aura=aura;g.userData.star=star;g.userData.head=head;g.userData.body=body;g.userData.shaku=shaku;
   return g;
 }
 function makeShikigami(){
@@ -3322,6 +3397,59 @@ function makeCrane(){
   crane.position.set(-19,1.1,40);crane.visible=false;
   scene.add(crane);register(crane,"tsuru",new THREE.Vector3(-19,3.0,40));
   waterBirds.push({g:crane,kind:"crane",base:new THREE.Vector2(-19,40),phase:0,winterOnly:true});
+})();
+
+/* ============================================================
+   飼い猫 — 寝殿の庭先でくつろぐ首輪付きの猫
+============================================================ */
+const petCats=[];
+function makePetCat(colors){
+  const g=new THREE.Group();
+  const fur=M({color:colors.fur,roughness:.9}),furLight=M({color:colors.light,roughness:.92});
+  const dark=M({color:0x2c241f,roughness:.75}),pink=M({color:0xd88782,roughness:.8});
+  const collar=M({color:colors.collar,roughness:.65}),gold=M({color:0xd5aa35,metalness:.35,roughness:.45});
+  // 胴を低く横長にし、前脚を胸の下へ畳んだ香箱座り
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.24,14,11),fur);
+  body.scale.set(.92,.62,1.35);body.position.set(0,.2,-.03);g.add(body);
+  const chest=new THREE.Mesh(new THREE.SphereGeometry(.15,12,9),furLight);
+  chest.scale.set(.8,.7,.55);chest.position.set(0,.23,.18);g.add(chest);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.17,14,10),fur);
+  head.position.set(0,.4,.22);g.add(head);
+  [-1,1].forEach(side=>{
+    const ear=new THREE.Mesh(new THREE.ConeGeometry(.075,.14,4),fur);
+    ear.position.set(side*.105,.56,.21);ear.rotation.y=Math.PI/4;g.add(ear);
+    const inner=new THREE.Mesh(new THREE.ConeGeometry(.038,.085,4),pink);
+    inner.position.set(side*.105,.57,.27);inner.rotation.y=Math.PI/4;g.add(inner);
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(.019,8,6),dark);
+    eye.scale.set(.72,1,.48);eye.position.set(side*.06,.42,.38);g.add(eye);
+    const tuckedPaw=new THREE.Mesh(new THREE.SphereGeometry(.075,10,7),furLight);
+    tuckedPaw.scale.set(1.15,.4,.72);tuckedPaw.position.set(side*.08,.075,.21);g.add(tuckedPaw);
+  });
+  const muzzle=new THREE.Mesh(new THREE.SphereGeometry(.085,10,8),furLight);
+  muzzle.scale.set(1.15,.72,.62);muzzle.position.set(0,.36,.36);g.add(muzzle);
+  const nose=new THREE.Mesh(new THREE.SphereGeometry(.024,8,6),pink);
+  nose.scale.set(1,.65,.55);nose.position.set(0,.395,.415);g.add(nose);
+  const collarRing=new THREE.Mesh(new THREE.TorusGeometry(.132,.018,7,18),collar);
+  collarRing.rotation.x=Math.PI/2;collarRing.position.set(0,.3,.19);g.add(collarRing);
+  const bell=new THREE.Mesh(new THREE.SphereGeometry(.035,9,7),gold);
+  bell.position.set(0,.275,.34);g.add(bell);
+  const tail=new THREE.Group();tail.position.set(-.19,.13,-.08);
+  const curl=new THREE.Mesh(new THREE.TorusGeometry(.19,.045,8,20,Math.PI*1.45),fur);
+  curl.rotation.x=Math.PI/2;curl.rotation.z=-.35;tail.add(curl);
+  g.add(tail);g.userData.tail=tail;g.userData.head=head;
+  return g;
+}
+(function placePetCat(){
+  const cats=[
+    {p:[-7.0,1.18,5.55],r:.18,c:{fur:0xb98555,light:0xead2ad,collar:0xa52f32}},
+    {p:[12.45,1.18,-1.2],r:-1.45,c:{fur:0xe2ddd2,light:0xf7f3e9,collar:0x315f83}},
+    {p:[29.2,1.03,-4.8],r:.72,c:{fur:0x4e443b,light:0xd6c7b0,collar:0x9a6530}}
+  ];
+  cats.forEach((cfg,i)=>{
+    const cat=makePetCat(cfg.c);cat.position.set(...cfg.p);cat.rotation.y=cfg.r;
+    scene.add(cat);register(cat,"neko",i===0?new THREE.Vector3(cfg.p[0],cfg.p[1]+.75,cfg.p[2]):null);
+    petCats.push({g:cat,tail:cat.userData.tail,head:cat.userData.head,baseY:cfg.p[1],phase:Math.random()*6});
+  });
 })();
 
 /* ============================================================
@@ -3441,8 +3569,12 @@ function makeFlyingCrane(scale=1){
   return noShadow(g);
 }
 function makeGooseMark(scale=.8){
-  const g=new THREE.Group(),mat=basicMat(0x1c1a16,1);  /* [fix] 雁を濃いシルエットで視認性UP */
-  [-1,1].forEach(s=>{const w=box(.6*scale,.05*scale,.16*scale,mat,s*.26*scale,0,-.12*scale,false);w.rotation.y=s*0.62;g.add(w);}); /* [fix] 翼を水平に・太く(見上げて見えるV字) */
+  const g=new THREE.Group(),mat=basicMat(0x2a241d,1),wingMat=basicMat(0x171512,.96);
+  const body=new THREE.Mesh(new THREE.SphereGeometry(.16*scale,10,7),mat);body.scale.set(.72,.50,1.65);g.add(body);
+  const neck=cyl(.035*scale,.045*scale,.34*scale,mat,0,.07*scale,.25*scale,7);neck.rotation.x=-.42;g.add(neck);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.065*scale,8,6),mat);head.position.set(0,.15*scale,.42*scale);g.add(head);
+  const beak=new THREE.Mesh(new THREE.ConeGeometry(.026*scale,.15*scale,6),basicMat(0x80613b));beak.position.set(0,.14*scale,.52*scale);beak.rotation.x=Math.PI/2;g.add(beak);
+  [-1,1].forEach(s=>{const w=new THREE.Mesh(new THREE.PlaneGeometry(.72*scale,.25*scale),wingMat);w.position.set(s*.27*scale,.02*scale,-.04*scale);w.rotation.y=s*.20;w.userData.wingSide=s;g.add(w);});
   return noShadow(g);
 }
 (function buildFlyingLife(){
@@ -3499,10 +3631,16 @@ function updateFlyingLife(dt,t){
       o.position.set(u.base.x+Math.cos(a)*u.r,u.base.y+Math.sin(t*3+u.phase)*.35,u.base.z+Math.sin(a*1.4)*u.r);
       o.rotation.y=-a+Math.PI/2;
     }else if(o.userData.kind==="geese"){
+      o.visible=(APP.time==="dusk");
+      if(!o.visible)return;
       const p=((t*.06)%1),x=-45+p*90;
-      o.position.set(x,19+Math.sin(t*.7)*1.0,12+Math.sin(t*.25)*6);  /* [fix] 高度を下げ中央寄りに(視認性UP) */
+      o.position.set(x,19+Math.sin(t*.85)*1.15,12+Math.sin(t*.25)*6);
       o.rotation.y=Math.PI/2;
-      o.children.forEach((g,i)=>g.rotation.z=Math.sin(t*5+i)*.08);
+      o.children.forEach((g,i)=>{
+        const phase=t*4.25+i*.16,raw=Math.sin(phase),flap=Math.sign(raw)*Math.pow(Math.abs(raw),.72);
+        g.position.y=Math.sin(phase*.5)*.045;g.rotation.x=-.04+Math.sin(phase*.5)*.025;g.rotation.z=0;
+        g.children.forEach(ch=>{if(ch.userData.wingSide)ch.rotation.z=ch.userData.wingSide*(.10+flap*.52);});
+      });
     }
   });
   flyingLife.winter.children.forEach(c=>{
@@ -3511,6 +3649,60 @@ function updateFlyingLife(dt,t){
     c.rotation.y=-a+Math.PI/2;
     c.children.forEach(ch=>{if(ch.userData.wingSide)ch.rotation.z=ch.userData.wingSide*(.18+Math.sin(t*3+u.phase)*.22);});
   });
+}
+
+/* ============================================================
+   雀と童 — 南庭を横切る小さな追いかけっこ
+============================================================ */
+const sparrowChase={birds:[],child:null};
+function makeWarawa(){
+  const g=new THREE.Group(),robe=heianTextile(0x8b4b32,false,3),under=heianTextile(0xc59855,false,2);
+  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.18,.31,.62,11),under);skirt.position.y=.33;g.add(skirt);
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.18,.25,.48,11),robe);body.position.y=.82;g.add(body);
+  const sash=box(.46,.055,.30,M({color:0x3d5e52,roughness:.82}),0,.63,.01);g.add(sash);
+  [-1,1].forEach(s=>{const arm=new THREE.Mesh(new THREE.CylinderGeometry(.045,.075,.47,8),robe);arm.position.set(s*.23,.84,.10);arm.rotation.z=s*.72;arm.rotation.x=-.22;arm.userData.armSide=s;g.add(arm);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(.045,9,7),HEIAN_SKIN);hand.position.set(s*.37,.68,.20);g.add(hand);
+    const leg=cyl(.055,.07,.40,under,s*.11,.12,.01,8);leg.userData.legSide=s;g.add(leg);
+    const foot=box(.13,.07,.22,M({color:0xe9dfca,roughness:.9}),s*.11,.035,.06);g.add(foot);
+  });
+  const head=new THREE.Mesh(HEIAN_GEO.head,HEIAN_SKIN);head.position.set(0,1.22,.03);head.scale.set(.13,.16,.125);g.add(head);
+  const hair=new THREE.Mesh(HEIAN_GEO.hairCap,HEIAN_HAIR);hair.position.set(0,1.30,.005);hair.scale.set(.14,.12,.13);g.add(hair);
+  const topknot=new THREE.Mesh(new THREE.SphereGeometry(.07,8,6),HEIAN_HAIR);topknot.position.set(0,1.45,-.02);g.add(topknot);
+  [-1,1].forEach(s=>{g.add(box(.032,.007,.006,HEIAN_FACE,s*.04,1.23,.155,false));
+    const ear=new THREE.Mesh(new THREE.SphereGeometry(.022,8,6),HEIAN_SKIN);ear.position.set(s*.13,1.22,.02);g.add(ear);});
+  const nose=new THREE.Mesh(new THREE.ConeGeometry(.012,.045,6),HEIAN_SKIN);nose.position.set(0,1.205,.16);nose.rotation.x=Math.PI/2;g.add(nose);
+  g.add(box(.05,.008,.006,new THREE.MeshBasicMaterial({color:0x8d5148}),0,1.17,.158,false));
+  g.userData.head=head;g.userData.body=body;
+  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;
+}
+(function buildSparrowChase(){
+  const child=makeWarawa();child.position.set(15,0,14);scene.add(child);
+  register(child,"warawa",new THREE.Vector3(15,1.7,14));sparrowChase.child=child;
+  const flock=new THREE.Group();scene.add(flock);register(flock,"suzume",new THREE.Vector3(20,1.1,14));
+  for(let i=0;i<4;i++){
+    const bird=makeSmallBird(i%2?0x6d5238:0x806040,0xc4ad83,.68);
+    bird.userData.phase=i*.73+rnd(0,.5);flock.add(bird);sparrowChase.birds.push(bird);
+  }
+  sparrowChase.flock=flock;
+})();
+function updateSparrowChase(t){
+  const a=t*.34,cx=15+Math.cos(a)*6.2,cz=14+Math.sin(a*1.15)*4.2,child=sparrowChase.child;
+  child.position.set(cx,groundH(cx,cz),cz);child.rotation.y=Math.atan2(-Math.sin(a),Math.cos(a*1.15));
+  child.children.forEach(ch=>{
+    if(ch.userData.armSide)ch.rotation.x=-.22+Math.sin(t*5.4)*ch.userData.armSide*.52;
+    if(ch.userData.legSide)ch.rotation.x=Math.sin(t*5.4)*ch.userData.legSide*.28;
+  });
+  if(child.userData.head)child.userData.head.rotation.y=Math.sin(t*2.7)*.10;
+  if(child.userData.body)child.userData.body.scale.y=1+Math.sin(t*5.4)*.025;
+  sparrowChase.birds.forEach((b,i)=>{
+    const ba=a+.58+i*.12,bx=15+Math.cos(ba)*(6.5+i*.10),bz=14+Math.sin(ba*1.15)*(4.5+i*.08);
+    const airborne=Math.sin(t*1.35+i*.9)>.05,hop=Math.abs(Math.sin(t*5.5+i));
+    b.position.set(bx,groundH(bx,bz)+(airborne?.55+hop*.42:.13+hop*.10),bz);
+    b.rotation.y=Math.atan2(-Math.sin(ba),Math.cos(ba*1.15));
+    b.children.forEach(ch=>{if(ch.userData.wingSide)ch.rotation.z=ch.userData.wingSide*(airborne?.22+Math.sin(t*10+i)*.58:.18);});
+  });
+  if(interactables.warawa)interactables.warawa.labelPos.set(cx,child.position.y+1.65,cz);
+  if(interactables.suzume&&sparrowChase.birds[0]){const b=sparrowChase.birds[0],p=sparrowChase.flock.localToWorld(b.position.clone());interactables.suzume.labelPos.set(p.x,p.y+.45,p.z);}
 }
 
 /* ============================================================
@@ -3697,7 +3889,7 @@ const SFX = {
   beds:  { water:"spring_water_on_Mt2.mp3", nightWind:"night_wind2.mp3", summer:"summer_mountains1.mp3" },
   loops: { takibi:"takibi.mp3" },   // 近接ループ(焚火)
   _rot:{}, _last:{}, _active:[], _curScene:null, _bedMedia:null, _bedBase:0.34, _curBed:false,
-  _takibiMedia:null, _spatialT:0, _muted:false,
+  _takibiMedia:null, _spatialT:0, _muted:false, _backgroundPaused:false,
 
   load(ctx){
     this.ctx = ctx;
@@ -3758,7 +3950,8 @@ const SFX = {
     if(key){
       const base = key === "nightWind" ? 0.4 : key === "summer" ? 0.32 : 0.34;
       const src=this.media[this.beds[key]].cloneNode(true);src.loop=true;src.volume=base;src.muted=this._muted;
-      src.play().catch(()=>{});this._bedMedia=src;this._bedBase=base;
+      if(!this._backgroundPaused&&!this._muted)src.play().catch(()=>{});
+      this._bedMedia=src;this._bedBase=base;
     }
     this._curBed = key;
   },
@@ -3784,7 +3977,8 @@ const SFX = {
       const gain=Math.max(0,Math.min(1,1-d/7))*.55;
       if(!this._takibiMedia){
         const src=this.media[this.loops.takibi].cloneNode(true);src.loop=true;src.volume=0;src.muted=this._muted;
-        src.play().catch(()=>{});this._takibiMedia=src;
+        if(!this._backgroundPaused&&!this._muted)src.play().catch(()=>{});
+        this._takibiMedia=src;
       }
       this._takibiMedia.volume=gain;
     } else if(this._takibiMedia){
@@ -3797,7 +3991,18 @@ const SFX = {
     if(this.master&&this.ctx)this.master.gain.setTargetAtTime(m?0:1,this.ctx.currentTime,.15);
     if(this._bedMedia)this._bedMedia.muted=m;if(this._takibiMedia)this._takibiMedia.muted=m;
     this._active.forEach(a=>a.src.muted=m);
-    if(!m){if(this._bedMedia)this._bedMedia.play().catch(()=>{});if(this._takibiMedia)this._takibiMedia.play().catch(()=>{});}
+    if(!m&&!this._backgroundPaused){if(this._bedMedia)this._bedMedia.play().catch(()=>{});if(this._takibiMedia)this._takibiMedia.play().catch(()=>{});}
+  },
+  setBackgroundPaused(paused){
+    this._backgroundPaused=paused;
+    if(paused){
+      if(this._bedMedia)this._bedMedia.pause();
+      if(this._takibiMedia)this._takibiMedia.pause();
+      this.stopActiveCalls();
+    }else if(!this._muted){
+      if(this._bedMedia)this._bedMedia.play().catch(()=>{});
+      if(this._takibiMedia)this._takibiMedia.play().catch(()=>{});
+    }
   }
 };
 
@@ -3849,6 +4054,16 @@ class AmbientAudio {
     if (this.windGain) this.windGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
     SFX.setMuted(true);  // [Phase] 実録音(鳴き声/環境ループ)もミュート
     this.playing = false;
+  }
+  pauseForBackground() {
+    if (!this.isInitialized || !this.playing) return;
+    SFX.setBackgroundPaused(true);
+    if (this.ctx && this.ctx.state === "running") this.ctx.suspend().catch(()=>{});
+  }
+  resumeFromBackground() {
+    if (!this.isInitialized || !this.playing) return;
+    if (this.ctx && this.ctx.state === "suspended") this.ctx.resume().catch(()=>{});
+    SFX.setBackgroundPaused(false);
   }
   toggle() {
     if (!this.isInitialized) {
@@ -4071,8 +4286,9 @@ class AmbientAudio {
 /* ============================================================
    アプリ状態・操作系(マウス/キーボード+タッチ両対応)
 ============================================================ */
-const APP={mode:"title",view:"fp",time:"day",season:"spring",labelMode:1,quiz:null,quest:null,questRole:"male",kaimami:null,codexOpen:false}; // labelMode 0:なし 1:近く 2:すべて
-const player={pos:new THREE.Vector3(0,2.7,26),yaw:0,pitch:-.02};
+const APP={mode:"title",view:"fp",time:"day",season:"spring",labelMode:1,minimap:true,quiz:null,quest:null,questRole:"male",kaimami:null,codexOpen:false}; // labelMode 0:なし 1:近く 2:すべて
+const START_POS=new THREE.Vector3(0,1.62,26);
+const player={pos:START_POS.clone(),yaw:0,pitch:-.02};
 const orbit={yaw:.7,pitch:.95,r:120};
 const keys={};
 addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;});
@@ -4144,6 +4360,23 @@ const seToggle=()=>beep(420,.07,"triangle",.12);
 const raycaster=new THREE.Raycaster();
 const INSTRUMENT_IDS=new Set(["biwa","koto","sho","ryuteki"]);
 const instrumentLast={};
+const NPC_DIALOGUES={
+  himegimi:["庭の風が、御簾をかすかに揺らしております。","今宵の月には、どのような歌が似合うでしょう。","誰かがこちらを見ているような……気のせいでしょうか。"],
+  nyobo:["姫君のお文は、わたくしがお預かりいたします。","御簾の内へは、どうぞ静かに。","今朝は東の庭の花が、たいそう見事でした。"],
+  kikoshi:["簀子より先へ進むには、まだ便りが足りぬようだ。","一目だけでも、お姿を拝したいものだ。","この歌を、女房どのに託していただけまいか。"],
+  warawa:["待て待て、雀たち！","あっ、また屋根へ逃げた！","静かに近づけば、もっとそばで見られるかな。"],
+  monban:["お通りの名を伺おう。","門前では足音をお静かに。","今宵は警固を厳しくせよとの仰せだ。"],
+  seimei:["星の巡りが、今宵の気配を告げている。","式神よ、邸の四方を静かに守れ。","闇を恐れることはない。恐れは形を得るゆえ。"]
+};
+const npcDialogueLast={};let dialogueTimer=0;
+function showNPCDialogue(id){
+  const lines=NPC_DIALOGUES[id];if(!lines||!lines.length)return false;
+  let idx=Math.floor(Math.random()*lines.length);if(lines.length>1&&idx===npcDialogueLast[id])idx=(idx+1)%lines.length;npcDialogueLast[id]=idx;
+  document.getElementById("dialogueName").textContent=ITEMS[id].n;
+  document.getElementById("dialogueText").textContent="「"+lines[idx]+"」";
+  const bubble=document.getElementById("dialogueBubble");bubble.classList.remove("show");void bubble.offsetWidth;bubble.classList.add("show");
+  clearTimeout(dialogueTimer);dialogueTimer=setTimeout(()=>bubble.classList.remove("show"),4300);return true;
+}
 function playInstrument(id){
   const now=performance.now();if(now-(instrumentLast[id]||0)<650)return;
   instrumentLast[id]=now;
@@ -4172,13 +4405,23 @@ function pick(sx,sy){
     toast("灯台のそばまで歩いて、灯芯に火をともそう");return;
   }
   if(gim)toggleGim(gim);
-  if(id&&ITEMS[id]){showInfo(id);if(APP.mode==="quest")questNotifyClick(id);}
+  if(id&&ITEMS[id]){
+    if(NPC_DIALOGUES[id]){showNPCDialogue(id);unlockCodex(id);}else showInfo(id);
+    if(APP.mode==="quest")questNotifyClick(id);
+  }
 }
 function toggleGim(gim){
   seToggle();
   if(gim.type==="shitomi"){gim.st.open=!gim.st.open;}
   else if(gim.type==="misu"){gim.st.up=!gim.st.up;}
-  else if(gim.type==="tsumado"){gim.st.open=!gim.st.open;if(typeof SFX!=="undefined")SFX.playCall("tsumado",0.6);/* [fix]妻戸の開閉音 */}
+  else if(gim.type==="tsumado"){
+    gim.st.open=!gim.st.open;if(typeof SFX!=="undefined")SFX.playCall("tsumado",0.6);
+    if(APP.kaimami&&gim.st.open){
+      APP.kaimami.noiseAt=new THREE.Vector3(player.pos.x,0,player.pos.z);APP.kaimami.noiseUntil=performance.now()+6000;
+      APP.kaimami.grace=0;APP.kaimami.exposure=Math.min(KAIMAMI_ALERT*.35,APP.kaimami.exposure+.18);
+      toast("妻戸の音が響いた。巡回がこちらへ向かってくる",3200);
+    }
+  }
   else if(gim.type==="lamp"){
     if(APP.time!=="night"){toast("灯台を使うのは夜。まず時間を夜にしよう");return;}
     gim.st.lit=!gim.st.lit;
@@ -4261,6 +4504,62 @@ function toast(s,ms=2600){$("toast").textContent=s;$("toast").style.display="blo
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>$("toast").style.display="none",ms);}
 
 /* ============================================================
+   ミニマップ — 主要建物・池・橋と現在地を簡略表示
+============================================================ */
+const minimapCanvas=$("minimap"),minimapCtx=minimapCanvas.getContext("2d");
+function drawMinimap(){
+  if(!APP.minimap||APP.mode==="title")return;
+  const x=minimapCtx,w=minimapCanvas.width,h=minimapCanvas.height,m=25,span=120;
+  const mx=v=>m+(v+60)/span*(w-m*2),my=v=>m+(v+60)/span*(h-m*2);
+  const rect=(cx,cz,rw,rd,fill)=>{
+    x.fillStyle=fill;x.fillRect(mx(cx-rw/2),my(cz+rd/2),rw/span*(w-m*2),rd/span*(h-m*2));
+  };
+  x.clearRect(0,0,w,h);
+  x.fillStyle="rgba(244,236,220,.52)";x.fillRect(0,0,w,h);
+  x.strokeStyle="rgba(90,58,34,.42)";x.lineWidth=3;x.strokeRect(m,m,w-m*2,h-m*2);
+  // 池
+  x.fillStyle="rgba(91,155,180,.46)";
+  pondCircles.forEach(c=>{x.beginPath();x.arc(mx(c[0]),my(c[1]),c[2]/span*(w-m*2),0,Math.PI*2);x.fill();});
+  // 中島
+  x.fillStyle="rgba(140,166,83,.58)";
+  [[-20,34,4.6],[-4,40,3.4]].forEach(c=>{x.beginPath();x.arc(mx(c[0]),my(c[1]),c[2]/span*(w-m*2),0,Math.PI*2);x.fill();});
+  // 主要建物と廊
+  rect(0,-2,27,17,"rgba(118,82,58,.66)");rect(35,-12,18,17,"rgba(118,82,58,.66)");rect(-35,-12,18,17,"rgba(118,82,58,.66)");
+  rect(0,-39,22,13,"rgba(118,82,58,.66)");rect(22,-12,18,3.2,"rgba(154,115,80,.58)");rect(-22,-12,18,3.2,"rgba(154,115,80,.58)");
+  rect(35,14,3.5,35,"rgba(154,115,80,.58)");rect(-35,14,3.5,35,"rgba(154,115,80,.58)");
+  // 反り橋
+  x.strokeStyle="#c85e45";x.lineWidth=8;x.lineCap="round";
+  (window.BRIDGES||[]).forEach(b=>{x.beginPath();x.moveTo(mx(b.x1),my(b.z1));x.lineTo(mx(b.x2),my(b.z2));x.stroke();});
+  // 現在地と向き
+  const fx=-Math.sin(player.yaw),fz=-Math.cos(player.yaw),rx=Math.cos(player.yaw),rz=-Math.sin(player.yaw);
+  const p1=[player.pos.x+fx*3,player.pos.z+fz*3];
+  const p2=[player.pos.x-fx*1.4+rx*1.7,player.pos.z-fz*1.4+rz*1.7];
+  const p3=[player.pos.x-fx*1.4-rx*1.7,player.pos.z-fz*1.4-rz*1.7];
+  x.fillStyle="#b7352b";x.strokeStyle="#fff7df";x.lineWidth=3;x.beginPath();
+  x.moveTo(mx(p1[0]),my(p1[1]));x.lineTo(mx(p2[0]),my(p2[1]));x.lineTo(mx(p3[0]),my(p3[1]));x.closePath();x.fill();x.stroke();
+  const px=player.pos.x,pz=player.pos.z;
+  let area="邸内";
+  if(Math.abs(px)<=15&&pz>-11&&pz<8)area="寝殿";
+  else if(Math.abs(px-35)<12&&pz>-22&&pz<0)area="東の対";
+  else if(Math.abs(px+35)<12&&pz>-22&&pz<0)area="西の対";
+  else if(Math.abs(px)<14&&pz<-31)area="北の対";
+  else if(inPond(px,pz))area="池泉庭園";
+  else if(pz>10)area="南庭";
+  else if(px>50)area="東門";
+  else if(px<-50)area="西門";
+  else if(pz<-50)area="北門";
+  // 方位磁針。赤い針が常に北を示す。
+  const ccx=w-52,ccy=52,cr=34;
+  x.save();x.fillStyle="rgba(24,17,12,.58)";x.strokeStyle="rgba(255,247,223,.88)";x.lineWidth=3;
+  x.beginPath();x.arc(ccx,ccy,cr,0,Math.PI*2);x.fill();x.stroke();
+  x.fillStyle="#f2d36f";x.font="bold 24px sans-serif";x.textAlign="center";x.fillText("N",ccx,ccy-cr-5);
+  x.fillStyle="#c94d3f";x.beginPath();x.moveTo(ccx,ccy-cr+6);x.lineTo(ccx-9,ccy+4);x.lineTo(ccx+9,ccy+4);x.closePath();x.fill();
+  x.fillStyle="#eee4cf";x.beginPath();x.moveTo(ccx,ccy+cr-6);x.lineTo(ccx-8,ccy-3);x.lineTo(ccx+8,ccy-3);x.closePath();x.fill();
+  x.restore();
+  $("minimapLabel").textContent="現在地: "+area;
+}
+
+/* ============================================================
    時間システム(昼・夕・夜)
 ============================================================ */
 const TIMES={
@@ -4304,6 +4603,23 @@ $("tbAudio").onclick=(e)=>{
   beep(600,.06);
 };
 
+let resumeAudioAfterBackground=false;
+function pauseAudioForBackground(){
+  if(!ambientAudio||!ambientAudio.isInitialized||!ambientAudio.playing)return;
+  resumeAudioAfterBackground=true;
+  ambientAudio.pauseForBackground();
+}
+function resumeAudioFromBackground(){
+  if(!resumeAudioAfterBackground||!ambientAudio)return;
+  resumeAudioAfterBackground=false;
+  ambientAudio.resumeFromBackground();
+}
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden)pauseAudioForBackground();else resumeAudioFromBackground();
+});
+addEventListener("pagehide",pauseAudioForBackground);
+addEventListener("pageshow",()=>{if(!document.hidden)resumeAudioFromBackground();});
+
 /* ============================================================
    モード管理
 ============================================================ */
@@ -4329,11 +4645,22 @@ function updateControlUI(){
   $("interactBtn").style.display=fp&&IS_TOUCH?"block":"none";
   $("crosshair").style.display=fp?"block":"none";
   $("tbView").textContent=APP.view==="fp"?"👁 俯瞰":"🚶 歩く";
+  $("minimapWrap").style.display=APP.minimap&&APP.mode!=="title"?"block":"none";
+  $("minimapWrap").style.bottom=IS_TOUCH?"116px":"14px";
+  $("tbMap").textContent=APP.minimap?"地図:入":"地図:切";
+  $("tbMap").classList.toggle("on",APP.minimap);
 }
 $("tbView").onclick=()=>{APP.view=APP.view==="fp"?"ov":"fp";updateControlUI();beep(600,.06);
   if(APP.view==="ov")toast("ドラッグで回転、ピンチ/ホイールで拡大縮小。タップで解説も読めます",3200);};
 $("tbLabel").onclick=()=>{APP.labelMode=(APP.labelMode+1)%3;
   $("tbLabel").textContent="札:"+["なし","近く","すべて"][APP.labelMode];PREFS.set("label",APP.labelMode);beep(600,.06);};
+$("tbMap").onclick=()=>{APP.minimap=!APP.minimap;updateControlUI();beep(560,.06);};
+$("tbHome").onclick=()=>{
+  APP.view="fp";player.pos.copy(START_POS);player.yaw=0;player.pitch=-.02;
+  camera.position.copy(player.pos);window.dummyCam=null;
+  joy.active=false;joy.vx=joy.vy=0;knob.style.transform="translate(-50%,-50%)";
+  closeInfo();updateControlUI();toast("開始位置へ戻りました");
+};
 $("tbHelp").onclick=()=>$("help").style.display="flex";
 $("helpClose").onclick=()=>$("help").style.display="none";
 $("creditsLink").onclick=()=>$("credits").style.display="flex";
@@ -4398,9 +4725,9 @@ const QUIZ_PLACE_HINT={
   kyousoku:"南廂の座のかたわらの肘掛け。",takatsuki:"東廂の座の近く、果物を盛る脚付きの台。",
   kyouzukue:"母屋の西寄り、経巻をのせた低い机。",kagaribi:"南庭に立つ、鉄籠の屋外照明。夜に灯る。",
   gissha:"東門の内側に停めてある牛の車。",
-  himegimi:"母屋の奥、御帳台のそば。",nyobo:"廂に控える女性。",kikoshi:"南廂、几帳ごしの男性。",
+  himegimi:"母屋の奥、御帳台のそば。",nyobo:"廂に控える女性。",kikoshi:"寝殿の東外、格子の隙間から姫君をうかがう男性。",
   oni:"夜、築地のそばの暗がり。",shikigami:"夜、庭を漂う白い影。",
-  oshidori:"池を泳ぐ水鳥。",tsuru:"冬の汀に佇む白い鳥。",hotaru:"夏の夜の光の虫。",uguisu:"春、梅のそばの鳥。"
+  oshidori:"池を泳ぐ水鳥。",tsuru:"冬の汀に佇む白い鳥。",neko:"寝殿南側の庭先でくつろぐ飼い猫。",hotaru:"夏の夜の光の虫。",uguisu:"春、梅のそばの鳥。"
 };
 function stamp(ok){
   const s=$("sealEl");s.textContent=ok?"正解":"残念";
@@ -4422,8 +4749,7 @@ function quizUpdate(){
     beep(680,.08);
   }
   if(!q.hint2&&el>25){q.hint2=true;
-    const lp=interactables[id]&&interactables[id].labelPos;
-    if(lp){beacon.visible=true;beacon.position.set(lp.x,groundH(lp.x,lp.z),lp.z);
+    if(showBeacon(id)){
       toast("光の柱のところにあります",3000);beep(620,.1);}
   }
 }
@@ -4484,12 +4810,27 @@ function endQuiz(){
 const beacon=new THREE.Group();
 {
   const b1=new THREE.Mesh(new THREE.CylinderGeometry(.7,.7,9,16,1,true),
-    new THREE.MeshBasicMaterial({color:0xffd470,transparent:true,opacity:.3,side:THREE.DoubleSide,depthWrite:false}));
+    new THREE.MeshBasicMaterial({color:0xffd470,transparent:true,opacity:.3,side:THREE.DoubleSide,depthWrite:false,depthTest:false}));
   b1.position.y=4.5;beacon.add(b1);
-  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.1,.08,8,28),new THREE.MeshBasicMaterial({color:0xffd470}));
-  ring.rotation.x=Math.PI/2;ring.position.y=.25;beacon.add(ring);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(1.1,.08,8,28),new THREE.MeshBasicMaterial({color:0xffd470,depthTest:false}));
+  ring.rotation.x=Math.PI/2;ring.position.y=.08;beacon.add(ring);
+  b1.renderOrder=20;ring.renderOrder=21;
   beacon.visible=false;scene.add(beacon);
 }
+const beaconBox=new THREE.Box3(),beaconCenter=new THREE.Vector3();
+function beaconAnchor(id,fallback){
+  const it=id&&interactables[id];
+  if(it&&it.roots){
+    const root=it.roots.find(r=>r.visible&&r.parent)||it.roots[0];
+    if(root){beaconBox.setFromObject(root);if(!beaconBox.isEmpty()){
+      beaconBox.getCenter(beaconCenter);
+      return new THREE.Vector3(beaconCenter.x,groundH(beaconCenter.x,beaconCenter.z)+.06,beaconCenter.z);
+    }}
+  }
+  if(it&&it.labelPos)return new THREE.Vector3(it.labelPos.x,groundH(it.labelPos.x,it.labelPos.z)+.06,it.labelPos.z);
+  return fallback?new THREE.Vector3(fallback[0],groundH(fallback[0],fallback[1])+.06,fallback[1]):null;
+}
+function showBeacon(id,fallback){const p=beaconAnchor(id,fallback);beacon.visible=!!p;if(p)beacon.position.copy(p);return !!p;}
 function makeQuestRobe(id,colors,pos,label){
   const g=new THREE.Group(),wood=M({color:0x6d4a2b,roughness:.86});
   g.add(box(1.15,.10,.28,wood,0,1.62,0));
@@ -4577,10 +4918,7 @@ function questAdvance(i){
   $("questTitle").textContent=s.ph;
   $("questText").textContent=s.txt;
   $("questProg").textContent="進行 "+(i)+" / "+(q.steps.length-1);
-  const label=s.bpId&&interactables[s.bpId]?interactables[s.bpId].labelPos:null;
-  if(label){beacon.visible=true;beacon.position.set(label.x,groundH(label.x,label.z),label.z);}
-  else if(s.bp){beacon.visible=true;beacon.position.set(s.bp[0],groundH(s.bp[0],s.bp[1]),s.bp[1]);}
-  else beacon.visible=false;
+  showBeacon(s.bpId,s.bp||null);
   if(s.type==="auto"){
     beacon.visible=false;
     if(s.act==="day")setTime("day");
@@ -4636,25 +4974,49 @@ function questFinish(){
    [Learning] 垣間見ミッション
    通常時の描画負荷を増やさず、このモード中だけ中央視線を判定する。
 ============================================================ */
-const KAIMAMI_ZONE={x:1.1,z:4.0,r:3.3,hold:1.25,start:[47.0,17.0]};
+const KAIMAMI_ZONE={hold:1.25,start:[47.0,17.0]};
 const KAIMAMI_SECRETS=[
-  {id:"east",name:"東の格子",x:13.25,z:-4.05,r:1.65,color:0x53d8c0},
-  {id:"north",name:"北の壁代",x:3.0,z:-7.15,r:1.55,color:0xa58be3}
+  {id:"kichou",name:"几帳越し",x:1.10,z:4.05,r:2.45,color:0xe1b74f},
+  {id:"east",name:"開いた東の格子",x:13.25,z:-4.05,r:1.90,color:0x53d8c0},
+  {id:"north",name:"北の破れた壁代",x:3.0,z:-9.05,r:1.90,color:0xa58be3},
+  {id:"tsumado",name:"妻戸を通った先",x:9.15,z:3.45,r:2.10,color:0xe77964}
 ];
-const KAIMAMI_ALERT=1.15;
+const KAIMAMI_ALERT=1.10;
 const kaimamiRay=new THREE.Raycaster(),kaimamiDetectRay=new THREE.Raycaster(),kaimamiHits=[],KAIMAMI_CENTER={x:0,y:0};
 function makeKaimamiGuard(){
   const g=new THREE.Group(),robe=heianTextile(0x303b31,false,1),under=heianTextile(0x5b4931,false,3),skin=HEIAN_SKIN;
   const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.24,.38,.86,12),under);skirt.position.y=.45;g.add(skirt);
   const body=new THREE.Mesh(new THREE.CylinderGeometry(.25,.34,.72,12),robe);body.position.y=1.14;g.add(body);
-  [-1,1].forEach(s=>{const cap=new THREE.Mesh(HEIAN_GEO.sphere,robe);cap.position.set(s*.25,1.38,0);cap.scale.set(.12,.13,.12);g.add(cap);
-    const arm=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,.55,8),robe);arm.position.set(s*.31,1.12,.03);arm.rotation.z=s*.18;g.add(arm);});
+  const belt=box(.62,.075,.32,M({color:0x56351f,roughness:.74}),0,.91,.01);g.add(belt);
+  const arms=[];
+  [-1,1].forEach(s=>{const shoulder=new THREE.Mesh(HEIAN_GEO.sphere,robe);shoulder.position.set(s*.25,1.38,0);shoulder.scale.set(.14,.14,.14);g.add(shoulder);
+    const arm=new THREE.Mesh(new THREE.CylinderGeometry(.065,.095,.58,9),robe);arm.position.set(s*.31,1.12,.04);arm.rotation.z=s*.18;arm.userData.side=s;g.add(arm);arms.push(arm);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(.055,9,7),skin);hand.position.set(s*.36,.82,.10);g.add(hand);
+    const leg=cyl(.07,.09,.48,under,s*.13,.20,.01,8);g.add(leg);
+    const foot=box(.16,.08,.28,M({color:0xe5ddca,roughness:.9}),s*.13,.045,.07);g.add(foot);
+  });
   const head=new THREE.Mesh(HEIAN_GEO.head,skin);head.position.set(0,1.72,.01);head.scale.set(.145,.18,.14);g.add(head);
   const cap=new THREE.Mesh(new THREE.CylinderGeometry(.09,.12,.28,10),MAT.black);cap.position.set(0,1.99,-.02);cap.rotation.x=-.08;g.add(cap);
-  [-1,1].forEach(s=>{const eye=box(.032,.006,.006,HEIAN_FACE,s*.045,1.73,.145,false);g.add(eye);});
+  [-1,1].forEach(s=>{const eye=box(.038,.007,.006,HEIAN_FACE,s*.045,1.73,.145,false);g.add(eye);
+    const brow=box(.052,.009,.006,HEIAN_FACE,s*.046,1.775,.14,false);brow.rotation.z=s*.07;g.add(brow);
+    const ear=new THREE.Mesh(new THREE.SphereGeometry(.026,8,6),skin);ear.position.set(s*.145,1.72,.01);g.add(ear);});
+  const nose=new THREE.Mesh(new THREE.ConeGeometry(.014,.052,6),skin);nose.position.set(0,1.70,.158);nose.rotation.x=Math.PI/2;g.add(nose);
+  g.add(box(.06,.008,.006,new THREE.MeshBasicMaterial({color:0x774a42}),0,1.655,.15,false));
   const staff=cyl(.025,.025,1.45,M({color:0x553a24,roughness:.85}),.40,.82,.04,7);staff.rotation.z=-.05;g.add(staff);
+  const sword=box(.075,.72,.045,M({color:0x34251c,roughness:.68}),-.39,.70,-.05);sword.rotation.z=-.10;g.add(sword);
+  g.userData.head=head;g.userData.body=body;g.userData.arms=arms;
   g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});g.visible=false;scene.add(g);return g;
 }
+const gateGuards=[
+  {p:[55.2,12],yaw:Math.PI/2},
+  {p:[-55.2,0],yaw:-Math.PI/2},
+  {p:[0,-55.2],yaw:Math.PI},
+  {p:[33.0,20],yaw:Math.PI/2},
+  {p:[-33.0,20],yaw:-Math.PI/2}
+].map((cfg,i)=>{
+  const g=makeKaimamiGuard(),y=groundH(cfg.p[0],cfg.p[1]);g.visible=true;g.position.set(cfg.p[0],y,cfg.p[1]);g.rotation.y=cfg.yaw;
+  register(g,"monban",i===0?new THREE.Vector3(cfg.p[0],y+2.25,cfg.p[1]):null);g.userData.guardPhase=i*1.17;return g;
+});
 function makeKaimamiNyobo(color){
   const g=new THREE.Group(),outer=heianTextile(color,false,3),inner=heianTextile(0xd6c28e,false,3);
   const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.26,.44,1.02,14),outer);skirt.position.y=.52;g.add(skirt);
@@ -4671,10 +5033,11 @@ function makeKaimamiNyobo(color){
 const kaimamiGuards=[makeKaimamiGuard(),makeKaimamiGuard(),makeKaimamiGuard(),makeKaimamiGuard(),makeKaimamiGuard()];
 const kaimamiNyobo=[makeKaimamiNyobo(0x405f3a),makeKaimamiNyobo(0x40597a),makeKaimamiNyobo(0x6f455f)];
 function makeKaimamiMarker(s){
-  const g=new THREE.Group(),mat=new THREE.MeshBasicMaterial({color:s.color,transparent:true,opacity:.72,depthWrite:false});
+  const g=new THREE.Group(),mat=new THREE.MeshBasicMaterial({color:s.color,transparent:true,opacity:.72,depthWrite:false,depthTest:false});
   const ring=new THREE.Mesh(new THREE.TorusGeometry(.76,.055,8,28),mat);ring.rotation.x=Math.PI/2;ring.position.y=.07;g.add(ring);
-  const ray=new THREE.Mesh(new THREE.CylinderGeometry(.22,.58,3.2,16,1,true),new THREE.MeshBasicMaterial({color:s.color,transparent:true,opacity:.13,side:THREE.DoubleSide,depthWrite:false}));
-  ray.position.y=1.6;g.add(ray);g.position.set(s.x,groundH(s.x,s.z),s.z);g.visible=false;scene.add(g);g.userData.ring=ring;return g;
+  const ray=new THREE.Mesh(new THREE.CylinderGeometry(.22,.58,3.2,16,1,true),new THREE.MeshBasicMaterial({color:s.color,transparent:true,opacity:.13,side:THREE.DoubleSide,depthWrite:false,depthTest:false}));
+  ring.renderOrder=21;ray.renderOrder=20;
+  ray.position.y=1.6;g.add(ray);g.position.set(s.x,groundH(s.x,s.z)+.06,s.z);g.visible=false;scene.add(g);g.userData.ring=ring;return g;
 }
 const kaimamiMarkers=KAIMAMI_SECRETS.map(makeKaimamiMarker);
 function makeNorthTear(){
@@ -4696,7 +5059,11 @@ function kaimamiRestoreActors(k=APP.kaimami){
   if(k&&k.prevLabel!==undefined){APP.labelMode=k.prevLabel;$("tbLabel").textContent="札:"+["なし","近く","すべて"][APP.labelMode];}
 }
 function kaimamiPlaceWatcher(w,t){
-  const a=t*w.speed+w.phase,x=w.cx+Math.cos(a)*w.rx,z=w.cz+Math.sin(a)*w.rz;
+  const a=t*w.speed+w.phase;let x=w.cx+Math.cos(a)*w.rx,z=w.cz+Math.sin(a)*w.rz;
+  const k=APP.kaimami,now=performance.now();
+  if(k&&k.noiseUntil>now&&k.noiseAt&&w.guard){
+    const rush=Math.min(.82,.30+(k.noiseUntil-now)/6000*.42);x+=(k.noiseAt.x-x)*rush;z+=(k.noiseAt.z-z)*rush;
+  }
   const dx=-Math.sin(a)*w.rx,dz=Math.cos(a)*w.rz;
   w.g.position.x=x;w.g.position.z=z;w.g.rotation.y=Math.atan2(dx,dz);w.g.visible=true;
   if(w.guard)w.g.position.y=groundH(x,z);
@@ -4705,23 +5072,24 @@ function kaimamiOwns(root,o){for(let p=o;p;p=p.parent)if(p===root)return true;re
 function kaimamiWatcherSees(w){
   const origin=new THREE.Vector3(w.g.position.x,w.g.position.y+(w.guard?1.62:1.08),w.g.position.z);
   const target=new THREE.Vector3(player.pos.x,player.pos.y-.22,player.pos.z),to=target.sub(origin),dist=to.length();
-  if(dist>w.range)return false;
+  if(dist>w.range+1.0)return false;
   const forward=new THREE.Vector3(0,0,1).applyQuaternion(w.g.getWorldQuaternion(new THREE.Quaternion()));forward.y=0;forward.normalize();
-  const flat=to.clone();flat.y=0;if(!flat.lengthSq()||forward.dot(flat.normalize())<Math.cos(w.fov*.5))return false;
+  const flat=to.clone();flat.y=0;if(!flat.lengthSq()||forward.dot(flat.normalize())<Math.cos((w.fov+.10)*.5))return false;
   kaimamiDetectRay.set(origin,to.normalize());kaimamiDetectRay.far=Math.max(0,dist-.42);
   const hits=kaimamiDetectRay.intersectObjects(rayTargets,false);
   return !hits.some(h=>!kaimamiOwns(w.g,h.object));
 }
-function kaimamiLookAtHime(){
-  kaimamiRay.setFromCamera(KAIMAMI_CENTER,camera);kaimamiHits.length=0;
-  kaimamiRay.intersectObjects(rayTargets,false,kaimamiHits);
-  const first=kaimamiHits.find(h=>isObjVisible(h.object));
-  return !!(first&&first.object.userData.iid==="himegimi");
+function kaimamiLookAtHime(route){
+  const hime=people[0]&&people[0].g;if(!hime||!route)return false;
+  const target=new THREE.Vector3(hime.position.x,hime.position.y+1.12,hime.position.z),dir=new THREE.Vector3();
+  camera.getWorldDirection(dir);const to=target.sub(camera.position),dist=to.length();
+  return dist<=22&&dir.dot(to.normalize())>=.965;
 }
 function kaimamiEyeUpdate(watcher,k){
   const eye=$("kaimamiEye"),pct=Math.min(100,Math.round(k.exposure/KAIMAMI_ALERT*100));
   eye.classList.toggle("watched",!!watcher);eye.querySelector(".fill").style.width=pct+"%";
-  eye.querySelector(".eye-label").textContent=watcher?`${watcher.name}の視線`:pct?"視線が遠のく":"気配なし";
+  eye.querySelector(".eye-label").textContent=watcher?`発見危険度 ${pct}%`:`発見危険度 ${pct}%`;
+  eye.title=watcher?`${watcher.name}に見られている`:"現在は見られていない";
 }
 function startKaimami(){
   scene.updateMatrixWorld(true);
@@ -4731,9 +5099,9 @@ function startKaimami(){
   gimmicks.shitomi.forEach((st,i)=>{st.root.getWorldPosition(tmp);const d=tmp.distanceToSquared(eastTarget);if(d<eastDist){eastDist=d;eastIndex=i;}});
   const kabeshiroCloth=interactables.kabeshiro&&interactables.kabeshiro.roots[0]&&interactables.kabeshiro.roots[0].children[0];
   APP.kaimami={hold:0,done:false,caught:0,exposure:0,grace:3.0,restore,watchers:[],prevLabel:APP.labelMode,
-    shitomi,misu,kabeshiroCloth,eastIndex,hintAt:performance.now()+18000,hintShown:false};APP.quest=null;
+    shitomi,misu,kabeshiroCloth,eastIndex,hintAt:performance.now()+40000,hintShown:false,noiseUntil:0,noiseAt:null};APP.quest=null;
   const k=APP.kaimami;
-  people[0].g.position.set(3.0,SH.f3+.02,-3.35);people[0].g.rotation.y=Math.PI/2;people[0].base.copy(people[0].g.position);people[0].g.visible=true;
+  people[0].g.position.set(.35,SH.f3+.02,-1.05);people[0].g.rotation.y=.42;people[0].base.copy(people[0].g.position);people[0].g.visible=true;
   people[1].g.visible=false;people[2].g.visible=false;APP.labelMode=0;$("tbLabel").textContent="札:なし";
   gimmicks.shitomi.forEach(st=>st.open=false);gimmicks.misu.forEach(st=>st.up=false);
   gimmicks.shitomi[eastIndex].open=true;if(gimmicks.misu[eastIndex])gimmicks.misu[eastIndex].up=true;
@@ -4752,8 +5120,8 @@ function startKaimami(){
   APP.view="fp";player.pos.set(KAIMAMI_ZONE.start[0],groundH(...KAIMAMI_ZONE.start)+1.62,KAIMAMI_ZONE.start[1]);player.yaw=Math.PI/2;player.pitch=-.04;
   setTime("dusk");updateControlUI();
   $("questTitle").textContent="垣間見 — 人目を忍べ";
-  $("questText").textContent="牛車から邸へ忍ぶ。東の開いた格子、または北廂の破れた壁代から、画面中央に姫君を捉えよう。";
-  $("questProg").textContent="見張りの向きと眼の警戒ゲージを見て進む";
+  $("questText").textContent="巡回を避け、①几帳越し ②開いた格子越し ③破れた壁代越し ④妻戸を通った先、いずれかから姫君を画面中央に捉えよう。";
+  $("questProg").textContent="四つの経路を探す。妻戸の音には注意";
   $("kaimamiEye").style.display="flex";beacon.visible=false;
 }
 function kaimamiUpdate(dt){
@@ -4761,20 +5129,19 @@ function kaimamiUpdate(dt){
   const t=performance.now()*.001;k.watchers.forEach(w=>kaimamiPlaceWatcher(w,t));
   k.grace=Math.max(0,k.grace-dt);
   const watcher=k.grace<=0?k.watchers.find(kaimamiWatcherSees):null;
-  k.exposure=watcher?Math.min(KAIMAMI_ALERT+.1,k.exposure+dt):Math.max(0,k.exposure-dt*2.8);
+  k.exposure=watcher?Math.min(KAIMAMI_ALERT+.1,k.exposure+dt*1.14):Math.max(0,k.exposure-dt*2.35);
   kaimamiEyeUpdate(watcher,k);
   if(k.exposure>=KAIMAMI_ALERT){
     k.caught++;k.exposure=0;k.hold=0;k.grace=2.6;seNG();
     player.pos.set(KAIMAMI_ZONE.start[0],groundH(...KAIMAMI_ZONE.start)+1.62,KAIMAMI_ZONE.start[1]);player.yaw=Math.PI/2;player.pitch=-.04;
     toast(`${watcher.name}に見つかった。物陰を使ってやり直そう`,3000);
   }
-  if(!k.hintShown&&performance.now()>=k.hintAt){k.hintShown=true;kaimamiMarkers.forEach(g=>g.visible=true);toast("二つの覗き口が淡く光り始めた",2800);}
+  if(!k.hintShown&&performance.now()>=k.hintAt){k.hintShown=true;kaimamiMarkers.forEach(g=>g.visible=true);toast("四つの覗き場所が淡く光り始めた",3000);}
   if(k.hintShown)kaimamiMarkers.forEach((g,i)=>{const pulse=1+Math.sin(performance.now()*.004+i)*.12;g.userData.ring.scale.setScalar(pulse);});
   const secret=KAIMAMI_SECRETS.find(s=>Math.hypot(player.pos.x-s.x,player.pos.z-s.z)<s.r);
-  const inZone=Math.hypot(player.pos.x-KAIMAMI_ZONE.x,player.pos.z-KAIMAMI_ZONE.z)<KAIMAMI_ZONE.r;
-  if(!secret&&!inZone){k.hold=0;$("questProg").textContent=watcher?`見つかりそう… ${Math.round(k.exposure/KAIMAMI_ALERT*100)}% / 警戒 ${k.caught}回`:
-    `警戒 ${k.caught}回 / 開いた格子か、北廂の破れた壁代を探す`;return;}
-  const seesHime=kaimamiLookAtHime();
+  if(!secret){k.hold=0;$("questProg").textContent=watcher?`見つかりそう… ${Math.round(k.exposure/KAIMAMI_ALERT*100)}% / 警戒 ${k.caught}回`:
+    `警戒 ${k.caught}回 / 几帳・格子・壁代・妻戸の経路を探す`;return;}
+  const seesHime=kaimamiLookAtHime(secret);
   k.hold=seesHime&&!watcher?Math.min(KAIMAMI_ZONE.hold,k.hold+dt):Math.max(0,k.hold-dt*2.2);
   const pct=Math.round(k.hold/KAIMAMI_ZONE.hold*100);
   $("questProg").textContent=watcher?`視線を感じる… 隠れよ ${Math.round(k.exposure/KAIMAMI_ALERT*100)}% / 警戒 ${k.caught}回`:
@@ -5066,6 +5433,9 @@ function animate(){
       if(sm.userData.aura)sm.userData.aura.intensity=(0.5+Math.sin(t*2)*0.25)*nightFade;
       if(sm.userData.star){sm.userData.star.rotation.z=t*0.4;
         sm.userData.star.material.opacity=(0.35+Math.sin(t*2)*0.2)*nightFade;}
+      if(sm.userData.body)sm.userData.body.scale.y=1+Math.sin(t*1.15)*.012;
+      if(sm.userData.head){sm.userData.head.rotation.y=Math.sin(t*.48)*.055;sm.userData.head.rotation.x=Math.sin(t*.31)*.018;}
+      if(sm.userData.shaku)sm.userData.shaku.rotation.z=-.08+Math.sin(t*.72)*.018;
     }
   }
 
@@ -5083,11 +5453,26 @@ function animate(){
     }
   }
 
+  /* --- 飼い猫 --- */
+  for(const c of petCats){
+    c.tail.rotation.z=Math.sin(t*.9+c.phase)*.2;
+    c.head.rotation.y=Math.sin(t*.35+c.phase)*.08;
+    c.g.position.y=c.baseY+Math.sin(t*1.2+c.phase)*.006;
+  }
+  for(const g of gateGuards){
+    const ph=g.userData.guardPhase;
+    g.rotation.z=Math.sin(t*.55+ph)*.006;
+    if(g.userData.body)g.userData.body.scale.y=1+Math.sin(t*.85+ph)*.008;
+    if(g.userData.head)g.userData.head.rotation.y=Math.sin(t*.42+ph)*.07;
+    (g.userData.arms||[]).forEach(a=>a.rotation.x=Math.sin(t*.55+ph+a.userData.side)*.025);
+  }
+
   /* --- 季節パーティクル --- */
   if(petals.visible)updateFalling(petals,dt,t);
   if(leavesFall.visible)updateFalling(leavesFall,dt,t);
   if(snowFall.visible)updateFalling(snowFall,dt,t);
   updateFlyingLife(dt,t);
+  updateSparrowChase(t);
   // 蛍は「夏」かつ「夜」のときだけ舞う
   const fireflyOn=(APP.season==="summer")&&(cur.moon>0.04);
   fireflies.visible=fireflyOn;
@@ -5189,6 +5574,7 @@ function animate(){
     if(APP.mode==="quiz")quizUpdate();
     if(APP.mode==="kaimami")kaimamiUpdate(dt);
   }
+  drawMinimap();    /* ミニマップ(独立2Dキャンバス) */
   BLOOM.update();   /* 夜/夕かつ高品質時のみブルームを有効化 */
   BLOOM.render();   /* 条件に応じ composer(ブルーム) か 通常描画 を選択 */
 }
@@ -5205,10 +5591,7 @@ renderer.domElement.addEventListener("webglcontextlost",e=>{e.preventDefault();g
 renderer.domElement.addEventListener("webglcontextrestored",()=>{glLost=false;
   if(typeof toast==="function")toast("描画を復帰しました",1600);},false);
 
-/* 橋の歩行ゾーン(南庭⇄中島A⇄中島B⇄南庭の回遊動線) */
-addZone(-20,26.25,3.4,8.5,1.05);   // 南庭→中島A 反り橋
-addZone(-11.5,37,10,8,1.05);        // 中島A→中島B
-addZone(-4,32.5,3.4,9,1.05);        // 中島B→南庭 反り橋
+/* 橋面の高さは groundH() が反りと両岸の高さから連続計算する。 */
 /* 中島 */
 addZone(-20,34,8,8,1.15);addZone(-4,40,6,6,1.15);
 
