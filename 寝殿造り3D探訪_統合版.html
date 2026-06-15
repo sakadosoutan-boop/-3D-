@@ -3236,11 +3236,12 @@ function makeShikigami(){
 }
 (function placeCreatures(){
   // 鬼:築地沿いの暗がり(東南と北西)に2体
-  [[42,42,2.4],[-40,-30,2.0]].forEach(p=>{
+  [[42,42,2.4,-2.35],[-40,-30,2.0,.72]].forEach(p=>{
     const oni=makeOni();oni.scale.setScalar(p[2]/2.2);
     oni.position.set(p[0],0,p[1]);oni.visible=false;
     scene.add(oni);register(oni,"oni",new THREE.Vector3(p[0],3.4*p[2]/2.2,p[1]));
-    creatures.oni.push({g:oni,base:new THREE.Vector2(p[0],p[1]),phase:Math.random()*6});
+    creatures.oni.push({g:oni,base:new THREE.Vector2(p[0],p[1]),phase:Math.random()*6,
+      dir:new THREE.Vector2(Math.sin(p[3]),Math.cos(p[3])),patrol:8});
   });
   // 式神:庭を漂う(3体)
   [[10,30],[-15,25],[20,15]].forEach(p=>{
@@ -5027,11 +5028,13 @@ function animate(){
   creatures.oni.forEach(o=>{
     o.g.visible=nightFade>0.05;
     if(o.g.visible){
-      const a=t*.05+o.phase,step=t*1.48+o.phase*2.3;
-      o.g.position.x=o.base.x+Math.cos(a)*4;
-      o.g.position.z=o.base.y+Math.sin(a)*4;
+      const travel=t*.22+o.phase*.17,cycle=((travel%2)+2)%2;
+      const forward=cycle<1,along=(forward?cycle:2-cycle)-.5,sign=forward?1:-1;
+      const step=t*1.48+o.phase*2.3;
+      o.g.position.x=o.base.x+o.dir.x*along*o.patrol;
+      o.g.position.z=o.base.y+o.dir.y*along*o.patrol;
       const impact=Math.pow(Math.max(0,Math.cos(step*2)),10);
-      o.g.position.y=.035-impact*.028;o.g.rotation.y=-a+Math.PI/2;o.g.rotation.x=.025;o.g.rotation.z=Math.sin(step)*.035;
+      o.g.position.y=.035-impact*.028;o.g.rotation.y=Math.atan2(o.dir.x*sign,o.dir.y*sign);o.g.rotation.x=.025;o.g.rotation.z=Math.sin(step)*.035;
       if(o.g.userData.body)o.g.userData.body.rotation.z=-Math.sin(step)*.025;
       (o.g.userData.legs||[]).forEach(L=>{
         const p=step+(L.side>0?Math.PI:0),swing=Math.sin(p),lift=Math.max(0,Math.cos(p))*.10;
