@@ -1106,9 +1106,9 @@ h1.t-main .shu{color:var(--shu-bright)}
 #topbar .spacer{flex:1}
 #modeTag{color:var(--gofun);background:rgba(179,64,42,.85);border:1px solid var(--kin);
   font-size:12px;padding:6px 12px;letter-spacing:.2em;border-radius:2px;white-space:nowrap}
-#minimapWrap{position:fixed;z-index:39;right:14px;bottom:14px;width:176px;height:176px;
-  display:none;border:1px solid rgba(201,162,63,.65);border-radius:8px;overflow:hidden;
-  background:rgba(20,13,8,.38);box-shadow:0 4px 14px rgba(0,0,0,.22);pointer-events:none}
+#minimapWrap{position:fixed;z-index:39;left:14px;top:52px;width:176px;height:176px;
+  display:none;border:1px solid rgba(201,162,63,.5);border-radius:8px;overflow:hidden;
+  background:rgba(20,13,8,.24);box-shadow:0 4px 14px rgba(0,0,0,.22);pointer-events:none;opacity:.82}
 #minimap{display:block;width:176px;height:176px}
 #minimapLabel{position:absolute;left:8px;top:6px;color:#f4ecdc;font:10px var(--sans);
   letter-spacing:.16em;text-shadow:0 1px 2px #000}
@@ -1275,8 +1275,8 @@ h1.t-main .shu{color:var(--shu-bright)}
   #info{right:0;left:0;top:auto;bottom:0;width:100%;border-radius:12px 12px 0 0}
   .info-body{max-height:38vh}
   #topbar{flex-wrap:wrap}
-  #minimapWrap{right:10px;bottom:116px;width:142px;height:142px}
-  #minimap{width:142px;height:142px}
+  #minimapWrap{left:10px;top:56px;width:132px;height:132px}
+  #minimap{width:132px;height:132px}
 }
 </style>
 </head>
@@ -3606,16 +3606,24 @@ function makeFalling(count,texture,size){
     m.rotation.set(rnd(0,3),rnd(0,3),rnd(0,3));
     g.add(m);
   }
-  g.visible=false;scene.add(g);return g;
+  g.userData.mat=mat;g.visible=false;scene.add(g);return g;
 }
 const petals=makeFalling(90,TEX.sakuraPetal,0.28);   // 桜の花びら(小さめ)
 const leavesFall=makeFalling(70,TEX.mapleLeaf,0.52); // 紅葉の落ち葉
 const snowFall=makeFalling(220,TEX.snow,0.26);       // 雪
-function updateFalling(g,dt,t){
+/* 桜吹雪の突風: 平常は穏やか、たまに強く舞う(2周波で不規則な周期に) */
+function sakuraGust(t){
+  const slow=Math.sin(t*0.045)+Math.sin(t*0.017+1.3);
+  return Math.min(1,0.12+Math.max(0,(slow-1.1)/0.9));
+}
+function updateFalling(g,dt,t,gust){
+  const hasG=(gust!==undefined);
+  const spd=hasG?(0.5+gust*1.7):1, swayMul=hasG?(0.6+gust*2.6):1;
+  if(hasG&&g.userData.mat)g.userData.mat.opacity=0.22+gust*0.68; // 平常は淡く、突風で濃く=間欠的な桜吹雪
   g.children.forEach(m=>{
     const u=m.userData;
-    m.position.y-=u.vy*60*dt;
-    m.position.x+=Math.sin(t*u.sx+u.sway)*0.02;
+    m.position.y-=u.vy*60*dt*spd;
+    m.position.x+=Math.sin(t*u.sx+u.sway)*0.02*swayMul;
     m.rotation.x+=dt*1.5;m.rotation.z+=dt*1.2;
     if(m.position.y<0.1){m.position.y=rnd(28,40);
       m.position.x=rnd(-60,60);m.position.z=rnd(-60,60);}
@@ -4595,10 +4603,13 @@ function unlockCodex(id){
 function renderCodex(){
   const grid=$("codexGrid");grid.textContent="";
   const catName={b:"建築",g:"建具",c:"調度品",p:"人物",x:"怪異",a:"生き物",s:"霊獣"};
+  const catHint={b:"建物の柱・屋根・床まわりを見上げて探そう",g:"戸・格子・簾など動かせる建具を調べよう",c:"寝殿や対屋の室内に置かれた道具を探そう",p:"邸内の人物に近づいて調べよう",x:"夜だけ現れる。時間を夜にして庭の暗がりへ",a:"庭や池のまわり。季節・時間で現れる生き物を探そう",s:"邸の四方(築地のきわ)に守護神が現れる"};
+  const catDiff={b:1,g:2,c:2,p:2,x:3,a:3,s:2};  // 発見難易度(カテゴリ基準)
   Object.keys(ITEMS).forEach(id=>{
     const it=ITEMS[id],open=codexUnlocked.has(id),b=document.createElement("button");
     b.className="codex-entry"+(open?"":" locked");b.disabled=!open;
-    b.innerHTML=open?`<b>${it.n}</b><small>${it.k}<br>${catName[it.cat]}</small>`:`<b>未解放</b><small>${catName[it.cat]} / 邸内で解説を読む</small>`;
+    const dv=catDiff[it.cat]||1,stars="★".repeat(dv)+"☆".repeat(3-dv);
+    b.innerHTML=open?`<b>${it.n}</b><small>${it.k}<br>${catName[it.cat]}　難${stars}</small>`:`<b>未解放</b><small>${catName[it.cat]}　難${stars}<br>ヒント: ${catHint[it.cat]||"邸内で解説を読む"}</small>`;
     if(open)b.onclick=()=>{
       const d=$("codexDetail");d.className="show";
       d.innerHTML=`<h3>${it.n}</h3><div>${it.k}</div><p>${it.d}</p><p><b>古文の窓:</b> ${it.t}</p>`;
@@ -4643,7 +4654,7 @@ function drawMinimap(){
     x.fillStyle=fill;x.fillRect(mx(cx-rw/2),my(cz+rd/2),rw/span*(w-m*2),rd/span*(h-m*2));
   };
   x.clearRect(0,0,w,h);
-  x.fillStyle="rgba(244,236,220,.52)";x.fillRect(0,0,w,h);
+  x.fillStyle="rgba(244,236,220,.30)";x.fillRect(0,0,w,h);
   x.strokeStyle="rgba(90,58,34,.42)";x.lineWidth=3;x.strokeRect(m,m,w-m*2,h-m*2);
   // 池
   x.fillStyle="rgba(91,155,180,.46)";
@@ -4684,7 +4695,8 @@ function drawMinimap(){
   x.fillStyle="#c94d3f";x.beginPath();x.moveTo(ccx,ccy-cr+6);x.lineTo(ccx-9,ccy+4);x.lineTo(ccx+9,ccy+4);x.closePath();x.fill();
   x.fillStyle="#eee4cf";x.beginPath();x.moveTo(ccx,ccy+cr-6);x.lineTo(ccx-8,ccy-3);x.lineTo(ccx+8,ccy-3);x.closePath();x.fill();
   x.restore();
-  $("minimapLabel").textContent="現在地: "+area;
+  const indoor=groundH(px,pz)>0.05;  // 床上=邸内 / 地面=邸外
+  $("minimapLabel").textContent=(indoor?"邸内":"邸外")+" ｜ "+area;
 }
 
 /* ============================================================
@@ -4773,8 +4785,7 @@ function updateControlUI(){
   $("interactBtn").style.display=fp&&IS_TOUCH?"block":"none";
   $("crosshair").style.display=fp?"block":"none";
   $("tbView").textContent=APP.view==="fp"?"👁 俯瞰":"🚶 歩く";
-  $("minimapWrap").style.display=APP.minimap&&APP.mode!=="title"?"block":"none";
-  $("minimapWrap").style.bottom=IS_TOUCH?"116px":"14px";
+  $("minimapWrap").style.display=APP.minimap&&(APP.mode==="walk"||APP.mode==="quiz")?"block":"none"; // 左上配置のため、上部HUDと競合する一日体験/垣間見では非表示
   $("tbMap").textContent=APP.minimap?"地図:入":"地図:切";
   $("tbMap").classList.toggle("on",APP.minimap);
 }
@@ -5696,7 +5707,7 @@ function animate(){
   }
 
   /* --- 季節パーティクル --- */
-  if(petals.visible)updateFalling(petals,dt,t);
+  if(petals.visible)updateFalling(petals,dt,t,sakuraGust(t));  // 桜は間欠的な突風
   if(leavesFall.visible)updateFalling(leavesFall,dt,t);
   if(snowFall.visible)updateFalling(snowFall,dt,t);
   updateFlyingLife(dt,t);
