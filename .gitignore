@@ -1,0 +1,17 @@
+# OS / OneDrive が生成するゴミ
+Thumbs.db
+desktop.ini
+ehthumbs.db
+*.tmp
+~$*
+
+# 作業バックアップ・一時ファイル
+*.bak
+_phase0_work.bak
+
+# エディタ
+.vscode/
+.idea/
+
+# 参照資料・並行ツール設定（コード本体ではない・PDF等で重い）
+素材/
