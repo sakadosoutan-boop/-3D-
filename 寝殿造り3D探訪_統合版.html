@@ -1088,6 +1088,11 @@ h1.t-main .shu{color:var(--shu-bright)}
 .t-btn.gold{background:linear-gradient(180deg,#5c4716,#3c2e0e)}
 .t-note{color:#8d8068;font-size:11px;margin-top:22px;letter-spacing:.08em;line-height:1.8}
 #loading{color:var(--kin);font-size:13px;letter-spacing:.3em;margin-top:18px;display:none}
+#questRolePicker{position:fixed;inset:0;z-index:65;display:none;align-items:center;justify-content:center;background:rgba(10,7,5,.78);backdrop-filter:blur(4px)}
+#questRolePicker .role-card{width:min(420px,calc(100vw - 36px));padding:28px;text-align:center;color:var(--gofun);background:#21160f;border:1px solid var(--kin);box-shadow:0 18px 60px rgba(0,0,0,.65)}
+#questRolePicker h2{color:var(--kin);font-size:20px;letter-spacing:.16em;margin-bottom:10px}
+#questRolePicker p{color:#cdbf9f;font-size:13px;line-height:1.7;margin-bottom:18px}
+#questRolePicker .role-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
 /* ===== 上部バー ===== */
 #topbar{position:fixed;top:0;left:0;right:0;z-index:40;display:none;align-items:center;gap:8px;
@@ -1287,8 +1292,7 @@ h1.t-main .shu{color:var(--shu-bright)}
       <button class="t-btn" id="btnWalk">自由散策<small>邸内と庭を歩き回る</small></button>
       <button class="t-btn gold" id="btnQuiz">名称当てクイズ<small>部位・調度品を探せ</small></button>
       <button class="t-btn gold" id="btnQuizTA">⏱ タイムアタック<small>10問を最速タイムで答えよ</small></button>
-      <button class="t-btn" id="btnQuest">男性貴族の一日<small>朝廷への出仕・教養・管弦</small></button>
-      <button class="t-btn" id="btnQuestF">女性貴族の一日<small>文・御簾越しの応対・管弦</small></button>
+      <button class="t-btn" id="btnQuest">貴族の一日体験<small>男女を選んで平安の一日をたどる</small></button>
       <button class="t-btn gold" id="btnKaimami">垣間見ミッション<small>女房と侍従の目を避けて忍ぶ</small></button>
       <button class="t-btn" id="btnCodex">平安ものしり図鑑<small id="titleCodexProgress">図鑑 0 / 0</small></button>
     </div>
@@ -1297,6 +1301,14 @@ h1.t-main .shu{color:var(--shu-bright)}
     <button id="creditsLink" class="t-credit">ⓘ クレジット・ライセンス</button>
   </div>
 </div>
+
+<div id="questRolePicker"><div class="role-card">
+  <h2>貴族の一日体験</h2><p>体験する人物を選んでください。</p>
+  <div class="role-actions">
+    <button class="t-btn" id="questRoleMale">男性貴族<small>朝廷への出仕と教養</small></button>
+    <button class="t-btn" id="questRoleFemale">女性貴族<small>文・応対・管弦</small></button>
+  </div>
+</div></div>
 
 <div id="topbar">
   <span class="brand">寝殿造り探訪</span>
@@ -2029,10 +2041,11 @@ const SHISHIN_DATA={
     });
   }
 
-  addImageShishin({id:"seiryu",data:SHISHIN_DATA.seiryu,color:0x32cfff,x:W-9,y:3.6,z:12,width:7.6,R:9.5});
-  addImageShishin({id:"byakko",data:SHISHIN_DATA.byakko,color:0xbda7ff,x:-W+9,y:2.25,z:0,width:7.2,R:9.5});
-  addImageShishin({id:"genbu",data:SHISHIN_DATA.genbu,color:0x54d7c7,x:0,y:2.15,z:-W+9,width:7.0,R:9.5});
-  addImageShishin({id:"suzaku",data:SHISHIN_DATA.suzaku,color:0xff643e,x:0,y:5.0,z:49,width:8.2,R:11});
+  const OUT=W+4;
+  addImageShishin({id:"seiryu",data:SHISHIN_DATA.seiryu,color:0x32cfff,x:OUT,y:3.6,z:12,width:7.6,R:15});
+  addImageShishin({id:"byakko",data:SHISHIN_DATA.byakko,color:0xbda7ff,x:-OUT,y:2.25,z:0,width:7.2,R:15});
+  addImageShishin({id:"genbu",data:SHISHIN_DATA.genbu,color:0x54d7c7,x:0,y:2.15,z:-OUT,width:7.0,R:15});
+  addImageShishin({id:"suzaku",data:SHISHIN_DATA.suzaku,color:0xff643e,x:0,y:5.0,z:OUT,width:8.2,R:16});
 }
 
 /* ============================================================
@@ -3721,9 +3734,9 @@ function updateFlyingLife(dt,t){
       o.position.set(x,19+Math.sin(t*.85)*1.15,12+Math.sin(t*.25)*6);
       o.rotation.y=Math.PI/2;
       o.children.forEach((g,i)=>{
-        const phase=t*4.25+i*.16,raw=Math.sin(phase),flap=Math.sign(raw)*Math.pow(Math.abs(raw),.72);
-        g.position.y=Math.sin(phase*.5)*.045;g.rotation.x=-.04+Math.sin(phase*.5)*.025;g.rotation.z=0;
-        g.children.forEach(ch=>{if(ch.userData.wingSide)ch.rotation.z=ch.userData.wingSide*(.10+flap*.52);});
+        const phase=t*2.65+i*.16,raw=Math.sin(phase),flap=Math.sign(raw)*Math.pow(Math.abs(raw),.78);
+        g.position.y=Math.sin(phase*.5)*.035;g.rotation.x=-.04+Math.sin(phase*.5)*.018;g.rotation.z=0;
+        g.children.forEach(ch=>{if(ch.userData.wingSide)ch.rotation.z=ch.userData.wingSide*(.10+flap*.30);});
       });
     }
   });
@@ -4785,8 +4798,11 @@ $("tbTitle").onclick=()=>{location.reload();};
 $("btnWalk").onclick=()=>{beep(660,.08);initAudio();enterMode("walk");};
 $("btnQuiz").onclick=()=>{beep(660,.08);initAudio();APP.quizTA=false;enterMode("quiz");};
 $("btnQuizTA").onclick=()=>{beep(720,.08);initAudio();APP.quizTA=true;enterMode("quiz");};
-$("btnQuest").onclick=()=>{beep(660,.08);initAudio();APP.questRole="male";enterMode("quest");};
-$("btnQuestF").onclick=()=>{beep(700,.08);initAudio();APP.questRole="female";enterMode("quest");};
+$("btnQuest").onclick=()=>{beep(660,.08);$("questRolePicker").style.display="flex";};
+$("questRolePicker").onclick=e=>{if(e.target===$("questRolePicker"))$("questRolePicker").style.display="none";};
+function chooseQuestRole(role){initAudio();APP.questRole=role;$("questRolePicker").style.display="none";enterMode("quest");}
+$("questRoleMale").onclick=()=>{beep(660,.08);chooseQuestRole("male");};
+$("questRoleFemale").onclick=()=>{beep(700,.08);chooseQuestRole("female");};
 $("btnKaimami").onclick=()=>{beep(660,.08);initAudio();enterMode("kaimami");};
 $("resClose").onclick=()=>{$("result").style.display="none";enterMode("walk");};
 
@@ -5015,9 +5031,9 @@ function questSetProps(role){
 }
 function questHideModeProps(){questProps.male.visible=false;questProps.female.visible=false;questCourt.visible=false;}
 const QUEST_MALE=[
- {ph:"一、早朝の身支度",type:"click",target:"sokutai",txt:"卯の刻ごろ、塗籠の寝所で目を覚ました。衣桁の出仕装束をクリックし、袍・袴・冠・笏を整えよう。",bpId:"sokutai"},
+ {ph:"一、早朝の身支度",type:"click",target:"sokutai",txt:"卯の刻(午前5時〜7時ごろ)、塗籠の寝所で目を覚ました。衣桁の出仕装束をクリックし、袍・袴・冠・笏を整えよう。",bpId:"sokutai"},
  {ph:"一、早朝の身支度",type:"click",target:"takatsuki",txt:"高坏に整えられた朝食を確認しよう。貴族の食事は一日二回が基本だった。",bpId:"takatsuki"},
- {ph:"二、朝廷へ出仕",type:"goto",p:[35,20],r:5,txt:"装束を整え、中門から車寄へ向かおう。",bp:[35,20]},
+ {ph:"二、朝廷へ出仕",type:"goto",p:[35,20],r:5,txt:"中門へ向かう。",bp:[35,20]},
  {ph:"二、朝廷へ出仕",type:"click",target:"gissha",txt:"牛車に乗って朝廷へ出仕する。牛車を調べよう。",bpId:"gissha"},
  {ph:"二、朝廷へ出仕",type:"auto",act:"court",txt:"朝廷での勤務は明け方から数時間ほど。政務や儀式を終え、昼前には帰邸する。"},
  {ph:"三、帰邸後の教養",type:"goto",p:[0,-2],r:5,hmin:1.15,txt:"帰邸した。寝殿の母屋へ戻ろう。",bp:[0,-2]},
@@ -5076,8 +5092,10 @@ function questAdvance(i){
   }else if(s.type==="dialogue"){
     beacon.visible=false;let line=0;
     const speak=()=>{if(APP.mode!=="quest"||!APP.quest||APP.quest.i!==i)return;
-      if(line>=s.lines.length){questAdvance(i+1);return;}
-      const l=s.lines[line++];$("questText").innerHTML=`<b>${l[0]}:</b>「${l[1]}」`;seOK();setTimeout(speak,1850);
+      if(line>=s.lines.length){$("dialogueBubble").classList.remove("show");questAdvance(i+1);return;}
+      const l=s.lines[line++],bubble=$("dialogueBubble");
+      $("dialogueName").textContent=l[0];$("dialogueText").textContent=`「${l[1]}」`;
+      bubble.classList.add("show");seOK();setTimeout(speak,2200);
     };speak();
   }
 }
