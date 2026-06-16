@@ -2058,7 +2058,7 @@ const SHISHIN_DATA={
   addImageShishin({id:"seiryu",data:SHISHIN_DATA.seiryu,color:0x32cfff,x:OUT,y:3.6,z:12,width:7.6,R:22});
   addImageShishin({id:"byakko",data:SHISHIN_DATA.byakko,color:0xbda7ff,x:-OUT,y:2.25,z:0,width:7.2,R:22});
   addImageShishin({id:"genbu",data:SHISHIN_DATA.genbu,color:0x54d7c7,x:0,y:2.15,z:-OUT,width:7.0,R:22});
-  addImageShishin({id:"suzaku",data:SHISHIN_DATA.suzaku,color:0xff643e,x:0,y:5.0,z:OUT,width:8.2,R:34}); // 南=池の小島(z≈37)からでも見えるよう広め
+  addImageShishin({id:"suzaku",data:SHISHIN_DATA.suzaku,color:0xff643e,x:0,y:5.0,z:OUT,width:8.2,R:42}); // 南=池が回り込めないため発見判定(R*0.6≈25)を南境界付近から届くよう拡大
 }
 
 /* ============================================================
@@ -3621,13 +3621,13 @@ function makeFalling(count,texture,size){
   }
   g.userData.mat=mat;g.visible=false;scene.add(g);return g;
 }
-const petals=makeFalling(90,TEX.sakuraPetal,0.28);   // 桜の花びら(小さめ)
+const petals=makeFalling(150,TEX.sakuraPetal,0.28);  // 桜の花びら(小さめ・増量)
 const leavesFall=makeFalling(70,TEX.mapleLeaf,0.52); // 紅葉の落ち葉
 const snowFall=makeFalling(220,TEX.snow,0.26);       // 雪
 /* 桜吹雪の突風: 平常は穏やか、たまに強く舞う(2周波で不規則な周期に) */
 function sakuraGust(t){
   const slow=Math.sin(t*0.045)+Math.sin(t*0.017+1.3);
-  return Math.min(1,0.12+Math.max(0,(slow-1.1)/0.9));
+  return Math.min(1,0.26+Math.max(0,(slow-0.8)/0.8)); // 底上げ→常に花びらが舞い、突風でさらに増える
 }
 function updateFalling(g,dt,t,gust){
   const hasG=(gust!==undefined);
@@ -3702,6 +3702,12 @@ function makeGooseMark(scale=.8){
     flyingLife.spring.add(b);
   }
   register(flyingLife.spring,"uguisu",new THREE.Vector3(-29,7,13));
+  // 春の花びら吹き抜け：夏の葉と同様に横方向に舞い散る
+  for(let i=0;i<12;i++){
+    const bl=new THREE.Mesh(new THREE.PlaneGeometry(.18,.18),new THREE.MeshBasicMaterial({map:TEX.sakuraPetal,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false,alphaTest:.015}));
+    bl.userData={kind:"springBreeze",noAutoShadow:true,phase:rnd(0,10),sx:rnd(-48,-22),sz:rnd(-10,38),amp:rnd(.3,.9)};
+    flyingLife.spring.add(bl);
+  }
   for(let i=0;i<26;i++){
     const leaf=new THREE.Mesh(new THREE.PlaneGeometry(.38,.38),new THREE.MeshBasicMaterial({map:TEX.greenLeaf,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false,alphaTest:.02}));
     leaf.position.set(rnd(-35,35),rnd(3,9),rnd(10,45));
@@ -3726,8 +3732,16 @@ function makeGooseMark(scale=.8){
 function updateFlyingLife(dt,t){
   // [fix] 鶯(春)・鶴(冬)は夜に出さない / とんぼは下のautumnループで夜オフ
   Object.keys(flyingLife).forEach(k=>flyingLife[k].visible=(APP.season===k)&&!(APP.time==="night"&&(k==="spring"||k==="winter")));
-  flyingLife.spring.children.forEach(b=>{
-    const u=b.userData,a=t*u.spd+u.phase;
+  flyingLife.spring.children.forEach((b,i)=>{
+    const u=b.userData;
+    if(u.kind==="springBreeze"){
+      // 横方向にふわりと舞い散る桜(夏の葉と同様の周期演出)
+      const cycle=(t+u.phase)%9,active=cycle<2.8;
+      b.visible=active;
+      if(active){const p=cycle/2.8;b.position.set(u.sx+p*64,u.amp+2.2+Math.sin(t*3.5+i)*0.8,u.sz+Math.sin(t*1.8+i)*2.5);b.rotation.set(t*2+i,t*1.8+i*.4,t*2.8+i);b.material.opacity=Math.sin(p*Math.PI)*.6;}
+      return;
+    }
+    const a=t*u.spd+u.phase;
     b.position.set(u.base.x+Math.cos(a)*u.r,u.base.y+Math.sin(t*1.7+u.phase)*.6,u.base.z+Math.sin(a)*u.r);
     b.rotation.y=-a+Math.PI/2;
     b.children.forEach(ch=>{if(ch.userData.wingSide)ch.rotation.z=ch.userData.wingSide*(.35+Math.sin(t*8+u.phase)*.38);});
@@ -4067,6 +4081,11 @@ const SFX = {
   },
   /* 環境ループを音風景に同期(季節/時間変更時に即時クロスフェード=残留させない) */
   updateBed(){
+    // タイトル画面中は環境音を停止(ゲームプレイ開始後に再開)
+    if(typeof APP !== "undefined" && APP.mode === "title"){
+      if(this._bedMedia){try{this._bedMedia.pause();this._bedMedia.currentTime=0;}catch(e){}}
+      this._bedMedia=null;this._curBed=null;this._curScene=null;return;
+    }
     const scene = (typeof APP !== "undefined") ? APP.season + "/" + APP.time : null;
     if(scene !== this._curScene){ this.stopActiveCalls(); this._curScene = scene; }  // 季節/時間が変わったら長い声を停止
     const sc = (typeof APP !== "undefined") ? (SOUNDSCAPE[APP.season + "/" + APP.time] || SOUNDSCAPE[APP.season + "/day"]) : null;
@@ -4086,12 +4105,15 @@ const SFX = {
   /* 毎フレーム(間引き): せせらぎの距離減衰 + 焚火の近接再生 */
   updateSpatial(px, pz){
     const now = performance.now(); if(now - this._spatialT < 150) return; this._spatialT = now;
-    // せせらぎ: 池から離れるほど小さく
+    // せせらぎ: 屋内では消音、池から離れるほど小さく
     if(this._curBed === "water" && this._bedMedia){
-      let d = Infinity;
-      if(typeof pondCircles !== "undefined") pondCircles.forEach(c => { const dd = Math.hypot(px-c[0], pz-c[1]) - c[2]; if(dd < d) d = dd; });
-      const f = Math.max(0.04, Math.min(1, 1 - Math.max(0,d)/20)); // 離れるほど明確に小さく
-      this._bedMedia.volume=this._bedBase*f;
+      const indoor=(typeof groundH==="function")&&groundH(px,pz)>0.05;
+      if(indoor){ this._bedMedia.volume=0; }else{
+        let d = Infinity;
+        if(typeof pondCircles !== "undefined") pondCircles.forEach(c => { const dd = Math.hypot(px-c[0], pz-c[1]) - c[2]; if(dd < d) d = dd; });
+        const f = Math.max(0.04, Math.min(1, 1 - Math.max(0,d)/20));
+        this._bedMedia.volume=this._bedBase*f;
+      }
     }
     // 焚火: 冬の夜は火桶/炭櫃、通年の夜は庭の篝火に近づくと
     const isNight = (typeof APP !== "undefined" && APP.time === "night");
@@ -4737,7 +4759,7 @@ const cur={sky:new THREE.Color(TIMES.day.sky),fog:new THREE.Color(TIMES.day.fog)
   ambC:new THREE.Color(TIMES.day.ambC),
   sunI:1.25,hemi:.62,amb:.18,moon:0,exp:1.05,int:.35,sunP:new THREE.Vector3(60,95,45)};
 function setTime(t){APP.time=t;$("tbTime").textContent={dawn:"🌅 朝",day:"☀ 昼",dusk:"🌇 夕",night:"🌙 夜"}[t];makeSkyEnv(t);if(typeof SFX!=="undefined")SFX.updateBed();/* [Phase1]IBL再生成 + [音]環境音を即時切替 */}
-$("tbTime").onclick=()=>{setTime(APP.time==="dawn"?"day":APP.time==="day"?"dusk":APP.time==="dusk"?"night":"dawn");PREFS.set("time",APP.time);beep(520,.06);};
+$("tbTime").onclick=()=>{setTime(APP.time==="dawn"?"day":APP.time==="day"?"dusk":APP.time==="dusk"?"night":"dawn");PREFS.set("time",APP.time);AUTO_TIME._last=performance.now();beep(520,.06);}; // 手動切替でタイマーリセット
 $("tbSeason").onclick=()=>{const i=SEASON_ORDER.indexOf(APP.season);
   applySeason(SEASON_ORDER[(i+1)%4]);PREFS.set("season",APP.season);beep(560,.06);};
 scene.background=cur.sky;
@@ -5364,6 +5386,9 @@ const _scSky=new THREE.Color(),_scFog=new THREE.Color(),_scSun=new THREE.Color()
 let glLost=false;  /* WebGLコンテキスト喪失中フラグ(モバイルのスリープ復帰・GPUリセット対策) */
 let bobPhase=0, bobAmp=0, footAccum=0;  /* ヘッドボブ位相/振幅・足音タイマー */
 const REDUCED_MOTION=!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches); /* 動きを減らす設定 */
+/* 時間の自動進行: 一定時間ごとに dawn→day→dusk→night→dawn と巡る */
+const AUTO_TIME={order:["dawn","day","dusk","night"],periodMs:4*60*1000,_last:0,_paused:false};
+AUTO_TIME._last=performance.now();
 /* 床材に応じた足音(合成)。簀子/畳など床上=木の軽い音、地面=低く鈍い音。音源未配置のため合成音 */
 function footstep(){
   if(typeof beep!=="function")return;
@@ -5758,6 +5783,17 @@ function animate(){
     });
   }
 
+  /* --- 時間の自動進行 --- */
+  if(APP.mode!=="title"&&!AUTO_TIME._paused){
+    const nowMs=performance.now();
+    if(nowMs-AUTO_TIME._last>=AUTO_TIME.periodMs){
+      AUTO_TIME._last=nowMs;
+      const idx=AUTO_TIME.order.indexOf(APP.time);
+      const next=AUTO_TIME.order[(idx+1)%AUTO_TIME.order.length];
+      setTime(next);PREFS.set("time",next);
+    }
+  }
+
   /* --- カメラの滑らかなイージング移動 & 回転補間 --- */
   if(APP.mode!=="title"){
     if (!window.dummyCam) {
@@ -5796,7 +5832,7 @@ function animate(){
         footAccum+=dt*(running?2.3:1.6);
         if(footAccum>=1){footAccum-=1;footstep();}
       }else{footAccum=0.6;}
-      bobAmp+=((moving&&!REDUCED_MOTION?(running?.024:.016):0)-bobAmp)*Math.min(1,dt*8); // 揺れを控えめに
+      bobAmp+=((moving&&!REDUCED_MOTION?(running?.009:.005):0)-bobAmp)*Math.min(1,dt*8); // 揺れを最小限に
 
       // 目標の座標と回転角度をダミーカメラに設定
       window.dummyCam.position.copy(player.pos);
