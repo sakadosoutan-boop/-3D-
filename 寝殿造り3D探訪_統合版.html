@@ -1051,6 +1051,7 @@
 </script>
 <style>
 :root{
+  --topbar-h:44px;       /* トップバー高さ(JSが実測値で更新) */
   --urushi:#1b130d;      /* 漆黒 */
   --shu:#b3402a;         /* 朱 */
   --shu-bright:#d4502f;
@@ -1068,26 +1069,59 @@ button{font-family:var(--serif);cursor:pointer}
 
 /* ===== タイトル画面 ===== */
 #title{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;
-  padding:18px 0;background:radial-gradient(ellipse at 50% 30%,#3a2a1c 0%,#1b130d 65%,#0d0907 100%);
+  padding:16px 0;background:radial-gradient(ellipse at 50% 28%,#3d2212 0%,#1b130d 60%,#0a0705 100%);
   transition:opacity .8s;overflow-y:auto}
 #title.hide{opacity:0;pointer-events:none}
-#title::before{content:"";position:absolute;inset:0;opacity:.18;
-  background-image:repeating-linear-gradient(90deg,transparent 0 38px,rgba(201,162,63,.25) 38px 39px)}
-.t-frame{position:relative;text-align:center;padding:34px 46px;border:1px solid rgba(201,162,63,.5);
-  background:rgba(17,11,7,.55);box-shadow:0 0 0 6px rgba(17,11,7,.55),0 0 60px rgba(0,0,0,.7);max-width:680px;width:min(92vw,680px)}
-.t-frame::after{content:"";position:absolute;inset:6px;border:1px solid rgba(201,162,63,.25);pointer-events:none}
-.t-eyebrow{color:var(--kin);letter-spacing:.45em;font-size:12px;margin-bottom:14px}
-h1.t-main{color:var(--gofun);font-size:clamp(30px,6vw,52px);font-weight:600;letter-spacing:.18em;line-height:1.25}
+#title::before{content:"";position:absolute;inset:0;opacity:.15;
+  background-image:repeating-linear-gradient(90deg,transparent 0 38px,rgba(201,162,63,.22) 38px 39px),
+    repeating-linear-gradient(0deg,transparent 0 38px,rgba(201,162,63,.10) 38px 39px)}
+.t-frame{position:relative;text-align:center;padding:24px 32px 20px;border:1px solid rgba(201,162,63,.55);
+  background:rgba(14,9,5,.62);box-shadow:0 0 0 5px rgba(14,9,5,.6),0 0 70px rgba(0,0,0,.75);
+  max-width:680px;width:min(93vw,680px)}
+.t-frame::after{content:"";position:absolute;inset:5px;border:1px solid rgba(201,162,63,.2);pointer-events:none}
+/* 家紋デコレーション */
+.t-kamon{margin-bottom:8px}
+.kamon-circle{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;
+  border-radius:50%;border:1.5px solid rgba(201,162,63,.75);color:rgba(201,162,63,.9);font-size:18px;
+  box-shadow:0 0 0 3px rgba(14,9,5,.8),0 0 0 5px rgba(201,162,63,.22),0 0 14px rgba(201,162,63,.12)}
+.t-eyebrow{color:var(--kin);letter-spacing:.42em;font-size:10.5px;margin-bottom:8px}
+@keyframes goldShimmer{0%,100%{text-shadow:0 0 0 transparent}50%{text-shadow:0 0 22px rgba(201,162,63,.4),0 0 48px rgba(201,162,63,.12)}}
+h1.t-main{color:var(--gofun);font-size:clamp(26px,6vw,50px);font-weight:600;letter-spacing:.22em;
+  line-height:1.22;margin:2px 0;animation:goldShimmer 5s ease-in-out infinite}
 h1.t-main .shu{color:var(--shu-bright)}
-.t-sub{color:#cdbf9f;font-size:clamp(12px,2.4vw,15px);letter-spacing:.2em;margin-top:12px}
-.t-modes{display:flex;gap:14px;justify-content:center;margin-top:30px;flex-wrap:wrap}
-.t-btn{background:linear-gradient(180deg,#4a1f14,#33150d);color:var(--gofun);border:1px solid var(--kin);
-  padding:13px 22px;font-size:15px;letter-spacing:.15em;min-width:160px;position:relative;transition:transform .15s,box-shadow .15s}
-.t-btn small{display:block;font-size:10px;color:#cdbf9f;letter-spacing:.1em;margin-top:5px}
-.t-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(180,64,42,.4)}
-.t-btn.gold{background:linear-gradient(180deg,#5c4716,#3c2e0e)}
-.t-note{color:#8d8068;font-size:11px;margin-top:22px;letter-spacing:.08em;line-height:1.8}
-#loading{color:var(--kin);font-size:13px;letter-spacing:.3em;margin-top:18px;display:none}
+.t-sub{color:#b0a07a;font-size:clamp(10px,2.1vw,12.5px);letter-spacing:.24em;margin-top:7px}
+.t-divider{color:rgba(201,162,63,.42);font-size:13px;margin:10px auto;letter-spacing:.9em}
+/* モード選択 */
+.t-modes{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.t-btn{background:linear-gradient(155deg,#4a1f14,#311309);color:var(--gofun);border:1px solid var(--kin);
+  padding:11px 16px;font-size:14px;letter-spacing:.12em;min-width:140px;position:relative;
+  transition:transform .15s,box-shadow .15s;cursor:pointer}
+.t-btn small{display:block;font-size:9.5px;color:#a89872;letter-spacing:.08em;margin-top:4px}
+.t-btn:hover,.t-btn:active{transform:translateY(-2px);box-shadow:0 6px 18px rgba(180,64,42,.45)}
+.t-btn.gold{background:linear-gradient(155deg,#5c4716,#3b2c0c);border-color:rgba(215,180,85,.65)}
+.t-btn.gold:hover{box-shadow:0 6px 18px rgba(200,160,40,.35)}
+/* カテゴリ(3モード)ボタン */
+.t-cat-btn{flex:1 1 130px;min-height:80px}
+.cat-icon{font-size:19px;margin-bottom:3px}
+/* サブパネル(クイズ/体験の選択) */
+.t-subpanel{animation:fadeInUp .2s ease}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.sp-title{color:rgba(201,162,63,.75);font-size:10.5px;letter-spacing:.42em;margin-bottom:10px;margin-top:2px}
+.t-back-btn{background:none;border:1px solid rgba(201,162,63,.28);color:#8a7c68;
+  font-size:10.5px;padding:5px 14px;letter-spacing:.18em;margin-top:10px;cursor:pointer;transition:color .15s,border-color .15s}
+.t-back-btn:hover{color:var(--gofun);border-color:var(--kin)}
+/* 図鑑ボタン */
+.t-codex-btn{width:100%;margin-top:12px;min-width:unset;
+  background:linear-gradient(155deg,#172713,#0d1c0b);border-color:rgba(100,185,80,.42);color:#a8d098}
+.t-codex-btn:hover{box-shadow:0 6px 18px rgba(70,150,50,.32)}
+/* 更新履歴 */
+.t-changelog{margin-top:10px;border-top:1px solid rgba(201,162,63,.16);padding-top:8px;font-size:9.5px}
+.t-changelog summary{color:#7a6e5e;letter-spacing:.22em;cursor:pointer;list-style:none;padding:2px 0 5px;user-select:none}
+.t-changelog summary::-webkit-details-marker,.t-changelog summary::marker{display:none}
+.cl-list{color:#60564a;text-align:left;display:flex;flex-direction:column;gap:2px;padding:3px 0;line-height:1.75}
+.t-note{color:#5e5244;font-size:9.5px;margin-top:10px;letter-spacing:.07em;line-height:1.8}
+#loading{color:var(--kin);font-size:13px;letter-spacing:.3em;margin-top:14px;display:none}
+
 #questRolePicker{position:fixed;inset:0;z-index:65;display:none;align-items:center;justify-content:center;background:rgba(10,7,5,.78);backdrop-filter:blur(4px)}
 #questRolePicker .role-card{width:min(420px,calc(100vw - 36px));padding:28px;text-align:center;color:var(--gofun);background:#21160f;border:1px solid var(--kin);box-shadow:0 18px 60px rgba(0,0,0,.65)}
 #questRolePicker h2{color:var(--kin);font-size:20px;letter-spacing:.16em;margin-bottom:10px}
@@ -1106,7 +1140,7 @@ h1.t-main .shu{color:var(--shu-bright)}
 #topbar .spacer{flex:1}
 #modeTag{color:var(--gofun);background:rgba(179,64,42,.85);border:1px solid var(--kin);
   font-size:12px;padding:6px 12px;letter-spacing:.2em;border-radius:2px;white-space:nowrap}
-#minimapWrap{position:fixed;z-index:39;left:14px;top:calc(52px + env(safe-area-inset-top));width:176px;height:176px;
+#minimapWrap{position:fixed;z-index:39;left:14px;top:calc(var(--topbar-h,52px) + 8px + env(safe-area-inset-top));width:176px;height:176px;
   display:none;border:1px solid rgba(201,162,63,.5);border-radius:8px;overflow:hidden;
   background:rgba(20,13,8,.24);box-shadow:0 4px 14px rgba(0,0,0,.22);pointer-events:none;opacity:.82}
 #minimap{display:block;width:176px;height:176px}
@@ -1140,7 +1174,7 @@ h1.t-main .shu{color:var(--shu-bright)}
   border:1px solid var(--kin);width:30px;height:30px;font-size:14px;border-radius:50%;z-index:2}
 
 /* ===== クイズHUD ===== */
-#quizHud{position:fixed;z-index:42;top:calc(56px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:none;
+#quizHud{position:fixed;z-index:42;top:calc(var(--topbar-h,52px) + 8px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:none;
   background:rgba(20,13,8,.92);border:1px solid var(--kin);color:var(--gofun);
   padding:12px 22px;text-align:center;border-radius:3px;min-width:min(440px,92vw)}
 #quizHud .q-label{font-size:11px;color:var(--kin);letter-spacing:.3em}
@@ -1157,7 +1191,7 @@ h1.t-main .shu{color:var(--shu-bright)}
 .seal.go{animation:stamp .45s ease-out forwards}
 
 /* ===== クエストHUD ===== */
-#questHud{position:fixed;z-index:42;top:calc(56px + env(safe-area-inset-top));left:12px;display:none;max-width:min(340px,80vw);
+#questHud{position:fixed;z-index:42;top:calc(var(--topbar-h,52px) + 8px + env(safe-area-inset-top));left:12px;display:none;max-width:min(340px,80vw);
   background:rgba(20,13,8,.92);border:1px solid var(--kin);color:var(--gofun);padding:12px 16px;border-radius:3px}
 #questHud .qs-title{font-size:13px;color:var(--kin);letter-spacing:.15em;border-bottom:1px solid rgba(201,162,63,.4);padding-bottom:6px;margin-bottom:8px}
 #questHud .qs-text{font-size:13.5px;line-height:1.8;font-family:var(--sans)}
@@ -1277,9 +1311,18 @@ h1.t-main .shu{color:var(--shu-bright)}
 @media (max-width:760px){
   #info{right:0;left:0;top:auto;bottom:0;width:100%;border-radius:12px 12px 0 0}
   .info-body{max-height:38vh}
-  #topbar{flex-wrap:wrap}
-  #minimapWrap{left:10px;top:calc(56px + env(safe-area-inset-top));width:132px;height:132px}
-  #minimap{width:132px;height:132px}
+  /* topbarは横スクロール式に(2行ラップをやめる) */
+  #topbar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:6px;padding-right:14px}
+  #topbar::-webkit-scrollbar{display:none}
+  /* モバイルで不要な要素を非表示 */
+  #topbar .brand{display:none}
+  #tbGfx,#tbHelp{display:none}
+  /* minimapはCSS変数で動的に位置調整(JSがtopbar高さを--topbar-hにセット) */
+  #minimapWrap{left:10px;width:128px;height:128px}
+  #minimap{width:128px;height:128px}
+  .t-frame{padding:20px 18px 16px}
+  .t-cat-btn{min-height:70px;flex:1 1 110px}
+  .t-btn{min-width:120px;font-size:13px;padding:10px 12px}
 }
 </style>
 </head>
@@ -1290,18 +1333,64 @@ h1.t-main .shu{color:var(--shu-bright)}
 
 <div id="title">
   <div class="t-frame">
-    <div class="t-eyebrow">古文・日本史 3D学習シミュレーター</div>
+    <div class="t-kamon"><div class="kamon-circle">✿</div></div>
+    <div class="t-eyebrow">古文・日本史　3D 学習シミュレーター</div>
     <h1 class="t-main">寝殿造り<span class="shu">探訪</span></h1>
-    <div class="t-sub">— 平安貴族の住まいを、歩いて、触れて、覚える —</div>
-    <div class="t-modes">
-      <button class="t-btn" id="btnWalk">自由散策<small>邸内と庭を歩き回る</small></button>
-      <button class="t-btn gold" id="btnQuiz">名称当てクイズ<small>部位・調度品を探せ</small></button>
-      <button class="t-btn gold" id="btnQuizTA">⏱ タイムアタック<small>10問を最速タイムで答えよ</small></button>
-      <button class="t-btn" id="btnQuest">貴族の一日体験<small>男女を選んで平安の一日をたどる</small></button>
-      <button class="t-btn gold" id="btnKaimami">垣間見ミッション<small>女房と侍従の目を避けて忍ぶ</small></button>
-      <button class="t-btn" id="btnCodex">平安ものしり図鑑<small id="titleCodexProgress">図鑑 0 / 0</small></button>
+    <div class="t-sub">平安貴族の住まいを　歩いて　触れて　覚える</div>
+    <div class="t-divider">✦　✦　✦</div>
+
+    <!-- メインモード選択(3つ) -->
+    <div id="mainModes">
+      <div class="t-modes">
+        <button class="t-btn t-cat-btn" id="btnWalk">
+          <div class="cat-icon">🚶</div>散策モード<small>邸内と庭を自由に歩き回る</small>
+        </button>
+        <button class="t-btn t-cat-btn gold" id="btnQuizMode">
+          <div class="cat-icon">📜</div>クイズモード<small>名称当て・タイムアタック</small>
+        </button>
+        <button class="t-btn t-cat-btn" id="btnTaikenMode" style="border-color:rgba(170,100,50,.7)">
+          <div class="cat-icon">👘</div>体験モード<small>一日体験・垣間見</small>
+        </button>
+      </div>
     </div>
-    <div class="t-note">推奨:タブレット横向き / PC<br>建物・建具・調度品をタップ(クリック)すると解説が読めます</div>
+
+    <!-- クイズのサブ選択 -->
+    <div id="quizSubPanel" class="t-subpanel" style="display:none">
+      <div class="sp-title">── クイズモードを選択 ──</div>
+      <div class="t-modes">
+        <button class="t-btn" id="btnQuiz">名称当てクイズ<small>部位・調度品を探せ</small></button>
+        <button class="t-btn gold" id="btnQuizTA">⏱ タイムアタック<small>10問を最速タイムで</small></button>
+      </div>
+      <button class="t-back-btn" id="quizBack">← 戻る</button>
+    </div>
+
+    <!-- 体験のサブ選択 -->
+    <div id="taikenSubPanel" class="t-subpanel" style="display:none">
+      <div class="sp-title">── 体験モードを選択 ──</div>
+      <div class="t-modes">
+        <button class="t-btn" id="btnQuestM">👦 男性貴族の一日<small>朝廷への出仕と教養</small></button>
+        <button class="t-btn" id="btnQuestF">👩 女性貴族の一日<small>文・応対・管弦</small></button>
+        <button class="t-btn gold" id="btnKaimami">🌙 垣間見ミッション<small>女房の目を避けて忍ぶ</small></button>
+      </div>
+      <button class="t-back-btn" id="taikenBack">← 戻る</button>
+    </div>
+
+    <!-- 図鑑(独立) -->
+    <button class="t-btn t-codex-btn" id="btnCodex">📚 平安ものしり図鑑<small id="titleCodexProgress">図鑑 0 / 0</small></button>
+
+    <!-- 更新履歴 -->
+    <details class="t-changelog">
+      <summary>▸ 最近の更新</summary>
+      <div class="cl-list">
+        <div>🌸 桜の演出強化（吹き抜けエフェクト・頻度アップ）</div>
+        <div>🕐 時間帯が4分ごとに自動で朝→昼→夕→夜と移り変わる</div>
+        <div>🔈 せせらぎは屋外・池のそばでのみ聞こえる</div>
+        <div>🦅 朱雀が正しく図鑑登録されるよう修正</div>
+        <div>🎵 朝の時間帯に季節ごとの暁の音風景を追加</div>
+      </div>
+    </details>
+
+    <div class="t-note">推奨: タブレット横向き / PC　　建具・調度品をタップで解説</div>
     <div id="loading">— 邸宅を造営中 —</div>
     <button id="creditsLink" class="t-credit">ⓘ クレジット・ライセンス</button>
   </div>
@@ -4810,17 +4899,27 @@ addEventListener("pageshow",()=>{if(!document.hidden)resumeAudioFromBackground()
 /* ============================================================
    モード管理
 ============================================================ */
+function syncTopbarH(){
+  const tb=$("topbar");if(!tb||!tb.offsetHeight)return;
+  document.documentElement.style.setProperty('--topbar-h',tb.offsetHeight+'px');
+}
+window.addEventListener('resize',syncTopbarH,{passive:true});
 function enterMode(m){
   APP.mode=m;
+  // タイトルのサブパネルをリセット
+  if($("mainModes"))$("mainModes").style.display="block";
+  if($("quizSubPanel"))$("quizSubPanel").style.display="none";
+  if($("taikenSubPanel"))$("taikenSubPanel").style.display="none";
   $("title").classList.add("hide");
   $("topbar").style.display="flex";
+  requestAnimationFrame(syncTopbarH); // topbar高さをCSS変数に同期
   $("quizHud").style.display=m==="quiz"?"block":"none";
   $("questHud").style.display=(m==="quest"||m==="kaimami")?"block":"none";
   $("kaimamiEye").style.display=m==="kaimami"?"flex":"none";
-  $("dangerVignette").style.opacity=0;  // 危険度の赤化は垣間見以外で消す
+  $("dangerVignette").style.opacity=0;
   closeInfo();closeCodex();
   $("modeTag").textContent=m==="quest"?(APP.questRole==="female"?"女性貴族の一日":"男性貴族の一日"):
-    {walk:"自由散策",quiz:"名称当てクイズ",kaimami:"垣間見"}[m];
+    {walk:"自由散策",quiz:APP.quizTA?"タイムアタック":"名称当てクイズ",kaimami:"垣間見"}[m]||m;
   updateControlUI();
   if(m==="quiz")startQuiz();
   if(m==="quest")startQuest();
@@ -4854,15 +4953,27 @@ $("creditsLink").onclick=()=>$("credits").style.display="flex";
 $("creditsClose").onclick=()=>$("credits").style.display="none";
 $("credits").onclick=e=>{if(e.target===$("credits"))$("credits").style.display="none";};
 $("tbTitle").onclick=()=>{location.reload();};
+// サブパネル切り替えヘルパー
+function showSubPanel(id){$("mainModes").style.display="none";$(id).style.display="block";beep(520,.05);}
+function hideSubPanel(id){$(id).style.display="none";$("mainModes").style.display="block";beep(400,.05);}
+// 散策モード
 $("btnWalk").onclick=()=>{beep(660,.08);initAudio();enterMode("walk");};
+// クイズモード
+$("btnQuizMode").onclick=()=>showSubPanel("quizSubPanel");
 $("btnQuiz").onclick=()=>{beep(660,.08);initAudio();APP.quizTA=false;enterMode("quiz");};
 $("btnQuizTA").onclick=()=>{beep(720,.08);initAudio();APP.quizTA=true;enterMode("quiz");};
-$("btnQuest").onclick=()=>{beep(660,.08);$("questRolePicker").style.display="flex";};
-$("questRolePicker").onclick=e=>{if(e.target===$("questRolePicker"))$("questRolePicker").style.display="none";};
-function chooseQuestRole(role){initAudio();APP.questRole=role;$("questRolePicker").style.display="none";enterMode("quest");}
-$("questRoleMale").onclick=()=>{beep(660,.08);chooseQuestRole("male");};
-$("questRoleFemale").onclick=()=>{beep(700,.08);chooseQuestRole("female");};
+$("quizBack").onclick=()=>hideSubPanel("quizSubPanel");
+// 体験モード
+$("btnTaikenMode").onclick=()=>showSubPanel("taikenSubPanel");
+$("btnQuestM").onclick=()=>{beep(660,.08);initAudio();APP.questRole="male";enterMode("quest");};
+$("btnQuestF").onclick=()=>{beep(700,.08);initAudio();APP.questRole="female";enterMode("quest");};
 $("btnKaimami").onclick=()=>{beep(660,.08);initAudio();enterMode("kaimami");};
+$("taikenBack").onclick=()=>hideSubPanel("taikenSubPanel");
+// questRolePicker (旧実装・互換性維持)
+function chooseQuestRole(role){initAudio();APP.questRole=role;if($("questRolePicker"))$("questRolePicker").style.display="none";enterMode("quest");}
+if($("questRolePicker"))$("questRolePicker").onclick=e=>{if(e.target===$("questRolePicker"))$("questRolePicker").style.display="none";};
+if($("questRoleMale"))$("questRoleMale").onclick=()=>{beep(660,.08);chooseQuestRole("male");};
+if($("questRoleFemale"))$("questRoleFemale").onclick=()=>{beep(700,.08);chooseQuestRole("female");};
 $("resClose").onclick=()=>{$("result").style.display="none";enterMode("walk");};
 
 /* ============================================================
