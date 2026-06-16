@@ -1280,10 +1280,25 @@ h1.t-main .shu{color:var(--shu-bright)}
 .codex-entry.locked{color:#8f826c;background:rgba(70,55,38,.08);cursor:default}
 .codex-entry b{display:block;font-family:var(--serif);font-size:16px;letter-spacing:.08em}
 .codex-entry small{display:block;margin-top:4px;font-size:10px;line-height:1.45}
+.codex-filter-bar{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.codex-filter-btn{padding:4px 10px;border:1px solid #b89b56;background:rgba(255,255,255,.3);color:var(--sumi);font-family:var(--sans);font-size:11px;cursor:pointer;border-radius:2px;transition:background .12s}
+.codex-filter-btn.active{background:#8a3b2a;color:#fff;border-color:#8a3b2a}
 #codexDetail{display:none;margin-top:16px;padding:14px 16px;border-left:4px solid var(--shu);
   background:rgba(255,255,255,.48);font-family:var(--sans);font-size:13px;line-height:1.85}
 #codexDetail.show{display:block}#codexDetail h3{font-family:var(--serif);font-size:20px;color:var(--shu);margin-bottom:4px}
 
+/* 和歌収集エフェクト */
+#wakaReveal{position:fixed;z-index:90;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;opacity:0;transition:opacity .6s;background:rgba(10,6,4,.55)}
+#wakaReveal.show{opacity:1;pointer-events:auto}
+.waka-rev-inner{background:linear-gradient(145deg,rgba(245,228,180,.97),rgba(255,244,210,.97));
+  border:2px solid #c9a23f;padding:28px 36px;max-width:480px;width:90%;text-align:center;
+  box-shadow:0 8px 50px rgba(0,0,0,.7);color:#3a2510;border-radius:2px}
+.waka-rev-season{font-size:12px;letter-spacing:.22em;color:#7a5c2a;margin-bottom:10px}
+.waka-rev-poem{font-size:20px;font-family:var(--serif);letter-spacing:.2em;line-height:2;margin-bottom:14px;color:#3a1505}
+.waka-rev-auth{font-size:12px;color:#6a4c2a;margin-bottom:10px;font-family:var(--serif);letter-spacing:.1em}
+.waka-rev-interp{font-size:11px;line-height:1.75;color:#5a4030;border-top:1px solid rgba(184,155,86,.5);padding-top:10px;text-align:left}
+.waka-rev-hint{font-size:10px;color:#9a7c5a;margin-top:10px;display:block}
 /* 動きを減らす設定の利用者向け:UIアニメーションを抑制(既定の見た目・3D演出は不変) */
 @media (prefers-reduced-motion:reduce){
   #info,#info.open,#title,.t-btn,.codex-entry,.codex-entry:hover,#kaimamiEye .pupil,#kaimamiEye .fill{transition:none!important}
@@ -1482,17 +1497,29 @@ h1.t-main .shu{color:var(--shu-bright)}
 </div></div>
 
 <div id="toast"></div>
+<div id="wakaReveal">
+  <div class="waka-rev-inner">
+    <div class="waka-rev-season" id="wakaRevSeason"></div>
+    <div class="waka-rev-poem" id="wakaRevPoem"></div>
+    <div class="waka-rev-auth" id="wakaRevAuth"></div>
+    <div class="waka-rev-interp" id="wakaRevInterp"></div>
+    <span class="waka-rev-hint">タップして閉じる</span>
+  </div>
+</div>
 <div id="help"><div class="h-card">
   <h3>操作方法</h3>
   <b>PC:</b> WASD / 矢印キーで移動、画面ドラッグで見回し、<b>クリック</b>で調べる(Shiftで早歩き)<br>
   <b>タブレット:</b> 左下のジョイスティックで移動、画面ドラッグで見回し、<b>タップ</b>または右下「調べる」ボタンで画面中央のものを調べる<br><br>
   <b>👁 俯瞰</b>…空から邸宅全体を見る(ドラッグ回転・ホイール/ピンチで拡大縮小)<br>
+  <b>🌸 春/夏/秋/冬</b>…季節を切り替えると庭の景色・登場する生き物・和歌短冊が変わる<br>
   <b>🌅/☀/🌙</b>…朝 → 昼 → 夕 → 夜 と時間を切り替え<br>
   <b>札</b>…名称タグの表示(近く / すべて / なし)<br>
   <b>地図</b>…右下のミニマップを表示 / 非表示<br>
   <b>開始位置</b>…自由散策を始めた南庭の位置へ戻る<br>
-  <b>図鑑</b>…解説を読んだ項目が記録され、次回起動後も解放状態を保持<br><br>
-  <b>動かせる建具:</b> 格子(半蔀)=タップで跳ね上げ / 御簾=巻き上げ / 妻戸=開閉 / 灯台=夜に近づいて点火<br>
+  <b>図鑑</b>…解説を読んだ項目が記録され、次回起動後も解放状態を保持。カテゴリ絞込も可能<br><br>
+  <b>動かせる建具:</b> 格子(半蔀)=タップで跳ね上げ / 御簾=巻き上げ / 妻戸=開閉 / 灯台=夜に点火 / 几帳=端へ寄せる<br><br>
+  <b>🎋 和歌短冊:</b> 邸内のわかりにくい場所に隠れている。近づくと和歌を入手。季節ごとに10首、全40首を集めよう<br>
+  <b>建物の出入り:</b> 建物は壁があるため横からは入れない。階段や廊下の入口から正面に入ろう<br>
   <button class="tb-btn" id="helpClose" style="margin-top:8px">閉じる</button>
 </div></div>
 
@@ -2529,6 +2556,7 @@ function broadleaf(s,leafMat){
 ============================================================ */
 /* 可動建具の状態(妻戸/半蔀/御簾/灯台) — 対屋でも使うため早期に宣言 */
 const gimmicks={shitomi:[],misu:[],tsumado:[],lamps:[],kagaribi:[],braziers:[]};
+const kichouGroups=[];
 function building(opts){
   const {w,d,fh=1.0,ph=2.5,wall=true,doors=[],id,name,roofH,ridge=.42}=opts;
   const g=new THREE.Group();
@@ -3019,6 +3047,8 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     cloth.position.y=1.0;cloth.castShadow=true;g.add(cloth);
     [-.62,0,.62].forEach(xx=>g.add(box(.025,1.44,.018,M({color:0xd8c6a0,roughness:.9}),xx,.98,.012,false)));
     [-.85,.85].forEach(xx=>{const ts=tassel(0x2c5234);ts.position.set(xx,1.76,.04);g.add(ts);});
+    const kst={g,baseRY:rot,foldT:0,folded:false};
+    g.userData.gim={type:"kichou",st:kst};kichouGroups.push(kst);
     shinden.add(g);register(g,"kichou");return g;
   }
   kichou(1.1,2.9,0.2);kichou(-6.5,4.8,-0.4);
@@ -4833,6 +4863,10 @@ function toggleGim(gim){
     if(typeof SFX!=="undefined")SFX.setBrazier(gimmicks.braziers.some(b=>b.lit)); // 焚火ループ音を点火状態に合わせる
     toast(gim.st.lit?"炭に火がおこった":"火を消した",1500);
   }
+  else if(gim.type==="kichou"){
+    gim.st.folded=!gim.st.folded;
+    toast(gim.st.folded?"几帳を端へ寄せた":"几帳を元の位置へ戻した",1800);
+  }
 }
 /* ギミックgroupにgim情報を付与(構築後に対応づけ) */
 (function attachGims(){
@@ -4871,18 +4905,49 @@ function unlockCodex(id){
   if(!ITEMS[id]||codexUnlocked.has(id))return;
   codexUnlocked.add(id);saveCodex();updateCodexProgress();
   toast(`図鑑に「${ITEMS[id].n}」を登録した`);
-  // 和歌短冊: 取得したら消す
   if(id.startsWith("waka_")){
     const m=WAKA_MESHES.find(m=>m.userData.wakaId===id);
     if(m)m.visible=false;
+    showWakaReveal(id);
   }
 }
+let _wakaRevTimer=0;
+function showWakaReveal(id){
+  const it=ITEMS[id];if(!it)return;
+  const w=WAKA_DATA.find(w=>w.id===id);if(!w)return;
+  const snLabel={spring:"🌸 春の歌",summer:"🌿 夏の歌",autumn:"🍂 秋の歌",winter:"❄ 冬の歌"};
+  $("wakaRevSeason").textContent=snLabel[w.season]||"和歌短冊";
+  $("wakaRevPoem").textContent=w.poem;
+  $("wakaRevAuth").textContent="― "+w.auth;
+  $("wakaRevInterp").textContent=it.t;
+  const el=$("wakaReveal");el.classList.add("show");
+  clearTimeout(_wakaRevTimer);_wakaRevTimer=setTimeout(()=>el.classList.remove("show"),5500);
+  el.onclick=()=>{el.classList.remove("show");clearTimeout(_wakaRevTimer);};
+}
+let codexCatFilter="all";
 function renderCodex(){
-  const grid=$("codexGrid");grid.textContent="";
+  const grid=$("codexGrid");
   const catName={b:"建築",g:"建具",c:"調度品",p:"人物",x:"怪異",a:"生き物",s:"霊獣",w:"和歌短冊"};
   const catHint={b:"建物の柱・屋根・床まわりを見上げて探そう",g:"戸・格子・簾など動かせる建具を調べよう",c:"寝殿や対屋の室内に置かれた道具を探そう",p:"邸内の人物に近づいて調べよう",x:"夜だけ現れる。時間を夜にして庭の暗がりへ",a:"庭や池のまわり。季節・時間で現れる生き物を探そう",s:"邸の四方(築地のきわ)に守護神が現れる",w:"季節を変えると別の短冊が現れる。40枚を全部集めよう"};
-  const catDiff={b:1,g:2,c:2,p:2,x:3,a:3,s:2,w:2};  // 発見難易度(カテゴリ基準)
-  Object.keys(ITEMS).forEach(id=>{
+  const catDiff={b:1,g:2,c:2,p:2,x:3,a:3,s:2,w:2};
+  // フィルターバー
+  let fb=$("codexFilterBar");
+  if(!fb){
+    fb=document.createElement("div");fb.id="codexFilterBar";fb.className="codex-filter-bar";
+    grid.parentElement.insertBefore(fb,grid);
+  }
+  fb.textContent="";
+  const usedCats=[...new Set(Object.values(ITEMS).map(it=>it.cat))];
+  ["all",...usedCats].forEach(cat=>{
+    const btn=document.createElement("button");
+    btn.className="codex-filter-btn"+(codexCatFilter===cat?" active":"");
+    btn.textContent=cat==="all"?"すべて":(catName[cat]||cat);
+    btn.onclick=()=>{codexCatFilter=cat;renderCodex();};
+    fb.appendChild(btn);
+  });
+  // エントリー
+  grid.textContent="";
+  Object.keys(ITEMS).filter(id=>codexCatFilter==="all"||ITEMS[id].cat===codexCatFilter).forEach(id=>{
     const it=ITEMS[id],open=codexUnlocked.has(id),b=document.createElement("button");
     b.className="codex-entry"+(open?"":" locked");b.disabled=!open;
     const dv=catDiff[it.cat]||1,stars="★".repeat(dv)+"☆".repeat(3-dv);
@@ -4901,8 +4966,8 @@ function closeCodex(){APP.codexOpen=false;$("codex").classList.remove("open");}
 function closeInfo(){$("info").classList.remove("open");}
 function showInfo(id){
   const it=ITEMS[id];if(!it)return;
-  $("infoCat").textContent={b:"建築部位",g:"動かせる建具",c:"調度品",p:"人物",x:"夜の怪異",a:"生き物",s:"四方の守護神(四神)"}[it.cat];
-  $("infoCat").className="info-cat "+({b:"b",g:"g",c:"",p:"p",x:"x",a:"a",s:"x"}[it.cat]||"");
+  $("infoCat").textContent={b:"建築部位",g:"動かせる建具",c:"調度品",p:"人物",x:"夜の怪異",a:"生き物",s:"四方の守護神(四神)",w:"和歌短冊"}[it.cat]||"";
+  $("infoCat").className="info-cat "+({b:"b",g:"g",c:"",p:"p",x:"x",a:"a",s:"x",w:""}[it.cat]||"");
   $("infoName").textContent=it.n;$("infoKana").textContent=it.k;
   $("infoDesc").textContent=it.d;
   $("infoTrivia").innerHTML="<b>📜 古文の窓</b><br>"+it.t;
@@ -6054,6 +6119,13 @@ function animate(){
   WAKA_MESHES.forEach(m=>{
     m.position.y=m.userData.baseY+Math.sin(t*0.7+m.userData.ph)*0.055;
     m.rotation.z=m.userData.baseRZ+Math.sin(t*0.45+m.userData.ph+1.2)*0.04;
+  });
+
+  /* --- 几帳の折りたたみアニメーション --- */
+  kichouGroups.forEach(st=>{
+    const target=st.folded?Math.PI*.48:0;
+    st.foldT+=(target-st.foldT)*.07;
+    st.g.rotation.y=st.baseRY+st.foldT;
   });
 
   /* --- 季節パーティクル --- */
