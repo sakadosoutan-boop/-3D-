@@ -1135,9 +1135,11 @@ h1.t-main .shu{color:var(--shu-bright)}
   border-bottom:1px solid rgba(201,162,63,.4)}
 #topbar .brand{color:var(--kin);font-size:13px;letter-spacing:.2em;margin-right:6px;white-space:nowrap}
 .tb-btn{background:rgba(60,38,22,.8);color:var(--gofun);border:1px solid rgba(201,162,63,.5);
-  padding:7px 11px;font-size:12px;letter-spacing:.08em;white-space:nowrap;border-radius:2px}
+  padding:6px 9px;font-size:12px;letter-spacing:.08em;white-space:nowrap;border-radius:2px}
 .tb-btn.on{background:var(--shu);border-color:var(--shu-bright);color:#fff}
 #topbar .spacer{flex:1}
+/* グループ区切り線 */
+.tb-sep{width:1px;height:20px;background:rgba(201,162,63,.3);margin:0 1px;flex-shrink:0;pointer-events:none}
 #modeTag{color:var(--gofun);background:rgba(179,64,42,.85);border:1px solid var(--kin);
   font-size:12px;padding:6px 12px;letter-spacing:.2em;border-radius:2px;white-space:nowrap}
 #minimapWrap{position:fixed;z-index:39;left:14px;top:calc(var(--topbar-h,52px) + 8px + env(safe-area-inset-top));width:176px;height:176px;
@@ -1317,6 +1319,7 @@ h1.t-main .shu{color:var(--shu-bright)}
   /* モバイルで不要な要素を非表示 */
   #topbar .brand{display:none}
   #tbGfx,#tbHelp{display:none}
+  #topbar .tb-sep{display:none}
   /* minimapはCSS変数で動的に位置調整(JSがtopbar高さを--topbar-hにセット) */
   #minimapWrap{left:10px;width:128px;height:128px}
   #minimap{width:128px;height:128px}
@@ -1382,10 +1385,12 @@ h1.t-main .shu{color:var(--shu-bright)}
     <details class="t-changelog">
       <summary>▸ 最近の更新</summary>
       <div class="cl-list">
+        <div>📜 和歌短冊5枚を邸内に設置。集めると図鑑登録（百人一首より）</div>
+        <div>🗾 ミニマップを絵巻物風にリデザイン（和紙風・墨絵風建物）</div>
+        <div>🏯 建物の壁に当たり判定を追加（正面の階段・渡殿から入場）</div>
         <div>🌸 桜の演出強化（吹き抜けエフェクト・頻度アップ）</div>
-        <div>🕐 時間帯が4分ごとに自動で朝→昼→夕→夜と移り変わる</div>
+        <div>🕐 時間帯が自動で朝→昼→夕→夜と移り変わる（4分サイクル）</div>
         <div>🔈 せせらぎは屋外・池のそばでのみ聞こえる</div>
-        <div>🦅 朱雀が正しく図鑑登録されるよう修正</div>
         <div>🎵 朝の時間帯に季節ごとの暁の音風景を追加</div>
       </div>
     </details>
@@ -1407,14 +1412,23 @@ h1.t-main .shu{color:var(--shu-bright)}
 <div id="topbar">
   <span class="brand">寝殿造り探訪</span>
   <span id="modeTag">自由散策</span>
+  <!-- 視点・位置 -->
+  <span class="tb-sep"></span>
   <button class="tb-btn" id="tbView">👁 俯瞰</button>
+  <button class="tb-btn" id="tbHome">開始位置</button>
+  <!-- 世界設定 -->
+  <span class="tb-sep"></span>
   <button class="tb-btn" id="tbTime">☀ 昼</button>
   <button class="tb-btn" id="tbSeason">🌸 春</button>
-  <button class="tb-btn" id="tbLabel">札:近く</button>
+  <!-- 表示設定 -->
+  <span class="tb-sep"></span>
   <button class="tb-btn" id="tbAudio">🔇 音:切</button>
   <button class="tb-btn on" id="tbMap">地図:入</button>
-  <button class="tb-btn" id="tbHome">開始位置</button>
+  <button class="tb-btn" id="tbLabel">札:近く</button>
+  <!-- 右端ツール -->
   <span class="spacer"></span>
+  <button class="tb-btn" id="tbCodex">📚 図鑑</button>
+  <span class="tb-sep"></span>
   <button class="tb-btn" id="tbGfx">⚙ 画質</button>
   <button class="tb-btn" id="tbHelp">?</button>
   <button class="tb-btn" id="tbTitle">表紙へ</button>
@@ -3725,6 +3739,7 @@ const fireflies=new THREE.Group();scene.add(fireflies);
    和歌短冊 — 邸内に散らばる収集アイテム
    tanzaku (poetry cards) collectibles — tap to unlock codex entry
 ============================================================ */
+const WAKA_MESHES=[];
 (function buildWakaCards(){
   // 短冊テクスチャ(和紙風・縦長)
   const tex=canv(64,192,(x,w,h)=>{
@@ -3765,11 +3780,12 @@ const fireflies=new THREE.Group();scene.add(fireflies);
   ];
   cards.forEach(([id,x,y,z,ry,mi])=>{
     const m=new THREE.Mesh(geo,mats[mi]);
-    m.position.set(x,y,z);m.rotation.y=ry;m.castShadow=false;
-    // わずかに傾けて画面映えを改善
-    m.rotation.z=0.08+Math.random()*0.06;
+    const baseRZ=0.08+Math.random()*0.06;
+    m.position.set(x,y,z);m.rotation.set(0,ry,baseRZ);m.castShadow=false;
+    m.userData.baseY=y;m.userData.baseRZ=baseRZ;m.userData.ph=Math.random()*6;
     scene.add(m);
     register(m,id,new THREE.Vector3(x,y+0.5,z));
+    WAKA_MESHES.push(m);
   });
 })();
 
@@ -4852,7 +4868,7 @@ function showInfo(id){
   requestAnimationFrame(()=>panel.classList.add("open"));
 }
 $("infoClose").onclick=closeInfo;
-$("btnCodex").onclick=openCodex;$("codexClose").onclick=closeCodex;
+$("btnCodex").onclick=openCodex;$("tbCodex").onclick=openCodex;$("codexClose").onclick=closeCodex;
 $("codex").addEventListener("click",e=>{if(e.target===$("codex"))closeCodex();});
 addEventListener("keydown",e=>{if(e.key==="Escape"){closeCodex();closeInfo();}});
 updateCodexProgress();
@@ -5990,6 +6006,12 @@ function animate(){
     if(g.userData.head)g.userData.head.rotation.y=Math.sin(t*.42+ph)*.07;
     (g.userData.arms||[]).forEach(a=>a.rotation.x=Math.sin(t*.55+ph+a.userData.side)*.025);
   }
+
+  /* --- 和歌短冊のふわふわアニメーション --- */
+  WAKA_MESHES.forEach(m=>{
+    m.position.y=m.userData.baseY+Math.sin(t*0.7+m.userData.ph)*0.055;
+    m.rotation.z=m.userData.baseRZ+Math.sin(t*0.45+m.userData.ph+1.2)*0.04;
+  });
 
   /* --- 季節パーティクル --- */
   if(petals.visible)updateFalling(petals,dt,t,sakuraGust(t));  // 桜は間欠的な突風
