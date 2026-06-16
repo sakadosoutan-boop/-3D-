@@ -3986,7 +3986,13 @@ const SOUNDSCAPE = {
   "autumn/night": { bed:"nightWind", calls:[ {pool:"insect4",    prob:0.55,gap:5000, gain:0.5 } ] },
   "winter/day":   { bed:"water",     calls:[ {pool:"tsuru",      prob:0.4, gap:19000,gain:0.5 } ] },  // 低頻度
   "winter/dusk":  { bed:"nightWind", calls:[] },
-  "winter/night": { bed:"nightWind", calls:[] }                                    // 焚火は火桶/炭櫃の近接で別管理
+  "winter/night": { bed:"nightWind", calls:[] },                                   // 焚火は火桶/炭櫃の近接で別管理
+  // 朝（夜明け）—各季節で暁の音風景を定義
+  "spring/dawn":  { bed:"water",     calls:[ {pool:"spring_bird",prob:0.65,gap:4000, gain:0.55} ] }, // 暁の鶯(春告げ鳥)
+  "summer/dawn":  { bed:"water",     calls:[ {pool:"hototogisu", prob:0.55,gap:10000,gain:0.48} ] }, // 暁の時鳥
+  "autumn/dawn":  { bed:"water",     calls:[ {pool:"kari",       prob:0.4, gap:18000,gain:0.5 },     // 夜明けの雁の声
+                                             {pool:"higurashi",  prob:0.4, gap:9000, gain:0.3 } ] }, // 暁のひぐらし
+  "winter/dawn":  { bed:"nightWind", calls:[ {pool:"tsuru",      prob:0.3, gap:22000,gain:0.45} ] }  // 冬の静かな夜明け・鶴
 };
 
 const SFX = {
@@ -4049,7 +4055,7 @@ const SFX = {
   },
   /* 音風景の鳴き声ルールを最小間隔つきで実行(重なり防止) */
   schedule(season, time, fallback){
-    const sc = SOUNDSCAPE[season + "/" + time] || SOUNDSCAPE[season + "/day"]; if(!sc) return; // 朝など未定義は昼の環境音に
+    const sc = SOUNDSCAPE[season + "/" + time] || SOUNDSCAPE[season + "/day"]; if(!sc) return; // 未定義の組み合わせは昼の環境音にフォールバック
     const now = performance.now();
     sc.calls.forEach(c => {
       if(now - (this._last[c.pool] || 0) < c.gap) return;
