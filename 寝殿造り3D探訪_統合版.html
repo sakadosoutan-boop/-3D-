@@ -2035,6 +2035,7 @@ const SHISHIN_DATA={
     const shadow=new THREE.Mesh(new THREE.CircleGeometry(1,32),shadowMat);shadow.scale.set(cfg.width*.43,cfg.width*.15,1);
     shadow.rotation.x=-Math.PI/2;shadow.position.set(cfg.x,.08,cfg.z);shadow.userData.noAutoShadow=true;shadow.visible=false;world.add(shadow);
     const light=new THREE.PointLight(cfg.color,0,11,2);light.position.z=.4;g.add(light);
+    [depthMat,mainMat,rimMat,glowMat,auraMat,shadowMat].forEach(m=>{m.depthTest=false;}); // 築地に遮蔽されず、壁の外にうっすら見えるように
 
     [depth,main,rim,glow,ring1,ring2].forEach(o=>{o.userData.noAutoShadow=true;o.castShadow=false;o.receiveShadow=false;o.renderOrder=6;});
     g.visible=false;world.add(g);
@@ -2047,10 +2048,10 @@ const SHISHIN_DATA={
   }
 
   const OUT=W+4;
-  addImageShishin({id:"seiryu",data:SHISHIN_DATA.seiryu,color:0x32cfff,x:OUT,y:3.6,z:12,width:7.6,R:15});
-  addImageShishin({id:"byakko",data:SHISHIN_DATA.byakko,color:0xbda7ff,x:-OUT,y:2.25,z:0,width:7.2,R:15});
-  addImageShishin({id:"genbu",data:SHISHIN_DATA.genbu,color:0x54d7c7,x:0,y:2.15,z:-OUT,width:7.0,R:15});
-  addImageShishin({id:"suzaku",data:SHISHIN_DATA.suzaku,color:0xff643e,x:0,y:5.0,z:OUT,width:8.2,R:16});
+  addImageShishin({id:"seiryu",data:SHISHIN_DATA.seiryu,color:0x32cfff,x:OUT,y:3.6,z:12,width:7.6,R:22});
+  addImageShishin({id:"byakko",data:SHISHIN_DATA.byakko,color:0xbda7ff,x:-OUT,y:2.25,z:0,width:7.2,R:22});
+  addImageShishin({id:"genbu",data:SHISHIN_DATA.genbu,color:0x54d7c7,x:0,y:2.15,z:-OUT,width:7.0,R:22});
+  addImageShishin({id:"suzaku",data:SHISHIN_DATA.suzaku,color:0xff643e,x:0,y:5.0,z:OUT,width:8.2,R:34}); // 南=池の小島(z≈37)からでも見えるよう広め
 }
 
 /* ============================================================
@@ -4076,7 +4077,7 @@ const SFX = {
     if(this._curBed === "water" && this._bedMedia){
       let d = Infinity;
       if(typeof pondCircles !== "undefined") pondCircles.forEach(c => { const dd = Math.hypot(px-c[0], pz-c[1]) - c[2]; if(dd < d) d = dd; });
-      const f = Math.max(0.16, Math.min(1, 1 - Math.max(0,d)/26));
+      const f = Math.max(0.04, Math.min(1, 1 - Math.max(0,d)/20)); // 離れるほど明確に小さく
       this._bedMedia.volume=this._bedBase*f;
     }
     // 焚火: 冬の夜は火桶/炭櫃、通年の夜は庭の篝火に近づくと
