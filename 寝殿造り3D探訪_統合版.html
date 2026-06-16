@@ -1163,9 +1163,12 @@ h1.t-main .shu{color:var(--shu-bright)}
 #questHud .qs-text{font-size:13.5px;line-height:1.8;font-family:var(--sans)}
 #questHud .qs-prog{font-size:11px;color:#cdbf9f;margin-top:6px;font-family:var(--sans)}
 #kaimamiEye{display:none;align-items:center;gap:9px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(201,162,63,.28)}
-#kaimamiEye{position:fixed;top:74px;right:16px;width:min(300px,calc(100vw - 32px));z-index:48;
+#kaimamiEye{position:fixed;bottom:104px;left:50%;transform:translateX(-50%);width:min(320px,calc(100vw - 32px));z-index:48;
   margin:0;padding:12px 14px;border:1px solid rgba(225,183,79,.72);border-radius:7px;
   background:rgba(18,12,9,.88);box-shadow:0 8px 26px rgba(0,0,0,.38);backdrop-filter:blur(4px)}
+/* 画面四隅を落とすビネット(常時・控えめ)。危険時は赤いビネットを重ねる(垣間見) */
+#vignette{position:fixed;inset:0;z-index:36;pointer-events:none;box-shadow:inset 0 0 150px 24px rgba(0,0,0,.34)}
+#dangerVignette{position:fixed;inset:0;z-index:37;pointer-events:none;box-shadow:inset 0 0 130px 55px rgba(200,25,18,.9);opacity:0;transition:opacity .12s linear}
 #kaimamiEye .eye{position:relative;width:42px;height:23px;border:2px solid #9db8c7;border-radius:55% 45%;overflow:hidden;
   background:rgba(190,216,226,.12);transform:rotate(-2deg);box-shadow:0 0 8px rgba(115,183,204,.12)}
 #kaimamiEye .pupil{position:absolute;left:50%;top:50%;width:11px;height:11px;margin:-5.5px;border-radius:50%;background:#66889a;
@@ -1282,6 +1285,8 @@ h1.t-main .shu{color:var(--shu-bright)}
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="vignette"></div>
+<div id="dangerVignette"></div>
 
 <div id="title">
   <div class="t-frame">
@@ -4770,6 +4775,7 @@ function enterMode(m){
   $("quizHud").style.display=m==="quiz"?"block":"none";
   $("questHud").style.display=(m==="quest"||m==="kaimami")?"block":"none";
   $("kaimamiEye").style.display=m==="kaimami"?"flex":"none";
+  $("dangerVignette").style.opacity=0;  // 危険度の赤化は垣間見以外で消す
   closeInfo();closeCodex();
   $("modeTag").textContent=m==="quest"?(APP.questRole==="female"?"女性貴族の一日":"男性貴族の一日"):
     {walk:"自由散策",quiz:"名称当てクイズ",kaimami:"垣間見"}[m];
@@ -5303,6 +5309,7 @@ function kaimamiUpdate(dt){
   k.grace=Math.max(0,k.grace-dt);
   const watcher=k.grace<=0?k.watchers.find(kaimamiWatcherSees):null;
   k.exposure=watcher?Math.min(KAIMAMI_ALERT+.1,k.exposure+dt*1.14):Math.max(0,k.exposure-dt*2.35);
+  $("dangerVignette").style.opacity=Math.min(1,Math.pow(k.exposure/KAIMAMI_ALERT,1.6)*1.05).toFixed(3); // 危険度が高いほど画面端が赤く
   kaimamiEyeUpdate(watcher,k);
   if(k.exposure>=KAIMAMI_ALERT){
     k.caught++;k.exposure=0;k.hold=0;k.grace=2.6;seNG();
