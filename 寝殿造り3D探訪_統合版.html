@@ -1096,7 +1096,7 @@ h1.t-main .shu{color:var(--shu-bright)}
 
 /* ===== 上部バー ===== */
 #topbar{position:fixed;top:0;left:0;right:0;z-index:40;display:none;align-items:center;gap:8px;
-  padding:8px 10px;padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right));
+  padding:8px 10px;padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right));padding-top:max(8px,env(safe-area-inset-top));
   background:linear-gradient(180deg,rgba(20,13,8,.92),rgba(20,13,8,.78));
   border-bottom:1px solid rgba(201,162,63,.4)}
 #topbar .brand{color:var(--kin);font-size:13px;letter-spacing:.2em;margin-right:6px;white-space:nowrap}
@@ -1106,7 +1106,7 @@ h1.t-main .shu{color:var(--shu-bright)}
 #topbar .spacer{flex:1}
 #modeTag{color:var(--gofun);background:rgba(179,64,42,.85);border:1px solid var(--kin);
   font-size:12px;padding:6px 12px;letter-spacing:.2em;border-radius:2px;white-space:nowrap}
-#minimapWrap{position:fixed;z-index:39;left:14px;top:52px;width:176px;height:176px;
+#minimapWrap{position:fixed;z-index:39;left:14px;top:calc(52px + env(safe-area-inset-top));width:176px;height:176px;
   display:none;border:1px solid rgba(201,162,63,.5);border-radius:8px;overflow:hidden;
   background:rgba(20,13,8,.24);box-shadow:0 4px 14px rgba(0,0,0,.22);pointer-events:none;opacity:.82}
 #minimap{display:block;width:176px;height:176px}
@@ -1140,7 +1140,7 @@ h1.t-main .shu{color:var(--shu-bright)}
   border:1px solid var(--kin);width:30px;height:30px;font-size:14px;border-radius:50%;z-index:2}
 
 /* ===== クイズHUD ===== */
-#quizHud{position:fixed;z-index:42;top:56px;left:50%;transform:translateX(-50%);display:none;
+#quizHud{position:fixed;z-index:42;top:calc(56px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:none;
   background:rgba(20,13,8,.92);border:1px solid var(--kin);color:var(--gofun);
   padding:12px 22px;text-align:center;border-radius:3px;min-width:min(440px,92vw)}
 #quizHud .q-label{font-size:11px;color:var(--kin);letter-spacing:.3em}
@@ -1157,7 +1157,7 @@ h1.t-main .shu{color:var(--shu-bright)}
 .seal.go{animation:stamp .45s ease-out forwards}
 
 /* ===== クエストHUD ===== */
-#questHud{position:fixed;z-index:42;top:56px;left:12px;display:none;max-width:min(340px,80vw);
+#questHud{position:fixed;z-index:42;top:calc(56px + env(safe-area-inset-top));left:12px;display:none;max-width:min(340px,80vw);
   background:rgba(20,13,8,.92);border:1px solid var(--kin);color:var(--gofun);padding:12px 16px;border-radius:3px}
 #questHud .qs-title{font-size:13px;color:var(--kin);letter-spacing:.15em;border-bottom:1px solid rgba(201,162,63,.4);padding-bottom:6px;margin-bottom:8px}
 #questHud .qs-text{font-size:13.5px;line-height:1.8;font-family:var(--sans)}
@@ -1278,7 +1278,7 @@ h1.t-main .shu{color:var(--shu-bright)}
   #info{right:0;left:0;top:auto;bottom:0;width:100%;border-radius:12px 12px 0 0}
   .info-body{max-height:38vh}
   #topbar{flex-wrap:wrap}
-  #minimapWrap{left:10px;top:56px;width:132px;height:132px}
+  #minimapWrap{left:10px;top:calc(56px + env(safe-area-inset-top));width:132px;height:132px}
   #minimap{width:132px;height:132px}
 }
 </style>
@@ -1420,7 +1420,13 @@ h1.t-main .shu{color:var(--shu-bright)}
       <button class="tb-btn" id="gfxB_off">切</button>
     </span>
   </div>
-  <p class="gfx-note">「オート」は端末性能に応じて自動調整します。動作が重いときは「中」「低」を、発光が強すぎるときは「切」をお試しください。</p>
+  <div class="gfx-row"><span class="gfx-lbl">ジョイスティック（スマホ/タブレット）</span>
+    <span class="gfx-opts">
+      <button class="tb-btn" id="gfxJ_fixed">固定（左下）</button>
+      <button class="tb-btn" id="gfxJ_dynamic">どこでも（左側を押した場所）</button>
+    </span>
+  </div>
+  <p class="gfx-note">「オート」は端末性能に応じて自動調整します。動作が重いときは「中」「低」を、発光が強すぎるときは「切」を。ジョイは倒し切るとダッシュします。</p>
   <button class="tb-btn" id="gfxClose" style="margin-top:10px">閉じる</button>
 </div></div>
 
@@ -4427,7 +4433,7 @@ addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;});
 addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false;});
 
 const joyEl=document.getElementById("joy"),knob=document.getElementById("joyKnob");
-const joy={active:false,id:null,vx:0,vy:0};
+const joy={active:false,id:null,vx:0,vy:0,dynamic:false};
 function joyHandle(e){
   const r=joyEl.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;
   let t=null;for(const tt of e.touches)if(tt.identifier===joy.id)t=tt;
@@ -4441,6 +4447,9 @@ joyEl.addEventListener("touchstart",e=>{e.preventDefault();joy.active=true;joy.i
 joyEl.addEventListener("touchmove",e=>{e.preventDefault();joyHandle(e);},{passive:false});
 joyEl.addEventListener("touchend",e=>{e.preventDefault();joy.active=false;joy.vx=joy.vy=0;
   knob.style.transform="translate(-50%,-50%)";},{passive:false});
+/* どこでも押せるジョイ: 触れた位置に出現させる */
+function joySpawn(t){joyEl.style.left=(t.clientX-59)+"px";joyEl.style.top=(t.clientY-59)+"px";joyEl.style.bottom="auto";joyEl.style.display="block";joy.active=true;joy.id=t.identifier;joyHandle({touches:[t]});}
+function joyRelease(){joy.active=false;joy.vx=joy.vy=0;joy.id=null;knob.style.transform="translate(-50%,-50%)";if(joy.dynamic)joyEl.style.display="none";}
 
 /* ドラッグ視点 + タップ/クリック判定 */
 const drag={on:false,id:null,x:0,y:0,moved:0,t0:0};
@@ -4465,15 +4474,17 @@ cv.addEventListener("touchstart",e=>{e.preventDefault();
   if(APP.view==="ov"&&e.touches.length>=2){pinch0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);drag.on=false;return;} // ピンチズームは俯瞰のみ
   if(drag.on)return;                                   // 既に視点ドラッグ中なら追加の指は無視
   const t=e.changedTouches[0];
+  if(joy.dynamic&&APP.view==="fp"&&!joy.active&&t.clientX<innerWidth*0.5){joySpawn(t);return;} // 左半分タップでジョイ出現
   if(t.identifier===joy.id)return;                     // ジョイスティック操作中の指は視点に使わない(=移動と視点の同時操作を可能に)
   pdown(t.clientX,t.clientY,t.identifier);},{passive:false});
 cv.addEventListener("touchmove",e=>{e.preventDefault();
   if(e.touches.length===2&&APP.view==="ov"){
     const p=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
     orbit.r=Math.max(35,Math.min(190,orbit.r*pinch0/p));pinch0=p;return;}
+  if(joy.dynamic&&joy.active)joyHandle(e);             // どこでもジョイの追従
   for(const t of e.touches)if(t.identifier===drag.id)pmove(t.clientX,t.clientY);},{passive:false});
 cv.addEventListener("touchend",e=>{e.preventDefault();
-  for(const t of e.changedTouches)if(t.identifier===drag.id)pup(t.clientX,t.clientY);},{passive:false});
+  for(const t of e.changedTouches){if(t.identifier===joy.id)joyRelease();if(t.identifier===drag.id)pup(t.clientX,t.clientY);}},{passive:false});
 cv.addEventListener("wheel",e=>{if(APP.view==="ov")orbit.r=Math.max(35,Math.min(190,orbit.r+e.deltaY*.08));},{passive:true});
 document.getElementById("interactBtn").addEventListener("click",()=>pick(innerWidth/2,innerHeight/2));
 
@@ -4790,7 +4801,7 @@ function enterMode(m){
 }
 function updateControlUI(){
   const fp=APP.view==="fp"&&APP.mode!=="title";
-  $("joy").style.display=fp&&IS_TOUCH?"block":"none";
+  $("joy").style.display=(fp&&IS_TOUCH&&!joy.dynamic)?"block":"none"; // どこでも方式は触れた時だけ出す
   $("interactBtn").style.display=fp&&IS_TOUCH?"block":"none";
   $("crosshair").style.display=fp?"block":"none";
   $("tbView").textContent=APP.view==="fp"?"👁 俯瞰":"🚶 歩く";
@@ -5343,6 +5354,7 @@ function kaimamiUpdate(dt){
 ============================================================ */
 const clock=new THREE.Clock();
 const tmpV=new THREE.Vector3();
+const _scSky=new THREE.Color(),_scFog=new THREE.Color(),_scSun=new THREE.Color(),_scAmb=new THREE.Color(); // 毎フレームのColor割当を避けGCかくつきを軽減
 let glLost=false;  /* WebGLコンテキスト喪失中フラグ(モバイルのスリープ復帰・GPUリセット対策) */
 let bobPhase=0, bobAmp=0, footAccum=0;  /* ヘッドボブ位相/振幅・足音タイマー */
 const REDUCED_MOTION=!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches); /* 動きを減らす設定 */
@@ -5389,7 +5401,7 @@ const QUALITY=(()=>{
       if(!enabled||dt<=0)return;
       if(warmup<2.5){warmup+=dt;return;}                    // 起動直後(シェーダ初回コンパイル等)は無視
       ema+=(1/Math.min(dt,0.25)-ema)*0.08;                  // FPSをEMA平滑し単発ヒッチに反応しない
-      if(ema<42 && lvl<levels.length-1){accDown+=dt;accUp=0;if(accDown>1.2){lvl++;accDown=0;apply();}}
+      if(ema<46 && lvl<levels.length-1){accDown+=dt;accUp=0;if(accDown>0.8){lvl++;accDown=0;apply();}}
       else if(ema>57 && lvl>0){accUp+=dt;accDown=0;if(accUp>5){lvl--;accUp=0;apply();}}
       else{accDown=Math.max(0,accDown-dt*0.5);accUp=Math.max(0,accUp-dt*0.5);}
     }
@@ -5466,6 +5478,10 @@ $("gfxP_low").onclick=()=>{GFX.setPreset("low");beep(560,.05);};
 $("gfxB_auto").onclick=()=>{GFX.setBloom("auto");beep(560,.05);};
 $("gfxB_on").onclick=()=>{GFX.setBloom("on");beep(560,.05);};
 $("gfxB_off").onclick=()=>{GFX.setBloom("off");beep(560,.05);};
+function applyJoy(mode){joy.dynamic=(mode==="dynamic");joyEl.style.left=joyEl.style.top=joyEl.style.bottom="";if(joy.dynamic)joyEl.style.display="none";["fixed","dynamic"].forEach(x=>{const b=$("gfxJ_"+x);if(b)b.classList.toggle("on",mode===x);});updateControlUI();}
+$("gfxJ_fixed").onclick=()=>{PREFS.set("joyMode","fixed");applyJoy("fixed");beep(560,.05);};
+$("gfxJ_dynamic").onclick=()=>{PREFS.set("joyMode","dynamic");applyJoy("dynamic");beep(560,.05);};
+applyJoy(PREFS.get("joyMode","fixed")); // 起動時にジョイ方式を復元
 GFX.init();
 
 function animate(){
@@ -5479,9 +5495,9 @@ function animate(){
   /* --- 時間遷移とフォグカラーの自動同期 --- */
   const tg=TIMES[APP.time];
   const lp=1-Math.pow(.0018,dt);
-  cur.sky.lerp(new THREE.Color(tg.sky),lp);cur.fog.lerp(new THREE.Color(tg.fog),lp);
-  cur.sunC.lerp(new THREE.Color(tg.sunC),lp);
-  cur.ambC.lerp(new THREE.Color(tg.ambC),lp);
+  cur.sky.lerp(_scSky.set(tg.sky),lp);cur.fog.lerp(_scFog.set(tg.fog),lp);
+  cur.sunC.lerp(_scSun.set(tg.sunC),lp);
+  cur.ambC.lerp(_scAmb.set(tg.ambC),lp);
   cur.sunI+=(tg.sunI-cur.sunI)*lp;cur.hemi+=(tg.hemi-cur.hemi)*lp;
   cur.amb+=(tg.amb-cur.amb)*lp;
   cur.moon+=(tg.moon-cur.moon)*lp;cur.exp+=(tg.exp-cur.exp)*lp;cur.int+=(tg.int-cur.int)*lp;
@@ -5752,9 +5768,10 @@ function animate(){
         mx+=joy.vx;mz+=joy.vy;
       }
       const m=Math.hypot(mx,mz);
+      const running=keys.shift||(joy.active&&Math.hypot(joy.vx,joy.vy)>0.9); // ジョイを倒し切るとダッシュ
       if(m>0.01){
         mx/=Math.max(1,m);mz/=Math.max(1,m);
-        const sp=(keys.shift?10.5:5.6)*dt;
+        const sp=(running?10.5:5.6)*dt;
         const sy=Math.sin(player.yaw),cy=Math.cos(player.yaw);
         const nx=player.pos.x+(mz*sy+mx*cy)*sp;
         const nz=player.pos.z+(mz*cy-mx*sy)*sp;
@@ -5769,11 +5786,11 @@ function animate(){
       // ヘッドボブ + 足音(歩行時のみ。ボブの実適用はカメラ補間後)
       const moving=(m>0.01);
       if(moving){
-        bobPhase+=dt*(keys.shift?13:9);
-        footAccum+=dt*(keys.shift?2.3:1.6);
+        bobPhase+=dt*(running?13:9);
+        footAccum+=dt*(running?2.3:1.6);
         if(footAccum>=1){footAccum-=1;footstep();}
       }else{footAccum=0.6;}
-      bobAmp+=((moving&&!REDUCED_MOTION?(keys.shift?.055:.038):0)-bobAmp)*Math.min(1,dt*8);
+      bobAmp+=((moving&&!REDUCED_MOTION?(running?.024:.016):0)-bobAmp)*Math.min(1,dt*8); // 揺れを控えめに
 
       // 目標の座標と回転角度をダミーカメラに設定
       window.dummyCam.position.copy(player.pos);
