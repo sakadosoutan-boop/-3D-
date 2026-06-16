@@ -1385,7 +1385,7 @@ h1.t-main .shu{color:var(--shu-bright)}
   <b>PC:</b> WASD / 矢印キーで移動、画面ドラッグで見回し、<b>クリック</b>で調べる(Shiftで早歩き)<br>
   <b>タブレット:</b> 左下のジョイスティックで移動、画面ドラッグで見回し、<b>タップ</b>または右下「調べる」ボタンで画面中央のものを調べる<br><br>
   <b>👁 俯瞰</b>…空から邸宅全体を見る(ドラッグ回転・ホイール/ピンチで拡大縮小)<br>
-  <b>☀/🌙</b>…昼 → 夕 → 夜 と時間を切り替え<br>
+  <b>🌅/☀/🌙</b>…朝 → 昼 → 夕 → 夜 と時間を切り替え<br>
   <b>札</b>…名称タグの表示(近く / すべて / なし)<br>
   <b>地図</b>…右下のミニマップを表示 / 非表示<br>
   <b>開始位置</b>…自由散策を始めた南庭の位置へ戻る<br>
@@ -1773,6 +1773,7 @@ const interiorLight=new THREE.PointLight(0xffe8c8,.35,40,1.8);interiorLight.posi
 ============================================================ */
 const ENV_PAL={
   day:  {top:"#9fc3e8",hor:"#e6ecec",grd:"#6f6552",sun:"#fff4d8",sunU:.30},
+  dawn: {top:"#a9bdd6",hor:"#f0d2c0",grd:"#5e5848",sun:"#ffdca8",sunU:.50},
   dusk: {top:"#b98fb0",hor:"#e6b27a",grd:"#5a4636",sun:"#ffd49a",sunU:.60},
   night:{top:"#0a1020",hor:"#1b2236",grd:"#070a12",sun:"#aab8dc",sunU:.24}
 };
@@ -4042,7 +4043,7 @@ const SFX = {
   },
   /* 音風景の鳴き声ルールを最小間隔つきで実行(重なり防止) */
   schedule(season, time, fallback){
-    const sc = SOUNDSCAPE[season + "/" + time]; if(!sc) return;
+    const sc = SOUNDSCAPE[season + "/" + time] || SOUNDSCAPE[season + "/day"]; if(!sc) return; // 朝など未定義は昼の環境音に
     const now = performance.now();
     sc.calls.forEach(c => {
       if(now - (this._last[c.pool] || 0) < c.gap) return;
@@ -4056,7 +4057,7 @@ const SFX = {
   updateBed(){
     const scene = (typeof APP !== "undefined") ? APP.season + "/" + APP.time : null;
     if(scene !== this._curScene){ this.stopActiveCalls(); this._curScene = scene; }  // 季節/時間が変わったら長い声を停止
-    const sc = (typeof APP !== "undefined") ? SOUNDSCAPE[APP.season + "/" + APP.time] : null;
+    const sc = (typeof APP !== "undefined") ? (SOUNDSCAPE[APP.season + "/" + APP.time] || SOUNDSCAPE[APP.season + "/day"]) : null;
     let key = sc ? sc.bed : null;
     if(key && !this.media[this.beds[key]]) key = null;
     if(key === this._curBed) return;
@@ -4710,6 +4711,7 @@ function drawMinimap(){
 ============================================================ */
 const TIMES={
  day:{sky:0xbfdcec,fog:0xcfe0ea,sunI:1.25,sunC:0xfff2dd,sunP:[60,95,45],hemi:.55,amb:.18,ambC:0xfff0dd,moon:0,exp:1.05,int:.35}, /* [Phase1] hemi .62→.55 (IBL補填分) */
+ dawn:{sky:0xb8c4d6,fog:0xc4cdda,sunI:.85,sunC:0xffd9a8,sunP:[92,30,26],hemi:.46,amb:.14,ambC:0xffe6cf,moon:.06,exp:1.0,int:.42}, /* 早朝:東から低い暖色の陽 */
  dusk:{sky:0xe8a368,fog:0xdf9a64,sunI:.7,sunC:0xff9a55,sunP:[-70,22,30],hemi:.34,amb:.12,ambC:0xffcaa0,moon:0,exp:1.0,int:.5},
  night:{sky:0x0d1626,fog:0x101a2c,sunI:0,sunC:0xffffff,sunP:[60,95,45],hemi:.055,amb:.012,ambC:0xffcf9a,moon:.34,exp:.88,int:.06}
 };
@@ -4717,8 +4719,8 @@ const ambient=new THREE.AmbientLight(0xfff0dd,0.18);scene.add(ambient);
 const cur={sky:new THREE.Color(TIMES.day.sky),fog:new THREE.Color(TIMES.day.fog),sunC:new THREE.Color(TIMES.day.sunC),
   ambC:new THREE.Color(TIMES.day.ambC),
   sunI:1.25,hemi:.62,amb:.18,moon:0,exp:1.05,int:.35,sunP:new THREE.Vector3(60,95,45)};
-function setTime(t){APP.time=t;$("tbTime").textContent={day:"☀ 昼",dusk:"🌇 夕",night:"🌙 夜"}[t];makeSkyEnv(t);if(typeof SFX!=="undefined")SFX.updateBed();/* [Phase1]IBL再生成 + [音]環境音を即時切替 */}
-$("tbTime").onclick=()=>{setTime(APP.time==="day"?"dusk":APP.time==="dusk"?"night":"day");PREFS.set("time",APP.time);beep(520,.06);};
+function setTime(t){APP.time=t;$("tbTime").textContent={dawn:"🌅 朝",day:"☀ 昼",dusk:"🌇 夕",night:"🌙 夜"}[t];makeSkyEnv(t);if(typeof SFX!=="undefined")SFX.updateBed();/* [Phase1]IBL再生成 + [音]環境音を即時切替 */}
+$("tbTime").onclick=()=>{setTime(APP.time==="dawn"?"day":APP.time==="day"?"dusk":APP.time==="dusk"?"night":"dawn");PREFS.set("time",APP.time);beep(520,.06);};
 $("tbSeason").onclick=()=>{const i=SEASON_ORDER.indexOf(APP.season);
   applySeason(SEASON_ORDER[(i+1)%4]);PREFS.set("season",APP.season);beep(560,.06);};
 scene.background=cur.sky;
@@ -5856,7 +5858,7 @@ addZone(-20,34,8,8,1.15);addZone(-4,40,6,6,1.15);
 const _ssn=PREFS.get("season","spring");
 applySeason(SEASON_ORDER.includes(_ssn)?_ssn:"spring");
 const _tm=PREFS.get("time","day");
-if(_tm==="dusk"||_tm==="night")setTime(_tm);
+if(_tm==="dusk"||_tm==="night"||_tm==="dawn")setTime(_tm);
 const _lbl=PREFS.get("label",1);
 if([0,1,2].includes(_lbl)&&_lbl!==APP.labelMode){APP.labelMode=_lbl;$("tbLabel").textContent="札:"+["なし","近く","すべて"][_lbl];}
 
