@@ -1213,7 +1213,13 @@ h1.t-main .shu{color:var(--shu-bright)}
 #kaimamiEye.watched .pupil{background:#ffcf70;box-shadow:0 0 0 4px rgba(207,40,25,.55);transform:scale(1.18)}
 #kaimamiEye .meter{flex:1;height:8px;border:1px solid rgba(220,205,174,.45);background:rgba(0,0,0,.38);overflow:hidden;border-radius:5px}
 #kaimamiEye .fill{height:100%;width:0;background:linear-gradient(90deg,#6d9caf,#e1b74f,#d74831);transition:width .08s linear}
-#kaimamiEye .eye-label{font-size:11px;color:#d9e5e9;min-width:92px;font-family:var(--sans);font-weight:700}
+#kaimamiEye .eye-label{font-size:11px;color:#d9e5e9;min-width:72px;font-family:var(--sans);font-weight:700}
+#kaimamiEye .kai-meters{display:flex;flex-direction:column;flex:1;gap:5px}
+#kaimamiEye .kai-row{display:flex;align-items:center;gap:6px}
+#kaimamiEye .kai-watch-row{display:none;align-items:center;gap:6px}
+#kaimamiEye .watch-bar{flex:1;height:8px;border:1px solid rgba(225,200,80,.55);background:rgba(0,0,0,.38);overflow:hidden;border-radius:5px}
+#kaimamiEye .watch-fill{height:100%;width:0;background:linear-gradient(90deg,#c8a020,#f0e070,#fffae0);transition:width .08s linear}
+#kaimamiEye .watch-label{font-size:11px;color:#f0e060;min-width:52px;font-family:var(--sans);font-weight:700}
 
 /* ===== NPC会話 ===== */
 #dialogueBubble{position:fixed;z-index:54;left:50%;bottom:92px;transform:translate(-50%,18px);
@@ -1463,7 +1469,7 @@ h1.t-main .shu{color:var(--shu-bright)}
   <button class="tb-btn" id="tbView">👁 俯瞰</button>
   <button class="tb-btn" id="tbHome">開始位置</button>
   <!-- 世界設定 -->
-  <span class="tb-sep"></span>
+  <span class="tb-sep" id="tbSepWorld"></span>
   <button class="tb-btn" id="tbTime">☀ 昼</button>
   <button class="tb-btn" id="tbSeason">🌸 春</button>
   <!-- 表示設定 -->
@@ -1525,7 +1531,7 @@ h1.t-main .shu{color:var(--shu-bright)}
   <div class="qs-title" id="questTitle"></div>
   <div class="qs-text" id="questText"></div>
   <div class="qs-prog" id="questProg"></div>
-  <div id="kaimamiEye"><div class="eye"><div class="pupil"></div></div><div class="meter"><div class="fill"></div></div><div class="eye-label">発見危険度 0%</div></div>
+  <div id="kaimamiEye"><div class="eye"><div class="pupil"></div></div><div class="kai-meters"><div class="kai-row"><div class="meter"><div class="fill"></div></div><div class="eye-label">危険 0%</div></div><div class="kai-watch-row"><div class="watch-bar"><div class="watch-fill"></div></div><div class="watch-label">視線 0%</div></div></div></div>
 </div>
 
 <div id="dialogueBubble"><div id="dialogueName"></div><div id="dialogueText"></div></div>
@@ -5267,6 +5273,13 @@ function enterMode(m){
   closeInfo();closeCodex();
   $("modeTag").textContent=m==="quest"?(APP.questRole==="female"?"女性貴族の一日":"男性貴族の一日"):
     {walk:"自由散策",quiz:APP.quizTA?"タイムアタック":"名称当てクイズ",kaimami:"垣間見"}[m]||m;
+  // モード別ボタン表示制御（時間・季節は探索以外で非表示、図鑑は競技系で非表示など）
+  {const cond=["tbHome","tbSepWorld","tbTime","tbSeason","tbCodex","tbLabel","tbMap"];
+   const off={quiz:["tbSepWorld","tbTime","tbSeason","tbCodex"],
+               kaimami:["tbHome","tbSepWorld","tbTime","tbSeason","tbMap","tbCodex","tbLabel"],
+               quest:["tbHome","tbSepWorld","tbTime","tbSeason","tbCodex"]};
+   cond.forEach(id=>{const e=$(id);if(e)e.style.display="";});
+   (off[m]||[]).forEach(id=>{const e=$(id);if(e)e.style.display="none";});}
   updateControlUI();
   if(m==="quiz")startQuiz();
   if(m==="quest")startQuest();
@@ -5498,6 +5511,8 @@ const beacon=new THREE.Group();
 const beaconBox=new THREE.Box3(),beaconCenter=new THREE.Vector3();
 function beaconAnchor(id,fallback){
   const it=id&&interactables[id];
+  // labelPosを優先（手動調整済みの位置が正確）。バウンディングボックス中心は広域オブジェクトでずれる
+  if(it&&it.labelPos){const p=it.labelPos;return new THREE.Vector3(p.x,groundH(p.x,p.z)+.06,p.z);}
   if(it&&it.roots){
     const root=it.roots.find(r=>r.visible&&r.parent)||it.roots[0];
     if(root){beaconBox.setFromObject(root);if(!beaconBox.isEmpty()){
@@ -5505,7 +5520,6 @@ function beaconAnchor(id,fallback){
       return new THREE.Vector3(beaconCenter.x,groundH(beaconCenter.x,beaconCenter.z)+.06,beaconCenter.z);
     }}
   }
-  if(it&&it.labelPos)return new THREE.Vector3(it.labelPos.x,groundH(it.labelPos.x,it.labelPos.z)+.06,it.labelPos.z);
   return fallback?new THREE.Vector3(fallback[0],groundH(fallback[0],fallback[1])+.06,fallback[1]):null;
 }
 function showBeacon(id,fallback){const p=beaconAnchor(id,fallback);beacon.visible=!!p;if(p)beacon.position.copy(p);return !!p;}
@@ -5656,10 +5670,10 @@ function questFinish(){
 ============================================================ */
 const KAIMAMI_ZONE={hold:1.25,start:[47.0,17.0]};
 const KAIMAMI_SECRETS=[
-  {id:"kichou",name:"几帳越し",x:1.10,z:4.05,r:2.45,color:0xe1b74f},
-  {id:"east",name:"開いた東の格子",x:13.25,z:-4.05,r:1.90,color:0x53d8c0},
-  {id:"north",name:"北の破れた壁代",x:3.0,z:-9.05,r:1.90,color:0xa58be3},
-  {id:"tsumado",name:"妻戸を通った先",x:9.15,z:3.45,r:2.10,color:0xe77964}
+  {id:"kichou",name:"几帳越し",x:0.8,z:3.8,r:2.45,color:0xe1b74f},
+  {id:"east",name:"開いた東の格子",x:12.2,z:-3.8,r:2.10,color:0x53d8c0},
+  {id:"north",name:"北の破れた壁代",x:2.5,z:-9.2,r:2.00,color:0xa58be3},
+  {id:"tsumado",name:"妻戸を通った先",x:8.8,z:3.2,r:2.10,color:0xe77964}
 ];
 const KAIMAMI_ALERT=1.10;
 const kaimamiRay=new THREE.Raycaster(),kaimamiDetectRay=new THREE.Raycaster(),kaimamiHits=[],KAIMAMI_CENTER={x:0,y:0};
@@ -5767,9 +5781,16 @@ function kaimamiLookAtHime(route){
 }
 function kaimamiEyeUpdate(watcher,k){
   const eye=$("kaimamiEye"),pct=Math.min(100,Math.round(k.exposure/KAIMAMI_ALERT*100));
-  eye.classList.toggle("watched",!!watcher);eye.querySelector(".fill").style.width=pct+"%";
-  eye.querySelector(".eye-label").textContent=watcher?`発見危険度 ${pct}%`:`発見危険度 ${pct}%`;
+  eye.classList.toggle("watched",!!watcher);
+  eye.querySelector(".fill").style.width=pct+"%";
+  eye.querySelector(".eye-label").textContent=`危険 ${pct}%`;
   eye.title=watcher?`${watcher.name}に見られている`:"現在は見られていない";
+  // 視線ゲージ: 姫君を見ているときだけ表示
+  const holdPct=Math.min(100,Math.round(k.hold/KAIMAMI_ZONE.hold*100));
+  const watchRow=eye.querySelector(".kai-watch-row");
+  if(watchRow){const show=k.hold>0;watchRow.style.display=show?"flex":"none";
+    eye.querySelector(".watch-fill").style.width=holdPct+"%";
+    eye.querySelector(".watch-label").textContent=`視線 ${holdPct}%`;}
 }
 function startKaimami(){
   scene.updateMatrixWorld(true);
