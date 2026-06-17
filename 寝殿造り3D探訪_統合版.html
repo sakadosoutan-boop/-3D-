@@ -1157,6 +1157,7 @@ h1.t-main .shu{color:var(--shu-bright)}
   transition:transform .36s cubic-bezier(.2,.78,.25,1),opacity .16s ease,visibility 0s linear .36s}
 #info.open{opacity:1;visibility:visible;pointer-events:auto;transform:scaleX(1);
   transition:transform .36s cubic-bezier(.2,.78,.25,1),opacity .16s ease,visibility 0s}
+#info.revisit{opacity:.70}
 #info::before,#info::after{content:"";position:absolute;z-index:3;top:-8px;bottom:-8px;width:11px;
   background:linear-gradient(90deg,#5e140c,#a8412a 45%,#6e180d);border:1px solid var(--kin);
   border-radius:6px;box-shadow:0 2px 7px rgba(0,0,0,.55);pointer-events:none}
@@ -1195,7 +1196,12 @@ h1.t-main .shu{color:var(--shu-bright)}
 /* ===== クエストHUD ===== */
 #questHud{position:fixed;z-index:42;top:calc(var(--topbar-h,52px) + 8px + env(safe-area-inset-top));left:12px;display:none;max-width:min(340px,80vw);
   background:rgba(20,13,8,.92);border:1px solid var(--kin);color:var(--gofun);padding:12px 16px;border-radius:3px}
-#questHud .qs-title{font-size:13px;color:var(--kin);letter-spacing:.15em;border-bottom:1px solid rgba(201,162,63,.4);padding-bottom:6px;margin-bottom:8px}
+#questHud .qs-header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(201,162,63,.4);padding-bottom:6px;margin-bottom:8px}
+#questHud.minimized .qs-header{border-bottom:none;padding-bottom:0;margin-bottom:0}
+#questHud.minimized #questBody{display:none}
+#questMin{background:none;border:none;color:var(--kin);font-size:16px;cursor:pointer;padding:0 2px;line-height:1;opacity:.8;flex-shrink:0}
+#questMin:hover{opacity:1}
+#questHud .qs-title{font-size:13px;color:var(--kin);letter-spacing:.15em}
 #questHud .qs-text{font-size:13.5px;line-height:1.8;font-family:var(--sans)}
 #questHud .qs-prog{font-size:11px;color:#cdbf9f;margin-top:6px;font-family:var(--sans)}
 #kaimamiEye{display:none;align-items:center;gap:9px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(201,162,63,.28)}
@@ -1319,7 +1325,7 @@ h1.t-main .shu{color:var(--shu-bright)}
   background:linear-gradient(180deg,#9a6630,#5c3a18);border-radius:8px;box-shadow:0 2px 7px rgba(0,0,0,.55)}
 .waka-rev-inner::before{top:-7px}.waka-rev-inner::after{bottom:-7px}
 .waka-rev-season{font-size:12px;letter-spacing:.24em;color:#7a5c2a;margin-bottom:14px}
-.waka-rev-poem{writing-mode:vertical-rl;font-family:var(--serif);font-size:23px;letter-spacing:.16em;
+.waka-rev-poem{writing-mode:vertical-rl;font-family:"YuKyokasho Yoko","YuKyokasho","游教科書体","Kyokasho ICA",var(--serif);font-size:23px;letter-spacing:.16em;
   line-height:2.05;height:min(50vh,360px);color:#2a1505;margin-bottom:14px;text-align:start}
 .waka-rev-auth{font-size:12px;color:#6a4c2a;margin-bottom:10px;font-family:var(--serif);letter-spacing:.12em}
 .waka-rev-interp{font-size:11px;line-height:1.75;color:#5a4030;border-top:1px solid rgba(184,155,86,.5);
@@ -1528,9 +1534,11 @@ h1.t-main .shu{color:var(--shu-bright)}
 <div id="quizFeedback"><div class="seal" id="sealEl">正解</div></div>
 
 <div id="questHud">
-  <div class="qs-title" id="questTitle"></div>
+  <div class="qs-header"><div class="qs-title" id="questTitle"></div><button id="questMin" title="最小化">－</button></div>
+  <div id="questBody">
   <div class="qs-text" id="questText"></div>
   <div class="qs-prog" id="questProg"></div>
+  </div>
   <div id="kaimamiEye"><div class="eye"><div class="pupil"></div></div><div class="kai-meters"><div class="kai-row"><div class="meter"><div class="fill"></div></div><div class="eye-label">危険 0%</div></div><div class="kai-watch-row"><div class="watch-bar"><div class="watch-fill"></div></div><div class="watch-label">視線 0%</div></div></div></div>
 </div>
 
@@ -1540,6 +1548,10 @@ h1.t-main .shu{color:var(--shu-bright)}
   <h2 id="resTitle">結果発表</h2>
   <div class="r-rank" id="resRank"></div>
   <div class="r-detail" id="resDetail"></div>
+  <div id="resKaimamiActions" style="display:none;gap:10px;justify-content:center;margin-top:10px">
+    <button class="t-btn" id="resRetry">もう一度挑戦</button>
+    <button class="t-btn" id="resWalk">散策モードへ</button>
+  </div>
   <button class="t-btn" id="resClose">閉じる</button>
 </div></div>
 
@@ -1739,6 +1751,70 @@ const WAKA_DATA=[
   {id:"waka_wi8",season:"winter",poem:"田子の浦にうち出でてみれば白妙の　富士の高嶺に雪は降りつつ",auth:"山部赤人",interp:"田子の浦に出て見れば、白く輝く富士の高嶺に雪が降り続けている。",x:-35,y:1.05,z:2,ry:-0.3},
   {id:"waka_wi9",season:"winter",poem:"御垣守衛士のたく火の夜は燃え　昼は消えつつ物をこそ思へ",auth:"大中臣能宣朝臣",interp:"宮の衛士が焚く火のように、夜は燃え昼は消えて、私も物思いに沈む。",x:35,y:1.05,z:26,ry:0.7},
   {id:"waka_wi10",season:"winter",poem:"わが袖は潮干に見えぬ沖の石の　人こそ知らね乾く間もなし",auth:"二条院讃岐",interp:"私の袖は沖の石のように、人は知らなくとも乾く暇もない（涙で濡れている）。",x:-35,y:1.05,z:26,ry:-0.5},
+  // 春 追加
+  {id:"waka_sp11",season:"spring",poem:"春の夜の闇はあやなし梅の花　色こそ見えね香やは隠るる",auth:"凡河内躬恒",interp:"春の夜の闇はつまらない。梅の花の色は見えなくとも、香りを隠すことはできないのだから。",x:10,y:0.35,z:19,ry:0.4},
+  {id:"waka_sp12",season:"spring",poem:"春過ぎて夏来にけらし白妙の　衣ほすてふ天の香具山",auth:"持統天皇",interp:"春が過ぎて夏が来たようだ。天の香具山に白い衣が干されている。",x:-10,y:0.35,z:19,ry:-0.6},
+  {id:"waka_sp13",season:"spring",poem:"久方の光のどけき春の日に　しづ心なく花の散るらむ",auth:"紀友則",interp:"光穏やかな春の日なのに、どうして花は落ち着きなく散るのか。",x:20,y:0.35,z:17,ry:1.0},
+  {id:"waka_sp14",season:"spring",poem:"わたの原漕ぎ出でて見れば久方の　雲居にまがふ沖つ白波",auth:"法性寺入道前関白太政大臣",interp:"大海原へ漕ぎ出して見れば、はるか空に紛れる沖の白波よ。",x:-20,y:0.35,z:17,ry:-1.1},
+  {id:"waka_sp15",season:"spring",poem:"朝ぼらけあるじを恋ひてうち泣くや　遠き声にも知らゆるものを",auth:"よみ人知らず",interp:"夜明けに主を恋しく泣いているのか、遠い声にも知れることよ。",x:0,y:0.35,z:22,ry:0.2},
+  {id:"waka_sp16",season:"spring",poem:"青柳の糸よりかくる春しもぞ　乱れて花のほころびにける",auth:"紀貫之",interp:"青柳の糸が垂れる春に、乱れるように花がほころんでいる。",x:15,y:0.35,z:21,ry:-0.8},
+  {id:"waka_sp17",season:"spring",poem:"たれをかも知る人にせむ高砂の　松も昔の友ならなくに",auth:"藤原興風",interp:"誰を知る人としようか。高砂の松も昔なじみではないのだから。",x:-15,y:0.35,z:21,ry:0.9},
+  {id:"waka_sp18",season:"spring",poem:"難波がた短き葦のふしの間も　逢はでこの世を過ぐしてよとや",auth:"伊勢大輔",interp:"難波潟の葦の節の短い間も逢わずに、この世を過ごせというのか。",x:28,y:0.35,z:16,ry:0.3},
+  {id:"waka_sp19",season:"spring",poem:"花さそふ嵐の庭の雪ならで　ふりゆくものはわが身なりけり",auth:"入道前太政大臣",interp:"花を誘う嵐が降らせる庭の雪ではなく、古りゆくのは我が身だったのだ。",x:-28,y:0.35,z:16,ry:-0.4},
+  {id:"waka_sp20",season:"spring",poem:"見渡せば花も紅葉もなかりけり　浦の苫屋の秋の夕暮れ",auth:"藤原定家",interp:"見渡せば花も紅葉もない。浦の苫屋の秋の夕暮れよ。",x:8,y:1.55,z:-3,ry:0.6},
+  {id:"waka_sp21",season:"spring",poem:"春の歌とてよみ侍りける　霞たち木の芽もはるの雪降れば　花なき里も花ぞ散りける",auth:"紀貫之",interp:"霞がたち木の芽が張る春に雪が降れば、花のない里にも花が散るようだ。",x:-8,y:1.55,z:-3,ry:-0.7},
+  {id:"waka_sp22",season:"spring",poem:"梅が香に昔を問へば春の月　答へぬ影ぞ袖にうつれる",auth:"藤原家隆",interp:"梅の香りに昔を問えば、春の月は答えず、その影が袖に映るだけ。",x:22,y:0.35,z:14,ry:-0.5},
+  {id:"waka_sp23",season:"spring",poem:"忘れじの行く末まではかたければ　けふを限りの命ともがな",auth:"儀同三司母",interp:"忘れまいとの誓いが末永く続くとも限らないから、今日を最後の命にしたい。",x:-22,y:0.35,z:14,ry:0.4},
+  {id:"waka_sp24",season:"spring",poem:"あしびきの山鳥の尾のしだり尾の　ながながし夜をひとりかも寝む",auth:"柿本人麻呂",interp:"山鳥の長い尾のように、長い夜を一人で寝ることか。",x:32,y:0.35,z:12,ry:0.7},
+  {id:"waka_sp25",season:"spring",poem:"みかの原わきて流るるいづみ川　いつ見きとてか恋しかるらむ",auth:"中納言兼輔",interp:"みかの原を分けて流れる泉川よ。いつ見たからといって恋しいのか。",x:-32,y:0.35,z:12,ry:-0.8},
+  // 夏 追加
+  {id:"waka_su11",season:"summer",poem:"天の原ふりさけ見れば春日なる　三笠の山に出でし月かも",auth:"阿倍仲麻呂",interp:"大空を見上げれば、春日の三笠山に出た月と同じ月か（唐の地で詠む）。",x:0,y:0.35,z:50,ry:0.1},
+  {id:"waka_su12",season:"summer",poem:"わびぬれば今はた同じ難波なる　みをつくしても逢はむとぞ思ふ",auth:"元良親王",interp:"侘びしくなったのでどうせ同じこと。難波の澪標のように身を尽くしても逢おうと思う。",x:28,y:0.35,z:44,ry:0.9},
+  {id:"waka_su13",season:"summer",poem:"今はただ思ひ絶えなむとばかりを　人づてならで言ふよしもがな",auth:"左京大夫道雅",interp:"今はただ思い切ろうとだけ、人づてでなく直接言う方法があればいいのに。",x:-28,y:0.35,z:44,ry:-0.9},
+  {id:"waka_su14",season:"summer",poem:"めぐり逢ひて見しやそれとも分かぬ間に　雲がくれにし夜半の月かな",auth:"紫式部",interp:"久しぶりに逢ったのか分からないうちに、雲に隠れてしまった夜半の月のようだ。",x:14,y:0.35,z:42,ry:-0.6},
+  {id:"waka_su15",season:"summer",poem:"いにしへの奈良の都の八重桜　けふ九重ににほひぬるかな",auth:"伊勢大輔",interp:"昔の奈良の都の八重桜が、今日は宮中に美しく咲いたことよ。",x:-14,y:0.35,z:42,ry:0.5},
+  {id:"waka_su16",season:"summer",poem:"大江山いく野の道の遠ければ　まだふみも見ず天の橋立",auth:"小式部内侍",interp:"大江山を越え生野の道は遠いので、天の橋立はまだ踏んでもいないし文も見ていない。",x:22,y:0.35,z:40,ry:0.3},
+  {id:"waka_su17",season:"summer",poem:"あらざらむこの世のほかの思ひ出に　今ひとたびの逢ふこともがな",auth:"和泉式部",interp:"もうすぐ死にゆくこの世の思い出に、もう一度逢いたいものよ。",x:-22,y:0.35,z:40,ry:-0.4},
+  {id:"waka_su18",season:"summer",poem:"やすらはで寝なましものを小夜更けて　かたぶくまでの月を見しかな",auth:"赤染衛門",interp:"ためらわずに寝ればよかったのに、夜更けて月が傾くまで待ってしまった。",x:35,y:1.05,z:28,ry:0.6},
+  {id:"waka_su19",season:"summer",poem:"かくとだにえやはいぶきのさしも草　さしも知らじな燃ゆる思ひを",auth:"藤原実方朝臣",interp:"こうだとも言えない。燃えるわが思いを伝える言葉もないことよ。",x:-35,y:1.05,z:28,ry:-0.7},
+  {id:"waka_su20",season:"summer",poem:"有明のつれなく見えし別れより　暁ばかり憂きものはなし",auth:"壬生忠岐",interp:"有明の月が冷たく見えた別れの夜から、夜明けほどつらいものはない。",x:18,y:0.35,z:48,ry:-0.5},
+  {id:"waka_su21",season:"summer",poem:"由良の門を渡る舟人かぢを絶え　行方も知らぬ恋の道かな",auth:"曽禰好忠",interp:"由良の瀬戸を渡る舟人が舵を失うように、行方も知れぬ恋の道よ。",x:-18,y:0.35,z:48,ry:0.4},
+  {id:"waka_su22",season:"summer",poem:"忘れては夢かとぞ思ふ思ひきや　雪踏み分けて君を見むとは",auth:"藤原忠平",interp:"忘れれば夢かと思う。雪を踏み分けてあなたに逢おうとは思いもよらなかった。",x:8,y:0.35,z:51,ry:0.8},
+  {id:"waka_su23",season:"summer",poem:"瀬をはやみ岩にせかるる滝川の　われても末に逢はむとぞ思ふ",auth:"崇徳院",interp:"川の瀬が速く岩に当たる滝川が二つに分かれても末に合流するように、また逢おう。",x:-8,y:0.35,z:51,ry:-0.9},
+  {id:"waka_su24",season:"summer",poem:"音にきく高師の浜のあだ波は　かけじや袖のぬれもこそすれ",auth:"祐子内親王家紀伊",interp:"評判に聞く高師の浜の波は心変わりと聞く。袖が濡れてはと用心している。",x:28,y:0.35,z:32,ry:0.2},
+  {id:"waka_su25",season:"summer",poem:"心にもあらでうき世にながらへば　恋しかるべき夜半の月かな",auth:"三条院",interp:"心ならずもこの世に生き続けるなら、この夜半の月が恋しくなるだろう。",x:-28,y:0.35,z:32,ry:-0.3},
+  // 秋 追加
+  {id:"waka_au11",season:"autumn",poem:"立ち別れいなばの山の峯に生ふる　まつとし聞かば今帰り来む",auth:"中納言行平",interp:"別れて因幡の山に行くが、松のように待つと聞いたらすぐに帰ってくる。",x:44,y:0.35,z:-16,ry:-0.5},
+  {id:"waka_au12",season:"autumn",poem:"夜をこめて鳥のそらねははかるとも　よに逢坂の関はゆるさじ",auth:"清少納言",interp:"夜のうちに鶏の鳴き真似で欺こうとしても、逢坂の関は決して通しません。",x:-44,y:0.35,z:-16,ry:0.6},
+  {id:"waka_au13",season:"autumn",poem:"君がため惜しからざりし命さへ　長くもがなと思ひけるかな",auth:"藤原義孝",interp:"あなたのためなら惜しくもなかった命なのに、長くあってほしいと思うようになったよ。",x:44,y:0.35,z:-8,ry:-0.3},
+  {id:"waka_au14",season:"autumn",poem:"長からむ心も知らず黒髪の　乱れて今朝は物をこそ思へ",auth:"待賢門院堀河",interp:"末永いかどうかもわからない。黒髪の乱れるように今朝は物思いにふける。",x:-44,y:0.35,z:-8,ry:0.4},
+  {id:"waka_au15",season:"autumn",poem:"わが袖は山の端ならぬものゆゑに　入る日を見ては暮れぬとぞ思ふ",auth:"宮内卿",interp:"私の袖は山の端ではないのに、日が沈むのを見ては暮れたと思う（涙で）。",x:10,y:1.45,z:-35,ry:0.5},
+  {id:"waka_au16",season:"autumn",poem:"秋風にたなびく雲の絶え間より　もれいづる月の影のさやけさ",auth:"左京大夫顕輔",interp:"秋風にたなびく雲の切れ間から漏れ出る月の光の清らかさよ。",x:-10,y:1.45,z:-35,ry:-0.6},
+  {id:"waka_au17",season:"autumn",poem:"逢ひ見ての後の心に比ぶれば　昔はものを思はざりけり",auth:"権中納言敦忠",interp:"逢って見た後の心に比べれば、昔は何も思わなかったのだなあ。",x:20,y:1.15,z:-28,ry:0.3},
+  {id:"waka_au18",season:"autumn",poem:"起きもせず寝もせで夜を明かしては　春の物とて眺め暮らしつ",auth:"相模",interp:"起きもせず寝もせず夜を明かし、春のものとして眺めて暮らした。",x:-20,y:1.15,z:-28,ry:-0.4},
+  {id:"waka_au19",season:"autumn",poem:"新古今の時代の歌なれど秋に　吹く嵐に散るもみぢ葉は竜田川　錦と見えて流れゆくかな",auth:"よみ人知らず",interp:"嵐に散る紅葉は竜田川を錦のように流れゆく。",x:35,y:0.35,z:-50,ry:0.6},
+  {id:"waka_au20",season:"autumn",poem:"もの思へば沢の蛍もわが身より　あくがれ出づる魂かとぞ見る",auth:"和泉式部",interp:"物思いをしていると、沢の蛍も私の魂がさ迷い出たものかと見える。",x:-35,y:0.35,z:-50,ry:-0.7},
+  {id:"waka_au21",season:"autumn",poem:"夕されば門田の稲葉おとづれて　あしのまろやに秋風ぞ吹く",auth:"大納言経信",interp:"夕方になると門田の稲葉を訪れて、葦の丸屋に秋風が吹いている。",x:16,y:0.35,z:-46,ry:-0.3},
+  {id:"waka_au22",season:"autumn",poem:"み山には嵐吹くらし遠里の　梢に秋の色ぞ見えける",auth:"よみ人知らず",interp:"山には嵐が吹いているらしい。遠くの里の梢に秋の色が見える。",x:-16,y:0.35,z:-46,ry:0.2},
+  {id:"waka_au23",season:"autumn",poem:"よもすがら物思ふ頃は明けやらで　ねやのひまさへつれなかりけり",auth:"藤原俊成女",interp:"夜通し物思いする頃は夜が明けず、寝室の隙間さえもつれない。",x:26,y:0.35,z:-44,ry:0.5},
+  {id:"waka_au24",season:"autumn",poem:"山川に風のかけたるしがらみは　流れもあへぬ紅葉なりけり",auth:"春道列樹",interp:"山川に風がかけた柵は流れも止まれぬ紅葉だったのだ。",x:-26,y:0.35,z:-44,ry:-0.5},
+  {id:"waka_au25",season:"autumn",poem:"あけぬれば暮るるものとは知りながら　なほうらめしき朝ぼらけかな",auth:"藤原道信朝臣",interp:"夜が明ければ暮れるものとは知りながら、やはり恨めしい夜明けよ。",x:6,y:1.35,z:-12,ry:0.8},
+  // 冬 追加
+  {id:"waka_wi11",season:"winter",poem:"今こむと言ひしばかりに長月の　有明の月を待ち出でつるかな",auth:"素性法師",interp:"「すぐ来る」と言ったばかりに、有明の月が出るまで待ち続けてしまった。",x:54,y:0.35,z:-30,ry:-0.4},
+  {id:"waka_wi12",season:"winter",poem:"み吉野の山の秋風さ夜ふけて　故郷寒く衣打つなり",auth:"参議雅経",interp:"吉野の山に秋風が吹き、夜が更けて故郷では衣打つ音が聞こえる。",x:-54,y:0.35,z:-30,ry:0.5},
+  {id:"waka_wi13",season:"winter",poem:"浅茅生の小野の篠原しのぶれど　あまりてなどか人の恋しき",auth:"参議等",interp:"浅茅が生い茂る野原で忍ぶのだが、あまりにもあなたが恋しくてどうしようもない。",x:54,y:0.35,z:-40,ry:-0.6},
+  {id:"waka_wi14",season:"winter",poem:"吹くからに秋の草木のしをるれば　むべ山風を嵐といふらむ",auth:"文屋康秀",interp:"吹くだけで秋の草木がしおれるから、もっともや山風を嵐というのだろう。",x:-54,y:0.35,z:-40,ry:0.7},
+  {id:"waka_wi15",season:"winter",poem:"山里は冬ぞさびしさまさりける　人目も草もかれぬと思へば",auth:"源宗于朝臣",interp:"山里は冬こそ寂しさが増す。人の訪れも草も枯れ果てると思うと。",x:4,y:1.55,z:-7,ry:0.9},
+  {id:"waka_wi16",season:"winter",poem:"思ひわびさても命はあるものを　憂きに堪へぬは涙なりけり",auth:"道因法師",interp:"思い悩んでも命はあるのに、辛さに堪えられないのは涙だったのだ。",x:-4,y:1.55,z:-7,ry:-0.8},
+  {id:"waka_wi17",season:"winter",poem:"世の中よ道こそなけれ思ひ入る　山の奥にも鹿ぞ鳴くなる",auth:"藤原俊成",interp:"この世に逃げ道はない。思い詰めて入った山の奥でも鹿が鳴いている。",x:45,y:0.35,z:5,ry:-0.4},
+  {id:"waka_wi18",season:"winter",poem:"ほととぎす鳴きつる雲の行方より　細まる川のながれ絶えずも",auth:"よみ人知らず",interp:"ほととぎすが鳴いた雲の方向から、細い川の流れが絶えることなく続く。",x:-45,y:0.35,z:5,ry:0.3},
+  {id:"waka_wi19",season:"winter",poem:"むすぶ手のしづくに濁る山の井の　あかでも人に別れぬるかな",auth:"西行法師",interp:"手で掬った水しずくで濁る山の清水のように、思いが晴れぬまま別れてしまった。",x:54,y:0.35,z:0,ry:-0.5},
+  {id:"waka_wi20",season:"winter",poem:"契りきなかたみに袖をしぼりつつ　末の松山波越さじとは",auth:"清原元輔",interp:"誓ったではないか。互いに袖を絞りながら末の松山を波が越えないように、変わらぬと。",x:-54,y:0.35,z:0,ry:0.6},
+  {id:"waka_wi21",season:"winter",poem:"来ぬ人をまつほの浦の夕なぎに　焼くや藻塩の身もこがれつつ",auth:"藤原定家",interp:"来ぬ人を待つ松帆の浦の夕凪に、焼く藻塩のように私の身も焦がれている。",x:45,y:0.35,z:-5,ry:-0.3},
+  {id:"waka_wi22",season:"winter",poem:"人もをし人もうらめし味気なく　世を思ふゆゑにもの思ふ身は",auth:"後鳥羽院",interp:"人も愛しく人も恨めしい。この世を何とも思えないために物思う身よ。",x:-45,y:0.35,z:-5,ry:0.2},
+  {id:"waka_wi23",season:"winter",poem:"風そよぐならの小川の夕暮れは　みそぎぞ夏のしるしなりける",auth:"従二位家隆",interp:"風がそよぐ奈良の小川の夕暮れ。禊こそが夏のしるしだ。",x:54,y:0.35,z:20,ry:-0.6},
+  {id:"waka_wi24",season:"winter",poem:"百敷や古き軒端のしのぶにも　なほあまりある昔なりけり",auth:"順徳院",interp:"宮中の古い軒端のしのぶ草を見ても、なお余りある昔の栄華よ。",x:-54,y:0.35,z:20,ry:0.7},
+  {id:"waka_wi25",season:"winter",poem:"花の香を風のたよりにたぐへてぞ　鶯誘ふしるべにはやる",auth:"紀貫之",interp:"花の香を風の便りに乗せて、鶯を誘う道しるべとする。",x:4,y:0.35,z:-55,ry:0.5},
 ];
 // ITEMS に動的登録
 const _WAKA_NUM=["一","二","三","四","五","六","七","八","九","十"];
@@ -4327,11 +4403,11 @@ const SOUNDSCAPE = {
   "winter/dusk":  { bed:"nightWind", calls:[] },
   "winter/night": { bed:"nightWind", calls:[] },                                   // 焚火は火桶/炭櫃の近接で別管理
   // 朝（夜明け）—各季節で暁の音風景を定義
-  "spring/dawn":  { bed:"water",     calls:[ {pool:"spring_bird",prob:0.65,gap:4000, gain:0.55} ] }, // 暁の鶯(春告げ鳥)
-  "summer/dawn":  { bed:"water",     calls:[ {pool:"hototogisu", prob:0.55,gap:10000,gain:0.48} ] }, // 暁の時鳥
-  "autumn/dawn":  { bed:"water",     calls:[ {pool:"kari",       prob:0.4, gap:18000,gain:0.5 },     // 夜明けの雁の声
-                                             {pool:"higurashi",  prob:0.4, gap:9000, gain:0.3 } ] }, // 暁のひぐらし
-  "winter/dawn":  { bed:"nightWind", calls:[ {pool:"tsuru",      prob:0.3, gap:22000,gain:0.45} ] }  // 冬の静かな夜明け・鶴
+  "spring/dawn":  { bed:null,        calls:[ {pool:"spring_bird",prob:0.28,gap:14000,gain:0.42} ] }, // 静寂の暁・時折鶯
+  "summer/dawn":  { bed:null,        calls:[ {pool:"hototogisu", prob:0.22,gap:22000,gain:0.35} ] }, // 静寂の暁・時折時鳥
+  "autumn/dawn":  { bed:null,        calls:[ {pool:"kari",       prob:0.18,gap:32000,gain:0.38},     // 静寂・遠くの雁
+                                             {pool:"higurashi",  prob:0.18,gap:20000,gain:0.20} ] }, // 静寂・遠くのひぐらし
+  "winter/dawn":  { bed:null,        calls:[ {pool:"tsuru",      prob:0.14,gap:40000,gain:0.32} ] }  // 最も静かな夜明け・稀に鶴
 };
 
 const SFX = {
@@ -5102,16 +5178,17 @@ function showInfo(id){
   const it=ITEMS[id];if(!it)return;
   // 和歌短冊はinfoパネルを出さず直接解錠してリビールのみ
   if(it.cat==="w"){unlockCodex(id);return;}
+  const isRevisit=codexUnlocked.has(id);
   $("infoCat").textContent={b:"建築部位",g:"動かせる建具",c:"調度品",p:"人物",x:"夜の怪異",a:"生き物",s:"四方の守護神(四神)"}[it.cat]||"";
   $("infoCat").className="info-cat "+({b:"b",g:"g",c:"",p:"p",x:"x",a:"a",s:"x"}[it.cat]||"");
   $("infoName").textContent=it.n;$("infoKana").textContent=it.k;
   $("infoDesc").textContent=it.d;
   $("infoTrivia").innerHTML="<b>📜 古文の窓</b><br>"+it.t;
   unlockCodex(id);
-  const panel=$("info");panel.classList.remove("open");void panel.offsetWidth;
+  const panel=$("info");panel.classList.remove("open","revisit");void panel.offsetWidth;
+  if(isRevisit)panel.classList.add("revisit");
   requestAnimationFrame(()=>panel.classList.add("open"));
-  // 少し経ったら自動で閉じる(読みやすさのため8秒)
-  clearTimeout(_infoTimer);_infoTimer=setTimeout(()=>panel.classList.remove("open"),8000);
+  clearTimeout(_infoTimer);_infoTimer=setTimeout(()=>panel.classList.remove("open"),isRevisit?2200:8000);
 }
 $("infoClose").onclick=closeInfo;
 $("btnCodex").onclick=()=>openCodex("main");$("tbCodex").onclick=()=>openCodex("main");
@@ -5174,15 +5251,21 @@ function drawMinimap(){
   (window.BRIDGES||[]).forEach(b=>{x.beginPath();x.moveTo(mx(b.x1),my(b.z1));x.lineTo(mx(b.x2),my(b.z2));x.stroke();});
   x.strokeStyle="rgba(220,160,100,.60)";x.lineWidth=2;
   (window.BRIDGES||[]).forEach(b=>{x.beginPath();x.moveTo(mx(b.x1),my(b.z1));x.lineTo(mx(b.x2),my(b.z2));x.stroke();});
-  // 現在地と向き(金色の矢印)
+  // 現在地アイコン — 烏帽子(黒塗・金縁)
+  const S=(w-m*2)/span;
   const fx=-Math.sin(player.yaw),fz=-Math.cos(player.yaw),rx=Math.cos(player.yaw),rz=-Math.sin(player.yaw);
-  const p1=[player.pos.x+fx*3.5,player.pos.z+fz*3.5];
-  const p2=[player.pos.x-fx*1.5+rx*2.0,player.pos.z-fz*1.5+rz*2.0];
-  const p3=[player.pos.x-fx*1.5-rx*2.0,player.pos.z-fz*1.5-rz*2.0];
-  x.fillStyle="#c8421e";x.strokeStyle="#f8e4a0";x.lineWidth=3;x.beginPath();
-  x.moveTo(mx(p1[0]),my(p1[1]));x.lineTo(mx(p2[0]),my(p2[1]));x.lineTo(mx(p3[0]),my(p3[1]));x.closePath();x.fill();x.stroke();
-  // 現在地の光点
-  x.fillStyle="rgba(255,220,80,.8)";x.beginPath();x.arc(mx(player.pos.x),my(player.pos.z),4,0,Math.PI*2);x.fill();
+  const ebX=mx(player.pos.x),ebZ=my(player.pos.z);
+  // スクリーン座標でのオフセット計算(前方=fx,fz / 側方=rx,rz)
+  const sp=(fw,ri)=>[ebX+fx*fw*S+rx*ri*S, ebZ+fz*fw*S+rz*ri*S];
+  x.fillStyle="#1a1510";x.strokeStyle="#c9a23f";x.lineWidth=2;
+  // 台座(烏帽子の縁):後ろ広め・前やや狭まる台形
+  const eb_bl=sp(-2.2,-2.4),eb_br=sp(-2.2,2.4),eb_fl=sp(0.6,-1.6),eb_fr=sp(0.6,1.6);
+  x.beginPath();x.moveTo(eb_bl[0],eb_bl[1]);x.lineTo(eb_fl[0],eb_fl[1]);x.lineTo(eb_fr[0],eb_fr[1]);x.lineTo(eb_br[0],eb_br[1]);x.closePath();x.fill();x.stroke();
+  // 烏帽子の突き出た頂上(前方へ先細り)
+  const eb_apex=sp(6.0,0),eb_tl=sp(0.4,-1.0),eb_tr=sp(0.4,1.0);
+  x.beginPath();x.moveTo(eb_tl[0],eb_tl[1]);x.lineTo(eb_apex[0],eb_apex[1]);x.lineTo(eb_tr[0],eb_tr[1]);x.closePath();x.fill();x.stroke();
+  // 金の位置点
+  x.fillStyle="#f0c830";x.beginPath();x.arc(ebX,ebZ,2.4,0,Math.PI*2);x.fill();
   const px=player.pos.x,pz=player.pos.z;
   let area="邸内";
   if(Math.abs(px)<=15&&pz>-11&&pz<8)area="寝殿";
@@ -5220,7 +5303,7 @@ function drawMinimap(){
 ============================================================ */
 const TIMES={
  day:{sky:0xbfdcec,fog:0xcfe0ea,sunI:1.25,sunC:0xfff2dd,sunP:[60,95,45],hemi:.55,amb:.18,ambC:0xfff0dd,moon:0,exp:1.05,int:.35}, /* [Phase1] hemi .62→.55 (IBL補填分) */
- dawn:{sky:0xb8c4d6,fog:0xc4cdda,sunI:.85,sunC:0xffd9a8,sunP:[92,30,26],hemi:.46,amb:.14,ambC:0xffe6cf,moon:.06,exp:1.0,int:.42}, /* 早朝:東から低い暖色の陽 */
+ dawn:{sky:0xb8c4d6,fog:0xd8dde8,sunI:.85,sunC:0xffd9a8,sunP:[92,30,26],hemi:.46,amb:.14,ambC:0xffe6cf,moon:.06,exp:1.0,int:.42}, /* 早朝:朝靄白色フォグ */
  dusk:{sky:0xe8a368,fog:0xdf9a64,sunI:.7,sunC:0xff9a55,sunP:[-70,22,30],hemi:.34,amb:.12,ambC:0xffcaa0,moon:0,exp:1.0,int:.5},
  night:{sky:0x0d1626,fog:0x101a2c,sunI:0,sunC:0xffffff,sunP:[60,95,45],hemi:.055,amb:.012,ambC:0xffcf9a,moon:.34,exp:.88,int:.06}
 };
@@ -5367,7 +5450,10 @@ function chooseQuestRole(role){initAudio();APP.questRole=role;if($("questRolePic
 if($("questRolePicker"))$("questRolePicker").onclick=e=>{if(e.target===$("questRolePicker"))$("questRolePicker").style.display="none";};
 if($("questRoleMale"))$("questRoleMale").onclick=()=>{beep(660,.08);chooseQuestRole("male");};
 if($("questRoleFemale"))$("questRoleFemale").onclick=()=>{beep(700,.08);chooseQuestRole("female");};
-$("resClose").onclick=()=>{$("result").style.display="none";enterMode("walk");};
+$("resClose").onclick=()=>{$("result").style.display="none";$("resKaimamiActions").style.display="none";enterMode("walk");};
+$("resRetry").onclick=()=>{$("result").style.display="none";$("resKaimamiActions").style.display="none";enterMode("kaimami");};
+$("resWalk").onclick=()=>{$("result").style.display="none";$("resKaimamiActions").style.display="none";enterMode("walk");};
+$("questMin").onclick=()=>{const h=$("questHud");const min=h.classList.toggle("minimized");$("questMin").textContent=min?"＋":"－";};
 
 /* ============================================================
    クイズモード
@@ -5494,18 +5580,26 @@ const LB=(()=>{
 })();
 function endQuiz(){
   const q=APP.quiz;
+  $("resKaimamiActions").style.display="none";$("resClose").style.display="";
   if(q.ta){ // ===== タイムアタックの結果 =====
     const tot=(performance.now()-q.tStart)/1000+q.penalty;
-    const rank=tot<=60?["韋駄天","いだてん — 神速!平安の風よりも速い!"]:
-               tot<=90?["関白","かんぱく — 見事な早業!"]:
-               tot<=130?["大納言","だいなごん — 立派なタイム!"]:
-               tot<=180?["殿上人","てんじょうびと — まずまずの腕前!"]:
-                        ["六位蔵人","ろくいのくろうど — 場所を覚えてもう一度!"];
+    const RANKS_TA=[
+      {label:"韋駄天",kana:"いだてん",lim:60, comment:"神速!平安の風よりも速い!"},
+      {label:"関白",  kana:"かんぱく", lim:90, comment:"見事な早業!"},
+      {label:"大納言",kana:"だいなごん",lim:130,comment:"立派なタイム!"},
+      {label:"殿上人",kana:"てんじょうびと",lim:180,comment:"まずまずの腕前!"},
+      {label:"六位蔵人",kana:"ろくいのくろうど",lim:Infinity,comment:"場所を覚えてもう一度!"},
+    ];
+    const ri=RANKS_TA.findIndex(r=>tot<=r.lim);
+    const rank=RANKS_TA[ri];
+    const rankTable='<div style="margin-top:10px;border-top:1px solid #b89b56;padding-top:8px;font-size:11.5px;text-align:left;font-family:var(--sans)"><b>称号ランク表</b><br><table style="width:100%;border-collapse:collapse">'+
+      RANKS_TA.map((r,i)=>`<tr style="background:${i===ri?"rgba(201,162,63,.22)":"transparent"};font-weight:${i===ri?"bold":"normal"}"><td style="padding:2px 4px">${r.label}</td><td style="padding:2px 4px;color:#9a8a6a">${r.kana}</td><td style="padding:2px 4px">${r.lim===Infinity?"180秒超":"～"+r.lim+"秒"}</td></tr>`).join("")+
+      '</table></div>';
     const lbr=LB.add("ta",tot);
     $("resTitle").textContent="タイムアタック結果";
-    $("resRank").textContent=rank[0];
-    $("resDetail").innerHTML="記録:<b>"+tot.toFixed(1)+"秒</b>(お手つき "+q.miss+"回 = +"+q.penalty+"秒)<br>"+rank[1]+
-      "<br>あなたの順位: <b>"+lbr.rank+"位</b> / "+lbr.total+"件中"+LB.html("ta");
+    $("resRank").textContent=rank.label;
+    $("resDetail").innerHTML="記録:<b>"+tot.toFixed(1)+"秒</b>(お手つき "+q.miss+"回 = +"+q.penalty+"秒)<br>"+rank.comment+
+      "<br>あなたの順位: <b>"+lbr.rank+"位</b> / "+lbr.total+"件中"+LB.html("ta")+rankTable;
     $("result").style.display="flex";seOK();
     APP.quiz=null;APP.mode="walk";$("quizHud").style.display="none";
     $("modeTag").textContent="自由散策";
@@ -5659,7 +5753,7 @@ function questAdvance(i){
       if(line>=s.lines.length){$("dialogueBubble").classList.remove("show");questAdvance(i+1);return;}
       const l=s.lines[line++],bubble=$("dialogueBubble");
       $("dialogueName").textContent=l[0];$("dialogueText").textContent=`「${l[1]}」`;
-      bubble.classList.add("show");seOK();setTimeout(speak,2200);
+      bubble.classList.add("show");seOK();setTimeout(speak,4500);
     };speak();
   }
 }
@@ -5807,6 +5901,11 @@ function kaimamiWatcherSees(w){
 }
 function kaimamiLookAtHime(route){
   const hime=people[0]&&people[0].g;if(!hime||!route)return false;
+  // 几帳越しは建物内側から北向きで覗き込む姿勢が必要
+  if(route.id==="kichou"){
+    // プレイヤーが几帳より南(z > route.z)にいて、かつ北向き(cos(yaw)>0.42 ≒ ±65°以内)
+    if(player.pos.z<route.z+0.5||Math.cos(player.yaw)<0.42)return false;
+  }
   const target=new THREE.Vector3(hime.position.x,hime.position.y+1.12,hime.position.z),dir=new THREE.Vector3();
   camera.getWorldDirection(dir);const to=target.sub(camera.position),dist=to.length();
   return dist<=22&&dir.dot(to.normalize())>=.965;
@@ -5885,7 +5984,7 @@ function kaimamiUpdate(dt){
     k.done=true;beacon.visible=false;seOK();
     $("resTitle").textContent="垣間見 達成";$("resRank").textContent="見初めたり";
     $("resDetail").innerHTML=`牛車から邸へ忍び、従者と女房の巡回を避けて${secret?secret.name:"几帳の隙間"}から実際に姫君の姿を捉えた。見つかった回数: <b>${k.caught}回</b><br><br>平安文学の<b>垣間見</b>は、姿を公に見せない高貴な女性を男性が偶然、あるいは密かに見る重要な出会いの型。『源氏物語』若紫巻などで物語が動き始める。`;
-    kaimamiRestoreActors(k);$("result").style.display="flex";APP.kaimami=null;APP.mode="walk";$("questHud").style.display="none";$("modeTag").textContent="自由散策";
+    kaimamiRestoreActors(k);$("resKaimamiActions").style.display="flex";$("resClose").style.display="none";$("result").style.display="flex";APP.kaimami=null;APP.mode="walk";$("questHud").style.display="none";$("modeTag").textContent="自由散策";
   }
 }
 
@@ -6048,7 +6147,7 @@ function animate(){
   
   if (scene.fog) {
     scene.fog.color.copy(cur.fog);
-    scene.fog.density = (APP.time === "day") ? 0.012 : 0.0;  /* [fix] 霞(フォグ)は昼だけ */
+    scene.fog.density = (APP.time==="day")?0.012:(APP.time==="dawn")?0.020:0.0; /* 昼:霞 / 朝:朝靄 */
   }
   scene.background=cur.sky;
   
