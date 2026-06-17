@@ -2169,10 +2169,11 @@ function groundH(x,z){let h=bridgeGroundH(x,z);
 /* 池(円の合成で近似) */
 const pondCircles=[[-22,40,17],[-2,47,15],[-34,28,11],[14,50,10],[-12,33,9]];
 function inPond(x,z){return pondCircles.some(c=>((x-c[0])**2+(z-c[1])**2)<c[2]*c[2]);}
-/* 建物の正規入口ゾーン（地面→建物床への許容遷移） */
-function inBuildingEntrance(x,z){
-  // 寝殿南 — 階段口(kizahashi) 幅3.4, z≈6.8〜9.2
-  if(Math.abs(x)<1.8&&z>5.8&&z<10.0)return true;
+/* 建物の正規入口ゾーン（地面→建物床への許容遷移）
+ * skipSouth=true: 垣間見モード時に寝殿南正面を封鎖し、妻戸経路のみ許容する */
+function inBuildingEntrance(x,z,skipSouth){
+  // 寝殿南 — 階段口(kizahashi) 幅3.4, z≈6.8〜9.2（垣間見では封鎖）
+  if(!skipSouth&&Math.abs(x)<1.8&&z>5.8&&z<10.0)return true;
   // 東渡殿 ↔ 寝殿東妻戸 (x≈11.8, z=-7.5)
   if(x>11.0&&x<13.5&&Math.abs(z+7.5)<1.6)return true;
   // 西透渡殿 ↔ 寝殿西妻戸 (x≈-11.8, z=-7.5)
@@ -5701,10 +5702,10 @@ function questFinish(){
 ============================================================ */
 const KAIMAMI_ZONE={hold:1.25,start:[47.0,17.0]};
 const KAIMAMI_SECRETS=[
-  {id:"kichou",name:"几帳越し",x:0.8,z:3.8,r:2.45,color:0xe1b74f},
-  {id:"east",name:"開いた東の格子",x:12.2,z:-3.8,r:2.10,color:0x53d8c0},
-  {id:"north",name:"北の破れた壁代",x:2.5,z:-9.2,r:2.00,color:0xa58be3},
-  {id:"tsumado",name:"妻戸を通った先",x:8.8,z:3.2,r:2.10,color:0xe77964}
+  {id:"kichou", name:"几帳越し",        x:0.8, z:3.8,  r:2.45,color:0xe1b74f,guarded:true },
+  {id:"east",   name:"開いた東の格子",  x:12.2,z:-3.8, r:2.10,color:0x53d8c0,guarded:false},
+  {id:"north",  name:"北の破れた壁代",  x:2.5, z:-9.2, r:2.00,color:0xa58be3,guarded:false},
+  {id:"tsumado",name:"妻戸を通った先",  x:8.8, z:3.2,  r:2.10,color:0xe77964,guarded:true },
 ];
 const KAIMAMI_ALERT=1.10;
 const kaimamiRay=new THREE.Raycaster(),kaimamiDetectRay=new THREE.Raycaster(),kaimamiHits=[],KAIMAMI_CENTER={x:0,y:0};
@@ -6346,12 +6347,13 @@ function animate(){
         const gh=groundH(cx,cz);
         const prevGH=groundH(player.pos.x,player.pos.z);
         // 建物壁衝突: 垣間見モードのみ。地面から建物床(h≥1.05)への直接侵入を防ぐ
-        const wallBlocked=APP.mode==="kaimami"&&prevGH<0.5&&gh>=1.05&&!inBuildingEntrance(cx,cz);
+        // 垣間見中は寝殿南正面(skipSouth=true)を封鎖し、妻戸経路のみ許容
+        const wallBlocked=APP.mode==="kaimami"&&prevGH<0.5&&gh>=1.05&&!inBuildingEntrance(cx,cz,true);
         if(wallBlocked){
           // 壁沿いスライド: X軸/Z軸のみで通り抜けを試みる
           const ghX=groundH(cx,player.pos.z),ghZ=groundH(player.pos.x,cz);
-          const slideX=!(prevGH<0.5&&ghX>=1.05&&!inBuildingEntrance(cx,player.pos.z));
-          const slideZ=!(prevGH<0.5&&ghZ>=1.05&&!inBuildingEntrance(player.pos.x,cz));
+          const slideX=!(prevGH<0.5&&ghX>=1.05&&!inBuildingEntrance(cx,player.pos.z,true));
+          const slideZ=!(prevGH<0.5&&ghZ>=1.05&&!inBuildingEntrance(player.pos.x,cz,true));
           if(slideX)player.pos.x=cx;
           if(slideZ)player.pos.z=cz;
         }else if(!(gh<0.05&&inPond(cx,cz))){
