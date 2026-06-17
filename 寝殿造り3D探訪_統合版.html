@@ -1269,10 +1269,20 @@ h1.t-main .shu{color:var(--shu-bright)}
 .codex-scroll::before,.codex-scroll::after{content:"";position:absolute;top:10px;bottom:10px;width:12px;
   background:linear-gradient(90deg,#5e140c,#a8412a 48%,#6e180d);border:1px solid var(--kin);border-radius:7px}
 .codex-scroll::before{left:7px}.codex-scroll::after{right:7px}
-.codex-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #b89b56}
+.codex-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #b89b56}
 .codex-head h2{color:var(--shu);font-size:24px;letter-spacing:.22em}
 #codexProgress{font-family:var(--sans);font-size:13px;color:#67583f;margin-top:5px}
 #codexClose{margin-left:auto}
+.codex-tabs{display:flex;gap:0;margin-bottom:10px;border-bottom:2px solid #b89b56}
+.codex-tab{padding:7px 20px;border:1px solid #b89b56;border-bottom:none;background:rgba(70,55,38,.08);color:#67583f;font-family:var(--serif);font-size:14px;cursor:pointer;margin-right:4px;border-radius:3px 3px 0 0;transition:background .12s}
+.codex-tab.active{background:linear-gradient(180deg,#fff8ee,#f5eddd);color:var(--shu);font-weight:bold}
+/* 和歌集ページ */
+#wakaPage{display:none}.codex-waka-list{display:flex;flex-direction:column;gap:8px}
+.waka-row{padding:12px 14px;border:1px solid #b89b56;background:rgba(255,255,255,.4);font-family:var(--serif)}
+.waka-row.locked{background:rgba(70,55,38,.06);color:#8f826c}
+.waka-row b{font-size:13px;letter-spacing:.1em}
+.waka-row .waka-poem{font-size:16px;letter-spacing:.15em;line-height:1.9;margin:6px 0 4px}
+.waka-row small{font-size:11px;color:#7a5c3a;line-height:1.6}
 .codex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
 .codex-entry{min-height:78px;padding:10px;text-align:left;border:1px solid #b89b56;background:rgba(255,255,255,.42);
   color:var(--sumi);font-family:var(--sans);transition:transform .12s,background .12s}
@@ -1457,8 +1467,18 @@ h1.t-main .shu{color:var(--shu-bright)}
       <div><h2 id="codexTitle">平安ものしり図鑑</h2><div id="codexProgress">図鑑 0 / 0</div></div>
       <button class="tb-btn" id="codexClose">閉じる</button>
     </div>
-    <div class="codex-grid" id="codexGrid"></div>
-    <div id="codexDetail"></div>
+    <div class="codex-tabs">
+      <button class="codex-tab active" id="codexTabMain">図鑑</button>
+      <button class="codex-tab" id="codexTabWaka">🎋 和歌集</button>
+    </div>
+    <div id="codexMainPage">
+      <div class="codex-grid" id="codexGrid"></div>
+      <div id="codexDetail"></div>
+    </div>
+    <div id="wakaPage">
+      <div id="codexWakaProgress" style="font-family:var(--sans);font-size:12px;color:#67583f;margin-bottom:8px"></div>
+      <div class="codex-waka-list" id="wakaList"></div>
+    </div>
   </div>
 </div>
 
@@ -1657,18 +1677,18 @@ const WAKA_DATA=[
   {id:"waka_sp7",season:"spring",poem:"桜散る木の下風は寒からで　空にしられぬ雪ぞ降りける",auth:"紀貫之",interp:"木の下の風は寒くないのに、空が知らぬうちに雪（花びら）が降っている。",x:0,y:1.55,z:-1,ry:0.8},
   {id:"waka_sp8",season:"spring",poem:"春の夜の夢ばかりなる手枕に　かひなく立たむ名こそ惜しけれ",auth:"藤原義孝",interp:"春の夜の夢のような短い逢瀬。そのために噂が立つのが惜しい。",x:26,y:0.35,z:10,ry:0.9},
   {id:"waka_sp9",season:"spring",poem:"吉野山去年の枝折の道かへて　まだ見ぬかたの花を尋ねむ",auth:"宮内卿",interp:"昨年の道と変えて、まだ見ぬ場所の花を探して行こう。",x:-26,y:0.35,z:10,ry:-0.9},
-  {id:"waka_sp10",season:"spring",poem:"人はいさ心も知らず故郷は　花ぞ昔の香に匂ひける",auth:"紀貫之",interp:"あなたの心はわからないが、この故郷の花だけは昔と変わらず香る。",x:0,y:0.35,z:7.5,ry:1.5},
+  {id:"waka_sp10",season:"spring",poem:"人はいさ心も知らず故郷は　花ぞ昔の香に匂ひける",auth:"紀貫之",interp:"あなたの心はわからないが、この故郷の花だけは昔と変わらず香る。",x:5.5,y:0.35,z:12.5,ry:1.5},
   // 夏 — 池・釣殿エリア
-  {id:"waka_su1",season:"summer",poem:"夏の夜はまだ宵ながら明けぬるを　雲のいづこに月宿るらむ",auth:"清原深養父",interp:"夏の夜はまだ宵のうちに明けてしまった。月はどの雲に泊まっているのか。",x:-22,y:0.35,z:34,ry:0.7},
-  {id:"waka_su2",season:"summer",poem:"ほととぎす鳴きつる方をながむれば　ただ有明の月ぞ残れる",auth:"後徳大寺左大臣",interp:"ほととぎすが鳴いた方を見れば、有明の月だけが残っている。",x:-5,y:0.35,z:50,ry:-0.5},
-  {id:"waka_su3",season:"summer",poem:"風そよぐならの小川の夕暮れは　みそぎぞ夏のしるしなりける",auth:"従二位家隆",interp:"風がそよぐ奈良の小川の夕暮れ。禊こそが夏のしるしだ。",x:12,y:0.35,z:44,ry:1.1},
-  {id:"waka_su4",season:"summer",poem:"夏来ぬと目にはさやかに見えねども　風の音にぞ驚かれぬる",auth:"藤原敏行",interp:"夏が来たと目には見えないが、風の音にはっと気づかされる。",x:-32,y:0.35,z:26,ry:-0.4},
+  {id:"waka_su1",season:"summer",poem:"夏の夜はまだ宵ながら明けぬるを　雲のいづこに月宿るらむ",auth:"清原深養父",interp:"夏の夜はまだ宵のうちに明けてしまった。月はどの雲に泊まっているのか。",x:-28,y:0.35,z:26,ry:0.7},
+  {id:"waka_su2",season:"summer",poem:"ほととぎす鳴きつる方をながむれば　ただ有明の月ぞ残れる",auth:"後徳大寺左大臣",interp:"ほととぎすが鳴いた方を見れば、有明の月だけが残っている。",x:6,y:0.35,z:38,ry:-0.5},
+  {id:"waka_su3",season:"summer",poem:"風そよぐならの小川の夕暮れは　みそぎぞ夏のしるしなりける",auth:"従二位家隆",interp:"風がそよぐ奈良の小川の夕暮れ。禊こそが夏のしるしだ。",x:24,y:0.35,z:38,ry:1.1},
+  {id:"waka_su4",season:"summer",poem:"夏来ぬと目にはさやかに見えねども　風の音にぞ驚かれぬる",auth:"藤原敏行",interp:"夏が来たと目には見えないが、風の音にはっと気づかされる。",x:-26,y:0.35,z:20,ry:-0.4},
   {id:"waka_su5",season:"summer",poem:"玉の緒よ絶えなば絶えねながらへば　忍ぶることの弱りもぞする",auth:"式子内親王",interp:"命よ絶えるなら絶えてしまえ。生き続ければ秘めた恋心が表に出てしまう。",x:35,y:1.35,z:34.5,ry:0.6},
   {id:"waka_su6",season:"summer",poem:"春すぎて夏来にけらし白妙の　衣ほすてふ天の香具山",auth:"持統天皇",interp:"春が過ぎて夏が来たようだ。天の香具山に白い衣が干されている。",x:-35,y:1.35,z:34.5,ry:-0.4},
   {id:"waka_su7",season:"summer",poem:"夏山に鳴くほととぎすこころあらば　物思ふ我に声聞かすなよ",auth:"和泉式部",interp:"夏山に鳴くほととぎすよ、情があるなら物思いにふける私に声を聞かせるな。",x:35,y:1.05,z:18,ry:0.3},
   {id:"waka_su8",season:"summer",poem:"五月雨に物思ひをれば郭公　夜ふかく鳴きていづちゆくらむ",auth:"藤原道長",interp:"五月雨に物思いに沈んでいると、ほととぎすが夜深く鳴きながらどこへ。",x:-35,y:1.05,z:18,ry:-0.6},
-  {id:"waka_su9",season:"summer",poem:"かきくらす心の闇にまどひにき　夢うつつとは世人さだめよ",auth:"在原業平",interp:"心の闇に迷い込んでしまった。夢か現かは世の人が決めてくれ。",x:-14,y:0.35,z:32,ry:1.3},
-  {id:"waka_su10",season:"summer",poem:"照る月のながるるみれば天の川　夜半に近づく夏はきにけり",auth:"よみ人知らず",interp:"月が流れるように見えれば天の川の夏。夜が深まるにつれ夏が来た。",x:10,y:0.35,z:52,ry:-1.0},
+  {id:"waka_su9",season:"summer",poem:"かきくらす心の闇にまどひにき　夢うつつとは世人さだめよ",auth:"在原業平",interp:"心の闇に迷い込んでしまった。夢か現かは世の人が決めてくれ。",x:-8,y:0.35,z:27,ry:1.3},
+  {id:"waka_su10",season:"summer",poem:"照る月のながるるみれば天の川　夜半に近づく夏はきにけり",auth:"よみ人知らず",interp:"月が流れるように見えれば天の川の夏。夜が深まるにつれ夏が来た。",x:20,y:0.35,z:47,ry:-1.0},
   // 秋 — 建物内・北側
   {id:"waka_au1",season:"autumn",poem:"今来むと言ひしばかりに長月の　有明の月を待ち出でつるかな",auth:"素性法師",interp:"「すぐ来る」と言ったばかりに、九月の有明の月が出るまで待ち続けた。",x:17,y:1.35,z:-7.5,ry:1.0},
   {id:"waka_au2",season:"autumn",poem:"ちはやぶる神代もきかず竜田川　からくれなゐに水くくるとは",auth:"在原業平",interp:"神代の昔にも聞いたことがない。竜田川を水ごと染める紅葉とは。",x:-17,y:1.35,z:-7.5,ry:-0.8},
@@ -1920,7 +1940,7 @@ const MAT={
 ============================================================ */
 const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true,powerPreference:"high-performance"});
 const IS_TOUCH=("ontouchstart" in window)||navigator.maxTouchPoints>0;
-renderer.setPixelRatio(Math.min(devicePixelRatio,IS_TOUCH?1.6:2));
+renderer.setPixelRatio(Math.min(devicePixelRatio,IS_TOUCH?1.5:1.5));
 renderer.setSize(innerWidth,innerHeight);
 
 /* 影（シャドウマップ）の完全有効化 */
@@ -1944,7 +1964,7 @@ sun.position.set(60,95,45);
 sun.castShadow=true;
 
 // シャドウマップの解像度
-sun.shadow.mapSize.set(2048,2048);
+sun.shadow.mapSize.set(1024,1024);
 
 // 影を描画する範囲。敷地全体を正確にカバーできるようにバウンディングボックスを調整
 const sc=sun.shadow.camera;
@@ -3877,9 +3897,9 @@ function makeFalling(count,texture,size){
   }
   g.userData.mat=mat;g.visible=false;scene.add(g);return g;
 }
-const petals=makeFalling(150,TEX.sakuraPetal,0.28);  // 桜の花びら(小さめ・増量)
-const leavesFall=makeFalling(70,TEX.mapleLeaf,0.52); // 紅葉の落ち葉
-const snowFall=makeFalling(220,TEX.snow,0.26);       // 雪
+const petals=makeFalling(80,TEX.sakuraPetal,0.28);   // 桜の花びら
+const leavesFall=makeFalling(40,TEX.mapleLeaf,0.52); // 紅葉の落ち葉
+const snowFall=makeFalling(100,TEX.snow,0.26);       // 雪
 /* 桜吹雪の突風: 平常は穏やか、たまに強く舞う(2周波で不規則な周期に) */
 function sakuraGust(t){
   const slow=Math.sin(t*0.045)+Math.sin(t*0.017+1.3);
@@ -4219,7 +4239,9 @@ function makeLabel(id){
 interactables.hajitomi&&(interactables.hajitomi.labelPos=new THREE.Vector3(SH.cx-7.4,SH.f2+3.2,SH.cz+SH.hd/2+.6));
 interactables.misu&&(interactables.misu.labelPos=new THREE.Vector3(SH.cx-4.4,SH.f2+3.2,SH.cz+SH.hd/2-.7));
 interactables.tsumado&&(interactables.tsumado.labelPos=new THREE.Vector3(SH.cx+SH.hw/2-1.3,SH.f2+3.3,SH.cz+SH.hd/2+.5));
-Object.keys(interactables).forEach(id=>{if(interactables[id].labelPos&&ITEMS[id])makeLabel(id);});
+Object.keys(interactables).forEach(id=>{
+  if(interactables[id].labelPos&&ITEMS[id]&&ITEMS[id].cat!=="w")makeLabel(id);
+});
 const itemFocus=new THREE.Group();
 {
   const ring=new THREE.Mesh(new THREE.RingGeometry(.72,.92,48),
@@ -4901,8 +4923,13 @@ const PREFS=(()=>{
   };
 })();
 function updateCodexProgress(){
-  const s=`図鑑 ${codexUnlocked.size} / ${Object.keys(ITEMS).length}`;
+  const wakaTotal=WAKA_DATA.length;
+  const wakaGot=[...codexUnlocked].filter(id=>id.startsWith("waka_")).length;
+  const mainTotal=Object.keys(ITEMS).filter(id=>!id.startsWith("waka_")).length;
+  const mainGot=codexUnlocked.size-wakaGot;
+  const s=`図鑑 ${mainGot}/${mainTotal}　和歌 ${wakaGot}/${wakaTotal}`;
   $("codexProgress").textContent=s;$("titleCodexProgress").textContent=s;
+  if($("codexWakaProgress")&&codexTab==="waka")renderWakaPage();
 }
 function unlockCodex(id){
   if(!ITEMS[id]||codexUnlocked.has(id))return;
@@ -4928,19 +4955,52 @@ function showWakaReveal(id){
   el.onclick=()=>{el.classList.remove("show");clearTimeout(_wakaRevTimer);};
 }
 let codexCatFilter="all";
+let codexTab="main"; // "main" | "waka"
+function setCodexTab(tab){
+  codexTab=tab;
+  $("codexTabMain").classList.toggle("active",tab==="main");
+  $("codexTabWaka").classList.toggle("active",tab==="waka");
+  $("codexMainPage").style.display=tab==="main"?"":"none";
+  $("wakaPage").style.display=tab==="waka"?"":"none";
+  if(tab==="main")renderCodex();else renderWakaPage();
+}
+function renderWakaPage(){
+  const snName={spring:"🌸 春",summer:"🌿 夏",autumn:"🍂 秋",winter:"❄ 冬"};
+  const snOrder=["spring","summer","autumn","winter"];
+  const wakaItems=WAKA_DATA;
+  const collected=wakaItems.filter(w=>codexUnlocked.has(w.id)).length;
+  $("codexWakaProgress").textContent=`和歌集 ${collected} / ${wakaItems.length} 首　(季節を切り替えて邸内を探索しよう)`;
+  const list=$("wakaList");list.textContent="";
+  snOrder.forEach(sn=>{
+    const hdr=document.createElement("div");
+    hdr.style.cssText="font-family:var(--serif);font-size:15px;color:var(--shu);margin:14px 0 6px;letter-spacing:.1em;border-bottom:1px solid #b89b56;padding-bottom:4px";
+    hdr.textContent=snName[sn]+"の和歌";list.appendChild(hdr);
+    wakaItems.filter(w=>w.season===sn).forEach(w=>{
+      const open=codexUnlocked.has(w.id);
+      const row=document.createElement("div");
+      row.className="waka-row"+(open?"":" locked");
+      if(open){
+        row.innerHTML=`<b>— ${w.auth} —</b><div class="waka-poem">${w.poem}</div><small>${ITEMS[w.id]?.t||""}</small>`;
+      }else{
+        row.innerHTML=`<b style="font-size:12px;color:#9a7c5a">${snName[w.season]}の短冊 — 未発見</b><div class="waka-poem" style="font-size:13px;color:#b0997a;letter-spacing:.05em">邸のどこかに隠れている…</div>`;
+      }
+      list.appendChild(row);
+    });
+  });
+}
 function renderCodex(){
   const grid=$("codexGrid");
-  const catName={b:"建築",g:"建具",c:"調度品",p:"人物",x:"怪異",a:"生き物",s:"霊獣",w:"和歌短冊"};
-  const catHint={b:"建物の柱・屋根・床まわりを見上げて探そう",g:"戸・格子・簾など動かせる建具を調べよう",c:"寝殿や対屋の室内に置かれた道具を探そう",p:"邸内の人物に近づいて調べよう",x:"夜だけ現れる。時間を夜にして庭の暗がりへ",a:"庭や池のまわり。季節・時間で現れる生き物を探そう",s:"邸の四方(築地のきわ)に守護神が現れる",w:"季節を変えると別の短冊が現れる。40枚を全部集めよう"};
-  const catDiff={b:1,g:2,c:2,p:2,x:3,a:3,s:2,w:2};
-  // フィルターバー
+  const catName={b:"建築",g:"建具",c:"調度品",p:"人物",x:"怪異",a:"生き物",s:"霊獣"};
+  const catHint={b:"建物の柱・屋根・床まわりを見上げて探そう",g:"戸・格子・簾など動かせる建具を調べよう",c:"寝殿や対屋の室内に置かれた道具を探そう",p:"邸内の人物に近づいて調べよう",x:"夜だけ現れる。時間を夜にして庭の暗がりへ",a:"庭や池のまわり。季節・時間で現れる生き物を探そう",s:"邸の四方(築地のきわ)に守護神が現れる"};
+  const catDiff={b:1,g:2,c:2,p:2,x:3,a:3,s:2};
+  // フィルターバー(和歌は別ページなので除外)
   let fb=$("codexFilterBar");
   if(!fb){
     fb=document.createElement("div");fb.id="codexFilterBar";fb.className="codex-filter-bar";
     grid.parentElement.insertBefore(fb,grid);
   }
   fb.textContent="";
-  const usedCats=[...new Set(Object.values(ITEMS).map(it=>it.cat))];
+  const usedCats=[...new Set(Object.values(ITEMS).filter(it=>it.cat!=="w").map(it=>it.cat))];
   ["all",...usedCats].forEach(cat=>{
     const btn=document.createElement("button");
     btn.className="codex-filter-btn"+(codexCatFilter===cat?" active":"");
@@ -4948,29 +5008,38 @@ function renderCodex(){
     btn.onclick=()=>{codexCatFilter=cat;renderCodex();};
     fb.appendChild(btn);
   });
-  // エントリー
+  // エントリー(和歌は表示しない)
   grid.textContent="";
-  Object.keys(ITEMS).filter(id=>codexCatFilter==="all"||ITEMS[id].cat===codexCatFilter).forEach(id=>{
-    const it=ITEMS[id],open=codexUnlocked.has(id),b=document.createElement("button");
-    b.className="codex-entry"+(open?"":" locked");b.disabled=!open;
-    const dv=catDiff[it.cat]||1,stars="★".repeat(dv)+"☆".repeat(3-dv);
-    b.innerHTML=open?`<b>${it.n}</b><small>${it.k}<br>${catName[it.cat]}　難${stars}</small>`:`<b>未解放</b><small>${catName[it.cat]}　難${stars}<br>ヒント: ${catHint[it.cat]||"邸内で解説を読む"}</small>`;
-    if(open)b.onclick=()=>{
-      const d=$("codexDetail");d.className="show";
-      d.innerHTML=`<h3>${it.n}</h3><div>${it.k}</div><p>${it.d}</p><p><b>古文の窓:</b> ${it.t}</p>`;
-      d.scrollIntoView({block:"nearest",behavior:"smooth"});
-    };
-    grid.appendChild(b);
-  });
+  Object.keys(ITEMS)
+    .filter(id=>ITEMS[id].cat!=="w"&&(codexCatFilter==="all"||ITEMS[id].cat===codexCatFilter))
+    .forEach(id=>{
+      const it=ITEMS[id],open=codexUnlocked.has(id),b=document.createElement("button");
+      b.className="codex-entry"+(open?"":" locked");b.disabled=!open;
+      const dv=catDiff[it.cat]||1,stars="★".repeat(dv)+"☆".repeat(3-dv);
+      b.innerHTML=open?`<b>${it.n}</b><small>${it.k}<br>${catName[it.cat]}　難${stars}</small>`:`<b>未解放</b><small>${catName[it.cat]}　難${stars}<br>ヒント: ${catHint[it.cat]||"邸内で解説を読む"}</small>`;
+      if(open)b.onclick=()=>{
+        const d=$("codexDetail");d.className="show";
+        d.innerHTML=`<h3>${it.n}</h3><div>${it.k}</div><p>${it.d}</p><p><b>古文の窓:</b> ${it.t}</p>`;
+        d.scrollIntoView({block:"nearest",behavior:"smooth"});
+      };
+      grid.appendChild(b);
+    });
   updateCodexProgress();
 }
-function openCodex(){APP.codexOpen=true;closeInfo();renderCodex();$("codexDetail").className="";$("codexDetail").textContent="";$("codex").classList.add("open");}
+function openCodex(tab){
+  APP.codexOpen=true;closeInfo();
+  $("codexDetail").className="";$("codexDetail").textContent="";
+  $("codex").classList.add("open");
+  setCodexTab(tab||"main");
+}
 function closeCodex(){APP.codexOpen=false;$("codex").classList.remove("open");}
 function closeInfo(){$("info").classList.remove("open");}
 function showInfo(id){
   const it=ITEMS[id];if(!it)return;
-  $("infoCat").textContent={b:"建築部位",g:"動かせる建具",c:"調度品",p:"人物",x:"夜の怪異",a:"生き物",s:"四方の守護神(四神)",w:"和歌短冊"}[it.cat]||"";
-  $("infoCat").className="info-cat "+({b:"b",g:"g",c:"",p:"p",x:"x",a:"a",s:"x",w:""}[it.cat]||"");
+  // 和歌短冊はinfoパネルを出さず直接解錠してリビールのみ
+  if(it.cat==="w"){unlockCodex(id);return;}
+  $("infoCat").textContent={b:"建築部位",g:"動かせる建具",c:"調度品",p:"人物",x:"夜の怪異",a:"生き物",s:"四方の守護神(四神)"}[it.cat]||"";
+  $("infoCat").className="info-cat "+({b:"b",g:"g",c:"",p:"p",x:"x",a:"a",s:"x"}[it.cat]||"");
   $("infoName").textContent=it.n;$("infoKana").textContent=it.k;
   $("infoDesc").textContent=it.d;
   $("infoTrivia").innerHTML="<b>📜 古文の窓</b><br>"+it.t;
@@ -4979,7 +5048,10 @@ function showInfo(id){
   requestAnimationFrame(()=>panel.classList.add("open"));
 }
 $("infoClose").onclick=closeInfo;
-$("btnCodex").onclick=openCodex;$("tbCodex").onclick=openCodex;$("codexClose").onclick=closeCodex;
+$("btnCodex").onclick=()=>openCodex("main");$("tbCodex").onclick=()=>openCodex("main");
+$("codexClose").onclick=closeCodex;
+$("codexTabMain").onclick=()=>setCodexTab("main");
+$("codexTabWaka").onclick=()=>setCodexTab("waka");
 $("codex").addEventListener("click",e=>{if(e.target===$("codex"))closeCodex();});
 addEventListener("keydown",e=>{if(e.key==="Escape"){closeCodex();closeInfo();}});
 updateCodexProgress();
@@ -6118,8 +6190,9 @@ function animate(){
     (g.userData.arms||[]).forEach(a=>a.rotation.x=Math.sin(t*.55+ph+a.userData.side)*.025);
   }
 
-  /* --- 和歌短冊のふわふわアニメーション --- */
+  /* --- 和歌短冊のふわふわアニメーション(表示中のみ) --- */
   WAKA_MESHES.forEach(m=>{
+    if(!m.visible)return;
     m.position.y=m.userData.baseY+Math.sin(t*0.7+m.userData.ph)*0.055;
     m.rotation.z=m.userData.baseRZ+Math.sin(t*0.45+m.userData.ph+1.2)*0.04;
   });
