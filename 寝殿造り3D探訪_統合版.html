@@ -3853,7 +3853,8 @@ function updateWakaVisibility(){
     register(m,w.id,new THREE.Vector3(w.x,w.y+0.3,w.z));
     WAKA_MESHES.push(m);
   });
-  updateWakaVisibility(); // 収集済みと季節に応じた初期表示
+  // 初期は全て非表示。APP/codexUnlocked初期化後に updateWakaVisibility() で季節別表示する
+  WAKA_MESHES.forEach(m=>m.visible=false);
 })();
 
 // 花びら（春）や落ち葉（秋）を本当の形に改良した降下パーティクル生成
@@ -4887,6 +4888,8 @@ const codexUnlocked=(()=>{try{
   return new Set(Array.isArray(saved)?saved.filter(id=>ITEMS[id]):[]);
 }catch(e){return new Set();}})();
 function saveCodex(){try{localStorage.setItem(CODEX_KEY,JSON.stringify([...codexUnlocked]));}catch(e){}}
+/* APPとcodexUnlockedが揃ったので、和歌短冊の初期表示(季節・収集状況)を反映 */
+if(typeof updateWakaVisibility==="function")updateWakaVisibility();
 /* ユーザーの表示設定(季節・時刻・札)を永続化。各モードのシナリオ起因の変更では保存しない */
 const PREFS_KEY="shinden3d-prefs-v1";
 const PREFS=(()=>{
