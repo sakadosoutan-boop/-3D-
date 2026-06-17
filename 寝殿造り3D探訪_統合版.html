@@ -1146,8 +1146,8 @@ h1.t-main .shu{color:var(--shu-bright)}
   display:none;border:1px solid rgba(201,162,63,.5);border-radius:8px;overflow:hidden;
   background:rgba(20,13,8,.24);box-shadow:0 4px 14px rgba(0,0,0,.22);pointer-events:none;opacity:.82}
 #minimap{display:block;width:176px;height:176px}
-#minimapLabel{position:absolute;left:8px;top:6px;color:#f4ecdc;font:10px var(--sans);
-  letter-spacing:.16em;text-shadow:0 1px 2px #000}
+#minimapLabel{position:absolute;left:8px;top:6px;color:#1a1008;font:bold 11px var(--sans);
+  letter-spacing:.16em;text-shadow:0 1px 2px rgba(255,248,225,.85)}
 
 /* ===== 解説ポップアップ(巻物風) ===== */
 #info{position:fixed;z-index:45;right:14px;top:64px;width:min(360px,calc(100vw - 28px));
@@ -1297,18 +1297,39 @@ h1.t-main .shu{color:var(--shu-bright)}
   background:rgba(255,255,255,.48);font-family:var(--sans);font-size:13px;line-height:1.85}
 #codexDetail.show{display:block}#codexDetail h3{font-family:var(--serif);font-size:20px;color:var(--shu);margin-bottom:4px}
 
-/* 和歌収集エフェクト */
+/* 和歌収集エフェクト — 巻物・縦書き */
 #wakaReveal{position:fixed;z-index:90;inset:0;display:flex;align-items:center;justify-content:center;
-  pointer-events:none;opacity:0;transition:opacity .6s;background:rgba(10,6,4,.55)}
+  pointer-events:none;opacity:0;transition:opacity .6s;background:rgba(10,6,4,.62)}
 #wakaReveal.show{opacity:1;pointer-events:auto}
-.waka-rev-inner{background:linear-gradient(145deg,rgba(245,228,180,.97),rgba(255,244,210,.97));
-  border:2px solid #c9a23f;padding:28px 36px;max-width:480px;width:90%;text-align:center;
-  box-shadow:0 8px 50px rgba(0,0,0,.7);color:#3a2510;border-radius:2px}
-.waka-rev-season{font-size:12px;letter-spacing:.22em;color:#7a5c2a;margin-bottom:10px}
-.waka-rev-poem{font-size:20px;font-family:var(--serif);letter-spacing:.2em;line-height:2;margin-bottom:14px;color:#3a1505}
-.waka-rev-auth{font-size:12px;color:#6a4c2a;margin-bottom:10px;font-family:var(--serif);letter-spacing:.1em}
-.waka-rev-interp{font-size:11px;line-height:1.75;color:#5a4030;border-top:1px solid rgba(184,155,86,.5);padding-top:10px;text-align:left}
+.waka-rev-inner{position:relative;display:flex;flex-direction:column;align-items:center;
+  background:linear-gradient(100deg,#efe0bc,#f7eed4 12%,#f8efd6 88%,#efe0bc);
+  border-left:2px solid #d8b86a;border-right:2px solid #d8b86a;
+  padding:40px 30px 26px;max-width:92vw;max-height:84vh;color:#3a2510;
+  box-shadow:0 14px 64px rgba(0,0,0,.72);
+  animation:wakaScrollIn .6s cubic-bezier(.2,.7,.3,1)}
+@keyframes wakaScrollIn{from{transform:scaleY(.04);opacity:0}to{transform:scaleY(1);opacity:1}}
+/* 巻物の軸(上下の棒) */
+.waka-rev-inner::before,.waka-rev-inner::after{content:"";position:absolute;left:-9px;right:-9px;height:15px;
+  background:linear-gradient(180deg,#9a6630,#5c3a18);border-radius:8px;box-shadow:0 2px 7px rgba(0,0,0,.55)}
+.waka-rev-inner::before{top:-7px}.waka-rev-inner::after{bottom:-7px}
+.waka-rev-season{font-size:12px;letter-spacing:.24em;color:#7a5c2a;margin-bottom:14px}
+.waka-rev-poem{writing-mode:vertical-rl;font-family:var(--serif);font-size:23px;letter-spacing:.16em;
+  line-height:2.05;height:min(50vh,360px);color:#2a1505;margin-bottom:14px;text-align:start}
+.waka-rev-auth{font-size:12px;color:#6a4c2a;margin-bottom:10px;font-family:var(--serif);letter-spacing:.12em}
+.waka-rev-interp{font-size:11px;line-height:1.75;color:#5a4030;border-top:1px solid rgba(184,155,86,.5);
+  padding-top:10px;max-width:320px;text-align:center}
 .waka-rev-hint{font-size:10px;color:#9a7c5a;margin-top:10px;display:block}
+
+/* モード起動ロード画面 */
+#loadingScreen{position:fixed;z-index:120;inset:0;display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:18px;background:radial-gradient(circle at 50% 45%,#1d140a,#0a0704);
+  opacity:0;transition:opacity .35s}
+#loadingScreen.show{display:flex;opacity:1}
+#loadingScreen .load-ring{width:54px;height:54px;border:3px solid rgba(201,162,63,.25);
+  border-top-color:#c9a23f;border-radius:50%;animation:loadSpin .9s linear infinite}
+@keyframes loadSpin{to{transform:rotate(360deg)}}
+#loadingScreen .load-text{color:#e6d4a4;font-family:var(--serif);font-size:15px;letter-spacing:.3em}
+@media (prefers-reduced-motion:reduce){#loadingScreen .load-ring{animation:none}.waka-rev-inner{animation:none}}
 /* 動きを減らす設定の利用者向け:UIアニメーションを抑制(既定の見た目・3D演出は不変) */
 @media (prefers-reduced-motion:reduce){
   #info,#info.open,#title,.t-btn,.codex-entry,.codex-entry:hover,#kaimamiEye .pupil,#kaimamiEye .fill{transition:none!important}
@@ -1459,7 +1480,7 @@ h1.t-main .shu{color:var(--shu-bright)}
   <button class="tb-btn" id="tbTitle">表紙へ</button>
 </div>
 
-<div id="minimapWrap"><canvas id="minimap" width="352" height="352"></canvas><div id="minimapLabel">現在地: 邸内</div></div>
+<div id="minimapWrap"><canvas id="minimap" width="352" height="352"></canvas><div id="minimapLabel">南庭</div></div>
 
 <div id="codex" role="dialog" aria-modal="true" aria-labelledby="codexTitle">
   <div class="codex-scroll">
@@ -1526,6 +1547,7 @@ h1.t-main .shu{color:var(--shu-bright)}
     <span class="waka-rev-hint">タップして閉じる</span>
   </div>
 </div>
+<div id="loadingScreen"><div class="load-ring"></div><div class="load-text">読み込み中…</div></div>
 <div id="help"><div class="h-card">
   <h3>操作方法</h3>
   <b>PC:</b> WASD / 矢印キーで移動、画面ドラッグで見回し、<b>クリック</b>で調べる(Shiftで早歩き)<br>
@@ -2204,6 +2226,9 @@ const world=new THREE.Group();scene.add(world);
   wallSeg(121,-W,0,Math.PI/2);      // 西
   wallSeg(48,W,-36.5,Math.PI/2);    // 東(門の北側)
   wallSeg(48,W,36.5,Math.PI/2);     // 東(門の南側)
+  // 東壁中央の開口を塞ぐ。棟門(z=0)と四脚門(z=12)の分だけ開口を残す
+  wallSeg(10.3,W,-7.35,Math.PI/2);  // 東(棟門の北側 z=-12.5〜-2.2)
+  wallSeg(6.3,W,5.35,Math.PI/2);    // 東(棟門と四脚門の間 z=2.2〜8.5)
   world.add(T);register(T,"tsuiji",new THREE.Vector3(0,4.6,W));
   /* 四脚門 */
   const gate=new THREE.Group();
@@ -2239,6 +2264,7 @@ const SHISHIN_DATA={
   }
   munamon(-W,0,Math.PI/2);   // 西門
   munamon(0,-W,0);           // 北門
+  munamon(W,0,Math.PI/2);    // 東門(中門正面・崩れていた築地に棟門を設置)
 
   const spiritGlowTex=canv(128,128,(x,w,h)=>{
     const g=x.createRadialGradient(w/2,h/2,2,w/2,h/2,w*.5);
@@ -4947,7 +4973,8 @@ function showWakaReveal(id){
   const w=WAKA_DATA.find(w=>w.id===id);if(!w)return;
   const snLabel={spring:"🌸 春の歌",summer:"🌿 夏の歌",autumn:"🍂 秋の歌",winter:"❄ 冬の歌"};
   $("wakaRevSeason").textContent=snLabel[w.season]||"和歌短冊";
-  $("wakaRevPoem").textContent=w.poem;
+  // 上句(五七五)と下句(七七)を全角空白で分け、縦書きで右→左の二列に
+  $("wakaRevPoem").innerHTML=w.poem.split(/[　 ]+/).map(s=>`<div>${s}</div>`).join("");
   $("wakaRevAuth").textContent="― "+w.auth;
   $("wakaRevInterp").textContent=it.t;
   const el=$("wakaReveal");el.classList.add("show");
@@ -4960,8 +4987,8 @@ function setCodexTab(tab){
   codexTab=tab;
   $("codexTabMain").classList.toggle("active",tab==="main");
   $("codexTabWaka").classList.toggle("active",tab==="waka");
-  $("codexMainPage").style.display=tab==="main"?"":"none";
-  $("wakaPage").style.display=tab==="waka"?"":"none";
+  $("codexMainPage").style.display=tab==="main"?"block":"none";
+  $("wakaPage").style.display=tab==="waka"?"block":"none";
   if(tab==="main")renderCodex();else renderWakaPage();
 }
 function renderWakaPage(){
@@ -5033,7 +5060,8 @@ function openCodex(tab){
   setCodexTab(tab||"main");
 }
 function closeCodex(){APP.codexOpen=false;$("codex").classList.remove("open");}
-function closeInfo(){$("info").classList.remove("open");}
+let _infoTimer=0;
+function closeInfo(){$("info").classList.remove("open");clearTimeout(_infoTimer);}
 function showInfo(id){
   const it=ITEMS[id];if(!it)return;
   // 和歌短冊はinfoパネルを出さず直接解錠してリビールのみ
@@ -5046,6 +5074,8 @@ function showInfo(id){
   unlockCodex(id);
   const panel=$("info");panel.classList.remove("open");void panel.offsetWidth;
   requestAnimationFrame(()=>panel.classList.add("open"));
+  // 少し経ったら自動で閉じる(読みやすさのため8秒)
+  clearTimeout(_infoTimer);_infoTimer=setTimeout(()=>panel.classList.remove("open"),8000);
 }
 $("infoClose").onclick=closeInfo;
 $("btnCodex").onclick=()=>openCodex("main");$("tbCodex").onclick=()=>openCodex("main");
@@ -5146,8 +5176,7 @@ function drawMinimap(){
   // 中心点
   x.fillStyle="#f5d060";x.beginPath();x.arc(ccx,ccy,3,0,Math.PI*2);x.fill();
   x.restore();
-  const indoor=groundH(px,pz)>0.05;  // 床上=邸内 / 地面=邸外
-  $("minimapLabel").textContent=(indoor?"邸内":"邸外")+" ｜ "+area;
+  $("minimapLabel").textContent=area;
 }
 
 /* ============================================================
@@ -5220,7 +5249,11 @@ function syncTopbarH(){
   document.documentElement.style.setProperty('--topbar-h',tb.offsetHeight+'px');
 }
 window.addEventListener('resize',syncTopbarH,{passive:true});
+let _loadTimer=0;
+function showLoading(){$("loadingScreen").classList.add("show");clearTimeout(_loadTimer);}
+function hideLoadingSoon(ms=650){clearTimeout(_loadTimer);_loadTimer=setTimeout(()=>$("loadingScreen").classList.remove("show"),ms);}
 function enterMode(m){
+  showLoading(); // 起動直後の重い描画(影マップ・テクスチャ転送)をロード画面で覆う
   APP.mode=m;
   // タイトルのサブパネルをリセット
   if($("mainModes"))$("mainModes").style.display="block";
@@ -5241,6 +5274,7 @@ function enterMode(m){
   if(m==="quest")startQuest();
   if(m==="kaimami")startKaimami();
   if(m==="walk")toast("ドラッグで見回し、タップ/クリックで調べられます",3400);
+  hideLoadingSoon(); // 初回フレーム描画が落ち着くころにロード画面をフェードアウト
 }
 function updateControlUI(){
   const fp=APP.view==="fp"&&APP.mode!=="title";
