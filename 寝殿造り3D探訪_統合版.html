@@ -1273,6 +1273,8 @@ body.taiji-mode #c{cursor:crosshair}
 #credits{position:fixed;z-index:67;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,6,4,.78)}
 #gfx{position:fixed;z-index:67;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,6,4,.78)}
 #gfx .h-card{min-width:min(420px,92vw)}
+.gfx-section{font-size:10px;letter-spacing:.28em;color:var(--kin);margin:12px 0 6px;border-bottom:1px solid rgba(201,162,63,.22);padding-bottom:3px}
+.gfx-section:first-of-type{margin-top:4px}
 .gfx-row{display:flex;flex-direction:column;gap:6px;margin:10px 0}
 .gfx-lbl{font-family:var(--serif);color:var(--kin);letter-spacing:.12em;font-size:13px}
 .gfx-opts{display:flex;flex-wrap:wrap;gap:6px}
@@ -1498,7 +1500,7 @@ body.taiji-mode #c{cursor:crosshair}
   <span class="spacer"></span>
   <button class="tb-btn" id="tbCodex">📚 図鑑</button>
   <span class="tb-sep"></span>
-  <button class="tb-btn" id="tbGfx">⚙ 画質</button>
+  <button class="tb-btn" id="tbGfx">⚙ 設定</button>
   <button class="tb-btn" id="tbHelp">?</button>
   <button class="tb-btn" id="tbTitle">表紙へ</button>
 </div>
@@ -1612,7 +1614,8 @@ body.taiji-mode #c{cursor:crosshair}
 </div></div>
 
 <div id="gfx"><div class="h-card">
-  <h3>グラフィック設定</h3>
+  <h3>設定</h3>
+  <div class="gfx-section">📺 グラフィック</div>
   <div class="gfx-row"><span class="gfx-lbl">画質プリセット</span>
     <span class="gfx-opts">
       <button class="tb-btn" id="gfxP_auto">オート</button>
@@ -1623,18 +1626,50 @@ body.taiji-mode #c{cursor:crosshair}
   </div>
   <div class="gfx-row"><span class="gfx-lbl">夜の発光（ブルーム）</span>
     <span class="gfx-opts">
-      <button class="tb-btn" id="gfxB_auto">自動（夜のみ）</button>
+      <button class="tb-btn" id="gfxB_auto">自動（夜）</button>
       <button class="tb-btn" id="gfxB_on">入</button>
       <button class="tb-btn" id="gfxB_off">切</button>
     </span>
   </div>
-  <div class="gfx-row"><span class="gfx-lbl">ジョイスティック（スマホ/タブレット）</span>
+  <div class="gfx-row"><span class="gfx-lbl">視野角（FOV）</span>
+    <span class="gfx-opts"><input type="range" id="gfxFov" min="50" max="90" step="5" value="62" style="width:120px;accent-color:var(--kin)"><span id="gfxFovVal" style="font-size:11px;color:#cdbf9f;min-width:28px">62°</span></span>
+  </div>
+  <div class="gfx-row"><span class="gfx-lbl">FPS表示</span>
     <span class="gfx-opts">
-      <button class="tb-btn" id="gfxJ_fixed">固定（左下）</button>
-      <button class="tb-btn" id="gfxJ_dynamic">どこでも（左側を押した場所）</button>
+      <button class="tb-btn" id="gfxFps_on">入</button>
+      <button class="tb-btn" id="gfxFps_off">切</button>
     </span>
   </div>
-  <p class="gfx-note">「オート」は端末性能に応じて自動調整します。動作が重いときは「中」「低」を、発光が強すぎるときは「切」を。ジョイは倒し切るとダッシュします。</p>
+  <div class="gfx-section">🎮 コントローラー</div>
+  <div class="gfx-row"><span class="gfx-lbl">ジョイスティック</span>
+    <span class="gfx-opts">
+      <button class="tb-btn" id="gfxJ_fixed">固定（左下）</button>
+      <button class="tb-btn" id="gfxJ_dynamic">どこでも</button>
+    </span>
+  </div>
+  <div class="gfx-row"><span class="gfx-lbl">視点感度</span>
+    <span class="gfx-opts"><input type="range" id="gfxSens" min="1" max="10" step="1" value="5" style="width:120px;accent-color:var(--kin)"><span id="gfxSensVal" style="font-size:11px;color:#cdbf9f;min-width:20px">5</span></span>
+  </div>
+  <div class="gfx-row"><span class="gfx-lbl">Y軸反転</span>
+    <span class="gfx-opts">
+      <button class="tb-btn" id="gfxInvY_off">通常</button>
+      <button class="tb-btn" id="gfxInvY_on">反転</button>
+    </span>
+  </div>
+  <div class="gfx-section">🔊 音声</div>
+  <div class="gfx-row"><span class="gfx-lbl">環境音・BGM</span>
+    <span class="gfx-opts">
+      <button class="tb-btn" id="gfxAud_on">入</button>
+      <button class="tb-btn" id="gfxAud_off">切</button>
+    </span>
+  </div>
+  <div class="gfx-row"><span class="gfx-lbl">効果音（SE）</span>
+    <span class="gfx-opts">
+      <button class="tb-btn" id="gfxSe_on">入</button>
+      <button class="tb-btn" id="gfxSe_off">切</button>
+    </span>
+  </div>
+  <p class="gfx-note">「オート」は端末性能に応じて自動調整。動作が重いときは「中」「低」を。</p>
   <button class="tb-btn" id="gfxClose" style="margin-top:10px">閉じる</button>
 </div></div>
 
@@ -3295,18 +3330,22 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     g.add(box(.32,.06,.42,M({color:0x2e4a78,roughness:.72}),.48,1.61,.02,false));
     shinden.add(g);register(g,"nikaizushi",new THREE.Vector3(S.cx+0.4,F+2.1,S.cz-3.0));
   }
-  /* --- 唐櫃 (母屋南壁沿い・姫君側が正面) --- */
+  /* --- 唐櫃 (母屋西側・フタ開閉あり) --- */
   {
-    const g=new THREE.Group();g.position.set(-2.6,F,3.2);g.rotation.y=Math.PI/2;
+    const g=new THREE.Group();g.position.set(-5.5,F,0.2);g.rotation.y=Math.PI/2;
     g.add(box(1.6,.8,.95,MAT.black,0,.75,0));
-    g.add(box(1.7,.16,1.05,MAT.black,0,1.22,0));
+    const lid=new THREE.Group();
+    lid.add(box(1.7,.16,1.05,MAT.black,0,0,0));
+    lid.position.set(0,1.22,0);
+    g.add(lid);
     addCornerCaps(g,1.52,.88,1.18);
     [[-.65,-.35],[0,-.35],[.65,-.35],[-.65,.35],[0,.35],[.65,.35]].forEach(p=>
       g.add(box(.13,.4,.13,MAT.black,p[0],.2,p[1])));
     g.add(box(.5,.06,.2,MAT.kin,0,1.0,.5,false));
     const handle=new THREE.Mesh(new THREE.TorusGeometry(.22,.025,8,18),MAT.kin);
     handle.position.set(0,.82,.53);handle.rotation.x=Math.PI/2;g.add(handle);
-    shinden.add(g);register(g,"karabitsu",new THREE.Vector3(S.cx-2.6,F+1.8,S.cz+3.2));
+    shinden.add(g);register(g,"karabitsu",new THREE.Vector3(S.cx-5.5,F+1.8,S.cz+0.2));
+    {const kst={lid,open:false,t:0};lid.userData.gim={type:"karabitsu",st:kst};kst.g=lid;gimmicks.tsumado.push(kst);}
   }
   /* --- 脇息(肘掛け) 南廂の座のかたわら --- */
   {
@@ -3592,19 +3631,19 @@ function addCharacterSlot({id,figure,position,yaw,labelPos}){
   addCharacterSlot({id:"himegimi",figure:hime,position:new THREE.Vector3(S.cx+1.0,S.f3+0.02,S.cz+0.4),yaw:.3,
     labelPos:new THREE.Vector3(S.cx+1.0,S.f3+1.4,S.cz+0.4)});
 
-  // 女房1:北の対 南廂(萌黄のかさね)
+  // 女房1:北の対 北廂(萌黄のかさね)
   const ny1=makeHeianFigure({role:"nyobo",palette:[0x415c35,0x7d3b36,0xb09a69,0xe9dfc8],scale:.96,prop:"scroll"});
-  addCharacterSlot({id:"nyobo",figure:ny1,position:new THREE.Vector3(-3.5,1.02,-34.2),yaw:2.6,
-    labelPos:new THREE.Vector3(-3.5,2.3,-34.2)});
+  addCharacterSlot({id:"nyobo",figure:ny1,position:new THREE.Vector3(-3.5,1.02,-42.0),yaw:2.6,
+    labelPos:new THREE.Vector3(-3.5,2.3,-42.0)});
 
-  // 女房2:北の対 南廂(縹=はなだのかさね)
+  // 女房2:北の対 北廂(縹=はなだのかさね)
   const ny2=makeHeianFigure({role:"nyobo",palette:[0x354f70,0x6d3f63,0x8a8953,0xe6ddcb],scale:.96,prop:"scroll"});
-  addCharacterSlot({id:"nyobo",figure:ny2,position:new THREE.Vector3(3.5,1.02,-34.2),yaw:-2.8});
+  addCharacterSlot({id:"nyobo",figure:ny2,position:new THREE.Vector3(3.5,1.02,-42.0),yaw:-2.8});
 
-  // 女房3:母屋(紅のかさね)
-  const ny3=makeHeianFigure({role:"nyobo",palette:[0x7d2020,0xb04040,0xcc9960,0xf0e5d0],scale:.96,prop:"scroll"});
-  addCharacterSlot({id:"nyobo",figure:ny3,position:new THREE.Vector3(S.cx-4.0,S.f3+0.02,S.cz-1.0),yaw:0.2,
-    labelPos:new THREE.Vector3(S.cx-4.0,S.f3+1.3,S.cz-1.0)});
+  // 女房3:母屋 畳のそば(若草のかさね)
+  const ny3=makeHeianFigure({role:"nyobo",palette:[0x4a7a3a,0x8aaa58,0xc8b870,0xeee5c5],scale:.96,prop:"fan"});
+  addCharacterSlot({id:"nyobo",figure:ny3,position:new THREE.Vector3(S.cx-2.2,S.f3+0.02,S.cz+0.8),yaw:0.4,
+    labelPos:new THREE.Vector3(S.cx-2.2,S.f3+1.3,S.cz+0.8)});
 
   // 女房4:北の廂(紫のかさね)＋几帳
   const ny4=makeHeianFigure({role:"nyobo",palette:[0x5a3a6a,0x9060a8,0xc4a870,0xede0c5],scale:.96,prop:"fan"});
@@ -3622,10 +3661,10 @@ function addCharacterSlot({id,figure,position,yaw,labelPos}){
   addCharacterSlot({id:"nyobo",figure:ny6,position:new THREE.Vector3(TAI.e.x-4,1.02,TAI.e.z+2),yaw:-0.5,
     labelPos:new THREE.Vector3(TAI.e.x-4,2.3,TAI.e.z+2)});
 
-  // 北の対 南廂を几帳で区切る(3枚)
-  kichou(-5.0,-34.0,Math.PI/2,world,1.0);
-  kichou( 0.5,-34.1,Math.PI/2+0.15,world,1.0);
-  kichou( 5.8,-34.0,Math.PI/2-0.1,world,1.0);
+  // 北の対 北廂を几帳で区切る(3枚)
+  kichou(-5.0,-42.0,Math.PI/2,world,1.0);
+  kichou( 0.5,-42.1,Math.PI/2+0.15,world,1.0);
+  kichou( 5.8,-42.0,Math.PI/2-0.1,world,1.0);
 
   // 貴公子:東側の簀子まで上がり、格子際から姫君を垣間見る
   const kik=makeHeianFigure({role:"kikoshi",palette:[0x171817,0x263e2c,0xb28b3e],scale:1.04,prop:"shaku"});
@@ -5059,7 +5098,7 @@ function pdown(x,y,id){drag.on=true;drag.id=id;drag.x=x;drag.y=y;drag.moved=0;dr
 function pmove(x,y){
   if(!drag.on)return;
   const dx=x-drag.x,dy=y-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);
-  if(APP.view==="fp"){player.yaw-=dx*.0042;player.pitch=Math.max(-1.25,Math.min(1.25,player.pitch-dy*.0035));}
+  if(APP.view==="fp"){const sc=(APP_SENS||5)/5;player.yaw-=dx*.0042*sc;const dp=dy*.0035*sc*(APP_INV_Y?-1:1);player.pitch=Math.max(-1.25,Math.min(1.25,player.pitch-dp));}
   else{orbit.yaw-=dx*.005;orbit.pitch=Math.max(.25,Math.min(1.45,orbit.pitch+dy*.004));}
   drag.x=x;drag.y=y;
 }
@@ -5092,6 +5131,7 @@ document.getElementById("interactBtn").addEventListener("click",()=>pick(innerWi
 /* ====== 効果音(WebAudio) ====== */
 let AC=null;
 function beep(f,dur=.12,type="sine",vol=.18){
+  if(!APP_SE)return;
   try{AC=AC||(ambientAudio&&ambientAudio.ctx)||new (window.AudioContext||window.webkitAudioContext)();
     if(AC.state==="suspended")AC.resume();
     const o=AC.createOscillator(),g=AC.createGain();
@@ -5190,6 +5230,9 @@ function toggleGim(gim){
   else if(gim.type==="kichou"){
     gim.st.folded=!gim.st.folded;
     toast(gim.st.folded?"几帳を端へ寄せた":"几帳を元の位置へ戻した",1800);
+  }else if(gim.type==="karabitsu"){
+    gim.st.open=!gim.st.open;
+    toast(gim.st.open?"唐櫃のふたを開けた":"唐櫃のふたを閉めた",1500);
   }
 }
 /* ギミックgroupにgim情報を付与(構築後に対応づけ) */
@@ -5243,21 +5286,10 @@ function unlockCodex(id){
   }
 }
 let _wakaRevTimer=0;
-/* 和歌を五・七・五・七・七の5句に分割(縦書き5列表示用) */
-function splitWaka5Lines(poem){
-  const parts=poem.split(/[　 ]+/);
-  if(parts.length<2)return[poem];
-  const[up,lo]=parts;
-  const PART='のにはがをもでへとよりからまでぞやかなけれどもいつしかし';
-  function brk(s,p){
-    const t=Math.round(s.length*p);
-    for(let d=0;d<=5;d++){for(const sg of[1,-1]){
-      const i=t+d*sg;
-      if(i>0&&i<s.length&&PART.includes(s[i-1]))return i;
-    }}return t;
-  }
-  const b1=brk(up,0.38),b2=brk(up,0.70),lb=brk(lo,0.52);
-  return[up.slice(0,b1),up.slice(b1,b2),up.slice(b2),lo.slice(0,lb),lo.slice(lb)].filter(s=>s.length>0);
+/* 和歌を上句・下句の2句に分割(縦書き2列表示) */
+function splitWaka2Lines(poem){
+  const parts=poem.split(/[　 ]+/).filter(s=>s.length>0);
+  return parts.length>=2?parts:[poem];
 }
 function showWakaReveal(id){
   const it=ITEMS[id];if(!it)return;
@@ -5265,7 +5297,7 @@ function showWakaReveal(id){
   const snLabel={spring:"🌸 春の歌",summer:"🌿 夏の歌",autumn:"🍂 秋の歌",winter:"❄ 冬の歌"};
   $("wakaRevSeason").textContent=snLabel[w.season]||"和歌短冊";
   // 五・七・五・七・七の5句に分けて縦書き右→左に表示
-  $("wakaRevPoem").innerHTML=splitWaka5Lines(w.poem).map(s=>`<div>${s}</div>`).join("");
+  $("wakaRevPoem").innerHTML=splitWaka2Lines(w.poem).map(s=>`<div>${s}</div>`).join("");
   $("wakaRevAuth").textContent="― "+w.auth;
   $("wakaRevInterp").textContent=it.t;
   const el=$("wakaReveal");el.classList.add("show");
@@ -5521,6 +5553,26 @@ $("tbAudio").onclick=(e)=>{
   $("tbAudio").textContent=ambientAudio.playing?"🔊 音:入":"🔇 音:切";
   beep(600,.06);
 };
+/* 設定パネル — 追加コントロール */
+let APP_SENS=5,APP_INV_Y=false,APP_SE=true;
+(function initSettings(){
+  const fovSlider=$("gfxFov"),fovVal=$("gfxFovVal");
+  if(fovSlider){fovSlider.oninput=()=>{const v=+fovSlider.value;camera.fov=v;camera.updateProjectionMatrix();if(fovVal)fovVal.textContent=v+"°";PREFS.set("fov",v);};
+    const saved=PREFS.get("fov");if(saved){fovSlider.value=saved;camera.fov=+saved;camera.updateProjectionMatrix();if(fovVal)fovVal.textContent=saved+"°";}}
+  const sensSlider=$("gfxSens"),sensVal=$("gfxSensVal");
+  if(sensSlider){sensSlider.oninput=()=>{APP_SENS=+sensSlider.value;if(sensVal)sensVal.textContent=APP_SENS;PREFS.set("sens",APP_SENS);};
+    const saved=PREFS.get("sens");if(saved){sensSlider.value=saved;APP_SENS=+saved;if(sensVal)sensVal.textContent=saved;}}
+  if($("gfxFps_on"))$("gfxFps_on").onclick=()=>{$("fpsMeter").style.display="block";PREFS.set("fps","1");beep(600,.04);};
+  if($("gfxFps_off"))$("gfxFps_off").onclick=()=>{$("fpsMeter").style.display="none";PREFS.set("fps","0");beep(540,.04);};
+  if($("gfxInvY_on"))$("gfxInvY_on").onclick=()=>{APP_INV_Y=true;PREFS.set("invY","1");beep(600,.04);};
+  if($("gfxInvY_off"))$("gfxInvY_off").onclick=()=>{APP_INV_Y=false;PREFS.set("invY","0");beep(540,.04);};
+  if($("gfxAud_on"))$("gfxAud_on").onclick=()=>{initAudio();if(ambientAudio&&!ambientAudio.playing)ambientAudio.toggle();$("tbAudio").textContent="🔊 音:入";beep(600,.04);};
+  if($("gfxAud_off"))$("gfxAud_off").onclick=()=>{if(ambientAudio&&ambientAudio.playing)ambientAudio.toggle();$("tbAudio").textContent="🔇 音:切";};
+  if($("gfxSe_on"))$("gfxSe_on").onclick=()=>{APP_SE=true;PREFS.set("se","1");beep(600,.04);};
+  if($("gfxSe_off"))$("gfxSe_off").onclick=()=>{APP_SE=false;PREFS.set("se","0");};
+  const savedInv=PREFS.get("invY");if(savedInv==="1")APP_INV_Y=true;
+  const savedSe=PREFS.get("se");if(savedSe==="0")APP_SE=false;
+})();
 
 let resumeAudioAfterBackground=false;
 function pauseAudioForBackground(){
@@ -5569,14 +5621,9 @@ function enterMode(m){
   closeInfo();closeCodex();
   $("modeTag").textContent=m==="quest"?(APP.questRole==="female"?"女性貴族の一日":"男性貴族の一日"):
     {walk:"自由散策",quiz:APP.quizTA?"タイムアタック":"名称当てクイズ",kaimami:"垣間見",taiji:"物の怪退治"}[m]||m;
-  // モード別ボタン表示制御
+  // モード別ボタン表示制御(全モード統一)
   {const cond=["tbHome","tbSepWorld","tbTime","tbSeason","tbCodex","tbLabel","tbMap"];
-   const off={quiz:["tbSepWorld","tbTime","tbSeason","tbCodex"],
-               kaimami:["tbHome","tbSepWorld","tbTime","tbSeason","tbMap","tbCodex","tbLabel"],
-               quest:["tbHome","tbSepWorld","tbTime","tbSeason","tbCodex"],
-               taiji:["tbHome","tbSepWorld","tbSeason","tbCodex","tbMap"]};
-   cond.forEach(id=>{const e=$(id);if(e)e.style.display="";});
-   (off[m]||[]).forEach(id=>{const e=$(id);if(e)e.style.display="none";});}
+   cond.forEach(id=>{const e=$(id);if(e)e.style.display="";});}
   updateControlUI();
   if(m==="quiz")startQuiz();
   if(m==="quest")startQuest();
@@ -6683,6 +6730,14 @@ function animate(){
     if(!m.visible)return;
     m.position.y=m.userData.baseY+Math.sin(t*0.7+m.userData.ph)*0.055;
     m.rotation.z=m.userData.baseRZ+Math.sin(t*0.45+m.userData.ph+1.2)*0.04;
+  });
+
+  /* --- 唐櫃フタアニメーション --- */
+  gimmicks.tsumado.forEach(st=>{
+    if(st.lid){
+      const target=st.open?-Math.PI/2:0;
+      st.lid.rotation.x+=(target-st.lid.rotation.x)*0.10;
+    }
   });
 
   /* --- 几帳の折りたたみアニメーション --- */
