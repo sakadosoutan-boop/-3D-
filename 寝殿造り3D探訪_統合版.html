@@ -1631,6 +1631,13 @@ body.taiji-mode #c{cursor:crosshair}
       <button class="tb-btn" id="gfxB_off">切</button>
     </span>
   </div>
+  <div class="gfx-row"><span class="gfx-lbl">フレームレート上限（発熱・電池対策）</span>
+    <span class="gfx-opts">
+      <button class="tb-btn" id="gfxFc_30">30</button>
+      <button class="tb-btn" id="gfxFc_60">60</button>
+      <button class="tb-btn" id="gfxFc_0">無制限</button>
+    </span>
+  </div>
   <div class="gfx-row"><span class="gfx-lbl">視野角（FOV）</span>
     <span class="gfx-opts"><input type="range" id="gfxFov" min="50" max="90" step="5" value="62" style="width:120px;accent-color:var(--kin)"><span id="gfxFovVal" style="font-size:11px;color:#cdbf9f;min-width:28px">62°</span></span>
   </div>
@@ -2101,7 +2108,7 @@ const MAT={
 ============================================================ */
 const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true,powerPreference:"high-performance"});
 const IS_TOUCH=("ontouchstart" in window)||navigator.maxTouchPoints>0;
-renderer.setPixelRatio(Math.min(devicePixelRatio,IS_TOUCH?1.5:1.5));
+renderer.setPixelRatio(Math.min(devicePixelRatio,IS_TOUCH?1.35:1.5)); // モバイルは描画ピクセル数を抑え発熱を軽減
 renderer.setSize(innerWidth,innerHeight);
 
 /* 影（シャドウマップ）の完全有効化 */
@@ -5555,6 +5562,8 @@ $("tbAudio").onclick=(e)=>{
 };
 /* 設定パネル — 追加コントロール */
 let APP_SENS=5,APP_INV_Y=false,APP_SE=true;
+/* フレームレート上限(fps)。0=無制限。スマホ既定30で発熱・電池消費を大幅軽減 */
+let APP_FPSCAP=IS_TOUCH?30:60;
 (function initSettings(){
   const fovSlider=$("gfxFov"),fovVal=$("gfxFovVal");
   if(fovSlider){fovSlider.oninput=()=>{const v=+fovSlider.value;camera.fov=v;camera.updateProjectionMatrix();if(fovVal)fovVal.textContent=v+"°";PREFS.set("fov",v);};
@@ -5564,6 +5573,16 @@ let APP_SENS=5,APP_INV_Y=false,APP_SE=true;
     const saved=PREFS.get("sens");if(saved){sensSlider.value=saved;APP_SENS=+saved;if(sensVal)sensVal.textContent=saved;}}
   if($("gfxFps_on"))$("gfxFps_on").onclick=()=>{$("fpsMeter").style.display="block";PREFS.set("fps","1");beep(600,.04);};
   if($("gfxFps_off"))$("gfxFps_off").onclick=()=>{$("fpsMeter").style.display="none";PREFS.set("fps","0");beep(540,.04);};
+  /* フレームレート上限 */
+  function setFpsCap(v,silent){
+    APP_FPSCAP=v;PREFS.set("fpscap",String(v));
+    [["gfxFc_30",30],["gfxFc_60",60],["gfxFc_0",0]].forEach(([id,n])=>{const b=$(id);if(b)b.classList.toggle("on",n===v);});
+    if(!silent)beep(580,.04);
+  }
+  if($("gfxFc_30"))$("gfxFc_30").onclick=()=>setFpsCap(30);
+  if($("gfxFc_60"))$("gfxFc_60").onclick=()=>setFpsCap(60);
+  if($("gfxFc_0"))$("gfxFc_0").onclick=()=>setFpsCap(0);
+  {const sc=PREFS.get("fpscap");setFpsCap(sc!=null&&sc!==""?(+sc):(IS_TOUCH?30:60),true);}
   if($("gfxInvY_on"))$("gfxInvY_on").onclick=()=>{APP_INV_Y=true;PREFS.set("invY","1");beep(600,.04);};
   if($("gfxInvY_off"))$("gfxInvY_off").onclick=()=>{APP_INV_Y=false;PREFS.set("invY","0");beep(540,.04);};
   if($("gfxAud_on"))$("gfxAud_on").onclick=()=>{initAudio();if(ambientAudio&&!ambientAudio.playing)ambientAudio.toggle();$("tbAudio").textContent="🔊 音:入";beep(600,.04);};
@@ -6321,7 +6340,7 @@ function footstep(){
    ※完全可逆な2レバー(pixelRatio / shadow.mapSize)のみ。シーングラフは改変しない。
 ============================================================ */
 const QUALITY=(()=>{
-  const basePR=Math.min(devicePixelRatio,IS_TOUCH?1.6:2);   // 現状の上限PRを基準にする
+  const basePR=Math.min(devicePixelRatio,IS_TOUCH?1.35:2);   // モバイル上限PRを抑え発熱を軽減
   const baseShadow=sun.shadow.mapSize.width;                // 現状の影解像度(2048)
   const levels=[
     {pr:1.00, shadow:baseShadow},                 // L0: 現状そのまま
@@ -6345,13 +6364,16 @@ const QUALITY=(()=>{
     get level(){return lvl;},
     get info(){return `Q${lvl}${forced!==null?"*":""} pr${(basePR*levels[lvl].pr).toFixed(2)} sh${levels[lvl].shadow}`;},
     setForced(f){forced=(f==null)?null:Math.max(0,Math.min(levels.length-1,f|0));if(forced!==null){lvl=forced;apply();}},
-    update(dt){
+    update(dt,targetFps){
       if(forced!==null)return;                              // 画質プリセットで固定中は自動調整しない
       if(!enabled||dt<=0)return;
       if(warmup<2.5){warmup+=dt;return;}                    // 起動直後(シェーダ初回コンパイル等)は無視
       ema+=(1/Math.min(dt,0.25)-ema)*0.08;                  // FPSをEMA平滑し単発ヒッチに反応しない
-      if(ema<46 && lvl<levels.length-1){accDown+=dt;accUp=0;if(accDown>0.8){lvl++;accDown=0;apply();}}
-      else if(ema>57 && lvl>0){accUp+=dt;accDown=0;if(accUp>5){lvl--;accUp=0;apply();}}
+      // しきい値はフレーム上限に対する相対値。上限到達(例:30fpsキャップで30近辺)なら降格しない
+      const tgt=targetFps>0?targetFps:60;
+      const down=tgt*0.76, up=tgt*0.95;
+      if(ema<down && lvl<levels.length-1){accDown+=dt;accUp=0;if(accDown>0.8){lvl++;accDown=0;apply();}}
+      else if(ema>up && lvl>0){accUp+=dt;accDown=0;if(accUp>5){lvl--;accUp=0;apply();}}
       else{accDown=Math.max(0,accDown-dt*0.5);accUp=Math.max(0,accUp-dt*0.5);}
     }
   };
@@ -6433,13 +6455,22 @@ $("gfxJ_dynamic").onclick=()=>{PREFS.set("joyMode","dynamic");applyJoy("dynamic"
 applyJoy(PREFS.get("joyMode","fixed")); // 起動時にジョイ方式を復元
 GFX.init();
 
-function animate(){
+let __lastFrameMs=0;
+function animate(now){
   requestAnimationFrame(animate);
+  /* フレームレート上限: スマホの発熱・電池消費を抑える(既定モバイル30fps)。
+     描画前に間引くことで GPU/CPU 稼働を大幅削減。clock は描画フレームのみ進む。 */
+  if(APP_FPSCAP>0){
+    if(now===undefined)now=performance.now();
+    const interval=1000/APP_FPSCAP;
+    if(now-__lastFrameMs<interval-1)return;
+    __lastFrameMs=now-((now-__lastFrameMs)%interval);  // 累積ドリフトを避けて一定間隔を保つ
+  }
   if(glLost){clock.getDelta();return;}  /* 喪失中は描画を休止。復帰後にdtが飛ばないよう時計だけ進める */
   const dt=Math.min(clock.getDelta(),.08);
   const t=clock.elapsedTime;
   __perf.tick(dt);  /* [Phase0] パフォーマンス計測 */
-  QUALITY.update(dt);  /* 適応的品質: 負荷に応じ描画解像度を自動調整(L0=現状) */
+  QUALITY.update(dt,APP_FPSCAP);  /* 適応的品質: 負荷に応じ描画解像度を自動調整。上限fpsを渡し誤降格を防ぐ */
 
   /* --- 時間遷移とフォグカラーの自動同期 --- */
   const tg=TIMES[APP.time];
