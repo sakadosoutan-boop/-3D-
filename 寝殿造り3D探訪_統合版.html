@@ -2751,7 +2751,7 @@ function broadleaf(s,leafMat){
    汎用建物(対屋・渡殿・廊・釣殿)
 ============================================================ */
 /* 可動建具の状態(妻戸/半蔀/御簾/灯台) — 対屋でも使うため早期に宣言 */
-const gimmicks={shitomi:[],misu:[],tsumado:[],lamps:[],kagaribi:[],braziers:[]};
+const gimmicks={shitomi:[],misu:[],tsumado:[],lamps:[],kagaribi:[],braziers:[],karabitsu:[]};
 const kichouGroups=[];
 function building(opts){
   const {w,d,fh=1.0,ph=2.5,wall=true,doors=[],id,name,roofH,ridge=.42}=opts;
@@ -3345,7 +3345,7 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     const handle=new THREE.Mesh(new THREE.TorusGeometry(.22,.025,8,18),MAT.kin);
     handle.position.set(0,.82,.53);handle.rotation.x=Math.PI/2;g.add(handle);
     shinden.add(g);register(g,"karabitsu",new THREE.Vector3(S.cx-5.5,F+1.8,S.cz+0.2));
-    {const kst={lid,open:false,t:0};lid.userData.gim={type:"karabitsu",st:kst};kst.g=lid;gimmicks.tsumado.push(kst);}
+    {const kst={lid,open:false,t:0};lid.userData.gim={type:"karabitsu",st:kst};kst.g=lid;gimmicks.karabitsu.push(kst);}
   }
   /* --- 脇息(肘掛け) 南廂の座のかたわら --- */
   {
@@ -6733,11 +6733,9 @@ function animate(){
   });
 
   /* --- 唐櫃フタアニメーション --- */
-  gimmicks.tsumado.forEach(st=>{
-    if(st.lid){
-      const target=st.open?-Math.PI/2:0;
-      st.lid.rotation.x+=(target-st.lid.rotation.x)*0.10;
-    }
+  gimmicks.karabitsu.forEach(st=>{
+    const target=st.open?-Math.PI/2:0;
+    st.lid.rotation.x+=(target-st.lid.rotation.x)*0.10;
   });
 
   /* --- 几帳の折りたたみアニメーション --- */
