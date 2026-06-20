@@ -79,6 +79,14 @@
 - 貴族の一日: 男女選択モーダル `#questRolePicker`、会話は `#dialogueBubble`（女性篇4.5秒/台詞）。
 - **可動調度品**: 屏風 `byoubuGroups`（折りたたみ）、厨子 `zushiGroups`（観音開き）、几帳 `kichouGroups`（カーテン）、唐櫃 `gimmicks.karabitsu`（別配列）。
   - 屏風の絵 `TEX.byoubu`: Canva制作の金地秋景大和絵「Autumn Yamato-e Byōbu」(design `DAHNGjt96Zo`) を1024x576のJPEG data URIで埋め込み。読込失敗時は従来の手続き生成画にフォールバック。4扇のパネルは元絵の横1/4ずつをUV分割（`u: i/4〜(i+1)/4`）して連続パノラマとして展開。差し替えは Canva を再エクスポート→base64化して同`<img>`の `src` を置換。
+
+### Canva素材の組み込み（画像はすべてbase64 data URIで内蔵・オフライン動作）
+- 各テクスチャ/画像は「Canva画像を読み込み、失敗時は手続き生成にフォールバック」する `new Image()` パターンで実装。差し替えは Canva 再エクスポート→base64化→該当 `src` 置換。
+- **タイトル背景** `#title::before`: 金地大和絵の寝殿景 (design `DAHNG7TQ2vY`, 1920x1080)。暗ヴィネット＋微金グリッドを重ねて可読性確保。
+- **白砂** `TEX.sand`: Canva砂質感をPILでシームレス化＋枯山水の掻き紋(平行溝)を合成したタイル。`repeat(20,20)`。タイル系は継ぎ目回避のためシームレス必須。
+- **几帳** `TEX.kichou`: 有職文様の絹地 (design `DAHNHL4XnKM`)。1パネル1回マッピングで継ぎ目なし。壁代等で伸びる `tobari` は据え置き。
+- **図鑑カテゴリ挿絵** `CODEX_CAT_IMG`（renderCodex直前で定義）: b建築/g建具/c調度品/p人物/x怪異/a生き物/s霊獣 の7枚を640px JPEGで内蔵。項目詳細(`#codexDetail`)に `.codex-illust` として表示。人物画は文字帯をPILでクロップ除去済み。
+- 注意: 画像内蔵でHTMLは約3.3MBに増加。さらなる挿絵追加時はモバイル読み込みとのトレードオフに留意。
 - **灯籠流し `tourouGroup`**: 夏の夜に池面を8基の和紙灯籠（PointLight付き）が漂う。
   - 小島(-20,34,r=4.6)(-4,40,r=3.4)との衝突を事前計算で回避した安全座標（南側開水面）に固定配置。
 
