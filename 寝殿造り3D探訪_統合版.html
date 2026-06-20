@@ -5727,8 +5727,21 @@ $("tbTitle").onclick=()=>{location.reload();};
 // サブパネル切り替えヘルパー
 function showSubPanel(id){$("mainModes").style.display="none";$(id).style.display="block";beep(520,.05);}
 function hideSubPanel(id){$(id).style.display="none";$("mainModes").style.display="block";beep(400,.05);}
-// 散策モード
-$("btnWalk").onclick=()=>{beep(660,.08);initAudio();enterMode("walk");};
+// 散策モード — 初回のみチュートリアルを挟む
+$("tutClose").onclick=()=>{
+  localStorage.setItem("shinden3d-tutorial-done","1");
+  $("tutorial").style.display="none";
+  enterMode("walk");
+};
+$("btnWalk").onclick=()=>{
+  beep(660,.08);initAudio();
+  if(!localStorage.getItem("shinden3d-tutorial-done")){
+    $("tutorial").style.display="flex";
+    setTimeout(()=>$("tutClose").onclick(),10000);
+  } else {
+    enterMode("walk");
+  }
+};
 // クイズモード
 $("btnQuizMode").onclick=()=>showSubPanel("quizSubPanel");
 $("btnQuiz").onclick=()=>{beep(660,.08);initAudio();APP.quizTA=false;enterMode("quiz");};
