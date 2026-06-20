@@ -2217,6 +2217,15 @@ const moonHalo = new THREE.Mesh(
 );
 moonHalo.userData.noAutoShadow=true;
 scene.add(moonHalo);
+/* 池面の月の映り込み: 夜のみ表示 */
+const moonRefl=new THREE.Mesh(
+  new THREE.CircleGeometry(5.5,32),
+  new THREE.MeshBasicMaterial({color:0xfff4c8,transparent:true,opacity:0,depthWrite:false})
+);
+moonRefl.rotation.x=-Math.PI/2;
+moonRefl.position.set(-8,0.09,39);
+moonRefl.userData.noAutoShadow=true;
+scene.add(moonRefl);
 
 /* ====== 共通ヘルパー ====== */
 const interactables={};      // id -> {root,meshes:[],labelPos:Vector3}
@@ -4266,6 +4275,53 @@ function makeFalling(count,texture,size){
 const petals=makeFalling(80,TEX.sakuraPetal,0.28);   // 桜の花びら
 const leavesFall=makeFalling(40,TEX.mapleLeaf,0.52); // 紅葉の落ち葉
 const snowFall=makeFalling(100,TEX.snow,0.26);       // 雪
+/* 雨エフェクト: 夏の夕方/夜・秋に降る */
+const rainMat=new THREE.MeshBasicMaterial({color:0xaac8ee,transparent:true,opacity:0.28,depthWrite:false,side:THREE.DoubleSide});
+function makeRain(){
+  const g=new THREE.Group();
+  for(let i=0;i<220;i++){
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(0.04,0.65),rainMat);
+    m.position.set(rnd(-55,55),rnd(0,38),rnd(-55,55));
+    m.userData={vy:rnd(0.60,0.95),sway:Math.random()*1.5,sx:rnd(0.04,0.10)};
+    m.rotation.y=Math.random()*Math.PI;
+    g.add(m);
+  }
+  g.userData.noAutoShadow=true;g.visible=false;scene.add(g);return g;
+}
+const rainFall=makeRain();
+function updateRain(g,dt,t){
+  g.children.forEach(m=>{
+    const u=m.userData;
+    m.position.y-=u.vy*60*dt;
+    m.position.x+=Math.sin(t*u.sx+u.sway)*0.015;
+    if(m.position.y<0){m.position.y=38;m.position.x=rnd(-55,55);m.position.z=rnd(-55,55);}
+  });
+}
+/* 灯籠流し: 夏の夜に池に浮かぶ灯籠8基 */
+const tourouGroup=(()=>{
+  const g=new THREE.Group();g.visible=false;g.userData.noAutoShadow=true;scene.add(g);
+  const lanterns=[];
+  for(let i=0;i<8;i++){
+    const lg=new THREE.Group();
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.11,0.24,10),
+      new THREE.MeshBasicMaterial({color:0xfff8e0,transparent:true,opacity:0.82}));
+    body.position.y=0.13;lg.add(body);
+    const cap=new THREE.Mesh(new THREE.ConeGeometry(0.16,0.08,10),
+      new THREE.MeshBasicMaterial({color:0xe8d890}));
+    cap.position.y=0.28;lg.add(cap);
+    const flame=new THREE.Mesh(new THREE.ConeGeometry(0.04,0.10,6),
+      new THREE.MeshBasicMaterial({color:0xffaa33}));
+    flame.position.y=0.32;lg.add(flame);
+    const light=new THREE.PointLight(0xffaa44,0.85,4.0);
+    light.position.y=0.28;light.userData.noAutoShadow=true;lg.add(light);
+    const a=Math.random()*Math.PI*2,r=rnd(4,13);
+    const cx=-8+rnd(-5,5),cz=39+rnd(-5,5);
+    lg.position.set(cx+Math.cos(a)*r,0.07,cz+Math.sin(a)*r);
+    lg.userData={phase:Math.random()*Math.PI*2,spd:rnd(0.04,0.11),r,cx,cz};
+    g.add(lg);lanterns.push({lg,light,flame});
+  }
+  g.userData.lanterns=lanterns;return g;
+})();
 /* 桜吹雪の突風: 平常は穏やか、たまに強く舞う(2周波で不規則な周期に) */
 function sakuraGust(t){
   const slow=Math.sin(t*0.045)+Math.sin(t*0.017+1.3);
@@ -4524,6 +4580,9 @@ function applySeason(key){
   petals.visible=!!s.petals;
   leavesFall.visible=!!s.leaves;
   snowFall.visible=!!s.snow;
+  // 雨は時間帯に応じてanimate()内で制御するが季節フラグは applySeason で更新
+  if(key==="summer"||key==="autumn")rainFall.userData.rainSeason=true;
+  else{rainFall.userData.rainSeason=false;rainFall.visible=false;}
   // 白砂への堆積
   SEASONAL.petalDrift&&(SEASONAL.petalDrift.visible=(key==="spring"));
   SEASONAL.fallenLeaves.visible=(key==="autumn");
@@ -5310,6 +5369,10 @@ function updateCodexProgress(){
   const wakaGot=[...codexUnlocked].filter(id=>id.startsWith("waka_")).length;
   const mainTotal=Object.keys(ITEMS).filter(id=>!id.startsWith("waka_")).length;
   const mainGot=codexUnlocked.size-wakaGot;
+  if(!window._codexCompleteFired&&mainGot>=mainTotal&&mainTotal>0){
+    window._codexCompleteFired=true;
+    setTimeout(()=>toast("✨ すべての図鑑を解放しました！平安博士の称号を授けよう",5500),800);
+  }
   const s=`図鑑 ${mainGot}/${mainTotal}　和歌 ${wakaGot}/${wakaTotal}`;
   $("codexProgress").textContent=s;$("titleCodexProgress").textContent=s;
   if($("codexWakaProgress")&&codexTab==="waka")renderWakaPage();
@@ -5516,6 +5579,19 @@ function drawMinimap(){
   x.beginPath();x.moveTo(eb_tl[0],eb_tl[1]);x.lineTo(eb_apex[0],eb_apex[1]);x.lineTo(eb_tr[0],eb_tr[1]);x.closePath();x.fill();x.stroke();
   // 金の位置点
   x.fillStyle="#f0c830";x.beginPath();x.arc(ebX,ebZ,2.4,0,Math.PI*2);x.fill();
+  // NPC: 姫君(ピンク)・安倍晴明(金)
+  if(APP.mode==="walk"||APP.mode==="quest"||APP.mode==="kaimami"){
+    const hime=people&&people[0]&&people[0].g;
+    if(hime&&hime.visible){
+      x.fillStyle="rgba(255,160,200,.92)";x.beginPath();x.arc(mx(hime.position.x),my(hime.position.z),4,0,Math.PI*2);x.fill();
+      x.strokeStyle="rgba(200,60,120,.70)";x.lineWidth=1.5;x.stroke();
+    }
+    const sei=creatures&&creatures.seimei&&creatures.seimei.g;
+    if(sei&&sei.visible){
+      x.fillStyle="rgba(240,220,80,.92)";x.beginPath();x.arc(mx(sei.position.x),my(sei.position.z),3.5,0,Math.PI*2);x.fill();
+      x.strokeStyle="rgba(180,140,20,.70)";x.lineWidth=1.5;x.stroke();
+    }
+  }
   const px=player.pos.x,pz=player.pos.z;
   let area="邸内";
   if(Math.abs(px)<=15&&pz>-11&&pz<8)area="寝殿";
@@ -6894,6 +6970,24 @@ function animate(now){
   if(petals.visible)updateFalling(petals,dt,t,sakuraGust(t));  // 桜は間欠的な突風
   if(leavesFall.visible)updateFalling(leavesFall,dt,t);
   if(snowFall.visible)updateFalling(snowFall,dt,t);
+  // 雨: 夏の夕方/夜・秋は常時
+  {const rainOn=rainFall.userData.rainSeason&&(APP.season==="autumn"||(APP.season==="summer"&&(APP.time==="dusk"||APP.time==="night")));
+   if(rainFall.visible!==rainOn)rainFall.visible=rainOn;
+   if(rainOn)updateRain(rainFall,dt,t);}
+  // 池面の月映り
+  {const reOn=(APP.time==="night");
+   moonRefl.visible=reOn;
+   if(reOn)moonRefl.material.opacity=0.13+Math.sin(t*0.83)*0.04+Math.sin(t*1.9)*0.02;}
+  // 灯籠流し: 夏の夜
+  {const tOn=(APP.season==="summer"&&APP.time==="night");
+   if(tourouGroup.visible!==tOn)tourouGroup.visible=tOn;
+   if(tOn){tourouGroup.userData.lanterns.forEach(l=>{
+     const ud=l.lg.userData,a=t*ud.spd+ud.phase;
+     l.lg.position.x=ud.cx+Math.cos(a)*ud.r*0.65;
+     l.lg.position.z=ud.cz+Math.sin(a)*ud.r;
+     l.light.intensity=0.7+Math.sin(t*3.1+ud.phase)*0.25;
+     l.flame.scale.y=0.88+Math.sin(t*4.3+ud.phase)*0.16;
+   });}}
   updateFlyingLife(dt,t);
   updateSparrowChase(t);
   // 蛍は「夏」かつ「夜」のときだけ舞う
