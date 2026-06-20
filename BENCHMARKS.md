@@ -41,3 +41,20 @@
 人物と四神の高精細化後の数値。端末依存のFPSより、draw callsとgeometriesの変化をPhase 4の比較基準とする。
 
 > FPS 実値は端末依存。PC / タブレット横 / 低スペック端末でそれぞれ `?fps=1` を記録すること。
+
+## 現行 main 計測（2026-06-21 / bd71625）
+
+条件: Codex同梱Playwright、1400x820、`scripts/collect-benchmark.js`、自由散策・春・昼・歩行視点、3.5秒待機後の `renderer.info`。
+
+| 指標 | 計測値 |
+|---|---:|
+| draw calls | **1,702** |
+| triangles | **91,695** |
+| lines | **17** |
+| geometries | **2,794** |
+| textures | **124** |
+| programs | **28** |
+| quality level | **0** |
+| pixel ratio | **1** |
+
+Canva素材・タイトルBGM・追加生き物/門/畳テクスチャ反映後の基準値。次の品質向上では、表示物を増やすたびにこの値との差分を取り、特に draw calls / textures / geometries の増加を確認する。

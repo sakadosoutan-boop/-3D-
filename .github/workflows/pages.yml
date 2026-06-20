@@ -27,6 +27,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify HTML bundle
+        run: node scripts/verify-html.js
+
       - name: Configure Pages (auto-enable)
         uses: actions/configure-pages@v5
         with:
@@ -40,3 +48,6 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify deployed URL
+        run: node scripts/verify-public-url.js "${{ steps.deployment.outputs.page_url }}" "${{ github.sha }}"

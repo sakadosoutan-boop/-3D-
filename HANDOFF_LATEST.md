@@ -1,13 +1,14 @@
 # 引き継ぎ資料（最新） — 寝殿造り3D探訪
 
-最終更新: 2026-06-20（第3セッション）。**これが最新の正本**。古い handoff ファイルは参考のみ。
+最終更新: 2026-06-21（第5セッション / Codex検証基盤）。**これが最新の正本**。古い handoff ファイルは参考のみ。
 
 ## 0. 最重要
 - 正本は GitHub **origin/main**。作業前と push 前に必ず `git fetch origin`。ローカルの古いHTMLを正本にしない。
-- 現在の origin/main: **`77c81e5`**（公開済み・2026-06-20 第3セッション デプロイ完了）。
+- 現在の origin/main: **`bd71625`**（Claudeの生き物/門/畳テクスチャ調整まで反映済み）。
 - 公開: main へ push すると GitHub Actions（`.github/workflows/pages.yml`）が自動デプロイ。
-  - 公開URL: https://sakadosoutan-boop.github.io/-3D-/ （反映確認はキャッシュ回避 `?v=77c81e5`）
+  - 公開URL: https://sakadosoutan-boop.github.io/-3D-/ （反映確認はキャッシュ回避 `?v=bd71625`）
 - 本体は単一HTML `寝殿造り3D探訪_統合版.html`（Three.js r128・四神WebP・選択的ブルーム用postprocessingを内蔵、オフライン動作）。
+- 直近の炎上: `77c81e5` で追加した初回チュートリアルが起動操作を塞いだため、`c67883e` でチュートリアル関連CSS/HTML/JSを完全削除して復旧済み。今後チュートリアルを戻す場合は全画面ロック型にしない。
 
 ## 1. 並行開発ルール（重要）
 - ClaudeとCodexが同じ巨大HTMLを同時に直接 main へ push しない。担当ごとにブランチ。
@@ -17,6 +18,18 @@
 - デスクトップ運用: フォルダをこのリポジトリの `git clone` にし、pull/push で同期（ユーザー方針）。
 
 ## 2. 検証
+- 基本静的検査: `node scripts/verify-html.js`
+  - 3つ目のメイン `<script>` の構文
+  - DOM ID重複と `$()` / `document.getElementById()` の参照欠落
+  - `ITEMS` 必須項目、`WAKA_DATA` 100首・重複ID・季節値
+  - HTML/JSが参照するmp3 23件の存在と `sounds/CREDITS.md` 記載
+  - Three.js r128非対応の `SRGBColorSpace` / `.colorSpace` 混入
+- 公開URL検査: `node scripts/verify-public-url.js https://sakadosoutan-boop.github.io/-3D-/ <hash>`
+  - `index.html` と本体HTMLがHTTP 200で、タイトル文字列を含むことを確認。Pages deploy後にも自動実行。
+- ブラウザスモーク（Playwright任意）: `node scripts/smoke-playwright.js`
+  - canvas初期化、散策開始、図鑑、画質設定パネルの最低限を確認。
+- ベンチ採取（Playwright任意）: `node scripts/collect-benchmark.js`
+  - `renderer.info` からdraw calls / triangles / geometries / textures等をJSON出力。
 - JS構文: `node --check`（HTMLの3つ目 `<script>` を抽出して検査）。
   ```python
   import re
@@ -35,7 +48,10 @@
 - 設定永続化 `PREFS`（localStorage `shinden3d-prefs-v1`）= 季節/時刻/札/画質preset/bloom/ジョイ方式。
 - WebGLコンテキスト喪失復帰、`prefers-reduced-motion`、safe-area（ノッチ/Dynamic Island対応）。
 - **フレームレート上限** `APP_FPSCAP`（スマホ30fps/PC60fps）`PREFS`永続化。animate()先頭でドロップ。スマホ発熱・電池対策。
-- **初回チュートリアル**: 散策モード初回起動時に操作ガイドを10秒表示（`localStorage "shinden3d-tutorial-done"` フラグ）。
+- **初回チュートリアルは削除済み**: 起動不能を招いたため `c67883e` で撤去。散策ボタンは直接 `enterMode("walk")` へ接続。
+- **HTML静的検証**: `scripts/verify-html.js` を追加。`.github/workflows/verify.yml` と Pages deploy 前に、メインJS構文、DOM ID重複、`ITEMS`/`WAKA_DATA`/音源CREDITS整合、r128非対応API混入を検査する。
+- **公開後検証**: Pages deploy後に `scripts/verify-public-url.js` を実行し、公開URLのHTTP 200と最低限のHTML内容を確認する。
+- **ローカル用ブラウザ検証**: `scripts/smoke-playwright.js` と `scripts/collect-benchmark.js` を追加。Playwrightが利用できる環境で起動スモークと描画統計を採取する。
 
 ### 描画・性能
 - 適応的品質 `QUALITY`（ダイナミック解像度：pixelRatio/影を負荷で自動調整。`?adaptive=0`）。
@@ -153,6 +169,9 @@
 - 注意: 画像内蔵でHTMLは約3.3MBに増加。さらなる挿絵追加時はモバイル読み込みとのトレードオフに留意。
 - **灯籠流し `tourouGroup`**: 夏の夜に池面を8基の和紙灯籠（PointLight付き）が漂う。
   - 小島(-20,34,r=4.6)(-4,40,r=3.4)との衝突を事前計算で回避した安全座標（南側開水面）に固定配置。
+- **`08d16b4` 追加分**: 唐櫃を塗籠西壁寄りへ移動、冬の篝火BGMを篝火近接限定に変更、短冊14枚を池外へ再配置、和歌の季節分類を修正、俯瞰モード長押しワープを追加、鯉・蝶・蜻蛉・烏・竹・藤・撫子・松を追加、北の対の女房の向きを反転、伏籠・文箱・薫物を `ITEMS`/図鑑/クイズヒントへ追加。
+- **`bd71625` 追加分**: 生き物ディテール強化、鯉/蝶のCanva素材化、河童/杜若/亀追加、畳いぐさ織りテクスチャ、北西築地の門開口、四脚門の向き補正、鯉の明滅/水紋、蝶の進行方向修正。
+- **`codexFilterBar` 補修**: `renderCodex()` が動的生成していた図鑑フィルターバーのDOMをHTML側にも追加。静的検査で欠落を検出したため、将来のUI崩れを避ける目的。
 
 ### URLフラグ
 `?fps=1`（または `~`キー）計測オーバーレイ / `?adaptive=0` 適応品質OFF / `?bloom=0` ブルームOFF / `?shadowall=1` 全影キャスト。
@@ -173,7 +192,8 @@
 6. 貴族の体験(女性篇)パフォーマンス改善（重さの原因を特定して対処）。
 
 **小**
-7. `BENCHMARKS.md` に最新の `?fps=1` 数値を記録（要実機）。`sounds/CREDITS.md` の個別URL確定は未完。
+7. 実機別の `?fps=1` 数値を `BENCHMARKS.md` に追加（Codex同梱Playwrightの基準値は記録済み）。`sounds/CREDITS.md` の個別URL確定は未完。
+8. Playwrightスモーク検査をCIへ常時追加するか判断する。スクリプト自体は追加済みだが、CI常時実行は依存インストール時間と安定性を見てから。
 
 ## 5. 重要な実装メモ（次セッションで必要になりそうな知識）
 
@@ -188,7 +208,10 @@ KAIMAMI_SECRETS   - 垣間見スポット定義 [{id,name,x,z,r,color,guarded}×
 people[0]         - 姫君 NPC（ミニマップでピンク表示）
 creatures.seimei  - 安倍晴明 NPC（ミニマップで金表示）
 window._codexCompleteFired - 図鑑コンプリート称号通知の重複防止フラグ
-localStorage "shinden3d-tutorial-done" - チュートリアル表示済みフラグ
+scripts/verify-html.js - 単一HTML静的検証。main push時のPages deploy前にも実行。
+scripts/verify-public-url.js - Pages deploy後のHTTP 200/最低限内容検査。
+scripts/smoke-playwright.js - Playwright任意の起動スモーク検査。
+scripts/collect-benchmark.js - Playwright任意のrenderer.info採取。
 ```
 
 ### 池の小島座標（灯籠・NPC 配置時の干渉チェック用）
@@ -210,17 +233,17 @@ if(rs.rainTimer <= 0) {
 ```
 #cloudOverlay   - 雨/曇り空グレーオーバーレイ (z-index:5)
 #dangerVignette - 垣間見の赤ビネット (z-index:37)
-#tutorial       - 初回チュートリアルオーバーレイ (z-index:200)
+#tutorial       - 削除済み。再追加する場合は全画面ロック事故に注意。
 #tutClose       - チュートリアルの「庭に出る」ボタン
 ```
 
 ## 6. 次セッションへ貼る短縮指示
 
 ```text
-HANDOFF_LATEST.md を最初に全文読む。正本は GitHub origin/main（現在 77c81e5）。
+HANDOFF_LATEST.md を最初に全文読む。正本は GitHub origin/main（現在 bd71625）。
 最初に git fetch origin して最新pushを確認し、最新版から専用ブランチで作業。
 単一HTMLなので共有変更点(ITEMS/register/animate/CSS/音声/TIMES/SOUNDSCAPE/QUALITY/BLOOM/GFX)に注意。
 r128旧API維持(outputEncoding/sRGBEncoding/texture.encoding — colorSpaceは使わない)。
-実装後は node --check（3つ目<script>ブロック抽出→node --check）、commit/push、Pages反映確認まで。
+実装後は `node scripts/verify-html.js`、必要に応じて `node scripts/smoke-playwright.js` / `node scripts/collect-benchmark.js`、commit/push、Pages反映確認まで。
 ローカルの古い差分を正本にしない・巻き戻さない。
 ```
