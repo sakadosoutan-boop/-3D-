@@ -84,6 +84,14 @@
 - **TEX.urushi（漆・梨地）**: 漆黒地＋金粉の梨地。`MAT.black`(color白に変更しmapを正しく表示)へ適用 → 二階厨子・帳台・楽器の台座・脇息など漆塗りの調度がまとめて高級感UP。
 - **TEX.nishiki（有職錦・七宝つなぎ）**: 蘇芳地に金の七宝文。茵(shitone)・枕(makura)・円座の敷物に適用（従来の無地TEX.tobariから差し替え。壁代等のMAT.tobariは据え置き）。
 
+### 几帳の柄バリエーション＋朱漆テクスチャ（2026-06 追加）
+- **几帳4柄**: `KICHOU_MATS=[MAT.kichou(Canva絹), kichou2 立涌, kichou3 花菱格子, kichou4 亀甲]`。`kichou()`生成時に `_kichouPatN++` で順番に割り当て、邸内の複数の几帳が別柄になる。新柄は手続き生成(`TEX.kichou2/3/4`)でファイルサイズ増なし。
+- **朱漆 `TEX.shu`**: 朱の漆塗り（下地の木目＋漆のムラ・ハイライト）。`MAT.shu`/`MAT.shuDark`(やや暗く着色)へ適用 → 高欄・反り橋・朱の梁など朱の構造材がまとめて質感UP。
+
+### タイトルBGM＋タイトル環境音バグ（2026-06）
+- **メインテーマ**: `sounds/悠久の伎楽.mp3`(64kbps 約9分)。`SFX.theme`に登録、`SFX.playTheme(0.25)`で小音量ループ。タイトルで初回タップ時に再生(autoplay制約のため)、`enterMode()`で`stopTheme()`。`setMuted`/`setBackgroundPaused`にも追従。※ルート直下にあった重複コピーは削除し、`sounds/`配下に一本化。
+- **タイトルで環境音が鳴るバグを修正**: 原因は`AmbientAudio.init()`が合成せせらぎ/風と鳴き声タイマーをモード無関係に開始していたこと。対策=①合成gainの初期値を0にし`syncSynthLevels()`がタイトル中は常に0、②`startTimers`のtickでタイトル中は`SFX.schedule`を呼ばない、③`updateBed`は既にタイトルでbed停止済。→ タイトルはテーマのみ、ゲーム開始で環境音へ切替。
+
 ### SE・BGM 構成（2026-06 整理）
 - **2系統**: ①`SFX`=実録mp3サンプル（`beds`環境ループ / `pools`鳴き声 / `loops.takibi`火音）、②`AmbientAudio`=Web Audio合成音（mp3欠損時の**フォールバック専用**）。
 - **合成音の二重再生を解消**: `AmbientAudio.syncSynthLevels()` が、対応するmp3環境ループが読込済みなら合成のせせらぎ/風を無音化。`resume()`とタイマーtickで同期。→「池の音が重い・とぎれる」原因の一つ（mp3＋合成の重なり）を除去。
