@@ -1223,14 +1223,6 @@ body.taiji-mode #c{cursor:crosshair}
 #dangerVignette{position:fixed;inset:0;z-index:37;pointer-events:none;box-shadow:inset 0 0 130px 55px rgba(200,25,18,.9);opacity:0;transition:opacity .12s linear}
 /* 雨・曇り空オーバーレイ */
 #cloudOverlay{position:fixed;inset:0;z-index:5;pointer-events:none;background:linear-gradient(180deg,rgba(72,82,98,.72) 0%,rgba(55,68,84,.48) 45%,rgba(38,52,68,.18) 100%);opacity:0}
-/* 初回チュートリアル */
-#tutorial{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;background:rgba(8,4,2,.78);backdrop-filter:blur(4px)}
-#tutBox{background:rgba(22,14,8,.95);border:1px solid rgba(201,162,63,.55);border-radius:14px;padding:28px 32px 22px;max-width:420px;width:92%;color:#e0ccaa;font-family:"Hiragino Mincho ProN","Yu Mincho",serif;text-align:center}
-#tutBox h2{color:#c9a23f;font-size:1.1rem;margin:0 0 16px;letter-spacing:.12em}
-#tutBox .tips{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin:0 0 20px;text-align:left}
-#tutBox .tip{font-size:.82rem;line-height:1.5}
-#tutBox .tip b{color:#c9a23f;display:block;margin-bottom:2px}
-#tutClose{background:#c9a23f;color:#1a0e06;border:none;border-radius:7px;padding:9px 30px;font-size:.92rem;font-family:inherit;cursor:pointer;letter-spacing:.08em}
 #kaimamiEye .eye{position:relative;width:42px;height:23px;border:2px solid #9db8c7;border-radius:55% 45%;overflow:hidden;
   background:rgba(190,216,226,.12);transform:rotate(-2deg);box-shadow:0 0 8px rgba(115,183,204,.12)}
 #kaimamiEye .pupil{position:absolute;left:50%;top:50%;width:11px;height:11px;margin:-5.5px;border-radius:50%;background:#66889a;
@@ -1414,18 +1406,6 @@ body.taiji-mode #c{cursor:crosshair}
 <div id="vignette"></div>
 <div id="dangerVignette"></div>
 <div id="cloudOverlay"></div>
-<div id="tutorial" style="display:flex">
-  <div id="tutBox">
-    <h2>〜 操作のしかた 〜</h2>
-    <div class="tips">
-      <div class="tip"><b>移動</b>WASD / 矢印キー<br>スマホ: 左側のジョイスティック</div>
-      <div class="tip"><b>視点</b>マウスドラッグ<br>スマホ: 右側をスワイプ</div>
-      <div class="tip"><b>調べる</b>近づいてクリック/タップ<br>光る札が手がかり</div>
-      <div class="tip"><b>モード切替</b>上部メニューから<br>クイズ・垣間見など</div>
-    </div>
-    <button id="tutClose">庭に出る</button>
-  </div>
-</div>
 
 <div id="title">
   <div class="t-frame">
@@ -5822,18 +5802,8 @@ $("tbTitle").onclick=()=>{location.reload();};
 // サブパネル切り替えヘルパー
 function showSubPanel(id){$("mainModes").style.display="none";$(id).style.display="block";beep(520,.05);}
 function hideSubPanel(id){$(id).style.display="none";$("mainModes").style.display="block";beep(400,.05);}
-// 散策モード — 初回はチュートリアルを挟む
-$("btnWalk").onclick=()=>{
-  beep(660,.08);initAudio();
-  if(!localStorage.getItem("shinden3d-tutorial-done")){
-    $("tutorial").style.display="flex";
-    const doEnter=()=>{localStorage.setItem("shinden3d-tutorial-done","1");$("tutorial").style.display="none";enterMode("walk");};
-    $("tutClose").onclick=doEnter;
-    setTimeout(doEnter,10000); // 10秒で自動消灯
-  } else {
-    enterMode("walk");
-  }
-};
+// 散策モード
+$("btnWalk").onclick=()=>{beep(660,.08);initAudio();enterMode("walk");};
 // クイズモード
 $("btnQuizMode").onclick=()=>showSubPanel("quizSubPanel");
 $("btnQuiz").onclick=()=>{beep(660,.08);initAudio();APP.quizTA=false;enterMode("quiz");};
