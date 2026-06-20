@@ -2098,6 +2098,20 @@ TEX.hide=canv(128,128,(x,w,h)=>{x.fillStyle="#2e2622";x.fillRect(0,0,w,h);
 TEX.snowSurf=canv(128,128,(x,w,h)=>{x.fillStyle="#f2f4f8";x.fillRect(0,0,w,h);
   for(let i=0;i<30;i++){x.fillStyle=`rgba(200,212,228,${rnd(.08,.2)})`;x.beginPath();x.ellipse(rnd(0,w),rnd(0,h),rnd(10,34),rnd(8,22),rnd(0,3),0,7);x.fill();}
   for(let i=0;i<60;i++){x.fillStyle=`rgba(255,255,255,${rnd(.4,.9)})`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,2),rnd(1,2));}});
+/* 蝶の片翅(前翅＋後翅)。白地に縁取りと斑点。素材colorで着色、alphaで翅形に切り抜く */
+TEX.bflyWing=canv(64,64,(x,w,h)=>{
+  x.fillStyle="#ffffff";
+  x.beginPath();x.moveTo(4,32);x.quadraticCurveTo(18,2,58,9);x.quadraticCurveTo(58,26,28,31);x.closePath();x.fill();
+  x.strokeStyle="rgba(40,24,10,.5)";x.lineWidth=2;x.stroke();
+  x.beginPath();x.moveTo(6,33);x.quadraticCurveTo(30,36,50,54);x.quadraticCurveTo(34,62,16,56);x.closePath();x.fill();x.stroke();
+  x.fillStyle="rgba(50,28,12,.35)";x.beginPath();x.arc(46,15,5,0,7);x.fill();x.beginPath();x.arc(40,48,4,0,7);x.fill();
+  x.fillStyle="rgba(255,255,255,.95)";x.beginPath();x.arc(55,11,2.5,0,7);x.fill();x.beginPath();x.arc(47,53,2.5,0,7);x.fill();});
+/* 葉群 — 中立(グレースケール)の葉の塊。各葉materialのcolorで着色するため季節の色替え(冬の雪白化等)を壊さない */
+TEX.leaves=canv(128,128,(x,w,h)=>{x.fillStyle="#ececec";x.fillRect(0,0,w,h);
+  for(let i=0;i<70;i++){const v=rnd(165,220)|0;x.fillStyle=`rgba(${v},${v},${v},${rnd(.25,.6)})`;
+    x.beginPath();x.ellipse(rnd(0,w),rnd(0,h),rnd(6,16),rnd(4,15),rnd(0,3),0,7);x.fill();}
+  for(let i=0;i<40;i++){x.fillStyle=`rgba(80,84,74,${rnd(.10,.26)})`;x.beginPath();x.arc(rnd(0,w),rnd(0,h),rnd(1,4),0,7);x.fill();}
+  for(let i=0;i<50;i++){x.fillStyle=`rgba(255,255,255,${rnd(.1,.3)})`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,2),rnd(1,2));}});
 /* 灰・炭のざらつき */
 TEX.ash=canv(128,128,(x,w,h)=>{x.fillStyle="#8f8a7e";x.fillRect(0,0,w,h);
   for(let i=0;i<1200;i++){const v=rnd(55,180)|0;x.fillStyle=`rgba(${v},${v},${Math.max(45,v-12)},${rnd(.22,.72)})`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,3),rnd(1,3));}
@@ -2201,12 +2215,12 @@ const MAT={
  tobari:M({map:TEX.tobari,roughness:.9,side:THREE.DoubleSide,transparent:true,opacity:.94}),
  water:new THREE.MeshPhysicalMaterial({map:TEX.water,roughness:.09,metalness:0,transparent:true,opacity:.9,envMapIntensity:1.3,clearcoat:.5,clearcoatRoughness:.12,side:THREE.DoubleSide}), /* [Phase1] 空を映す水面 */
  trunk:M({map:TEX.bark,roughness:.95}),
- leaf:M({color:0x4e6e3a,roughness:.95}),
- leaf2:M({color:0x6d8a46,roughness:.95}),
- pine:M({color:0x3c5a34,roughness:.95}),
- pineDark:M({color:0x2c4526,roughness:.96}),
- momijiGreen:M({color:0x6d8a46,roughness:.95}),
- momijiRed:M({color:0xb5402a,roughness:.9}),
+ leaf:M({map:TEX.leaves,color:0x4e6e3a,roughness:.95}),
+ leaf2:M({map:TEX.leaves,color:0x6d8a46,roughness:.95}),
+ pine:M({map:TEX.leaves,color:0x3c5a34,roughness:.95}),
+ pineDark:M({map:TEX.leaves,color:0x2c4526,roughness:.96}),
+ momijiGreen:M({map:TEX.leaves,color:0x6d8a46,roughness:.95}),
+ momijiRed:M({map:TEX.leaves,color:0xb5402a,roughness:.9}),
  sakura:M({color:0xf6d3de,roughness:.9}),
  ume:M({color:0xf3e7ee,roughness:.9}),
  hasuLeaf:M({color:0x3f6b48,roughness:.95,side:THREE.DoubleSide}),
@@ -4089,8 +4103,8 @@ const YOKAI_DEFS=[
   {type:"hitodama",id:"hitodama",x:22, y:1.8,z:42, col:0x4488ff,phase:3.2},
   {type:"hitodama",id:"hitodama",x:-23,y:2.3,z:36, col:0x7766ff,phase:5.0},
   {type:"hitodama",id:"hitodama",x:0,  y:2.6,z:50, col:0x66aaff,phase:2.5},
-  // 河童 — 池のほとり
-  {type:"kappa",   id:"kappa",   x:-16,y:0,  z:35, col:0,       phase:0.0},
+  // 河童 — 池の南のほとり(反り橋の下に隠れないよう、開始地点から見える汀へ移動)
+  {type:"kappa",   id:"kappa",   x:-8, y:0,  z:26, col:0,       phase:0.0},
   // 提灯お化け — 東西の建物角
   {type:"chochin", id:"chochin", x:26, y:3.0,z:6,  col:0,       phase:0.5},
   {type:"chochin", id:"chochin", x:-26,y:3.0,z:6,  col:0,       phase:2.3},
@@ -4176,25 +4190,46 @@ function makeShikigami(){
 const waterBirds=[];
 function makeMandarinDuck(){
   const g=new THREE.Group();
-  // 胴
-  const body=new THREE.Mesh(new THREE.SphereGeometry(0.28,12,10),M({color:0x8a4a2a,roughness:.8}));
+  // 胴(栗色)
+  const body=new THREE.Mesh(new THREE.SphereGeometry(0.28,14,11),M({color:0x8a4a2a,roughness:.8}));
   body.scale.set(1,0.8,1.5);body.position.y=0.18;body.castShadow=true;g.add(body);
-  // 首・頭
-  const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.1,0.25,8),M({color:0x2a6a5a,roughness:.8}));
+  // 胸(紫がかった栗)
+  const breast=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,9),M({color:0x6a3050,roughness:.8}));
+  breast.scale.set(1,0.85,1.0);breast.position.set(0,0.2,0.22);g.add(breast);
+  // 首・頭(緑の光沢)
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.1,0.25,8),M({color:0x1f5a4a,roughness:.6,metalness:.2}));
   neck.position.set(0,0.32,0.3);neck.rotation.x=-0.3;g.add(neck);
-  const head=new THREE.Mesh(new THREE.SphereGeometry(0.13,10,8),M({color:0x2a7a6a,roughness:.8}));
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.13,12,10),M({color:0x1f6a54,roughness:.5,metalness:.25}));
   head.position.set(0,0.42,0.4);g.add(head);
-  // 冠羽(オレンジ)
-  const crest=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,6),M({color:0xd07020,roughness:.8}));
-  crest.scale.set(1,0.6,1.4);crest.position.set(0,0.46,0.36);g.add(crest);
-  // くちばし
-  const beak=new THREE.Mesh(new THREE.ConeGeometry(0.04,0.12,6),M({color:0xc04030,roughness:.7}));
-  beak.position.set(0,0.4,0.52);beak.rotation.x=Math.PI/2;g.add(beak);
-  // 帆(銀杏羽=オレンジの帆)
+  // 白い眉(目の上の帯)
   [-1,1].forEach(s=>{
-    const sail=new THREE.Mesh(new THREE.BoxGeometry(0.04,0.18,0.2),M({color:0xd88030,roughness:.8}));
-    sail.position.set(s*0.12,0.32,-0.12);sail.rotation.z=s*0.3;g.add(sail);
+    const brow=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,6),M({color:0xf4f0e6,roughness:.7}));
+    brow.scale.set(0.5,0.5,1.3);brow.position.set(s*0.06,0.46,0.42);g.add(brow);
   });
+  // 頬の橙の飾り羽
+  [-1,1].forEach(s=>{
+    const cheek=new THREE.Mesh(new THREE.SphereGeometry(0.07,8,6),M({color:0xe0a050,roughness:.8}));
+    cheek.scale.set(0.6,1.0,1.1);cheek.position.set(s*0.1,0.4,0.4);g.add(cheek);
+  });
+  // 冠羽(後頭)
+  const crest=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,6),M({color:0x2a5a6a,roughness:.7}));
+  crest.scale.set(1,0.6,1.5);crest.position.set(0,0.47,0.34);g.add(crest);
+  // 目
+  [-1,1].forEach(s=>{
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(0.022,6,6),M({color:0x0a0805}));
+    eye.position.set(s*0.07,0.44,0.46);g.add(eye);
+  });
+  // くちばし(赤)
+  const beak=new THREE.Mesh(new THREE.ConeGeometry(0.04,0.12,6),M({color:0xc83828,roughness:.5}));
+  beak.position.set(0,0.41,0.52);beak.rotation.x=Math.PI/2;g.add(beak);
+  // 帆(銀杏羽=橙の帆を左右に立てる)
+  [-1,1].forEach(s=>{
+    const sail=new THREE.Mesh(new THREE.CircleGeometry(0.14,3),M({color:0xe07820,roughness:.7,side:THREE.DoubleSide}));
+    sail.position.set(s*0.13,0.34,-0.1);sail.rotation.set(0,s*0.5,s*0.4);g.add(sail);
+  });
+  // 尾
+  const tail=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.22,6),M({color:0x5a3020,roughness:.8}));
+  tail.rotation.x=-Math.PI/2.4;tail.position.set(0,0.2,-0.34);g.add(tail);
   return g;
 }
 function makeCrane(){
@@ -4336,7 +4371,9 @@ const fireflies=new THREE.Group();scene.add(fireflies);
 const WAKA_MESHES=[];
 function updateWakaVisibility(){
   WAKA_MESHES.forEach(m=>{
-    m.visible=(APP.mode==="walk")&&(m.userData.season===APP.season)&&!codexUnlocked.has(m.userData.wakaId);
+    const vis=(APP.mode==="walk")&&(m.userData.season===APP.season)&&!codexUnlocked.has(m.userData.wakaId);
+    m.visible=vis;
+    if(m.userData.hit)m.userData.hit.visible=vis;   // 透明当たりもrayから外す/戻す(収集後・季節外は無効)
   });
 }
 (function buildWakaCards(){
@@ -4351,6 +4388,8 @@ function updateWakaVisibility(){
   const mats={};
   Object.entries(seasonTex).forEach(([s,t])=>mats[s]=new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide,transparent:true}));
   const geo=new THREE.PlaneGeometry(0.14,0.42); // 前より小さく
+  const hitGeo=new THREE.PlaneGeometry(0.5,0.74); // タップ判定用の見えない当たり(短冊が小さくスマホで押しにくいため)
+  const hitMat=new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide});
   WAKA_DATA.forEach(w=>{
     const m=new THREE.Mesh(geo,mats[w.season]);
     const baseRZ=0.06+Math.random()*0.08;
@@ -4360,6 +4399,7 @@ function updateWakaVisibility(){
     m.userData.baseY=w.y;m.userData.baseRZ=baseRZ;
     m.userData.ph=Math.random()*Math.PI*2;
     m.userData.wakaId=w.id;m.userData.season=w.season;
+    const hit=new THREE.Mesh(hitGeo,hitMat);hit.position.y=0.12;m.add(hit);m.userData.hit=hit; // 大きめの透明当たりを子に
     scene.add(m);
     register(m,w.id,new THREE.Vector3(w.x,w.y+0.3,w.z));
     WAKA_MESHES.push(m);
@@ -4666,12 +4706,31 @@ function updateSparrowChase(t){
 (function buildKoi(){
   function makeKoi(c1,c2){
     const g=new THREE.Group();
-    const body=new THREE.Mesh(new THREE.SphereGeometry(.22,12,8),M({color:c1,roughness:.55}));
-    body.scale.set(.52,.28,1.1);g.add(body);
-    const tail=new THREE.Mesh(new THREE.ConeGeometry(.15,.22,4),M({color:c1,roughness:.6}));
-    tail.position.z=-.28;tail.rotation.x=-Math.PI/2;g.add(tail);
-    const patch=new THREE.Mesh(new THREE.SphereGeometry(.10,7,6),M({color:c2,roughness:.55}));
-    patch.scale.set(.5,.24,.52);patch.position.set(.05,.02,.06);g.add(patch);
+    const body=new THREE.Mesh(new THREE.SphereGeometry(.22,14,10),M({color:c1,roughness:.5}));
+    body.scale.set(.52,.30,1.1);g.add(body);
+    // 尾びれ(二枚の扇)
+    [-1,1].forEach(s=>{
+      const tf=new THREE.Mesh(new THREE.CircleGeometry(.16,3),M({color:c1,roughness:.55,transparent:true,opacity:.9,side:THREE.DoubleSide}));
+      tf.position.set(0,.01,-.3);tf.rotation.set(Math.PI/2,0,s*.5);g.add(tf);
+    });
+    // 背びれ
+    const dorsal=new THREE.Mesh(new THREE.CircleGeometry(.1,3),M({color:c1,roughness:.55,transparent:true,opacity:.88,side:THREE.DoubleSide}));
+    dorsal.position.set(0,.08,-.02);dorsal.rotation.set(0,Math.PI/2,0);g.add(dorsal);
+    // 胸びれ
+    [-1,1].forEach(s=>{
+      const pf=new THREE.Mesh(new THREE.CircleGeometry(.07,3),M({color:c1,roughness:.55,transparent:true,opacity:.82,side:THREE.DoubleSide}));
+      pf.position.set(s*.1,0,.06);pf.rotation.set(Math.PI/2,0,s*.6);g.add(pf);
+    });
+    // 紋様(2色のまだら)
+    const patch=new THREE.Mesh(new THREE.SphereGeometry(.10,8,6),M({color:c2,roughness:.5}));
+    patch.scale.set(.55,.3,.55);patch.position.set(.04,.05,.12);g.add(patch);
+    const patch2=new THREE.Mesh(new THREE.SphereGeometry(.08,8,6),M({color:c2,roughness:.5}));
+    patch2.scale.set(.5,.3,.5);patch2.position.set(-.05,.05,-.12);g.add(patch2);
+    // 目
+    [-1,1].forEach(s=>{
+      const eye=new THREE.Mesh(new THREE.SphereGeometry(.02,6,6),M({color:0x0a0805}));
+      eye.position.set(s*.08,.03,.26);g.add(eye);
+    });
     return g;
   }
   [[0xd04820,0xf0f0e8,-10,44],[0xe07030,0x111111,2,50],[0xf0f0e8,0xcc3318,-18,36],[0xd44020,0xf8f0c0,8,44]].forEach(([c1,c2,px,pz],i)=>{
@@ -4687,14 +4746,24 @@ SEASONAL.chou=[];
 (function buildButterflies(){
   function makeBfly(col){
     const g=new THREE.Group();
-    const wm=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.82,side:THREE.DoubleSide,depthWrite:false});
-    [[.17,.11,0],[.12,.09,-.04]].forEach(([wr,xOff,zo])=>[-1,1].forEach(s=>{
-      const w=new THREE.Mesh(new THREE.CircleGeometry(wr,7),wm.clone());
-      w.position.set(s*(xOff+wr*.55),zo,0);w.rotation.x=Math.PI/2;
+    const wm=new THREE.MeshBasicMaterial({map:TEX.bflyWing,color:col,transparent:true,opacity:.9,side:THREE.DoubleSide,depthWrite:false,alphaTest:.05});
+    // 左右の翅(テクスチャで前翅+後翅の形に。scale.xで鏡像化)
+    [-1,1].forEach(s=>{
+      const w=new THREE.Mesh(new THREE.PlaneGeometry(.34,.3),wm.clone());
+      w.position.set(s*.16,0,0);w.rotation.x=Math.PI/2;w.scale.x=s;
       w.userData.wS=s;g.add(w);
-    }));
-    const bd=new THREE.Mesh(new THREE.CylinderGeometry(.012,.018,.22,6),M({color:0x1a1408,roughness:.9}));
+    });
+    // 胴
+    const bd=new THREE.Mesh(new THREE.CylinderGeometry(.012,.018,.24,6),M({color:0x1a1408,roughness:.9}));
     bd.rotation.x=Math.PI/2;g.add(bd);
+    // 頭
+    const hd=new THREE.Mesh(new THREE.SphereGeometry(.022,6,6),M({color:0x1a1408,roughness:.9}));
+    hd.position.z=.12;g.add(hd);
+    // 触角
+    [-1,1].forEach(s=>{
+      const an=new THREE.Mesh(new THREE.CylinderGeometry(.003,.003,.1,4),M({color:0x1a1408,roughness:.9}));
+      an.position.set(s*.025,0,.17);an.rotation.set(Math.PI/2.3,0,s*.32);g.add(an);
+    });
     return g;
   }
   [[0xe07830,6,1.4,20],[0x8050c8,12,1.5,24],[0xd07020,-6,1.3,22]].forEach(([col,bx,by,bz],i)=>{
@@ -4788,21 +4857,29 @@ SEASONAL.fuji=[];
     const bar=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,2.6,6),wm);
     bar.rotation.z=Math.PI/2;bar.position.set(0,2.58,zz);g.add(bar);
   });
-  const purples=[0x9060d0,0x7050b0,0xa070e0];
-  [[-0.8,0.5],[-0.1,1.2],[0.6,1.8],[0.9,2.4],[-0.5,2.1],[0.2,0.8]].forEach(([xi,zi])=>{
-    const cl=new THREE.Group();cl.position.set(xi,2.52,zi);g.add(cl);
-    for(let k=0;k<10;k++){
-      const fl=new THREE.Mesh(new THREE.SphereGeometry(rnd(.04,.07),5,4),
-        M({color:purples[k%3],roughness:.85}));
-      fl.position.set(rnd(-.08,.08),-k*.1,rnd(-.08,.08));cl.add(fl);
+  // 花房(房は下ほど淡く先細り。長く垂らして藤らしく)
+  const purples=[0x7a44b8,0x8f5fd0,0xa97fe0,0xc6a8ee];
+  [[-0.9,0.3],[-0.4,0.9],[0.1,1.5],[0.7,2.1],[1.0,2.5],[-0.7,2.2],[0.4,0.5],[-0.1,1.9],[0.8,1.2],[-1.0,1.4]].forEach(([xi,zi])=>{
+    const cl=new THREE.Group();cl.position.set(xi,2.5,zi);g.add(cl);
+    const len=8+Math.floor(rnd(0,5));
+    for(let k=0;k<len;k++){
+      const tcol=purples[Math.min(purples.length-1,Math.floor(k/len*purples.length))];
+      const fr=rnd(.05,.082)*(1-k/len*0.45);
+      for(let m2=0;m2<3;m2++){
+        const fl=new THREE.Mesh(new THREE.SphereGeometry(fr,5,4),M({color:tcol,roughness:.85}));
+        fl.position.set(rnd(-.07,.07),-k*.105,rnd(-.07,.07));cl.add(fl);
+      }
     }
     SEASONAL.fuji.push(cl);
   });
-  for(let i=0;i<18;i++){
-    const lf=new THREE.Mesh(new THREE.CircleGeometry(rnd(.07,.13),6),
-      M({color:0x3a6828,roughness:.9,side:THREE.DoubleSide}));
-    lf.position.set(rnd(-1.2,1.2),rnd(1.8,2.52),rnd(0,2.5));
-    lf.rotation.set(rnd(-.3,.3),rnd(0,6),rnd(-.3,.3));g.add(lf);
+  // 葉(羽状複葉=数枚の小葉を一本の柄に並べる)
+  for(let i=0;i<12;i++){
+    const st=new THREE.Group();st.position.set(rnd(-1.2,1.2),rnd(2.0,2.5),rnd(0,2.5));st.rotation.y=rnd(0,6);g.add(st);
+    for(let j=0;j<5;j++){
+      const lf=new THREE.Mesh(new THREE.CircleGeometry(rnd(.05,.08),5),
+        M({color:0x3a6828,roughness:.9,side:THREE.DoubleSide}));
+      lf.position.set((j-2)*.09,0,0);lf.rotation.set(-1.2,rnd(-.2,.2),0);st.add(lf);
+    }
   }
   register(g,"fuji",new THREE.Vector3(-40,2.2,12));
 })();
@@ -5561,13 +5638,14 @@ addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;});
 addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false;});
 
 const joyEl=document.getElementById("joy"),knob=document.getElementById("joyKnob");
-const joy={active:false,id:null,vx:0,vy:0,dynamic:false};
+const joy={active:false,id:null,vx:0,vy:0,dynamic:false,_t0:0,_used:false};
 function joyHandle(e){
   const r=joyEl.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;
   let t=null;for(const tt of e.touches)if(tt.identifier===joy.id)t=tt;
   if(!t)return;
   let dx=(t.clientX-cx)/(r.width/2),dy=(t.clientY-cy)/(r.height/2);
   const m=Math.hypot(dx,dy);if(m>1){dx/=m;dy/=m;}
+  if(m>0.22)joy._used=true;   // 一定以上動かしたら「移動操作」と判定(タップ誤爆を防ぐ)
   joy.vx=dx;joy.vy=dy;
   knob.style.transform=`translate(calc(-50% + ${dx*34}px),calc(-50% + ${dy*34}px))`;
 }
@@ -5576,7 +5654,7 @@ joyEl.addEventListener("touchmove",e=>{e.preventDefault();joyHandle(e);},{passiv
 joyEl.addEventListener("touchend",e=>{e.preventDefault();joy.active=false;joy.vx=joy.vy=0;
   knob.style.transform="translate(-50%,-50%)";},{passive:false});
 /* どこでも押せるジョイ: 触れた位置に出現させる */
-function joySpawn(t){joyEl.style.left=(t.clientX-59)+"px";joyEl.style.top=(t.clientY-59)+"px";joyEl.style.bottom="auto";joyEl.style.display="block";joy.active=true;joy.id=t.identifier;joyHandle({touches:[t]});}
+function joySpawn(t){joyEl.style.left=(t.clientX-59)+"px";joyEl.style.top=(t.clientY-59)+"px";joyEl.style.bottom="auto";joyEl.style.display="block";joy.active=true;joy.id=t.identifier;joy._t0=performance.now();joy._used=false;joyHandle({touches:[t]});}
 function joyRelease(){joy.active=false;joy.vx=joy.vy=0;joy.id=null;knob.style.transform="translate(-50%,-50%)";if(joy.dynamic)joyEl.style.display="none";}
 
 /* ドラッグ視点 + タップ/クリック判定 */
@@ -5630,7 +5708,15 @@ cv.addEventListener("touchmove",e=>{e.preventDefault();
   if(joy.dynamic&&joy.active)joyHandle(e);             // どこでもジョイの追従
   for(const t of e.touches)if(t.identifier===drag.id)pmove(t.clientX,t.clientY);},{passive:false});
 cv.addEventListener("touchend",e=>{e.preventDefault();
-  for(const t of e.changedTouches){if(t.identifier===joy.id)joyRelease();if(t.identifier===drag.id)pup(t.clientX,t.clientY);}},{passive:false});
+  for(const t of e.changedTouches){
+    if(t.identifier===joy.id){
+      // 左半分の素早い「動かさないタップ」はジョイ操作ではなくアイテム選択として扱う(短冊などの取得対策)
+      const wasTap=joy.dynamic&&!joy._used&&(performance.now()-joy._t0<260);
+      joyRelease();
+      if(wasTap)pick(t.clientX,t.clientY);
+    }
+    if(t.identifier===drag.id)pup(t.clientX,t.clientY);
+  }},{passive:false});
 cv.addEventListener("wheel",e=>{if(APP.view==="ov")orbit.r=Math.max(35,Math.min(190,orbit.r+e.deltaY*.08));},{passive:true});
 document.getElementById("interactBtn").addEventListener("click",()=>pick(innerWidth/2,innerHeight/2));
 
@@ -5797,7 +5883,7 @@ function unlockCodex(id){
   toast(`図鑑に「${ITEMS[id].n}」を登録した`);
   if(id.startsWith("waka_")){
     const m=WAKA_MESHES.find(m=>m.userData.wakaId===id);
-    if(m)m.visible=false;
+    if(m){m.visible=false;if(m.userData.hit)m.userData.hit.visible=false;}
     showWakaReveal(id);
   }
 }
