@@ -84,6 +84,11 @@
 - **TEX.urushi（漆・梨地）**: 漆黒地＋金粉の梨地。`MAT.black`(color白に変更しmapを正しく表示)へ適用 → 二階厨子・帳台・楽器の台座・脇息など漆塗りの調度がまとめて高級感UP。
 - **TEX.nishiki（有職錦・七宝つなぎ）**: 蘇芳地に金の七宝文。茵(shitone)・枕(makura)・円座の敷物に適用（従来の無地TEX.tobariから差し替え。壁代等のMAT.tobariは据え置き）。
 
+### タイトルBGMの自動再生対策＋テクスチャ追加（2026-06）
+- **自動再生**: ブラウザはユーザー操作前の発音を禁止するため真の自動再生は不可。対策として①`load`時に`SFX.playTheme()`をベストエフォートで試行(許可環境では即再生)、②`pointerdown/touchstart/keydown/click`のいずれの初回操作でも`tryStartTheme()`で確実に開始、③`#titleAudioHint`「画面をタップすると音楽が流れます」を鳴り出すまで表示(再生成功/enterModeで`hideTitleAudioHint`)。`SFX.playTheme`はAudioContext生成前でも鳴らせるよう単体Audioを遅延生成し、play()のPromiseを返す。
+- **追加テクスチャ(手続き生成)**: `TEX.bark`(樹皮)→`MAT.trunk`、`TEX.hide`(牛の毛皮)→`MAT.ox`、`TEX.snowSurf`(積雪面)→`MAT.snowMat`。いずれも基色を従来色に合わせ、平面色だった箇所を質感化。
+- **未着手のテクスチャ候補**: 植栽の葉群(ビルボード/UV調整が要るため保留)、障子・襖の紙、灯籠の石、牛車の各部。
+
 ### 几帳の柄バリエーション＋朱漆テクスチャ（2026-06 追加）
 - **几帳4柄**: `KICHOU_MATS=[MAT.kichou(Canva絹), kichou2 立涌, kichou3 花菱格子, kichou4 亀甲]`。`kichou()`生成時に `_kichouPatN++` で順番に割り当て、邸内の複数の几帳が別柄になる。新柄は手続き生成(`TEX.kichou2/3/4`)でファイルサイズ増なし。
 - **朱漆 `TEX.shu`**: 朱の漆塗り（下地の木目＋漆のムラ・ハイライト）。`MAT.shu`/`MAT.shuDark`(やや暗く着色)へ適用 → 高欄・反り橋・朱の梁など朱の構造材がまとめて質感UP。

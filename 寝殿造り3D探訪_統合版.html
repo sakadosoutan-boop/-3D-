@@ -1072,6 +1072,12 @@ button{font-family:var(--serif);cursor:pointer}
   padding:16px 0;background:radial-gradient(ellipse at 50% 28%,#3d2212 0%,#1b130d 60%,#0a0705 100%);
   transition:opacity .8s;overflow-y:auto}
 #title.hide{opacity:0;pointer-events:none}
+#titleAudioHint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:3;
+  font-family:var(--sans);font-size:12px;letter-spacing:.04em;color:#f1e4c4;white-space:nowrap;
+  background:rgba(30,18,10,.5);padding:6px 14px;border-radius:16px;border:1px solid rgba(201,162,63,.45);
+  pointer-events:none;transition:opacity .7s;animation:hintPulse 2.4s ease-in-out infinite}
+#titleAudioHint.hide{opacity:0}
+@keyframes hintPulse{0%,100%{opacity:.55}50%{opacity:.95}}
 #title::before{content:"";position:absolute;inset:0;opacity:.92;
   background-image:
     repeating-linear-gradient(90deg,transparent 0 38px,rgba(201,162,63,.07) 38px 39px),
@@ -1414,6 +1420,7 @@ body.taiji-mode #c{cursor:crosshair}
 <div id="cloudOverlay"></div>
 
 <div id="title">
+  <div id="titleAudioHint">🎵 画面をタップすると音楽が流れます</div>
   <div class="t-frame">
     <div class="t-kamon"><div class="kamon-circle">✿</div></div>
     <div class="t-eyebrow">古文・日本史　3D 学習シミュレーター</div>
@@ -2075,6 +2082,22 @@ TEX.shu=canv(256,256,(x,w,h)=>{x.fillStyle="#b3402a";x.fillRect(0,0,w,h);
     x.beginPath();x.moveTo(i+rnd(-2,2),0);x.bezierCurveTo(i+rnd(-3,3),h*.4,i+rnd(-3,3),h*.7,i+rnd(-2,2),h);x.stroke();}
   for(let i=0;i<40;i++){x.fillStyle=`rgba(${rnd(150,210)|0},${rnd(70,110)|0},${rnd(50,80)|0},${rnd(.05,.16)})`;
     x.beginPath();x.ellipse(rnd(0,w),rnd(0,h),rnd(8,30),rnd(4,14),rnd(0,3.14),0,7);x.fill();}});
+/* 樹皮 — 縦に走る溝とごつごつした明部。木の幹(MAT.trunk)に使用 */
+TEX.bark=canv(256,256,(x,w,h)=>{x.fillStyle="#5a4632";x.fillRect(0,0,w,h);
+  for(let i=0;i<70;i++){const bx=rnd(0,w);x.strokeStyle=`rgba(${rnd(40,70)|0},${rnd(30,50)|0},${rnd(20,36)|0},${rnd(.3,.7)})`;x.lineWidth=rnd(1,4);
+    x.beginPath();x.moveTo(bx,0);let cx2=bx;for(let yy=0;yy<=h;yy+=16){cx2+=rnd(-4,4);x.lineTo(cx2,yy);}x.stroke();}
+  for(let i=0;i<60;i++){x.fillStyle=`rgba(${rnd(110,150)|0},${rnd(90,120)|0},${rnd(60,86)|0},${rnd(.06,.18)})`;
+    x.beginPath();x.ellipse(rnd(0,w),rnd(0,h),rnd(2,7),rnd(8,22),rnd(-.3,.3),0,7);x.fill();}});
+TEX.bark.repeat.set(1,2);
+/* 牛の毛皮 — 短い毛流れ＋濃淡のまだら。牛車の牛(MAT.ox)に使用 */
+TEX.hide=canv(128,128,(x,w,h)=>{x.fillStyle="#2e2622";x.fillRect(0,0,w,h);
+  for(let i=0;i<900;i++){x.strokeStyle=`rgba(${rnd(50,80)|0},${rnd(40,64)|0},${rnd(32,52)|0},${rnd(.1,.3)})`;x.lineWidth=.8;
+    const sx=rnd(0,w),sy=rnd(0,h),an=rnd(1.2,1.9),ln=rnd(3,8);x.beginPath();x.moveTo(sx,sy);x.lineTo(sx+Math.cos(an)*ln,sy+Math.sin(an)*ln);x.stroke();}
+  for(let i=0;i<14;i++){x.fillStyle="rgba(20,16,14,.5)";x.beginPath();x.ellipse(rnd(0,w),rnd(0,h),rnd(6,16),rnd(5,12),rnd(0,3),0,7);x.fill();}});
+/* 積雪面 — ゆるい陰影＋きらめき。冬の雪面(MAT.snowMat)に使用 */
+TEX.snowSurf=canv(128,128,(x,w,h)=>{x.fillStyle="#f2f4f8";x.fillRect(0,0,w,h);
+  for(let i=0;i<30;i++){x.fillStyle=`rgba(200,212,228,${rnd(.08,.2)})`;x.beginPath();x.ellipse(rnd(0,w),rnd(0,h),rnd(10,34),rnd(8,22),rnd(0,3),0,7);x.fill();}
+  for(let i=0;i<60;i++){x.fillStyle=`rgba(255,255,255,${rnd(.4,.9)})`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,2),rnd(1,2));}});
 /* 灰・炭のざらつき */
 TEX.ash=canv(128,128,(x,w,h)=>{x.fillStyle="#8f8a7e";x.fillRect(0,0,w,h);
   for(let i=0;i<1200;i++){const v=rnd(55,180)|0;x.fillStyle=`rgba(${v},${v},${Math.max(45,v-12)},${rnd(.22,.72)})`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,3),rnd(1,3));}
@@ -2177,7 +2200,7 @@ const MAT={
  byoubu:M({map:TEX.byoubu,roughness:.55,side:THREE.DoubleSide}),
  tobari:M({map:TEX.tobari,roughness:.9,side:THREE.DoubleSide,transparent:true,opacity:.94}),
  water:new THREE.MeshPhysicalMaterial({map:TEX.water,roughness:.09,metalness:0,transparent:true,opacity:.9,envMapIntensity:1.3,clearcoat:.5,clearcoatRoughness:.12,side:THREE.DoubleSide}), /* [Phase1] 空を映す水面 */
- trunk:M({color:0x5a4632,roughness:.95}),
+ trunk:M({map:TEX.bark,roughness:.95}),
  leaf:M({color:0x4e6e3a,roughness:.95}),
  leaf2:M({color:0x6d8a46,roughness:.95}),
  pine:M({color:0x3c5a34,roughness:.95}),
@@ -2189,10 +2212,10 @@ const MAT={
  hasuLeaf:M({color:0x3f6b48,roughness:.95,side:THREE.DoubleSide}),
  hasuFlower:M({color:0xf0a8c0,roughness:.9}),
  tsubaki:M({color:0xc0352f,roughness:.85}),
- snowMat:M({color:0xf2f4f8,roughness:.9}),
+ snowMat:M({map:TEX.snowSurf,roughness:.9}),
  stone:M({map:TEX.stonePaving,color:0x9a9486,roughness:.92}),
  ash:M({map:TEX.ash,roughness:1}),
- ox:M({color:0x2e2622,roughness:.9}),
+ ox:M({map:TEX.hide,roughness:.9}),
  flame:new THREE.MeshBasicMaterial({color:0xffb84d}),
 };
 /* 几帳の帷の柄バリエーション。各几帳に順番に割り当てて単調さを避ける(立涌/七宝/花菱/亀甲) */
@@ -5191,16 +5214,21 @@ const SFX = {
   },
   /* 火桶/炭櫃の点火・消火に連動。実制御はupdateSpatial(距離減衰)へ統合したので、ここでは即時に再計算させるだけ。 */
   setBrazier(on){ this._spatialT = 0; },
-  /* タイトル画面のメインテーマ(小音量ループ)。ゲーム開始時(enterMode)にstopThemeで停止。 */
+  /* タイトル画面のメインテーマ(小音量ループ)。ゲーム開始時(enterMode)にstopThemeで停止。
+     AudioContext初期化前でも鳴らせるよう、必要なら単体のAudio要素を生成する。
+     戻り値は play() のPromise(自動再生可否の判定に使う)。 */
   playTheme(vol = 0.25){
-    if(!this.theme || !this.media[this.theme]) return;   // 未配置なら何もしない(壊さない)
-    if(this._themeMedia) return;                          // 多重再生防止
-    try{
-      const src=this.media[this.theme].cloneNode(true);
-      src.loop=true; src.volume=Math.max(0,Math.min(1,vol)); src.muted=this._muted;
-      if(!this._backgroundPaused && !this._muted) src.play().catch(()=>{});
-      this._themeMedia=src;
-    }catch(e){}
+    if(!this.theme) return Promise.reject();
+    if(!this._themeMedia){
+      let a = this.media[this.theme];
+      if(a){ a = a.cloneNode(true); }
+      else { a = new Audio(); a.preload="auto"; a.src = this.base + encodeURIComponent(this.theme); this.media[this.theme] = a; }
+      a.loop = true; a.volume = Math.max(0,Math.min(1,vol)); a.muted = this._muted;
+      this._themeMedia = a;
+    }
+    if(this._backgroundPaused || this._muted) return Promise.reject();
+    const p = this._themeMedia.play();
+    return (p && p.then) ? p : Promise.resolve();
   },
   stopTheme(){
     if(this._themeMedia){ try{this._themeMedia.pause();this._themeMedia.currentTime=0;}catch(e){} this._themeMedia=null; }
@@ -6048,6 +6076,22 @@ function initAudio() {
 // 最初の操作で一度だけ初期化。常時リスナーにすると「音:切」の直後に再開してしまう。
 addEventListener("pointerdown",initAudio,{once:true});
 
+/* ── タイトルBGMの自動再生対策 ──
+   ブラウザはユーザー操作前の発音を禁止するため、(1)読込時に自動再生を試み、
+   (2)あらゆる初回操作で確実に開始し、(3)鳴るまでヒントを表示する。 */
+let _themeStarted=false;
+function hideTitleAudioHint(){const h=$("titleAudioHint");if(h)h.classList.add("hide");}
+function tryStartTheme(){
+  if(_themeStarted) return;
+  if(typeof SFX==="undefined" || (typeof APP!=="undefined" && APP.mode!=="title")) return;
+  const p=SFX.playTheme();
+  if(p&&p.then) p.then(()=>{_themeStarted=true;hideTitleAudioHint();}).catch(()=>{});
+}
+// 読込直後に一度トライ(多くの環境ではブロックされるが、許可される環境では即再生)
+addEventListener("load",()=>{tryStartTheme();},{once:true});
+// 最初のいかなる操作でもテーマ開始(pointerdownを取りこぼす環境への保険)
+["pointerdown","touchstart","keydown","click"].forEach(ev=>addEventListener(ev,tryStartTheme,{passive:true}));
+
 $("tbAudio").onclick=(e)=>{
   e.stopPropagation();
   if(!ambientAudio){
@@ -6148,6 +6192,7 @@ function enterMode(m){
   if(m==="walk")toast("ドラッグで見回し、タップ/クリックで調べられます",3400);
   if(typeof updateWakaVisibility==="function")updateWakaVisibility();
   // [音] タイトルのテーマを止め、ゲーム内の環境音(bed/合成フォールバック)へ切替
+  hideTitleAudioHint();
   if(typeof SFX!=="undefined"){SFX.stopTheme();SFX.updateBed();}
   if(ambientAudio&&ambientAudio.syncSynthLevels)ambientAudio.syncSynthLevels();
   hideLoadingSoon(); // 初回フレーム描画が落ち着くころにロード画面をフェードアウト
