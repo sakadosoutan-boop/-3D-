@@ -2760,6 +2760,8 @@ function broadleaf(s,leafMat){
 /* 可動建具の状態(妻戸/半蔀/御簾/灯台) — 対屋でも使うため早期に宣言 */
 const gimmicks={shitomi:[],misu:[],tsumado:[],lamps:[],kagaribi:[],braziers:[],karabitsu:[]};
 const kichouGroups=[];
+const byoubuGroups=[];   /* 屏風(タップで畳む/広げる) */
+const zushiGroups=[];    /* 二階厨子(タップで扉開閉) */
 function building(opts){
   const {w,d,fh=1.0,ph=2.5,wall=true,doors=[],id,name,roofH,ridge=.42}=opts;
   const g=new THREE.Group();
@@ -3256,19 +3258,23 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
   }
   kichou(1.1,2.9,0.2);kichou(-6.5,4.8,-0.4);
   interactables.kichou.labelPos=new THREE.Vector3(S.cx+1.1,F+2.3,S.cz+2.9);
-  /* --- 屏風(4曲) --- */
+  /* --- 屏風(4曲・タップで畳む/広げる) --- */
   {
     const g=new THREE.Group();g.position.set(-1.9,F,-2.6);
+    const panels=[];
     for(let i=0;i<4;i++){
-      const p=new THREE.Mesh(new THREE.PlaneGeometry(.95,1.65),MAT.byoubu);
+      const pg=new THREE.Group();
       const frame=new THREE.Mesh(new THREE.PlaneGeometry(1.0,1.72),MAT.black);
-      frame.position.set(i*.9-1.35,.86,(i%2?0:.3)-.01);frame.rotation.y=(i%2? -.5:.5);
-      p.position.copy(frame.position);p.position.z+=.012;p.rotation.y=frame.rotation.y;
-      p.castShadow=true;g.add(frame);g.add(p);}
-    for(let i=1;i<4;i++){
-      const hinge=cyl(.025,.025,1.66,MAT.kin,i*.9-1.8,.86,.16,8);
-      hinge.rotation.x=.04;g.add(hinge);
+      const p=new THREE.Mesh(new THREE.PlaneGeometry(.95,1.65),MAT.byoubu);
+      frame.position.y=.86;p.position.set(0,.86,.012);p.castShadow=true;
+      pg.add(frame);pg.add(p);
+      if(i>0){const hinge=cyl(.025,.025,1.66,MAT.kin,-.5,.86,.04,8);hinge.rotation.x=.04;pg.add(hinge);}
+      pg.userData.baseX=i*.9-1.35;pg.userData.sign=(i%2?-1:1);
+      pg.position.x=pg.userData.baseX;pg.rotation.y=pg.userData.sign*.5;
+      g.add(pg);panels.push(pg);
     }
+    const bst={panels,foldT:0,folded:false};
+    g.userData.gim={type:"byoubu",st:bst};byoubuGroups.push(bst);
     shinden.add(g);register(g,"byoubu",new THREE.Vector3(S.cx-1.9,F+2.2,S.cz-2.6));
   }
   /* --- 壁代(母屋北側の柱間) --- */
@@ -3330,11 +3336,21 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     g.add(box(1.5,.08,.62,MAT.black,0,1.05,0));
     [[-.7],[.7]].forEach(s=>{g.add(box(.08,1.5,.55,MAT.black,s[0],.75,0));});
     g.add(box(1.34,.5,.5,MAT.woodDark,0,.78,0));
-    g.add(box(.6,.42,.03,MAT.kin,-.33,.78,.26,false));g.add(box(.6,.42,.03,MAT.kin,.33,.78,.26,false));
+    /* 棚内に収まる巻物・硯箱(扉を開けると見える) */
+    [[-.42,1,0xe7d7bc],[-.08,0,0xf2ead6],[.26,1,0xeaddc4]].forEach(([xx,i,col])=>{const sc=cyl(.045,.045,.44,M({color:col,roughness:.8}),xx,.66,0,8);sc.rotation.z=Math.PI/2;g.add(sc);});
+    g.add(box(.34,.12,.44,M({color:0x2e4a78,roughness:.72}),.42,.62,0,false)); // 硯箱
+    /* 観音開きの扉(タップで開閉) */
+    const doorL=new THREE.Group();doorL.position.set(-.66,.78,.27);
+    doorL.add(box(.62,.44,.03,MAT.kin,.31,0,0,false));
+    const doorR=new THREE.Group();doorR.position.set(.66,.78,.27);
+    doorR.add(box(.62,.44,.03,MAT.kin,-.31,0,0,false));
+    g.add(doorL);g.add(doorR);
     g.add(box(1.5,.08,.62,MAT.black,0,1.55,0));
     const scroll=cyl(.05,.05,.5,M({color:0xf0e6cf}),-.4,1.62,0,8);scroll.rotation.z=Math.PI/2;g.add(scroll);
     [-.05,.28].forEach((xx,i)=>{const sc=cyl(.035,.035,.42,M({color:i?0xe7d7bc:0xf2ead6,roughness:.8}),xx,1.62,.04,8);sc.rotation.z=Math.PI/2;g.add(sc);});
     g.add(box(.32,.06,.42,M({color:0x2e4a78,roughness:.72}),.48,1.61,.02,false));
+    const zst={doorL,doorR,open:false,t:0};
+    g.userData.gim={type:"zushi",st:zst};zushiGroups.push(zst);
     shinden.add(g);register(g,"nikaizushi",new THREE.Vector3(S.cx+0.4,F+2.1,S.cz-3.0));
   }
   /* --- 唐櫃 (母屋西側・フタ開閉あり) --- */
@@ -5240,6 +5256,12 @@ function toggleGim(gim){
   }else if(gim.type==="karabitsu"){
     gim.st.open=!gim.st.open;
     toast(gim.st.open?"唐櫃のふたを開けた":"唐櫃のふたを閉めた",1500);
+  }else if(gim.type==="byoubu"){
+    gim.st.folded=!gim.st.folded;
+    toast(gim.st.folded?"屏風を畳んだ":"屏風を広げた",1500);
+  }else if(gim.type==="zushi"){
+    gim.st.open=!gim.st.open;
+    toast(gim.st.open?"二階厨子の扉を開けた":"二階厨子の扉を閉めた",1500);
   }
 }
 /* ギミックgroupにgim情報を付与(構築後に対応づけ) */
@@ -6776,6 +6798,25 @@ function animate(now){
     st.g.rotation.y=st.baseRY+st.foldT;
   });
 
+  /* --- 屏風の開閉(畳む/広げる)アニメーション --- */
+  byoubuGroups.forEach(st=>{
+    const target=st.folded?1:0;
+    st.foldT+=(target-st.foldT)*.10;
+    const f=st.foldT;
+    st.panels.forEach((pg,i)=>{
+      pg.rotation.y=pg.userData.sign*(.5+f*.95);
+      pg.position.x=pg.userData.baseX*(1-f)+(i*.34-.51)*f;
+    });
+  });
+
+  /* --- 二階厨子の扉開閉アニメーション --- */
+  zushiGroups.forEach(st=>{
+    const target=st.open?1:0;
+    st.t+=(target-st.t)*.14;
+    st.doorL.rotation.y=-1.25*st.t;
+    st.doorR.rotation.y= 1.25*st.t;
+  });
+
   /* --- 季節パーティクル --- */
   if(petals.visible)updateFalling(petals,dt,t,sakuraGust(t));  // 桜は間欠的な突風
   if(leavesFall.visible)updateFalling(leavesFall,dt,t);
@@ -6946,11 +6987,27 @@ if(_tm==="dusk"||_tm==="night"||_tm==="dawn")setTime(_tm);
 const _lbl=PREFS.get("label",1);
 if([0,1,2].includes(_lbl)&&_lbl!==APP.labelMode){APP.labelMode=_lbl;$("tbLabel").textContent="札:"+["なし","近く","すべて"][_lbl];}
 
-/* 全オブジェクトへの影（Cast & Receive）の自動適用 */
+/* 影の最適化(軽量化): 影を落とすのは一定サイズ以上の立体だけに限定する。
+   小物(取手・脚・細部)はシャドウマップ描画(ライト視点での全シーン再描画)から外し、
+   ほぼ視認できない影のための毎フレーム負荷を削減。受光は安価なので全メッシュ維持。
+   既に noTinyShadow 済みの figure 細部などはここで除外される。?shadowall=1 で従来動作に戻せる。 */
+const _SHADOW_ALL=/[?&]shadowall=1/.test(location.search);
+const _shThresh=0.6;                       // ワールド最大寸法(これ未満は影を落とさない)
+const _shBox=new THREE.Box3(),_shSize=new THREE.Vector3(),_shScale=new THREE.Vector3();
 scene.traverse((node) => {
   if (node.isMesh&&!node.userData.noAutoShadow) {
-    node.castShadow = true;
     node.receiveShadow = true;
+    if(_SHADOW_ALL||node.userData.forceCastShadow){
+      node.castShadow = true;
+    }else if(node.geometry){
+      if(!node.geometry.boundingBox)node.geometry.computeBoundingBox();
+      node.geometry.boundingBox.getSize(_shSize);
+      node.getWorldScale(_shScale);            // 親までのスケールを反映した実寸で判定
+      const mx=Math.max(_shSize.x*Math.abs(_shScale.x),_shSize.y*Math.abs(_shScale.y),_shSize.z*Math.abs(_shScale.z));
+      node.castShadow = mx>=_shThresh;
+    }else{
+      node.castShadow = true;
+    }
   }
 });
 
