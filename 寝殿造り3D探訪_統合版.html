@@ -1545,6 +1545,12 @@ body.taiji-mode #c{cursor:crosshair}
   <div class="q-meta">第 <b id="quizNo">1</b> 問 / <span id="quizTotal">10</span>　<span id="quizScoreWrap">得点 <b id="quizScore">0</b></span><span id="quizTimerWrap" style="display:none">⏱ <b id="quizTimer">0.0</b> 秒　お手つき <b id="quizMiss">0</b></span>　<span id="quizHint"></span></div>
 </div>
 <div id="quizFeedback"><div class="seal" id="sealEl">正解</div></div>
+<div id="quizDiffPicker" style="display:none;position:fixed;inset:0;background:rgba(10,6,2,.78);z-index:430;align-items:center;justify-content:center;flex-direction:column;gap:12px">
+  <div style="color:var(--kin);font-size:14px;letter-spacing:.22em;margin-bottom:4px">難易度を選んでください</div>
+  <button class="t-btn" id="qdEasy" style="min-width:220px">初級　8問・ヒントあり</button>
+  <button class="t-btn" id="qdNormal" style="min-width:220px">中級　10問・ヒント遅め</button>
+  <button class="t-btn" id="qdHard" style="min-width:220px">上級　12問・ヒントなし</button>
+</div>
 
 <div id="questHud">
   <div class="qs-header"><div class="qs-title" id="questTitle"></div><button id="questMin" title="最小化">－</button></div>
@@ -3934,17 +3940,20 @@ function makeYukiOnna(){
   g.userData={type:"yukionna",li,aura};return g;
 }
 /* 物の怪退治モード用: 結界霊 */
-function makeTaijiKekkai(){
+/* 退治モード霊の種類: normal=普通(1発), strong=強い怨霊(2発・赤), wander=揺れる霊(移動・青) */
+function makeTaijiKekkai(spiritType){
   const g=new THREE.Group();
-  const col=0x9944ff;
-  const outer=new THREE.Mesh(new THREE.SphereGeometry(0.65,12,10),
-    new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.26,depthWrite:false,side:THREE.DoubleSide}));
+  const C=spiritType==="strong"?{col:0xff1133,ic:0xff6688,or:0.78,ir:0.34,li:2.0,lr:7.5,op:0.30}:
+           spiritType==="wander"?{col:0x2266ff,ic:0x88bbff,or:0.55,ir:0.22,li:1.2,lr:6.0,op:0.28}:
+                                 {col:0x9944ff,ic:0xcc88ff,or:0.65,ir:0.28,li:1.4,lr:6.5,op:0.26};
+  const outer=new THREE.Mesh(new THREE.SphereGeometry(C.or,12,10),
+    new THREE.MeshBasicMaterial({color:C.col,transparent:true,opacity:C.op,depthWrite:false,side:THREE.DoubleSide}));
   g.add(outer);
-  const inner=new THREE.Mesh(new THREE.SphereGeometry(0.28,10,8),
-    new THREE.MeshBasicMaterial({color:0xcc88ff,transparent:true,opacity:0.75}));
+  const inner=new THREE.Mesh(new THREE.SphereGeometry(C.ir,10,8),
+    new THREE.MeshBasicMaterial({color:C.ic,transparent:true,opacity:0.75}));
   g.add(inner);
-  const li=new THREE.PointLight(col,1.4,6.5);g.add(li);
-  g.userData={type:"kekkai",outer,inner,li,phase:Math.random()*Math.PI*2,alive:true};
+  const li=new THREE.PointLight(C.col,C.li,C.lr);g.add(li);
+  g.userData={type:"kekkai",spiritType:spiritType||"normal",outer,inner,li,phase:Math.random()*Math.PI*2,alive:true};
   return g;
 }
 /* 妖怪配置定義 */
@@ -3966,17 +3975,18 @@ const YOKAI_DEFS=[
   // 雪女 — 冬の夜のみ北の対に現れる
   {type:"yukionna",id:"yukionna",x:2,  y:0,  z:-44,col:0x88aaff,phase:0,  winterOnly:true},
 ];
-/* 物の怪退治モード: 怨霊出現スポット */
+/* 物の怪退治モード: 怨霊出現スポット
+   normal=普通(1発)  strong=強い怨霊(2発・赤)  wander=揺れる霊(移動・青) */
 const TAIJI_SPOTS=[
-  {x:0,  y:1.8,z:8,  label:"寝殿南"},
-  {x:-14,y:1.8,z:2,  label:"西廂"},
-  {x:14, y:1.8,z:2,  label:"東廂"},
-  {x:0,  y:1.8,z:38, label:"池の中央"},
-  {x:35, y:1.8,z:14, label:"東の釣殿"},
-  {x:-35,y:1.8,z:14, label:"西の釣殿"},
-  {x:0,  y:1.8,z:-40,label:"北の対"},
-  {x:48, y:1.5,z:-18,label:"東築地"},
-  {x:-48,y:1.5,z:-18,label:"西築地"},
+  {x:0,  y:1.8,z:8,  label:"寝殿南",   type:"normal"},
+  {x:-14,y:1.8,z:2,  label:"西廂",     type:"strong"},
+  {x:14, y:1.8,z:2,  label:"東廂",     type:"normal"},
+  {x:0,  y:1.8,z:38, label:"池の中央", type:"wander"},
+  {x:35, y:1.8,z:14, label:"東の釣殿", type:"normal"},
+  {x:-35,y:1.8,z:14, label:"西の釣殿", type:"strong"},
+  {x:0,  y:1.8,z:-40,label:"北の対",   type:"normal"},
+  {x:48, y:1.5,z:-18,label:"東築地",   type:"strong"},
+  {x:-48,y:1.5,z:-18,label:"西築地",   type:"wander"},
 ];
 function makeShikigami(){
   const g=new THREE.Group();
@@ -5666,7 +5676,7 @@ function enterMode(m){
   {const cond=["tbHome","tbSepWorld","tbTime","tbSeason","tbCodex","tbLabel","tbMap"];
    cond.forEach(id=>{const e=$(id);if(e)e.style.display="";});}
   updateControlUI();
-  if(m==="quiz")startQuiz();
+  if(m==="quiz"){const pk=$("quizDiffPicker");pk.style.display="flex";}
   if(m==="quest")startQuest();
   if(m==="kaimami")startKaimami();
   if(m==="taiji")startTaiji();
@@ -5710,6 +5720,11 @@ $("btnWalk").onclick=()=>{beep(660,.08);initAudio();enterMode("walk");};
 $("btnQuizMode").onclick=()=>showSubPanel("quizSubPanel");
 $("btnQuiz").onclick=()=>{beep(660,.08);initAudio();APP.quizTA=false;enterMode("quiz");};
 $("btnQuizTA").onclick=()=>{beep(720,.08);initAudio();APP.quizTA=true;enterMode("quiz");};
+/* 難易度ピッカー */
+["easy","normal","hard"].forEach(diff=>{
+  const btn=$("qd"+diff.charAt(0).toUpperCase()+diff.slice(1));
+  if(btn)btn.onclick=()=>{APP.quizDiff=diff;$("quizDiffPicker").style.display="none";startQuiz();beep(660,.08);};
+});
 $("quizBack").onclick=()=>hideSubPanel("quizSubPanel");
 // 体験モード
 $("btnTaikenMode").onclick=()=>showSubPanel("taikenSubPanel");
@@ -5734,12 +5749,20 @@ $("questMin").onclick=()=>{const h=$("questHud");const min=h.classList.toggle("m
    クイズモード
 ============================================================ */
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+/* クイズ難易度設定 */
+const QUIZ_DIFF_CFG={
+  easy:  {count:8,  h1:12, h2:25,  label:"初級"},
+  normal:{count:10, h1:20, h2:999, label:"中級"},
+  hard:  {count:12, h1:999,h2:999, label:"上級"},
+};
 function startQuiz(){
   const ta=!!APP.quizTA;
-  const qs=shuffle(QUIZ_POOL.slice()).slice(0,10);
+  const diff=APP.quizDiff||"normal";
+  const cfg=QUIZ_DIFF_CFG[diff];
+  const qs=shuffle(QUIZ_POOL.slice()).slice(0,cfg.count);
   APP.quiz={qs,i:0,score:0,miss:0,missCur:0,lock:false,qStart:performance.now(),hint1:false,hint2:false,
-            ta,tStart:performance.now(),penalty:0};
-  $("quizTotal").textContent=10;
+            ta,tStart:performance.now(),penalty:0,cfg};
+  $("quizTotal").textContent=cfg.count;
   // HUD: タイムアタックはタイマー表示、通常は得点表示
   $("quizScoreWrap").style.display=ta?"none":"";
   $("quizTimerWrap").style.display=ta?"":"none";
@@ -5799,11 +5822,11 @@ function quizUpdate(){
   if(q.lock)return;
   const el=(performance.now()-q.qStart)/1000;
   const id=q.qs[q.i];
-  if(!q.hint1&&el>12){q.hint1=true;
+  if(!q.hint1&&el>q.cfg.h1){q.hint1=true;
     toast("ヒント:"+(QUIZ_PLACE_HINT[id]||ITEMS[id].d.slice(0,24)),3600);
     beep(680,.08);
   }
-  if(!q.hint2&&el>25){q.hint2=true;
+  if(!q.hint2&&el>q.cfg.h2){q.hint2=true;
     if(showBeacon(id)){
       toast("光の柱のところにあります",3000);beep(620,.1);}
   }
@@ -6154,22 +6177,33 @@ function kaimamiRestoreActors(k=APP.kaimami){
   if(k&&k.prevLabel!==undefined){APP.labelMode=k.prevLabel;$("tbLabel").textContent="札:"+["なし","近く","すべて"][APP.labelMode];}
 }
 function kaimamiPlaceWatcher(w,t){
-  const a=t*w.speed+w.phase;let x=w.cx+Math.cos(a)*w.rx,z=w.cz+Math.sin(a)*w.rz;
+  /* 捜索モード倍率(逃走直後に速度・視野が上がる) */
+  const sm=w._searchMul||1.0;
+  /* 周期的な立ち止まり+見回し: 各巡回者が13秒周期で2.4秒静止してゆっくり首を振る */
+  const PAUSE_CYCLE=13.0,PAUSE_DUR=2.4;
+  const tp=((t*Math.abs(w.speed)*3.2+w.phase*4.1)%PAUSE_CYCLE);
+  const paused=(tp<PAUSE_DUR)&&(sm<=1.0); // 捜索モード中は立ち止まらず走り回る
+  const spd=paused?0:w.speed*sm;
+  const a=t*spd+w.phase+(paused?0:0);
+  let x=w.cx+Math.cos(t*w.speed+w.phase)*w.rx,z=w.cz+Math.sin(t*w.speed+w.phase)*w.rz;
   const k=APP.kaimami,now=performance.now();
   if(k&&k.noiseUntil>now&&k.noiseAt&&w.guard){
     const rush=Math.min(.82,.30+(k.noiseUntil-now)/6000*.42);x+=(k.noiseAt.x-x)*rush;z+=(k.noiseAt.z-z)*rush;
   }
-  const dx=-Math.sin(a)*w.rx,dz=Math.cos(a)*w.rz;
-  w.g.position.x=x;w.g.position.z=z;w.g.rotation.y=Math.atan2(dx,dz);w.g.visible=true;
+  const baseA=t*w.speed+w.phase;
+  const dx=-Math.sin(baseA)*w.rx,dz=Math.cos(baseA)*w.rz;
+  const scanYaw=paused?Math.sin(t*0.88+w.phase)*0.82:0; // 立ち止まり中の首振り
+  w.g.position.x=x;w.g.position.z=z;w.g.rotation.y=Math.atan2(dx,dz)+scanYaw;w.g.visible=true;
   if(w.guard)w.g.position.y=groundH(x,z);
 }
 function kaimamiOwns(root,o){for(let p=o;p;p=p.parent)if(p===root)return true;return false;}
 function kaimamiWatcherSees(w){
+  const sm=w._searchMul||1.0;
   const origin=new THREE.Vector3(w.g.position.x,w.g.position.y+(w.guard?1.62:1.08),w.g.position.z);
   const target=new THREE.Vector3(player.pos.x,player.pos.y-.22,player.pos.z),to=target.sub(origin),dist=to.length();
-  if(dist>w.range+1.0)return false;
+  if(dist>(w.range+1.0)*sm)return false;
   const forward=new THREE.Vector3(0,0,1).applyQuaternion(w.g.getWorldQuaternion(new THREE.Quaternion()));forward.y=0;forward.normalize();
-  const flat=to.clone();flat.y=0;if(!flat.lengthSq()||forward.dot(flat.normalize())<Math.cos((w.fov+.10)*.5))return false;
+  const flat=to.clone();flat.y=0;if(!flat.lengthSq()||forward.dot(flat.normalize())<Math.cos((w.fov*Math.min(sm,1.4)+.10)*.5))return false;
   kaimamiDetectRay.set(origin,to.normalize());kaimamiDetectRay.far=Math.max(0,dist-.42);
   const hits=kaimamiDetectRay.intersectObjects(rayTargets,false);
   return !hits.some(h=>!kaimamiOwns(w.g,h.object));
@@ -6205,14 +6239,16 @@ const YOKAI_IDS=new Set(["hitodama","kappa","chochin","kitsunebi","yukionna"]);
 function startTaiji(){
   if(APP.time!=="night"){setTime("night");PREFS.set("time","night");}
   document.body.classList.add("taiji-mode");
-  // 結界霊を配置
+  // 結界霊を配置(種類別に生成)
   const spirits=TAIJI_SPOTS.map((sp,i)=>{
-    const g=makeTaijiKekkai();
+    const g=makeTaijiKekkai(sp.type||"normal");
     g.position.set(sp.x,sp.y,sp.z);scene.add(g);
     g.userData.inner.userData.iid="__kekkai__";
     g.userData.inner.userData.kekkai_idx=i;
     rayTargets.push(g.userData.inner);
-    return {g,sp,alive:true,idx:i};
+    const hp=sp.type==="strong"?2:1;
+    const wander=sp.type==="wander"?{tx:sp.x,tz:sp.z,nextMs:performance.now()+3000}:null;
+    return {g,sp,alive:true,idx:i,hp,wander};
   });
   APP.taiji={spirits,shot:0,miss:0,weapon:"bow",tStart:performance.now(),done:false};
   $("taijiRemain").textContent=spirits.length;
@@ -6253,6 +6289,17 @@ function taijiShoot(sx,sy){
     if(sp&&sp.alive){
       const removeSp=(s)=>{s.alive=false;s.g.visible=false;k.shot++;
         const i=rayTargets.indexOf(s.g.userData.inner);if(i>=0)rayTargets.splice(i,1);};
+      sp.hp--;
+      if(sp.hp>0){
+        /* 強い怨霊: 1発目は赤くフラッシュするが消えない */
+        const mat=sp.g.userData.inner.material;
+        const origOp=mat.opacity;mat.opacity=1.0;
+        setTimeout(()=>{if(mat)mat.opacity=origOp;},120);
+        k.miss++;beep(520,.12,"sawtooth",.08);
+        $("taijiMsg").textContent=sp.sp.label+"の怨霊はまだ消えない…もう一発！";
+        setTimeout(()=>{if($("taijiMsg"))$("taijiMsg").textContent="";},1600);
+        return;
+      }
       removeSp(sp);
       // 呪印は範囲内(8ユニット)の怨霊もまとめて退散
       if(k.weapon==="seal"){
@@ -6306,9 +6353,20 @@ function startKaimami(){
 }
 function kaimamiUpdate(dt){
   const k=APP.kaimami;if(APP.mode!=="kaimami"||!k||k.done)return;
-  const t=performance.now()*.001;k.watchers.forEach(w=>kaimamiPlaceWatcher(w,t));
+  const t=performance.now()*.001;
+  /* 捜索モード: 逃走直後に9秒間、速度・視野を増幅 */
+  const searchActive=k.searchUntil&&performance.now()<k.searchUntil;
+  k.watchers.forEach(w=>{w._searchMul=searchActive?1.55:1.0;});
+  k.watchers.forEach(w=>kaimamiPlaceWatcher(w,t));
   k.grace=Math.max(0,k.grace-dt);
   const watcher=k.grace<=0?k.watchers.find(kaimamiWatcherSees):null;
+  /* 逃走検知: 直前フレームで見つかりそうだったが今は見えていない → 捜索モード起動 */
+  if(!watcher&&k._prevWatcher&&k.exposure<KAIMAMI_ALERT*.5&&!k.searchUntil){
+    k.searchUntil=performance.now()+9000;
+    setTimeout(()=>{if(APP.kaimami)APP.kaimami.searchUntil=0;},9000);
+    toast("…気配がした？　巡回が警戒し始めた",2800);
+  }
+  k._prevWatcher=watcher;
   k.exposure=watcher?Math.min(KAIMAMI_ALERT+.1,k.exposure+dt*1.14):Math.max(0,k.exposure-dt*2.35);
   $("dangerVignette").style.opacity=Math.min(1,Math.pow(k.exposure/KAIMAMI_ALERT,1.6)*1.05).toFixed(3); // 危険度が高いほど画面端が赤く
   kaimamiEyeUpdate(watcher,k);
@@ -6740,13 +6798,28 @@ function animate(now){
   }
   /* --- 物の怪結界 (taiji mode) --- */
   if(APP.mode==="taiji"&&APP.taiji){
+    const now=performance.now();
     for(const sp of APP.taiji.spirits){
       if(!sp.alive)continue;
       const ud=sp.g.userData;const ph=t*2+sp.idx*0.8;
-      if(ud.outer)ud.outer.material.opacity=0.12+Math.sin(ph)*0.06;
-      if(ud.inner)ud.inner.material.opacity=0.35+Math.sin(ph*1.3)*0.15;
-      if(ud.li)ud.li.intensity=0.8+Math.sin(ph*1.7)*0.4;
+      /* 種類別点滅速度: 強い怨霊は速く点滅、揺れる霊は緩やか */
+      const rate=ud.spiritType==="strong"?2.8:ud.spiritType==="wander"?1.2:2.0;
+      if(ud.outer)ud.outer.material.opacity=0.12+Math.sin(ph*rate*.5)*0.07;
+      if(ud.inner)ud.inner.material.opacity=0.35+Math.sin(ph*rate*.65)*0.17;
+      if(ud.li)ud.li.intensity=0.8+Math.sin(ph*rate*.85)*0.5;
       sp.g.rotation.y=t*0.6+sp.idx*0.9;
+      /* 揺れる霊: ランダム地点へゆっくり移動 */
+      if(sp.wander){
+        const w=sp.wander;
+        if(now>w.nextMs){
+          const a=Math.random()*Math.PI*2,r=6+Math.random()*20;
+          w.tx=sp.sp.x+Math.cos(a)*r;w.tz=sp.sp.z+Math.sin(a)*r;
+          w.nextMs=now+4500+Math.random()*3000;
+        }
+        sp.g.position.x+=(w.tx-sp.g.position.x)*0.008;
+        sp.g.position.z+=(w.tz-sp.g.position.z)*0.008;
+        sp.g.position.y=sp.sp.y+Math.sin(t*0.7+sp.idx)*0.3; // ゆらゆら上下
+      }
     }
   }
 
