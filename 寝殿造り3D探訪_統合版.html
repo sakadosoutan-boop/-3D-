@@ -2030,6 +2030,22 @@ TEX.byoubu=canv(1024,576,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.add
 TEX.tobari=canv(128,256,(x,w,h)=>{x.fillStyle="#f4eedf";x.fillRect(0,0,w,h);
   for(let i=0;i<w;i+=14){x.fillStyle=`rgba(190,178,150,${rnd(.1,.32)})`;x.fillRect(i,0,7,h);}
   x.fillStyle="#b3402a";x.fillRect(0,h-18,w,6);});
+/* 漆器(梨地) — 漆黒の地にほのかな光沢ムラと金粉(梨地)を散らす。MAT.black(漆塗りの調度)の地肌に使用 */
+TEX.urushi=canv(256,256,(x,w,h)=>{x.fillStyle="#17110c";x.fillRect(0,0,w,h);
+  const g=x.createRadialGradient(w*.36,h*.30,8,w*.5,h*.5,w*.85);
+  g.addColorStop(0,"rgba(78,60,34,.30)");g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.fillRect(0,0,w,h);
+  for(let i=0;i<560;i++){x.globalAlpha=rnd(.12,.6);x.fillStyle=Math.random()<.5?"#caa64a":"#e7cf86";
+    x.beginPath();x.arc(rnd(0,w),rnd(0,h),rnd(.3,1.1),0,7);x.fill();}
+  x.globalAlpha=1;});
+/* 有職錦(七宝つなぎ) — 茵・円座・枕の敷物用。蘇芳(すおう)の地に金の七宝文 */
+TEX.nishiki=canv(128,128,(x,w,h)=>{x.fillStyle="#7c2f34";x.fillRect(0,0,w,h);
+  for(let i=0;i<2200;i++){x.globalAlpha=rnd(.02,.07);x.fillStyle=Math.random()<.5?"#000":"#e8d7b0";x.fillRect(rnd(0,w),rnd(0,h),1,1);}
+  x.globalAlpha=1;x.strokeStyle="#c9a23f";x.lineWidth=1.6;const s=32;
+  for(let gy=-1;gy<=h/s+1;gy++)for(let gx=-1;gx<=w/s+1;gx++){
+    x.beginPath();x.arc(gx*s,gy*s,s*.52,0,7);x.stroke();
+    x.beginPath();x.arc(gx*s+s/2,gy*s+s/2,s*.52,0,7);x.stroke();}
+  x.fillStyle="rgba(201,162,63,.55)";
+  for(let gy=0;gy<=h/s;gy++)for(let gx=0;gx<=w/s;gx++){x.beginPath();x.arc(gx*s,gy*s,1.7,0,7);x.fill();}});
 /* 灰・炭のざらつき */
 TEX.ash=canv(128,128,(x,w,h)=>{x.fillStyle="#8f8a7e";x.fillRect(0,0,w,h);
   for(let i=0;i<1200;i++){const v=rnd(55,180)|0;x.fillStyle=`rgba(${v},${v},${Math.max(45,v-12)},${rnd(.22,.72)})`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,3),rnd(1,3));}
@@ -2116,7 +2132,7 @@ const MAT={
  sunoko:M({map:TEX.sunoko,roughness:.7}),
  shu:M({color:0xb3402a,roughness:.5}),
  shuDark:M({color:0x8e2f1e,roughness:.55}),
- black:new THREE.MeshPhysicalMaterial({color:0x17110c,roughness:.5,metalness:.1,clearcoat:1.0,clearcoatRoughness:.18,envMapIntensity:.9}), /* [Phase1] 漆の濡れ光沢(clearcoat) */
+ black:new THREE.MeshPhysicalMaterial({map:TEX.urushi,color:0xffffff,roughness:.5,metalness:.1,clearcoat:1.0,clearcoatRoughness:.18,envMapIntensity:.9}), /* [Phase1] 漆の濡れ光沢(clearcoat)＋梨地(金粉)の地肌 */
  kin:M({color:0xc9a23f,roughness:.28,metalness:1.0,envMapIntensity:1.15}), /* [Phase1] 金泥の輝き(IBL反射) */
  sand:M({map:TEX.sand,roughness:.98}),
  stonePaving:M({map:TEX.stonePaving,roughness:.88}),
@@ -3258,7 +3274,7 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     addCornerCaps(g,2.82,2.82,.32);
     g.add(box(2.6,.1,2.6,MAT.tatami,0,.32,0));
     g.add(box(1.6,.07,1.6,M({map:TEX.ungen}),0,.40,0));
-    const makura=box(.92,.16,.42,M({map:TEX.tobari,roughness:.82}),-.34,.52,.42);
+    const makura=box(.92,.16,.42,M({map:TEX.nishiki,roughness:.82}),-.34,.52,.42);
     makura.rotation.y=.08;g.add(makura);
     [[-1.35,-1.35],[1.35,-1.35],[-1.35,1.35],[1.35,1.35]].forEach(p=>
       g.add(box(.13,2.3,.13,MAT.black,p[0],1.43,p[1])));
@@ -3281,7 +3297,7 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     g.add(box(1.9,.09,.95,M({map:TEX.ungen}),0,.045,0));
     g.add(box(1.78,.1,.83,MAT.tatami,0,.06,0));
     register(g,"tatami");
-    if(withShitone){const s=box(.78,.06,.78,M({map:TEX.tobari,roughness:.95}),0,.14,0);
+    if(withShitone){const s=box(.78,.06,.78,M({map:TEX.nishiki,roughness:.9}),0,.14,0);
       const sg=new THREE.Group();sg.position.copy(g.position);sg.rotation.y=rot;sg.add(s);
       const edge=box(.84,.05,.84,MAT.shu,0,.115,0);sg.add(edge);
       const fold=box(.72,.028,.06,MAT.kin,0,.18,-.34,false);sg.add(fold);
@@ -3431,7 +3447,7 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
   {
     const g=new THREE.Group();g.position.set(-3.4,F,5.0);g.rotation.y=Math.PI/2;
     g.add(box(.80,.07,.20,MAT.black,0,.30,0));                                  // 天板(肘を載せる横木)
-    g.add(box(.72,.045,.16,M({map:TEX.tobari,roughness:.9}),0,.355,0,false));   // 上の茵(布)
+    g.add(box(.72,.045,.16,M({map:TEX.nishiki,roughness:.9}),0,.355,0,false));   // 上の茵(布)
     [-.30,.30].forEach(xx=>{g.add(box(.07,.30,.16,MAT.black,xx,.15,0));          // 脚2本
       g.add(box(.11,.035,.18,MAT.kin,xx,.018,0,false));});                       // 脚の金沓
     shinden.add(g);register(g,"kyousoku",new THREE.Vector3(S.cx-3.4,F+.7,S.cz+5.0));
@@ -5004,6 +5020,7 @@ const SOUNDSCAPE = {
   "winter/dawn":  { bed:null,        calls:[ {pool:"tsuru",      prob:0.14,gap:40000,gain:0.32} ] }  // 最も静かな夜明け・稀に鶴
 };
 
+const _sfxTmpVec = new THREE.Vector3();  // updateSpatialで火源のワールド座標取得に再利用(毎フレームの確保を避ける)
 const SFX = {
   ctx:null, master:null, base:"sounds/",
   media:{},                         // ファイル名 -> HTMLAudioElement (file://対応)
@@ -5026,7 +5043,7 @@ const SFX = {
   beds:  { water:"spring_water_on_Mt2.mp3", nightWind:"night_wind2.mp3", summer:"summer_mountains1.mp3" },
   loops: { takibi:"takibi.mp3" },   // 近接ループ(焚火)
   _rot:{}, _last:{}, _active:[], _curScene:null, _bedMedia:null, _bedBase:0.34, _curBed:false,
-  _takibiMedia:null, _brazierMedia:null, _spatialT:0, _muted:false, _backgroundPaused:false,
+  _fireMedia:null, _spatialT:0, _muted:false, _backgroundPaused:false,
 
   load(ctx){
     this.ctx = ctx;
@@ -5048,12 +5065,15 @@ const SFX = {
   playCall(cat, gain = 0.6){
     const list = (this.pools[cat] || []).filter(f => this.media[f]);
     if(!list.length) return false;
+    if(this._active.length >= 6) return false;  // 同時発音数を制限(クローン要素の残留と負荷=音とぎれを防ぐ)
     const n = this._rot[cat] = (this._rot[cat] == null ? Math.floor(Math.random()*list.length) : (this._rot[cat] + 1) % list.length);
     try{
       const src=this.media[list[n]].cloneNode(true);src.volume=Math.max(0,Math.min(1,gain));
       src.playbackRate=0.97+Math.random()*.06;src.muted=this._muted;
       const rec={src,media:true};this._active.push(rec);src.play().catch(()=>{});
-      src.onended = () => { const i = this._active.indexOf(rec); if(i>=0) this._active.splice(i,1); };
+      // 再生終了/失敗時は配列から外し、要素のバッファも解放してGCを促す(長時間プレイでの肥大化防止)
+      const done = () => { const i = this._active.indexOf(rec); if(i>=0) this._active.splice(i,1); try{src.onended=null;src.onerror=null;src.removeAttribute("src");src.load();}catch(e){} };
+      src.onended = done; src.onerror = done;
       return true;
     }catch(e){ return false; }
   },
@@ -5110,57 +5130,46 @@ const SFX = {
         this._bedMedia.volume=this._bedBase*f;
       }
     }
-    // 焚火: 夜に屋外の篝火に近づくと鳴る(冬も篝火のそばのみ)
-    const isNight = (typeof APP !== "undefined" && APP.time === "night");
-    const on = (isNight && this.media[this.loops.takibi]);
-    if(on){
-      let d = Infinity;
-      if(typeof KAGARIBI !== "undefined")
-        KAGARIBI.forEach(k => { const dd = Math.hypot(px-k.x, pz-k.z); if(dd < d) d = dd; });
-      const gain=Math.max(0,Math.min(1,1-d/7))*.55;
-      if(!this._takibiMedia){
+    // 火(焚火)ループは1本に統合。"燃えている"火源=夜の屋外篝火(KAGARIBI)＋点火中の屋内火桶・炭櫃(braziers)
+    // のうち最も近いものとの距離で音量を決める。離れれば自然に消える(=点けっぱなしでも遠ければ鳴らない)。
+    let fireD = Infinity;
+    if(typeof APP !== "undefined" && APP.time === "night" && typeof KAGARIBI !== "undefined")
+      KAGARIBI.forEach(k => { const dd = Math.hypot(px-k.x, pz-k.z); if(dd < fireD) fireD = dd; });
+    if(typeof gimmicks !== "undefined" && gimmicks.braziers)
+      gimmicks.braziers.forEach(b => { if(!b.lit || !b.g) return; b.g.getWorldPosition(_sfxTmpVec);
+        const dd = Math.hypot(px-_sfxTmpVec.x, pz-_sfxTmpVec.z); if(dd < fireD) fireD = dd; });
+    const fireOn = (fireD < 9) && this.media[this.loops.takibi];
+    if(fireOn){
+      const gain = Math.max(0, Math.min(1, 1 - fireD/7.5)) * .55;
+      if(!this._fireMedia){
         const src=this.media[this.loops.takibi].cloneNode(true);src.loop=true;src.volume=0;src.muted=this._muted;
         if(!this._backgroundPaused&&!this._muted)src.play().catch(()=>{});
-        this._takibiMedia=src;
+        this._fireMedia=src;
       }
-      this._takibiMedia.volume=gain;
-    } else if(this._takibiMedia){
-      try{this._takibiMedia.pause();this._takibiMedia.currentTime=0;}catch(e){}
-      this._takibiMedia=null;
+      this._fireMedia.volume=gain;
+    } else if(this._fireMedia){
+      try{this._fireMedia.pause();this._fireMedia.currentTime=0;}catch(e){}
+      this._fireMedia=null;
     }
   },
-  /* 火桶/炭櫃のタップ点火に連動する焚火ループ(季節・時間に関係なく鳴る) */
-  setBrazier(on){
-    if(on){
-      if(!this.media[this.loops.takibi])return;
-      if(!this._brazierMedia){
-        const src=this.media[this.loops.takibi].cloneNode(true);src.loop=true;src.volume=.5;src.muted=this._muted;
-        if(!this._backgroundPaused&&!this._muted)src.play().catch(()=>{});
-        this._brazierMedia=src;
-      }
-    }else if(this._brazierMedia){
-      try{this._brazierMedia.pause();this._brazierMedia.currentTime=0;}catch(e){}
-      this._brazierMedia=null;
-    }
-  },
+  /* 火桶/炭櫃の点火・消火に連動。実制御はupdateSpatial(距離減衰)へ統合したので、ここでは即時に再計算させるだけ。 */
+  setBrazier(on){ this._spatialT = 0; },
   setMuted(m){
     this._muted=m;
     if(this.master&&this.ctx)this.master.gain.setTargetAtTime(m?0:1,this.ctx.currentTime,.15);
-    if(this._bedMedia)this._bedMedia.muted=m;if(this._takibiMedia)this._takibiMedia.muted=m;if(this._brazierMedia)this._brazierMedia.muted=m;
+    if(this._bedMedia)this._bedMedia.muted=m;if(this._fireMedia)this._fireMedia.muted=m;
     this._active.forEach(a=>a.src.muted=m);
-    if(!m&&!this._backgroundPaused){if(this._bedMedia)this._bedMedia.play().catch(()=>{});if(this._takibiMedia)this._takibiMedia.play().catch(()=>{});if(this._brazierMedia)this._brazierMedia.play().catch(()=>{});}
+    if(!m&&!this._backgroundPaused){if(this._bedMedia)this._bedMedia.play().catch(()=>{});if(this._fireMedia)this._fireMedia.play().catch(()=>{});}
   },
   setBackgroundPaused(paused){
     this._backgroundPaused=paused;
     if(paused){
       if(this._bedMedia)this._bedMedia.pause();
-      if(this._takibiMedia)this._takibiMedia.pause();
-      if(this._brazierMedia)this._brazierMedia.pause();
+      if(this._fireMedia)this._fireMedia.pause();
       this.stopActiveCalls();
     }else if(!this._muted){
       if(this._bedMedia)this._bedMedia.play().catch(()=>{});
-      if(this._takibiMedia)this._takibiMedia.play().catch(()=>{});
-      if(this._brazierMedia)this._brazierMedia.play().catch(()=>{});
+      if(this._fireMedia)this._fireMedia.play().catch(()=>{});
     }
   }
 };
@@ -5203,10 +5212,19 @@ class AmbientAudio {
     if (this.ctx && this.ctx.state === "suspended") {
       this.ctx.resume();
     }
-    if (this.waterGain) this.waterGain.gain.setTargetAtTime(0.04, this.ctx.currentTime, 0.2);
-    if (this.windGain) this.windGain.gain.setTargetAtTime(0.02, this.ctx.currentTime, 0.2);
-    SFX.setMuted(false);  // [Phase] 実録音もミュート解除
     this.playing = true;
+    this.syncSynthLevels();   // 実録ループの有無に応じて合成音の音量を決定(二重再生を防止)
+    SFX.setMuted(false);  // [Phase] 実録音もミュート解除
+  }
+  /* 合成音(せせらぎ/風)は実録の環境ループが無いときだけ鳴らす真のフォールバック。
+     mp3が読み込めている場合は無音化し、せせらぎ/風が二重に重なって濁る・負荷で途切れるのを防ぐ。 */
+  syncSynthLevels() {
+    if (!this.ctx || !this.playing) return;
+    const t = this.ctx.currentTime;
+    const haveWater = !!(typeof SFX !== "undefined" && SFX.media && SFX.media[SFX.beds.water]);
+    const haveWind  = !!(typeof SFX !== "undefined" && SFX.media && SFX.media[SFX.beds.nightWind]);
+    if (this.waterGain) this.waterGain.gain.setTargetAtTime(haveWater ? 0 : 0.04, t, 0.6);
+    if (this.windGain)  this.windGain.gain.setTargetAtTime(haveWind  ? 0 : 0.02, t, 0.6);
   }
   suspend() {
     if (this.waterGain) this.waterGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
@@ -5305,6 +5323,7 @@ class AmbientAudio {
   startTimers() {
     const tick = () => {
       if (!this.playing) return;
+      this.syncSynthLevels();   // mp3ロード完了後に合成音フォールバックを無音化(二重再生防止)
       SFX.updateBed();   // 念のため(setTime/applySeasonでも即時切替済)
       // 音風景表に基づき、最小間隔つきで鳴き声を再生(重なり防止)
       SFX.schedule(APP.season, APP.time, (pool) => {

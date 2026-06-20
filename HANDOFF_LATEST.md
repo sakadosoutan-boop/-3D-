@@ -80,6 +80,17 @@
 - **可動調度品**: 屏風 `byoubuGroups`（折りたたみ）、厨子 `zushiGroups`（観音開き）、几帳 `kichouGroups`（カーテン）、唐櫃 `gimmicks.karabitsu`（別配列）。
   - 屏風の絵 `TEX.byoubu`: Canva制作の金地秋景大和絵「Autumn Yamato-e Byōbu」(design `DAHNGjt96Zo`) を1024x576のJPEG data URIで埋め込み。読込失敗時は従来の手続き生成画にフォールバック。4扇のパネルは元絵の横1/4ずつをUV分割（`u: i/4〜(i+1)/4`）して連続パノラマとして展開。差し替えは Canva を再エクスポート→base64化して同`<img>`の `src` を置換。
 
+### 調度品テクスチャ（手続き生成・ファイルサイズ増なし）
+- **TEX.urushi（漆・梨地）**: 漆黒地＋金粉の梨地。`MAT.black`(color白に変更しmapを正しく表示)へ適用 → 二階厨子・帳台・楽器の台座・脇息など漆塗りの調度がまとめて高級感UP。
+- **TEX.nishiki（有職錦・七宝つなぎ）**: 蘇芳地に金の七宝文。茵(shitone)・枕(makura)・円座の敷物に適用（従来の無地TEX.tobariから差し替え。壁代等のMAT.tobariは据え置き）。
+
+### SE・BGM 構成（2026-06 整理）
+- **2系統**: ①`SFX`=実録mp3サンプル（`beds`環境ループ / `pools`鳴き声 / `loops.takibi`火音）、②`AmbientAudio`=Web Audio合成音（mp3欠損時の**フォールバック専用**）。
+- **合成音の二重再生を解消**: `AmbientAudio.syncSynthLevels()` が、対応するmp3環境ループが読込済みなら合成のせせらぎ/風を無音化。`resume()`とタイマーtickで同期。→「池の音が重い・とぎれる」原因の一つ（mp3＋合成の重なり）を除去。
+- **火音ループを1本に統合**: 旧 `_takibiMedia`(夜の篝火近接) と `_brazierMedia`(火桶点火＝**全域で鳴り続ける不具合**) を `_fireMedia` に統一。`updateSpatial`が「燃えている火源（夜の篝火KAGARIBI＋点火中のbraziers実ワールド座標）」の最近傍距離で音量を決め、離れれば自然に消える。→「焚火が鳴り続ける」を修正。`setBrazier()`は即時再計算トリガのみに簡素化。
+- **クローン残留対策**: `playCall`は同時発音6本までに制限し、終了/失敗時に要素のsrcを解放（長時間プレイの肥大化＝処理落ち防止）。
+- 注: mp3ループの継ぎ目「プツッ」は素材依存。完全gapless化はWeb Audio decode移行が必要（未実施）。
+
 ### Canva素材の組み込み（画像はすべてbase64 data URIで内蔵・オフライン動作）
 - 各テクスチャ/画像は「Canva画像を読み込み、失敗時は手続き生成にフォールバック」する `new Image()` パターンで実装。差し替えは Canva 再エクスポート→base64化→該当 `src` 置換。
 - **タイトル背景** `#title::before`: 金地大和絵の寝殿景 (design `DAHNG7TQ2vY`, 1920x1080)。暗ヴィネット＋微金グリッドを重ねて可読性確保。
