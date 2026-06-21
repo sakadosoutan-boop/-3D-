@@ -6600,6 +6600,9 @@ $("tbCollapse").onclick=()=>{
 try{if(localStorage.getItem("shinden3d-tbcollapse")==="1")applyTopbarCollapsed(true);}catch(e){}
 $("tbHelp").onclick=()=>$("help").style.display="flex";
 $("helpClose").onclick=()=>$("help").style.display="none";
+/* ヘルプは全画面ロックにせず、背景タップ／Escでも閉じられるように(#58) */
+$("help").addEventListener("click",e=>{if(e.target===$("help"))$("help").style.display="none";});
+addEventListener("keydown",e=>{if(e.key==="Escape")$("help").style.display="none";});
 $("creditsLink").onclick=()=>$("credits").style.display="flex";
 $("creditsClose").onclick=()=>$("credits").style.display="none";
 $("credits").onclick=e=>{if(e.target===$("credits"))$("credits").style.display="none";};
