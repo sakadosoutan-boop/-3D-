@@ -1354,6 +1354,7 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
 .codex-entry.locked{color:#8f826c;background:rgba(70,55,38,.08);cursor:default}
 .codex-entry b{display:block;font-family:var(--serif);font-size:16px;letter-spacing:.08em}
 .codex-entry small{display:block;margin-top:4px;font-size:10px;line-height:1.45}
+.codex-search{width:100%;box-sizing:border-box;padding:7px 10px;margin-bottom:9px;border:1px solid #b89b56;border-radius:3px;background:rgba(255,255,255,.55);color:var(--sumi);font-family:var(--sans);font-size:13px}
 .codex-filter-bar{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
 .codex-filter-btn{padding:4px 10px;border:1px solid #b89b56;background:rgba(255,255,255,.3);color:var(--sumi);font-family:var(--sans);font-size:11px;cursor:pointer;border-radius:2px;transition:background .12s}
 .codex-filter-btn.active{background:#8a3b2a;color:#fff;border-color:#8a3b2a}
@@ -1566,6 +1567,7 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
       <button class="codex-tab" id="codexTabWaka">🎋 和歌集</button>
     </div>
     <div id="codexMainPage">
+      <input type="search" id="codexSearch" class="codex-search" placeholder="🔍 名前・よみ・説明で検索">
       <div class="codex-filter-bar" id="codexFilterBar"></div>
       <div class="codex-grid" id="codexGrid"></div>
       <div id="codexDetail"></div>
@@ -6166,6 +6168,8 @@ function showWakaReveal(id){
   el.onclick=()=>{el.classList.remove("show");clearTimeout(_wakaRevTimer);};
 }
 let codexCatFilter="all";
+let codexSearchTerm="";
+{const si=$("codexSearch");if(si)si.oninput=()=>{codexSearchTerm=si.value.trim().toLowerCase();renderCodex();};}
 let codexTab="main"; // "main" | "waka"
 function setCodexTab(tab){
   codexTab=tab;
@@ -6223,9 +6227,14 @@ function renderCodex(){
   });
   // エントリー(和歌は表示しない)
   grid.textContent="";
-  Object.keys(ITEMS)
-    .filter(id=>ITEMS[id].cat!=="w"&&(codexCatFilter==="all"||ITEMS[id].cat===codexCatFilter))
-    .forEach(id=>{
+  const matchSearch=(it)=>{if(!codexSearchTerm)return true;
+    return (it.n+" "+it.k+" "+it.d).toLowerCase().indexOf(codexSearchTerm)>=0;};
+  const shown=Object.keys(ITEMS)
+    .filter(id=>ITEMS[id].cat!=="w"&&(codexCatFilter==="all"||ITEMS[id].cat===codexCatFilter)&&matchSearch(ITEMS[id]));
+  if(!shown.length){const empty=document.createElement("div");
+    empty.style.cssText="grid-column:1/-1;text-align:center;color:#7a6a4a;padding:20px;font-family:var(--sans);font-size:13px";
+    empty.textContent="該当する項目がありません";grid.appendChild(empty);}
+  shown.forEach(id=>{
       const it=ITEMS[id],open=codexUnlocked.has(id),b=document.createElement("button");
       b.className="codex-entry"+(open?"":" locked");b.disabled=!open;
       const dv=catDiff[it.cat]||1,stars="★".repeat(dv)+"☆".repeat(3-dv);
