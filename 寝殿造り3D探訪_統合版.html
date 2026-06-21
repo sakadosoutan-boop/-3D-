@@ -2031,8 +2031,12 @@ TEX.grass=canv(512,512,(x,w,h)=>{x.fillStyle="#6f7d42";x.fillRect(0,0,w,h);
   for(let i=0;i<8000;i++){x.fillStyle=`rgba(${rnd(70,125)|0},${rnd(95,150)|0},${rnd(40,72)|0},.55)`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,3),rnd(1,3));}});
 TEX.grass.repeat.set(24,24);
 /* 畳 */
-TEX.tatami=canv(256,256,(x,w,h)=>{x.fillStyle="#c8bd7e";x.fillRect(0,0,w,h);
-  for(let y=0;y<h;y+=4){x.strokeStyle=y%8?"rgba(150,140,85,.8)":"rgba(110,100,55,.6)";x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke();}});
+TEX.tatami=canv(512,512,(x,w,h)=>{x.fillStyle="#c8bd7e";x.fillRect(0,0,w,h);
+  /* い草の横糸(主) */
+  for(let y=0;y<h;y+=4){x.strokeStyle=y%8?"rgba(150,140,85,.8)":"rgba(110,100,55,.6)";x.lineWidth=1.4;x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke();}
+  /* 織りの縦糸を細く重ね、市松状の起伏で本物の畳表らしい質感に */
+  for(let xx=0;xx<w;xx+=6){x.strokeStyle="rgba(120,110,68,.16)";x.lineWidth=1;x.beginPath();x.moveTo(xx,0);x.lineTo(xx,h);x.stroke();}
+  x.fillStyle="rgba(255,250,225,.06)";for(let y=0;y<h;y+=8)for(let xx=(y%16?0:6);xx<w;xx+=12)x.fillRect(xx,y,4,3);});
 /* 繧繝縁(うんげんべり=高貴な畳縁) */
 TEX.ungen=canv(64,64,(x,w,h)=>{const cols=["#3a7a4e","#e8e2d0","#b3402a","#e8e2d0","#3d5d9e","#e8e2d0"];
   for(let i=0;i<h;i+=6){x.fillStyle=cols[(i/6|0)%cols.length];x.fillRect(0,i,w,6);}});
