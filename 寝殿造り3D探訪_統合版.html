@@ -3294,6 +3294,26 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     shinden.add(cyl(.17,.19,S.ph,MAT.woodDark,-S.hw/2+S.hw*i/HX,S.f2+S.ph/2,-S.hd/2+S.hd*j/HZ,12));}
   shinden.add(box(S.hw+.4,.3,S.hd+.4,MAT.woodDark,0,S.f2+S.ph+.13,0));
 
+  /* --- 疑似AO(柱脚の接地影): 放射グラデの薄い円盤を床面に伏せて陰影を足す --- */
+  (function bakeShadow(){
+    if(!MAT._aoDisc){
+      const c=document.createElement("canvas");c.width=c.height=64;const g=c.getContext("2d");
+      const rg=g.createRadialGradient(32,32,2,32,32,32);
+      rg.addColorStop(0,"rgba(0,0,0,.42)");rg.addColorStop(.55,"rgba(0,0,0,.20)");rg.addColorStop(1,"rgba(0,0,0,0)");
+      g.fillStyle=rg;g.fillRect(0,0,64,64);
+      const tx=new THREE.CanvasTexture(c);tx.encoding=THREE.sRGBEncoding;
+      MAT._aoDisc=new THREE.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1});
+      MAT._aoGeo=new THREE.PlaneGeometry(1,1);
+    }
+    const drop=(rad,px,py,pz)=>{const m=new THREE.Mesh(MAT._aoGeo,MAT._aoDisc);
+      m.rotation.x=-Math.PI/2;m.scale.set(rad,rad,1);m.position.set(px,py,pz);
+      m.userData.noAutoShadow=true;m.renderOrder=-1;shinden.add(m);};
+    for(let i=0;i<=NX;i++)for(let j=0;j<=NZ;j++){if(j===1&&i>0&&i<NX)continue;
+      drop(.85,-S.mw/2+S.mw*i/NX,S.f3+.05,-S.md/2+S.md*j/NZ);}
+    for(let i=0;i<=HX;i++)for(let j=0;j<=HZ;j++){if(j===1&&i>0&&i<HX)continue;if(j===0&&(i===0||i===HX))continue;
+      drop(.78,-S.hw/2+S.hw*i/HX,S.f2+.05,-S.hd/2+S.hd*j/HZ);}
+  })();
+
   /* --- 屋根(二重:廂の裳階+母屋の大屋根) --- */
   shinden.add(hipRoof(S.sw+4.6,S.sd+4.6,1.7,.62,S.f2+S.ph+.26));
   const upperWall=box(S.mw+1.2,1.5,S.md+1.2,MAT.plaster,0,S.f2+S.ph+1.9,0);shinden.add(upperWall);
