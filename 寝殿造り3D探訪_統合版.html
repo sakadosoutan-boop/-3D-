@@ -1203,6 +1203,9 @@ body.taiji-mode #c{cursor:crosshair}
 body.taiji-mode #topbar{display:none!important}
 /* トップバー折りたたみ: 銘・モード名・開閉ボタン以外を隠してプレイ画面を広く使う */
 #topbar.collapsed>:not(.brand):not(#modeTag):not(#tbCollapse){display:none!important}
+/* 文字サイズ: 解説・図鑑など読み物パネルを拡大(zoomでレイアウトごと拡大) */
+body.font-l #info,body.font-l #codex,body.font-l #toast{zoom:1.18}
+body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
 #info::before,#info::after{content:"";position:absolute;z-index:3;top:-8px;bottom:-8px;width:11px;
   background:linear-gradient(90deg,#5e140c,#a8412a 45%,#6e180d);border:1px solid var(--kin);
   border-radius:6px;box-shadow:0 2px 7px rgba(0,0,0,.55);pointer-events:none}
@@ -1733,6 +1736,14 @@ body.taiji-mode #topbar{display:none!important}
     <span class="gfx-opts">
       <button class="tb-btn" id="gfxSe_on">入</button>
       <button class="tb-btn" id="gfxSe_off">切</button>
+    </span>
+  </div>
+  <div class="gfx-section">📖 表示</div>
+  <div class="gfx-row"><span class="gfx-lbl">文字サイズ（解説・図鑑）</span>
+    <span class="gfx-opts">
+      <button class="tb-btn" id="gfxFont_n">標準</button>
+      <button class="tb-btn" id="gfxFont_l">大</button>
+      <button class="tb-btn" id="gfxFont_xl">特大</button>
     </span>
   </div>
   <p class="gfx-note">「オート」は端末性能に応じて自動調整。動作が重いときは「中」「低」を。</p>
@@ -6458,6 +6469,19 @@ let APP_FPSCAP=IS_TOUCH?30:60;
   if($("gfxFc_60"))$("gfxFc_60").onclick=()=>setFpsCap(60);
   if($("gfxFc_0"))$("gfxFc_0").onclick=()=>setFpsCap(0);
   {const sc=PREFS.get("fpscap");setFpsCap(sc!=null&&sc!==""?(+sc):(IS_TOUCH?30:60),true);}
+  /* 文字サイズ(解説・図鑑の読みやすさ) */
+  function setFontScale(v,silent){
+    PREFS.set("fontscale",v);
+    document.body.classList.remove("font-l","font-xl");
+    if(v==="l")document.body.classList.add("font-l");
+    else if(v==="xl")document.body.classList.add("font-xl");
+    [["gfxFont_n","n"],["gfxFont_l","l"],["gfxFont_xl","xl"]].forEach(([id,k])=>{const b=$(id);if(b)b.classList.toggle("on",k===v);});
+    if(!silent)beep(580,.04);
+  }
+  if($("gfxFont_n"))$("gfxFont_n").onclick=()=>setFontScale("n");
+  if($("gfxFont_l"))$("gfxFont_l").onclick=()=>setFontScale("l");
+  if($("gfxFont_xl"))$("gfxFont_xl").onclick=()=>setFontScale("xl");
+  {const fs=PREFS.get("fontscale");setFontScale(fs==="l"||fs==="xl"?fs:"n",true);}
   if($("gfxInvY_on"))$("gfxInvY_on").onclick=()=>{APP_INV_Y=true;PREFS.set("invY","1");beep(600,.04);};
   if($("gfxInvY_off"))$("gfxInvY_off").onclick=()=>{APP_INV_Y=false;PREFS.set("invY","0");beep(540,.04);};
   if($("gfxAud_on"))$("gfxAud_on").onclick=()=>{initAudio();if(ambientAudio&&!ambientAudio.playing)ambientAudio.toggle();$("tbAudio").textContent="🔊 音:入";beep(600,.04);};
