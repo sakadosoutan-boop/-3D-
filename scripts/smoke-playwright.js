@@ -60,6 +60,12 @@ async function launchBrowser() {
       const kaimamiOk = typeof APP !== 'undefined' && APP.mode === 'kaimami';
       const kaimamiRoutes = Array.isArray(KAIMAMI_SECRETS) ? KAIMAMI_SECRETS.map((route) => route.id) : [];
       const kaimamiText = document.getElementById('questText')?.textContent || '';
+      if (typeof applySeason === 'function') applySeason('summer');
+      if (typeof setTime === 'function') setTime('night');
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const tourou = typeof tourouGroup !== 'undefined' ? tourouGroup : null;
+      const tourouOk = !!tourou?.visible;
+      const tourouRipples = tourou?.userData?.lanterns?.filter((lantern) => !!lantern.ripple).length || 0;
       return {
         missing,
         walkOk,
@@ -68,6 +74,8 @@ async function launchBrowser() {
         kaimamiOk,
         kaimamiRoutes,
         kaimamiTextOk: kaimamiText.includes('三つの観察地点'),
+        tourouOk,
+        tourouRipples,
         canvas: !!document.querySelector('canvas'),
         objects: typeof scene !== 'undefined' ? scene.children.length : null,
       };
@@ -79,6 +87,8 @@ async function launchBrowser() {
     if (!status.kaimamiOk) errors.push('kaimami mode did not start');
     if (status.kaimamiRoutes.join(',') !== 'east,north,tsumado') errors.push(`unexpected kaimami routes: ${status.kaimamiRoutes.join(',')}`);
     if (!status.kaimamiTextOk) errors.push('kaimami instructions did not mention the three observation points');
+    if (!status.tourouOk) errors.push('tourou lanterns did not appear in summer night');
+    if (status.tourouRipples !== 8) errors.push(`unexpected tourou ripple count: ${status.tourouRipples}`);
     if (errors.length) {
       console.error(JSON.stringify({ status, errors }, null, 2));
       process.exit(1);
