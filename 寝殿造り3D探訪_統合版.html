@@ -4737,28 +4737,40 @@ const BFLY_TEX={yellow:CRT_TEX.bflyYellow,blue:CRT_TEX.bflyBlue};
 (function buildKoi(){
   function makeKoi(tex,fin){
     const g=new THREE.Group();
+    const finM=()=>M({color:fin,roughness:.5,transparent:true,opacity:.8,side:THREE.DoubleSide});
+    // 胴(頭=+z, 尾=-z)
     const body=new THREE.Mesh(new THREE.SphereGeometry(.22,16,12),M({map:tex,roughness:.42,metalness:.05}));
-    body.scale.set(.52,.30,1.12);g.add(body);
-    // 尾びれ(二枚扇)・背びれ・胸びれ(体色に合わせた半透明)
-    [-1,1].forEach(s=>{
-      const tf=new THREE.Mesh(new THREE.CircleGeometry(.16,3),M({color:fin,roughness:.5,transparent:true,opacity:.78,side:THREE.DoubleSide}));
-      tf.position.set(0,.01,-.3);tf.rotation.set(Math.PI/2,0,s*.5);g.add(tf);
+    body.scale.set(.5,.3,1.15);g.add(body);
+    // 尾(付け根を支点に振れるグループ)
+    const tail=new THREE.Group();tail.position.set(0,.04,-.24);g.add(tail);g.userData.tail=tail;
+    const peduncle=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),M({map:tex,roughness:.45}));
+    peduncle.scale.set(.4,.5,.7);peduncle.position.z=-.04;tail.add(peduncle);
+    [1,-1].forEach(s=>{ // 後方へ広がる二葉の尾びれ
+      const lobe=new THREE.Mesh(new THREE.CircleGeometry(.17,3),finM());
+      lobe.position.set(0,s*.06,-.2);lobe.rotation.set(s*0.5,Math.PI/2,0);tail.add(lobe);
     });
-    const dorsal=new THREE.Mesh(new THREE.CircleGeometry(.1,3),M({color:fin,roughness:.5,transparent:true,opacity:.72,side:THREE.DoubleSide}));
-    dorsal.position.set(0,.08,-.02);dorsal.rotation.set(0,Math.PI/2,0);g.add(dorsal);
+    // 背びれ
+    const dorsal=new THREE.Mesh(new THREE.CircleGeometry(.12,3),finM());
+    dorsal.position.set(0,.12,-.05);dorsal.rotation.set(0,Math.PI/2,Math.PI*0.04);g.add(dorsal);
+    // 胸びれ(左右)
     [-1,1].forEach(s=>{
-      const pf=new THREE.Mesh(new THREE.CircleGeometry(.07,3),M({color:fin,roughness:.5,transparent:true,opacity:.68,side:THREE.DoubleSide}));
-      pf.position.set(s*.1,0,.06);pf.rotation.set(Math.PI/2,0,s*.6);g.add(pf);
+      const pf=new THREE.Mesh(new THREE.CircleGeometry(.09,3),finM());
+      pf.position.set(s*.13,-.02,.12);pf.rotation.set(Math.PI/2.2,0,s*.7);g.add(pf);
     });
-    // 目
+    // 口(下向きの吸い口=リング)
+    const mouth=new THREE.Mesh(new THREE.TorusGeometry(.05,.018,6,12),M({color:0xb98a6a,roughness:.7}));
+    mouth.rotation.x=Math.PI/2;mouth.position.set(0,-.02,.4);g.add(mouth);
+    // 目(小さめ・側面・白目+黒目)
     [-1,1].forEach(s=>{
-      const eye=new THREE.Mesh(new THREE.SphereGeometry(.02,6,6),M({color:0x0a0805}));
-      eye.position.set(s*.08,.03,.26);g.add(eye);
+      const wE=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),M({color:0xe8e2c8,roughness:.5}));
+      wE.scale.set(1,1,.7);wE.position.set(s*.14,.05,.2);g.add(wE);
+      const pE=new THREE.Mesh(new THREE.SphereGeometry(.022,8,6),new THREE.MeshBasicMaterial({color:0x141008}));
+      pE.position.set(s*.165,.05,.225);g.add(pE);
     });
-    // ひげ
+    // ひげ(口元から前方へ垂れる)
     [-1,1].forEach(s=>{
-      const wk=new THREE.Mesh(new THREE.CylinderGeometry(.004,.004,.08,4),M({color:0x9a8a6a,roughness:.8}));
-      wk.position.set(s*.05,-.01,.3);wk.rotation.set(Math.PI/2.2,0,s*.5);g.add(wk);
+      const wk=new THREE.Mesh(new THREE.CylinderGeometry(.005,.003,.16,4),M({color:0xc8b48a,roughness:.8}));
+      wk.position.set(s*.05,-.03,.44);wk.rotation.set(Math.PI/2.6,0,s*.4);g.add(wk);
     });
     return g;
   }
@@ -4778,13 +4790,19 @@ SEASONAL.chou=[];
   // Canvaの蝶切り抜き(白背景を透過済み)を左右に分割して貼り、中央で羽ばたかせる
   function makeBfly(uri){
     const g=new THREE.Group();
+    // 左右の翅を体(中央)で蝶番にし、z軸まわりに上下へ羽ばたかせる
     [-1,1].forEach(s=>{
+      const hinge=new THREE.Group();hinge.userData.wS=s;g.add(hinge);
       const t=new THREE.TextureLoader().load(uri);t.encoding=THREE.sRGBEncoding;
       t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;t.repeat.x=0.5;t.offset.x=s<0?0:0.5;
       const wm=new THREE.MeshBasicMaterial({map:t,transparent:true,side:THREE.DoubleSide,depthWrite:false,alphaTest:.35});
-      const w=new THREE.Mesh(new THREE.PlaneGeometry(.34,.46),wm);
-      w.position.set(s*.17,0,0);w.rotation.x=Math.PI/2;w.userData.wS=s;g.add(w);
+      const w=new THREE.Mesh(new THREE.PlaneGeometry(.3,.42),wm);
+      w.position.set(s*.15,0,0);w.rotation.x=Math.PI/2;hinge.add(w);
     });
+    // 胴(前後に伸びる)・頭
+    const bd=new THREE.Mesh(new THREE.CylinderGeometry(.01,.014,.34,6),M({color:0x241a10,roughness:.9}));
+    bd.rotation.x=Math.PI/2;g.add(bd);
+    const hd=new THREE.Mesh(new THREE.SphereGeometry(.022,6,6),M({color:0x241a10,roughness:.9}));hd.position.z=.17;g.add(hd);
     return g;
   }
   const bset=[BFLY_TEX.yellow,BFLY_TEX.blue];
@@ -4909,7 +4927,7 @@ SEASONAL.fuji=[];
 // 撫子(前栽の花壇 — 夏・秋)
 SEASONAL.nadesiko=[];
 (function buildNadesiko(){
-  [[8,17],[-4,18],[16,20],[3,16]].forEach((p,i)=>{
+  [[8,17],[-4,18],[16,20],[3,16],[-12,19],[22,17],[12,14.5],[-8,15],[20,22],[0,20.5],[-16,16],[6,21]].forEach((p,i)=>{
     const g=new THREE.Group();g.position.set(p[0],0,p[1]);
     const stm=M({color:0x4a6528,roughness:.9}),ptl=M({color:0xe060a0,roughness:.85,side:THREE.DoubleSide});
     for(let k=0;k<8;k++){
@@ -4934,7 +4952,7 @@ SEASONAL.kakitsubata=[];
   const leafM=M({color:0x3f6b2e,roughness:.9,side:THREE.DoubleSide});
   const pet=M({color:0x6a3fae,roughness:.7,side:THREE.DoubleSide});
   const petHi=M({color:0x8b5fd0,roughness:.7,side:THREE.DoubleSide});
-  [[-13,24],[-9,25],[5,26],[12,29],[-3,27]].forEach((p,i)=>{
+  [[-13,24],[-9,25.5],[5,26],[12,29],[-3,27],[-17,28],[9,24],[16,32],[-20,33],[2,23],[-7,30.5],[14,26],[-11,22]].forEach((p,i)=>{
     const g=new THREE.Group();g.position.set(p[0],0,p[1]);
     for(let k=0;k<6;k++){
       const H=rnd(.7,1.05);const lf=new THREE.Mesh(new THREE.PlaneGeometry(.05,H),leafM);
@@ -7522,7 +7540,10 @@ function animate(now){
       b.g.position.x=b.base.x+Math.cos(a)*b.r;
       b.g.position.z=b.base.y+Math.sin(a)*b.r;
       b.g.position.y=0.06+Math.sin(t*2.2+b.phase)*.03;
-      b.g.rotation.y=-a+Math.PI*.5;
+      // 進行方向へ頭を向け(頭=+z)、体を左右にくねらせて魚らしく泳ぐ
+      b.g.rotation.y=-a+Math.sin(t*5+b.phase)*0.13;
+      b.g.rotation.z=Math.sin(t*5+b.phase)*0.06;
+      if(b.g.userData.tail)b.g.userData.tail.rotation.y=Math.sin(t*7+b.phase)*0.45;
     }
   }
 
@@ -7534,8 +7555,10 @@ function animate(now){
     bf.g.position.y=bf.by+Math.sin(a*.9)*.55;
     bf.g.position.z=bf.bz+Math.sin(a*1.1)*2.0+Math.cos(a*.85)*.6;
     bf.g.rotation.y=a*1.5;
-    const flap=Math.sin(t*7+bf.phase)*.5;
-    bf.g.children.forEach(w=>{if(w.userData.wS!==undefined)w.rotation.z=w.userData.wS*(flap+.1);});
+    // 翅を上下に大きく羽ばたかせる(常にやや立てて、紙が平たく飛ぶ印象を解消)
+    const flap=Math.sin(t*9+bf.phase)*0.5+0.5; // 0..1
+    const ang=0.22+flap*1.05;
+    bf.g.children.forEach(h=>{if(h.userData.wS!==undefined)h.rotation.z=h.userData.wS*ang;});
   }
   for(const df of dragonflies){
     if(!df.g.visible)continue;
@@ -7641,8 +7664,8 @@ function animate(now){
    });}}
   updateFlyingLife(dt,t);
   updateSparrowChase(t);
-  // 蛍は「夏」かつ「夜」のときだけ舞う
-  const fireflyOn=(APP.season==="summer")&&(cur.moon>0.04);
+  // 蛍は「夏」かつ「夜」のときだけ舞う(昼夜の遷移中に月明かりが残って札だけ出るのを防ぐためtimeで厳密に判定)
+  const fireflyOn=(APP.season==="summer")&&(APP.time==="night")&&(cur.moon>0.04);
   fireflies.visible=fireflyOn;
   if(fireflies.visible){
     const fade=Math.min(1,(cur.moon-0.04)/0.25);
