@@ -139,6 +139,15 @@ if (!itemExpr) {
   if (items) {
     const invalid = Object.entries(items).filter(([, value]) => !value.n || !value.k || !value.cat || !value.d);
     if (invalid.length) fail(`ITEMS entries missing n/k/cat/d: ${invalid.map(([key]) => key).join(', ')}`);
+    // QUIZ_POOL の全IDが ITEMS に存在するか（クイズで出題されるのに図鑑定義が無い不整合を検出）
+    const quizExpr = extractBalanced(mainScript, 'const QUIZ_POOL', '[', ']');
+    if (quizExpr) {
+      const quiz = evaluateExpression(quizExpr, 'QUIZ_POOL');
+      if (Array.isArray(quiz)) {
+        const missingQuiz = quiz.filter((id) => typeof id === 'string' && !(id in items));
+        if (missingQuiz.length) fail(`QUIZ_POOL ids not defined in ITEMS: ${missingQuiz.join(', ')}`);
+      }
+    }
   }
 }
 
