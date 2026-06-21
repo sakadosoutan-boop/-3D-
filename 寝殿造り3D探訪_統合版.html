@@ -6739,6 +6739,11 @@ function quizAnswer(id){
     }
     seOK();stamp(true);
     q.missCur=0;beacon.visible=false;
+    /* 豆知識: 正解した札の「古文の窓」を一言で学べるよう提示(タイムアタックは速度優先で省略) */
+    if(!q.ta&&ITEMS[want]&&ITEMS[want].t){
+      const tv=ITEMS[want].t.replace(/<[^>]+>/g,"");
+      setTimeout(()=>toast("📜 "+tv,5200),1000);
+    }
     setTimeout(()=>{q.i++;q.lock=false;
       if(q.i>=q.qs.length)endQuiz();else showQuizQ();},950);
   }else{
