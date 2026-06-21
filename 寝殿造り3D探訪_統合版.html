@@ -1169,13 +1169,13 @@ h1.t-main .shu{color:var(--shu-bright)}
   transition:transform .36s cubic-bezier(.2,.78,.25,1),opacity .16s ease,visibility 0s}
 #info.revisit{opacity:.70}
 /* 物の怪退治 HUD(画面下部中央。トップバーと被らない) */
-#taijiHud{position:fixed;z-index:42;left:50%;transform:translateX(-50%);bottom:calc(14px+env(safe-area-inset-bottom));display:none;
+#taijiHud{position:fixed;z-index:42;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));display:none;
   background:rgba(10,5,20,.90);border:1px solid rgba(160,90,220,.65);color:#ddc8ff;padding:8px 14px 9px;border-radius:9px;text-align:center;min-width:248px;max-width:94vw}
 .tj-title{font-size:12px;color:#cc88ff;letter-spacing:.10em;margin-bottom:6px}
 #tjHpWrap{position:relative;height:13px;background:rgba(40,20,60,.85);border:1px solid rgba(160,90,220,.5);border-radius:7px;overflow:hidden;margin-bottom:7px}
 #tjHpFill{height:100%;width:100%;background:linear-gradient(90deg,#e0406a,#ff9a3c);transition:width .18s}
 #tjHpLabel{position:absolute;inset:0;font-size:9px;line-height:13px;color:#fff;text-shadow:0 1px 2px #000;letter-spacing:.06em}
-.tj-weapons{display:flex;gap:8px;justify-content:center;margin-bottom:4px}
+.tj-weapons{display:flex;gap:8px;justify-content:center;margin-bottom:4px;flex-wrap:wrap}
 .tw-btn{background:rgba(60,25,100,.75);border:1px solid rgba(160,90,220,.55);color:#ddc8ff;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;font-family:var(--sans)}
 .tw-btn.active{background:rgba(140,60,200,.85);border-color:#cc88ff;color:#fff;font-weight:bold}
 #taijiMsg{font-size:11px;color:#bb99dd;font-family:var(--sans);min-height:14px}
@@ -1183,13 +1183,14 @@ h1.t-main .shu{color:var(--shu-bright)}
 #tjQuit{position:absolute;top:6px;right:8px;background:none;border:none;color:#a98;font-size:13px;cursor:pointer;line-height:1}
 #tjCool{height:3px;margin-top:3px;background:rgba(160,90,220,.25);border-radius:2px;overflow:hidden}
 #tjCoolFill{height:100%;width:0;background:#cc88ff}
+#twDodge.ready{border-color:#88ddff;color:#e8fbff}
 /* 禍々しい気配オーバーレイ(退治モード) */
 #taijiMood{position:fixed;inset:0;z-index:6;pointer-events:none;display:none;
   background:radial-gradient(ellipse at 50% 36%, rgba(40,0,8,0) 36%, rgba(86,0,12,.42) 100%);mix-blend-mode:multiply;animation:moodPulse 5s ease-in-out infinite}
 @keyframes moodPulse{0%,100%{opacity:.82}50%{opacity:1}}
 body.taiji-mode #taijiMood{display:block}
 /* ボスHPバー(エルデンリング風・上部) */
-#bossBar{position:fixed;z-index:43;left:50%;transform:translateX(-50%);top:calc(var(--topbar-h,8px)+10px+env(safe-area-inset-top));
+#bossBar{position:fixed;z-index:43;left:50%;transform:translateX(-50%);top:calc(var(--topbar-h,8px) + 10px + env(safe-area-inset-top));
   width:min(560px,82vw);display:none;text-align:center;font-family:var(--sans)}
 #bossName{color:#f0d8e6;font-size:14px;letter-spacing:.18em;text-shadow:0 2px 6px #000;margin-bottom:4px}
 #bossHpWrap{height:9px;background:rgba(20,8,12,.85);border:1px solid rgba(180,60,70,.8);border-radius:1px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.7)}
@@ -1420,7 +1421,8 @@ body.taiji-mode #topbar{display:none!important}
   #info{right:0;left:0;top:auto;bottom:0;width:100%;border-radius:12px 12px 0 0}
   .info-body{max-height:38vh}
   /* topbarは横スクロール式に(2行ラップをやめる) */
-  #topbar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:6px;padding-right:14px}
+  #topbar{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:6px;padding-right:14px;touch-action:pan-x;overscroll-behavior-x:contain}
+  #topbar button{touch-action:manipulation}
   #topbar::-webkit-scrollbar{display:none}
   /* モバイルで不要な要素を非表示(設定・ヘルプはスマホでも使えるよう表示維持) */
   #topbar .brand{display:none}
@@ -1493,6 +1495,9 @@ body.taiji-mode #topbar{display:none!important}
     <details class="t-changelog">
       <summary>▸ 最近の更新</summary>
       <div class="cl-list">
+        <div>⚡ 物の怪退治にハード/百鬼夜行、回避、晴明の一度回復、鬼討伐ボーナスを追加</div>
+        <div>👹 秋ボスが第2形態の大鬼へ変化。ボス戦を南庭の広場へ移動</div>
+        <div>📱 スマホ横向きのトップバー横スクロールと退治HUD下部表示を修正</div>
         <div>📜 和歌短冊5枚を邸内に設置。集めると図鑑登録（百人一首より）</div>
         <div>🗾 ミニマップを絵巻物風にリデザイン（和紙風・墨絵風建物）</div>
         <div>🏯 建物の壁に当たり判定を追加（正面の階段・渡殿から入場）</div>
@@ -1606,11 +1611,13 @@ body.taiji-mode #topbar{display:none!important}
   <div class="tj-weapons">
     <button class="tw-btn" id="twBow">🏹 破魔の矢<small>1 / タップ左上</small></button>
     <button class="tw-btn" id="twSeal">🔮 破魔の札<small>2 / タップ右上</small></button>
+    <button class="tw-btn ready" id="twDodge">↶ 回避<small>Space / 下へ</small></button>
   </div>
   <div id="tjCool"><div id="tjCoolFill"></div></div>
   <div id="taijiMsg"></div>
 </div>
 <div id="taijiMood"></div>
+<div id="taijiSeasonPick" style="display:none"></div>
 <div id="bossBar"><div id="bossName"></div><div id="bossHpWrap"><div id="bossHpFill"></div></div></div>
 <div id="dialogueBubble"><div id="dialogueName"></div><div id="dialogueText"></div></div>
 
@@ -4190,6 +4197,24 @@ const TAIJI_SPOTS=[
   {x:48, y:1.5,z:-18,label:"東築地",   type:"strong"},
   {x:-48,y:1.5,z:-18,label:"西築地",   type:"wander"},
 ];
+const TAIJI_EXTRA_SPOTS=[
+  {x:22,y:1.8,z:24,label:"東南庭",type:"normal"},
+  {x:-22,y:1.8,z:24,label:"西南庭",type:"normal"},
+  {x:34,y:1.8,z:-4,label:"東渡殿",type:"wander"},
+  {x:-34,y:1.8,z:-4,label:"西渡殿",type:"wander"},
+  {x:10,y:1.8,z:-28,label:"北渡殿東",type:"strong"},
+  {x:-10,y:1.8,z:-28,label:"北渡殿西",type:"strong"},
+  {x:0,y:1.8,z:28,label:"南庭中央",type:"strong"}
+];
+const TAIJI_DIFF={
+  normal:{label:"通常",hpMul:1,extra:0,bossMul:1,dmgMul:1,burst:0},
+  hard:{label:"ハード",hpMul:1.35,extra:3,bossMul:1.35,dmgMul:1.12,burst:1},
+  hyakki:{label:"百鬼夜行",hpMul:1.75,extra:7,bossMul:1.85,dmgMul:1.25,burst:2}
+};
+function taijiBuildSpots(diff){
+  const cfg=TAIJI_DIFF[diff]||TAIJI_DIFF.normal;
+  return TAIJI_SPOTS.concat(TAIJI_EXTRA_SPOTS.slice(0,cfg.extra));
+}
 function makeShikigami(){
   const g=new THREE.Group();
   // 紙の人形(ひとがた):白い平たい板
@@ -6491,13 +6516,22 @@ $("btnKaimami").onclick=()=>{beep(660,.08);initAudio();enterMode("kaimami");};
 $("btnTaiji").onclick=()=>{beep(440,.09,"sawtooth");hideSubPanel("taikenSubPanel");showTaijiSeasonPicker();};
 function showTaijiSeasonPicker(){
   let ov=document.getElementById("taijiSeasonPick");
-  if(!ov){ov=document.createElement("div");ov.id="taijiSeasonPick";
+  if(!ov){ov=document.createElement("div");ov.id="taijiSeasonPick";document.body.appendChild(ov);}
+  if(!ov.querySelector("#ssRow")){
     ov.style.cssText="position:fixed;inset:0;z-index:85;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,3,8,.9);font-family:var(--sans);padding:20px";
     ov.innerHTML='<div style="color:#cc88ff;font-size:18px;letter-spacing:.18em;margin-bottom:6px">物の怪退治 — 季節を選べ</div>'
-      +'<div style="color:#b89;font-size:12px;margin-bottom:20px;text-align:center">雑魚の霊をすべて退治するとボスが立ちふさがる<br>(北の対の奥でボス戦)</div>'
+      +'<div style="color:#b89;font-size:12px;margin-bottom:14px;text-align:center">雑魚の霊をすべて退治すると、南庭の広場でボス戦</div>'
+      +'<div id="tjDiffRow" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:18px"></div>'
       +'<div id="ssRow" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:92vw"></div>'
       +'<button id="ssCancel" style="margin-top:20px;background:none;border:1px solid #654;color:#a98;padding:8px 18px;border-radius:6px;cursor:pointer;font-family:var(--sans)">← 戻る</button>';
-    document.body.appendChild(ov);
+    const diffRow=ov.querySelector("#tjDiffRow");
+    [["normal","通常"],["hard","ハード"],["hyakki","百鬼夜行"]].forEach(([d,label])=>{
+      const db=document.createElement("button");
+      db.style.cssText="padding:8px 13px;border:1px solid rgba(160,90,220,.65);background:rgba(24,12,34,.75);color:#ddc8ff;border-radius:6px;cursor:pointer;font-family:var(--sans)";
+      db.textContent=label;db.dataset.diff=d;
+      db.onclick=()=>{APP.taijiDifficulty=d;diffRow.querySelectorAll("button").forEach(x=>x.style.background="rgba(24,12,34,.75)");db.style.background="rgba(120,48,170,.85)";beep(520,.05,"triangle",.05);};
+      diffRow.appendChild(db);
+    });
     [["spring","🌸 春","狐火 → 九尾の狐"],["summer","🪷 夏","提灯・河童 → 河童の主"],["autumn","🍁 秋","群がる人魂 → 合体人魂"],["winter","❄ 冬","雪女 → 雪女王"]].forEach(([s,label,desc])=>{
       const b=document.createElement("button");
       b.style.cssText="width:158px;padding:16px 10px;border:1px solid rgba(170,100,60,.7);background:rgba(40,18,28,.75);color:#e8d8c0;border-radius:9px;cursor:pointer;font-family:var(--sans)";
@@ -6506,16 +6540,20 @@ function showTaijiSeasonPicker(){
       ov.querySelector("#ssRow").appendChild(b);});
     ov.querySelector("#ssCancel").onclick=()=>{ov.style.display="none";};
   }
+  const diff=APP.taijiDifficulty||"normal";
+  ov.querySelectorAll("#tjDiffRow button").forEach(b=>b.style.background=b.dataset.diff===diff?"rgba(120,48,170,.85)":"rgba(24,12,34,.75)");
   ov.style.display="flex";
 }
 function taijiSetWeapon(w){ if(!APP.taiji)return; APP.taiji.weapon=w;
   $("twBow").classList.toggle("active",w==="bow");$("twSeal").classList.toggle("active",w==="seal");beep(660,.04,"triangle",.06);}
 $("twBow").onclick=()=>taijiSetWeapon("bow");
 $("twSeal").onclick=()=>taijiSetWeapon("seal");
+$("twDodge").onclick=()=>taijiDodge();
 $("tjQuit").onclick=()=>taijiQuit();
 // 武器切替: PCは1/2キー(やQ/Eで前後)。スマホ/タブレットはHUDのボタン or 画面上部隅タップ
 addEventListener("keydown",e=>{ if(APP.mode!=="taiji"||!APP.taiji)return;
   if(e.key==="1")taijiSetWeapon("bow"); else if(e.key==="2")taijiSetWeapon("seal");
+  else if(e.code==="Space"){e.preventDefault();taijiDodge();}
   else if(e.key==="q"||e.key==="e"||e.key==="Tab"){e.preventDefault();taijiSetWeapon(APP.taiji.weapon==="bow"?"seal":"bow");}});
 $("taikenBack").onclick=()=>hideSubPanel("taikenSubPanel");
 // questRolePicker (旧実装・互換性維持)
@@ -6526,6 +6564,17 @@ if($("questRoleFemale"))$("questRoleFemale").onclick=()=>{beep(700,.08);chooseQu
 $("resClose").onclick=()=>{$("result").style.display="none";$("resKaimamiActions").style.display="none";enterMode("walk");};
 $("resRetry").onclick=()=>{$("result").style.display="none";$("resKaimamiActions").style.display="none";enterMode("kaimami");};
 $("resWalk").onclick=()=>{$("result").style.display="none";$("resKaimamiActions").style.display="none";enterMode("walk");};
+function setTaijiResultActions(){
+  $("resKaimamiActions").style.display="flex";$("resClose").style.display="none";
+  $("resRetry").textContent="再挑戦";$("resWalk").textContent="ステージ選択";
+  $("resRetry").onclick=()=>{$("result").style.display="none";$("resKaimamiActions").style.display="none";enterMode("taiji");};
+  $("resWalk").onclick=()=>{$("result").style.display="none";$("resKaimamiActions").style.display="none";APP.mode="walk";$("modeTag").textContent="自由散策";showTaijiSeasonPicker();};
+}
+function setDefaultResultActions(){
+  $("resRetry").textContent="もう一度挑戦";$("resWalk").textContent="散策モードへ";
+  $("resRetry").onclick=()=>{$("result").style.display="none";$("resKaimamiActions").style.display="none";enterMode("kaimami");};
+  $("resWalk").onclick=()=>{$("result").style.display="none";$("resKaimamiActions").style.display="none";enterMode("walk");};
+}
 $("questMin").onclick=()=>{const h=$("questHud");const min=h.classList.toggle("minimized");$("questMin").textContent=min?"＋":"－";};
 
 /* ============================================================
@@ -7027,25 +7076,29 @@ function startTaiji(){
   // [軽量化] 退治中は影マップの毎フレーム更新を止める(夜で影はほぼ不可視)
   renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
   if($("tjCoolFill"))$("tjCoolFill").style.width="0%";
+  const diffKey=APP.taijiDifficulty||"normal",diff=TAIJI_DIFF[diffKey]||TAIJI_DIFF.normal;
+  const spots=taijiBuildSpots(diffKey);
   // 結界霊を配置(種類別に生成)
-  const spirits=TAIJI_SPOTS.map((sp,i)=>{
+  const spirits=spots.map((sp,i)=>{
     const g=makeTaijiKekkai(sp.type||"normal");
     g.position.set(sp.x,sp.y,sp.z);scene.add(g);
     g.userData.inner.userData.iid="__kekkai__";
     g.userData.inner.userData.kekkai_idx=i;
     rayTargets.push(g.userData.inner);
-    const hp=sp.type==="strong"?2:1;
+    const baseHp=sp.type==="strong"?2:1;
+    const hp=Math.max(1,Math.ceil(baseHp*diff.hpMul));
     const hpbar=makeHpBar();hpbar.position.y=(sp.type==="strong"?1.2:0.95);g.add(hpbar);
     const wander=sp.type==="wander"?{tx:sp.x,tz:sp.z,nextMs:performance.now()+3000}:null;
     return {g,sp,alive:true,idx:i,hp,maxHp:hp,wander,nextHit:0,hpbar};
   });
   APP.taiji={spirits,shot:0,miss:0,weapon:"bow",tStart:performance.now(),done:false,hp:100,maxHp:100,bonus:0,slowUntil:0,fudaCd:0,
-    season:(APP.taijiSeason||APP.season||"spring"),bossSpawned:false,boss:null};
+    season:(APP.taijiSeason||APP.season||"spring"),bossSpawned:false,boss:null,total:spots.length,diffKey,diff,dodgeCd:0,dodgeUntil:0,seimeiHealUsed:false,fudaCharges:0};
+  creatures.oni.forEach(o=>{o.taijiHp=Math.ceil(32*diff.hpMul);o.taijiAlive=true;o.dispelledUntil=0;});
   $("taijiRemain").textContent=spirits.length;
   $("taijiHud").style.display="block";
   $("twBow").classList.add("active");$("twSeal").classList.remove("active");
   updateTaijiHp();
-  $("taijiMsg").textContent="物の怪が襲ってくる！破魔の矢で射て、破魔の札で薙ぎ払え(避けながら)";
+  $("taijiMsg").textContent="物の怪が襲ってくる！ 回避で間合いを取り、晴明に話すと一度だけ回復";
   setTimeout(()=>{if($("taijiMsg"))$("taijiMsg").textContent="";},3500);
 }
 function updateTaijiHp(){
@@ -7057,16 +7110,35 @@ function updateTaijiHp(){
 /* 敵の接触ダメージ */
 function taijiDamage(amt){
   const k=APP.taiji;if(!k||k.done)return;
-  k.hp=Math.max(0,k.hp-amt);updateTaijiHp();
+  if(performance.now()<(k.dodgeUntil||0)){taijiMsg("回避！",550);return;}
+  k.hp=Math.max(0,k.hp-amt*(k.diff?k.diff.dmgMul:1));updateTaijiHp();
   const dv=$("dangerVignette");if(dv){dv.style.opacity=0.55;clearTimeout(window._tjDmgT);window._tjDmgT=setTimeout(()=>{if(APP.mode==="taiji")dv.style.opacity=0;},180);}
   beep(135,.2,"sawtooth",.12);
   if(k.hp<=0){k.done=true;$("taijiMsg").textContent="気を失った…";setTimeout(()=>endTaiji(true),500);}
+}
+function taijiDodge(){
+  const k=APP.taiji,now=performance.now();if(!k||k.done)return;
+  if(now<(k.dodgeCd||0)){taijiMsg("回避の体勢が整わない",650);return;}
+  const side=(Math.random()<0.5?-1:1),back=new THREE.Vector3(Math.sin(player.yaw),0,Math.cos(player.yaw)).multiplyScalar(2.6);
+  const strafe=new THREE.Vector3(Math.cos(player.yaw),0,-Math.sin(player.yaw)).multiplyScalar(side*1.15);
+  player.pos.add(back).add(strafe);player.pos.y=groundH(player.pos.x,player.pos.z)+1.62;
+  k.dodgeUntil=now+520;k.dodgeCd=now+1450;taijiMsg("回避！",650);beep(740,.045,"triangle",.045);
+}
+function taijiTrySeimeiHeal(sx,sy){
+  const k=APP.taiji,sei=creatures&&creatures.seimei&&creatures.seimei.g;if(!k||!sei||!sei.visible||k.seimeiHealUsed)return false;
+  if(player.pos.distanceTo(sei.position)>9)return false;
+  const meshes=[];sei.traverse(o=>{if(o.isMesh)meshes.push(o);});
+  raycaster.setFromCamera({x:sx/innerWidth*2-1,y:-(sy/innerHeight)*2+1},camera);
+  if(!raycaster.intersectObjects(meshes,false).length)return false;
+  k.seimeiHealUsed=true;k.hp=k.maxHp;updateTaijiHp();taijiMsg("晴明の祈祷で体力が戻った。一度きりの加護だ",2600);toast("安倍晴明が傷を癒やした",2200);beep(528,.22,"sine",.08);
+  return true;
 }
 function taijiQuit(){
   const k=APP.taiji;if(!k)return;k.done=true;
   k.spirits.forEach(sp=>{if(sp.alive){const i=rayTargets.indexOf(sp.g.userData.inner);if(i>=0)rayTargets.splice(i,1);}scene.remove(sp.g);});
   if(k.boss&&k.boss.g)scene.remove(k.boss.g);
   _clearTaijiFx();
+  creatures.oni.forEach(o=>{o.taijiAlive=true;o.dispelledUntil=0;});
   document.body.classList.remove("taiji-mode");
   renderer.shadowMap.autoUpdate=true;renderer.shadowMap.needsUpdate=true;
   $("bossBar").style.display="none";$("taijiHud").style.display="none";
@@ -7083,17 +7155,18 @@ function endTaiji(failed){
   $("bossBar").style.display="none";
   if(k.boss&&k.boss.g)scene.remove(k.boss.g);
   _clearTaijiFx();
+  creatures.oni.forEach(o=>{o.taijiAlive=true;o.dispelledUntil=0;});
   k.spirits.forEach(sp=>{
     if(sp.alive){const idx=rayTargets.indexOf(sp.g.userData.inner);if(idx>=0)rayTargets.splice(idx,1);}
     scene.remove(sp.g);
   });
   document.body.classList.remove("taiji-mode");
-  const elapsed=(performance.now()-k.tStart)/1000,total=TAIJI_SPOTS.length,hit=k.shot;
+  const elapsed=(performance.now()-k.tStart)/1000,total=k.total||TAIJI_SPOTS.length,hit=k.shot;
   if(failed){
     $("resTitle").textContent="物の怪退治 結果";
     $("resRank").textContent="敗北";
     $("resDetail").innerHTML=`物の怪に襲われ気を失った…<br>退散: <b>${hit}/${total}体</b>　残り体力: <b>0</b><br><br><span style="font-size:11px;color:#aa88cc">逃げながら破魔の矢を当てよう。破魔の札(衝撃波)で囲まれた敵を薙ぎ払える。</span>`;
-    $("resKaimamiActions").style.display="none";$("resClose").style.display="";
+    setTaijiResultActions();
     $("result").style.display="flex";seNG();
     APP.taiji=null;APP.mode="walk";$("taijiHud").style.display="none";$("modeTag").textContent="自由散策";
     return;
@@ -7105,8 +7178,8 @@ function endTaiji(failed){
                     ["俗人","ぞくじん — 霊力が足りなかった…弓矢の稽古から！"];
   $("resTitle").textContent="物の怪退治 結果";
   $("resRank").textContent=rank[0];
-  $("resDetail").innerHTML=`退散: <b>${hit}/${total}体</b>　追い祓い: <b>${k.bonus||0}</b>　外れ: <b>${k.miss}回</b>　時間: <b>${elapsed.toFixed(1)}秒</b><br>${rank[1]}<br><br><span style="font-size:11px;color:#aa88cc">武器: ${k.weapon==="bow"?"🏹破魔の矢（単体）":"🔮破魔の札（衝撃波）"}</span>`;
-  $("resKaimamiActions").style.display="none";$("resClose").style.display="";
+  $("resDetail").innerHTML=`難易度: <b>${(k.diff&&k.diff.label)||"通常"}</b>　退散: <b>${hit}/${total}体</b>　追い祓い: <b>${k.bonus||0}</b>　外れ: <b>${k.miss}回</b>　時間: <b>${elapsed.toFixed(1)}秒</b><br>${rank[1]}<br><br><span style="font-size:11px;color:#aa88cc">武器: ${k.weapon==="bow"?"🏹破魔の矢（単体）":"🔮破魔の札（衝撃波）"}</span>`;
+  setTaijiResultActions();
   $("result").style.display="flex";seOK();
   APP.taiji=null;APP.mode="walk";$("taijiHud").style.display="none";
   $("modeTag").textContent="自由散策";
@@ -7168,6 +7241,7 @@ function _spiritWinCheck(k){const remain=k.spirits.filter(s=>s.alive).length;if(
   return remain;}
 function taijiShoot(sx,sy){
   const k=APP.taiji;if(!k||k.done)return;
+  if(taijiTrySeimeiHeal(sx,sy))return;
   if(sy<innerHeight*0.13){taijiSetWeapon(sx<innerWidth*0.5?"bow":"seal");return;} // 上部隅タップで武器切替(スマホ/タブレット)
   if(k.weapon==="seal")taijiFuda();else taijiArrow(sx,sy);
 }
@@ -7180,8 +7254,11 @@ function taijiArrow(sx,sy){
   const bh=(k.boss&&!k.boss.dead)?raycaster.intersectObject(k.boss.g,true):[];
   if(bh.length)to=bh[0].point.clone();
   else if(sh.length)to=sh[0].point.clone();
-  else{const ym=[];creatures.yokai.forEach(yk=>{if(yk.g.visible)yk.g.traverse(o=>{if(o.isMesh)ym.push(o);});});
+  else{const om=[];creatures.oni.forEach(on=>{if(on.g.visible&&on.taijiAlive!==false)on.g.traverse(o=>{if(o.isMesh)om.push(o);});});
+    const oh=raycaster.intersectObjects(om,false);if(oh.length)to=oh[0].point.clone();
+    else{const ym=[];creatures.yokai.forEach(yk=>{if(yk.g.visible)yk.g.traverse(o=>{if(o.isMesh)ym.push(o);});});
     const yh=raycaster.intersectObjects(ym,false);to=yh.length?yh[0].point.clone():raycaster.ray.at(28,new THREE.Vector3());}
+  }
   const from=camera.position.clone().add(raycaster.ray.direction.clone().multiplyScalar(0.6));
   seArrowShot();spawnArrow(from,to,()=>applyArrowHit(sx,sy));
 }
@@ -7190,6 +7267,9 @@ function applyArrowHit(sx,sy){
   raycaster.setFromCamera({x:sx/innerWidth*2-1,y:-(sy/innerHeight)*2+1},camera);
   if(k.boss&&!k.boss.dead){const bh=raycaster.intersectObject(k.boss.g,true);
     if(bh.length){k.boss.hp-=10;updateBossBar(k.boss);seArrowHit();const m=k.boss.g.userData.core.material,o=m.opacity;m.opacity=1;setTimeout(()=>{if(m)m.opacity=o;},90);taijiMsg(k.boss.cfg.name+"に命中！");return;}}
+  const oniMeshes=[];creatures.oni.forEach(o=>{if(o.g.visible&&o.taijiAlive!==false)o.g.traverse(m=>{if(m.isMesh){m.userData._oniRef=o;oniMeshes.push(m);}});});
+  const oh=raycaster.intersectObjects(oniMeshes,false);
+  if(oh.length){taijiHitOni(oh[0].object.userData._oniRef,10);return;}
   const targets=k.spirits.filter(s=>s.alive).map(s=>s.g.userData.inner);
   const hits=raycaster.intersectObjects(targets,false);
   if(hits.length){
@@ -7208,15 +7288,25 @@ function applyArrowHit(sx,sy){
       seArrowHit();taijiMsg((YOKAI_NAME[yk.def.type]||"妖怪")+"を祓った！(追い祓い "+k.bonus+")");return;}}
   k.miss++;beep(220,.08,"sawtooth",.05);taijiMsg("外れ…",700);
 }
+function taijiHitOni(o,dmg){
+  const k=APP.taiji;if(!k||!o||o.taijiAlive===false)return;
+  o.taijiHp=(o.taijiHp||32)-dmg;seArrowHit();
+  if(o.g.userData.body){const mat=o.g.userData.body.material,old=mat.color.getHex();mat.color.setHex(0xff7766);setTimeout(()=>{if(mat)mat.color.setHex(old);},120);}
+  if(o.taijiHp<=0){o.taijiAlive=false;o.g.visible=false;o.dispelledUntil=performance.now()+16000;k.bonus=(k.bonus||0)+1;k.fudaCharges=2;taijiMsg("鬼を討った！ 破魔の札を二連続で使える",2600);toast("鬼退治: 破魔の札が二連続で発動可能",2400);}
+  else taijiMsg("鬼に命中。まだ迫ってくる…");
+}
 /* 破魔の札: 自分中心の衝撃波(クールタイムあり) */
 function taijiFuda(){
   const k=APP.taiji;const now=performance.now();
-  if(now<(k.fudaCd||0)){taijiMsg("破魔の札は まだ整わない("+((k.fudaCd-now)/1000).toFixed(1)+"s)",700);return;}
-  k.fudaCd=now+4000;seFuda();spawnShockwave(player.pos);
+  const charged=(k.fudaCharges||0)>0;
+  if(!charged&&now<(k.fudaCd||0)){taijiMsg("破魔の札は まだ整わない("+((k.fudaCd-now)/1000).toFixed(1)+"s)",700);return;}
+  if(charged){k.fudaCharges--;k.fudaCd=now;}else k.fudaCd=now+4000;
+  seFuda();spawnShockwave(player.pos);
   const R=9;let n=0;
   k.spirits.forEach(s=>{if(s.alive&&s.g.position.distanceTo(player.pos)<R){s.hp--;updateSpiritHp(s);
     if(s.hp<=0){_killSpirit(k,s);n++;}else{const mat=s.g.userData.inner.material,o=mat.opacity;mat.opacity=1;setTimeout(()=>{if(mat)mat.opacity=o;},120);}}});
   creatures.yokai.forEach(yk=>{if(yk.g.visible&&yk.g.position.distanceTo(player.pos)<R){yk.dispelledUntil=now+9000;yk.g.visible=false;k.bonus=(k.bonus||0)+1;}});
+  creatures.oni.forEach(o=>{if(o.g.visible&&o.taijiAlive!==false&&o.g.position.distanceTo(player.pos)<R+1)taijiHitOni(o,12);});
   taijiMsg("破魔の札！ 周囲を祓った"+(n?"("+n+"体)":""));
   if(k.boss&&!k.boss.dead&&k.boss.g.position.distanceTo(player.pos)<R){k.boss.hp-=8;updateBossBar(k.boss);}
   _spiritWinCheck(k);
@@ -7243,12 +7333,22 @@ function makeBoss(season){
   }else{core.scale.set(0.8,1.7,0.8);const hair=new THREE.Mesh(new THREE.CylinderGeometry(0.75,0.95,2.6,10),new THREE.MeshBasicMaterial({color:0xddeeff,transparent:true,opacity:.45,side:THREE.DoubleSide}));hair.position.y=1.7;g.add(hair);}
   return g;
 }
+function autumnBossPhase2(b){
+  if(!b||b.phase2)return;b.phase2=true;b.cfg.name="大鬼と化した人魂";$("bossName").textContent=b.cfg.name;
+  const g=b.g;g.scale.setScalar(1.28);
+  const mat=new THREE.MeshBasicMaterial({color:0x8f1f28,transparent:true,opacity:.9});
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.75,1.1,1.8,7),mat);body.position.y=1.6;g.add(body);
+  [-1,1].forEach(s=>{const horn=new THREE.Mesh(new THREE.ConeGeometry(0.16,0.55,5),new THREE.MeshBasicMaterial({color:0xf2dfb0}));horn.position.set(s*.34,3.05,.05);horn.rotation.z=-s*.35;g.add(horn);});
+  const club=new THREE.Mesh(new THREE.CylinderGeometry(0.10,0.16,2.1,6),new THREE.MeshBasicMaterial({color:0x4b2a20}));club.position.set(.95,1.85,.1);club.rotation.z=-.65;g.add(club);
+  b.cfg.attack="oni";taijiMsg("人魂が集まり、大鬼へ変じた！",2600);seFuda();
+}
 function spawnBoss(k){
   k.bossSpawned=true;const cfg=BOSS_CFG[k.season]||BOSS_CFG.spring;
-  const g=makeBoss(k.season);g.position.set(0,0,-52);scene.add(g);
-  k.boss={g,cfg,hp:cfg.hp,maxHp:cfg.hp,nextAtk:performance.now()+2600,dead:false};
+  const g=makeBoss(k.season);g.position.set(0,0,24);scene.add(g);
+  const hp=Math.ceil(cfg.hp*((k.diff&&k.diff.bossMul)||1));
+  k.boss={g,cfg:Object.assign({},cfg),hp,maxHp:hp,nextAtk:performance.now()+2400,dead:false};
   $("bossName").textContent=cfg.name;$("bossHpFill").style.width="100%";$("bossBar").style.display="block";
-  $("taijiRemain").textContent="ボス";taijiMsg("北の対の奥に強大な気配…！ ボスが立ちふさがる",2800);seFuda();
+  $("taijiRemain").textContent="ボス";taijiMsg("南庭に強大な気配…！ 広場でボス戦",2800);seFuda();
 }
 function updateBossBar(b){$("bossHpFill").style.width=Math.max(0,b.hp/b.maxHp*100)+"%";}
 const bossProjs=[];
@@ -7264,7 +7364,12 @@ function bossAttack(K,b,now){
   if(at==="pull"){ if(d<13){const dir=bp.clone().sub(pp).setY(0).normalize();player.pos.x+=dir.x*2.2;player.pos.z+=dir.z*2.2;taijiDamage(10);taijiMsg("河童の主に引き込まれる！");}else spawnBossProj(bp,pp,b.cfg.col,8,10); }
   else if(at==="blizzard"){ if(d<14){K.slowUntil=now+1800;taijiDamage(8);taijiMsg("雪女王の吹雪！ 凍えて動けない");}else spawnBossProj(bp,pp,0xcfeeff,7,8); }
   else if(at==="souls"){ for(let i=0;i<3;i++){const off=new THREE.Vector3((Math.random()-.5)*4,Math.random()*2,(Math.random()-.5)*4);spawnBossProj(bp.clone().add(off),pp,b.cfg.col,7,8);} }
+  else if(at==="oni"){ if(d<10){spawnShockwave(b.g.position);taijiDamage(13);taijiMsg("大鬼の踏み荒らし！");}else spawnBossProj(bp,pp,0xaa2233,10,11); }
   else{ spawnBossProj(bp,pp,b.cfg.col,9,13); }
+  for(let i=0;i<(K.diff&&K.diff.burst||0);i++){
+    const off=new THREE.Vector3((Math.random()-.5)*5,Math.random()*1.5,(Math.random()-.5)*5);
+    spawnBossProj(bp.clone().add(off),pp,b.cfg.col,6,8+Math.random()*4);
+  }
 }
 function updateBoss(K,t,now,dt){
   const b=K.boss;if(!b)return;
@@ -7272,6 +7377,7 @@ function updateBoss(K,t,now,dt){
     b.g.userData.core.material.opacity=0.78+Math.sin(t*3)*0.16;
     b.g.userData.aura.scale.setScalar(1+Math.sin(t*2)*0.07);
     b.g.rotation.y=t*0.4;b.g.position.y=Math.sin(t*1.2)*0.18;
+    if(K.season==="autumn"&&!b.phase2&&b.hp<b.maxHp*.5)autumnBossPhase2(b);
     if(now>b.nextAtk&&!K.done){b.nextAtk=now+(b.cfg.attack==="souls"?2700:2300);bossAttack(K,b,now);}
     if(b.hp<=0){b.dead=true;scene.remove(b.g);$("bossBar").style.display="none";K.done=true;taijiMsg(b.cfg.name+"を討ち取った！",2200);setTimeout(()=>endTaiji(false),1300);}
   }
@@ -7352,7 +7458,7 @@ function kaimamiUpdate(dt){
     k.done=true;beacon.visible=false;seOK();
     $("resTitle").textContent="垣間見 達成";$("resRank").textContent="見初めたり";
     $("resDetail").innerHTML=`牛車から邸へ忍び、従者と女房の巡回を避けて${secret?secret.name:"几帳の隙間"}から実際に姫君の姿を捉えた。見つかった回数: <b>${k.caught}回</b><br><br>平安文学の<b>垣間見</b>は、姿を公に見せない高貴な女性を男性が偶然、あるいは密かに見る重要な出会いの型。『源氏物語』若紫巻などで物語が動き始める。`;
-    kaimamiRestoreActors(k);$("resKaimamiActions").style.display="flex";$("resClose").style.display="none";$("result").style.display="flex";APP.kaimami=null;APP.mode="walk";$("questHud").style.display="none";$("modeTag").textContent="自由散策";
+    kaimamiRestoreActors(k);setDefaultResultActions();$("resKaimamiActions").style.display="flex";$("resClose").style.display="none";$("result").style.display="flex";APP.kaimami=null;APP.mode="walk";$("questHud").style.display="none";$("modeTag").textContent="自由散策";
   }
 }
 
@@ -7688,13 +7794,19 @@ function animate(now){
   /* --- 夜の怪異 --- */
   const nightFade=Math.max(0,Math.min(1,(cur.moon-0.05)/0.3)); 
   creatures.oni.forEach(o=>{
-    o.g.visible=nightFade>0.05;
+    o.g.visible=nightFade>0.05&&!(o.dispelledUntil&&performance.now()<o.dispelledUntil)&&o.taijiAlive!==false;
     if(o.g.visible){
       const step=t*1.48+o.phase*2.3;
       const a=t*.085+o.phase;                                       // [fix] 広い範囲をゆっくり巡回(反復感を抑制)
       const px=o.g.position.x, pz=o.g.position.z;
-      o.g.position.x=o.base.x+Math.cos(a)*11+Math.sin(a*1.7)*4.5;   // 2周波の合成で往復に見えにくい広域パス
-      o.g.position.z=o.base.y+Math.sin(a*0.8)*11+Math.cos(a*1.32)*4.5;
+      if(APP.mode==="taiji"&&APP.taiji&&!APP.taiji.done){
+        const dx=player.pos.x-o.g.position.x,dz=player.pos.z-o.g.position.z,d=Math.hypot(dx,dz);
+        if(d<38&&d>1.4){const s=(3.0+((APP.taiji.diff&&APP.taiji.diff.burst)||0)*.45)*dt;o.g.position.x+=dx/d*s;o.g.position.z+=dz/d*s;}
+        if(d<2.1&&performance.now()>(o.atkCd||0)){o.atkCd=performance.now()+1200;taijiDamage(18);taijiMsg("鬼の金棒が迫る！");}
+      }else{
+        o.g.position.x=o.base.x+Math.cos(a)*11+Math.sin(a*1.7)*4.5;   // 2周波の合成で往復に見えにくい広域パス
+        o.g.position.z=o.base.y+Math.sin(a*0.8)*11+Math.cos(a*1.32)*4.5;
+      }
       const dx=o.g.position.x-px, dz=o.g.position.z-pz;
       if(dx*dx+dz*dz>1e-6)o.g.rotation.y=Math.atan2(dx,dz);          // 進行方向を向く
       const impact=Math.pow(Math.max(0,Math.cos(step*2)),10);
@@ -7740,6 +7852,7 @@ function animate(now){
   const isSeason=s=>typeof APP.season==="string"?APP.season===s:true;
   for(const yk of creatures.yokai){
     let show=nightFade>0.05&&!(yk.winterOnly&&!isSeason("winter"));
+    if(APP.mode==="taiji"&&APP.taiji&&APP.taiji.season==="summer"&&yk.def.type==="chochin")show=false;
     if(yk.dispelledUntil&&performance.now()<yk.dispelledUntil)show=false; // 退治モードで祓われた間は隠す
     yk.g.visible=show;
     if(!show)continue;
@@ -7778,6 +7891,7 @@ function animate(now){
   if(APP.mode==="taiji"&&APP.taiji){
     const now=performance.now();const pX=player.pos.x,pZ=player.pos.z;const K=APP.taiji;
     updateTaijiFx(now);
+    if($("twDodge"))$("twDodge").classList.toggle("ready",now>=(K.dodgeCd||0));
     // 破魔の札クールタイム表示
     if($("tjCoolFill")){const cd=4000,rem=(K.fudaCd||0)-now;$("tjCoolFill").style.width=(rem>0?(1-rem/cd):1)*100+"%";}
     let nearestD=1e9;
@@ -7807,7 +7921,9 @@ function animate(now){
   }
 
   /* --- 水鳥 --- */
+  const taijiLightMode=APP.mode==="taiji";
   for(const b of waterBirds){
+    if(taijiLightMode)continue;
     if(!b.g.visible)continue;
     if(b.kind==="duck"){
       const a=t*b.spd+b.phase;
@@ -7830,6 +7946,7 @@ function animate(now){
 
   /* --- 蝶・蜻蛉 --- */
   for(const bf of butterflies){
+    if(taijiLightMode){bf.g.visible=false;continue;}
     if(!bf.g.visible)continue;
     const a=t*bf.spd+bf.phase;
     bf.g.position.x=bf.bx+Math.cos(a*1.2)*2.2+Math.sin(a*.7)*.8;
@@ -7845,6 +7962,7 @@ function animate(now){
     bf.g.children.forEach(h=>{if(h.userData.wS!==undefined)h.rotation.z=h.userData.wS*ang;});
   }
   for(const df of dragonflies){
+    if(taijiLightMode){df.g.visible=false;continue;}
     if(!df.g.visible)continue;
     const a=t*df.spd+df.phase;
     df.g.position.x=df.bx+Math.sin(a*2.1)*df.r;
@@ -7907,9 +8025,9 @@ function animate(now){
   });
 
   /* --- 季節パーティクル --- */
-  if(petals.visible)updateFalling(petals,dt,t,sakuraGust(t));  // 桜は間欠的な突風
-  if(leavesFall.visible)updateFalling(leavesFall,dt,t);
-  if(snowFall.visible)updateFalling(snowFall,dt,t);
+  if(!taijiLightMode&&petals.visible)updateFalling(petals,dt,t,sakuraGust(t));  // 桜は間欠的な突風
+  if(!taijiLightMode&&leavesFall.visible)updateFalling(leavesFall,dt,t);
+  if(!taijiLightMode&&snowFall.visible)updateFalling(snowFall,dt,t);
   // 雨: ランダム間欠(秋は高頻度/長め、夏は低頻度/短め、春冬なし)
   {const rs=rainFall.userData;
    if(rs.rainSeason){
@@ -7925,7 +8043,8 @@ function animate(now){
        }
      }
      rainFall.visible=rs.rainOn;
-     if(rs.rainOn){rainMat.opacity=APP.season==="autumn"?0.32:0.20;updateRain(rainFall,dt,t);}
+     if(rs.rainOn&&!taijiLightMode){rainMat.opacity=APP.season==="autumn"?0.32:0.20;updateRain(rainFall,dt,t);}
+     if(taijiLightMode)rainFall.visible=false;
    }
    // 雲/空オーバーレイ
    const co=document.getElementById("cloudOverlay");
@@ -7952,7 +8071,7 @@ function animate(now){
   updateFlyingLife(dt,t);
   updateSparrowChase(t);
   // 蛍は「夏」かつ「夜」のときだけ舞う(昼夜の遷移中に月明かりが残って札だけ出るのを防ぐためtimeで厳密に判定)
-  const fireflyOn=(APP.season==="summer")&&(APP.time==="night")&&(cur.moon>0.04);
+  const fireflyOn=!taijiLightMode&&(APP.season==="summer")&&(APP.time==="night")&&(cur.moon>0.04);
   fireflies.visible=fireflyOn;
   if(fireflies.visible){
     const fade=Math.min(1,(cur.moon-0.04)/0.25);
