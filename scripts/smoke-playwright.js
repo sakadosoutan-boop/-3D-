@@ -66,6 +66,8 @@ async function launchBrowser() {
       const tourou = typeof tourouGroup !== 'undefined' ? tourouGroup : null;
       const tourouOk = !!tourou?.visible;
       const tourouRipples = tourou?.userData?.lanterns?.filter((lantern) => !!lantern.ripple).length || 0;
+      const emakiCount = typeof EMAKI_FRAGMENT_IDS !== 'undefined' ? EMAKI_FRAGMENT_IDS.length : 0;
+      const emakiVisible = typeof emakiFragments !== 'undefined' ? emakiFragments.filter((fragment) => fragment.visible).length : 0;
       return {
         missing,
         walkOk,
@@ -76,6 +78,8 @@ async function launchBrowser() {
         kaimamiTextOk: kaimamiText.includes('三つの観察地点'),
         tourouOk,
         tourouRipples,
+        emakiCount,
+        emakiVisible,
         canvas: !!document.querySelector('canvas'),
         objects: typeof scene !== 'undefined' ? scene.children.length : null,
       };
@@ -89,6 +93,7 @@ async function launchBrowser() {
     if (!status.kaimamiTextOk) errors.push('kaimami instructions did not mention the three observation points');
     if (!status.tourouOk) errors.push('tourou lanterns did not appear in summer night');
     if (status.tourouRipples !== 8) errors.push(`unexpected tourou ripple count: ${status.tourouRipples}`);
+    if (status.emakiCount !== 6 || status.emakiVisible !== 6) errors.push(`unexpected emaki fragments: ${status.emakiVisible}/${status.emakiCount}`);
     if (errors.length) {
       console.error(JSON.stringify({ status, errors }, null, 2));
       process.exit(1);
