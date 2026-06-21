@@ -1584,8 +1584,8 @@ body.taiji-mode #c{cursor:crosshair}
   <div class="tj-title">⚡ 物の怪退治　残り <b id="taijiRemain">0</b> 体</div>
   <div id="tjHpWrap"><div id="tjHpFill"></div><div id="tjHpLabel">体力</div></div>
   <div class="tj-weapons">
-    <button class="tw-btn" id="twBow">🏹 弓矢</button>
-    <button class="tw-btn" id="twSeal">🔮 呪印</button>
+    <button class="tw-btn" id="twBow">🏹 破魔の矢</button>
+    <button class="tw-btn" id="twSeal">🔮 破魔の札</button>
   </div>
   <div id="taijiMsg"></div>
 </div>
@@ -2558,7 +2558,6 @@ const world=new THREE.Group();scene.add(world);
   [[-2.1,-2.4],[-2.1,2.4],[2.1,-2.4],[2.1,2.4]].forEach(p=>gate.add(cyl(.2,.23,3.4,MAT.woodDark,p[0],1.7,p[1])));
   gate.add(box(.7,.5,6.4,MAT.woodDark,0,4.15,0));
   gate.add(hipRoof(7.4,9.2,2.1,.5,4.4));
-  gate.add(box(.18,3.2,2.6,MAT.wood,-.45,1.7,-1.45).translateZ(-1.3*0)); 
   const d1=box(.18,3.4,2.9,MAT.wood,0,1.7,0);d1.position.set(-.3,1.7,-1.5);d1.rotation.y=2.4;gate.add(d1);
   const d2=box(.18,3.4,2.9,MAT.wood,0,1.7,0);d2.position.set(-.3,1.7,1.5);d2.rotation.y=-2.4;gate.add(d2);
   gate.position.set(W,0,12);gate.rotation.y=0;  // 築地(東壁=Z方向)と平行に
@@ -4044,8 +4043,7 @@ function makeHitodama(col){
   const glow=new THREE.Mesh(new THREE.SphereGeometry(0.44,10,8),M2);g.add(glow);
   const tail=new THREE.Mesh(new THREE.SphereGeometry(0.11,8,6),M3);
   tail.position.y=-0.32;tail.scale.y=1.9;g.add(tail);
-  const li=new THREE.PointLight(col,1.1,5.5);g.add(li);
-  g.userData={type:"hitodama",glow,li};return g;
+  g.userData={type:"hitodama",glow,li:null};return g;
 }
 function makeKappa(){
   const g=new THREE.Group();
@@ -4097,16 +4095,14 @@ function makeChochin(){
     e.position.set(s*0.11,0.10,0.26);g.add(e);});
   const tongue=new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.018,0.50,6),new THREE.MeshBasicMaterial({color:0xcc3322,transparent:true,opacity:0.88}));
   tongue.position.set(0,-0.72,0.24);g.add(tongue);
-  const li=new THREE.PointLight(0xff9940,1.2,3.5);g.add(li);
-  g.userData={type:"chochin",li};return g;
+  g.userData={type:"chochin",li:null};return g;
 }
 function makeKitsunebi(col){
   const g=new THREE.Group();
   [[0,0,0,0.16],[0.22,0.08,-0.10,0.11],[-0.20,0.10,0.12,0.10],[0.05,0.24,0.04,0.09]].forEach(p=>{
     const mm=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.68+p[3]*1.5});
     g.add(new THREE.Mesh(new THREE.SphereGeometry(p[3],8,6),mm));g.children[g.children.length-1].position.set(p[0],p[1],p[2]);});
-  const li=new THREE.PointLight(col,0.9,4.5);g.add(li);
-  g.userData={type:"kitsunebi",li};return g;
+  g.userData={type:"kitsunebi",li:null};return g;
 }
 function makeYukiOnna(){
   const g=new THREE.Group();
@@ -4119,10 +4115,9 @@ function makeYukiOnna(){
   const hair=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.12,1.10,10),M({color:0x111111,roughness:0.9}));hair.position.set(0,1.38,-0.04);g.add(hair);
   [-1,1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(0.030,6,5),new THREE.MeshBasicMaterial({color:0x88ccff}));
     e.position.set(s*0.072,1.73,0.175);g.add(e);});
-  const li=new THREE.PointLight(0x88aaff,0.9,5.5);li.position.y=1.5;g.add(li);
   const aura=new THREE.Mesh(new THREE.SphereGeometry(0.65,10,8),new THREE.MeshBasicMaterial({color:0xaaccff,transparent:true,opacity:0.12,depthWrite:false}));
   aura.position.y=1.0;g.add(aura);
-  g.userData={type:"yukionna",li,aura};return g;
+  g.userData={type:"yukionna",li:null,aura};return g;
 }
 /* 物の怪退治モード用: 結界霊 */
 /* 退治モード霊の種類: normal=普通(1発), strong=強い怨霊(2発・赤), wander=揺れる霊(移動・青) */
@@ -4137,8 +4132,7 @@ function makeTaijiKekkai(spiritType){
   const inner=new THREE.Mesh(new THREE.SphereGeometry(C.ir,10,8),
     new THREE.MeshBasicMaterial({color:C.ic,transparent:true,opacity:0.75}));
   g.add(inner);
-  const li=new THREE.PointLight(C.col,C.li,C.lr);g.add(li);
-  g.userData={type:"kekkai",spiritType:spiritType||"normal",outer,inner,li,phase:Math.random()*Math.PI*2,alive:true};
+  g.userData={type:"kekkai",spiritType:spiritType||"normal",outer,inner,li:null,phase:Math.random()*Math.PI*2,alive:true};
   return g;
 }
 /* 妖怪配置定義 */
@@ -6989,15 +6983,16 @@ function startTaiji(){
     g.userData.inner.userData.kekkai_idx=i;
     rayTargets.push(g.userData.inner);
     const hp=sp.type==="strong"?2:1;
+    const hpbar=makeHpBar();hpbar.position.y=(sp.type==="strong"?1.2:0.95);g.add(hpbar);
     const wander=sp.type==="wander"?{tx:sp.x,tz:sp.z,nextMs:performance.now()+3000}:null;
-    return {g,sp,alive:true,idx:i,hp,wander,nextHit:0};
+    return {g,sp,alive:true,idx:i,hp,maxHp:hp,wander,nextHit:0,hpbar};
   });
-  APP.taiji={spirits,shot:0,miss:0,weapon:"bow",tStart:performance.now(),done:false,hp:100,maxHp:100,bonus:0};
+  APP.taiji={spirits,shot:0,miss:0,weapon:"bow",tStart:performance.now(),done:false,hp:100,maxHp:100,bonus:0,slowUntil:0,fudaCd:0};
   $("taijiRemain").textContent=spirits.length;
   $("taijiHud").style.display="block";
   $("twBow").classList.add("active");$("twSeal").classList.remove("active");
   updateTaijiHp();
-  $("taijiMsg").textContent="物の怪が襲ってくる！弓矢で退散させよ(避けて当てろ)";
+  $("taijiMsg").textContent="物の怪が襲ってくる！破魔の矢で射て、破魔の札で薙ぎ払え(避けながら)";
   setTimeout(()=>{if($("taijiMsg"))$("taijiMsg").textContent="";},3500);
 }
 function updateTaijiHp(){
@@ -7025,7 +7020,7 @@ function endTaiji(failed){
   if(failed){
     $("resTitle").textContent="物の怪退治 結果";
     $("resRank").textContent="敗北";
-    $("resDetail").innerHTML=`物の怪に襲われ気を失った…<br>退散: <b>${hit}/${total}体</b>　残り体力: <b>0</b><br><br><span style="font-size:11px;color:#aa88cc">逃げながら弓矢を当てよう。呪印(範囲)も有効。</span>`;
+    $("resDetail").innerHTML=`物の怪に襲われ気を失った…<br>退散: <b>${hit}/${total}体</b>　残り体力: <b>0</b><br><br><span style="font-size:11px;color:#aa88cc">逃げながら破魔の矢を当てよう。破魔の札(衝撃波)で囲まれた敵を薙ぎ払える。</span>`;
     $("resKaimamiActions").style.display="none";$("resClose").style.display="";
     $("result").style.display="flex";seNG();
     APP.taiji=null;APP.mode="walk";$("taijiHud").style.display="none";$("modeTag").textContent="自由散策";
@@ -7038,74 +7033,113 @@ function endTaiji(failed){
                     ["俗人","ぞくじん — 霊力が足りなかった…弓矢の稽古から！"];
   $("resTitle").textContent="物の怪退治 結果";
   $("resRank").textContent=rank[0];
-  $("resDetail").innerHTML=`退散: <b>${hit}/${total}体</b>　追い祓い: <b>${k.bonus||0}</b>　外れ: <b>${k.miss}回</b>　時間: <b>${elapsed.toFixed(1)}秒</b><br>${rank[1]}<br><br><span style="font-size:11px;color:#aa88cc">武器: ${k.weapon==="bow"?"🏹弓矢（単体）":"🔮呪印（範囲退散）"}</span>`;
+  $("resDetail").innerHTML=`退散: <b>${hit}/${total}体</b>　追い祓い: <b>${k.bonus||0}</b>　外れ: <b>${k.miss}回</b>　時間: <b>${elapsed.toFixed(1)}秒</b><br>${rank[1]}<br><br><span style="font-size:11px;color:#aa88cc">武器: ${k.weapon==="bow"?"🏹破魔の矢（単体）":"🔮破魔の札（衝撃波）"}</span>`;
   $("resKaimamiActions").style.display="none";$("resClose").style.display="";
   $("result").style.display="flex";seOK();
   APP.taiji=null;APP.mode="walk";$("taijiHud").style.display="none";
   $("modeTag").textContent="自由散策";
 }
+const YOKAI_NAME={hitodama:"人魂",kappa:"河童",chochin:"提灯お化け",kitsunebi:"狐火",yukionna:"雪女"};
+function taijiMsg(s,ms){$("taijiMsg").textContent=s;clearTimeout(window._tjMsgT);window._tjMsgT=setTimeout(()=>{if($("taijiMsg"))$("taijiMsg").textContent="";},ms||1300);}
+/* 効果音 */
+function seArrowShot(){beep(900,.05,"square",.07);setTimeout(()=>beep(560,.06,"square",.06),38);}
+function seArrowHit(){beep(320,.1,"square",.10);}
+function seFuda(){beep(190,.30,"sine",.13);setTimeout(()=>beep(95,.42,"sine",.10),28);}
+/* 飛翔する破魔の矢・破魔の札の衝撃波(描画ループで更新) */
+const taijiArrows=[],taijiWaves=[];
+function spawnArrow(from,to,onHit){
+  const dir=to.clone().sub(from),arrow=new THREE.Group();
+  const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.55,5),new THREE.MeshBasicMaterial({color:0xf3e6c0}));arrow.add(shaft);
+  const head=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.14,6),new THREE.MeshBasicMaterial({color:0xd8d0e8}));head.position.y=0.34;arrow.add(head);
+  arrow.position.copy(from);arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.clone().normalize());arrow.renderOrder=8;
+  arrow.traverse(o=>{if(o.material)o.material.depthTest=false;});scene.add(arrow);
+  taijiArrows.push({g:arrow,from:from.clone(),to:to.clone(),t0:performance.now(),dur:Math.min(280,Math.max(90,dir.length()*11)),onHit,done:false});
+}
+function spawnShockwave(center){
+  const ring=new THREE.Mesh(new THREE.RingGeometry(0.4,0.62,40),new THREE.MeshBasicMaterial({color:0xbb88ff,transparent:true,opacity:0.75,side:THREE.DoubleSide,depthWrite:false}));
+  ring.rotation.x=-Math.PI/2;ring.position.set(center.x,0.14,center.z);ring.renderOrder=8;scene.add(ring);
+  taijiWaves.push({g:ring,t0:performance.now(),dur:480,done:false});
+}
+function updateTaijiFx(now){
+  for(const a of taijiArrows){if(a.done)continue;const u=(now-a.t0)/a.dur;
+    if(u>=1){a.g.position.copy(a.to);scene.remove(a.g);a.done=true;if(a.onHit)a.onHit();}else a.g.position.lerpVectors(a.from,a.to,u);}
+  for(let i=taijiArrows.length-1;i>=0;i--)if(taijiArrows[i].done)taijiArrows.splice(i,1);
+  for(const w of taijiWaves){if(w.done)continue;const u=(now-w.t0)/w.dur;
+    if(u>=1){scene.remove(w.g);w.done=true;}else{const sc=1+u*16;w.g.scale.set(sc,sc,sc);w.g.material.opacity=0.75*(1-u);}}
+  for(let i=taijiWaves.length-1;i>=0;i--)if(taijiWaves[i].done)taijiWaves.splice(i,1);
+}
+/* 敵HPバー(ビルボード) */
+function makeHpBar(){
+  const c=document.createElement('canvas');c.width=64;c.height=12;const x=c.getContext('2d');
+  const tex=new THREE.CanvasTexture(c);
+  const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false,depthWrite:false}));
+  spr.scale.set(0.95,0.18,1);spr.renderOrder=9;
+  spr.userData.draw=function(frac){x.clearRect(0,0,64,12);x.fillStyle="rgba(0,0,0,.62)";x.fillRect(0,0,64,12);
+    x.fillStyle=frac>0.5?"#6de08a":frac>0.25?"#e0c04a":"#e05a5a";x.fillRect(2,2,(60)*Math.max(0,frac),8);
+    x.strokeStyle="rgba(255,255,255,.55)";x.lineWidth=1;x.strokeRect(0.5,0.5,63,11);tex.needsUpdate=true;};
+  spr.userData.draw(1);return spr;
+}
+function updateSpiritHp(sp){if(sp.hpbar)sp.hpbar.userData.draw(Math.max(0,sp.hp/(sp.maxHp||1)));}
+/* 配置妖怪の特徴的な攻撃 */
+function taijiYokaiAttack(type){
+  const k=APP.taiji;if(!k)return;
+  if(type==="yukionna"){k.slowUntil=performance.now()+1700;taijiDamage(6);taijiMsg("雪女の冷気！動きが鈍る");}
+  else if(type==="kitsunebi"){taijiDamage(8);taijiMsg("狐火に焼かれた！");}
+  else if(type==="kappa"){taijiDamage(12);taijiMsg("河童に水へ引き込まれた！");}
+  else if(type==="chochin"){taijiDamage(7);taijiMsg("提灯お化けの怪火！");}
+  else {taijiDamage(5);taijiMsg("人魂に憑かれた…");}
+}
+function _killSpirit(k,s){s.alive=false;s.g.visible=false;k.shot++;
+  const i=rayTargets.indexOf(s.g.userData.inner);if(i>=0)rayTargets.splice(i,1);}
+function _spiritWinCheck(k){const remain=k.spirits.filter(s=>s.alive).length;$("taijiRemain").textContent=remain;
+  if(remain===0){k.done=true;setTimeout(()=>endTaiji(false),900);}return remain;}
 function taijiShoot(sx,sy){
+  const k=APP.taiji;if(!k||k.done)return;
+  if(k.weapon==="seal")taijiFuda();else taijiArrow(sx,sy);
+}
+/* 破魔の矢: 矢が飛んで着弾時に判定 */
+function taijiArrow(sx,sy){
+  const k=APP.taiji;
+  raycaster.setFromCamera({x:sx/innerWidth*2-1,y:-(sy/innerHeight)*2+1},camera);
+  const inner=k.spirits.filter(s=>s.alive).map(s=>s.g.userData.inner);
+  const sh=raycaster.intersectObjects(inner,false);let to;
+  if(sh.length)to=sh[0].point.clone();
+  else{const ym=[];creatures.yokai.forEach(yk=>{if(yk.g.visible)yk.g.traverse(o=>{if(o.isMesh)ym.push(o);});});
+    const yh=raycaster.intersectObjects(ym,false);to=yh.length?yh[0].point.clone():raycaster.ray.at(28,new THREE.Vector3());}
+  const from=camera.position.clone().add(raycaster.ray.direction.clone().multiplyScalar(0.6));
+  seArrowShot();spawnArrow(from,to,()=>applyArrowHit(sx,sy));
+}
+function applyArrowHit(sx,sy){
   const k=APP.taiji;if(!k||k.done)return;
   raycaster.setFromCamera({x:sx/innerWidth*2-1,y:-(sy/innerHeight)*2+1},camera);
   const targets=k.spirits.filter(s=>s.alive).map(s=>s.g.userData.inner);
   const hits=raycaster.intersectObjects(targets,false);
   if(hits.length){
-    const idx=hits[0].object.userData.kekkai_idx;
-    const sp=k.spirits[idx];
+    const sp=k.spirits[hits[0].object.userData.kekkai_idx];
     if(sp&&sp.alive){
-      const removeSp=(s)=>{s.alive=false;s.g.visible=false;k.shot++;
-        const i=rayTargets.indexOf(s.g.userData.inner);if(i>=0)rayTargets.splice(i,1);};
-      sp.hp--;
-      if(sp.hp>0){
-        /* 強い怨霊: 1発目は赤くフラッシュするが消えない */
-        const mat=sp.g.userData.inner.material;
-        const origOp=mat.opacity;mat.opacity=1.0;
-        setTimeout(()=>{if(mat)mat.opacity=origOp;},120);
-        k.miss++;beep(520,.12,"sawtooth",.08);
-        $("taijiMsg").textContent=sp.sp.label+"の怨霊はまだ消えない…もう一発！";
-        setTimeout(()=>{if($("taijiMsg"))$("taijiMsg").textContent="";},1600);
-        return;
-      }
-      removeSp(sp);
-      // 呪印は範囲内(8ユニット)の怨霊もまとめて退散
-      if(k.weapon==="seal"){
-        k.spirits.forEach(s=>{if(s.alive&&s.g.position.distanceTo(sp.g.position)<8)removeSp(s);});
-      }
-      const remain=k.spirits.filter(s=>s.alive).length;
-      $("taijiRemain").textContent=remain;
-      $("taijiMsg").textContent=sp.sp.label+"の物の怪を退散！";
-      setTimeout(()=>{if($("taijiMsg"))$("taijiMsg").textContent="";},1400);
-      seOK();
-      if(remain===0){k.done=true;setTimeout(endTaiji,900);}
+      sp.hp--;updateSpiritHp(sp);
+      if(sp.hp>0){const mat=sp.g.userData.inner.material,o=mat.opacity;mat.opacity=1;setTimeout(()=>{if(mat)mat.opacity=o;},120);
+        seArrowHit();taijiMsg(sp.sp.label+"の怨霊はまだ消えない…");return;}
+      _killSpirit(k,sp);seArrowHit();taijiMsg(sp.sp.label+"の物の怪を退散！");_spiritWinCheck(k);return;
     }
-  } else {
-    // 配置された妖怪(人魂・河童・提灯お化け・狐火・雪女)も攻撃して祓える
-    if(typeof creatures!=="undefined"&&creatures.yokai){
-      const ymeshes=[];
-      creatures.yokai.forEach(yk=>{ if(yk.g.visible) yk.g.traverse(o=>{ if(o.isMesh){o.userData._ykRef=yk; ymeshes.push(o);} }); });
-      const yh=raycaster.intersectObjects(ymeshes,false);
-      if(yh.length){
-        const yk=yh[0].object.userData._ykRef;
-        if(yk&&yk.g.visible){
-          yk.dispelledUntil=performance.now()+9000; // 9秒祓う(その後また現れる)
-          yk.g.visible=false;
-          k.bonus=(k.bonus||0)+1;
-          const nm={hitodama:"人魂",kappa:"河童",chochin:"提灯お化け",kitsunebi:"狐火",yukionna:"雪女"}[yk.def.type]||"妖怪";
-          $("taijiMsg").textContent=nm+"を祓った！(追い祓い "+k.bonus+")";
-          setTimeout(()=>{if($("taijiMsg"))$("taijiMsg").textContent="";},1200);
-          seOK();
-          if(k.weapon==="seal"){ // 呪印は周囲の妖怪もまとめて祓う
-            const c=yh[0].point;
-            creatures.yokai.forEach(o=>{ if(o!==yk&&o.g.visible&&o.g.position.distanceTo(c)<8){o.dispelledUntil=performance.now()+9000;o.g.visible=false;k.bonus++;} });
-          }
-          return;
-        }
-      }
-    }
-    k.miss++;beep(220,0.08,"sawtooth",0.06);
-    $("taijiMsg").textContent="外れ…";
-    setTimeout(()=>{if($("taijiMsg"))$("taijiMsg").textContent="";},700);
   }
+  const ym=[];creatures.yokai.forEach(yk=>{if(yk.g.visible)yk.g.traverse(o=>{if(o.isMesh){o.userData._ykRef=yk;ym.push(o);}});});
+  const yh=raycaster.intersectObjects(ym,false);
+  if(yh.length){const yk=yh[0].object.userData._ykRef;
+    if(yk&&yk.g.visible){yk.dispelledUntil=performance.now()+9000;yk.g.visible=false;k.bonus=(k.bonus||0)+1;
+      seArrowHit();taijiMsg((YOKAI_NAME[yk.def.type]||"妖怪")+"を祓った！(追い祓い "+k.bonus+")");return;}}
+  k.miss++;beep(220,.08,"sawtooth",.05);taijiMsg("外れ…",700);
+}
+/* 破魔の札: 自分中心の衝撃波(クールタイムあり) */
+function taijiFuda(){
+  const k=APP.taiji;const now=performance.now();
+  if(now<(k.fudaCd||0)){taijiMsg("破魔の札は まだ整わない("+((k.fudaCd-now)/1000).toFixed(1)+"s)",700);return;}
+  k.fudaCd=now+4000;seFuda();spawnShockwave(player.pos);
+  const R=9;let n=0;
+  k.spirits.forEach(s=>{if(s.alive&&s.g.position.distanceTo(player.pos)<R){s.hp--;updateSpiritHp(s);
+    if(s.hp<=0){_killSpirit(k,s);n++;}else{const mat=s.g.userData.inner.material,o=mat.opacity;mat.opacity=1;setTimeout(()=>{if(mat)mat.opacity=o;},120);}}});
+  creatures.yokai.forEach(yk=>{if(yk.g.visible&&yk.g.position.distanceTo(player.pos)<R){yk.dispelledUntil=now+9000;yk.g.visible=false;k.bonus=(k.bonus||0)+1;}});
+  taijiMsg("破魔の札！ 周囲を祓った"+(n?"("+n+"体)":""));_spiritWinCheck(k);
 }
 function startKaimami(){
   scene.updateMatrixWorld(true);
@@ -7590,10 +7624,16 @@ function animate(now){
       yk.g.rotation.y=Math.sin(ph*0.25)*0.3;
       if(yk.g.userData.aura)yk.g.userData.aura.material.opacity=(0.12+Math.sin(ph*1.5)*0.06)*nightFade;
     }
+    /* 退治モード: 近づくと配置妖怪が特徴的な攻撃をしてくる */
+    if(APP.mode==="taiji"&&APP.taiji&&!APP.taiji.done){
+      const dd=Math.hypot(player.pos.x-yk.g.position.x,player.pos.z-yk.g.position.z);
+      if(dd<2.0){const nw=performance.now();if(nw>(yk.atkCd||0)){yk.atkCd=nw+1500;taijiYokaiAttack(def.type);}}
+    }
   }
   /* --- 物の怪結界 (taiji mode): プレイヤーへ接近し接触でダメージ --- */
   if(APP.mode==="taiji"&&APP.taiji){
     const now=performance.now();const pX=player.pos.x,pZ=player.pos.z;
+    updateTaijiFx(now);
     for(const sp of APP.taiji.spirits){
       if(!sp.alive)continue;
       const ud=sp.g.userData;const ph=t*2+sp.idx*0.8;
@@ -7804,7 +7844,8 @@ function animate(now){
       const running=keys.shift||(joy.active&&Math.hypot(joy.vx,joy.vy)>0.8); // ジョイを倒し切るとダッシュ(小型ジョイでも届くよう0.8)
       if(m>0.01){
         mx/=Math.max(1,m);mz/=Math.max(1,m);
-        const sp=(running?10.5:5.6)*dt;
+        let sp=(running?10.5:5.6)*dt;
+        if(APP.mode==="taiji"&&APP.taiji&&performance.now()<(APP.taiji.slowUntil||0))sp*=0.45; // 雪女の冷気で鈍足
         const sy=Math.sin(player.yaw),cy=Math.cos(player.yaw);
         const nx=player.pos.x+(mz*sy+mx*cy)*sp;
         const nz=player.pos.z+(mz*cy-mx*sy)*sp;
