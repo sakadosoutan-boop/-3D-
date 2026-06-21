@@ -54,11 +54,20 @@ async function launchBrowser() {
       await new Promise((resolve) => setTimeout(resolve, 100));
       const gfx = document.getElementById('gfx');
       const gfxOk = !!gfx && getComputedStyle(gfx).display !== 'none';
+      if (gfx) gfx.style.display = 'none';
+      if (typeof enterMode === 'function') enterMode('kaimami');
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const kaimamiOk = typeof APP !== 'undefined' && APP.mode === 'kaimami';
+      const kaimamiRoutes = Array.isArray(KAIMAMI_SECRETS) ? KAIMAMI_SECRETS.map((route) => route.id) : [];
+      const kaimamiText = document.getElementById('questText')?.textContent || '';
       return {
         missing,
         walkOk,
         codexOk,
         gfxOk,
+        kaimamiOk,
+        kaimamiRoutes,
+        kaimamiTextOk: kaimamiText.includes('三つの観察地点'),
         canvas: !!document.querySelector('canvas'),
         objects: typeof scene !== 'undefined' ? scene.children.length : null,
       };
@@ -67,6 +76,9 @@ async function launchBrowser() {
     if (!status.walkOk) errors.push('walk mode did not start');
     if (!status.codexOk) errors.push('codex did not open');
     if (!status.gfxOk) errors.push('graphics settings did not open');
+    if (!status.kaimamiOk) errors.push('kaimami mode did not start');
+    if (status.kaimamiRoutes.join(',') !== 'east,north,tsumado') errors.push(`unexpected kaimami routes: ${status.kaimamiRoutes.join(',')}`);
+    if (!status.kaimamiTextOk) errors.push('kaimami instructions did not mention the three observation points');
     if (errors.length) {
       console.error(JSON.stringify({ status, errors }, null, 2));
       process.exit(1);

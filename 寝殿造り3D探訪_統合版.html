@@ -6784,7 +6784,6 @@ function questFinish(){
 ============================================================ */
 const KAIMAMI_ZONE={hold:1.25,start:[47.0,17.0]};
 const KAIMAMI_SECRETS=[
-  {id:"kichou", name:"几帳越し",        x:0.8, z:3.8,  r:2.45,color:0xe1b74f,guarded:true },
   {id:"east",   name:"開いた東の格子",  x:12.2,z:-3.8, r:2.10,color:0x53d8c0,guarded:false},
   {id:"north",  name:"北の破れた壁代",  x:2.5, z:-9.2, r:2.00,color:0xa58be3,guarded:false},
   {id:"tsumado",name:"妻戸を通った先",  x:8.8, z:3.2,  r:2.10,color:0xe77964,guarded:true },
@@ -7037,8 +7036,8 @@ function startKaimami(){
   APP.view="fp";player.pos.set(KAIMAMI_ZONE.start[0],groundH(...KAIMAMI_ZONE.start)+1.62,KAIMAMI_ZONE.start[1]);player.yaw=Math.PI/2;player.pitch=-.04;
   setTime("dusk");updateControlUI();
   $("questTitle").textContent="垣間見 — 人目を忍べ";
-  $("questText").textContent="巡回を避け、①几帳越し ②開いた格子越し ③破れた壁代越し ④妻戸を通った先、いずれかから姫君を画面中央に捉えよう。";
-  $("questProg").textContent="四つの経路を探す。妻戸の音には注意";
+  $("questText").textContent="南正面からは入れない。巡回を避け、①東格子 ②北の壁代 ③妻戸を通った先の三つの観察地点から姫君を画面中央に捉えよう。";
+  $("questProg").textContent="三つの観察地点を探す。妻戸の音には注意";
   $("kaimamiEye").style.display="flex";beacon.visible=false;
 }
 function kaimamiUpdate(dt){
@@ -7065,11 +7064,11 @@ function kaimamiUpdate(dt){
     player.pos.set(KAIMAMI_ZONE.start[0],groundH(...KAIMAMI_ZONE.start)+1.62,KAIMAMI_ZONE.start[1]);player.yaw=Math.PI/2;player.pitch=-.04;
     toast(`${watcher.name}に見つかった。物陰を使ってやり直そう`,3000);
   }
-  if(!k.hintShown&&performance.now()>=k.hintAt){k.hintShown=true;kaimamiMarkers.forEach(g=>g.visible=true);toast("四つの覗き場所が淡く光り始めた",3000);}
+  if(!k.hintShown&&performance.now()>=k.hintAt){k.hintShown=true;kaimamiMarkers.forEach(g=>g.visible=true);toast("三つの観察地点が淡く光り始めた",3000);}
   if(k.hintShown)kaimamiMarkers.forEach((g,i)=>{const pulse=1+Math.sin(performance.now()*.004+i)*.12;g.userData.ring.scale.setScalar(pulse);});
   const secret=KAIMAMI_SECRETS.find(s=>Math.hypot(player.pos.x-s.x,player.pos.z-s.z)<s.r);
   if(!secret){k.hold=0;$("questProg").textContent=watcher?`見つかりそう… ${Math.round(k.exposure/KAIMAMI_ALERT*100)}% / 警戒 ${k.caught}回`:
-    `警戒 ${k.caught}回 / 几帳・格子・壁代・妻戸の経路を探す`;return;}
+    `警戒 ${k.caught}回 / 東格子・北壁代・妻戸先の観察地点を探す`;return;}
   const seesHime=kaimamiLookAtHime(secret);
   k.hold=seesHime&&!watcher?Math.min(KAIMAMI_ZONE.hold,k.hold+dt):Math.max(0,k.hold-dt*2.2);
   const pct=Math.round(k.hold/KAIMAMI_ZONE.hold*100);
