@@ -5356,8 +5356,10 @@ const SFX = {
   beds:  { water:"spring_water_on_Mt2.mp3", nightWind:"night_wind2.mp3", summer:"summer_mountains1.mp3" },
   loops: { takibi:"takibi.mp3" },   // 近接ループ(焚火)
   theme: "悠久の伎楽.mp3",            // タイトル画面のメインテーマ(小音量ループ)
+  se: { arrowShot:"弓矢を放つ.mp3", arrowHit:"弓矢が刺さる.mp3", fuda:"聖魔法.mp3", fire:"火炎魔法1.mp3", ice:"氷魔法2.mp3", thunder:"雷魔法2.mp3", heal:"回復魔法1.mp3", slash:"剣で斬る2.mp3", blunt:"打撃2.mp3" }, // 退治モードの単発SE
+  bossBgm: { spring:"九尾狐戦.mp3", summer:"提灯・河童戦.mp3", autumn:"人魂・大鬼戦.mp3", winter:"雪女戦.mp3" }, // ボス戦BGM(ループ)
   _rot:{}, _last:{}, _active:[], _curScene:null, _bedMedia:null, _bedBase:0.34, _curBed:false,
-  _fireMedia:null, _themeMedia:null, _spatialT:0, _muted:false, _backgroundPaused:false,
+  _fireMedia:null, _themeMedia:null, _bossMedia:null, _spatialT:0, _muted:false, _backgroundPaused:false,
 
   load(ctx){
     this.ctx = ctx;
@@ -5367,6 +5369,7 @@ const SFX = {
     Object.values(this.beds).forEach(f => files.add(f));
     Object.values(this.loops).forEach(f => files.add(f));
     if(this.theme) files.add(this.theme);
+    if(this.se) Object.values(this.se).forEach(f => files.add(f)); // 単発SEは先読み(ボスBGMは大きいのでplayBossBgmで遅延)
     files.forEach(f => {
       if(this.media[f])return;
       const a=new Audio();a.preload="auto";a.src=this.base+encodeURIComponent(f);a.muted=this._muted;
@@ -5488,12 +5491,34 @@ const SFX = {
   stopTheme(){
     if(this._themeMedia){ try{this._themeMedia.pause();this._themeMedia.currentTime=0;}catch(e){} this._themeMedia=null; }
   },
+  /* 単発SE。mp3があればtrueを返す(無ければfalseで合成音にフォールバック) */
+  playSe(key, vol){
+    const f=this.se&&this.se[key]; if(!f||!this.media[f]) return false;
+    try{ const s=this.media[f].cloneNode(true); s.volume=Math.max(0,Math.min(1,vol==null?0.6:vol)); s.muted=this._muted;
+      s.play().catch(()=>{}); const done=()=>{try{s.onended=null;s.removeAttribute("src");s.load();}catch(e){}}; s.onended=done; s.onerror=done; return true;
+    }catch(e){ return false; }
+  },
+  /* ボス戦BGM(ループ・遅延ロード)。環境ベッドを退避して戻す */
+  playBossBgm(season){
+    const f=this.bossBgm&&this.bossBgm[season]; if(!f||!this.ctx) return;
+    this.stopBossBgm();
+    let s=this.media[f];
+    if(!s){ s=new Audio(); s.preload="auto"; s.src=this.base+encodeURIComponent(f); s.addEventListener("error",()=>{},{once:true}); this.media[f]=s; }
+    try{ s.loop=true; try{s.currentTime=0;}catch(e){} s.volume=0.42; s.muted=this._muted;
+      if(!this._backgroundPaused&&!this._muted) s.play().catch(()=>{}); this._bossMedia=s;
+      if(this._bedMedia) this._bedMedia.volume=0;
+    }catch(e){}
+  },
+  stopBossBgm(){
+    if(this._bossMedia){ try{this._bossMedia.pause();this._bossMedia.currentTime=0;}catch(e){} this._bossMedia=null; }
+    if(this._bedMedia&&this._curBed) this._bedMedia.volume=this._bedBase;
+  },
   setMuted(m){
     this._muted=m;
     if(this.master&&this.ctx)this.master.gain.setTargetAtTime(m?0:1,this.ctx.currentTime,.15);
-    if(this._bedMedia)this._bedMedia.muted=m;if(this._fireMedia)this._fireMedia.muted=m;if(this._themeMedia)this._themeMedia.muted=m;
+    if(this._bedMedia)this._bedMedia.muted=m;if(this._fireMedia)this._fireMedia.muted=m;if(this._themeMedia)this._themeMedia.muted=m;if(this._bossMedia)this._bossMedia.muted=m;
     this._active.forEach(a=>a.src.muted=m);
-    if(!m&&!this._backgroundPaused){if(this._bedMedia)this._bedMedia.play().catch(()=>{});if(this._fireMedia)this._fireMedia.play().catch(()=>{});if(this._themeMedia)this._themeMedia.play().catch(()=>{});}
+    if(!m&&!this._backgroundPaused){if(this._bedMedia)this._bedMedia.play().catch(()=>{});if(this._fireMedia)this._fireMedia.play().catch(()=>{});if(this._themeMedia)this._themeMedia.play().catch(()=>{});if(this._bossMedia)this._bossMedia.play().catch(()=>{});}
   },
   setBackgroundPaused(paused){
     this._backgroundPaused=paused;
@@ -5501,11 +5526,13 @@ const SFX = {
       if(this._bedMedia)this._bedMedia.pause();
       if(this._fireMedia)this._fireMedia.pause();
       if(this._themeMedia)this._themeMedia.pause();
+      if(this._bossMedia)this._bossMedia.pause();
       this.stopActiveCalls();
     }else if(!this._muted){
       if(this._bedMedia)this._bedMedia.play().catch(()=>{});
       if(this._fireMedia)this._fireMedia.play().catch(()=>{});
       if(this._themeMedia)this._themeMedia.play().catch(()=>{});
+      if(this._bossMedia)this._bossMedia.play().catch(()=>{});
     }
   }
 };
@@ -7130,7 +7157,8 @@ function taijiTrySeimeiHeal(sx,sy){
   const meshes=[];sei.traverse(o=>{if(o.isMesh)meshes.push(o);});
   raycaster.setFromCamera({x:sx/innerWidth*2-1,y:-(sy/innerHeight)*2+1},camera);
   if(!raycaster.intersectObjects(meshes,false).length)return false;
-  k.seimeiHealUsed=true;k.hp=k.maxHp;updateTaijiHp();taijiMsg("晴明の祈祷で体力が戻った。一度きりの加護だ",2600);toast("安倍晴明が傷を癒やした",2200);beep(528,.22,"sine",.08);
+  k.seimeiHealUsed=true;k.hp=k.maxHp;updateTaijiHp();taijiMsg("晴明の祈祷で体力が戻った。一度きりの加護だ",2600);toast("安倍晴明が傷を癒やした",2200);
+  if(!(typeof SFX!=="undefined"&&SFX.playSe("heal",.6)))beep(528,.22,"sine",.08);
   return true;
 }
 function taijiQuit(){
@@ -7148,6 +7176,7 @@ function _clearTaijiFx(){
   if(typeof bossProjs!=="undefined"){bossProjs.forEach(p=>scene.remove(p.m));bossProjs.length=0;}
   if(typeof taijiArrows!=="undefined"){taijiArrows.forEach(a=>scene.remove(a.g));taijiArrows.length=0;}
   if(typeof taijiWaves!=="undefined"){taijiWaves.forEach(w=>scene.remove(w.g));taijiWaves.length=0;}
+  if(typeof SFX!=="undefined")SFX.stopBossBgm();
 }
 function endTaiji(failed){
   const k=APP.taiji;if(!k)return;
@@ -7187,9 +7216,10 @@ function endTaiji(failed){
 const YOKAI_NAME={hitodama:"人魂",kappa:"河童",chochin:"提灯お化け",kitsunebi:"狐火",yukionna:"雪女"};
 function taijiMsg(s,ms){$("taijiMsg").textContent=s;clearTimeout(window._tjMsgT);window._tjMsgT=setTimeout(()=>{if($("taijiMsg"))$("taijiMsg").textContent="";},ms||1300);}
 /* 効果音 */
-function seArrowShot(){beep(900,.05,"square",.07);setTimeout(()=>beep(560,.06,"square",.06),38);}
-function seArrowHit(){beep(320,.1,"square",.10);}
-function seFuda(){beep(190,.30,"sine",.13);setTimeout(()=>beep(95,.42,"sine",.10),28);}
+function seArrowShot(){if(typeof SFX!=="undefined"&&SFX.playSe("arrowShot",.62))return;beep(900,.05,"square",.07);setTimeout(()=>beep(560,.06,"square",.06),38);}
+function seArrowHit(){if(typeof SFX!=="undefined"&&SFX.playSe("arrowHit",.6))return;beep(320,.1,"square",.10);}
+function seFuda(){if(typeof SFX!=="undefined"&&SFX.playSe("fuda",.6))return;beep(190,.30,"sine",.13);setTimeout(()=>beep(95,.42,"sine",.10),28);}
+function seMagic(key){if(typeof SFX!=="undefined")SFX.playSe(key,.55);}
 /* 飛翔する破魔の矢・破魔の札の衝撃波(描画ループで更新) */
 const taijiArrows=[],taijiWaves=[];
 function spawnArrow(from,to,onHit){
@@ -7228,11 +7258,11 @@ function updateSpiritHp(sp){if(sp.hpbar)sp.hpbar.userData.draw(Math.max(0,sp.hp/
 /* 配置妖怪の特徴的な攻撃 */
 function taijiYokaiAttack(type){
   const k=APP.taiji;if(!k)return;
-  if(type==="yukionna"){k.slowUntil=performance.now()+1700;taijiDamage(6);taijiMsg("雪女の冷気！動きが鈍る");}
-  else if(type==="kitsunebi"){taijiDamage(8);taijiMsg("狐火に焼かれた！");}
-  else if(type==="kappa"){taijiDamage(12);taijiMsg("河童に水へ引き込まれた！");}
-  else if(type==="chochin"){taijiDamage(7);taijiMsg("提灯お化けの怪火！");}
-  else {taijiDamage(5);taijiMsg("人魂に憑かれた…");}
+  if(type==="yukionna"){seMagic("ice");k.slowUntil=performance.now()+1700;taijiDamage(6);taijiMsg("雪女の冷気！動きが鈍る");}
+  else if(type==="kitsunebi"){seMagic("fire");taijiDamage(8);taijiMsg("狐火に焼かれた！");}
+  else if(type==="kappa"){seMagic("blunt");taijiDamage(12);taijiMsg("河童に水へ引き込まれた！");}
+  else if(type==="chochin"){seMagic("fire");taijiDamage(7);taijiMsg("提灯お化けの怪火！");}
+  else {seMagic("thunder");taijiDamage(5);taijiMsg("人魂に憑かれた…");}
 }
 function _killSpirit(k,s){s.alive=false;s.g.visible=false;k.shot++;
   const i=rayTargets.indexOf(s.g.userData.inner);if(i>=0)rayTargets.splice(i,1);}
@@ -7349,6 +7379,7 @@ function spawnBoss(k){
   k.boss={g,cfg:Object.assign({},cfg),hp,maxHp:hp,nextAtk:performance.now()+2400,dead:false};
   $("bossName").textContent=cfg.name;$("bossHpFill").style.width="100%";$("bossBar").style.display="block";
   $("taijiRemain").textContent="ボス";taijiMsg("南庭に強大な気配…！ 広場でボス戦",2800);seFuda();
+  if(typeof SFX!=="undefined")SFX.playBossBgm(k.season); // 季節別ボス戦BGM
 }
 function updateBossBar(b){$("bossHpFill").style.width=Math.max(0,b.hp/b.maxHp*100)+"%";}
 const bossProjs=[];
@@ -7361,11 +7392,11 @@ function spawnBossProj(from,to,col,dmg,spd){
 function bossAttack(K,b,now){
   const bp=b.g.position.clone();bp.y=2.0;const pp=player.pos.clone();const d=bp.distanceTo(pp);
   const at=b.cfg.attack;
-  if(at==="pull"){ if(d<13){const dir=bp.clone().sub(pp).setY(0).normalize();player.pos.x+=dir.x*2.2;player.pos.z+=dir.z*2.2;taijiDamage(10);taijiMsg("河童の主に引き込まれる！");}else spawnBossProj(bp,pp,b.cfg.col,8,10); }
-  else if(at==="blizzard"){ if(d<14){K.slowUntil=now+1800;taijiDamage(8);taijiMsg("雪女王の吹雪！ 凍えて動けない");}else spawnBossProj(bp,pp,0xcfeeff,7,8); }
-  else if(at==="souls"){ for(let i=0;i<3;i++){const off=new THREE.Vector3((Math.random()-.5)*4,Math.random()*2,(Math.random()-.5)*4);spawnBossProj(bp.clone().add(off),pp,b.cfg.col,7,8);} }
-  else if(at==="oni"){ if(d<10){spawnShockwave(b.g.position);taijiDamage(13);taijiMsg("大鬼の踏み荒らし！");}else spawnBossProj(bp,pp,0xaa2233,10,11); }
-  else{ spawnBossProj(bp,pp,b.cfg.col,9,13); }
+  if(at==="pull"){ seMagic("blunt"); if(d<13){const dir=bp.clone().sub(pp).setY(0).normalize();player.pos.x+=dir.x*2.2;player.pos.z+=dir.z*2.2;taijiDamage(10);taijiMsg("河童の主に引き込まれる！");}else spawnBossProj(bp,pp,b.cfg.col,8,10); }
+  else if(at==="blizzard"){ seMagic("ice"); if(d<14){K.slowUntil=now+1800;taijiDamage(8);taijiMsg("雪女王の吹雪！ 凍えて動けない");}else spawnBossProj(bp,pp,0xcfeeff,7,8); }
+  else if(at==="souls"){ seMagic("thunder"); for(let i=0;i<3;i++){const off=new THREE.Vector3((Math.random()-.5)*4,Math.random()*2,(Math.random()-.5)*4);spawnBossProj(bp.clone().add(off),pp,b.cfg.col,7,8);} }
+  else if(at==="oni"){ seMagic("slash"); if(d<10){spawnShockwave(b.g.position);taijiDamage(13);taijiMsg("大鬼の踏み荒らし！");}else spawnBossProj(bp,pp,0xaa2233,10,11); }
+  else{ seMagic("fire"); spawnBossProj(bp,pp,b.cfg.col,9,13); }
   for(let i=0;i<(K.diff&&K.diff.burst||0);i++){
     const off=new THREE.Vector3((Math.random()-.5)*5,Math.random()*1.5,(Math.random()-.5)*5);
     spawnBossProj(bp.clone().add(off),pp,b.cfg.col,6,8+Math.random()*4);
@@ -7379,7 +7410,7 @@ function updateBoss(K,t,now,dt){
     b.g.rotation.y=t*0.4;b.g.position.y=Math.sin(t*1.2)*0.18;
     if(K.season==="autumn"&&!b.phase2&&b.hp<b.maxHp*.5)autumnBossPhase2(b);
     if(now>b.nextAtk&&!K.done){b.nextAtk=now+(b.cfg.attack==="souls"?2700:2300);bossAttack(K,b,now);}
-    if(b.hp<=0){b.dead=true;scene.remove(b.g);$("bossBar").style.display="none";K.done=true;taijiMsg(b.cfg.name+"を討ち取った！",2200);setTimeout(()=>endTaiji(false),1300);}
+    if(b.hp<=0){b.dead=true;scene.remove(b.g);$("bossBar").style.display="none";K.done=true;if(typeof SFX!=="undefined"){SFX.stopBossBgm();SFX.playSe("heal",.5);}taijiMsg(b.cfg.name+"を討ち取った！",2200);setTimeout(()=>endTaiji(false),1300);}
   }
   for(let i=bossProjs.length-1;i>=0;i--){const p=bossProjs[i];p.m.position.addScaledVector(p.dir,p.spd*dt);
     const dd=p.m.position.distanceTo(new THREE.Vector3(player.pos.x,player.pos.y,player.pos.z));
