@@ -1221,6 +1221,11 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
 .info-trivia{margin-top:12px;padding:10px 12px;background:rgba(179,64,42,.08);
   border-left:3px solid var(--shu);font-size:12px;line-height:1.85;font-family:var(--sans)}
 .info-trivia b{color:var(--shu)}
+/* 解説段階化: まず説明だけ、「もっと詳しく」で古文の窓を展開(#解説段階化) */
+.info-more{margin-top:10px;background:rgba(179,64,42,.06);border:1px solid #b89b56;color:var(--shu);
+  font-family:var(--sans);font-size:12px;padding:6px 12px;border-radius:3px;cursor:pointer;letter-spacing:.04em}
+.info-body:not(.expanded) .info-trivia{display:none}
+.info-body.expanded .info-more{display:none}
 #infoClose{position:absolute;top:12px;right:10px;background:var(--urushi);color:var(--gofun);
   border:1px solid var(--kin);width:30px;height:30px;font-size:14px;border-radius:50%;z-index:2}
 
@@ -1597,6 +1602,7 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
     <div class="info-name" id="infoName"></div>
     <div class="info-kana" id="infoKana"></div>
     <div class="info-desc" id="infoDesc"></div>
+    <button class="info-more" id="infoMore">📜 もっと詳しく（古文の窓）▼</button>
     <div class="info-trivia" id="infoTrivia"></div>
   </div>
 </div>
@@ -6279,12 +6285,18 @@ function showInfo(id){
   $("infoName").textContent=it.n;$("infoKana").textContent=it.k;
   $("infoDesc").textContent=it.d;
   $("infoTrivia").innerHTML="<b>📜 古文の窓</b><br>"+it.t;
+  const ib=$("info").querySelector(".info-body");if(ib)ib.classList.remove("expanded"); // 毎回まず説明だけ表示
   unlockCodex(id);
   const panel=$("info");panel.classList.remove("open","revisit");void panel.offsetWidth;
   if(isRevisit)panel.classList.add("revisit");
   requestAnimationFrame(()=>panel.classList.add("open"));
   clearTimeout(_infoTimer);_infoTimer=setTimeout(()=>panel.classList.remove("open"),isRevisit?2200:8000);
 }
+/* 「もっと詳しく」: 古文の窓を展開し、読み切れるよう自動クローズを止める */
+$("infoMore").onclick=()=>{
+  const ib=$("info").querySelector(".info-body");if(ib)ib.classList.add("expanded");
+  clearTimeout(_infoTimer);beep(560,.05);
+};
 $("infoClose").onclick=closeInfo;
 $("btnCodex").onclick=()=>openCodex("main");$("tbCodex").onclick=()=>openCodex("main");
 $("codexClose").onclick=closeCodex;
