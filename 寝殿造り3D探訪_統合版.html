@@ -5223,13 +5223,16 @@ function isObjVisible(o){
   while(n){if(!n.visible)return false;n=n.parent;}
   return true;
 }
-function makeLabel(id){
-  const it=ITEMS[id];if(!it)return;
+/* ラベル描画を一度だけ行い CanvasTexture を完全キャッシュ（同一文字列は GPU テクスチャを共有） */
+const _labelTexCache=new Map();
+function _buildLabelTex(name,kana){
+  const key=name+""+kana;
+  let hit=_labelTexCache.get(key);if(hit)return hit;
   const c=document.createElement("canvas"),x=c.getContext("2d");
   const nameFont="bold 48px 'Hiragino Mincho ProN','Yu Mincho',serif";
   const kanaFont="22px 'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif";
-  x.font=nameFont;const nameW=x.measureText(it.n).width;
-  x.font=kanaFont;const kanaW=x.measureText(it.k).width;
+  x.font=nameFont;const nameW=x.measureText(name).width;
+  x.font=kanaFont;const kanaW=x.measureText(kana).width;
   const H=116,W=Math.ceil(Math.max(150,Math.min(512,Math.max(nameW,kanaW)+64))/8)*8;
   c.width=W;c.height=H;
   x.fillStyle="rgba(20,13,8,.86)";
@@ -5239,13 +5242,18 @@ function makeLabel(id){
   x.lineTo(r,H-26);x.quadraticCurveTo(8,H-26,8,H-r-26);x.lineTo(8,r+8);x.quadraticCurveTo(8,8,r,8);x.fill();
   x.strokeStyle="rgba(201,162,63,.95)";x.lineWidth=3;x.stroke();
   x.textAlign="center";x.textBaseline="middle";
-  x.fillStyle="#c9a23f";x.font=kanaFont;x.fillText(it.k,W/2,29);
-  x.fillStyle="#f4ecdc";x.font=nameFont;x.fillText(it.n,W/2,67);
+  x.fillStyle="#c9a23f";x.font=kanaFont;x.fillText(kana,W/2,29);
+  x.fillStyle="#f4ecdc";x.font=nameFont;x.fillText(name,W/2,67);
   const t=new THREE.CanvasTexture(c);
-  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false,transparent:true}));
+  hit={tex:t,aspect:W/H};_labelTexCache.set(key,hit);return hit;
+}
+function makeLabel(id){
+  const it=ITEMS[id];if(!it)return;
+  const lt=_buildLabelTex(it.n,it.k);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:lt.tex,depthTest:false,transparent:true}));
   sp.renderOrder=999;sp.visible=false;
   scene.add(sp);
-  labels.push({sp,id,aspect:W/H});
+  labels.push({sp,id,aspect:lt.aspect});
 }
 /* labelPos未設定の建具に付与 */
 interactables.hajitomi&&(interactables.hajitomi.labelPos=new THREE.Vector3(SH.cx-7.4,SH.f2+3.2,SH.cz+SH.hd/2+.6));
