@@ -100,6 +100,10 @@
 - **TEX.urushi（漆・梨地）**: 漆黒地＋金粉の梨地。`MAT.black`(color白に変更しmapを正しく表示)へ適用 → 二階厨子・帳台・楽器の台座・脇息など漆塗りの調度がまとめて高級感UP。
 - **TEX.nishiki（有職錦・七宝つなぎ）**: 蘇芳地に金の七宝文。茵(shitone)・枕(makura)・円座の敷物に適用（従来の無地TEX.tobariから差し替え。壁代等のMAT.tobariは据え置き）。
 
+### 退治モードの効果音/ボスBGM実装（2026-06）
+- `SFX.se`(弓矢を放つ/刺さる・聖魔法=破魔の札・火炎/氷/雷/回復/斬/打撃)を先読み、`SFX.playSe(key,vol)`で再生(mp3無しは合成音にフォールバック)。`seMagic(key)`新設。各攻撃に適音配線(ボス dart→火炎/pull→打撃/blizzard→氷/souls→雷/oni→斬、配置妖怪も同様、晴明回復=回復)。
+- **ボス戦BGM** `SFX.bossBgm`(九尾狐戦/提灯・河童戦/人魂・大鬼戦/雪女戦)を`spawnBoss`で再生、撃破/終了/中断(`_clearTaijiFx`)で`stopBossBgm`。6-8MBと大きいため先読みせず`playBossBgm`で遅延ロード。再生中は環境ベッドを0にダッキング、停止で復帰。mute/背面追従。
+
 ### 退治モード: 季節ボス戦・UI刷新・更なる軽量化（2026-06）
 - **UI被り解消**: taiji中は`body.taiji-mode #topbar{display:none!important}`でトップバーを完全非表示。操作はすべて下部HUD(`#taijiHud`)＋ボスバー(上部)。HUDに✕やめる(`taijiQuit`)・破魔の札クールタイムバー(`#tjCool`)。
 - **軽量化**: taiji中は`renderer.shadowMap.autoUpdate=false`(影の毎フレーム再描画停止)。前回のライト全廃と合わせ更に軽量。退治FX/弾は退治終了時に`_clearTaijiFx`で掃除。
