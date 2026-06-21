@@ -100,6 +100,15 @@
 - **TEX.urushi（漆・梨地）**: 漆黒地＋金粉の梨地。`MAT.black`(color白に変更しmapを正しく表示)へ適用 → 二階厨子・帳台・楽器の台座・脇息など漆塗りの調度がまとめて高級感UP。
 - **TEX.nishiki（有職錦・七宝つなぎ）**: 蘇芳地に金の七宝文。茵(shitone)・枕(makura)・円座の敷物に適用（従来の無地TEX.tobariから差し替え。壁代等のMAT.tobariは据え置き）。
 
+### 退治モード: 季節ボス戦・UI刷新・更なる軽量化（2026-06）
+- **UI被り解消**: taiji中は`body.taiji-mode #topbar{display:none!important}`でトップバーを完全非表示。操作はすべて下部HUD(`#taijiHud`)＋ボスバー(上部)。HUDに✕やめる(`taijiQuit`)・破魔の札クールタイムバー(`#tjCool`)。
+- **軽量化**: taiji中は`renderer.shadowMap.autoUpdate=false`(影の毎フレーム再描画停止)。前回のライト全廃と合わせ更に軽量。退治FX/弾は退治終了時に`_clearTaijiFx`で掃除。
+- **時間固定＋禍々しい空**: taiji中は時間UI非表示で夜固定。描画ループで空/霧を暗赤へ寄せ(`cur.sky/fog→0x1a0407等`)、霧密度0.012、`#taijiMood`(赤黒radial+multiply+脈動)を重ねる。
+- **武器切替**: PCは1=破魔の矢/2=破魔の札(Q/E/Tabでトグル)。スマホ/タブレットは画面上部隅タップ(左=矢/右=札)＋HUDボタン。`taijiSetWeapon`。
+- **接近警告音**: 最寄りの霊が10m以内で距離に応じた間隔のビープ。
+- **季節選択→ボス戦**: `btnTaiji`で季節ピッカー(`showTaijiSeasonPicker`)。雑魚(kekkai)を一掃で`spawnBoss`。ボスは北の対の奥(z=-52)。`BOSS_CFG`(春=九尾の狐/dart, 夏=河童の主/pull, 秋=合体人魂/souls, 冬=雪女王/blizzard)。各固有攻撃を`bossAttack`＋`bossProjs`弾で実装。ボスHP/名はエルデンリング風に上部(`#bossBar`)。破魔の矢/札でボスにダメージ、撃破で勝利。
+- 注: 雑魚自体は汎用kekkai(季節別ではない)。ボスと配置妖怪が季節色を担う。
+
 ### 退治モード軽量化・武器刷新・敵HP・特殊攻撃（2026-06）
 - **軽量化(フリーズ解消)**: 妖怪ごとの`PointLight`を全廃(hitodama/chochin/kitsunebi/yukionna/kekkai=実行時~19個)。Three.jsはライト数が変わると全マテリアル再コンパイルするため、退治で霊が消える瞬間に固まっていた。発光はMeshBasic+Bloomで維持。anim側の`li`参照は元々ガード済み。
 - **四脚門の扉重なり**: 余分な扉パネル1枚(translateZ(0)の重複box)を削除。扉は左右2枚のみ。
