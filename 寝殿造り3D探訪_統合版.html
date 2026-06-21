@@ -1440,6 +1440,17 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
   .t-cat-btn{min-height:70px;flex:1 1 110px}
   .t-btn{min-width:120px;font-size:13px;padding:10px 12px}
 }
+/* 横向き(背の低いビューポート=スマホ横持ち): 下部の操作系と解説/地図が重ならないよう再配置(#59) */
+@media (orientation:landscape) and (max-height:520px){
+  /* 解説は下部シートをやめ、左下ジョイ・右下「調べる」を避けて右上へ */
+  #info{left:auto;right:8px;top:calc(var(--topbar-h,48px) + 6px);bottom:auto;width:min(340px,46vw);border-radius:10px}
+  .info-body{max-height:60vh}
+  #minimapWrap{width:96px;height:96px}
+  #minimap{width:96px;height:96px}
+  /* 操作ボタンをやや小さく下げ、画面下の重なりを緩和 */
+  #joy{width:96px;height:96px}
+  #interactBtn{width:60px;height:60px}
+}
 </style>
 </head>
 <body>
