@@ -4441,8 +4441,9 @@ function makePetCat(colors){
 // 蛍(夏夜):光る点のパーティクル
 const fireflies=new THREE.Group();scene.add(fireflies);
 (function buildFireflies(){
+  const fgeo=new THREE.SphereGeometry(0.05,6,6); // 蛍は1ジオメトリ共有(材質は明滅で個別)
   for(let i=0;i<40;i++){
-    const m=new THREE.Mesh(new THREE.SphereGeometry(0.05,6,6),
+    const m=new THREE.Mesh(fgeo,
       new THREE.MeshBasicMaterial({color:0xaaff66,transparent:true,opacity:0.9}));
     m.position.set(rnd(-15,20),rnd(0.5,3),rnd(20,52));
     m.userData={bx:m.position.x,bz:m.position.z,by:m.position.y,ph:Math.random()*6};
@@ -4507,14 +4508,15 @@ function makeFalling(count,texture,size){
     depthWrite:false,
     alphaTest:0.02 // 透明縁を柔らかくし、黒い輪郭が出にくいようにする
   });
+  const geo=new THREE.PlaneGeometry(size,size); // 1ジオメトリを全粒子で共有（プール化）
   for(let i=0; i<count; i++){
-    const m=new THREE.Mesh(new THREE.PlaneGeometry(size,size),mat);
+    const m=new THREE.Mesh(geo,mat);
     m.position.set(rnd(-60,60),rnd(0,40),rnd(-60,60));
     m.userData={vy:rnd(0.02,0.06),sway:Math.random()*6,sx:rnd(0.3,0.8)};
     m.rotation.set(rnd(0,3),rnd(0,3),rnd(0,3));
     g.add(m);
   }
-  g.userData.mat=mat;g.visible=false;scene.add(g);return g;
+  g.userData.mat=mat;g.userData.geo=geo;g.visible=false;scene.add(g);return g;
 }
 const petals=makeFalling(80,TEX.sakuraPetal,0.28);   // 桜の花びら
 const leavesFall=makeFalling(40,TEX.mapleLeaf,0.52); // 紅葉の落ち葉
@@ -4523,8 +4525,9 @@ const snowFall=makeFalling(100,TEX.snow,0.26);       // 雪
 const rainMat=new THREE.MeshBasicMaterial({color:0xaac8ee,transparent:true,opacity:0.28,depthWrite:false,side:THREE.DoubleSide});
 function makeRain(){
   const g=new THREE.Group();
+  const rainGeo=new THREE.PlaneGeometry(0.04,0.65); // 雨粒も1ジオメトリ共有
   for(let i=0;i<220;i++){
-    const m=new THREE.Mesh(new THREE.PlaneGeometry(0.04,0.65),rainMat);
+    const m=new THREE.Mesh(rainGeo,rainMat);
     m.position.set(rnd(-55,55),rnd(0,38),rnd(-55,55));
     m.userData={vy:rnd(0.60,0.95),sway:Math.random()*1.5,sx:rnd(0.04,0.10)};
     m.rotation.y=Math.random()*Math.PI;
