@@ -7707,7 +7707,7 @@ function animate(now){
     if(rainFall&&rainFall.visible){
       scene.fog.density=0.022; // 雨のときは濃い霧
     } else {
-      scene.fog.density = (APP.mode==="taiji")?0.012:(APP.time==="day")?0.012:(APP.time==="dawn")?0.020:0.0; /* 退治:禍々しい霧 / 昼:霞 / 朝:朝靄 */
+      scene.fog.density = (APP.mode==="taiji")?0.012:(APP.time==="day")?0.012:(APP.time==="dawn")?0.020:(APP.time==="dusk")?0.014:0.013; /* 退治:禍々しい霧 / 昼:霞 / 朝:朝靄 / 夜:遠景を青黒に沈める薄霧(灯火の暖色を引き立てる) */
     }
   }
   scene.background=cur.sky;
