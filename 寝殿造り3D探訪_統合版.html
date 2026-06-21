@@ -1201,6 +1201,8 @@ body.taiji-mode #taijiMood{display:block}
 /* 弓矢カーソル: taiji mode 中は十字線 */
 body.taiji-mode #c{cursor:crosshair}
 body.taiji-mode #topbar{display:none!important}
+/* トップバー折りたたみ: 銘・モード名・開閉ボタン以外を隠してプレイ画面を広く使う */
+#topbar.collapsed>:not(.brand):not(#modeTag):not(#tbCollapse){display:none!important}
 #info::before,#info::after{content:"";position:absolute;z-index:3;top:-8px;bottom:-8px;width:11px;
   background:linear-gradient(90deg,#5e140c,#a8412a 45%,#6e180d);border:1px solid var(--kin);
   border-radius:6px;box-shadow:0 2px 7px rgba(0,0,0,.55);pointer-events:none}
@@ -1525,6 +1527,7 @@ body.taiji-mode #topbar{display:none!important}
 <div id="topbar">
   <span class="brand">寝殿造り探訪</span>
   <span id="modeTag">自由散策</span>
+  <button class="tb-btn" id="tbCollapse" title="ツールバーの開閉">≡</button>
   <!-- 視点・位置 -->
   <span class="tb-sep"></span>
   <button class="tb-btn" id="tbView">👁 俯瞰</button>
@@ -6549,6 +6552,19 @@ $("tbHome").onclick=()=>{
   joy.active=false;joy.vx=joy.vy=0;knob.style.transform="translate(-50%,-50%)";
   closeInfo();updateControlUI();toast("開始位置へ戻りました");
 };
+/* トップバー折りたたみの開閉(localStorage保存) */
+function applyTopbarCollapsed(on){
+  $("topbar").classList.toggle("collapsed",on);
+  $("tbCollapse").textContent=on?"≡＋":"≡";
+  $("tbCollapse").title=on?"ツールバーを開く":"ツールバーを畳む";
+  requestAnimationFrame(syncTopbarH);
+}
+$("tbCollapse").onclick=()=>{
+  const on=!$("topbar").classList.contains("collapsed");
+  try{localStorage.setItem("shinden3d-tbcollapse",on?"1":"0");}catch(e){}
+  applyTopbarCollapsed(on);beep(520,.05);
+};
+try{if(localStorage.getItem("shinden3d-tbcollapse")==="1")applyTopbarCollapsed(true);}catch(e){}
 $("tbHelp").onclick=()=>$("help").style.display="flex";
 $("helpClose").onclick=()=>$("help").style.display="none";
 $("creditsLink").onclick=()=>$("credits").style.display="flex";
