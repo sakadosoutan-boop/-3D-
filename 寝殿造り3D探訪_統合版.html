@@ -2570,9 +2570,9 @@ const SHISHIN_DATA={
     [-1,1].forEach(s=>g.add(box(.16,3.4,1.75,MAT.wood,0,1.75,s*0.95)));   // 扉(閉)
     world.add(g);return g;
   }
-  munamon(-W,0,Math.PI/2);   // 西門
-  munamon(0,-W,0);           // 北門
-  munamon(W,0,Math.PI/2);    // 東門(中門正面・崩れていた築地に棟門を設置)
+  munamon(-W,0,0);           // 西門(築地と平行に=Z方向に揃える)
+  munamon(0,-W,Math.PI/2);   // 北門(築地と平行に=X方向に揃える)
+  munamon(W,0,0);            // 東門(中門正面・崩れていた築地に棟門を設置。築地と平行に)
 
   const spiritGlowTex=canv(128,128,(x,w,h)=>{
     const g=x.createRadialGradient(w/2,h/2,2,w/2,h/2,w*.5);
