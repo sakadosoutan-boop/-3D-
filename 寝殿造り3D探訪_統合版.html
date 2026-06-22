@@ -1202,6 +1202,14 @@ body.taiji-mode #taijiMood{display:block}
 /* 弓矢カーソル: taiji mode 中は十字線 */
 body.taiji-mode #c{cursor:crosshair}
 body.taiji-mode #topbar{display:none!important}
+/* 撮影モード: HUD・操作系をすべて隠して景色だけにする(#40) */
+body.photo-mode #topbar,body.photo-mode #minimapWrap,body.photo-mode #joy,body.photo-mode #interactBtn,
+body.photo-mode #crosshair,body.photo-mode #quizHud,body.photo-mode #questHud,body.photo-mode #taijiHud,
+body.photo-mode #kaimamiEye,body.photo-mode #fpsMeter,body.photo-mode #bossBar{display:none!important}
+#photoExit{position:fixed;z-index:60;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);
+  display:none;background:rgba(20,13,8,.82);color:var(--gofun);border:1px solid var(--kin);
+  padding:9px 16px;font-size:13px;letter-spacing:.08em;border-radius:4px}
+body.photo-mode #photoExit{display:block}
 /* トップバー折りたたみ: 銘・モード名・開閉ボタン以外を隠してプレイ画面を広く使う */
 #topbar.collapsed>:not(.brand):not(#modeTag):not(#tbCollapse){display:none!important}
 /* 文字サイズ: 解説・図鑑など読み物パネルを拡大(zoomでレイアウトごと拡大) */
@@ -1766,12 +1774,16 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
       <button class="tb-btn" id="gfxFont_xl">特大</button>
     </span>
   </div>
+  <div class="gfx-row"><span class="gfx-lbl">撮影モード（UIを隠す）</span>
+    <span class="gfx-opts"><button class="tb-btn" id="gfxPhoto">📷 撮影モード</button></span>
+  </div>
   <p class="gfx-note">「オート」は端末性能に応じて自動調整。動作が重いときは「中」「低」を。</p>
   <button class="tb-btn" id="gfxClose" style="margin-top:10px">閉じる</button>
 </div></div>
 
 <div id="joy"><div id="joyKnob"></div></div>
 <button id="interactBtn">調べる</button>
+<button id="photoExit">📷 撮影モード解除（P）</button>
 <div id="crosshair"></div>
 <div id="fpsMeter"></div>
 
@@ -7822,6 +7834,19 @@ const GFX=(()=>{
 })();
 $("tbGfx").onclick=()=>{$("gfx").style.display="flex";};
 $("gfxClose").onclick=()=>{$("gfx").style.display="none";};
+/* 撮影モード(#40): UIを隠して景色を撮影。Pキー / 設定ボタン / 解除ボタンで切替 */
+function setPhotoMode(on){
+  document.body.classList.toggle("photo-mode",on);
+  if(on){$("gfx").style.display="none";closeInfo();closeCodex();$("help").style.display="none";}
+}
+$("gfxPhoto").onclick=()=>{setPhotoMode(true);beep(620,.05);};
+$("photoExit").onclick=()=>{setPhotoMode(false);beep(540,.05);};
+addEventListener("keydown",e=>{
+  if((e.key==="p"||e.key==="P")&&APP.mode!=="title"){
+    const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))return; // 検索入力中は無効
+    setPhotoMode(!document.body.classList.contains("photo-mode"));
+  }
+});
 $("gfx").onclick=e=>{if(e.target===$("gfx"))$("gfx").style.display="none";};
 $("gfxP_auto").onclick=()=>{GFX.setPreset("auto");beep(560,.05);};
 $("gfxP_high").onclick=()=>{GFX.setPreset("high");beep(560,.05);};
