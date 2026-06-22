@@ -1364,6 +1364,13 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
 .gloss-card .gloss-mean{font-size:13px;line-height:1.7;margin-top:4px}
 .gloss-card .gloss-ex{font-size:11px;line-height:1.65;color:#5a4030;margin-top:5px;border-top:1px dashed rgba(184,155,86,.6);padding-top:5px}
 .gloss-card .gloss-ex b{color:var(--shu)}
+.gloss-study-toggle{display:flex;align-items:center;gap:6px;font-family:var(--sans);font-size:12px;color:#67583f;margin-bottom:9px;cursor:pointer}
+.gloss-study-toggle input{accent-color:var(--shu)}
+.gloss-grid.study .gloss-card{cursor:pointer}
+.gloss-grid.study .gloss-card .gloss-mean,.gloss-grid.study .gloss-card .gloss-ex{display:none}
+.gloss-grid.study .gloss-card.revealed .gloss-mean,.gloss-grid.study .gloss-card.revealed .gloss-ex{display:block}
+.gloss-grid.study .gloss-card::after{content:"タップで意味を表示";display:block;margin-top:5px;font-size:10px;color:#9a7c5a}
+.gloss-grid.study .gloss-card.revealed::after{content:""}
 /* 和歌集ページ */
 #wakaPage{display:none}.codex-waka-list{display:flex;flex-direction:column;gap:8px}
 .waka-row{padding:12px 14px;border:1px solid #b89b56;background:rgba(255,255,255,.4);font-family:var(--serif)}
@@ -1615,6 +1622,7 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
     <div id="glossPage">
       <div id="glossIntro" style="font-family:var(--sans);font-size:12px;color:#67583f;margin-bottom:8px">古文で頻出する重要語・敬語・文法のカード。タップで意味と例を確認しよう。</div>
       <input type="search" id="glossSearch" class="codex-search" placeholder="🔍 語・よみ・意味で検索">
+      <label class="gloss-study-toggle"><input type="checkbox" id="glossHide"> 意味を隠して暗記（カードをタップで答え合わせ）</label>
       <div class="codex-filter-bar" id="glossFilterBar"></div>
       <div class="gloss-grid" id="glossGrid"></div>
     </div>
@@ -6249,8 +6257,9 @@ const GLOSSARY=[
  {t:"係り結び",y:"かかりむすび",c:"g",m:"【文法】ぞ・なむ・や・か→文末は連体形／こそ→已然形。",e:"「ぞ・なむ」は強調、「や・か」は疑問・反語。「こそ…已然形」は強調。"},
  {t:"なむ",y:"なむ",c:"g",m:"①係助詞(強調) ②願望の終助詞(他に対し…してほしい) ③ナ変+む ④完了「ぬ」+推量「む」。",e:"識別問題の頻出語。未然形+なむ=願望、連用形+なむ=強意+推量。"}
 ];
-let glossCatFilter="all";let glossSearchTerm="";
+let glossCatFilter="all";let glossSearchTerm="";let glossStudy=false;
 {const gs=$("glossSearch");if(gs)gs.oninput=()=>{glossSearchTerm=gs.value.trim().toLowerCase();renderGlossPage();};}
+{const gh=$("glossHide");if(gh)gh.onchange=()=>{glossStudy=gh.checked;renderGlossPage();};}
 function renderGlossPage(){
   const catName={w:"重要語",k:"敬語",g:"文法"};
   const fb=$("glossFilterBar");fb.textContent="";
@@ -6262,7 +6271,7 @@ function renderGlossPage(){
     btn.onclick=()=>{glossCatFilter=cat;renderGlossPage();};
     fb.appendChild(btn);
   });
-  const grid=$("glossGrid");grid.textContent="";
+  const grid=$("glossGrid");grid.textContent="";grid.classList.toggle("study",glossStudy);
   const match=(e)=>{if(!glossSearchTerm)return true;
     return (e.t+" "+e.y+" "+e.m+" "+e.e).toLowerCase().indexOf(glossSearchTerm)>=0;};
   const shown=GLOSSARY.filter(e=>(glossCatFilter==="all"||e.c===glossCatFilter)&&match(e));
@@ -6273,6 +6282,7 @@ function renderGlossPage(){
     const card=document.createElement("div");card.className="gloss-card";
     card.innerHTML=`<div><span class="gloss-term">${e.t}</span><span class="gloss-yomi">${e.y}</span></div>`+
       `<div class="gloss-mean">${e.m}</div><div class="gloss-ex"><b>例・解説:</b> ${e.e}</div>`;
+    card.onclick=()=>{if(grid.classList.contains("study")){card.classList.toggle("revealed");beep(card.classList.contains("revealed")?560:420,.04);}};
     grid.appendChild(card);
   });
 }
