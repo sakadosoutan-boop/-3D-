@@ -1354,6 +1354,16 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
 .codex-tabs{display:flex;gap:0;margin-bottom:10px;border-bottom:2px solid #b89b56}
 .codex-tab{padding:7px 20px;border:1px solid #b89b56;border-bottom:none;background:rgba(70,55,38,.08);color:#67583f;font-family:var(--serif);font-size:14px;cursor:pointer;margin-right:4px;border-radius:3px 3px 0 0;transition:background .12s}
 .codex-tab.active{background:linear-gradient(180deg,#fff8ee,#f5eddd);color:var(--shu);font-weight:bold}
+/* 用語カードページ */
+#glossPage{display:none}
+.gloss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:9px}
+.gloss-card{padding:11px 13px;border:1px solid #b89b56;background:rgba(255,255,255,.45);
+  color:var(--sumi);font-family:var(--sans);border-left:4px solid var(--shu);border-radius:2px}
+.gloss-card .gloss-term{font-family:var(--serif);font-size:18px;color:var(--shu);letter-spacing:.06em}
+.gloss-card .gloss-yomi{font-size:11px;color:#7a5c3a;margin-left:6px}
+.gloss-card .gloss-mean{font-size:13px;line-height:1.7;margin-top:4px}
+.gloss-card .gloss-ex{font-size:11px;line-height:1.65;color:#5a4030;margin-top:5px;border-top:1px dashed rgba(184,155,86,.6);padding-top:5px}
+.gloss-card .gloss-ex b{color:var(--shu)}
 /* 和歌集ページ */
 #wakaPage{display:none}.codex-waka-list{display:flex;flex-direction:column;gap:8px}
 .waka-row{padding:12px 14px;border:1px solid #b89b56;background:rgba(255,255,255,.4);font-family:var(--serif)}
@@ -1590,6 +1600,7 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
     <div class="codex-tabs">
       <button class="codex-tab active" id="codexTabMain">図鑑</button>
       <button class="codex-tab" id="codexTabWaka">🎋 和歌集</button>
+      <button class="codex-tab" id="codexTabGloss">📖 用語カード</button>
     </div>
     <div id="codexMainPage">
       <input type="search" id="codexSearch" class="codex-search" placeholder="🔍 名前・よみ・説明で検索">
@@ -1600,6 +1611,12 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
     <div id="wakaPage">
       <div id="codexWakaProgress" style="font-family:var(--sans);font-size:12px;color:#67583f;margin-bottom:8px"></div>
       <div class="codex-waka-list" id="wakaList"></div>
+    </div>
+    <div id="glossPage">
+      <div id="glossIntro" style="font-family:var(--sans);font-size:12px;color:#67583f;margin-bottom:8px">古文で頻出する重要語・敬語・文法のカード。タップで意味と例を確認しよう。</div>
+      <input type="search" id="glossSearch" class="codex-search" placeholder="🔍 語・よみ・意味で検索">
+      <div class="codex-filter-bar" id="glossFilterBar"></div>
+      <div class="gloss-grid" id="glossGrid"></div>
     </div>
   </div>
 </div>
@@ -6197,17 +6214,81 @@ function showWakaReveal(id){
   clearTimeout(_wakaRevTimer);_wakaRevTimer=setTimeout(()=>el.classList.remove("show"),5500);
   el.onclick=()=>{el.classList.remove("show");clearTimeout(_wakaRevTimer);};
 }
+/* ---- 用語カード(古文の用語集) — 重要語(w)/敬語(k)/文法(g) ---- */
+const GLOSSARY=[
+ {t:"あはれなり",y:"あわれなり",c:"w",m:"しみじみと心が動かされる。趣深い。",e:"喜怒哀楽どの感情にも使う。『源氏物語』の世界観そのもの。「をかし」が知的な感動なら、こちらは情にしみる感動。"},
+ {t:"をかし",y:"おかし",c:"w",m:"趣がある。興味深い。こっけいだ。美しい。",e:"『枕草子』の基調となる明るく知的な美意識。現代語「おかしい(変だ)」とは意味が違うので注意。"},
+ {t:"いと",y:"いと",c:"w",m:"非常に。たいそう。(打消を伴い)たいして…ない。",e:"程度の大きさを表す副詞。「いとをかし」=とても趣がある。"},
+ {t:"ゆかし",y:"ゆかし",c:"w",m:"見たい・知りたい・聞きたい。心がひかれる。",e:"対象に近づきたい気持ち全般。「奥ゆかしい」の語源。"},
+ {t:"うつくし",y:"うつくし",c:"w",m:"かわいらしい。いとしい。",e:"小さいもの・幼いものへの愛情。現代の「美しい」より「かわいい」に近い。"},
+ {t:"うるはし",y:"うるわし",c:"w",m:"きちんと整って美しい。端正だ。",e:"乱れのない正式な美しさ。打ち解けた美の「なまめかし」と対比される。"},
+ {t:"あさまし",y:"あさまし",c:"w",m:"驚きあきれる。意外だ。情けない。",e:"良いことにも悪いことにも、予想外で驚いたときに使う。"},
+ {t:"すさまじ",y:"すさまじ",c:"w",m:"興ざめだ。殺風景だ。",e:"その場にふさわしくなく、しらける様子。『枕草子』「すさまじきもの」が有名。"},
+ {t:"めでたし",y:"めでたし",c:"w",m:"すばらしい。立派だ。",e:"心から賞賛する気持ち。動詞「愛づ(めづ)」から。現代「めでたい」より広い。"},
+ {t:"はづかし",y:"はずかし",c:"w",m:"(相手が立派で)気おくれする。こちらが恥ずかしくなるほど立派だ。",e:"「はづかしき人」=こちらが気後れするほど立派な人。"},
+ {t:"いみじ",y:"いみじ",c:"w",m:"程度がはなはだしい。(よくも悪くも)すごい。",e:"文脈で「すばらしい」にも「ひどい」にもなる。「いみじう泣く」=ひどく泣く。"},
+ {t:"わろし",y:"わろし",c:"w",m:"よくない。感心しない。",e:"「悪し(あし)」ほど悪くなく、程度が良くないだけ。「よし>よろし>わろし>あし」の段階。"},
+ {t:"あやし",y:"あやし",c:"w",m:"①不思議だ ②身分が低い・みすぼらしい。",e:"漢字で「怪し(不思議)」「賤し(下賤)」と書き分ける。"},
+ {t:"つとめて",y:"つとめて",c:"w",m:"早朝。(何かの)翌朝。",e:"『枕草子』「冬はつとめて」=冬は早朝(が良い)。"},
+ {t:"やうやう",y:"ようよう",c:"w",m:"だんだん。しだいに。",e:"「やうやう白くなりゆく山ぎは」(枕草子)。"},
+ {t:"おぼゆ",y:"おぼゆ",c:"w",m:"①自然と思われる ②似る ③思い出される。",e:"自発の意味が中心。「人のおぼえ」=世間の評判。"},
+ {t:"ときめく",y:"ときめく",c:"w",m:"寵愛を受けて栄える。時流に乗って栄える。",e:"「いとやんごとなき際にはあらぬが、すぐれてときめき給ふ」(桐壺)。"},
+ {t:"こころもとなし",y:"こころもとなし",c:"w",m:"じれったい。待ち遠しい。不安だ。",e:"はっきりしない状態への落ち着かなさ。"},
+ {t:"たまふ",y:"たまう",c:"k",m:"【尊敬】お与えになる/(補助動詞)…なさる。【謙譲】…(ござい)ます。",e:"四段は尊敬、下二段は謙譲。古文最頻出の敬語。"},
+ {t:"たてまつる",y:"たてまつる",c:"k",m:"【謙譲】差し上げる。【尊敬】召し上がる・お召しになる・お乗りになる。",e:"「奉る」。文脈で謙譲か尊敬かを見極める。"},
+ {t:"はべり",y:"はべり",c:"k",m:"【丁寧】あります・おります。【謙譲】お仕えする・伺候する。",e:"「侍り」。会話・手紙文で「ございます」にあたる。"},
+ {t:"おはす",y:"おわす",c:"k",m:"【尊敬】いらっしゃる(「あり・居り・行く・来」の尊敬)。",e:"「おはします」はさらに高い敬意。"},
+ {t:"奏す",y:"そうす",c:"k",m:"【謙譲】(天皇・上皇に)申し上げる。",e:"相手が天皇のときだけ使う絶対敬語。中宮・東宮には「啓す」。"},
+ {t:"啓す",y:"けいす",c:"k",m:"【謙譲】(中宮・東宮に)申し上げる。",e:"相手が決まっている絶対敬語。天皇には「奏す」。"},
+ {t:"けり",y:"けり",c:"g",m:"【助動詞】①過去(…た) ②詠嘆・気づき(…だなあ／…なのだった)。",e:"和歌や会話末の「けり」は詠嘆が多い。直接体験の過去は「き」。"},
+ {t:"き",y:"き",c:"g",m:"【助動詞】過去(…た)。自分が直接体験した過去。",e:"伝聞・気づきの「けり」と区別する。連体形は「し」、已然形は「しか」。"},
+ {t:"なり",y:"なり",c:"g",m:"【助動詞】①断定(…だ) ②伝聞・推定(…のようだ／…という)。",e:"体言+なり=断定。終止形+なり=伝聞推定(音や声を根拠にする)。"},
+ {t:"む",y:"む",c:"g",m:"【助動詞】推量・意志・婉曲・適当・勧誘。",e:"主語が一人称なら意志、二人称なら勧誘・適当、三人称なら推量になりやすい。"},
+ {t:"べし",y:"べし",c:"g",m:"【助動詞】推量・意志・可能・当然・命令・適当。",e:"「むべなり」より強い。文脈で六つの意味を判別する。"},
+ {t:"らむ・けむ",y:"らむ・けむ",c:"g",m:"【助動詞】らむ=現在推量(今ごろ…ているだろう)／けむ=過去推量(…ただろう)。",e:"目の前にない事を推量する。原因推量「なぜ…なのだろう」にもなる。"},
+ {t:"係り結び",y:"かかりむすび",c:"g",m:"【文法】ぞ・なむ・や・か→文末は連体形／こそ→已然形。",e:"「ぞ・なむ」は強調、「や・か」は疑問・反語。「こそ…已然形」は強調。"},
+ {t:"なむ",y:"なむ",c:"g",m:"①係助詞(強調) ②願望の終助詞(他に対し…してほしい) ③ナ変+む ④完了「ぬ」+推量「む」。",e:"識別問題の頻出語。未然形+なむ=願望、連用形+なむ=強意+推量。"}
+];
+let glossCatFilter="all";let glossSearchTerm="";
+{const gs=$("glossSearch");if(gs)gs.oninput=()=>{glossSearchTerm=gs.value.trim().toLowerCase();renderGlossPage();};}
+function renderGlossPage(){
+  const catName={w:"重要語",k:"敬語",g:"文法"};
+  const fb=$("glossFilterBar");fb.textContent="";
+  const usedCats=[...new Set(GLOSSARY.map(e=>e.c))];
+  ["all",...usedCats].forEach(cat=>{
+    const btn=document.createElement("button");
+    btn.className="codex-filter-btn"+(glossCatFilter===cat?" active":"");
+    btn.textContent=cat==="all"?"すべて":(catName[cat]||cat);
+    btn.onclick=()=>{glossCatFilter=cat;renderGlossPage();};
+    fb.appendChild(btn);
+  });
+  const grid=$("glossGrid");grid.textContent="";
+  const match=(e)=>{if(!glossSearchTerm)return true;
+    return (e.t+" "+e.y+" "+e.m+" "+e.e).toLowerCase().indexOf(glossSearchTerm)>=0;};
+  const shown=GLOSSARY.filter(e=>(glossCatFilter==="all"||e.c===glossCatFilter)&&match(e));
+  if(!shown.length){const empty=document.createElement("div");
+    empty.style.cssText="grid-column:1/-1;text-align:center;color:#7a6a4a;padding:20px;font-family:var(--sans);font-size:13px";
+    empty.textContent="該当する用語がありません";grid.appendChild(empty);}
+  shown.forEach(e=>{
+    const card=document.createElement("div");card.className="gloss-card";
+    card.innerHTML=`<div><span class="gloss-term">${e.t}</span><span class="gloss-yomi">${e.y}</span></div>`+
+      `<div class="gloss-mean">${e.m}</div><div class="gloss-ex"><b>例・解説:</b> ${e.e}</div>`;
+    grid.appendChild(card);
+  });
+}
 let codexCatFilter="all";
 let codexSearchTerm="";
 {const si=$("codexSearch");if(si)si.oninput=()=>{codexSearchTerm=si.value.trim().toLowerCase();renderCodex();};}
-let codexTab="main"; // "main" | "waka"
+let codexTab="main"; // "main" | "waka" | "gloss"
 function setCodexTab(tab){
   codexTab=tab;
   $("codexTabMain").classList.toggle("active",tab==="main");
   $("codexTabWaka").classList.toggle("active",tab==="waka");
+  $("codexTabGloss").classList.toggle("active",tab==="gloss");
   $("codexMainPage").style.display=tab==="main"?"block":"none";
   $("wakaPage").style.display=tab==="waka"?"block":"none";
-  if(tab==="main")renderCodex();else renderWakaPage();
+  $("glossPage").style.display=tab==="gloss"?"block":"none";
+  if(tab==="main")renderCodex();else if(tab==="waka")renderWakaPage();else renderGlossPage();
 }
 function renderWakaPage(){
   const snName={spring:"🌸 春",summer:"🌿 夏",autumn:"🍂 秋",winter:"❄ 冬"};
@@ -6315,6 +6396,7 @@ $("btnCodex").onclick=()=>openCodex("main");$("tbCodex").onclick=()=>openCodex("
 $("codexClose").onclick=closeCodex;
 $("codexTabMain").onclick=()=>setCodexTab("main");
 $("codexTabWaka").onclick=()=>setCodexTab("waka");
+$("codexTabGloss").onclick=()=>setCodexTab("gloss");
 $("codex").addEventListener("click",e=>{if(e.target===$("codex"))closeCodex();});
 addEventListener("keydown",e=>{if(e.key==="Escape"){closeCodex();closeInfo();}});
 updateCodexProgress();
