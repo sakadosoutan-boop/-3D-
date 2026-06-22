@@ -1371,6 +1371,12 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
 .gloss-grid.study .gloss-card.revealed .gloss-mean,.gloss-grid.study .gloss-card.revealed .gloss-ex{display:block}
 .gloss-grid.study .gloss-card::after{content:"タップで意味を表示";display:block;margin-top:5px;font-size:10px;color:#9a7c5a}
 .gloss-grid.study .gloss-card.revealed::after{content:""}
+/* 収集データの引き継ぎ */
+.codex-backup{margin-top:18px;padding-top:12px;border-top:1px solid #b89b56;font-family:var(--sans)}
+.codex-backup summary{cursor:pointer;font-size:13px;color:#67583f;letter-spacing:.04em}
+.codex-backup p{font-size:11.5px;line-height:1.7;color:#6a5c44;margin:8px 0}
+.codex-backup textarea{width:100%;box-sizing:border-box;height:56px;resize:vertical;padding:7px 9px;border:1px solid #b89b56;border-radius:3px;background:rgba(255,255,255,.6);color:var(--sumi);font-family:monospace;font-size:11px;word-break:break-all}
+.codex-backup-btns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 /* 和歌集ページ */
 #wakaPage{display:none}.codex-waka-list{display:flex;flex-direction:column;gap:8px}
 .waka-row{padding:12px 14px;border:1px solid #b89b56;background:rgba(255,255,255,.4);font-family:var(--serif)}
@@ -1543,6 +1549,8 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
     <details class="t-changelog">
       <summary>▸ 最近の更新</summary>
       <div class="cl-list">
+        <div>⚔ 物の怪退治に「ボスラッシュ」を追加。春→夏→秋→冬の四ボスを連続討伐</div>
+        <div>💾 図鑑に収集データの引き継ぎ（バックアップ／復元コード）を追加</div>
         <div>❄ 雪女の姿を一新（白の十二単・漆黒の垂髪・氷の簪）。建物にめり込む不具合も修正</div>
         <div>📖 図鑑に「用語カード」を追加。古文の重要語・敬語・文法を検索／暗記モードで学べる</div>
         <div>⚡ 物の怪退治にハード/百鬼夜行、回避、晴明の一度回復、鬼討伐ボーナスを追加</div>
@@ -1628,6 +1636,15 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
       <div class="codex-filter-bar" id="glossFilterBar"></div>
       <div class="gloss-grid" id="glossGrid"></div>
     </div>
+    <details id="codexBackup" class="codex-backup">
+      <summary>💾 収集データの引き継ぎ（バックアップ／復元）</summary>
+      <p>アップデートや別の端末・URLで収集状況が消えたときのために、コードで持ち運べます。「書き出す」でコードをコピーし、新しい環境で貼り付けて「読み込む」と図鑑・和歌の収集が復元されます。</p>
+      <textarea id="codexBackupText" placeholder="ここに引き継ぎコードが表示されます（復元時はここに貼り付け）"></textarea>
+      <div class="codex-backup-btns">
+        <button id="codexExport" class="tb-btn">📤 書き出す（コピー）</button>
+        <button id="codexImport" class="tb-btn">📥 読み込む（復元）</button>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -4322,8 +4339,8 @@ const YOKAI_DEFS=[
   // 狐火 — 築地の外をさまよう
   {type:"kitsunebi",id:"kitsunebi",x:50, y:1.5,z:-12,col:0xff7722,phase:1.0},
   {type:"kitsunebi",id:"kitsunebi",x:-50,y:1.5,z:-12,col:0xff5511,phase:4.0},
-  // 雪女 — 冬の夜のみ北の対の北側(建物の外・開けた雪庭)に現れる
-  {type:"yukionna",id:"yukionna",x:0,  y:0,  z:-50,col:0x88aaff,phase:0,  winterOnly:true},
+  // 雪女 — 冬の夜のみ北の対の北側(建物の外・開けた雪庭)に現れる。ボス出現位置(0,0,-50)とは重ならないよう西へずらす
+  {type:"yukionna",id:"yukionna",x:-7, y:0,  z:-49,col:0x88aaff,phase:0,  winterOnly:true},
 ];
 /* 物の怪退治モード: 怨霊出現スポット
    normal=普通(1発)  strong=強い怨霊(2発・赤)  wander=揺れる霊(移動・青) */
@@ -6455,6 +6472,40 @@ $("codexTabWaka").onclick=()=>setCodexTab("waka");
 $("codexTabGloss").onclick=()=>setCodexTab("gloss");
 $("codex").addEventListener("click",e=>{if(e.target===$("codex"))closeCodex();});
 addEventListener("keydown",e=>{if(e.key==="Escape"){closeCodex();closeInfo();}});
+/* 収集データの引き継ぎ(バックアップ/復元) — localStorageは原則永続だが、URL/オリジンの違いや
+   端末変更で消えても復元できるよう、コード化して書き出し/読み込みできるようにする。 */
+function _codexExportCode(){
+  try{return "SHINDEN1:"+btoa(unescape(encodeURIComponent(JSON.stringify({v:1,c:[...codexUnlocked]}))));}
+  catch(e){return "";}
+}
+function _codexImportCode(str){
+  try{
+    const m=(str||"").trim().replace(/^SHINDEN1:/,"");if(!m)return 0;
+    const obj=JSON.parse(decodeURIComponent(escape(atob(m))));
+    const arr=Array.isArray(obj)?obj:(obj&&Array.isArray(obj.c)?obj.c:null);
+    if(!arr)return -1;
+    let added=0;
+    arr.forEach(id=>{if(typeof id==="string"&&ITEMS[id]&&!codexUnlocked.has(id)){codexUnlocked.add(id);added++;}});
+    if(added){saveCodex();updateCodexProgress();
+      if(typeof updateWakaVisibility==="function")updateWakaVisibility();
+      if(typeof updateEmakiVisibility==="function")updateEmakiVisibility();
+      if(APP.codexOpen)setCodexTab(codexTab);}
+    return added;
+  }catch(e){return -1;}
+}
+$("codexExport").onclick=()=>{
+  const code=_codexExportCode(),ta=$("codexBackupText");ta.value=code;ta.focus();ta.select();
+  let copied=false;
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code);copied=true;}}catch(e){}
+  if(!copied){try{copied=document.execCommand("copy");}catch(e){}}
+  toast(copied?"引き継ぎコードをコピーしました":"コードを表示しました。長押しでコピーを",2600);beep(620,.05);
+};
+$("codexImport").onclick=()=>{
+  const n=_codexImportCode($("codexBackupText").value);
+  if(n>0){toast(`収集データを復元しました（+${n}件）`,2800);beep(680,.06);}
+  else if(n===0){toast("追加できる収集はありませんでした（既に最新か、コードが空）",2800);beep(440,.05);}
+  else{toast("コードが正しくありません。全文を貼り付けてください",2800);beep(170,.18,"sawtooth",.1);}
+};
 updateCodexProgress();
 let toastTimer=0;
 function toast(s,ms=2600){$("toast").textContent=s;$("toast").style.display="block";
@@ -6808,10 +6859,11 @@ function showTaijiSeasonPicker(){
   if(!ov.querySelector("#ssRow")){
     ov.style.cssText="position:fixed;inset:0;z-index:85;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,3,8,.9);font-family:var(--sans);padding:20px";
     ov.innerHTML='<div style="color:#cc88ff;font-size:18px;letter-spacing:.18em;margin-bottom:6px">物の怪退治 — 季節を選べ</div>'
-      +'<div style="color:#b89;font-size:12px;margin-bottom:14px;text-align:center">雑魚の霊をすべて退治すると、南庭の広場でボス戦</div>'
+      +'<div style="color:#b89;font-size:12px;margin-bottom:14px;text-align:center">雑魚の霊をすべて退治すると、北の対の奥でボス戦</div>'
       +'<div id="tjDiffRow" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:18px"></div>'
       +'<div id="ssRow" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:92vw"></div>'
-      +'<button id="ssCancel" style="margin-top:20px;background:none;border:1px solid #654;color:#a98;padding:8px 18px;border-radius:6px;cursor:pointer;font-family:var(--sans)">← 戻る</button>';
+      +'<button id="ssBossRush" style="margin-top:16px;padding:13px 22px;border:1px solid rgba(220,90,90,.85);background:linear-gradient(180deg,rgba(120,28,40,.9),rgba(60,12,26,.92));color:#ffd8d8;border-radius:9px;cursor:pointer;font-family:var(--sans);font-size:15px;letter-spacing:.08em;box-shadow:0 4px 18px rgba(120,20,40,.5)">⚔ ボスラッシュ <span style="font-size:10px;opacity:.85;color:#f3b">雑魚なし・四季の主を連続討伐</span></button>'
+      +'<button id="ssCancel" style="margin-top:16px;background:none;border:1px solid #654;color:#a98;padding:8px 18px;border-radius:6px;cursor:pointer;font-family:var(--sans)">← 戻る</button>';
     const diffRow=ov.querySelector("#tjDiffRow");
     [["normal","通常"],["hard","ハード"],["hyakki","百鬼夜行"]].forEach(([d,label])=>{
       const db=document.createElement("button");
@@ -6824,8 +6876,9 @@ function showTaijiSeasonPicker(){
       const b=document.createElement("button");
       b.style.cssText="width:158px;padding:16px 10px;border:1px solid rgba(170,100,60,.7);background:rgba(40,18,28,.75);color:#e8d8c0;border-radius:9px;cursor:pointer;font-family:var(--sans)";
       b.innerHTML='<div style="font-size:19px;margin-bottom:5px">'+label+'</div><div style="font-size:10px;opacity:.85;color:#caa">ボス: '+desc+'</div>';
-      b.onclick=()=>{ov.style.display="none";beep(440,.09,"sawtooth");initAudio();APP.taijiSeason=s;applySeason(s);PREFS.set("season",s);enterMode("taiji");};
+      b.onclick=()=>{ov.style.display="none";beep(440,.09,"sawtooth");initAudio();APP.taijiBossRush=false;APP.taijiSeason=s;applySeason(s);PREFS.set("season",s);enterMode("taiji");};
       ov.querySelector("#ssRow").appendChild(b);});
+    ov.querySelector("#ssBossRush").onclick=()=>{ov.style.display="none";beep(330,.14,"sawtooth",.06);initAudio();APP.taijiBossRush=true;APP.taijiSeason="spring";applySeason("spring");PREFS.set("season","spring");enterMode("taiji");};
     ov.querySelector("#ssCancel").onclick=()=>{ov.style.display="none";};
   }
   const diff=APP.taijiDifficulty||"normal";
@@ -7389,7 +7442,9 @@ function startTaiji(){
   taijiSetLightScene(true);
   if($("tjCoolFill"))$("tjCoolFill").style.width="0%";
   const diffKey=APP.taijiDifficulty||"normal",diff=TAIJI_DIFF[diffKey]||TAIJI_DIFF.normal;
-  const spots=taijiBuildSpots(diffKey);
+  const bossRush=!!APP.taijiBossRush;
+  // ボスラッシュは雑魚なし。通常は難易度に応じた結界霊を配置
+  const spots=bossRush?[]:taijiBuildSpots(diffKey);
   // 結界霊を配置(種類別に生成)
   const spirits=spots.map((sp,i)=>{
     const g=makeTaijiKekkai(sp.type||"normal");
@@ -7403,16 +7458,24 @@ function startTaiji(){
     const wander=sp.type==="wander"?{tx:sp.x,tz:sp.z,nextMs:performance.now()+3000}:null;
     return {g,sp,alive:true,idx:i,hp,maxHp:hp,wander,nextHit:0,hpbar};
   });
+  const rushQueue=["spring","summer","autumn","winter"];
   APP.taiji={spirits,shot:0,miss:0,weapon:"bow",tStart:performance.now(),done:false,hp:100,maxHp:100,bonus:0,slowUntil:0,fudaCd:0,
-    season:(APP.taijiSeason||APP.season||"spring"),bossSpawned:false,boss:null,total:spots.length,diffKey,diff,dodgeCd:0,dodgeUntil:0,
-    seimeiHealUsed:false,fudaBurst:false,fudaChain:1,arrowCd:0};
+    season:(bossRush?rushQueue[0]:(APP.taijiSeason||APP.season||"spring")),bossSpawned:false,boss:null,total:bossRush?rushQueue.length:spots.length,diffKey,diff,dodgeCd:0,dodgeUntil:0,
+    seimeiHealUsed:false,fudaBurst:false,fudaChain:1,arrowCd:0,
+    bossRush,rushQueue,rushIndex:0,rushCleared:0};
   creatures.oni.forEach(o=>{o.taijiHp=Math.ceil(32*diff.hpMul);o.taijiAlive=true;o.dispelledUntil=0;});
-  $("taijiRemain").textContent=spirits.length;
+  $("taijiRemain").textContent=bossRush?"ボス":spirits.length;
   $("taijiHud").style.display="block";
   $("twBow").classList.add("active");$("twSeal").classList.remove("active");
   updateTaijiHp();
   updateTaijiFudaUi();
-  $("taijiMsg").textContent="物の怪が襲ってくる！ 回避で間合いを取り、晴明に話すと一度だけ回復";
+  if(bossRush){
+    $("taijiMsg").textContent="⚔ ボスラッシュ — 四季の主が次々と襲い来る！ 回避と札の連射で討て";
+    const K=APP.taiji;
+    setTimeout(()=>{if(APP.mode==="taiji"&&APP.taiji===K&&!K.done&&!K.boss)spawnBoss(K);},1000);
+  }else{
+    $("taijiMsg").textContent="物の怪が襲ってくる！ 回避で間合いを取り、晴明に話すと一度だけ回復";
+  }
   setTimeout(()=>{if($("taijiMsg"))$("taijiMsg").textContent="";},3500);
 }
 function taijiSetLightScene(on){
@@ -7502,6 +7565,26 @@ function endTaiji(failed){
   });
   document.body.classList.remove("taiji-mode");
   const elapsed=(performance.now()-k.tStart)/1000,total=k.total||TAIJI_SPOTS.length,hit=k.shot;
+  if(k.bossRush){
+    const cleared=k.rushCleared||0,all=(k.rushQueue&&k.rushQueue.length)||4;
+    $("resTitle").textContent="⚔ ボスラッシュ 結果";
+    if(failed){
+      $("resRank").textContent="敗北";
+      $("resDetail").innerHTML=`四鬼夜行に挑むも力尽きた…<br>撃破: <b>${cleared}/${all}体</b>　時間: <b>${elapsed.toFixed(1)}秒</b><br><br><span style="font-size:11px;color:#aa88cc">回避で被弾を避け、破魔の札の連射でボスのHPを削ろう。</span>`;
+      seNG();
+    }else{
+      const rank=elapsed<150?["四神を統べる者","ししんをすべるもの — 全ボス撃破・神速の除霊！"]:
+                 elapsed<240?["陰陽師頭","おんみょうじのかしら — 四季の主すべてを討ち取った！"]:
+                             ["除霊の達人","じょれいのたつじん — ボスラッシュ完全制覇！"];
+      $("resRank").textContent=rank[0];
+      $("resDetail").innerHTML=`難易度: <b>${(k.diff&&k.diff.label)||"通常"}</b>　撃破: <b>${cleared}/${all}体</b>　残り体力: <b>${Math.ceil(k.hp)}</b>　時間: <b>${elapsed.toFixed(1)}秒</b><br>${rank[1]}<br><br><span style="font-size:11px;color:#aa88cc">春→夏→秋→冬、四季の主を連続で撃破！</span>`;
+      seOK();
+    }
+    setTaijiResultActions();
+    $("result").style.display="flex";
+    APP.taiji=null;APP.mode="walk";$("taijiHud").style.display="none";$("modeTag").textContent="自由散策";
+    return;
+  }
   if(failed){
     $("resTitle").textContent="物の怪退治 結果";
     $("resRank").textContent="敗北";
@@ -7762,7 +7845,21 @@ function updateBoss(K,t,now,dt){
     b.g.rotation.y=t*0.4;b.g.position.y=Math.sin(t*1.2)*0.18;
     if(K.season==="autumn"&&!b.phase2&&b.hp<=0){autumnBossPhase2(b);return;}
     if(now>b.nextAtk&&!K.done){b.nextAtk=now+(b.cfg.attack==="souls"?2700:2300);bossAttack(K,b,now);}
-    if(b.hp<=0){b.dead=true;scene.remove(b.g);$("bossBar").style.display="none";K.done=true;if(typeof SFX!=="undefined"){SFX.stopBossBgm();SFX.playSe("heal",.5);}taijiMsg(b.cfg.name+"を討ち取った！",2200);setTimeout(()=>endTaiji(false),1300);}
+    if(b.hp<=0){
+      b.dead=true;scene.remove(b.g);$("bossBar").style.display="none";
+      if(typeof SFX!=="undefined"){SFX.stopBossBgm();SFX.playSe("heal",.5);}
+      if(K.bossRush&&K.rushIndex<K.rushQueue.length-1){
+        // ボスラッシュ: 次の季節の主へ。残弾を消し、体力を少し回復して連戦
+        K.rushCleared=(K.rushCleared||0)+1;K.rushIndex++;K.boss=null;
+        if(typeof bossProjs!=="undefined"){bossProjs.forEach(p=>scene.remove(p.m));bossProjs.length=0;}
+        K.hp=Math.min(K.maxHp,K.hp+20);updateTaijiHp();
+        taijiMsg(b.cfg.name+"を討ち取った！ 次なる怪異が迫る…("+K.rushCleared+"/"+K.rushQueue.length+")",2400);
+        setTimeout(()=>{if(APP.mode==="taiji"&&APP.taiji===K&&!K.done){K.season=K.rushQueue[K.rushIndex];spawnBoss(K);}},1700);
+      }else{
+        K.done=true;if(K.bossRush)K.rushCleared=(K.rushCleared||0)+1;
+        taijiMsg(b.cfg.name+"を討ち取った！",2200);setTimeout(()=>endTaiji(false),1300);
+      }
+    }
   }
   for(let i=bossProjs.length-1;i>=0;i--){const p=bossProjs[i];p.m.position.addScaledVector(p.dir,p.spd*dt);
     const dd=p.m.position.distanceTo(new THREE.Vector3(player.pos.x,player.pos.y,player.pos.z));

@@ -50,7 +50,9 @@
 | 体験 | #40 撮影モード（UI全隠し、Pキー/設定/解除ボタン） | 9064f3f |
 | 学習 | 用語カード（図鑑の第3タブ。古文重要語32枚＝重要語/敬語/文法、検索＋カテゴリ絞り込み） | 5721957 |
 | 学習 | 用語カードに暗記モード（意味を隠してタップで答え合わせ＝フラッシュカード） | f9f12ee |
-| 不具合/見た目 | 雪女が北の対にめり込んで不可視だったのを修正（建物外 z=-50 へ）＋ローポリで姿を一新 | (本セッション最新) |
+| 不具合/見た目 | 雪女が北の対にめり込んで不可視だったのを修正（建物外 z=-49 へ）＋ローポリで姿を一新 | (本セッション) |
+| 退治モード | ボスラッシュ追加（雑魚なし・春→夏→秋→冬の四ボス連戦、季節ピッカーに⚔ボタン） | (本セッション最新) |
+| 学習/保存 | 図鑑に収集データの引き継ぎ（書き出し/読み込みコード `SHINDEN1:`）を追加 | (本セッション最新) |
 
 ## 4. 判断して「見送った」項目（理由つき。再開時は要再検討）
 - **#17 レイキャスト空間分割**: pick はタップ駆動で実利益が微小。母屋/廂の大型建具は原点が遠く、
@@ -84,7 +86,15 @@
   DOM `#codexTabGloss`/`#glossPage`/`#glossSearch`/`#glossHide`/`#glossFilterBar`/`#glossGrid`、
   暗記モード CSS `.gloss-grid.study`: glossary 定義は codex 関数群の直前（`let codexCatFilter` の上）。
 - 雪女: `makeYukiOnna()`（白の十二単・垂髪・氷簪のローポリ）＋ 配置 `YOKAI_DEFS` の yukionna
-  （`x:0,y:0,z:-50` 北の対の北・建物外）。毎フレーム更新は line ~8229（小さな上下揺れのみ）。
+  （`x:-7,y:0,z:-49` 北の対の北・建物外。ボス出現点 (0,0,-50) を避けて西へずらしてある）。
+  毎フレーム更新は line ~8229（小さな上下揺れのみ）。
+- ボスラッシュ: `APP.taijiBossRush` フラグ。季節ピッカー `#ssBossRush`（`showTaijiSeasonPicker`）→
+  `startTaiji` で雑魚なし・`rushQueue=[春夏秋冬]`/`rushIndex`/`rushCleared` を持たせ最初のボスを `spawnBoss`。
+  ボス撃破時の分岐は `updateBoss` 内 `b.hp<=0`（次の季節へ `K.season=...;spawnBoss(K)` か `endTaiji`）。
+  結果画面は `endTaiji` 冒頭の `if(k.bossRush)` 分岐。秋ボスの第2形態(大鬼)もそのまま動く。
+- 収集データ引き継ぎ: `_codexExportCode`/`_codexImportCode`（`SHINDEN1:`+base64）、DOM `#codexBackup`/
+  `#codexBackupText`/`#codexExport`/`#codexImport`。localStorage `CODEX_KEY="shinden3d-codex-v1"` は
+  本来オリジン単位で永続。リセットの主因は URL/オリジン差・ローカルファイル閲覧と推測（コード側にクリア処理は無い）。
 
 ## 7. 音源ライセンス状況（`sounds/CREDITS.md`）
 - 戦闘SE（効果音ラボ想定）・ボス戦BGM（ユーザー提供）はいずれも **ライセンス要確認**。
