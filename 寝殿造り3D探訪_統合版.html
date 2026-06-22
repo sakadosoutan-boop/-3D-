@@ -1543,6 +1543,8 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
     <details class="t-changelog">
       <summary>▸ 最近の更新</summary>
       <div class="cl-list">
+        <div>❄ 雪女の姿を一新（白の十二単・漆黒の垂髪・氷の簪）。建物にめり込む不具合も修正</div>
+        <div>📖 図鑑に「用語カード」を追加。古文の重要語・敬語・文法を検索／暗記モードで学べる</div>
         <div>⚡ 物の怪退治にハード/百鬼夜行、回避、晴明の一度回復、鬼討伐ボーナスを追加</div>
         <div>👹 秋ボスが第2形態の大鬼へ変化。ボス戦を南庭の広場へ移動</div>
         <div>📱 スマホ横向きのトップバー横スクロールと退治HUD下部表示を修正</div>
@@ -4230,18 +4232,62 @@ function makeKitsunebi(col){
   g.userData={type:"kitsunebi",li:null};return g;
 }
 function makeYukiOnna(){
+  /* ローポリの範囲(セグメント≤16)で「可憐さ・妖艶さ・端麗さ」を狙った雪女。
+     平安の白い十二単+漆黒の垂髪、足は雪霧に溶けて見えない幽玄の姿。 */
   const g=new THREE.Group();
-  const robeM=M({color:0xeef2f8,roughness:0.5,transparent:true,opacity:0.84,emissive:0x8899cc,emissiveIntensity:0.18});
-  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.38,1.0,12),robeM);skirt.position.y=0.50;g.add(skirt);
-  const torso=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.20,0.60,12),robeM);torso.position.y=1.20;g.add(torso);
-  [-1,1].forEach(s=>{const sl=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.14,0.55,10),robeM);
-    sl.position.set(s*0.38,1.25,0);sl.rotation.z=s*0.6;g.add(sl);});
-  const head=new THREE.Mesh(new THREE.SphereGeometry(0.19,10,8),M({color:0xf4eee8,roughness:0.6}));head.position.y=1.72;g.add(head);
-  const hair=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.12,1.10,10),M({color:0x111111,roughness:0.9}));hair.position.set(0,1.38,-0.04);g.add(hair);
-  [-1,1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(0.030,6,5),new THREE.MeshBasicMaterial({color:0x88ccff}));
-    e.position.set(s*0.072,1.73,0.175);g.add(e);});
-  const aura=new THREE.Mesh(new THREE.SphereGeometry(0.65,10,8),new THREE.MeshBasicMaterial({color:0xaaccff,transparent:true,opacity:0.12,depthWrite:false}));
-  aura.position.y=1.0;g.add(aura);
+  // 素材 — 白衣はほのかに発光して夜に映える。重ね(襲)は淡い水色で陰影をつける
+  const robe =M({color:0xf0f6fc,roughness:0.42,transparent:true,opacity:0.93,emissive:0xa6c6ec,emissiveIntensity:0.22});
+  const robe2=M({color:0xd7e6f5,roughness:0.5, transparent:true,opacity:0.95,emissive:0x86a8d4,emissiveIntensity:0.16}); // 襲(重ね)の下層・袖口
+  const mistM=new THREE.MeshBasicMaterial({color:0xdcebff,transparent:true,opacity:0.30,depthWrite:false});
+  const skin =M({color:0xf7efe9,roughness:0.55,emissive:0xead6d2,emissiveIntensity:0.05});
+  const hairM=M({color:0x14131b,roughness:0.30,metalness:0.06,emissive:0x222a40,emissiveIntensity:0.06}); // 漆黒の艶
+  const lipM =M({color:0xc25a66,roughness:0.45});
+  const eyeM =new THREE.MeshBasicMaterial({color:0x9fdcff});
+  const blushM=new THREE.MeshBasicMaterial({color:0xf3b8c2,transparent:true,opacity:0.5,depthWrite:false});
+  const iceM =new THREE.MeshBasicMaterial({color:0xbfe8ff,transparent:true,opacity:0.85});
+  // 裾が雪霧に溶ける(足を見せない) — 下向きの細い円錐
+  const mist=new THREE.Mesh(new THREE.ConeGeometry(0.52,0.55,14),mistM);mist.rotation.x=Math.PI;mist.position.y=0.14;g.add(mist);
+  // 裳(も)・打掛の重ね — 下層
+  const hem=new THREE.Mesh(new THREE.CylinderGeometry(0.30,0.56,1.05,14,1,true),robe2);hem.position.y=0.55;g.add(hem);
+  // 表着(うわぎ) 主たる白衣
+  const robeMain=new THREE.Mesh(new THREE.CylinderGeometry(0.20,0.40,1.0,14),robe);robeMain.position.y=0.80;g.add(robeMain);
+  // 胴・上半身
+  const torso=new THREE.Mesh(new THREE.CylinderGeometry(0.145,0.205,0.55,12),robe);torso.position.y=1.35;g.add(torso);
+  // 襟(合わせ)— 胸元のV字
+  [-1,1].forEach(s=>{const c=new THREE.Mesh(new THREE.BoxGeometry(0.055,0.42,0.03),robe2);
+    c.position.set(s*0.05,1.41,0.165);c.rotation.z=s*0.22;g.add(c);});
+  // 大袖(振袖風)— ゆったり長く外へ流れ、袖口に重ねの色が覗く
+  [-1,1].forEach(s=>{const sl=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.17,0.72,12),robe);
+    sl.position.set(s*0.34,1.28,0);sl.rotation.z=s*0.52;g.add(sl);
+    const cuff=new THREE.Mesh(new THREE.CylinderGeometry(0.165,0.18,0.10,12),robe2);
+    cuff.position.set(s*0.49,0.99,0);g.add(cuff);});
+  // 首
+  const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.06,0.10,8),skin);neck.position.y=1.63;g.add(neck);
+  // 顔(やや面長の瓜実顔)
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.175,16,14),skin);head.position.y=1.77;head.scale.set(0.92,1.07,0.9);g.add(head);
+  // 黒髪(垂髪)— 背に長く流れる
+  const backHair=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.11,1.32,12),hairM);backHair.position.set(0,1.16,-0.07);g.add(backHair);
+  const hairCap=new THREE.Mesh(new THREE.SphereGeometry(0.196,16,12,0,Math.PI*2,0,Math.PI*0.64),hairM);hairCap.position.set(0,1.81,-0.01);hairCap.scale.set(1.0,1.05,1.03);g.add(hairCap);
+  // 鬢(びん)— 顔の両脇に垂れる前髪
+  [-1,1].forEach(s=>{const side=new THREE.Mesh(new THREE.CylinderGeometry(0.034,0.046,0.62,8),hairM);
+    side.position.set(s*0.16,1.55,0.05);side.rotation.z=s*0.05;g.add(side);});
+  // 目(切れ長・淡く光る)
+  [-1,1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(0.028,8,6),eyeM);
+    e.position.set(s*0.073,1.78,0.158);e.scale.set(1.5,0.9,0.6);g.add(e);});
+  // 眉(細く)
+  [-1,1].forEach(s=>{const br=new THREE.Mesh(new THREE.BoxGeometry(0.05,0.012,0.012),hairM);
+    br.position.set(s*0.072,1.825,0.158);br.rotation.z=-s*0.12;g.add(br);});
+  // 紅(唇)
+  const lip=new THREE.Mesh(new THREE.SphereGeometry(0.024,8,6),lipM);lip.position.set(0,1.715,0.165);lip.scale.set(1.45,0.7,0.6);g.add(lip);
+  // 頬の紅(可憐さ)
+  [-1,1].forEach(s=>{const bl=new THREE.Mesh(new THREE.CircleGeometry(0.034,10),blushM);
+    bl.position.set(s*0.104,1.745,0.158);g.add(bl);});
+  // 氷の簪(かんざし)— 妖艶な煌めき
+  [-1,1].forEach(s=>{const cr=new THREE.Mesh(new THREE.ConeGeometry(0.022,0.13,5),iceM);
+    cr.position.set(s*0.12,1.95,0);cr.rotation.z=s*0.26;g.add(cr);});
+  // 冷気のオーラ
+  const aura=new THREE.Mesh(new THREE.SphereGeometry(0.7,12,10),new THREE.MeshBasicMaterial({color:0xaaccff,transparent:true,opacity:0.1,depthWrite:false}));
+  aura.position.y=1.05;g.add(aura);
   g.userData={type:"yukionna",li:null,aura};return g;
 }
 /* 物の怪退治モード用: 結界霊 */
@@ -4276,8 +4322,8 @@ const YOKAI_DEFS=[
   // 狐火 — 築地の外をさまよう
   {type:"kitsunebi",id:"kitsunebi",x:50, y:1.5,z:-12,col:0xff7722,phase:1.0},
   {type:"kitsunebi",id:"kitsunebi",x:-50,y:1.5,z:-12,col:0xff5511,phase:4.0},
-  // 雪女 — 冬の夜のみ北の対に現れる
-  {type:"yukionna",id:"yukionna",x:2,  y:0,  z:-44,col:0x88aaff,phase:0,  winterOnly:true},
+  // 雪女 — 冬の夜のみ北の対の北側(建物の外・開けた雪庭)に現れる
+  {type:"yukionna",id:"yukionna",x:0,  y:0,  z:-50,col:0x88aaff,phase:0,  winterOnly:true},
 ];
 /* 物の怪退治モード: 怨霊出現スポット
    normal=普通(1発)  strong=強い怨霊(2発・赤)  wander=揺れる霊(移動・青) */
