@@ -7560,6 +7560,7 @@ function taijiQuit(){
 }
 function _clearTaijiFx(){
   if(typeof bossProjs!=="undefined"){bossProjs.forEach(p=>scene.remove(p.m));bossProjs.length=0;}
+  if(typeof bossHazards!=="undefined"){bossHazards.forEach(h=>scene.remove(h.m));bossHazards.length=0;}
   if(typeof taijiArrows!=="undefined"){taijiArrows.forEach(a=>scene.remove(a.g));taijiArrows.length=0;}
   if(typeof taijiWaves!=="undefined"){taijiWaves.forEach(w=>scene.remove(w.g));taijiWaves.length=0;}
   if(typeof SFX!=="undefined")SFX.stopBossBgm();
@@ -8060,28 +8061,95 @@ function spawnBoss(k){
   if(typeof SFX!=="undefined")SFX.playBossBgm(k.season); // 季節別ボス戦BGM
 }
 function updateBossBar(b){$("bossHpFill").style.width=Math.max(0,b.hp/b.maxHp*100)+"%";}
-const bossProjs=[];
-function spawnBossProj(from,to,col,dmg,spd){
-  const m=new THREE.Mesh(new THREE.SphereGeometry(0.3,8,6),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.92}));
-  m.position.copy(from);m.renderOrder=8;m.material.depthTest=false;scene.add(m);
-  const dir=to.clone().sub(from);if(dir.lengthSq()<0.01)dir.set(0,0,1);dir.normalize();
-  bossProjs.push({m,dir,spd:spd||9,born:performance.now(),dmg});
+const bossProjs=[],bossHazards=[];
+function bossFxMat(col,op){return new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false,depthTest:false,blending:THREE.AdditiveBlending});}
+function seBossCast(key){
+  seMagic(key);
+  if(key==="ice"){beep(720,.06,"sine",.035);setTimeout(()=>beep(980,.08,"sine",.03),55);}
+  else if(key==="fire"){beep(190,.07,"sawtooth",.035);setTimeout(()=>beep(420,.05,"triangle",.028),45);}
+  else if(key==="blunt"||key==="slash"){beep(96,.08,"square",.045);setTimeout(()=>beep(64,.10,"square",.035),70);}
+  else beep(330,.07,"triangle",.035);
 }
-function bossAttack(K,b,now){
-  const bp=b.g.position.clone();bp.y=2.0;const pp=player.pos.clone();const d=bp.distanceTo(pp);
-  const at=b.cfg.attack;
-  if(at==="pull"){ seMagic("blunt"); if(d<13){const dir=bp.clone().sub(pp).setY(0).normalize();player.pos.x+=dir.x*2.2;player.pos.z+=dir.z*2.2;taijiDamage(10);taijiMsg("河童の主に引き込まれる！");}else spawnBossProj(bp,pp,b.cfg.col,8,10); }
-  else if(at==="duo"){seMagic("fire");const left=bp.clone().add(new THREE.Vector3(-.9,.1,0)),right=bp.clone().add(new THREE.Vector3(1.1,.35,0));
-    if(d<12){const dir=bp.clone().sub(pp).setY(0).normalize();player.pos.x+=dir.x*1.8;player.pos.z+=dir.z*1.8;taijiDamage(8);taijiMsg("河童が足を絡め、提灯の怪火が追う！");}
-    spawnBossProj(left,pp,0x33b866,7,10);spawnBossProj(right,pp.clone().add(new THREE.Vector3((Math.random()-.5)*2,0,(Math.random()-.5)*2)),0xff7a33,6,12);}
-  else if(at==="blizzard"){ seMagic("ice"); if(d<14){K.slowUntil=now+1800;taijiDamage(8);taijiMsg("雪女王の吹雪！ 凍えて動けない");}else spawnBossProj(bp,pp,0xcfeeff,7,8); }
-  else if(at==="souls"){ seMagic("thunder"); for(let i=0;i<3;i++){const off=new THREE.Vector3((Math.random()-.5)*4,Math.random()*2,(Math.random()-.5)*4);spawnBossProj(bp.clone().add(off),pp,b.cfg.col,7,8);} }
-  else if(at==="oni"){ seMagic("slash"); if(d<10){spawnShockwave(b.g.position);taijiDamage(13);taijiMsg("大鬼の踏み荒らし！");}else spawnBossProj(bp,pp,0xaa2233,10,11); }
-  else{ seMagic("fire"); spawnBossProj(bp,pp,b.cfg.col,9,13); }
-  for(let i=0;i<(K.diff&&K.diff.burst||0);i++){
-    const off=new THREE.Vector3((Math.random()-.5)*5,Math.random()*1.5,(Math.random()-.5)*5);
-    spawnBossProj(bp.clone().add(off),pp,b.cfg.col,6,8+Math.random()*4);
+function spawnBossProj(from,to,col,dmg,spd,opt={}){
+  const geo=opt.cone?new THREE.ConeGeometry(opt.size||0.22,(opt.size||0.22)*2.2,7):new THREE.SphereGeometry(opt.size||0.3,8,6);
+  const m=new THREE.Mesh(geo,bossFxMat(col,opt.opacity||.92));
+  m.position.copy(from);m.renderOrder=8;scene.add(m);
+  const dir=to.clone().sub(from);if(dir.lengthSq()<0.01)dir.set(0,0,1);dir.normalize();
+  if(opt.cone)m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.clone());
+  bossProjs.push({m,dir,spd:spd||9,born:performance.now(),dmg,lifetime:opt.lifetime||4500,homing:opt.homing||0,slow:opt.slow||0,wobble:opt.wobble||0,pulse:opt.pulse||0,phase:Math.random()*9});
+}
+function spawnBossProjDir(from,dir,col,dmg,spd,opt={}){
+  const to=from.clone().add(dir.clone().normalize().multiplyScalar(10));
+  spawnBossProj(from,to,col,dmg,spd,opt);
+}
+function bossCircle(pos,r,col,dmg,delay=700,dur=260,opt={}){
+  const m=new THREE.Mesh(new THREE.RingGeometry(.72,1,40),bossFxMat(col,opt.opacity||.56));
+  m.rotation.x=-Math.PI/2;m.position.set(pos.x,.16,pos.z);m.scale.setScalar(Math.max(.2,r));m.renderOrder=9;scene.add(m);
+  bossHazards.push({kind:opt.kind||"circle",m,pos:pos.clone(),r,dmg,born:performance.now(),delay,dur,hit:false,slow:opt.slow||0,pull:opt.pull||0,tick:opt.tick||0,nextTick:0});
+}
+function bossLine(from,to,width,col,dmg,delay=420,dur=280,opt={}){
+  const a=new THREE.Vector3(from.x,.22,from.z),b=new THREE.Vector3(to.x,.22,to.z),len=Math.max(.1,a.distanceTo(b));
+  const m=new THREE.Mesh(new THREE.BoxGeometry(len,.06,width),bossFxMat(col,opt.opacity||.58));
+  m.position.copy(a).lerp(b,.5);m.rotation.y=-Math.atan2(b.z-a.z,b.x-a.x);m.renderOrder=9;scene.add(m);
+  bossHazards.push({kind:"line",m,a,b,width,dmg,born:performance.now(),delay,dur,hit:false,slow:opt.slow||0});
+}
+function bossWave(center,col,dmg,maxR=13){
+  const m=new THREE.Mesh(new THREE.RingGeometry(.88,1.08,54),bossFxMat(col,.72));
+  m.rotation.x=-Math.PI/2;m.position.set(center.x,.18,center.z);m.renderOrder=9;scene.add(m);
+  bossHazards.push({kind:"wave",m,pos:center.clone(),r:0,maxR,dmg,born:performance.now(),delay:0,dur:920,hit:false});
+}
+function distSeg2D(px,pz,a,b){
+  const vx=b.x-a.x,vz=b.z-a.z,wx=px-a.x,wz=pz-a.z,c1=vx*wx+vz*wz,c2=vx*vx+vz*vz,t=c2?Math.max(0,Math.min(1,c1/c2)):0;
+  const x=a.x+vx*t,z=a.z+vz*t;return Math.hypot(px-x,pz-z);
+}
+function updateBossHazards(K,now,dt){
+  const pp=player.pos;
+  for(let i=bossHazards.length-1;i>=0;i--){
+    const h=bossHazards[i],age=now-h.born,active=age>=h.delay,life=h.delay+h.dur;
+    if(h.kind==="wave"){
+      const u=Math.min(1,age/h.dur);h.r=h.maxR*u;h.m.scale.setScalar(Math.max(.1,h.r));h.m.material.opacity=.72*(1-u);
+      const d=Math.hypot(pp.x-h.pos.x,pp.z-h.pos.z);if(!h.hit&&active&&Math.abs(d-h.r)<1.25){h.hit=true;taijiDamage(h.dmg);taijiMsg("大鬼の衝撃波！",900);seBossCast("blunt");}
+    }else if(h.kind==="line"){
+      h.m.material.opacity=active?.78:.34+Math.sin(age*.02)*.18;
+      if(!h.hit&&active&&distSeg2D(pp.x,pp.z,h.a,h.b)<h.width*.55){h.hit=true;if(h.slow)K.slowUntil=now+h.slow;taijiDamage(h.dmg);}
+    }else{
+      h.m.material.opacity=active?(.34+Math.sin(age*.012)*.12):(.18+Math.sin(age*.02)*.18);
+      h.m.rotation.z+=dt*(active?1.6:.7);
+      const d=Math.hypot(pp.x-h.pos.x,pp.z-h.pos.z);
+      if(active&&d<h.r){
+        if(h.tick){if(now>h.nextTick){h.nextTick=now+h.tick;if(h.slow)K.slowUntil=now+h.slow;if(h.pull){const dir=h.pos.clone().sub(pp).setY(0);if(dir.lengthSq()>0.01){dir.normalize();player.pos.x+=dir.x*h.pull;player.pos.z+=dir.z*h.pull;}}taijiDamage(h.dmg);}}
+        else if(!h.hit){h.hit=true;if(h.slow)K.slowUntil=now+h.slow;taijiDamage(h.dmg);}
+      }
+    }
+    if(age>life){scene.remove(h.m);bossHazards.splice(i,1);}
   }
+}
+function clearBossBattleFx(){bossProjs.forEach(p=>scene.remove(p.m));bossProjs.length=0;bossHazards.forEach(h=>scene.remove(h.m));bossHazards.length=0;}
+function bossAttack(K,b,now){
+  const bp=b.g.position.clone();bp.y=2.0;const pp=player.pos.clone();const d=bp.distanceTo(pp),at=b.cfg.attack;
+  const phase=1-b.hp/Math.max(1,b.maxHp),pat=(b.pattern=(b.pattern||0)+1),hard=(K.diff&&K.diff.burst||0);
+  if(at==="dart"){
+    if(pat%3===1){seBossCast("fire");taijiMsg("九尾が狐火を放つ。火が追ってくる！",1300);
+      const n=5+(phase>.45?2:0)+hard;for(let i=0;i<n;i++){const a=i*Math.PI*2/n;const from=bp.clone().add(new THREE.Vector3(Math.cos(a)*1.45,.45+Math.sin(i)*.25,Math.sin(a)*1.45));spawnBossProj(from,pp,0xff8a44,7,5.2,{homing:.055,wobble:.9,pulse:.2,size:.22,lifetime:5600});}}
+    else if(pat%3===2){seBossCast("fire");taijiMsg("九尾扇状弾。尻尾の間を抜けろ！",1200);
+      const base=Math.atan2(pp.z-bp.z,pp.x-bp.x),spread=phase>.55?1.00:1.32;for(let i=0;i<9;i++){const a=base-spread/2+spread*i/8;spawnBossProjDir(bp.clone().add(new THREE.Vector3(0,.7,0)),new THREE.Vector3(Math.cos(a),0,Math.sin(a)),0xffd26a,6,10.8,{size:.18,pulse:.12});}}
+    else{seBossCast("thunder");taijiMsg("狐火陣が足元に浮かぶ！",1200);bossCircle(pp,2.4,0xff6f92,12,820,260,{slow:700});for(let i=0;i<2+(phase>.5?1:0);i++)bossCircle(pp.clone().add(new THREE.Vector3((Math.random()-.5)*7,0,(Math.random()-.5)*7)),1.8,0xffb15a,8,980+i*140,220);}
+  }else if(at==="blizzard"){
+    if(pat%3===1){seBossCast("ice");taijiMsg("氷柱が落ちる。影から離れろ！",1300);const n=4+(phase>.45?2:0)+hard;for(let i=0;i<n;i++)bossCircle(pp.clone().add(new THREE.Vector3((Math.random()-.5)*8,0,(Math.random()-.5)*8)),1.35,0xbfeeff,8,720+i*90,220,{slow:1100});}
+    else if(pat%3===2){seBossCast("ice");taijiMsg("雪女王の氷霧。踏み込むと凍える！",1300);bossCircle(pp,3.1,0x9edcff,3,260,2600,{kind:"mist",tick:560,slow:1200});}
+    else{seBossCast("ice");taijiMsg("凍てつく吐息が一直線に走る！",1100);bossLine(bp.clone().add(new THREE.Vector3(0,.2,0)),pp.clone().add(pp.clone().sub(bp).setY(0).normalize().multiplyScalar(5)),1.25,0xdff8ff,11,520,360,{slow:1700});}
+  }else if(at==="duo"){
+    if(pat%3===1){seBossCast("blunt");taijiMsg("河童の水流が足を取る！",1200);bossCircle(pp,3.0,0x37c884,3,220,2200,{kind:"pool",tick:520,pull:.45,slow:850});if(d<15){const dir=bp.clone().sub(pp).setY(0).normalize();player.pos.x+=dir.x*1.5;player.pos.z+=dir.z*1.5;}}
+    else if(pat%3===2){seBossCast("fire");taijiMsg("提灯の舌と怪火が同時に伸びる！",1200);bossLine(bp.clone().add(new THREE.Vector3(1.0,.2,0)),pp,1.05,0xff553d,10,360,300);spawnBossProj(bp.clone().add(new THREE.Vector3(-1,.4,0)),pp,0xff9a33,7,7.2,{homing:.035,wobble:.6,size:.24,lifetime:5200});}
+    else{seBossCast("fire");taijiMsg("河童の水弾と提灯の怪火が挟み撃ち！",1200);spawnBossProj(bp.clone().add(new THREE.Vector3(-1,.2,0)),pp,0x37c884,7,9.5,{slow:900,size:.25});spawnBossProj(bp.clone().add(new THREE.Vector3(1.1,.55,0)),pp.clone().add(new THREE.Vector3((Math.random()-.5)*3,0,(Math.random()-.5)*3)),0xff7a33,7,11.5,{homing:.025,size:.22});}
+  }else if(at==="souls"){
+    seBossCast("thunder");if(pat%2){taijiMsg("人魂が波打って襲いかかる！",1100);for(let i=0;i<4+hard;i++){const off=new THREE.Vector3((i-1.5)*.8,Math.random()*1.8,(Math.random()-.5)*1.2);spawnBossProj(bp.clone().add(off),pp,0xbb88ff,7,7.8,{homing:.025,wobble:1.1,pulse:.2,lifetime:5200});}}else{taijiMsg("怨念の火種が地面から噴き上がる！",1200);for(let i=0;i<3+(phase>.45?2:0);i++)bossCircle(pp.clone().add(new THREE.Vector3((Math.random()-.5)*7,0,(Math.random()-.5)*7)),1.5,0xaa66ff,8,760+i*120,260,{slow:800});}
+  }else if(at==="oni"){
+    if(pat%3===1){seBossCast("blunt");taijiMsg("大鬼が地を踏み割る！ 衝撃波を避けろ",1200);bossWave(b.g.position,0xff6a33,13,12+(phase>.5?4:0));}
+    else if(pat%3===2){seBossCast("slash");taijiMsg("金棒の叩きつけ！ 正面から外れろ",1100);bossLine(bp,pp.clone().add(pp.clone().sub(bp).setY(0).normalize().multiplyScalar(4)),1.75,0xff3d2e,14,500,340);}
+    else{seBossCast("blunt");taijiMsg("大鬼が岩を投げつける！",1000);for(let i=0;i<2+(phase>.4?1:0);i++)spawnBossProj(bp.clone().add(new THREE.Vector3((Math.random()-.5)*1.2,.9,(Math.random()-.5)*1.2)),pp.clone().add(new THREE.Vector3((Math.random()-.5)*2,0,(Math.random()-.5)*2)),0x8a4a32,10,8.8,{size:.34,cone:true});}
+  }else{ seBossCast("fire"); spawnBossProj(bp,pp,b.cfg.col,9,13); }
+  for(let i=0;i<hard;i++){const off=new THREE.Vector3((Math.random()-.5)*5,Math.random()*1.5,(Math.random()-.5)*5);spawnBossProj(bp.clone().add(off),pp,b.cfg.col,6,8+Math.random()*4,{homing:.015,size:.18});}
 }
 function updateBoss(K,t,now,dt){
   const b=K.boss;if(!b)return;
@@ -8095,11 +8163,11 @@ function updateBoss(K,t,now,dt){
     if(b.hp<=0){
       b.dead=true;scene.remove(b.g);$("bossBar").style.display="none";
       taijiClearBossGate(K);
+      clearBossBattleFx();
       if(typeof SFX!=="undefined"){SFX.stopBossBgm();SFX.playSe("heal",.5);}
       if(K.bossRush&&K.rushIndex<K.rushQueue.length-1){
         // ボスラッシュ: 次の季節の主へ。残弾を消し、体力を少し回復して連戦
         K.rushCleared=(K.rushCleared||0)+1;K.rushIndex++;K.boss=null;
-        if(typeof bossProjs!=="undefined"){bossProjs.forEach(p=>scene.remove(p.m));bossProjs.length=0;}
         K.hp=Math.min(K.maxHp,K.hp+20);updateTaijiHp();
         taijiMsg(b.cfg.name+"を討ち取った！ 次なる怪異が迫る…("+K.rushCleared+"/"+K.rushQueue.length+")",2400);
         setTimeout(()=>{if(APP.mode==="taiji"&&APP.taiji===K&&!K.done){K.season=K.rushQueue[K.rushIndex];K.bossSpawned=false;taijiPrepareBossGate(K,true);}},1700);
@@ -8109,10 +8177,15 @@ function updateBoss(K,t,now,dt){
       }
     }
   }
-  for(let i=bossProjs.length-1;i>=0;i--){const p=bossProjs[i];p.m.position.addScaledVector(p.dir,p.spd*dt);
+  updateBossHazards(K,now,dt);
+  for(let i=bossProjs.length-1;i>=0;i--){const p=bossProjs[i];
+    if(p.homing){const want=new THREE.Vector3(player.pos.x,player.pos.y,player.pos.z).sub(p.m.position);if(want.lengthSq()>0.01){want.normalize();p.dir.lerp(want,p.homing).normalize();}}
+    p.m.position.addScaledVector(p.dir,p.spd*dt);
+    if(p.wobble){p.m.position.x+=Math.sin((now-p.born)*.006+p.phase)*p.wobble*dt;p.m.position.z+=Math.cos((now-p.born)*.005+p.phase)*p.wobble*dt;}
+    if(p.pulse)p.m.scale.setScalar(1+Math.sin((now-p.born)*.012+p.phase)*p.pulse);
     const dd=p.m.position.distanceTo(new THREE.Vector3(player.pos.x,player.pos.y,player.pos.z));
-    if(dd<1.7){taijiDamage(p.dmg);scene.remove(p.m);bossProjs.splice(i,1);continue;}
-    if(now-p.born>4500){scene.remove(p.m);bossProjs.splice(i,1);}}
+    if(dd<1.7){if(p.slow)K.slowUntil=now+p.slow;taijiDamage(p.dmg);scene.remove(p.m);bossProjs.splice(i,1);continue;}
+    if(now-p.born>p.lifetime){scene.remove(p.m);bossProjs.splice(i,1);}}
 }
 function startKaimami(){
   scene.updateMatrixWorld(true);
