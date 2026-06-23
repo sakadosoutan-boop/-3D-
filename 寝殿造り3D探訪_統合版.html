@@ -1185,6 +1185,34 @@ h1.t-main .shu{color:var(--shu-bright)}
 #tjCoolFill{height:100%;width:0;background:#cc88ff}
 #twDodge.ready{border-color:#88ddff;color:#e8fbff}
 #twSeal.charged{border-color:#f6d36a;color:#fff2b8;box-shadow:0 0 10px rgba(246,211,106,.28)}
+/* ガードメーター(退治HUD内) */
+#tjGuardRow{display:flex;align-items:center;gap:6px;margin-top:5px}
+#tjGuardRow .lbl{font-size:8px;color:#e9d09a;letter-spacing:.04em;white-space:nowrap}
+#tjGuardWrap{flex:1;height:6px;background:rgba(40,30,12,.8);border:1px solid rgba(200,160,70,.5);border-radius:4px;overflow:hidden}
+#tjGuardFill{height:100%;width:100%;background:linear-gradient(90deg,#caa019,#ffe27a);transition:width .12s}
+/* === 退治モードのアクションパッド(スマホ親指操作): 攻撃/回避/ガード === */
+#tjPad{position:fixed;z-index:45;right:max(16px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));display:none;width:190px;height:188px;pointer-events:none}
+body.taiji-mode.touch-ui #tjPad{display:block}
+.tj-act{position:absolute;pointer-events:auto;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:var(--sans);font-weight:700;color:#fff;text-align:center;line-height:1.04;-webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;box-shadow:0 4px 16px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.2)}
+.tj-act:active{transform:scale(.92)}
+.tj-act small{display:block;font-size:8px;opacity:.82;font-weight:400;letter-spacing:0}
+#tjFire{right:4px;bottom:28px;width:94px;height:94px;font-size:15px;background:radial-gradient(circle at 36% 30%,#ff5d6b,#9c1b2c);border:2px solid #ffd9d0}
+#tjDodgeBtn{left:0;bottom:6px;width:64px;height:64px;font-size:12px;background:radial-gradient(circle at 36% 30%,#62c8ff,#1c5b9c);border:2px solid #d7f0ff}
+#tjGuardBtn{right:22px;top:0;width:64px;height:64px;font-size:12px;background:radial-gradient(circle at 36% 30%,#ffd76a,#9c7414);border:2px solid #fff0c8;color:#2a1c00}
+.tj-act.cooling{filter:grayscale(.65) brightness(.7);opacity:.72}
+#tjGuardBtn.on{box-shadow:0 0 0 3px rgba(255,238,150,.85),0 4px 16px rgba(0,0,0,.5);background:radial-gradient(circle at 36% 30%,#fff0b0,#caa019)}
+/* ローリング回避の発光フラッシュ(無敵中の手応え) */
+#dodgeFlash{position:fixed;inset:0;z-index:41;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 60%,rgba(150,220,255,0) 42%,rgba(120,200,255,.38) 100%)}
+#dodgeFlash.show{animation:dodgeFlash .42s ease-out}
+@keyframes dodgeFlash{0%{opacity:.95;transform:scale(1.07)}100%{opacity:0;transform:scale(1)}}
+body.guarding-now #taijiMood{background:radial-gradient(ellipse at 50% 50%,rgba(255,230,150,0) 50%,rgba(190,150,45,.30) 100%)}
+/* スマホ縦: 退治HUDを上寄せ・コンパクトにして親指パッド/ジョイと重ねない */
+body.taiji-mode.touch-ui #taijiHud{bottom:auto;top:calc(var(--topbar-h,8px) + 44px + env(safe-area-inset-top));min-width:0;width:min(300px,74vw)}
+body.taiji-mode #interactBtn{display:none!important}
+/* 退治中はクロスヘアを赤く強調(狙点を明確に) */
+body.taiji-mode #crosshair{display:block;width:14px;height:14px;margin:-7px 0 0 -7px;border-color:rgba(255,120,120,.9);box-shadow:0 0 8px rgba(255,60,60,.55),inset 0 0 4px rgba(255,80,80,.5)}
 /* 禍々しい気配オーバーレイ(退治モード) */
 #taijiMood{position:fixed;inset:0;z-index:6;pointer-events:none;display:none;
   background:radial-gradient(ellipse at 50% 36%, rgba(40,0,8,0) 36%, rgba(86,0,12,.42) 100%);mix-blend-mode:multiply;animation:moodPulse 5s ease-in-out infinite}
@@ -1702,8 +1730,15 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
     <button class="tw-btn ready" id="twDodge">↶ 回避<small>Space / 下へ</small></button>
   </div>
   <div id="tjCool"><div id="tjCoolFill"></div></div>
+  <div id="tjGuardRow"><span class="lbl">🛡</span><div id="tjGuardWrap"><div id="tjGuardFill"></div></div></div>
   <div id="taijiMsg"></div>
 </div>
+<div id="tjPad">
+  <button class="tj-act" id="tjFire">🏹<small>射る</small></button>
+  <button class="tj-act" id="tjGuardBtn">🛡<small>ガード</small></button>
+  <button class="tj-act" id="tjDodgeBtn">↻<small>回避</small></button>
+</div>
+<div id="dodgeFlash"></div>
 <div id="taijiMood"></div>
 <div id="taijiSeasonPick" style="display:none"></div>
 <div id="bossBar"><div id="bossName"></div><div id="bossHpWrap"><div id="bossHpFill"></div></div></div>
@@ -2395,6 +2430,7 @@ const CT2_TEX={tatami:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA
 ============================================================ */
 const renderer=new THREE.WebGLRenderer({canvas:document.getElementById("c"),antialias:true,powerPreference:"high-performance"});
 const IS_TOUCH=("ontouchstart" in window)||navigator.maxTouchPoints>0;
+if(IS_TOUCH)document.body.classList.add("touch-ui"); // 親指操作パッド等のタッチ向けUIを有効化
 renderer.setPixelRatio(Math.min(devicePixelRatio,IS_TOUCH?1.35:1.5)); // モバイルは描画ピクセル数を抑え発熱を軽減
 renderer.setSize(innerWidth,innerHeight);
 
@@ -6031,6 +6067,7 @@ function joyHandle(e){
   let dx=(t.clientX-cx)/(r.width/2),dy=(t.clientY-cy)/(r.height/2);
   const m=Math.hypot(dx,dy);if(m>1){dx/=m;dy/=m;}
   if(m>0.22)joy._used=true;   // 一定以上動かしたら「移動操作」と判定(タップ誤爆を防ぐ)
+  if(m<0.14){dx=0;dy=0;}      // デッドゾーン: 微小なブレで勝手に動かない
   joy.vx=dx;joy.vy=dy;
   knob.style.transform=`translate(calc(-50% + ${dx*34}px),calc(-50% + ${dy*34}px))`;
 }
@@ -6903,11 +6940,27 @@ $("twBow").onclick=()=>taijiSetWeapon("bow");
 $("twSeal").onclick=()=>taijiSetWeapon("seal");
 $("twDodge").onclick=()=>taijiDodge();
 $("tjQuit").onclick=()=>taijiQuit();
-// 武器切替: PCは1/2キー(やQ/Eで前後)。スマホ/タブレットはHUDのボタン or 画面上部隅タップ
+/* スマホ親指パッド: 攻撃(中央狙点へ発射)・回避・ガード(押している間) */
+(function bindTaijiPad(){
+  const fire=$("tjFire"),dodgeB=$("tjDodgeBtn"),guardB=$("tjGuardBtn");
+  if(fire)fire.addEventListener("click",e=>{e.preventDefault();if(APP.mode==="taiji")pick(innerWidth/2,innerHeight/2);});
+  if(dodgeB)dodgeB.addEventListener("click",e=>{e.preventDefault();taijiDodge();});
+  if(guardB){
+    const gd=e=>{e.preventDefault();taijiSetGuard(true);},gu=e=>{e.preventDefault();taijiSetGuard(false);};
+    guardB.addEventListener("touchstart",gd,{passive:false});
+    guardB.addEventListener("touchend",gu,{passive:false});
+    guardB.addEventListener("touchcancel",gu,{passive:false});
+    guardB.addEventListener("mousedown",gd);guardB.addEventListener("mouseup",gu);guardB.addEventListener("mouseleave",gu);
+  }
+})();
+// 武器切替: PCは1/2キー(やQ/Eで前後)。回避=Space、ガード=Shift長押し。スマホは親指パッド
 addEventListener("keydown",e=>{ if(APP.mode!=="taiji"||!APP.taiji)return;
   if(e.key==="1")taijiSetWeapon("bow"); else if(e.key==="2")taijiSetWeapon("seal");
   else if(e.code==="Space"){e.preventDefault();taijiDodge();}
+  else if(e.key==="Shift"){e.preventDefault();taijiSetGuard(true);}
   else if(e.key==="q"||e.key==="e"||e.key==="Tab"){e.preventDefault();taijiSetWeapon(APP.taiji.weapon==="bow"?"seal":"bow");}});
+addEventListener("keyup",e=>{ if(APP.mode!=="taiji"||!APP.taiji)return;
+  if(e.key==="Shift")taijiSetGuard(false);});
 $("taikenBack").onclick=()=>hideSubPanel("taikenSubPanel");
 // questRolePicker (旧実装・互換性維持)
 function chooseQuestRole(role){initAudio();APP.questRole=role;if($("questRolePicker"))$("questRolePicker").style.display="none";enterMode("quest");}
@@ -7474,6 +7527,7 @@ function startTaiji(){
   APP.taiji={spirits,shot:0,miss:0,weapon:"bow",tStart:performance.now(),done:false,hp:100,maxHp:100,bonus:0,slowUntil:0,fudaCd:0,
     season:(bossRush?rushQueue[0]:(APP.taijiSeason||APP.season||"spring")),bossSpawned:false,boss:null,total:bossRush?rushQueue.length:spots.length,diffKey,diff,dodgeCd:0,dodgeUntil:0,
     seimeiHealUsed:false,fudaBurst:false,fudaChain:1,arrowCd:0,
+    guarding:false,guardMeter:100,rollUntil:0,rollDir:null,
     bossRush,rushQueue,rushIndex:0,rushCleared:0};
   creatures.oni.forEach(o=>{o.taijiHp=Math.ceil(32*diff.hpMul);o.taijiAlive=true;o.dispelledUntil=0;});
   $("taijiRemain").textContent=bossRush?"ボス":spirits.length;
@@ -7521,19 +7575,56 @@ function updateTaijiHp(){
 /* 敵の接触ダメージ */
 function taijiDamage(amt){
   const k=APP.taiji;if(!k||k.done)return;
-  if(performance.now()<(k.dodgeUntil||0)){taijiMsg("回避！",550);return;}
-  k.hp=Math.max(0,k.hp-amt*(k.diff?k.diff.dmgMul:1));updateTaijiHp();
+  if(performance.now()<(k.dodgeUntil||0)){taijiMsg("回避！(無敵)",500);return;} // ローリング回避の無敵時間
+  let dmg=amt*(k.diff?k.diff.dmgMul:1);
+  if(k.guarding&&(k.guardMeter||0)>0){ // ガード成立: 大幅軽減＆ノックバック無効
+    dmg*=0.22;k.guardMeter=Math.max(0,k.guardMeter-(amt*3.4+8));
+    taijiMsg("ガード！",450);beep(300,.05,"square",.06);
+    const gf=$("dodgeFlash");if(gf){gf.classList.remove("show");}
+    if(k.guardMeter<=0){k.guarding=false;taijiMsg("ガードが崩れた！",950);beep(170,.14,"square",.09);}
+  }
+  k.hp=Math.max(0,k.hp-dmg);updateTaijiHp();
   const dv=$("dangerVignette");if(dv){dv.style.opacity=0.55;clearTimeout(window._tjDmgT);window._tjDmgT=setTimeout(()=>{if(APP.mode==="taiji")dv.style.opacity=0;},180);}
   beep(135,.2,"sawtooth",.12);
   if(k.hp<=0){k.done=true;$("taijiMsg").textContent="気を失った…";setTimeout(()=>endTaiji(true),500);}
 }
 function taijiDodge(){
   const k=APP.taiji,now=performance.now();if(!k||k.done)return;
-  if(now<(k.dodgeCd||0)){taijiMsg("回避の体勢が整わない",650);return;}
-  const side=(Math.random()<0.5?-1:1),back=new THREE.Vector3(Math.sin(player.yaw),0,Math.cos(player.yaw)).multiplyScalar(2.6);
-  const strafe=new THREE.Vector3(Math.cos(player.yaw),0,-Math.sin(player.yaw)).multiplyScalar(side*1.15);
-  player.pos.add(back).add(strafe);player.pos.y=groundH(player.pos.x,player.pos.z)+1.62;
-  k.dodgeUntil=now+520;k.dodgeCd=now+1450;taijiMsg("回避！",650);beep(740,.045,"triangle",.045);
+  if(now<(k.dodgeCd||0)){taijiMsg("回避の体勢が整わない",600);beep(200,.06,"square",.05);return;}
+  // 回避方向: 移動入力があればその向き、無ければ後方(画面手前)へローリング
+  let dx=0,dz=0;
+  if(keys.w||keys.arrowup)dz-=1;if(keys.s||keys.arrowdown)dz+=1;
+  if(keys.a||keys.arrowleft)dx-=1;if(keys.d||keys.arrowright)dx+=1;
+  dx+=joy.vx;dz+=joy.vy;
+  const mm=Math.hypot(dx,dz);
+  if(mm>0.2){dx/=mm;dz/=mm;}else{dx=0;dz=1;}
+  const sy=Math.sin(player.yaw),cy=Math.cos(player.yaw);
+  // ローリングの移動はフレーム更新側で滑らかに適用(rollUntilの間)。無敵はdodgeUntil。
+  k.rollDir={x:(dz*sy+dx*cy),z:(dz*cy-dx*sy)};
+  k.rollStart=now;k.rollUntil=now+360;k.dodgeUntil=now+480;k.dodgeCd=now+960;k.guarding=false;
+  taijiMsg("回避！(無敵)",600);beep(720,.05,"triangle",.05);beep(430,.06,"sine",.04);
+  const df=$("dodgeFlash");if(df){df.classList.remove("show");void df.offsetWidth;df.classList.add("show");}
+  updateTaijiControlsUi();
+}
+function taijiSetGuard(on){
+  const k=APP.taiji;if(!k||k.done)return;
+  if(on&&(k.guardMeter||0)<=4){beep(180,.08,"square",.06);return;} // メーター切れでは構えられない
+  if(on&&now_within_roll(k))return; // ローリング中は不可
+  k.guarding=!!on;
+  if(on)beep(360,.04,"triangle",.05);
+  updateTaijiControlsUi();
+}
+function now_within_roll(k){return performance.now()<(k.rollUntil||0);}
+function updateTaijiControlsUi(){
+  const k=APP.taiji;if(!k)return;const now=performance.now();
+  const cd=Math.max(0,Math.min(1,((k.dodgeCd||0)-now)/960));
+  if($("tjCoolFill"))$("tjCoolFill").style.width=(cd*100)+"%";
+  const ready=now>=(k.dodgeCd||0);
+  if($("twDodge"))$("twDodge").classList.toggle("ready",ready);
+  if($("tjDodgeBtn"))$("tjDodgeBtn").classList.toggle("cooling",!ready);
+  if($("tjGuardFill"))$("tjGuardFill").style.width=(k.guardMeter==null?100:k.guardMeter)+"%";
+  if($("tjGuardBtn"))$("tjGuardBtn").classList.toggle("on",!!k.guarding);
+  document.body.classList.toggle("guarding-now",!!k.guarding);
 }
 function taijiTrySeimeiHeal(sx,sy){
   const k=APP.taiji,sei=creatures&&creatures.seimei&&creatures.seimei.g;if(!k||!sei||!sei.visible||k.seimeiHealUsed)return false;
@@ -8981,6 +9072,21 @@ function animate(now){
     }
 
     if(APP.view==="fp"){
+      // 退治モード: ガード回復／ローリング回避の滑らかな移動／操作UIの毎フレーム更新
+      let tjRoll=false;
+      if(APP.mode==="taiji"&&APP.taiji&&!APP.taiji.done){
+        const kk=APP.taiji,tn=performance.now();
+        if(kk.guarding&&(kk.guardMeter||0)>0){kk.guardMeter=Math.max(0,kk.guardMeter-27*dt);if(kk.guardMeter<=0){kk.guarding=false;taijiMsg("ガードが崩れた！",950);beep(180,.12,"square",.08);}}
+        else if((kk.guardMeter||0)<100){kk.guardMeter=Math.min(100,(kk.guardMeter||0)+15*dt);}
+        if(kk.rollUntil&&tn<kk.rollUntil&&kk.rollDir){
+          tjRoll=true;
+          const prog=Math.max(0,Math.min(1,(tn-kk.rollStart)/360)),rsp=16*dt*(0.45+(1-prog)*(1-prog));
+          let cx=Math.max(-57,Math.min(57,player.pos.x+kk.rollDir.x*rsp)),cz=Math.max(-57,Math.min(57,player.pos.z+kk.rollDir.z*rsp));
+          const bc=taijiClampBossArena(cx,cz);cx=bc.x;cz=bc.z;
+          player.pos.x=cx;player.pos.z=cz;player.pos.y=groundH(cx,cz)+1.62;
+        }
+        updateTaijiControlsUi();
+      }
       let mx=0,mz=0;
       if(!APP.codexOpen){
         if(keys.w||keys.arrowup)mz-=1;if(keys.s||keys.arrowdown)mz+=1;
@@ -8989,10 +9095,11 @@ function animate(now){
       }
       const m=Math.hypot(mx,mz);
       const running=keys.shift||(joy.active&&Math.hypot(joy.vx,joy.vy)>0.8); // ジョイを倒し切るとダッシュ(小型ジョイでも届くよう0.8)
-      if(m>0.01){
+      if(!tjRoll&&m>0.01){
         mx/=Math.max(1,m);mz/=Math.max(1,m);
         let sp=(running?10.5:5.6)*dt;
         if(APP.mode==="taiji"&&APP.taiji&&performance.now()<(APP.taiji.slowUntil||0))sp*=0.45; // 雪女の冷気で鈍足
+        if(APP.mode==="taiji"&&APP.taiji&&APP.taiji.guarding)sp*=0.42; // ガード中は摺り足
         const sy=Math.sin(player.yaw),cy=Math.cos(player.yaw);
         const nx=player.pos.x+(mz*sy+mx*cy)*sp;
         const nz=player.pos.z+(mz*cy-mx*sy)*sp;
