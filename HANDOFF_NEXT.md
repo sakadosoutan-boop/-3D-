@@ -52,7 +52,10 @@
 | 学習 | 用語カードに暗記モード（意味を隠してタップで答え合わせ＝フラッシュカード） | f9f12ee |
 | 不具合/見た目 | 雪女が北の対にめり込んで不可視だったのを修正（建物外 z=-49 へ）＋ローポリで姿を一新 | (本セッション) |
 | 退治モード | ボスラッシュ追加（雑魚なし・春→夏→秋→冬の四ボス連戦、季節ピッカーに⚔ボタン） | (本セッション最新) |
-| 学習/保存 | 図鑑に収集データの引き継ぎ（書き出し/読み込みコード `SHINDEN1:`）を追加 | (本セッション最新) |
+| 学習/保存 | 図鑑に収集データの引き継ぎ（書き出し/読み込みコード `SHINDEN1:`）を追加 | (本セッション) |
+| 退治/操作 | ローリング回避(無敵時間)・ガード(メーター制)・スマホ親指パッド(攻撃/回避/ガード)・ジョイのデッドゾーン・クロスヘア強調 | e65bccb |
+| 退治/配置 | ボス戦アリーナを東の開地(`TAIJI_BOSS_ARENA={x:30,z:-48,r:18,gateZ:-30}`)へ移設＋ボス戦中の鬼乱入を停止 | 5833c6a |
+| 退治/ボス | 夏ボスを河童の主と提灯お化けに分離（`K.bosses`配列化・別HPバー#bossBar2・別の動き/攻撃） | (本セッション最新) |
 
 ## 4. 判断して「見送った」項目（理由つき。再開時は要再検討）
 - **#17 レイキャスト空間分割**: pick はタップ駆動で実利益が微小。母屋/廂の大型建具は原点が遠く、
@@ -95,6 +98,14 @@
 - 収集データ引き継ぎ: `_codexExportCode`/`_codexImportCode`（`SHINDEN1:`+base64）、DOM `#codexBackup`/
   `#codexBackupText`/`#codexExport`/`#codexImport`。localStorage `CODEX_KEY="shinden3d-codex-v1"` は
   本来オリジン単位で永続。リセットの主因は URL/オリジン差・ローカルファイル閲覧と推測（コード側にクリア処理は無い）。
+- 退治の操作系: 回避=`taijiDodge`(rollDir/rollUntil/dodgeUntil でローリング無敵、移動はフレーム更新側で適用)、
+  ガード=`taijiSetGuard`/`k.guarding`/`k.guardMeter`(更新ループで回復・摺り足)、UIは `updateTaijiControlsUi`。
+  スマホ親指パッド `#tjPad`(`#tjFire`/`#tjDodgeBtn`/`#tjGuardBtn`)、body に `touch-ui` クラス。退治中 `#interactBtn` は隠す。
+- **【Codex要注意】退治ボスは複数体対応に変更**: `APP.taiji.bosses=[...]`（単体でも長さ1配列）＋ `APP.taiji.boss=bosses[0]`(後方互換)。
+  各 boss は `{g,cfg,hp,maxHp,nextAtk,dead,movePhase,barId,wrapId,role}`。夏のみ河童(role:"kappa")＋提灯(role:"chochin")の2体。
+  当たり判定/AOE/掃討/`updateBoss`/`updateBossMotion`/`bossAttack` は配列前提。共通操作は `taijiBossList(k)` を使う。
+- アリーナ: `TAIJI_BOSS_ARENA={x:30,z:-48,r:18,gateZ:-30}`(東の開地)。霧門メッシュ/出現/誘導は arena 座標基準。
+  ボス戦中(`bossSpawned`/`bossGate.triggered`/`bossRush`)は鬼を非表示にして乱入停止(描画ループの `_bossOn`)。
 
 ## 7. 音源ライセンス状況（`sounds/CREDITS.md`）
 - 戦闘SE（効果音ラボ想定）・ボス戦BGM（ユーザー提供）はいずれも **ライセンス要確認**。
