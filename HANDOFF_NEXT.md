@@ -100,7 +100,8 @@
   `#codexBackupText`/`#codexExport`/`#codexImport`。localStorage `CODEX_KEY="shinden3d-codex-v1"` は
   本来オリジン単位で永続。リセットの主因は URL/オリジン差・ローカルファイル閲覧と推測（コード側にクリア処理は無い）。
 - 退治の操作系(エルデンリング風): HUDは `#taijiHud`(inset:0 layer)＋ `#erStats`(左上HP/ガード/残り)・`#erItems`(左下武器スロット #twBow/#twSeal)・`#erActions`(右下 #tjGuardBtn/#tjFire)。
-  回避=`taijiDodge(flickDir)`(画面フリックで発動、rollDir/rollUntil でローリング、dodgeUntil が無敵)。フリック検出は `pup` 内(taiji+タッチ)。
+  回避=`taijiDodge()`(右下の回避↻ボタン #tjDodgeBtn / PCはSpace。移動入力方向へローリング、rollUntilで移動・dodgeUntilで無敵)。※フリック操作は誤爆のため廃止済み。
+  ロックオン=Codex実装の #tjLockBtn / Lキー（`taijiSetLockOn`/`k.lockOn`/`k.lockTarget`）。#erActions は ロック/回避/ガード/攻撃 の4ボタン。
   ガード=`taijiSetGuard`/`k.guarding`/`k.guardMeter`。押した瞬間 `k.parryUntil`(230ms)が開き被弾で `taijiParry()`=無効＋反撃。長押し/キーリピートは `wasGuarding` で連続パリィ抑止。
   戦闘中はジョイを `joy.dynamic=true` に強制(左下を空ける)、退治終了で `APP._prevJoyDyn` に復元。`#tjDodgeBtn`/#tjCool は隠し(DOM参照維持)。退治中 `#interactBtn` は隠す。
 - **【Codex要注意】退治ボスは複数体対応に変更**: `APP.taiji.bosses=[...]`（単体でも長さ1配列）＋ `APP.taiji.boss=bosses[0]`(後方互換)。
