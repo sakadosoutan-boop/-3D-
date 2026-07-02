@@ -10710,10 +10710,10 @@ function taijiQuit(){
 }
 function taijiBossList(k){return (k&&k.bosses)?k.bosses:(k&&k.boss?[k.boss]:[]);}
 function _clearTaijiFx(){
-  if(typeof bossProjs!=="undefined"){bossProjs.forEach(p=>scene.remove(p.m));bossProjs.length=0;}
-  if(typeof bossHazards!=="undefined"){bossHazards.forEach(h=>scene.remove(h.m));bossHazards.length=0;}
-  if(typeof taijiArrows!=="undefined"){taijiArrows.forEach(a=>scene.remove(a.g));taijiArrows.length=0;}
-  if(typeof taijiWaves!=="undefined"){taijiWaves.forEach(w=>scene.remove(w.g));taijiWaves.length=0;}
+  if(typeof bossProjs!=="undefined"){bossProjs.forEach(p=>taijiDisposeFx(p.m));bossProjs.length=0;}
+  if(typeof bossHazards!=="undefined"){bossHazards.forEach(h=>taijiDisposeFx(h.m));bossHazards.length=0;}
+  if(typeof taijiArrows!=="undefined"){taijiArrows.forEach(a=>taijiDisposeFx(a.g));taijiArrows.length=0;}
+  if(typeof taijiWaves!=="undefined"){taijiWaves.forEach(w=>taijiDisposeFx(w.g));taijiWaves.length=0;}
   taijiClearPolish();
   if(typeof SFX!=="undefined")SFX.stopBossBgm();
 }
@@ -10965,6 +10965,18 @@ function seFuda(){if(typeof SFX!=="undefined"&&SFX.playSe("fuda",.6))return;beep
 function seMagic(key){if(typeof SFX!=="undefined")SFX.playSe(key,.55);}
 /* 飛翔する破魔の矢・破魔の札の衝撃波(描画ループで更新) */
 const taijiArrows=[],taijiWaves=[];
+/* 戦闘fx(矢・弾・危険地帯・衝撃波)の破棄。全fxは毎回新規のgeometry/materialを持つ(共有なし)ため、
+   sceneから外すだけではGPU側に蓄積し、長期戦・ボスラッシュでモバイルが不安定になる。
+   除去は必ずこれを通す(material.disposeはテクスチャを触らないのでmap共有があっても安全) */
+function taijiDisposeFx(o){
+  if(!o)return;
+  o.traverse(n=>{
+    if(!n.isMesh)return;
+    if(n.geometry)n.geometry.dispose();
+    (Array.isArray(n.material)?n.material:[n.material]).forEach(m=>{if(m&&m.dispose)m.dispose();});
+  });
+  if(o.parent)o.parent.remove(o);
+}
 function spawnArrow(from,to,onHit){
   const dir=to.clone().sub(from),arrow=new THREE.Group();
   const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.55,5),new THREE.MeshBasicMaterial({color:0xf3e6c0}));arrow.add(shaft);
@@ -10988,10 +11000,10 @@ function spawnSwordArc(){
 }
 function updateTaijiFx(now){
   for(const a of taijiArrows){if(a.done)continue;const u=(now-a.t0)/a.dur;
-    if(u>=1){a.g.position.copy(a.to);scene.remove(a.g);a.done=true;if(a.onHit)a.onHit();}else a.g.position.lerpVectors(a.from,a.to,u);}
+    if(u>=1){a.g.position.copy(a.to);taijiDisposeFx(a.g);a.done=true;if(a.onHit)a.onHit();}else a.g.position.lerpVectors(a.from,a.to,u);}
   for(let i=taijiArrows.length-1;i>=0;i--)if(taijiArrows[i].done)taijiArrows.splice(i,1);
   for(const w of taijiWaves){if(w.done)continue;const u=(now-w.t0)/w.dur;
-    if(u>=1){scene.remove(w.g);w.done=true;}else if(w.sword){const sc=1+u*.42;w.g.scale.set(sc,sc,sc);w.g.material.opacity=0.82*(1-u);}
+    if(u>=1){taijiDisposeFx(w.g);w.done=true;}else if(w.sword){const sc=1+u*.42;w.g.scale.set(sc,sc,sc);w.g.material.opacity=0.82*(1-u);}
     else{const sc=1+u*16;w.g.scale.set(sc,sc,sc);w.g.material.opacity=0.75*(1-u);}}
   for(let i=taijiWaves.length-1;i>=0;i--)if(taijiWaves[i].done)taijiWaves.splice(i,1);
 }
@@ -11611,7 +11623,7 @@ function bossLiteCount(n){return Math.max(1,Math.round(n*(IS_TOUCH?0.72:1)));}
 function bossTrimFx(arr,limit){
   while(arr.length>limit){
     const old=arr.shift();
-    if(old&&old.m)scene.remove(old.m);
+    if(old&&old.m)taijiDisposeFx(old.m);
   }
 }
 function bossFan(bp,pp,col,dmg,count,spread,spd,opt={}){
@@ -11697,10 +11709,10 @@ function updateBossHazards(K,now,dt){
         else if(!h.hit){h.hit=true;if(h.slow)K.slowUntil=now+h.slow;taijiDamage(h.dmg);}
       }
     }
-    if(age>life){scene.remove(h.m);bossHazards.splice(i,1);}
+    if(age>life){taijiDisposeFx(h.m);bossHazards.splice(i,1);}
   }
 }
-function clearBossBattleFx(){bossProjs.forEach(p=>scene.remove(p.m));bossProjs.length=0;bossHazards.forEach(h=>scene.remove(h.m));bossHazards.length=0;const blind=$("taijiBlind");if(blind)blind.style.opacity=0;}
+function clearBossBattleFx(){bossProjs.forEach(p=>taijiDisposeFx(p.m));bossProjs.length=0;bossHazards.forEach(h=>taijiDisposeFx(h.m));bossHazards.length=0;const blind=$("taijiBlind");if(blind)blind.style.opacity=0;}
 function bossArenaClampVec(v,margin=2){
   const cx=TAIJI_BOSS_ARENA.x,cz=TAIJI_BOSS_ARENA.z,r=TAIJI_BOSS_ARENA.r-margin;
   const dx=v.x-cx,dz=v.z-cz,d=Math.hypot(dx,dz);
@@ -11919,7 +11931,7 @@ function updateBoss(K,t,now,dt){
       if(aim&&p.homing){const want=aim.clone().sub(p.m.position);if(want.lengthSq()>0.01){want.normalize();p.dir.lerp(want,p.homing).normalize();}}
       if(aim&&p.m.position.distanceTo(aim)<1.65){
         if(tb&&!tb.dead){damageBoss(tb,p.dmg||12,"reflect");tb.nextAtk=Math.max(tb.nextAtk||0,now+900);taijiMsg("弾き返し！",620);}
-        scene.remove(p.m);bossProjs.splice(i,1);continue;
+        taijiDisposeFx(p.m);bossProjs.splice(i,1);continue;
       }
     }else if(p.homing){const want=new THREE.Vector3(player.pos.x,player.pos.y,player.pos.z).sub(p.m.position);if(want.lengthSq()>0.01){want.normalize();p.dir.lerp(want,p.homing).normalize();}}
     p.m.position.addScaledVector(p.dir,p.spd*dt);
@@ -11928,9 +11940,9 @@ function updateBoss(K,t,now,dt){
     const dd=p.m.position.distanceTo(new THREE.Vector3(player.pos.x,player.pos.y,player.pos.z));
     if(!p.reflected&&dd<1.7){
       if(K.guarding&&now<(K.parryUntil||0)){taijiParry(p);K.parryUntil=0;continue;}
-      if(p.slow)K.slowUntil=now+p.slow;taijiDamage(p.dmg);scene.remove(p.m);bossProjs.splice(i,1);continue;
+      if(p.slow)K.slowUntil=now+p.slow;taijiDamage(p.dmg);taijiDisposeFx(p.m);bossProjs.splice(i,1);continue;
     }
-    if(now-p.born>p.lifetime){scene.remove(p.m);bossProjs.splice(i,1);}}
+    if(now-p.born>p.lifetime){taijiDisposeFx(p.m);bossProjs.splice(i,1);}}
 }
 function startKaimami(){
   scene.updateMatrixWorld(true);
@@ -12968,7 +12980,16 @@ const SAIGEN_SCENES=[
 ];
 function disposeSaigenStage(){
   const st=window.SAIGEN_STAGE;
-  if(st){if(st.parent)st.parent.remove(st);window.SAIGEN_STAGE=null;}
+  if(st){
+    // __saigenOwned の複製マテリアルだけ解放する(共有MAT/HEIAN_MATS/共有テクスチャは触らない)。
+    // 再入場のたびに御簾・格子の複製がGPUへ蓄積するのを防ぐ
+    st.traverse(o=>{
+      if(!o.isMesh)return;
+      const mats=Array.isArray(o.material)?o.material:[o.material];
+      mats.forEach(m=>{if(m&&m.__saigenOwned&&m.dispose)m.dispose();});
+    });
+    if(st.parent)st.parent.remove(st);window.SAIGEN_STAGE=null;
+  }
 }
 /* 場面専用の道具を既存の素材(MAT.koushi/MAT.misu等)で組む。世界(建物)モードで使用。
    ■ 母屋の正面2間を覆う大型の御簾(半透明)を新規に立て、大臣はこの奥に座らせる。
@@ -12982,12 +13003,14 @@ const SAIGEN_PROP_BUILDERS={
     let koushiFillMat;
     try{koushiFillMat=(koushiMat&&koushiMat.clone)?koushiMat.clone():M({color:0x6b5536,roughness:.8});}
     catch(e){koushiFillMat=M({color:0x6b5536,roughness:.8});}
+    koushiFillMat.__saigenOwned=true; // 舞台撤去時にdispose(共有MATと違い、この場だけの複製)
     koushiFillMat.transparent=true;koushiFillMat.opacity=0.13;koushiFillMat.depthWrite=false;
     if(typeof THREE!=="undefined"&&THREE.DoubleSide!=null)koushiFillMat.side=THREE.DoubleSide;
     // ── 大型御簾(母屋の南正面) ── 幅10m × 高さ2.5m、半透明 ──
     let misuMat;
     try{misuMat=(typeof MAT!=="undefined"&&MAT.misu&&MAT.misu.clone)?MAT.misu.clone():M({color:0x8a7d52,roughness:.9});}
     catch(e){misuMat=M({color:0x8a7d52,roughness:.9});}
+    misuMat.__saigenOwned=true; // 舞台撤去時にdispose(mapは共有TEXなので触らない)
     misuMat.transparent=true;misuMat.opacity=0.40;misuMat.depthWrite=false;
     if(typeof THREE!=="undefined"&&THREE.DoubleSide!=null)misuMat.side=THREE.DoubleSide;
     const misuW=10.4, misuH=2.50, misuCY=2.55, misuZ=1.85; // 母屋南端のすぐ南(z=1.85)
