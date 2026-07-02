@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Shinden Story Chapter",
+  "type": "object",
+  "required": ["chapterId", "chapterTitle", "season", "timeOfDay", "startSequence"],
+  "properties": {
+    "chapterId": { "type": "integer", "minimum": 1 },
+    "chapterTitle": { "type": "string" },
+    "season": { "type": "string" },
+    "timeOfDay": { "type": "string" },
+    "startSequence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/event" }
+    }
+  },
+  "$defs": {
+    "effects": {
+      "type": "object",
+      "properties": {
+        "realityEgo": { "type": "number" },
+        "fantasySynchro": { "type": "number" },
+        "brainErosion": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "event": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "enum": [
+            "dialogue",
+            "choice",
+            "set_scene",
+            "camera",
+            "spawn_collectibles",
+            "require_collectibles",
+            "trigger_minigame",
+            "effect",
+            "set_flag",
+            "ending_check",
+            "ending"
+          ]
+        },
+        "speaker": { "type": "string" },
+        "text": { "type": "string" },
+        "cameraAngleId": { "type": "string" },
+        "next": { "type": "string" },
+        "effects": { "$ref": "#/$defs/effects" },
+        "successEffects": { "$ref": "#/$defs/effects" },
+        "failEffects": { "$ref": "#/$defs/effects" },
+        "setFlag": { "type": "object", "description": "ルートフラグを直接立てる(例 {\"heardRealName\": true})" },
+        "endingId": { "type": "string", "description": "type:ending 用。ED1_TRUE〜ED5_SPOOKY" },
+        "season": { "type": "string", "description": "set_scene用。spring/summer/autumn/winter/tokoyo(章の既定を上書き)" },
+        "timeOfDay": { "type": "string" },
+        "playerStart": { "type": "object", "description": "set_scene用 {x,z,yaw}" },
+        "groupId": { "type": "string", "description": "spawn/require_collectibles の収集グループID" },
+        "kind": { "type": "string", "description": "収集物の種類 term_card / waka_tanzaku など" },
+        "count": { "type": "integer" },
+        "positions": { "type": "array", "description": "収集物の配置 [{id,label,x,z}]" },
+        "gameMode": { "type": "string", "description": "trigger_minigame の接続先モード" },
+        "payload": { "type": "object" },
+        "successNext": { "type": "string" },
+        "failNext": { "type": "string" },
+        "effectId": { "type": "string", "description": "type:effect の演出名(抽象名を推奨)" },
+
+        "fade": { "enum": ["black", "white"], "description": "演出: 場面転換の暗転/白転(本体の波L saigenFade 互換)" },
+        "fx": { "enum": ["lightning"], "description": "演出: 稲光(fadeと同一イベントでの併用不可)" },
+        "se": { "enum": ["gong", "bell", "koto", "thunder", "wind"], "description": "演出: 効果音キュー(波L saigenSe 互換)" },
+        "emotes": { "type": "object", "description": "人物の所作 {actorKey: emoteName}。emoteは neutral/smile/stern/sad/surprise(表情) と weep/nod/point/shy/listen/startle/recite/laugh/anger/bow(所作)" },
+        "shioriGhost": { "type": "number", "description": "小萩→栞の透け度 0..1(StoryObjects.kohagi.setShioriGhost)" },
+        "stage": { "type": "object", "description": "舞台指定 {topic,judgeFanText,ministerShadow,ministerPossessed,crownState,purpleCord,seagull,silence,erosionLevel など}。ブリッジがStoryObjectsのAPIへ流す" },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["text", "next"],
+            "properties": {
+              "text": { "type": "string" },
+              "next": { "type": "string" },
+              "effects": { "$ref": "#/$defs/effects" }
+            }
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
