@@ -1,0 +1,223 @@
+{
+  "chapterId": 4,
+  "chapterTitle": "冬夜、歌合の火花",
+  "season": "winter",
+  "timeOfDay": "night",
+  "startSequence": [
+    {
+      "id": "seq_401_open_snow",
+      "type": "set_scene",
+      "season": "winter",
+      "timeOfDay": "night",
+      "playerStart": {
+        "x": 0.6,
+        "z": 2.4,
+        "yaw": 3.14
+      },
+      "cameraAngleId": "cam_winter_utakai_hisashi",
+      "next": "seq_402_lamp_effect",
+      "fade": "black",
+      "se": "gong"
+    },
+    {
+      "id": "seq_402_lamp_effect",
+      "type": "effect",
+      "effectId": "winter_lamp_dim",
+      "payload": {
+        "gagaku": true,
+        "snow": true
+      },
+      "next": "seq_403_minister_appears"
+    },
+    {
+      "id": "seq_403_minister_appears",
+      "type": "dialogue",
+      "speaker": "左大臣",
+      "text": "今宵は歌にて、若君の心を量る。雪の庭に、軽き言葉は落ちて消えようぞ。",
+      "next": "seq_404_judge_intro"
+    },
+    {
+      "id": "seq_404_judge_intro",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "一番、題は『雪』。ただ白しと言うなかれ。白きものに、見えぬ心を映してこそ歌。",
+      "next": "seq_405_topic_snow",
+      "se": "koto",
+      "stage": {
+        "topic": "雪",
+        "judgeFanText": "題 雪"
+      }
+    },
+    {
+      "id": "seq_405_topic_snow",
+      "type": "choice",
+      "text": "一番『雪』。どの趣で詠む？",
+      "options": [
+        {
+          "text": "雪の白さに、御簾の向こうの声を重ねる",
+          "next": "seq_406_topic_wait_intro",
+          "effects": {
+            "fantasySynchro": 8,
+            "utakaiPrepScore": 2
+          }
+        },
+        {
+          "text": "庭が白くてきれいだと素直に詠む",
+          "next": "seq_406_topic_wait_intro",
+          "effects": {
+            "fantasySynchro": 3,
+            "utakaiPrepScore": 1
+          }
+        },
+        {
+          "text": "寒いので早く帰りたいと詠む",
+          "next": "seq_406_topic_wait_intro",
+          "effects": {
+            "realityEgo": 5,
+            "brainErosion": 4,
+            "utakaiPrepScore": 0
+          }
+        }
+      ]
+    },
+    {
+      "id": "seq_406_topic_wait_intro",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "二番、題は『待つ』。急く心は真なれど、歌は心を投げつける器にあらず。",
+      "next": "seq_407_topic_wait",
+      "stage": {
+        "topic": "待つ",
+        "judgeFanText": "題 待"
+      }
+    },
+    {
+      "id": "seq_407_topic_wait",
+      "type": "choice",
+      "text": "二番『待つ』。返歌にふさわしい心は？",
+      "options": [
+        {
+          "text": "待つ時間そのものを、月の移ろいとして詠む",
+          "next": "seq_408_topic_return_intro",
+          "effects": {
+            "fantasySynchro": 7,
+            "utakaiPrepScore2": 2
+          }
+        },
+        {
+          "text": "なぜ遅いのかと相手を責める",
+          "next": "seq_408_topic_return_intro",
+          "effects": {
+            "brainErosion": 10,
+            "utakaiPrepScore2": 0
+          }
+        },
+        {
+          "text": "会いたい気持ちは隠さず、季節の景に預ける",
+          "next": "seq_408_topic_return_intro",
+          "effects": {
+            "realityEgo": 4,
+            "fantasySynchro": 6,
+            "utakaiPrepScore2": 2
+          }
+        }
+      ]
+    },
+    {
+      "id": "seq_408_topic_return_intro",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "三番、題は『帰る』。この題に、今宵のすべてが潜む。",
+      "next": "seq_409_topic_return",
+      "stage": {
+        "topic": "帰る",
+        "judgeFanText": "題 帰"
+      }
+    },
+    {
+      "id": "seq_409_topic_return",
+      "type": "choice",
+      "text": "三番『帰る』。あなたは何を詠む？",
+      "options": [
+        {
+          "text": "帰る朝だけを願う歌",
+          "next": "seq_410_trigger_utakai",
+          "effects": {
+            "realityEgo": 12,
+            "utakaiReturnTone": 1
+          }
+        },
+        {
+          "text": "帰らぬ夢だけを願う歌",
+          "next": "seq_410_trigger_utakai",
+          "effects": {
+            "fantasySynchro": 14,
+            "utakaiReturnTone": 2
+          }
+        },
+        {
+          "text": "帰る袖にも、残る香があると詠む歌",
+          "next": "seq_410_trigger_utakai",
+          "effects": {
+            "realityEgo": 8,
+            "fantasySynchro": 8,
+            "utakaiReturnTone": 3
+          },
+          "setFlag": {
+            "balancedReturnPoem": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "seq_410_trigger_utakai",
+      "type": "trigger_minigame",
+      "gameMode": "utakai_story",
+      "payload": {
+        "rounds": 3,
+        "needWins": 2,
+        "storyTheme": "return",
+        "judgeExplains": true
+      },
+      "successEffects": {
+        "fantasySynchro": 10,
+        "brainErosion": -5,
+        "utakaiWon": true
+      },
+      "failEffects": {
+        "brainErosion": 25,
+        "chapter4Lost": true
+      },
+      "successNext": "seq_411_win",
+      "failNext": "seq_412_lose_ed3"
+    },
+    {
+      "id": "seq_411_win",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "あなたは、歌を点ではなく道として渡りました。その道なら、御簾の向こうにも届きましょう。",
+      "setFlag": {
+        "utakaiWon": true,
+        "chapter4Cleared": true
+      },
+      "next": "chapter_complete",
+      "emotes": {
+        "kohagi": "smile"
+      },
+      "se": "bell"
+    },
+    {
+      "id": "seq_412_lose_ed3",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "言葉を軽んじる者は、言葉のない夜へ。火桶の火まで、あなたの名を忘れた。",
+      "next": "seq_413_ed3",
+      "fade": "black"
+    },
+    {
+      "id": "seq_413_ed3",
+      "type": "ending",
+      "endingId": "ED3_GAMEOVER"
+    }
+  ]
+}

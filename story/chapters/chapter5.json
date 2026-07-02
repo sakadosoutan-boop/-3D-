@@ -1,0 +1,229 @@
+{
+  "chapterId": 5,
+  "chapterTitle": "常世の黎明、大鬼祓い",
+  "season": "tokoyo",
+  "timeOfDay": "dawn",
+  "startSequence": [
+    {
+      "id": "seq_501_open_tokoyo",
+      "type": "set_scene",
+      "season": "tokoyo",
+      "timeOfDay": "dawn",
+      "playerStart": {
+        "x": 1.8,
+        "z": -3.4,
+        "yaw": 0
+      },
+      "cameraAngleId": "cam_tokoyo_north_tainoya",
+      "next": "seq_502_tokoyo_effect",
+      "fade": "white"
+    },
+    {
+      "id": "seq_502_tokoyo_effect",
+      "type": "effect",
+      "effectId": "tokoyo_glitch",
+      "payload": {
+        "floatingCards": true,
+        "brokenMisu": true,
+        "fogGate": true
+      },
+      "next": "seq_503_kohagi_glitch"
+    },
+    {
+      "id": "seq_503_kohagi_glitch",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "帰る道は、覚えたものを忘れぬ者にだけ開きます。わたくしの名も、どうか急いで決めませぬよう。",
+      "effects": {
+        "fantasySynchro": 4
+      },
+      "next": "seq_504_minister_possessed",
+      "emotes": {
+        "kohagi": "sad"
+      },
+      "shioriGhost": 0.6
+    },
+    {
+      "id": "seq_504_minister_possessed",
+      "type": "dialogue",
+      "speaker": "左大臣",
+      "text": "この邸は古きものを守るためにある。新しき世へ返すものなど、ひとつもない。",
+      "next": "seq_505_oni_reveal",
+      "stage": {
+        "ministerShadow": 0.8,
+        "ministerPossessed": true
+      }
+    },
+    {
+      "id": "seq_505_oni_reveal",
+      "type": "effect",
+      "effectId": "oni_tears_misu",
+      "payload": {
+        "boss": "great_oni",
+        "phase": 1
+      },
+      "next": "seq_506_oni_battle",
+      "fx": "lightning",
+      "se": "thunder"
+    },
+    {
+      "id": "seq_506_oni_battle",
+      "type": "trigger_minigame",
+      "gameMode": "taiji_oni_story_final",
+      "payload": {
+        "boss": "great_oni",
+        "arena": "north_tainoya_wide",
+        "fogGate": true,
+        "weapons": [
+          "arrow",
+          "ofuda",
+          "katana"
+        ],
+        "healingItem": "omiki",
+        "requiresFinalQuiz": true
+      },
+      "successEffects": {
+        "realityEgo": 12,
+        "fantasySynchro": 8,
+        "brainErosion": -8,
+        "oniWon": true
+      },
+      "failEffects": {
+        "brainErosion": 35,
+        "chapter5Lost": true
+      },
+      "successNext": "seq_507_after_battle",
+      "failNext": "seq_516_lose_ed3"
+    },
+    {
+      "id": "seq_507_after_battle",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "大鬼の胸に、小萩の影が短冊のように封じられていた。札はまだ三枚、朝の風に震えている。",
+      "next": "seq_508_final_quiz_1",
+      "se": "wind"
+    },
+    {
+      "id": "seq_508_final_quiz_1",
+      "type": "choice",
+      "text": "破魔の連札 一。御簾とは、何をするものか。",
+      "options": [
+        {
+          "text": "相手を完全に隠す壁",
+          "next": "seq_517_quiz_fail_ed3",
+          "effects": {
+            "brainErosion": 20
+          }
+        },
+        {
+          "text": "見えぬ相手へ礼を保つ境",
+          "next": "seq_509_final_quiz_2",
+          "effects": {
+            "fantasySynchro": 5,
+            "realityEgo": 2
+          }
+        },
+        {
+          "text": "偉い人だけが使う飾り",
+          "next": "seq_517_quiz_fail_ed3",
+          "effects": {
+            "brainErosion": 15
+          }
+        }
+      ]
+    },
+    {
+      "id": "seq_509_final_quiz_2",
+      "type": "choice",
+      "text": "破魔の連札 二。返歌に必要なのは何か。",
+      "options": [
+        {
+          "text": "相手の言葉を受け、季節に返すこと",
+          "next": "seq_510_final_quiz_3",
+          "effects": {
+            "fantasySynchro": 5,
+            "realityEgo": 3
+          }
+        },
+        {
+          "text": "自分の気持ちを一番強く言うこと",
+          "next": "seq_517_quiz_fail_ed3",
+          "effects": {
+            "brainErosion": 15
+          }
+        },
+        {
+          "text": "相手より難しい言葉を使うこと",
+          "next": "seq_517_quiz_fail_ed3",
+          "effects": {
+            "brainErosion": 12
+          }
+        }
+      ]
+    },
+    {
+      "id": "seq_510_final_quiz_3",
+      "type": "choice",
+      "text": "破魔の連札 三。目の前の人を、何と呼ぶ。",
+      "options": [
+        {
+          "text": "小萩",
+          "next": "seq_511_ending_check",
+          "effects": {
+            "fantasySynchro": 14
+          }
+        },
+        {
+          "text": "栞",
+          "next": "seq_511_ending_check",
+          "effects": {
+            "realityEgo": 14
+          }
+        },
+        {
+          "text": "あなた",
+          "next": "seq_511_ending_check",
+          "effects": {
+            "realityEgo": 8,
+            "fantasySynchro": 8
+          },
+          "setFlag": {
+            "calledYou": true
+          }
+        }
+      ],
+      "stage": {
+        "silence": true
+      }
+    },
+    {
+      "id": "seq_511_ending_check",
+      "type": "ending_check",
+      "requirements": {
+        "trueReality": 60,
+        "trueFantasy": 60,
+        "trueMaxErosion": 20,
+        "syncGap": 25
+      }
+    },
+    {
+      "id": "seq_516_lose_ed3",
+      "type": "dialogue",
+      "speaker": "大鬼",
+      "text": "名を知れど、恐れを斬れぬ。ならば御簾の裂け目で、百年眠れ。",
+      "next": "seq_518_ed3"
+    },
+    {
+      "id": "seq_517_quiz_fail_ed3",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "最後の名づけを誤れば、勝ちし戦も夜へ戻る。言葉の火は、ここで消えた。",
+      "next": "seq_518_ed3"
+    },
+    {
+      "id": "seq_518_ed3",
+      "type": "ending",
+      "endingId": "ED3_GAMEOVER"
+    }
+  ]
+}

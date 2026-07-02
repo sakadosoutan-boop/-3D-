@@ -1,0 +1,157 @@
+{
+  "chapterId": 1,
+  "chapterTitle": "異邦の若君、御簾を叩く",
+  "season": "spring",
+  "timeOfDay": "morning",
+  "startSequence": [
+    {
+      "id": "seq_001",
+      "type": "set_scene",
+      "season": "spring",
+      "timeOfDay": "morning",
+      "playerStart": { "x": 0.2, "z": 4.8, "yaw": 3.14 },
+      "cameraAngleId": "cam_main_house_inside",
+      "fade": "black",
+      "next": "seq_002"
+    },
+    {
+      "id": "seq_002",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "これ、秀頼様。あな、見苦し。まずはその歩き方から直されよ。",
+      "cameraAngleId": "cam_main_house_inside",
+      "se": "bell",
+      "emotes": { "kohagi": "stern" },
+      "next": "seq_002b"
+    },
+    {
+      "id": "seq_002b",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "……は？ 歩き方って——いや、待て。なんであんた、俺の名前を知ってるんだ。",
+      "cameraAngleId": "cam_ch1_low_floor",
+      "emotes": { "hidetora": "surprise" },
+      "next": "seq_002c"
+    },
+    {
+      "id": "seq_002c",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "名は、呼ぶものではなく、呼ばれるものにございます。……さ、背を伸ばされませ、若君。",
+      "emotes": { "kohagi": "neutral" },
+      "setFlag": { "kohagiKnewName": true },
+      "next": "seq_003"
+    },
+    {
+      "id": "seq_003",
+      "type": "choice",
+      "text": "（どうする…？）",
+      "options": [
+        {
+          "text": "ここはどこだ？と激しく問い詰める",
+          "next": "seq_004_rational",
+          "effects": { "realityEgo": 10, "fantasySynchro": 0, "brainErosion": 5 }
+        },
+        {
+          "text": "御簾の向こうの気配に静かに平伏する",
+          "next": "seq_004_miyabi",
+          "effects": { "realityEgo": 0, "fantasySynchro": 15, "brainErosion": 0 }
+        },
+        {
+          "text": "まず出口と人の配置を静かに確認する",
+          "next": "seq_004_observe",
+          "effects": { "realityEgo": 6, "fantasySynchro": 3, "brainErosion": 0 }
+        }
+      ]
+    },
+    {
+      "id": "seq_004_rational",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "声を荒らぐるは、下衆のふるまひ。ここでは、まず目を伏せるものにて候。",
+      "effects": { "brainErosion": 4 },
+      "next": "seq_005_quiz"
+    },
+    {
+      "id": "seq_004_miyabi",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "よろし。御簾の内外を知ること、それがこの邸で生きる第一歩にございます。",
+      "effects": { "fantasySynchro": 5 },
+      "next": "seq_005_quiz"
+    },
+    {
+      "id": "seq_004_observe",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "逃げ道を見る目に、場を荒らさぬ慎みが添えばよろし。廂と母屋、その境から覚えましょう。",
+      "effects": { "realityEgo": 2, "fantasySynchro": 3 },
+      "next": "seq_005_quiz"
+    },
+    {
+      "id": "seq_005_quiz",
+      "type": "trigger_minigame",
+      "gameMode": "quiz_beginner",
+      "payload": {
+        "questionCount": 5,
+        "targetTags": ["半蔀", "御簾", "几帳", "廂", "母屋"]
+      },
+      "successEffects": { "realityEgo": 3, "fantasySynchro": 5, "brainErosion": -3 },
+      "failEffects": { "brainErosion": 18 },
+      "successNext": "seq_006_voice",
+      "failNext": "seq_retry_or_ed5"
+    },
+    {
+      "id": "seq_006_voice",
+      "type": "dialogue",
+      "speaker": "御簾の向こうの声",
+      "text": "——せりざわくん。",
+      "cameraAngleId": "cam_ch1_misu_gap",
+      "se": "wind",
+      "setFlag": { "heardRealName": true },
+      "next": "seq_007_kohagi_deny"
+    },
+    {
+      "id": "seq_007_kohagi_deny",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "……風の音にございましょう。今のは、どなたの名でもありませぬ。",
+      "emotes": { "kohagi": "sad" },
+      "next": "seq_clear"
+    },
+    {
+      "id": "seq_retry_or_ed5",
+      "type": "choice",
+      "text": "小萩は眉をひそめた。もう一度、建具の名を学び直すか。",
+      "options": [
+        {
+          "text": "学び直す",
+          "next": "seq_005_quiz",
+          "effects": { "realityEgo": 2, "brainErosion": 4 }
+        },
+        {
+          "text": "もう十分だと言い張る",
+          "next": "seq_bad_manners",
+          "effects": { "realityEgo": 8, "brainErosion": 12 }
+        }
+      ]
+    },
+    {
+      "id": "seq_bad_manners",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "ならば、その『十分』が通じぬ世にて、ひとり立ってみるがよい。",
+      "emotes": { "kohagi": "stern" },
+      "setFlag": { "skippedLessons": true },
+      "next": "seq_clear"
+    },
+    {
+      "id": "seq_clear",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "春の朝、秀頼は御簾の向こうにいる誰かの息遣いを、はじめて物語として聞いた。",
+      "setFlag": { "chapter1Cleared": true },
+      "next": "chapter_complete"
+    }
+  ]
+}
