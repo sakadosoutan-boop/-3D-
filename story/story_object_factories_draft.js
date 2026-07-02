@@ -763,6 +763,225 @@
   }
 
   /* ============================================================
+     E. 別ロケーション(現代)セット — 病院・教室など「寝殿の外」の場面。
+     ■ 方式: 寝殿から十分離れた座標(STORY_OFFSTAGE)に密閉された内装セットを建てる。
+       部屋は内向きBoxGeometry(BackSide)なので外界は一切映らず、フォグ・空も見えない。
+       専用のPointLightを持ち、寝殿側の昼夜設定に依存しない。
+     ■ 転換手順(推奨): saigenFade("black") → プレイヤー/カメラをセットのカメラ台帳へsnap
+       → 章の終わりに disposeGroup で撤去。生成は章頭のみ。
+  ============================================================ */
+  const STORY_OFFSTAGE={
+    hospital: {x:-260,y:0,z:240},
+    classroom:{x:-260,y:0,z:300},
+    spare1:   {x:-260,y:0,z:360},
+    spare2:   {x:-200,y:0,z:360}
+  };
+
+  /* 内向きの部屋シェル。floor/wall/ceilingを別色にできる6面BackSide箱+天井灯 */
+  function createModernRoomShell(opt={}){
+    const w=opt.w||6.5,h=opt.h||3.0,d=opt.d||5.2;
+    const g=new THREE.Group();
+    const mk=c=>{const m=M({color:c,roughness:.92,side:THREE.BackSide});m.__ownedByStory=true;return m;};
+    const wall=mk(opt.wallColor!=null?opt.wallColor:0xe8ecea);
+    const mats=[wall,wall,mk(opt.ceilColor!=null?opt.ceilColor:0xf2f4f2),
+                mk(opt.floorColor!=null?opt.floorColor:0xd8d2c4),wall,wall]; // +x,-x,+y,-y,+z,-z
+    const room=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mats);
+    room.position.y=h/2;room.receiveShadow=true;g.add(room);
+    // 幅木(壁と床の境の締め)
+    const skirt=M({color:0xb9b2a2,roughness:.85});skirt.__ownedByStory=true;
+    [[0,-d/2+.02,w-.08,0],[0,d/2-.02,w-.08,0],[-w/2+.02,0,d-.08,Math.PI/2],[w/2-.02,0,d-.08,Math.PI/2]].forEach(p=>{
+      const b=box(p[2],.10,.03,skirt,p[0],.05,p[1]);b.rotation.y=p[3];g.add(b);});
+    // 天井灯(発光パネル+PointLight)。窓は各セット側で壁に貼る
+    const lm=new THREE.MeshBasicMaterial({color:opt.lightTint||0xf6f4ea});lm.__ownedByStory=true;
+    const panel=plane(w*.34,d*.22,lm,0,h-.02,0);panel.rotation.x=Math.PI/2;g.add(noShadow(panel));
+    const light=new THREE.PointLight(opt.lightTint||0xfff4e0,opt.lightPower!=null?opt.lightPower:.95,Math.max(w,d)*1.6,2);
+    light.position.set(0,h-.5,0);g.add(light);
+    g.userData.size={w,h,d};
+    return g;
+  }
+
+  /* 壁の窓: 淡い外光の発光板+桟。timeTint で朝/昼/夕の光色を変えられる */
+  function windowPane(w,h,tint){
+    const g=new THREE.Group();
+    const glow=new THREE.MeshBasicMaterial({color:tint||0xdfe9f4});glow.__ownedByStory=true;
+    g.add(noShadow(plane(w,h,glow,0,0,0)));
+    const frame=M({color:0x9aa2a8,roughness:.6});frame.__ownedByStory=true;
+    g.add(box(w+.06,.05,.04,frame,0,h/2,0));g.add(box(w+.06,.05,.04,frame,0,-h/2,0));
+    g.add(box(.05,h,.04,frame,-w/2,0,0));g.add(box(.05,h,.04,frame,w/2,0,0));
+    g.add(box(.035,h,.03,frame,0,0,0));g.add(box(w,.035,.03,frame,0,0,0));
+    return g;
+  }
+
+  /* ---- E-1. 病院の個室 ----
+     栞の現実側の真相シーン用。ベッド・点滴・心電モニタ・カーテン・
+     サイドテーブルの上に「薄紫の紐のしおり付きノート」(常世との接続)。
+     api: update(t) / setCurtain(0..1) / monitor(点滅・波形スクロール) */
+  function createHospitalRoomSet(){
+    const anchor=STORY_OFFSTAGE.hospital;
+    const g=new THREE.Group();g.position.set(anchor.x,anchor.y,anchor.z);
+    const shell=createModernRoomShell({w:6.4,h:3.0,d:5.2,wallColor:0xe6efe9,floorColor:0xdcd8ce,lightTint:0xf2f6f0,lightPower:.8});
+    g.add(shell);
+    // 窓(淡い朝光)+ブラインド
+    const win=windowPane(2.0,1.3,0xe9f2fb);win.position.set(-3.17,1.7,-.6);win.rotation.y=Math.PI/2;g.add(win);
+    const blind=M({color:0xf0f2ee,roughness:.9});blind.__ownedByStory=true;
+    for(let i=0;i<5;i++)g.add(noShadow(box(.02,.10,2.0,blind,-3.13,2.30-i*.13,-.6,false)));
+    // ベッド(枠・マット・毛布・枕・柵)
+    const bed=new THREE.Group();
+    const steel=M({color:0xcfd6da,roughness:.4,metalness:.5});steel.__ownedByStory=true;
+    bed.add(box(2.15,.09,1.05,steel,0,.42,0));
+    [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(p=>bed.add(cyl(.035,.035,.42,steel,p[0]*1.0,.21,p[1]*.48,8)));
+    bed.add(box(2.05,.16,.98,M({color:0xf4f2ec,roughness:.95}),0,.545,0));                    // マット
+    const blanket=box(1.45,.10,1.00,M({color:0xbcd4c8,roughness:.9}),-.28,.665,0);bed.add(blanket); // 毛布
+    bed.add(box(.42,.09,.60,M({color:0xffffff,roughness:.95}),.78,.645,0));                   // 枕
+    [[-1],[1]].forEach(s=>{const rail=box(1.1,.05,.04,steel,-.35,.86,s[0]*.52);bed.add(rail);
+      bed.add(cyl(.02,.02,.26,steel,-.85,.72,s[0]*.52,6));bed.add(cyl(.02,.02,.26,steel,.15,.72,s[0]*.52,6));});
+    bed.add(box(.9,.5,.05,steel,1.08,.75,0));                                                 // ヘッドボード
+    bed.position.set(1.2,0,-1.3);bed.rotation.y=Math.PI/2;g.add(bed);
+    // 点滴スタンド(ポール・フック・バッグ・チューブ)
+    const iv=new THREE.Group();
+    iv.add(cyl(.018,.018,1.8,steel,0,.9,0,8));
+    iv.add(cyl(.22,.22,.02,steel,0,.03,0,10));
+    [[.16,0],[-.16,0],[0,.16],[0,-.16]].forEach(p=>iv.add(cyl(.015,.02,.05,steel,p[0],.05,p[1],6)));
+    const hook=box(.30,.02,.02,steel,0,1.80,0);iv.add(hook);
+    const bagMat=new THREE.MeshStandardMaterial({color:0xeef4f8,transparent:true,opacity:.75,roughness:.3});bagMat.__ownedByStory=true;
+    iv.add(box(.16,.26,.05,bagMat,.13,1.62,0));
+    iv.add(noShadow(box(.13,.16,.03,new THREE.MeshBasicMaterial({color:0xcfe4f0}),.13,1.58,.027)));  // 液面
+    const tube=cyl(.006,.006,.9,bagMat,.16,1.05,.10,6);tube.rotation.x=.35;iv.add(tube);
+    iv.position.set(.35,0,-2.15);g.add(iv);
+    // 心電モニタ(波形はCanvasTextureをスクロール)
+    const mon=new THREE.Group();
+    mon.add(box(.44,.34,.30,M({color:0xdfe3e6,roughness:.6}),0,1.18,0));
+    const mc=document.createElement("canvas");mc.width=128;mc.height=64;
+    const mx=mc.getContext("2d");
+    mx.fillStyle="#0c1a14";mx.fillRect(0,0,128,64);
+    mx.strokeStyle="#39e6a0";mx.lineWidth=2;mx.beginPath();
+    for(let x=0;x<=128;x++){const beat=(x%64);let y=40;
+      if(beat>26&&beat<30)y=40-(beat-26)*9;else if(beat>=30&&beat<34)y=4+(beat-30)*11;
+      else y=40+Math.sin(x*.4)*2;
+      x===0?mx.moveTo(x,y):mx.lineTo(x,y);}
+    mx.stroke();
+    const monTex=new THREE.CanvasTexture(mc);monTex.wrapS=THREE.RepeatWrapping;monTex.encoding=THREE.sRGBEncoding;
+    const monMat=new THREE.MeshBasicMaterial({map:monTex});monMat.__ownedByStory=true;
+    mon.add(noShadow(plane(.36,.24,monMat,0,1.20,.155)));
+    const dot=noShadow(sph(.014,new THREE.MeshBasicMaterial({color:0x51ffb2}),.14,1.30,.16,6,5));mon.add(dot);
+    mon.add(cyl(.03,.03,1.0,steel,0,.5,0,8));mon.add(cyl(.18,.18,.02,steel,0,.02,0,10));
+    mon.position.set(.35,0,-.35);g.add(mon);
+    // 間仕切りカーテン(レール+ヒダ=波板)。setCurtainで開閉
+    const railY=2.55;
+    const rail=cyl(.015,.015,3.4,steel,0,railY,.9,8);rail.rotation.z=Math.PI/2;g.add(rail);
+    const curtainMat=M({color:0xdfe8dd,roughness:.95,side:THREE.DoubleSide});curtainMat.__ownedByStory=true;
+    const curtain=new THREE.Group();
+    for(let i=0;i<7;i++){const fold=plane(.24,railY-.35,curtainMat,0,0,0);
+      fold.position.set(-.72+i*.24,(railY-.35)/2+.05,.9+((i%2)?.03:-.03));fold.rotation.y=(i%2?1:-1)*.18;curtain.add(fold);}
+    g.add(curtain);
+    // サイドテーブル: ノート(薄紫の紐しおり)+眼鏡+吸い飲み
+    const table=new THREE.Group();
+    table.add(box(.55,.04,.42,M({color:0xcfc4ae,roughness:.8}),0,.62,0));
+    table.add(box(.50,.58,.38,M({color:0xe3ddd0,roughness:.85}),0,.31,0));
+    const note=box(.26,.03,.34,M({color:0xf4f6f8,roughness:.95}),-.06,.66,0);note.rotation.y=.18;table.add(note);
+    table.add(box(.26,.006,.02,M({color:0x8fb4d8,roughness:.9}),-.06,.677,.05));           // 罫線の帯
+    const cordMark=createPurpleCordMotif();cordMark.attachTo(table,{x:.06,y:.685,z:-.10},.8); // 栞=薄紫の紐
+    table.position.set(1.15,0,-2.30);g.add(table);
+    // 丸椅子とスリッパ(誰かが見舞いに来ている気配)
+    g.add(cyl(.19,.19,.05,M({color:0xd8cfc0,roughness:.85}),2.35,.44,-1.0,12));
+    g.add(cyl(.03,.03,.42,steel,2.35,.21,-1.0,8));
+    [[-.02],[.14]].forEach((s,i)=>g.add(box(.11,.03,.26,M({color:0xe8e2d4,roughness:.9}),2.0+s[0],.02,.4+i*.02)));
+    let curtainOpen=1;
+    const api={group:g,anchor,
+      setCurtain(v){curtainOpen=Math.max(0,Math.min(1,v));
+        curtain.children.forEach((f,i)=>{f.position.x=-.72*curtainOpen+i*.24*curtainOpen; f.visible=curtainOpen>.05;});},
+      update(t){monTex.offset.x=(t*.14)%1;                                    // 波形が流れる
+        dot.material.color.setHex(Math.sin(t*6)>0?0x51ffb2:0x0c3a28);         // 心拍の点滅
+        curtain.children.forEach((f,i)=>f.rotation.y=(i%2?1:-1)*(.18+Math.sin(t*.8+i)*.02));
+        cordMark.update(t);}
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ---- E-2. 現代の教室 ----
+     第1話冒頭とEDの舞台。黒板には寝殿造りの平面図(Canvas描画)。
+     栞の席=窓際後方。机上のノートとシャーペンに薄紫の紐。
+     api: update(t) / setBoard("plan"|"waka") / shioriSeat(グループ参照) */
+  function createClassroomSet(){
+    const anchor=STORY_OFFSTAGE.classroom;
+    const g=new THREE.Group();g.position.set(anchor.x,anchor.y,anchor.z);
+    const shell=createModernRoomShell({w:8.2,h:3.1,d:6.6,wallColor:0xefeade,floorColor:0xc9b98f,ceilColor:0xf4f2ec,lightTint:0xf8f6ee,lightPower:1.0});
+    g.add(shell);
+    // 黒板(寝殿造り平面図をCanvasで描く)
+    const bc=document.createElement("canvas");bc.width=512;bc.height=192;
+    const bx=bc.getContext("2d");
+    bx.fillStyle="#274236";bx.fillRect(0,0,512,192);
+    bx.strokeStyle="#e8e2ce";bx.lineWidth=2;bx.font="14px 'Hiragino Mincho ProN',serif";bx.fillStyle="#e8e2ce";
+    const rect=(x,y,w,h,label)=>{bx.strokeRect(x,y,w,h);if(label)bx.fillText(label,x+w/2-14,y+h/2+5);};
+    rect(200,45,110,64,"母屋");
+    bx.strokeRect(184,29,142,96);bx.fillText("廂",192,44);
+    rect(60,45,70,64,"対屋");rect(382,45,70,64,"対屋");
+    bx.beginPath();bx.moveTo(130,77);bx.lineTo(184,77);bx.stroke();bx.fillText("渡殿",138,70);
+    bx.beginPath();bx.moveTo(326,77);bx.lineTo(382,77);bx.stroke();
+    bx.beginPath();bx.moveTo(95,109);bx.lineTo(95,160);bx.lineTo(240,168);bx.stroke();bx.fillText("遣水",100,150);
+    bx.beginPath();bx.ellipse(300,160,60,18,0,0,Math.PI*2);bx.stroke();bx.fillText("池",292,165);
+    bx.fillText("寝殿造り",228,22);
+    const boardTex=new THREE.CanvasTexture(bc);boardTex.encoding=THREE.sRGBEncoding;
+    const boardMat=new THREE.MeshBasicMaterial({map:boardTex});boardMat.__ownedByStory=true;
+    const board=new THREE.Group();
+    board.add(box(3.6,1.45,.06,M({color:0x6b5a42,roughness:.8}),0,1.75,0));
+    board.add(noShadow(plane(3.4,1.28,boardMat,0,1.75,.035)));
+    board.add(box(3.5,.05,.10,M({color:0x9a8a6a,roughness:.7}),0,1.06,.05)); // チョーク受け
+    board.add(box(.08,.025,.025,M({color:0xffffff,roughness:.9}),-.6,1.09,.05));
+    board.position.set(0,0,-3.25);g.add(board);
+    // 教卓
+    g.add(box(1.1,.75,.55,M({color:0xc8b088,roughness:.8}),0,.375,-2.4));
+    // 生徒机×6(2列×3)+椅子。窓際後方の1つが「栞の席」
+    const deskMat=M({color:0xd8c9a0,roughness:.85});deskMat.__ownedByStory=true;
+    const legMat=M({color:0x8e9499,roughness:.5,metalness:.4});legMat.__ownedByStory=true;
+    let shioriSeat=null;
+    for(let r=0;r<3;r++)for(let c=0;c<2;c++){
+      const desk=new THREE.Group();
+      desk.add(box(.62,.035,.44,deskMat,0,.70,0));
+      [[-.27,-.18],[-.27,.18],[.27,-.18],[.27,.18]].forEach(p=>desk.add(cyl(.015,.015,.70,legMat,p[0],.35,p[1],6)));
+      const chair=box(.36,.03,.34,deskMat,0,.42,.44);desk.add(chair);
+      [[-.15,.30],[-.15,.58],[.15,.30],[.15,.58]].forEach(p=>desk.add(cyl(.013,.013,.42,legMat,p[0],.21,p[1],6)));
+      desk.add(box(.36,.34,.03,deskMat,0,.62,.60));
+      desk.position.set(-1.0+c*2.0,0,-1.1+r*1.35);
+      g.add(desk);
+      if(r===2&&c===1){ // 窓際(x+側)最後列=栞の席
+        shioriSeat=desk;
+        const note=box(.24,.02,.32,M({color:0xf6f8fa,roughness:.95}),-.08,.725,-.02);note.rotation.y=-.12;desk.add(note);
+        const pen=cyl(.008,.008,.16,M({color:0x8a7ab8,roughness:.5}),.10,.725,.04,6);pen.rotation.z=Math.PI/2;pen.rotation.y=.5;desk.add(pen);
+        const cord=createPurpleCordMotif();cord.attachTo(desk,{x:.16,y:.735,z:.06},.65);   // シャーペンの紐飾り
+        desk.userData.cord=cord;
+      }
+    }
+    // 窓列(x+側の壁に3枚、外は白く飛んだ春の光)
+    for(let i=0;i<3;i++){const win=windowPane(1.5,1.35,0xf3f7fb);win.position.set(4.07,1.8,-1.8+i*1.9);win.rotation.y=-Math.PI/2;g.add(win);}
+    // 蛍光灯2本
+    for(let i=0;i<2;i++){const fl=new THREE.MeshBasicMaterial({color:0xf2f4ee});fl.__ownedByStory=true;
+      g.add(noShadow(box(1.8,.04,.12,fl,-1.2+i*2.4,3.02,0,false)));}
+    let wakaTex=null;
+    const api={group:g,anchor,shioriSeat,
+      /* 黒板を平面図/和歌の板書に切替(EDの「御簾=隔てる/つなぐ」の書き足し等) */
+      setBoard(mode,extraText){
+        if(mode==="waka"||extraText){
+          bx.fillStyle="rgba(39,66,54,.92)";bx.fillRect(330,120,178,66);
+          bx.fillStyle="#f2ecd8";bx.font="16px 'Hiragino Mincho ProN',serif";
+          bx.fillText(extraText||"御簾=隔てる/つなぐ",338,155);
+          boardTex.needsUpdate=true;
+        }
+      },
+      update(t){if(shioriSeat&&shioriSeat.userData.cord)shioriSeat.userData.cord.update(t);}
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ロケーション一括生成: kind→セット。story側は
+     createStoryLocation("hospital") だけで部屋+カメラが揃う */
+  function createStoryLocation(kind){
+    if(kind==="hospital")return createHospitalRoomSet();
+    if(kind==="classroom")return createClassroomSet();
+    return null;
+  }
+
+  /* ============================================================
      カメラ台帳 — chapterN.json の cameraAngleId に対応する実座標。
      寝殿の実寸(SH: cx=0,cz=-2, 母屋±8.8/z-5.8〜1.8, 廂z〜4.8, 簀子z〜5.5,
      東の対x=35, ボス広場x=30,z=-48)に基づく。統合時は applySaigenCam 互換の
@@ -789,7 +1008,14 @@
     cam_ch5_oni_reveal:      {pos:[27.0,1.3 ,-42.0],look:[30.0,3.0,-48.0],fov:70},
     cam_ch5_overhead:        {pos:[30.0,14.0,-40.0],look:[30.0,0.0,-48.0],fov:60},
     /* 第6話: 静止画に近い長い間 */
-    cam_ending_morning:      {pos:[ 0.2,1.6 , 8.8],look:[ 0.0,1.9,-2.0],fov:50}
+    cam_ending_morning:      {pos:[ 0.2,1.6 , 8.8],look:[ 0.0,1.9,-2.0],fov:50},
+    /* 別ロケーション(STORY_OFFSTAGE基準の絶対座標) */
+    cam_hospital_bed:        {pos:[-257.6,1.50,240.6],look:[-258.8,0.95,238.7],fov:52}, // ベッドの栞を見下ろす
+    cam_hospital_window:     {pos:[-258.2,1.30,237.8],look:[-263.0,1.70,239.4],fov:58}, // 朝光の窓へ
+    cam_hospital_door_pov:   {pos:[-257.2,1.55,242.2],look:[-258.8,1.00,238.7],fov:60}, // 入口から一望(秀頼の視点)
+    cam_classroom_board:     {pos:[-260.0,1.50,301.8],look:[-260.0,1.60,296.8],fov:55}, // 黒板の平面図
+    cam_classroom_shiori:    {pos:[-259.8,1.35,302.6],look:[-259.0,0.75,301.6],fov:50}, // 栞の席(肩越し)
+    cam_classroom_sleepy:    {pos:[-261.2,0.95,300.2],look:[-260.0,1.30,296.8],fov:62}  // 机に伏せた低い目線(1話冒頭)
   };
 
   /* ============ 公開 ============ */
@@ -801,6 +1027,7 @@
     createWhiteTanzakuObject,createTermCardObject,createWakaTanzakuObject,createPurpleCordMotif,
     createMisuBoundaryEffect,createTokoyoGlitchProps,createBrainErosionOverlay,createUtakaiStageProps,
     createGreatOniStoryObject,createNameSealEffect,createFinalQuizThreeSeals,
-    STORY_CAMERA_ANGLES
+    createModernRoomShell,createHospitalRoomSet,createClassroomSet,createStoryLocation,
+    STORY_OFFSTAGE,STORY_CAMERA_ANGLES
   };
 })(typeof window!=="undefined"?window:globalThis);
