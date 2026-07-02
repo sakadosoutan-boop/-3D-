@@ -1,0 +1,103 @@
+{
+  "chapterId": 6,
+  "chapterTitle": "帰る朝、残る香",
+  "season": "spring",
+  "timeOfDay": "morning",
+  "startSequence": [
+    {
+      "id": "seq_601_open_endings",
+      "type": "set_scene",
+      "season": "spring",
+      "timeOfDay": "morning",
+      "playerStart": { "x": 0.2, "z": 4.8, "yaw": 3.14 },
+      "cameraAngleId": "cam_ending_morning",
+      "next": "seq_602_ending_gallery"
+    },
+    {
+      "id": "seq_602_ending_gallery",
+      "type": "effect",
+      "effectId": "ending_gallery_ready",
+      "payload": { "scrollableResult": true, "showTopButton": true, "showRetryButton": true },
+      "next": "seq_603_select_ending"
+    },
+    {
+      "id": "seq_603_select_ending",
+      "type": "choice",
+      "text": "到達した結末の演出を表示する。通常進行では第5話の判定結果から直接呼び出す。",
+      "options": [
+        { "text": "ED1 True End『御簾を上げる朝』", "next": "seq_611_ed1" },
+        { "text": "ED2 Normal End『現の朝』", "next": "seq_621_ed2" },
+        { "text": "ED3 Bad End A『歌なき夜』", "next": "seq_631_ed3" },
+        { "text": "ED4 Bad End B『常世の婿』", "next": "seq_641_ed4" },
+        { "text": "ED5 Spooky End『百年の夢』", "next": "seq_651_ed5" }
+      ]
+    },
+    {
+      "id": "seq_611_ed1",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "秀頼は現代の教室で目を覚ました。机には白い短冊が一枚だけ残り、窓の外をカモメが横切る。",
+      "next": "seq_612_ed1_line"
+    },
+    {
+      "id": "seq_612_ed1_line",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "御簾って、ただ隠すためのものじゃないんだな。今度、ちゃんと教えてくれないか。",
+      "next": "seq_613_ed1_end"
+    },
+    {
+      "id": "seq_613_ed1_end",
+      "type": "ending",
+      "endingId": "ED1_TRUE"
+    },
+    {
+      "id": "seq_621_ed2",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "秀頼は現実へ戻った。古典の点は上がった。けれど、小萩の声だけが、朝の光の中で薄れていく。",
+      "next": "seq_622_ed2_end"
+    },
+    {
+      "id": "seq_622_ed2_end",
+      "type": "ending",
+      "endingId": "ED2_NORMAL"
+    },
+    {
+      "id": "seq_631_ed3",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "灯火は消え、御簾の向こうの声は黒い線になった。言葉のない夜だけが、廂に残った。",
+      "next": "seq_632_ed3_end"
+    },
+    {
+      "id": "seq_632_ed3_end",
+      "type": "ending",
+      "endingId": "ED3_GAMEOVER"
+    },
+    {
+      "id": "seq_641_ed4",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "帰る道を前に、秀頼は振り返った。御簾の内へ入ると、現代の音は美しく遠ざかった。",
+      "next": "seq_642_ed4_end"
+    },
+    {
+      "id": "seq_642_ed4_end",
+      "type": "ending",
+      "endingId": "ED4_SYNC"
+    },
+    {
+      "id": "seq_651_ed5",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "名をなくした人は、物語にやさしく飼われます。あなたの席は、まだ空いています。",
+      "next": "seq_652_ed5_end"
+    },
+    {
+      "id": "seq_652_ed5_end",
+      "type": "ending",
+      "endingId": "ED5_SPOOKY"
+    }
+  ]
+}

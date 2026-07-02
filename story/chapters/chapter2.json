@@ -1,0 +1,122 @@
+{
+  "chapterId": 2,
+  "chapterTitle": "夏の昼、光る詞を拾う",
+  "season": "summer",
+  "timeOfDay": "day",
+  "startSequence": [
+    {
+      "id": "seq_201_open_heat",
+      "type": "set_scene",
+      "season": "summer",
+      "timeOfDay": "day",
+      "playerStart": { "x": -2.2, "z": 3.6, "yaw": 1.57 },
+      "cameraAngleId": "cam_summer_sunoko",
+      "next": "seq_202_heat_effect"
+    },
+    {
+      "id": "seq_202_heat_effect",
+      "type": "effect",
+      "effectId": "summer_heat_haze",
+      "payload": { "seagull": true, "intensity": 0.45 },
+      "next": "seq_203_kohagi_warning"
+    },
+    {
+      "id": "seq_203_kohagi_warning",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "この邸の名が、暑さにほどけております。名を失えば、道もまた失せましょう。",
+      "next": "seq_204_ukon_intro"
+    },
+    {
+      "id": "seq_204_ukon_intro",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "若君、札拾いでございます。恋文なら胸躍りましょうが、今回は床と柱の名でございますな。",
+      "effects": { "realityEgo": 2 },
+      "next": "seq_205_spawn_cards"
+    },
+    {
+      "id": "seq_205_spawn_cards",
+      "type": "spawn_collectibles",
+      "groupId": "chapter2_terms",
+      "kind": "term_card",
+      "count": 5,
+      "positions": [
+        { "id": "hisashi", "label": "廂", "x": -1.4, "z": 1.6 },
+        { "id": "sunoko", "label": "簀子", "x": -3.2, "z": 4.1 },
+        { "id": "watadono", "label": "渡殿", "x": 2.8, "z": 2.6 },
+        { "id": "yarimizu", "label": "遣水", "x": 4.6, "z": -2.7 },
+        { "id": "tainoya", "label": "対屋", "x": -4.4, "z": -1.8 }
+      ],
+      "next": "seq_206_collect_check"
+    },
+    {
+      "id": "seq_206_collect_check",
+      "type": "require_collectibles",
+      "groupId": "chapter2_terms",
+      "count": 5,
+      "successNext": "seq_207_place_terms",
+      "failNext": "seq_205_spawn_cards"
+    },
+    {
+      "id": "seq_207_place_terms",
+      "type": "choice",
+      "text": "左大臣は廂に出て問うた。「母屋と廂、何が違う」",
+      "options": [
+        {
+          "text": "中心と周縁。人との距離も変わります",
+          "next": "seq_208_correct",
+          "effects": { "realityEgo": 5, "fantasySynchro": 8, "brainErosion": -2 }
+        },
+        {
+          "text": "偉い人がいるところが母屋です",
+          "next": "seq_208_partial",
+          "effects": { "brainErosion": 8 }
+        },
+        {
+          "text": "どちらも部屋なので同じです",
+          "next": "seq_208_wrong",
+          "effects": { "brainErosion": 12 }
+        }
+      ]
+    },
+    {
+      "id": "seq_208_correct",
+      "type": "dialogue",
+      "speaker": "判者めいた声",
+      "text": "よし。場所の名は、そこに立つ人の心の距離まで示すもの。",
+      "setFlag": { "chapter2TermMaster": true },
+      "next": "seq_211_white_tanzaku"
+    },
+    {
+      "id": "seq_208_partial",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "惜しゅうございます。身分だけでなく、建物のつくりと人の隔たりを見なされませ。",
+      "next": "seq_211_white_tanzaku"
+    },
+    {
+      "id": "seq_208_wrong",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "若君、それを申せば大工も女房も皆、夏の庭へ倒れ伏しましょうぞ。",
+      "next": "seq_211_white_tanzaku"
+    },
+    {
+      "id": "seq_211_white_tanzaku",
+      "type": "effect",
+      "effectId": "white_tanzaku_from_seagull",
+      "payload": { "text": "見えぬものほど、名を呼べ" },
+      "setFlag": { "whiteTanzaku1": true },
+      "next": "seq_212_complete"
+    },
+    {
+      "id": "seq_212_complete",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "夏の昼、秀頼は邸を歩くための名を拾った。空の白い鳥だけが、この邸に海がないことを知っていた。",
+      "setFlag": { "chapter2Cleared": true },
+      "next": "chapter_complete"
+    }
+  ]
+}

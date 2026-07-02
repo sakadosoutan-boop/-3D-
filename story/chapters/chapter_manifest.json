@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "basePath": "story/chapters/",
+  "chapters": [
+    {
+      "chapterId": 1,
+      "file": "chapter1.json",
+      "chapterTitle": "異邦の若君、御簾を叩く",
+      "season": "spring",
+      "timeOfDay": "morning",
+      "requiredModes": ["quiz_beginner"],
+      "clearCondition": "初級名称当てクイズ5問クリア"
+    },
+    {
+      "chapterId": 2,
+      "file": "chapter2.json",
+      "chapterTitle": "夏の昼、光る詞を拾う",
+      "season": "summer",
+      "timeOfDay": "day",
+      "requiredModes": ["collect_terms", "choice"],
+      "clearCondition": "光る用語カード5枚収集"
+    },
+    {
+      "chapterId": 3,
+      "file": "chapter3.json",
+      "chapterTitle": "秋夕、垣間見と水底の主",
+      "season": "autumn",
+      "timeOfDay": "dusk",
+      "requiredModes": ["kaimami", "collect_waka", "taiji_summer_boss"],
+      "clearCondition": "姫君観察、短冊5枚収集、河童の主撃破"
+    },
+    {
+      "chapterId": 4,
+      "file": "chapter4.json",
+      "chapterTitle": "冬夜、歌合の火花",
+      "season": "winter",
+      "timeOfDay": "night",
+      "requiredModes": ["utakai"],
+      "clearCondition": "歌合三番勝負で二勝以上"
+    },
+    {
+      "chapterId": 5,
+      "file": "chapter5.json",
+      "chapterTitle": "常世の黎明、大鬼祓い",
+      "season": "tokoyo",
+      "timeOfDay": "dawn",
+      "requiredModes": ["taiji_oni_boss", "final_quiz"],
+      "clearCondition": "大鬼撃破と最終3連クイズ正解"
+    },
+    {
+      "chapterId": 6,
+      "file": "chapter6.json",
+      "chapterTitle": "帰る朝、残る香",
+      "season": "spring",
+      "timeOfDay": "morning",
+      "requiredModes": ["ending"],
+      "clearCondition": "ED1-ED5の演出"
+    }
+  ]
+}

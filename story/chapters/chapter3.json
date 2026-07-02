@@ -1,0 +1,188 @@
+{
+  "chapterId": 3,
+  "chapterTitle": "秋夕、垣間見と水底の主",
+  "season": "autumn",
+  "timeOfDay": "dusk",
+  "startSequence": [
+    {
+      "id": "seq_301_open_dusk",
+      "type": "set_scene",
+      "season": "autumn",
+      "timeOfDay": "dusk",
+      "playerStart": { "x": -3.8, "z": 1.4, "yaw": 0.8 },
+      "cameraAngleId": "cam_autumn_south_garden",
+      "next": "seq_302_kaimami_intro"
+    },
+    {
+      "id": "seq_302_kaimami_intro",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "今宵は、見てはならぬものほど見たくなる刻。見えぬまま覚えることも、礼にございます。",
+      "effects": { "fantasySynchro": 3 },
+      "next": "seq_303_ukon_joke"
+    },
+    {
+      "id": "seq_303_ukon_joke",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "若君、首を伸ばしすぎれば恋より先に首が落ちますぞ。高欄から半歩、下がられよ。",
+      "next": "seq_304_trigger_kaimami"
+    },
+    {
+      "id": "seq_304_trigger_kaimami",
+      "type": "trigger_minigame",
+      "gameMode": "kaimami_story",
+      "payload": {
+        "focusGauge": "bottom_center",
+        "targets": ["衣の色目", "扇の模様", "香の煙", "筆跡"],
+        "avoidDirectFace": true
+      },
+      "successEffects": { "fantasySynchro": 8, "brainErosion": -2 },
+      "failEffects": { "brainErosion": 14 },
+      "successNext": "seq_305_observation_choice",
+      "failNext": "seq_305_observation_choice"
+    },
+    {
+      "id": "seq_305_observation_choice",
+      "type": "choice",
+      "text": "あなたは、何を見たことにする？",
+      "options": [
+        {
+          "text": "顔立ちを覚えた",
+          "next": "seq_306_face_warning",
+          "effects": { "brainErosion": 12 }
+        },
+        {
+          "text": "扇の模様と香の気配を覚えた",
+          "next": "seq_306_graceful",
+          "effects": { "fantasySynchro": 10 }
+        },
+        {
+          "text": "見えなかったことを、そのまま覚えた",
+          "next": "seq_306_true_observe",
+          "effects": { "realityEgo": 5, "fantasySynchro": 8 }
+        }
+      ]
+    },
+    {
+      "id": "seq_306_face_warning",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "見たものを語るほど、見えぬ心から遠ざかります。恋は、目の勝ち負けではございませぬ。",
+      "next": "seq_307_spawn_waka"
+    },
+    {
+      "id": "seq_306_graceful",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "よろし。扇と香は、姿を暴かず心へ届く道しるべにございます。",
+      "next": "seq_307_spawn_waka"
+    },
+    {
+      "id": "seq_306_true_observe",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "見えなかったと申せる勇気こそ、今宵の月に近うございます。",
+      "setFlag": { "respectfulKaimami": true },
+      "next": "seq_307_spawn_waka"
+    },
+    {
+      "id": "seq_307_spawn_waka",
+      "type": "spawn_collectibles",
+      "groupId": "chapter3_waka_words",
+      "kind": "waka_tanzaku",
+      "count": 5,
+      "positions": [
+        { "id": "autumn", "label": "秋", "x": -2.4, "z": -2.2 },
+        { "id": "mist", "label": "霧", "x": -3.5, "z": -0.6 },
+        { "id": "wait", "label": "待つ", "x": -1.2, "z": 0.7 },
+        { "id": "sleeve", "label": "袖", "x": 1.1, "z": -1.4 },
+        { "id": "moon", "label": "月", "x": 2.6, "z": 0.2 }
+      ],
+      "next": "seq_308_collect_waka_check"
+    },
+    {
+      "id": "seq_308_collect_waka_check",
+      "type": "require_collectibles",
+      "groupId": "chapter3_waka_words",
+      "count": 5,
+      "successNext": "seq_309_reply_waka",
+      "failNext": "seq_307_spawn_waka"
+    },
+    {
+      "id": "seq_309_reply_waka",
+      "type": "choice",
+      "text": "集めた詞で、御簾の向こうへ返す歌を選ぶ。",
+      "options": [
+        {
+          "text": "霧の向こうの月を待つ歌",
+          "next": "seq_310_water_distortion",
+          "effects": { "fantasySynchro": 8 }
+        },
+        {
+          "text": "早く会いたいと直接迫る歌",
+          "next": "seq_310_water_distortion",
+          "effects": { "brainErosion": 10 }
+        },
+        {
+          "text": "見えぬまま、袖に残る香を返す歌",
+          "next": "seq_310_water_distortion",
+          "effects": { "realityEgo": 3, "fantasySynchro": 12 },
+          "setFlag": { "wakaGracefulReply": true }
+        }
+      ]
+    },
+    {
+      "id": "seq_310_water_distortion",
+      "type": "effect",
+      "effectId": "yarimizu_dark_reflection",
+      "payload": { "showsClassroom": true, "bossHint": "kappa" },
+      "next": "seq_311_kappa_warning"
+    },
+    {
+      "id": "seq_311_kappa_warning",
+      "type": "dialogue",
+      "speaker": "水底の声",
+      "text": "覗いた目を、水底に沈める。見たと言い張る口を、泥でふさぐ。",
+      "next": "seq_312_kappa_boss"
+    },
+    {
+      "id": "seq_312_kappa_boss",
+      "type": "trigger_minigame",
+      "gameMode": "taiji_kappa_story",
+      "payload": {
+        "boss": "kappa_lord",
+        "arena": "north_tainoya_wide",
+        "allowLanternPartner": false,
+        "storyDifficulty": "middle"
+      },
+      "successEffects": { "realityEgo": 8, "fantasySynchro": 4, "brainErosion": -4 },
+      "failEffects": { "brainErosion": 22 },
+      "successNext": "seq_313_shiori_reflection",
+      "failNext": "seq_314_after_fail"
+    },
+    {
+      "id": "seq_313_shiori_reflection",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "水面に映ったのは姫君ではなかった。制服の横顔が、夕霧の底でこちらを見ていた。",
+      "setFlag": { "sawShioriReflection": true, "chapter3BossCleared": true },
+      "next": "seq_315_complete"
+    },
+    {
+      "id": "seq_314_after_fail",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "水底から戻られただけで上々。されど、次は足元の影をお見逃しなさるな。",
+      "next": "seq_315_complete"
+    },
+    {
+      "id": "seq_315_complete",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "秋の夕、秀頼は相手を見つめることと、相手を奪うことの違いを知った。",
+      "setFlag": { "chapter3Cleared": true },
+      "next": "chapter_complete"
+    }
+  ]
+}
