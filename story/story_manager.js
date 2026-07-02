@@ -53,6 +53,8 @@
         onRequireCollectibles: () => {},
         onMiniGameStart: () => {},
         onEnding: () => {},
+        /* 章クリア(next:"chapter_complete"到達)の通知。UI側で「次の話へ」導線を出す */
+        onChapterComplete: () => {},
         /* brainErosionが80を跨いだ瞬間に一度だけ呼ぶ(ED5前の明確な警告演出用) */
         onErosionWarning: () => {},
         onError: error => { console.error("[StoryManager]", error); }
@@ -187,7 +189,8 @@
       this.hooks.onScene({
         season: event.season || this.chapter.season,
         timeOfDay: event.timeOfDay || this.chapter.timeOfDay,
-        playerStart: event.playerStart || null
+        playerStart: event.playerStart || null,
+        event
       }, this.snapshot());
       if(event.cameraAngleId)this.hooks.onCamera(event.cameraAngleId, event, this.snapshot());
       return this.goNext(event.next);
@@ -212,6 +215,7 @@
       this.hooks.onChoice({
         text: event.text || "",
         options: event.options || [],
+        event,
         choose: optionIndex => this.choose(optionIndex)
       }, this.snapshot());
       this.save();
@@ -353,6 +357,7 @@
       this.state.completedChapters[this.state.chapterId] = true;
       this.save();
       this.hooks.onStateChanged(this.snapshot());
+      this.hooks.onChapterComplete(this.state.chapterId, this.snapshot());
       return { type: "chapter_complete", chapterId: this.state.chapterId };
     }
 

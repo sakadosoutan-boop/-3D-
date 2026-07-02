@@ -3213,6 +3213,8 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
   <button id="ukObStart" class="uk-btn gold">承知。歌合を始める</button>
 </div></div>
 
+<!-- 波M: ストーリーモードHUD(中身と装飾はランタイムが注入。?story=1でのみ使用) -->
+<div id="storyHud"></div>
 <!-- 再現モード(絵巻・紙芝居)HUD -->
 <div id="saigenHud">
   <div class="sg-top">
@@ -9369,7 +9371,7 @@ function enterMode(m){
   if(m!=="renaiShort"&&m!=="renaiSim"&&typeof renaiHideTargetPicker==="function")renaiHideTargetPicker(); // 恋愛モード以外へ遷移時はピッカーを閉じる
   $("title").classList.add("hide");
   $("topbar").style.display="flex";
-  const worldBar=$("worldStatusBar");if(worldBar)worldBar.style.display=(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim")?"none":"flex";
+  const worldBar=$("worldStatusBar");if(worldBar)worldBar.style.display=(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"||m==="story")?"none":"flex";
   requestAnimationFrame(syncTopbarH); // topbar高さをCSS変数に同期
   $("quizHud").style.display=m==="quiz"?"block":"none";
   $("questHud").style.display=(m==="quest"||m==="kaimami")?"block":"none";
@@ -9378,6 +9380,7 @@ function enterMode(m){
   $("utakaiHud").style.display=m==="utakai"?"block":"none";
   $("saigenHud").style.display=m==="saigen"?"block":"none";
   $("renaiHud").style.display=(m==="renaiShort"||m==="renaiSim")?"block":"none";
+  {const shud=$("storyHud");if(shud)shud.style.display=(m==="story")?"block":"none";} // 波M(初回起動前はまだ無い)
   if(window.UTAKAI_STAGE)window.UTAKAI_STAGE.visible=(m==="utakai");
   if(window.SAIGEN_STAGE)window.SAIGEN_STAGE.visible=(m==="saigen");
   document.body.classList.toggle("utakai-mode",m==="utakai"); // 歌合中はメニュー(topbar)を隠す
@@ -9425,7 +9428,7 @@ function enterMode(m){
   $("dangerVignette").style.opacity=0;
   closeInfo();closeCodex();
   $("modeTag").textContent=m==="quest"?(APP.questRole==="female"?"女性貴族の一日":"男性貴族の一日"):
-    {walk:"自由散策",quiz:APP.quizTA?"タイムアタック":"名称当てクイズ",kaimami:"垣間見",taiji:"物の怪退治",utakai:"歌合モード",saigen:"再現モード",renaiShort:"恋文ショート体験",renaiSim:"恋愛シミュレーション"}[m]||m;
+    {walk:"自由散策",quiz:APP.quizTA?"タイムアタック":"名称当てクイズ",kaimami:"垣間見",taiji:"物の怪退治",utakai:"歌合モード",saigen:"再現モード",renaiShort:"恋文ショート体験",renaiSim:"恋愛シミュレーション",story:"物語(試験中)"}[m]||m;
   if(typeof renaiUiUpdateTools==="function")renaiUiUpdateTools();
   // モード別ボタン表示制御(全モード統一)
   {const cond=["tbHome","tbTime","tbSeason","tbCodex","tbMap"];
@@ -9439,6 +9442,7 @@ function enterMode(m){
   if(m==="taiji")startTaiji();
   if(m==="utakai")startUtakai();
   if(m==="saigen")startSaigen();
+  if(m==="story"&&typeof startStory==="function")startStory(); // 波M: 隠しゲート(?story=1)からのみ到達
   if(m==="renaiShort")renaiShowTargetPicker("short");
   if(m==="renaiSim")renaiShowTargetPicker("sim");
   if((m==="renaiShort"||m==="renaiSim")&&typeof RENAI_BGM!=="undefined")RENAI_BGM.start(APP.season); // 優美な和風BGMを流す
@@ -9924,6 +9928,14 @@ const LB=(()=>{
   };
 })();
 function endQuiz(){
+  /* 波M: ストーリー内クイズは結果画面を出さず、成否だけ物語へ返す */
+  if(APP.storyQuiz){
+    const sq=APP.quiz,ok=!!sq&&(sq.miss<=3);
+    APP.quiz=null;$("quizHud").style.display="none";beacon.visible=false;
+    const done=APP.storyQuiz;APP.storyQuiz=null;
+    done(ok);
+    return;
+  }
   const q=APP.quiz;
   markDailyMission(q.ta?"quizTA":"quiz");
   recordProgress("quiz",1);gainParam("knowledge",q.ta?2:4);if((q.missed||[]).length)gainParam("focus",2);
@@ -16262,6 +16274,7 @@ function animate(now){
     if(APP.mode==="kaimami")kaimamiUpdate(dt);
     if(APP.mode==="utakai")utakaiUpdate(dt);
     if(APP.mode==="saigen")saigenUpdate(dt);
+    if(APP.mode==="story"&&typeof storyUpdate==="function")storyUpdate(dt); // 波M
   }
   drawMinimap();    /* ミニマップ(独立2Dキャンバス) */
   BLOOM.update();   /* 夜/夕かつ高品質時のみブルームを有効化 */
@@ -16316,6 +16329,1900 @@ scene.traverse((node) => {
   }
 });
 
+
+/* ================== 波M: ストーリーモード同梱ここから ================== */
+/* 波M: 章データ同梱(file://対応・単一HTML主義)。正本は story/chapters/*.json */
+window.STORY_EMBED={"manifest":{"version":1,"basePath":"story/chapters/","chapters":[{"chapterId":1,"file":"chapter1.json","chapterTitle":"異邦の若君、御簾を叩く","season":"spring","timeOfDay":"morning","requiredModes":["quiz_beginner"],"clearCondition":"初級名称当てクイズ5問クリア"},{"chapterId":2,"file":"chapter2.json","chapterTitle":"夏の昼、光る詞を拾う","season":"summer","timeOfDay":"day","requiredModes":["collect_terms","choice"],"clearCondition":"光る用語カード5枚収集"},{"chapterId":3,"file":"chapter3.json","chapterTitle":"秋夕、垣間見と水底の主","season":"autumn","timeOfDay":"dusk","requiredModes":["kaimami","collect_waka","taiji_summer_boss"],"clearCondition":"姫君観察、短冊5枚収集、河童の主撃破"},{"chapterId":4,"file":"chapter4.json","chapterTitle":"冬夜、歌合の火花","season":"winter","timeOfDay":"night","requiredModes":["utakai"],"clearCondition":"歌合三番勝負で二勝以上"},{"chapterId":5,"file":"chapter5.json","chapterTitle":"常世の黎明、大鬼祓い","season":"tokoyo","timeOfDay":"dawn","requiredModes":["taiji_oni_boss","final_quiz"],"clearCondition":"大鬼撃破と最終3連クイズ正解"},{"chapterId":6,"file":"chapter6.json","chapterTitle":"帰る朝、残る香","season":"spring","timeOfDay":"morning","requiredModes":["ending"],"clearCondition":"ED1-ED5の演出"}]},"chapters":{"1":{"chapterId":1,"chapterTitle":"異邦の若君、御簾を叩く","season":"spring","timeOfDay":"morning","startSequence":[{"id":"seq_001","type":"set_scene","season":"spring","timeOfDay":"morning","playerStart":{"x":0.2,"z":4.8,"yaw":3.14},"cameraAngleId":"cam_main_house_inside","fade":"black","next":"seq_002"},{"id":"seq_002","type":"dialogue","speaker":"小萩","text":"これ、秀頼様。あな、見苦し。まずはその歩き方から直されよ。","cameraAngleId":"cam_main_house_inside","se":"bell","emotes":{"kohagi":"stern"},"next":"seq_002b"},{"id":"seq_002b","type":"dialogue","speaker":"秀頼","text":"……は？ 歩き方って——いや、待て。なんであんた、俺の名前を知ってるんだ。","cameraAngleId":"cam_ch1_low_floor","emotes":{"hidetora":"surprise"},"next":"seq_002c"},{"id":"seq_002c","type":"dialogue","speaker":"小萩","text":"名は、呼ぶものではなく、呼ばれるものにございます。……さ、背を伸ばされませ、若君。","emotes":{"kohagi":"neutral"},"setFlag":{"kohagiKnewName":true},"next":"seq_003"},{"id":"seq_003","type":"choice","text":"（どうする…？）","options":[{"text":"ここはどこだ？と激しく問い詰める","next":"seq_004_rational","effects":{"realityEgo":10,"fantasySynchro":0,"brainErosion":5}},{"text":"御簾の向こうの気配に静かに平伏する","next":"seq_004_miyabi","effects":{"realityEgo":0,"fantasySynchro":15,"brainErosion":0}},{"text":"まず出口と人の配置を静かに確認する","next":"seq_004_observe","effects":{"realityEgo":6,"fantasySynchro":3,"brainErosion":0}}]},{"id":"seq_004_rational","type":"dialogue","speaker":"小萩","text":"声を荒らぐるは、下衆のふるまひ。ここでは、まず目を伏せるものにて候。","effects":{"brainErosion":4},"next":"seq_005_quiz"},{"id":"seq_004_miyabi","type":"dialogue","speaker":"小萩","text":"よろし。御簾の内外を知ること、それがこの邸で生きる第一歩にございます。","effects":{"fantasySynchro":5},"next":"seq_005_quiz"},{"id":"seq_004_observe","type":"dialogue","speaker":"小萩","text":"逃げ道を見る目に、場を荒らさぬ慎みが添えばよろし。廂と母屋、その境から覚えましょう。","effects":{"realityEgo":2,"fantasySynchro":3},"next":"seq_005_quiz"},{"id":"seq_005_quiz","type":"trigger_minigame","gameMode":"quiz_beginner","payload":{"questionCount":5,"targetTags":["半蔀","御簾","几帳","廂","母屋"]},"successEffects":{"realityEgo":3,"fantasySynchro":5,"brainErosion":-3},"failEffects":{"brainErosion":18},"successNext":"seq_006_voice","failNext":"seq_retry_or_ed5"},{"id":"seq_006_voice","type":"dialogue","speaker":"御簾の向こうの声","text":"——せりざわくん。","cameraAngleId":"cam_ch1_misu_gap","se":"wind","setFlag":{"heardRealName":true},"next":"seq_007_kohagi_deny"},{"id":"seq_007_kohagi_deny","type":"dialogue","speaker":"小萩","text":"……風の音にございましょう。今のは、どなたの名でもありませぬ。","emotes":{"kohagi":"sad"},"next":"seq_clear"},{"id":"seq_retry_or_ed5","type":"choice","text":"小萩は眉をひそめた。もう一度、建具の名を学び直すか。","options":[{"text":"学び直す","next":"seq_005_quiz","effects":{"realityEgo":2,"brainErosion":4}},{"text":"もう十分だと言い張る","next":"seq_bad_manners","effects":{"realityEgo":8,"brainErosion":12}}]},{"id":"seq_bad_manners","type":"dialogue","speaker":"小萩","text":"ならば、その『十分』が通じぬ世にて、ひとり立ってみるがよい。","emotes":{"kohagi":"stern"},"setFlag":{"skippedLessons":true},"next":"seq_clear"},{"id":"seq_clear","type":"dialogue","speaker":"語り","text":"春の朝、秀頼は御簾の向こうにいる誰かの息遣いを、はじめて物語として聞いた。","setFlag":{"chapter1Cleared":true},"next":"chapter_complete"}]},"2":{"chapterId":2,"chapterTitle":"夏の昼、光る詞を拾う","season":"summer","timeOfDay":"day","startSequence":[{"id":"seq_201_open_heat","type":"set_scene","season":"summer","timeOfDay":"day","playerStart":{"x":-2.2,"z":3.6,"yaw":1.57},"cameraAngleId":"cam_summer_sunoko","fade":"white","next":"seq_202_heat_effect"},{"id":"seq_202_heat_effect","type":"effect","effectId":"summer_heat_haze","payload":{"seagull":true,"intensity":0.45},"next":"seq_203_kohagi_warning"},{"id":"seq_203_kohagi_warning","type":"dialogue","speaker":"小萩","text":"この邸の名が、暑さにほどけております。名を失えば、道もまた失せましょう。","next":"seq_204_ukon_intro"},{"id":"seq_204_ukon_intro","type":"dialogue","speaker":"右近","text":"若君、札拾いでございます。恋文なら胸躍りましょうが、今回は床と柱の名でございますな。","effects":{"realityEgo":2},"next":"seq_205_spawn_cards"},{"id":"seq_205_spawn_cards","type":"spawn_collectibles","groupId":"chapter2_terms","kind":"term_card","count":5,"positions":[{"id":"hisashi","label":"廂","x":-1.4,"z":1.6},{"id":"sunoko","label":"簀子","x":-3.2,"z":4.1},{"id":"watadono","label":"渡殿","x":2.8,"z":2.6},{"id":"yarimizu","label":"遣水","x":4.6,"z":-2.7},{"id":"tainoya","label":"対屋","x":-4.4,"z":-1.8}],"next":"seq_206_collect_check"},{"id":"seq_206_collect_check","type":"require_collectibles","groupId":"chapter2_terms","count":5,"successNext":"seq_207_place_terms","failNext":"seq_205_spawn_cards"},{"id":"seq_207_place_terms","type":"choice","text":"左大臣は廂に出て問うた。「母屋と廂、何が違う」","options":[{"text":"中心と周縁。人との距離も変わります","next":"seq_208_correct","effects":{"realityEgo":5,"fantasySynchro":8,"brainErosion":-2}},{"text":"偉い人がいるところが母屋です","next":"seq_208_partial","effects":{"brainErosion":8}},{"text":"どちらも部屋なので同じです","next":"seq_208_wrong","effects":{"brainErosion":12}}]},{"id":"seq_208_correct","type":"dialogue","speaker":"判者めいた声","text":"よし。場所の名は、そこに立つ人の心の距離まで示すもの。","setFlag":{"chapter2TermMaster":true},"next":"seq_211_white_tanzaku"},{"id":"seq_208_partial","type":"dialogue","speaker":"小萩","text":"惜しゅうございます。身分だけでなく、建物のつくりと人の隔たりを見なされませ。","next":"seq_211_white_tanzaku"},{"id":"seq_208_wrong","type":"dialogue","speaker":"右近","text":"若君、それを申せば大工も女房も皆、夏の庭へ倒れ伏しましょうぞ。","next":"seq_211_white_tanzaku"},{"id":"seq_211_white_tanzaku","type":"effect","effectId":"white_tanzaku_from_seagull","payload":{"text":"見えぬものほど、名を呼べ","backText":"ここまで来て","backHandwriting":"shiori"},"se":"wind","setFlag":{"whiteTanzaku1":true},"next":"seq_212_complete"},{"id":"seq_212_complete","type":"dialogue","speaker":"語り","text":"夏の昼、秀頼は邸を歩くための名を拾った。空の白い鳥だけが、この邸に海がないことを知っていた。","setFlag":{"chapter2Cleared":true},"next":"chapter_complete"}]},"3":{"chapterId":3,"chapterTitle":"秋夕、垣間見と水底の主","season":"autumn","timeOfDay":"dusk","startSequence":[{"id":"seq_301_open_dusk","type":"set_scene","season":"autumn","timeOfDay":"dusk","playerStart":{"x":-3.8,"z":1.4,"yaw":0.8},"cameraAngleId":"cam_autumn_south_garden","next":"seq_302_kaimami_intro","fade":"black"},{"id":"seq_302_kaimami_intro","type":"dialogue","speaker":"小萩","text":"今宵は、見てはならぬものほど見たくなる刻。見えぬまま覚えることも、礼にございます。","effects":{"fantasySynchro":3},"next":"seq_303_ukon_joke"},{"id":"seq_303_ukon_joke","type":"dialogue","speaker":"右近","text":"若君、首を伸ばしすぎれば恋より先に首が落ちますぞ。高欄から半歩、下がられよ。","next":"seq_304_trigger_kaimami"},{"id":"seq_304_trigger_kaimami","type":"trigger_minigame","gameMode":"kaimami_story","payload":{"focusGauge":"bottom_center","targets":["衣の色目","扇の模様","香の煙","筆跡"],"avoidDirectFace":true},"successEffects":{"fantasySynchro":8,"brainErosion":-2},"failEffects":{"brainErosion":14},"successNext":"seq_305_observation_choice","failNext":"seq_305_observation_choice"},{"id":"seq_305_observation_choice","type":"choice","text":"あなたは、何を見たことにする？","options":[{"text":"顔立ちを覚えた","next":"seq_306_face_warning","effects":{"brainErosion":12}},{"text":"扇の模様と香の気配を覚えた","next":"seq_306_graceful","effects":{"fantasySynchro":10}},{"text":"見えなかったことを、そのまま覚えた","next":"seq_306_true_observe","effects":{"realityEgo":5,"fantasySynchro":8}}]},{"id":"seq_306_face_warning","type":"dialogue","speaker":"小萩","text":"見たものを語るほど、見えぬ心から遠ざかります。恋は、目の勝ち負けではございませぬ。","next":"seq_307_spawn_waka"},{"id":"seq_306_graceful","type":"dialogue","speaker":"小萩","text":"よろし。扇と香は、姿を暴かず心へ届く道しるべにございます。","next":"seq_307_spawn_waka"},{"id":"seq_306_true_observe","type":"dialogue","speaker":"小萩","text":"見えなかったと申せる勇気こそ、今宵の月に近うございます。","setFlag":{"respectfulKaimami":true},"next":"seq_307_spawn_waka"},{"id":"seq_307_spawn_waka","type":"spawn_collectibles","groupId":"chapter3_waka_words","kind":"waka_tanzaku","count":5,"positions":[{"id":"autumn","label":"秋","x":-2.4,"z":-2.2},{"id":"mist","label":"霧","x":-3.5,"z":-0.6},{"id":"wait","label":"待つ","x":-1.2,"z":0.7},{"id":"sleeve","label":"袖","x":1.1,"z":-1.4},{"id":"moon","label":"月","x":2.6,"z":0.2}],"next":"seq_308_collect_waka_check"},{"id":"seq_308_collect_waka_check","type":"require_collectibles","groupId":"chapter3_waka_words","count":5,"successNext":"seq_309_reply_waka","failNext":"seq_307_spawn_waka"},{"id":"seq_309_reply_waka","type":"choice","text":"集めた詞で、御簾の向こうへ返す歌を選ぶ。","options":[{"text":"霧の向こうの月を待つ歌","next":"seq_310_water_distortion","effects":{"fantasySynchro":8}},{"text":"早く会いたいと直接迫る歌","next":"seq_310_water_distortion","effects":{"brainErosion":10}},{"text":"見えぬまま、袖に残る香を返す歌","next":"seq_310_water_distortion","effects":{"realityEgo":3,"fantasySynchro":12},"setFlag":{"wakaGracefulReply":true}}]},{"id":"seq_310_water_distortion","type":"effect","effectId":"yarimizu_dark_reflection","payload":{"showsClassroom":true,"bossHint":"kappa"},"next":"seq_311_kappa_warning"},{"id":"seq_311_kappa_warning","type":"dialogue","speaker":"水底の声","text":"覗いた目を、水底に沈める。見たと言い張る口を、泥でふさぐ。","next":"seq_312_kappa_boss","se":"thunder","fx":"lightning"},{"id":"seq_312_kappa_boss","type":"trigger_minigame","gameMode":"taiji_kappa_story","payload":{"boss":"kappa_lord","arena":"north_tainoya_wide","allowLanternPartner":false,"storyDifficulty":"middle"},"successEffects":{"realityEgo":8,"fantasySynchro":4,"brainErosion":-4},"failEffects":{"brainErosion":22},"successNext":"seq_313_shiori_reflection","failNext":"seq_314_after_fail"},{"id":"seq_313_shiori_reflection","type":"dialogue","speaker":"語り","text":"水面に映ったのは姫君ではなかった。制服の横顔が、夕霧の底でこちらを見ていた。","setFlag":{"sawShioriReflection":true,"chapter3BossCleared":true},"next":"seq_315_complete","emotes":{"kohagi":"sad"},"se":"koto"},{"id":"seq_314_after_fail","type":"dialogue","speaker":"右近","text":"水底から戻られただけで上々。されど、次は足元の影をお見逃しなさるな。","next":"seq_315_complete"},{"id":"seq_315_complete","type":"dialogue","speaker":"語り","text":"秋の夕、秀頼は相手を見つめることと、相手を奪うことの違いを知った。","setFlag":{"chapter3Cleared":true},"next":"chapter_complete"}]},"4":{"chapterId":4,"chapterTitle":"冬夜、歌合の火花","season":"winter","timeOfDay":"night","startSequence":[{"id":"seq_401_open_snow","type":"set_scene","season":"winter","timeOfDay":"night","playerStart":{"x":0.6,"z":2.4,"yaw":3.14},"cameraAngleId":"cam_winter_utakai_hisashi","next":"seq_402_lamp_effect","fade":"black","se":"gong"},{"id":"seq_402_lamp_effect","type":"effect","effectId":"winter_lamp_dim","payload":{"gagaku":true,"snow":true},"next":"seq_403_minister_appears"},{"id":"seq_403_minister_appears","type":"dialogue","speaker":"左大臣","text":"今宵は歌にて、若君の心を量る。雪の庭に、軽き言葉は落ちて消えようぞ。","next":"seq_404_judge_intro"},{"id":"seq_404_judge_intro","type":"dialogue","speaker":"判者","text":"一番、題は『雪』。ただ白しと言うなかれ。白きものに、見えぬ心を映してこそ歌。","next":"seq_405_topic_snow","se":"koto","stage":{"topic":"雪","judgeFanText":"題 雪"}},{"id":"seq_405_topic_snow","type":"choice","text":"一番『雪』。どの趣で詠む？","options":[{"text":"雪の白さに、御簾の向こうの声を重ねる","next":"seq_406_topic_wait_intro","effects":{"fantasySynchro":8,"utakaiPrepScore":2}},{"text":"庭が白くてきれいだと素直に詠む","next":"seq_406_topic_wait_intro","effects":{"fantasySynchro":3,"utakaiPrepScore":1}},{"text":"寒いので早く帰りたいと詠む","next":"seq_406_topic_wait_intro","effects":{"realityEgo":5,"brainErosion":4,"utakaiPrepScore":0}}]},{"id":"seq_406_topic_wait_intro","type":"dialogue","speaker":"判者","text":"二番、題は『待つ』。急く心は真なれど、歌は心を投げつける器にあらず。","next":"seq_407_topic_wait","stage":{"topic":"待つ","judgeFanText":"題 待"}},{"id":"seq_407_topic_wait","type":"choice","text":"二番『待つ』。返歌にふさわしい心は？","options":[{"text":"待つ時間そのものを、月の移ろいとして詠む","next":"seq_408_topic_return_intro","effects":{"fantasySynchro":7,"utakaiPrepScore2":2}},{"text":"なぜ遅いのかと相手を責める","next":"seq_408_topic_return_intro","effects":{"brainErosion":10,"utakaiPrepScore2":0}},{"text":"会いたい気持ちは隠さず、季節の景に預ける","next":"seq_408_topic_return_intro","effects":{"realityEgo":4,"fantasySynchro":6,"utakaiPrepScore2":2}}]},{"id":"seq_408_topic_return_intro","type":"dialogue","speaker":"判者","text":"三番、題は『帰る』。この題に、今宵のすべてが潜む。","next":"seq_409_topic_return","stage":{"topic":"帰る","judgeFanText":"題 帰"}},{"id":"seq_409_topic_return","type":"choice","text":"三番『帰る』。あなたは何を詠む？","options":[{"text":"帰る朝だけを願う歌","next":"seq_410_trigger_utakai","effects":{"realityEgo":12,"utakaiReturnTone":1}},{"text":"帰らぬ夢だけを願う歌","next":"seq_410_trigger_utakai","effects":{"fantasySynchro":14,"utakaiReturnTone":2}},{"text":"帰る袖にも、残る香があると詠む歌","next":"seq_410_trigger_utakai","effects":{"realityEgo":8,"fantasySynchro":8,"utakaiReturnTone":3},"setFlag":{"balancedReturnPoem":true}}]},{"id":"seq_410_trigger_utakai","type":"trigger_minigame","gameMode":"utakai_story","payload":{"rounds":3,"needWins":2,"storyTheme":"return","judgeExplains":true},"successEffects":{"fantasySynchro":10,"brainErosion":-5,"utakaiWon":true},"failEffects":{"brainErosion":25,"chapter4Lost":true},"successNext":"seq_411_win","failNext":"seq_412_lose_ed3"},{"id":"seq_411_win","type":"dialogue","speaker":"小萩","text":"あなたは、歌を点ではなく道として渡りました。その道なら、御簾の向こうにも届きましょう。","setFlag":{"utakaiWon":true,"chapter4Cleared":true},"next":"chapter_complete","emotes":{"kohagi":"smile"},"se":"bell"},{"id":"seq_412_lose_ed3","type":"dialogue","speaker":"判者","text":"言葉を軽んじる者は、言葉のない夜へ。火桶の火まで、あなたの名を忘れた。","next":"seq_413_ed3","fade":"black"},{"id":"seq_413_ed3","type":"ending","endingId":"ED3_GAMEOVER"}]},"5":{"chapterId":5,"chapterTitle":"常世の黎明、大鬼祓い","season":"tokoyo","timeOfDay":"dawn","startSequence":[{"id":"seq_501_open_tokoyo","type":"set_scene","season":"tokoyo","timeOfDay":"dawn","playerStart":{"x":1.8,"z":-3.4,"yaw":0},"cameraAngleId":"cam_tokoyo_north_tainoya","next":"seq_502_tokoyo_effect","fade":"white"},{"id":"seq_502_tokoyo_effect","type":"effect","effectId":"tokoyo_glitch","payload":{"floatingCards":true,"brokenMisu":true,"fogGate":true},"next":"seq_503_kohagi_glitch"},{"id":"seq_503_kohagi_glitch","type":"dialogue","speaker":"小萩","text":"帰る道は、覚えたものを忘れぬ者にだけ開きます。わたくしの名も、どうか急いで決めませぬよう。","effects":{"fantasySynchro":4},"next":"seq_504_minister_possessed","emotes":{"kohagi":"sad"},"shioriGhost":0.6},{"id":"seq_504_minister_possessed","type":"dialogue","speaker":"左大臣","text":"この邸は古きものを守るためにある。新しき世へ返すものなど、ひとつもない。","next":"seq_505_oni_reveal","stage":{"ministerShadow":0.8,"ministerPossessed":true}},{"id":"seq_505_oni_reveal","type":"effect","effectId":"oni_tears_misu","payload":{"boss":"great_oni","phase":1},"next":"seq_506_oni_battle","fx":"lightning","se":"thunder"},{"id":"seq_506_oni_battle","type":"trigger_minigame","gameMode":"taiji_oni_story_final","payload":{"boss":"great_oni","arena":"north_tainoya_wide","fogGate":true,"weapons":["arrow","ofuda","katana"],"healingItem":"omiki","requiresFinalQuiz":true},"successEffects":{"realityEgo":12,"fantasySynchro":8,"brainErosion":-8,"oniWon":true},"failEffects":{"brainErosion":35,"chapter5Lost":true},"successNext":"seq_507_after_battle","failNext":"seq_516_lose_ed3"},{"id":"seq_507_after_battle","type":"dialogue","speaker":"語り","text":"大鬼の胸に、小萩の影が短冊のように封じられていた。札はまだ三枚、朝の風に震えている。","next":"seq_508_final_quiz_1","se":"wind"},{"id":"seq_508_final_quiz_1","type":"choice","text":"破魔の連札 一。御簾とは、何をするものか。","options":[{"text":"相手を完全に隠す壁","next":"seq_517_quiz_fail_ed3","effects":{"brainErosion":20}},{"text":"見えぬ相手へ礼を保つ境","next":"seq_509_final_quiz_2","effects":{"fantasySynchro":5,"realityEgo":2}},{"text":"偉い人だけが使う飾り","next":"seq_517_quiz_fail_ed3","effects":{"brainErosion":15}}]},{"id":"seq_509_final_quiz_2","type":"choice","text":"破魔の連札 二。返歌に必要なのは何か。","options":[{"text":"相手の言葉を受け、季節に返すこと","next":"seq_510_final_quiz_3","effects":{"fantasySynchro":5,"realityEgo":3}},{"text":"自分の気持ちを一番強く言うこと","next":"seq_517_quiz_fail_ed3","effects":{"brainErosion":15}},{"text":"相手より難しい言葉を使うこと","next":"seq_517_quiz_fail_ed3","effects":{"brainErosion":12}}]},{"id":"seq_510_final_quiz_3","type":"choice","text":"破魔の連札 三。目の前の人を、何と呼ぶ。","options":[{"text":"小萩","next":"seq_511_ending_check","effects":{"fantasySynchro":14}},{"text":"栞","next":"seq_511_ending_check","effects":{"realityEgo":14}},{"text":"あなた","next":"seq_511_ending_check","effects":{"realityEgo":8,"fantasySynchro":8},"setFlag":{"calledYou":true}}],"stage":{"silence":true}},{"id":"seq_511_ending_check","type":"ending_check","requirements":{"trueReality":60,"trueFantasy":60,"trueMaxErosion":20,"syncGap":25}},{"id":"seq_516_lose_ed3","type":"dialogue","speaker":"大鬼","text":"名を知れど、恐れを斬れぬ。ならば御簾の裂け目で、百年眠れ。","next":"seq_518_ed3"},{"id":"seq_517_quiz_fail_ed3","type":"dialogue","speaker":"判者","text":"最後の名づけを誤れば、勝ちし戦も夜へ戻る。言葉の火は、ここで消えた。","next":"seq_518_ed3"},{"id":"seq_518_ed3","type":"ending","endingId":"ED3_GAMEOVER"}]},"6":{"chapterId":6,"chapterTitle":"帰る朝、残る香","season":"spring","timeOfDay":"morning","startSequence":[{"id":"seq_601_open_endings","type":"set_scene","season":"spring","timeOfDay":"morning","playerStart":{"x":0.2,"z":4.8,"yaw":3.14},"cameraAngleId":"cam_ending_morning","next":"seq_602_ending_gallery","fade":"white"},{"id":"seq_602_ending_gallery","type":"effect","effectId":"ending_gallery_ready","payload":{"scrollableResult":true,"showTopButton":true,"showRetryButton":true},"next":"seq_603_select_ending"},{"id":"seq_603_select_ending","type":"choice","text":"到達した結末の演出を表示する。通常進行では第5話の判定結果から直接呼び出す。","options":[{"text":"ED1 True End『御簾を上げる朝』","next":"seq_611_ed1"},{"text":"ED2 Normal End『現の朝』","next":"seq_621_ed2"},{"text":"ED3 Bad End A『歌なき夜』","next":"seq_631_ed3"},{"text":"ED4 Bad End B『常世の婿』","next":"seq_641_ed4"},{"text":"ED5 Spooky End『百年の夢』","next":"seq_651_ed5"}]},{"id":"seq_611_ed1","type":"dialogue","speaker":"語り","text":"秀頼は現代の教室で目を覚ました。机には白い短冊が一枚だけ残り、窓の外をカモメが横切る。","next":"seq_612_ed1_line","se":"bell","stage":{"purpleCord":true,"seagull":true}},{"id":"seq_612_ed1_line","type":"dialogue","speaker":"秀頼","text":"御簾って、ただ隠すためのものじゃないんだな。今度、ちゃんと教えてくれないか。","next":"seq_613_ed1_end"},{"id":"seq_613_ed1_end","type":"ending","endingId":"ED1_TRUE"},{"id":"seq_621_ed2","type":"dialogue","speaker":"語り","text":"秀頼は現実へ戻った。古典の点は上がった。けれど、小萩の声だけが、朝の光の中で薄れていく。","next":"seq_622_ed2_end"},{"id":"seq_622_ed2_end","type":"ending","endingId":"ED2_NORMAL"},{"id":"seq_631_ed3","type":"dialogue","speaker":"語り","text":"灯火は消え、御簾の向こうの声は黒い線になった。言葉のない夜だけが、廂に残った。","next":"seq_632_ed3_end"},{"id":"seq_632_ed3_end","type":"ending","endingId":"ED3_GAMEOVER"},{"id":"seq_641_ed4","type":"dialogue","speaker":"語り","text":"帰る道を前に、秀頼は振り返った。御簾の内へ入ると、現代の音は美しく遠ざかった。","next":"seq_642_ed4_end","stage":{"crownState":"deep"}},{"id":"seq_642_ed4_end","type":"ending","endingId":"ED4_SYNC"},{"id":"seq_651_ed5","type":"dialogue","speaker":"小萩","text":"名をなくした人は、物語にやさしく飼われます。あなたの席は、まだ空いています。","next":"seq_652_ed5_end","stage":{"erosionLevel":100}},{"id":"seq_652_ed5_end","type":"ending","endingId":"ED5_SPOOKY"}]}}};
+/*
+ * StoryManager scaffold for 寝殿造り3D探訪.
+ *
+ * This file is intentionally standalone. During the final integration, either
+ * inline this class into 寝殿造り3D探訪_統合版.html or load it before starting
+ * story mode. Scenario prose stays in story/chapters/*.json.
+ */
+(function(global){
+  "use strict";
+
+  const STORY_SAVE_KEY = "shinden3d-story-save-v1";
+  const STORY_DEFAULT_PARAMS = Object.freeze({
+    realityEgo: 0,
+    fantasySynchro: 0,
+    brainErosion: 0
+  });
+
+  const STORY_ENDINGS = Object.freeze({
+    TRUE: "ED1_TRUE",
+    NORMAL: "ED2_NORMAL",
+    BAD_GAMEOVER: "ED3_GAMEOVER",
+    BAD_SYNC: "ED4_SYNC",
+    SPOOKY: "ED5_SPOOKY"
+  });
+
+  function clamp(value, min, max){
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function clonePlain(value){
+    return JSON.parse(JSON.stringify(value));
+  }
+
+  class StoryManager {
+    constructor(options = {}){
+      this.basePath = options.basePath || "story/chapters/";
+      this.saveKey = options.saveKey || STORY_SAVE_KEY;
+      this.fetchImpl = options.fetchImpl || (global.fetch ? global.fetch.bind(global) : null);
+      this.hooks = Object.assign({}, StoryManager.defaultHooks(), options.hooks || {});
+      this.resetRuntime();
+    }
+
+    static defaultHooks(){
+      return {
+        onChapterLoaded: () => {},
+        onStateChanged: () => {},
+        onDialogue: () => {},
+        onChoice: () => {},
+        onScene: () => {},
+        onCamera: () => {},
+        onEffect: () => {},
+        onCollectibles: () => {},
+        onRequireCollectibles: () => {},
+        onMiniGameStart: () => {},
+        onEnding: () => {},
+        /* 章クリア(next:"chapter_complete"到達)の通知。UI側で「次の話へ」導線を出す */
+        onChapterComplete: () => {},
+        /* brainErosionが80を跨いだ瞬間に一度だけ呼ぶ(ED5前の明確な警告演出用) */
+        onErosionWarning: () => {},
+        onError: error => { console.error("[StoryManager]", error); }
+      };
+    }
+
+    resetRuntime(){
+      this.chapter = null;
+      this.manifest = null;
+      this.sequenceMap = new Map();
+      this.currentSequenceId = null;
+      this.state = {
+        chapterId: null,
+        chapterTitle: "",
+        routeFlags: {},
+        collected: {},
+        completedChapters: {},
+        params: Object.assign({}, STORY_DEFAULT_PARAMS),
+        lastMiniGame: null,
+        endingId: null,
+        history: []
+      };
+    }
+
+    /* file:// 対策 — 本体HTMLへ同梱した window.STORY_EMBED = {manifest, chapters:{1:{...}}}
+       があれば fetch せずそれを使う。HTTP配信時は従来通り相対fetchする。
+       (単一HTML主義との両立: ビルド時に story/chapters/*.json を <script> へ流し込む) */
+    embedded(){
+      return (global.STORY_EMBED && typeof global.STORY_EMBED === "object") ? global.STORY_EMBED : null;
+    }
+
+    async loadManifest(manifestPath = `${this.basePath}chapter_manifest.json`){
+      const emb = this.embedded();
+      if(emb && emb.manifest){this.manifest = clonePlain(emb.manifest);return this.manifest;}
+      if(!this.fetchImpl)throw new Error("StoryManager requires fetch() or options.fetchImpl");
+      const response = await this.fetchImpl(manifestPath, { cache: "no-store" });
+      if(!response.ok)throw new Error(`Story manifest fetch failed: ${response.status}`);
+      const manifest = await response.json();
+      this.manifest = manifest;
+      return manifest;
+    }
+
+    async loadChapter(chapterId){
+      const emb = this.embedded();
+      let chapter = null;
+      if(emb && emb.chapters && emb.chapters[chapterId]){
+        chapter = clonePlain(emb.chapters[chapterId]);
+      }else{
+        if(!this.fetchImpl)throw new Error("StoryManager requires fetch() or options.fetchImpl");
+        /* manifest優先でファイル名を解決(QA改善候補2)。未ロード時は従来の命名規則へフォールバック */
+        let file = `chapter${chapterId}.json`;
+        try{
+          const manifest = this.manifest || await this.loadManifest();
+          this.manifest = manifest;
+          const entry = (manifest.chapters || []).find(ch => ch.chapterId === chapterId);
+          if(entry && entry.file)file = entry.file;
+        }catch(e){ /* manifest無しでも旧命名で続行 */ }
+        const url = `${this.basePath}${file}`;
+        const response = await this.fetchImpl(url, { cache: "no-store" });
+        if(!response.ok)throw new Error(`Story chapter fetch failed: ${url} (${response.status})`);
+        chapter = await response.json();
+      }
+      this.validateChapter(chapter);
+      this.chapter = chapter;
+      this.sequenceMap = new Map(chapter.startSequence.map(step => [step.id, step]));
+      this.state.chapterId = chapter.chapterId;
+      this.state.chapterTitle = chapter.chapterTitle;
+      this.currentSequenceId = chapter.startSequence[0] && chapter.startSequence[0].id;
+      this.hooks.onChapterLoaded(chapter, this.snapshot());
+      this.save();
+      return chapter;
+    }
+
+    validateChapter(chapter){
+      if(!chapter || !Array.isArray(chapter.startSequence)){
+        throw new Error("Invalid story chapter: startSequence is required");
+      }
+      const ids = new Set();
+      chapter.startSequence.forEach(step => {
+        if(!step.id || !step.type)throw new Error("Invalid story event: id and type are required");
+        if(ids.has(step.id))throw new Error(`Duplicate story sequence id: ${step.id}`);
+        ids.add(step.id);
+      });
+    }
+
+    async startChapter(chapterId){
+      await this.loadChapter(chapterId);
+      return this.runCurrent();
+    }
+
+    async runCurrent(){
+      if(this.state.endingId)return { type: "ending", endingId: this.state.endingId };
+      if(!this.currentSequenceId)return null;
+      if(this.currentSequenceId === "chapter_complete"){
+        return this.completeChapter();
+      }
+      const event = this.sequenceMap.get(this.currentSequenceId);
+      if(!event)throw new Error(`Story sequence not found: ${this.currentSequenceId}`);
+      this.state.history.push({ chapterId: this.state.chapterId, sequenceId: event.id, type: event.type });
+      this.applyEffects(event.effects);
+      this.applyFlag(event.setFlag);
+
+      switch(event.type){
+        case "set_scene":
+          return this.handleSetScene(event);
+        case "camera":
+          return this.handleCamera(event);
+        case "dialogue":
+          return this.handleDialogue(event);
+        case "choice":
+          return this.handleChoice(event);
+        case "spawn_collectibles":
+          return this.handleSpawnCollectibles(event);
+        case "require_collectibles":
+          return this.handleRequireCollectibles(event);
+        case "trigger_minigame":
+          return this.handleMiniGame(event);
+        case "effect":
+          return this.handleEffect(event);
+        case "set_flag":
+          return this.goNext(event.next);
+        case "ending_check":
+          return this.handleEndingCheck(event);
+        case "ending":
+          return this.triggerEnding(event.endingId);
+        default:
+          throw new Error(`Unsupported story event type: ${event.type}`);
+      }
+    }
+
+    handleSetScene(event){
+      this.hooks.onScene({
+        season: event.season || this.chapter.season,
+        timeOfDay: event.timeOfDay || this.chapter.timeOfDay,
+        playerStart: event.playerStart || null,
+        event
+      }, this.snapshot());
+      if(event.cameraAngleId)this.hooks.onCamera(event.cameraAngleId, event, this.snapshot());
+      return this.goNext(event.next);
+    }
+
+    handleCamera(event){
+      this.hooks.onCamera(event.cameraAngleId, event, this.snapshot());
+      return this.goNext(event.next);
+    }
+
+    handleDialogue(event){
+      this.hooks.onDialogue({
+        speaker: event.speaker || "",
+        text: event.text || "",
+        event
+      }, this.snapshot());
+      this.save();
+      return event;
+    }
+
+    handleChoice(event){
+      this.hooks.onChoice({
+        text: event.text || "",
+        options: event.options || [],
+        event,
+        choose: optionIndex => this.choose(optionIndex)
+      }, this.snapshot());
+      this.save();
+      return event;
+    }
+
+    handleSpawnCollectibles(event){
+      this.hooks.onCollectibles({
+        groupId: event.groupId,
+        kind: event.kind,
+        count: event.count || 0,
+        positions: event.positions || [],
+        onCollect: itemId => this.collect(event.groupId, itemId)
+      }, this.snapshot());
+      this.save();
+      return event;
+    }
+
+    handleRequireCollectibles(event){
+      const group = this.state.collected[event.groupId] || {};
+      const count = Object.keys(group).length;
+      const ok = count >= (event.count || 0);
+      this.hooks.onRequireCollectibles({ event, count, ok }, this.snapshot());
+      return this.goNext(ok ? event.successNext : event.failNext);
+    }
+
+    handleMiniGame(event){
+      this.state.lastMiniGame = {
+        gameMode: event.gameMode,
+        eventId: event.id,
+        successNext: event.successNext,
+        failNext: event.failNext,
+        successEffects: event.successEffects || null,
+        failEffects: event.failEffects || null
+      };
+      this.hooks.onMiniGameStart({
+        gameMode: event.gameMode,
+        payload: event.payload || {},
+        complete: result => this.resumeFromMiniGame(result)
+      }, this.snapshot());
+      this.save();
+      return event;
+    }
+
+    handleEffect(event){
+      this.hooks.onEffect({
+        effectId: event.effectId,
+        payload: event.payload || {},
+        event
+      }, this.snapshot());
+      return this.goNext(event.next);
+    }
+
+    handleEndingCheck(event){
+      const endingId = this.determineEnding(event.requirements || {});
+      return this.triggerEnding(endingId);
+    }
+
+    choose(optionIndex){
+      if(this.state.endingId)return { type: "ending", endingId: this.state.endingId };
+      const event = this.sequenceMap.get(this.currentSequenceId);
+      if(!event || event.type !== "choice")throw new Error("No active choice event");
+      const option = (event.options || [])[optionIndex];
+      if(!option)throw new Error(`Choice option not found: ${optionIndex}`);
+      this.applyEffects(option.effects);
+      if(this.state.endingId)return { type: "ending", endingId: this.state.endingId };
+      this.applyFlag(option.setFlag);
+      return this.goNext(option.next);
+    }
+
+    async resumeFromMiniGame(result = {}){
+      const mini = this.state.lastMiniGame;
+      if(!mini)throw new Error("No pending story mini game");
+      const success = !!result.success;
+      this.state.lastMiniGame = Object.assign({}, mini, { result });
+      this.applyEffects(success ? mini.successEffects : mini.failEffects);
+      if(this.state.endingId)return { type: "ending", endingId: this.state.endingId };
+      if(result.effects)this.applyEffects(result.effects);
+      if(this.state.endingId)return { type: "ending", endingId: this.state.endingId };
+      if(result.flags)this.applyFlag(result.flags);
+      return this.goNext(success ? mini.successNext : mini.failNext);
+    }
+
+    collect(groupId, itemId){
+      if(!groupId || !itemId)return;
+      if(!this.state.collected[groupId])this.state.collected[groupId] = {};
+      this.state.collected[groupId][itemId] = true;
+      this.save();
+      this.hooks.onStateChanged(this.snapshot());
+      const event = this.sequenceMap.get(this.currentSequenceId);
+      if(event && event.type === "spawn_collectibles" && event.groupId === groupId){
+        const count = Object.keys(this.state.collected[groupId]).length;
+        if(count >= (event.count || 0) && event.next){
+          return this.goNext(event.next);
+        }
+      }
+      return this.snapshot();
+    }
+
+    applyEffects(effects){
+      if(!effects)return;
+      const prevErosion = this.state.params.brainErosion || 0;
+      Object.keys(effects).forEach(key => {
+        if(key in STORY_DEFAULT_PARAMS){
+          const max = key === "brainErosion" ? 100 : 999;
+          this.state.params[key] = clamp((this.state.params[key] || 0) + Number(effects[key] || 0), 0, max);
+        }else{
+          this.state.routeFlags[key] = effects[key];
+        }
+      });
+      if(this.state.params.brainErosion >= 100){
+        this.triggerEnding(STORY_ENDINGS.SPOOKY);
+        return;
+      }
+      /* ED5の1段手前(80)を跨いだら一度だけ警告hook(QA改善候補4)。理不尽な即死を避ける */
+      if(prevErosion < 80 && this.state.params.brainErosion >= 80){
+        this.hooks.onErosionWarning(this.state.params.brainErosion, this.snapshot());
+      }
+      this.hooks.onStateChanged(this.snapshot());
+      this.save();
+    }
+
+    applyFlag(flag){
+      if(!flag)return;
+      Object.assign(this.state.routeFlags, flag);
+      this.hooks.onStateChanged(this.snapshot());
+      this.save();
+    }
+
+    async goNext(nextId){
+      if(this.state.endingId)return { type: "ending", endingId: this.state.endingId };
+      if(!nextId)return null;
+      this.currentSequenceId = nextId;
+      this.save();
+      return this.runCurrent();
+    }
+
+    completeChapter(){
+      this.state.completedChapters[this.state.chapterId] = true;
+      this.save();
+      this.hooks.onStateChanged(this.snapshot());
+      this.hooks.onChapterComplete(this.state.chapterId, this.snapshot());
+      return { type: "chapter_complete", chapterId: this.state.chapterId };
+    }
+
+    determineEnding(requirements = {}){
+      const p = this.state.params;
+      const f = this.state.routeFlags;
+      if(p.brainErosion >= 100)return STORY_ENDINGS.SPOOKY;
+      if(f.chapter4Lost || f.chapter5Lost)return STORY_ENDINGS.BAD_GAMEOVER;
+
+      const realityHigh = p.realityEgo >= (requirements.trueReality || 60);
+      const fantasyHigh = p.fantasySynchro >= (requirements.trueFantasy || 60);
+      const erosionLow = p.brainErosion <= (requirements.trueMaxErosion || 20);
+      /* Perfectフラグはミニゲーム側評価(result.flags)で付与される予定。
+         requirePerfect:false を渡すと勝利フラグ(utakaiWon/oniWon)で代用できる
+         (ミニゲーム評価が未接続の間、True Endが構造的に到達不能になるのを防ぐ) */
+      const requirePerfect = requirements.requirePerfect !== false;
+      const perfectOk = requirePerfect
+        ? (f.utakaiPerfect && f.oniPerfect)
+        : (f.utakaiWon && f.oniWon);
+      if(realityHigh && fantasyHigh && erosionLow && perfectOk){
+        return STORY_ENDINGS.TRUE;
+      }
+
+      /* ED4(常世の婿)は「小萩を理想像として選んだ」者の結末。
+         最終問で相手を「あなた」と呼べた者(calledYou)は、同調値が高くても
+         理想化を脱しているため、婿入りではなく現へ帰す(ED2へ)。
+         これがないと、良プレイほど fantasySynchro が先行して最良プレイがED4に落ちる */
+      if(!f.calledYou && p.fantasySynchro >= p.realityEgo + (requirements.syncGap || 25)){
+        return STORY_ENDINGS.BAD_SYNC;
+      }
+
+      return STORY_ENDINGS.NORMAL;
+    }
+
+    triggerEnding(endingId){
+      if(this.state.endingId)return { type: "ending", endingId: this.state.endingId };
+      this.state.endingId = endingId;
+      this.save();
+      this.hooks.onEnding(endingId, this.snapshot());
+      return { type: "ending", endingId };
+    }
+
+    serialize(){
+      return JSON.stringify({
+        version: 1,
+        currentSequenceId: this.currentSequenceId,
+        state: this.state
+      });
+    }
+
+    deserialize(raw){
+      const data = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if(!data || !data.state)throw new Error("Invalid story save data");
+      this.state = Object.assign({}, data.state);
+      this.currentSequenceId = data.currentSequenceId || null;
+      return this.snapshot();
+    }
+
+    save(){
+      try{
+        global.localStorage.setItem(this.saveKey, this.serialize());
+      }catch(error){
+        this.hooks.onError(error);
+      }
+    }
+
+    load(){
+      try{
+        const raw = global.localStorage.getItem(this.saveKey);
+        if(!raw)return null;
+        return this.deserialize(raw);
+      }catch(error){
+        this.hooks.onError(error);
+        return null;
+      }
+    }
+
+    clearSave(){
+      try{ global.localStorage.removeItem(this.saveKey); }
+      catch(error){ this.hooks.onError(error); }
+    }
+
+    snapshot(){
+      return {
+        chapter: this.chapter ? {
+          chapterId: this.chapter.chapterId,
+          chapterTitle: this.chapter.chapterTitle,
+          season: this.chapter.season,
+          timeOfDay: this.chapter.timeOfDay
+        } : null,
+        currentSequenceId: this.currentSequenceId,
+        state: clonePlain(this.state)
+      };
+    }
+  }
+
+  StoryManager.SAVE_KEY = STORY_SAVE_KEY;
+  StoryManager.DEFAULT_PARAMS = STORY_DEFAULT_PARAMS;
+  StoryManager.ENDINGS = STORY_ENDINGS;
+
+  global.StoryManager = StoryManager;
+})(typeof window !== "undefined" ? window : globalThis);
+
+/*
+ * ストーリーモード用 Three.js オブジェクトファクトリ（ドラフト）
+ * 対象: 寝殿造り3D探訪_統合版.html（Three.js r128 / スマホ優先 / 低ポリ和風）
+ *
+ * ■ このファイルはまだ本体HTMLに読み込まない（Codex依頼書の通り）。
+ * ■ 統合時の作法:
+ *   - ここでは自前の素材(mat)を使うが、本体統合時は heianTextile()/MAT.* に差し替えられるよう
+ *     すべて STORY_MATS 経由で参照している。STORY_MATS を上書きすれば衣装が本体品質になる。
+ *   - 人物は本体の makeHeianFigure 派生(SAIGEN_CHARS)に置き換えてもよい。その場合も
+ *     各 api(表情・冠・影・扇文字)はアタッチ部品として流用できる構造にしてある。
+ *   - すべて Group/Mesh/基本ジオメトリのみ。SkinnedMesh・重いパーティクル・テクスチャ画像なし。
+ *     文字はCanvasTexture(小さめ)で描く。生成は章頭のみ、毎フレームは update(t) の軽い揺れだけ。
+ *   - r128準拠: tex.encoding=THREE.sRGBEncoding / material.emissive を使用。colorSpaceは使わない。
+ *
+ * ■ 公開API: window.StoryObjects.{create...} / STORY_CAMERA_ANGLES / disposeGroup / makePool
+ */
+(function(global){
+  "use strict";
+  if(typeof THREE==="undefined"){console.warn("[StoryObjects] THREE not loaded");return;}
+
+  /* ============ 素材(統合時は heianTextile/MAT.* に差し替え) ============ */
+  function M(o){return new THREE.MeshStandardMaterial(o);}
+  const STORY_MATS={
+    skin:      M({color:0xf0d5bd,roughness:.72}),
+    hair:      M({color:0x0a0a0c,roughness:.5,metalness:.04}),
+    // 小萩: 萩色(紫がかった紅)の袿に薄紫の単衣
+    kohagiOuter:M({color:0x8a4a68,roughness:.8}),
+    kohagiMid:  M({color:0xb07a92,roughness:.82}),
+    kohagiInner:M({color:0xcabce0,roughness:.85}),
+    murasakiCord:M({color:0xb9a5e6,roughness:.55,emissive:0x30245c,emissiveIntensity:.25}), // 薄紫の紐(小萩/栞/True短冊 共通)
+    // 秀頼: 若い男の縹(はなだ)の直衣。少し明るすぎる=場に馴染んでいない色
+    hidetoraNoshi:M({color:0x4a6fa8,roughness:.78}),
+    hidetoraSashinuki:M({color:0x39496b,roughness:.85}),
+    // 右近: 侍の麻色
+    ukonRobe:  M({color:0x55633f,roughness:.85}),
+    ukonUnder: M({color:0x3a4a30,roughness:.85}),
+    // 左大臣: 濃紫の袍
+    ministerRobe:M({color:0x432a66,roughness:.75}),
+    // 判者: 鈍色(にびいろ)の落ち着いた袍
+    judgeRobe: M({color:0x4c4a55,roughness:.8}),
+    gold:      M({color:0xc9a23f,roughness:.5,metalness:.35}),
+    black:     M({color:0x17130f,roughness:.7}),
+    wood:      M({color:0x6b4a2c,roughness:.85}),
+    woodDark:  M({color:0x4a3722,roughness:.8}),
+    paper:     M({color:0xf2ead6,roughness:.92}),
+    ink:       M({color:0x2a201a,roughness:.85}),
+    ofuda:     M({color:0xe9e0c4,roughness:.9,emissive:0x8a6a20,emissiveIntensity:.12}),
+    oniSkin:   M({color:0x7c1f1a,roughness:.68}),
+    oniDark:   M({color:0x3a0f0e,roughness:.75}),
+    shadowFlat:new THREE.MeshBasicMaterial({color:0x05030a,transparent:true,opacity:.55,depthWrite:false}),
+    ghostUniform:new THREE.MeshBasicMaterial({color:0xcfd8ea,transparent:true,opacity:0,depthWrite:false}), // 栞の制服シルエット
+    misu:      M({color:0x8a7d52,roughness:.9,transparent:true,opacity:.42,side:THREE.DoubleSide,depthWrite:false}),
+    fog:       new THREE.MeshBasicMaterial({color:0xaebedd,transparent:true,opacity:.16,side:THREE.DoubleSide,depthWrite:false})
+  };
+
+  /* ============ 汎用ヘルパー ============ */
+  function box(w,h,d,mat,x=0,y=0,z=0,shadow=true){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=shadow;m.receiveShadow=shadow;return m;}
+  function cyl(rt,rb,h,mat,x=0,y=0,z=0,seg=10){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;return m;}
+  function sph(r,mat,x=0,y=0,z=0,w=8,h=6){const m=new THREE.Mesh(new THREE.SphereGeometry(r,w,h),mat);m.position.set(x,y,z);m.castShadow=true;return m;}
+  function plane(w,h,mat,x=0,y=0,z=0){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);m.position.set(x,y,z);return m;}
+  function noShadow(o){o.castShadow=false;o.receiveShadow=false;return o;}
+
+  /* 縦書き/横書きテキストのCanvasTexture(小さく生成し、にじみ防止に2x) */
+  function textTexture(text,opt={}){
+    const vertical=opt.vertical!==false, W=opt.w||96, H=opt.h||256, fs=opt.fontSize||44;
+    const c=document.createElement("canvas");c.width=W*2;c.height=H*2;
+    const x=c.getContext("2d");x.scale(2,2);
+    x.fillStyle=opt.bg||"rgba(0,0,0,0)";x.fillRect(0,0,W,H);
+    x.fillStyle=opt.color||"#2a201a";
+    x.font=(opt.bold?"700 ":"")+fs+"px 'Hiragino Mincho ProN','Yu Mincho',serif";
+    x.textAlign="center";x.textBaseline="middle";
+    const chars=String(text).split("");
+    if(vertical){const total=chars.length*fs*1.12,y0=H/2-total/2+fs*.62;
+      chars.forEach((ch,i)=>x.fillText(ch,W/2,y0+i*fs*1.12));}
+    else x.fillText(String(text),W/2,H/2);
+    const tex=new THREE.CanvasTexture(c);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=2;
+    return tex;
+  }
+
+  /* グループ配下のgeometry/material/textureを破棄(章の出入りでのリーク防止) */
+  function disposeGroup(g){
+    if(!g)return;
+    g.traverse(o=>{
+      if(o.isMesh){
+        if(o.geometry)o.geometry.dispose();
+        const mats=Array.isArray(o.material)?o.material:[o.material];
+        mats.forEach(m=>{if(!m)return;if(m.map&&m.map.dispose)m.map.dispose();if(m.__ownedByStory&&m.dispose)m.dispose();});
+      }
+    });
+    if(g.parent)g.parent.remove(g);
+  }
+
+  /* 簡易オブジェクトプール(短冊・札など生成破棄を繰り返すもの用) */
+  function makePool(factory){
+    const free=[];
+    return {
+      get(...a){const o=free.pop()||factory(...a);o.visible=true;return o;},
+      put(o){if(!o)return;o.visible=false;free.push(o);},
+      drain(){while(free.length)disposeGroup(free.pop());}
+    };
+  }
+
+  /* ============================================================
+     A-0. 人物共通の土台
+     本体の makeHeianFigure と同じ「座位の量感」を primitives で再現。
+     standing=true で立位(裾を伸ばし、脚部を作る)。
+  ============================================================ */
+  function baseFigure({outer,mid,inner,scale=1,standing=false,female=true}){
+    const g=new THREE.Group();
+    if(standing){
+      g.add(cyl(.24,.40,.92,mid,0,.48,0,12));                  // 袴・裾
+      g.add(cyl(.25,.335,.72,outer,0,1.16,0,12));              // 胴(袍)
+      [-1,1].forEach(s=>{g.add(cyl(.07,.09,.46,mid,s*.13,.20,.01,8));
+        g.add(box(.16,.08,.27,STORY_MATS.black,s*.13,.045,.07));});
+    }else{
+      g.add(cyl(.30,.52,.60,outer,0,.30,0,14));                // 打袴の裾ぐるみ(座位)
+      g.add(cyl(.26,.36,.62,mid,0,.78,0,12));                  // 重ね
+      g.add(cyl(.235,.315,.60,outer,0,1.10,0,12));             // 上体
+    }
+    const neckY=standing?1.55:1.42;
+    [-1,1].forEach(s=>{
+      g.add(sph(.115,outer,s*.245,neckY-.13,.01));             // 肩
+      const arm=cyl(.065,.09,.50,inner,s*.30,neckY-.34,.06,8);arm.rotation.z=s*.17;g.add(arm);
+      g.add(sph(.052,STORY_MATS.skin,s*.35,neckY-.60,.12,8,6));// 手
+      const cuff=cyl(.10,.13,.10,inner,s*.335,neckY-.545,.10,8);cuff.rotation.z=s*.2;g.add(cuff); // 袖口の重ね色
+    });
+    const head=sph(.155,STORY_MATS.skin,0,neckY+.17,.01,10,8);head.scale.set(.95,1.12,.92);g.add(head);
+    g.userData.head=head;g.userData.neckY=neckY;
+    if(female){
+      const cap=sph(.163,STORY_MATS.hair,0,neckY+.245,-.015,10,8);cap.scale.set(1,.82,1);g.add(cap);
+      g.add(box(.25,standing?1.15:.85,.07,STORY_MATS.hair,0,neckY-.28,-.135));   // 垂髪
+      [-1,1].forEach(s=>g.add(box(.05,.34,.05,STORY_MATS.hair,s*.13,neckY+.02,.10))); // 鬢そぎ
+    }else{
+      const cap=sph(.160,STORY_MATS.hair,0,neckY+.235,-.01,10,8);cap.scale.set(1,.72,1);g.add(cap);
+    }
+    // 顔(目・眉・口は差し替え可能な独立メッシュにしておく=表情API用)
+    const face={};
+    const mkEye=(s,shape)=>{const e=noShadow(box(shape==="smile"?.040:.036,shape==="stern"?.006:.010,.006,STORY_MATS.ink,s*.055,neckY+.185,.148));return e;};
+    [-1,1].forEach(s=>{
+      face["eye"+(s<0?"L":"R")]=mkEye(s);g.add(face["eye"+(s<0?"L":"R")]);
+      const brow=noShadow(box(.052,.008,.006,STORY_MATS.ink,s*.056,neckY+.235,.143));brow.rotation.z=s*.06;g.add(brow);
+      face["brow"+(s<0?"L":"R")]=brow;
+    });
+    const nose=noShadow(new THREE.Mesh(new THREE.ConeGeometry(.013,.05,6),STORY_MATS.skin));
+    nose.position.set(0,neckY+.155,.160);nose.rotation.x=Math.PI/2;g.add(nose);
+    const mouth=noShadow(box(.05,.008,.006,new THREE.MeshBasicMaterial({color:0x8a4038}),0,neckY+.108,.152));g.add(mouth);
+    face.mouth=mouth;g.userData.face=face;
+    g.scale.setScalar(scale);
+    return g;
+  }
+  /* 表情API: 目の細さ・眉の角度・口の形だけで喜/静/厳/哀を出す(低負荷) */
+  function makeExpressionApi(g){
+    const f=g.userData.face,ny=g.userData.neckY;
+    return function setExpression(name){
+      const L=f.eyeL,R=f.eyeR,bl=f.browL,br=f.browR,m=f.mouth;
+      if(!L)return;
+      if(name==="smile"){L.scale.set(1,.55,1);R.scale.set(1,.55,1);L.rotation.z=.18;R.rotation.z=-.18;bl.rotation.z=-.10;br.rotation.z=.10;m.scale.set(1.15,1,1);m.position.y=ny+.112;}
+      else if(name==="stern"){L.scale.set(1,.7,1);R.scale.set(1,.7,1);L.rotation.z=-.14;R.rotation.z=.14;bl.rotation.z=.16;br.rotation.z=-.16;m.scale.set(.8,1,1);m.position.y=ny+.104;}
+      else if(name==="sad"){L.scale.set(1,.6,1);R.scale.set(1,.6,1);L.rotation.z=.10;R.rotation.z=-.10;bl.rotation.z=-.18;br.rotation.z=.18;m.scale.set(.85,1,1);m.position.y=ny+.102;}
+      else if(name==="surprise"){L.scale.set(1,1.6,1);R.scale.set(1,1.6,1);L.rotation.z=0;R.rotation.z=0;bl.position.y=ny+.25;br.position.y=ny+.25;m.scale.set(.7,1.6,1);}
+      else{L.scale.set(1,1,1);R.scale.set(1,1,1);L.rotation.z=0;R.rotation.z=0;bl.rotation.z=.06;br.rotation.z=-.06;m.scale.set(1,1,1);m.position.y=ny+.108;}
+    };
+  }
+
+  /* ============================================================
+     A-1. 小萩 — 若い女房。薄紫の紐飾り(栞との接続)を袖に必ず付ける。
+     api: setExpression / setShioriGhost(0..1) / setFan(deg) / update(t)
+  ============================================================ */
+  function createStoryKohagiObject(){
+    const g=baseFigure({outer:STORY_MATS.kohagiOuter,mid:STORY_MATS.kohagiMid,inner:STORY_MATS.kohagiInner,female:true});
+    const ny=g.userData.neckY;
+    // 薄紫の紐飾り: 右袖口に結び、二本の垂れと小さな結び玉
+    const cord=new THREE.Group();
+    cord.add(sph(.030,STORY_MATS.murasakiCord,0,0,0,8,6));
+    const t1=cyl(.008,.008,.16,STORY_MATS.murasakiCord,-.015,-.09,0,6);t1.rotation.z=.18;cord.add(t1);
+    const t2=cyl(.008,.008,.13,STORY_MATS.murasakiCord,.018,-.075,0,6);t2.rotation.z=-.14;cord.add(t2);
+    cord.position.set(.345,ny-.52,.13);g.add(cord);g.userData.cord=cord;
+    // 檜扇(表情差分の一部: 口元を隠す角度を変えられる)
+    const fan=new THREE.Group();
+    for(let i=0;i<6;i++){const blade=box(.028,.20,.006,i%2?STORY_MATS.paper:STORY_MATS.kohagiInner,0,.10,0,false);
+      blade.rotation.z=(i-2.5)*.16;blade.position.x=(i-2.5)*.016;fan.add(noShadow(blade));}
+    fan.position.set(-.30,ny-.42,.16);fan.rotation.z=.35;g.add(fan);g.userData.fan=fan;
+    // 栞の制服シルエット(半透明・通常opacity0)。小萩の輪郭に重なる簡素な形。
+    const ghostMat=STORY_MATS.ghostUniform.clone();ghostMat.__ownedByStory=true;
+    const ghost=new THREE.Group();
+    ghost.add(noShadow(cyl(.26,.30,.62,ghostMat,0,.55,0,10)));           // スカート
+    ghost.add(noShadow(cyl(.24,.28,.55,ghostMat,0,1.12,0,10)));          // 上衣
+    ghost.add(noShadow(box(.34,.16,.02,ghostMat,0,1.36,.14)));           // セーラー襟
+    ghost.add(noShadow(sph(.15,ghostMat,0,ny+.17,.01,8,6)));             // 頭
+    ghost.add(noShadow(box(.05,.30,.03,ghostMat,.20,1.0,.05)));          // 提げ鞄の帯
+    ghost.visible=false;g.add(ghost);
+    const api={
+      group:g,
+      setExpression:makeExpressionApi(g),
+      /* 0=小萩のみ / 1=栞が強く透ける。0.15以上でghost表示 */
+      setShioriGhost(v){const o=Math.max(0,Math.min(1,v));ghost.visible=o>0.15;ghostMat.opacity=o*.5;
+        STORY_MATS.murasakiCord.emissiveIntensity=.25+o*.6;},
+      setFan(cover){ // 0=下げる / 1=口元まで上げる
+        fan.position.y=ny-.42+cover*.30;fan.position.x=-.30+cover*.13;fan.rotation.z=.35+cover*.55;},
+      update(t){g.position.y=(g.userData.baseY||0)+Math.sin(t*1.05)*.012; // 呼吸
+        cord.rotation.z=Math.sin(t*1.6)*.12;}                             // 紐が風に揺れる
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     A-2. 秀頼 — 平安装束を着せられた現代高校生。
+     冠が「ずれている」ことが違和感と成長の記号。
+     api: setCrownState("tilted"|"straight"|"deep") / setExpression / update
+  ============================================================ */
+  function createStoryHidetoraObject(){
+    const g=baseFigure({outer:STORY_MATS.hidetoraNoshi,mid:STORY_MATS.hidetoraSashinuki,inner:STORY_MATS.hidetoraNoshi,female:false,standing:true});
+    const ny=g.userData.neckY;
+    // 冠(纓つき)。ピボットで傾け/深被りを切替
+    const crown=new THREE.Group();
+    crown.add(cyl(.085,.105,.14,STORY_MATS.black,0,.07,0,10));
+    crown.add(box(.03,.16,.012,STORY_MATS.black,0,.20,-.03));  // 巾子
+    const ei=box(.026,.22,.008,STORY_MATS.black,0,.10,-.10);ei.rotation.x=.75;crown.add(ei); // 纓
+    crown.position.set(0,ny+.30,0);g.add(crown);
+    // 現代の名残: 左手首に腕時計(袖口の奥、注視しないと見えない大きさ)
+    const watch=new THREE.Group();
+    watch.add(cyl(.020,.020,.016,new THREE.MeshBasicMaterial({color:0x222831}),0,0,0,10));
+    watch.add(noShadow(cyl(.012,.012,.018,new THREE.MeshBasicMaterial({color:0xd8e2f0}),0,.001,0,8)));
+    watch.rotation.z=Math.PI/2;watch.position.set(.352,ny-.575,.115);g.add(watch);
+    // 沓の代わりに白い靴下風(僅かな現代感)
+    g.children.forEach(o=>{if(o.geometry&&o.geometry.type==="BoxGeometry"&&o.position.y<.06)o.material=M({color:0xdfe3e8,roughness:.9});});
+    const api={
+      group:g,
+      setExpression:makeExpressionApi(g),
+      setCrownState(state){
+        if(state==="straight"){crown.rotation.set(0,0,0);crown.position.y=ny+.30;}
+        else if(state==="deep"){crown.rotation.set(.14,0,0);crown.position.y=ny+.265;} // ED4: 自ら深く被る
+        else {crown.rotation.set(.06,0,-.18);crown.position.y=ny+.295;}                 // 序盤: ずれ
+      },
+      update(t){g.position.y=(g.userData.baseY||0)+Math.sin(t*1.15+1.3)*.010;}
+    };
+    api.setCrownState("tilted");
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     A-3. 右近 — 軽口の随身。立位、弓・矢筒・太刀。
+     api: setPose("ease"|"alert") / update
+  ============================================================ */
+  function createStoryUkonObject(){
+    const g=baseFigure({outer:STORY_MATS.ukonRobe,mid:STORY_MATS.ukonUnder,inner:STORY_MATS.ukonUnder,female:false,standing:true});
+    const ny=g.userData.neckY;
+    g.add(cyl(.088,.108,.13,STORY_MATS.black,0,ny+.30,0,10)); // 折烏帽子(簡易)
+    // 弓(背負い)
+    const bow=new THREE.Group();
+    const arc=cyl(.012,.012,1.35,STORY_MATS.wood,0,0,0,6);arc.rotation.z=.06;bow.add(arc);
+    bow.add(noShadow(box(.004,1.28,.004,STORY_MATS.black,-.035,0,0)));
+    bow.rotation.z=.28;bow.position.set(-.16,1.10,-.16);g.add(bow);
+    // 矢筒(靫)と矢羽
+    const quiver=new THREE.Group();
+    quiver.add(cyl(.055,.065,.42,STORY_MATS.woodDark,0,0,0,8));
+    for(let i=0;i<3;i++){const a=cyl(.006,.006,.30,STORY_MATS.wood,(i-1)*.028,.30,0,5);quiver.add(a);
+      quiver.add(noShadow(box(.03,.05,.008,M({color:0xd8d2c2,roughness:.9}),(i-1)*.028,.44,0)));}
+    quiver.rotation.z=-.20;quiver.position.set(.17,1.15,-.17);g.add(quiver);
+    // 簡易太刀(腰)
+    const tachi=box(.06,.62,.035,STORY_MATS.woodDark,-.24,.86,.02);tachi.rotation.z=-.28;g.add(tachi);
+    g.add(box(.05,.10,.045,STORY_MATS.gold,-.115,1.075,.02));
+    const api={
+      group:g,setExpression:makeExpressionApi(g),
+      setPose(p){g.rotation.x=p==="alert"?-.03:0;g.userData._sway=p==="alert"?.004:.012;},
+      update(t){g.position.y=(g.userData.baseY||0)+Math.sin(t*1.3+2.1)*(g.userData._sway||.012);
+        g.rotation.z=Math.sin(t*.9+1)*.015;}
+    };
+    api.setExpression("smile");api.setPose("ease");
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     A-4. 左大臣 — 威厳とコミカルさ。第5話で影が伸び大鬼に接続。
+     api: setShadowReach(0..1) / setPossessed(bool) / update
+  ============================================================ */
+  function createMinisterObject(){
+    const g=baseFigure({outer:STORY_MATS.ministerRobe,mid:STORY_MATS.ministerRobe,inner:STORY_MATS.gold,female:false});
+    g.scale.setScalar(1.18);
+    const ny=g.userData.neckY;
+    g.add(cyl(.09,.11,.15,STORY_MATS.black,0,ny+.30,0,10));
+    const ei=box(.028,.24,.008,STORY_MATS.black,0,ny+.40,-.09);ei.rotation.x=.85;g.add(ei);
+    const shaku=box(.045,.30,.014,M({color:0xe7ddc4,roughness:.8}),.30,ny-.42,.17);shaku.rotation.z=-.12;g.add(shaku);
+    // ひげ(コミカルさの記号)
+    g.add(noShadow(box(.10,.016,.008,STORY_MATS.ink,0,ny+.085,.150)));
+    // 背後の影メッシュ(床に伸びる)。setShadowReachで長さ/濃さが変わり、大鬼の輪郭が滲む
+    const shMat=STORY_MATS.shadowFlat.clone();shMat.__ownedByStory=true;shMat.opacity=0;
+    const shadow=new THREE.Group();
+    const body=plane(1.0,2.2,shMat,0,0,-1.4);body.rotation.x=-Math.PI/2;shadow.add(noShadow(body));
+    const hornL=plane(.16,.5,shMat,-.28,.001,-2.35);hornL.rotation.x=-Math.PI/2;hornL.rotation.z=.3;shadow.add(noShadow(hornL));
+    const hornR=plane(.16,.5,shMat,.28,.001,-2.35);hornR.rotation.x=-Math.PI/2;hornR.rotation.z=-.3;shadow.add(noShadow(hornR));
+    shadow.position.y=.012;g.add(shadow);
+    // 憑依時の目(赤く光る差分)
+    const eyeGlowL=noShadow(sph(.016,new THREE.MeshBasicMaterial({color:0xff4030}),-.055,ny+.185,.15,6,5));
+    const eyeGlowR=noShadow(sph(.016,new THREE.MeshBasicMaterial({color:0xff4030}),.055,ny+.185,.15,6,5));
+    eyeGlowL.visible=eyeGlowR.visible=false;g.add(eyeGlowL);g.add(eyeGlowR);
+    const api={
+      group:g,setExpression:makeExpressionApi(g),
+      setShadowReach(v){const o=Math.max(0,Math.min(1,v));shMat.opacity=o*.6;shadow.scale.set(1,1,1+o*2.2);},
+      setPossessed(on){eyeGlowL.visible=eyeGlowR.visible=!!on;api.setExpression(on?"stern":"neutral");},
+      update(t){g.position.y=(g.userData.baseY||0)+Math.sin(t*.85)*.012;}
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     A-5. 判者 — 扇で顔半分を隠す。扇面の文字を差し替え可能。
+     api: setFanText("題 雪"|"勝"|"負"|"") / setFanOpen(bool) / update
+  ============================================================ */
+  function createUtakaiJudgeObject(){
+    const g=baseFigure({outer:STORY_MATS.judgeRobe,mid:STORY_MATS.judgeRobe,inner:STORY_MATS.paper,female:false});
+    const ny=g.userData.neckY;
+    g.add(cyl(.088,.106,.14,STORY_MATS.black,0,ny+.295,0,10));
+    // 大きめの檜扇: 開閉2状態 + 文字プレーン(CanvasTexture差し替え)
+    const fan=new THREE.Group();
+    const fanFace=plane(.34,.22,M({color:0xf4edd8,roughness:.9,side:THREE.DoubleSide}),0,.11,0);
+    fan.add(fanFace);
+    for(let i=0;i<7;i++){const rib=box(.006,.24,.004,STORY_MATS.wood,(i-3)*.052,.10,-.004,false);rib.rotation.z=(i-3)*.10;fan.add(noShadow(rib));}
+    const txtMat=new THREE.MeshBasicMaterial({transparent:true,opacity:.95});txtMat.__ownedByStory=true;
+    const txt=plane(.26,.17,txtMat,0,.115,.004);fan.add(noShadow(txt));txt.visible=false;
+    fan.position.set(.10,ny+.02,.19);fan.rotation.z=-.10;g.add(fan);
+    let curTex=null;
+    const api={
+      group:g,setExpression:makeExpressionApi(g),
+      setFanText(s){
+        if(curTex){curTex.dispose();curTex=null;}
+        if(!s){txt.visible=false;return;}
+        curTex=textTexture(s,{vertical:s.length<=1,w:128,h:96,fontSize:s.length<=1?64:30,color:"#7a2417",bold:true});
+        txtMat.map=curTex;txtMat.needsUpdate=true;txt.visible=true;
+      },
+      setFanOpen(open){ // 開=顔を隠す(通常) / 閉=判定の瞬間だけ顔を出す
+        fan.visible=true;fan.position.y=ny+(open?.02:-.42);fan.rotation.z=open?-.10:.65;},
+      update(t){g.position.y=(g.userData.baseY||0)+Math.sin(t*.95+.6)*.010;
+        fan.rotation.z+=Math.sin(t*1.4)*.0015;}
+    };
+    api.setFanOpen(true);
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     B-1. 白い短冊 — カモメが落とす。表=平安の料紙 / 裏=現代ノート片。
+     api: setText(str) / flipTo("heian"|"modern") / update(t)=ひらひら落下
+  ============================================================ */
+  function createWhiteTanzakuObject(){
+    const g=new THREE.Group();
+    const front=plane(.16,.55,M({color:0xf6f0dd,roughness:.92}),0,0,.002);g.add(front);
+    // 裏面: ノート(青い罫線+薄紫のマージン線=栞の記号)
+    const c=document.createElement("canvas");c.width=64;c.height=192;const x=c.getContext("2d");
+    x.fillStyle="#f4f6f8";x.fillRect(0,0,64,192);
+    x.strokeStyle="#b8c9de";x.lineWidth=1;
+    for(let i=1;i<10;i++){x.beginPath();x.moveTo(6,i*19);x.lineTo(60,i*19);x.stroke();}
+    x.strokeStyle="#b9a5e6";x.beginPath();x.moveTo(10,0);x.lineTo(10,192);x.stroke();
+    const backTex=new THREE.CanvasTexture(c);backTex.encoding=THREE.sRGBEncoding;
+    const back=plane(.16,.55,new THREE.MeshStandardMaterial({map:backTex,roughness:.92}),0,0,-.002);
+    back.rotation.y=Math.PI;g.add(back);
+    let inkTex=null;const inkMat=new THREE.MeshBasicMaterial({transparent:true});inkMat.__ownedByStory=true;
+    const ink=plane(.13,.5,inkMat,0,0,.004);ink.visible=false;g.add(noShadow(ink));
+    g.userData.fallT=0;
+    const api={
+      group:g,
+      setText(s){if(inkTex)inkTex.dispose();
+        inkTex=textTexture(s,{w:64,h:224,fontSize:15,color:"#3a3230"});
+        inkMat.map=inkTex;inkMat.needsUpdate=true;ink.visible=!!s;},
+      flipTo(side){g.rotation.y=(side==="modern")?Math.PI:0;},
+      /* ひらひら落下(fromY→toY)。返り値true=着地 */
+      updateFall(dt,toY=0.06){
+        g.userData.fallT+=dt;const t=g.userData.fallT;
+        if(g.position.y>toY){g.position.y-=dt*.55;
+          g.rotation.z=Math.sin(t*3.1)*.6;g.rotation.x=Math.sin(t*2.3)*.35;
+          g.position.x+=Math.sin(t*2.6)*dt*.35;return false;}
+        g.rotation.x=-Math.PI/2;g.rotation.z*=0.9;return true;
+      }
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     B-2. 用語カード — 第2話の光る札。正しい場所に置くと淡く光って消える。
+     api: setPlacedTarget({x,z,r}) / tryPlace(pos)→bool / resolve() / update(t)
+  ============================================================ */
+  function createTermCardObject(label){
+    const g=new THREE.Group();
+    const bodyMat=M({color:0xefe6cc,roughness:.85,emissive:0x8a6a20,emissiveIntensity:.28});bodyMat.__ownedByStory=true;
+    g.add(box(.02,.46,.15,bodyMat,0,0,0));
+    const tex=textTexture(label,{w:64,h:192,fontSize:34,color:"#4a3722",bold:true});
+    const txtMat=new THREE.MeshBasicMaterial({map:tex,transparent:true});txtMat.__ownedByStory=true;
+    const t1=plane(.13,.42,txtMat,.012,0,0);t1.rotation.y=Math.PI/2;g.add(noShadow(t1));
+    const t2=plane(.13,.42,txtMat,-.012,0,0);t2.rotation.y=-Math.PI/2;g.add(noShadow(t2));
+    const ringMat=new THREE.MeshBasicMaterial({color:0xffe9a8,transparent:true,opacity:.0,depthWrite:false});ringMat.__ownedByStory=true;
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.30,.02,8,22),ringMat);ring.rotation.x=Math.PI/2;ring.position.y=-.26;g.add(noShadow(ring));
+    let target=null,resolving=0;
+    const api={
+      group:g,label,
+      setPlacedTarget(t){target=t;},
+      tryPlace(pos){if(!target)return false;
+        const ok=Math.hypot(pos.x-target.x,pos.z-target.z)<=(target.r||1.2);
+        if(ok)api.resolve();return ok;},
+      resolve(){resolving=1;},
+      get resolved(){return resolving>=2;},
+      update(t,dt){
+        if(resolving===0){
+          g.position.y=(g.userData.baseY||1.0)+Math.sin(t*1.8+(g.userData.ph||0))*.05;
+          g.rotation.y=t*.6;bodyMat.emissiveIntensity=.28+Math.sin(t*2.6)*.12;
+        }else if(resolving===1){ // 正置: 輪が広がり、札が淡く溶ける
+          ringMat.opacity=Math.min(.8,ringMat.opacity+dt*2.2);ring.scale.multiplyScalar(1+dt*2.4);
+          bodyMat.emissiveIntensity+=dt*3;g.scale.multiplyScalar(Math.max(.0,1-dt*1.6));
+          if(g.scale.x<.05){g.visible=false;resolving=2;}
+        }
+      }
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     B-3. 和歌短冊 — 第3話。「秋」「霧」「待つ」「袖」「月」を縦書き表示。
+  ============================================================ */
+  function createWakaTanzakuObject(word){
+    const g=new THREE.Group();
+    const paperMat=M({color:0xf2e7cf,roughness:.9,emissive:0x6a5420,emissiveIntensity:.15});paperMat.__ownedByStory=true;
+    g.add(box(.012,.52,.13,paperMat,0,0,0));
+    g.add(box(.014,.03,.135,STORY_MATS.gold,0,.245,0)); // 天の飾り
+    const tex=textTexture(word,{w:64,h:224,fontSize:38,color:"#2a201a"});
+    const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true});mat.__ownedByStory=true;
+    [1,-1].forEach(s=>{const p=plane(.115,.48,mat,s*.008,0,0);p.rotation.y=s*Math.PI/2;g.add(noShadow(p));});
+    const api={group:g,word,
+      update(t){g.position.y=(g.userData.baseY||.9)+Math.sin(t*1.5+(g.userData.ph||0))*.06;
+        g.rotation.y=Math.sin(t*.8+(g.userData.ph||0))*.5;
+        g.rotation.z=Math.sin(t*2.2+(g.userData.ph||0))*.08;} // 風に舞う
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     B-4. 薄紫の紐モチーフ — 小萩の袖/栞のノート/True End短冊に共通。
+     単体でも置ける(結び目+二本の垂れ+房)。attachTo(parent,pos,scale)
+  ============================================================ */
+  function createPurpleCordMotif(){
+    const g=new THREE.Group();
+    g.add(sph(.035,STORY_MATS.murasakiCord,0,0,0,8,6));
+    g.add(sph(.022,STORY_MATS.murasakiCord,-.045,.012,0,8,6));
+    g.add(sph(.022,STORY_MATS.murasakiCord,.045,.012,0,8,6)); // 蝶結びの輪
+    const s1=cyl(.009,.009,.20,STORY_MATS.murasakiCord,-.02,-.11,0,6);s1.rotation.z=.15;g.add(s1);
+    const s2=cyl(.009,.009,.16,STORY_MATS.murasakiCord,.024,-.09,0,6);s2.rotation.z=-.12;g.add(s2);
+    [-.02,.024].forEach((x,i)=>{const tas=cyl(.016,.020,.05,STORY_MATS.murasakiCord,x+(i?-.006:.008),i? -.19:-.235,0,6);g.add(tas);});
+    const api={group:g,
+      attachTo(parent,pos,scale=1){g.position.set(pos.x||0,pos.y||0,pos.z||0);g.scale.setScalar(scale);parent.add(g);},
+      update(t){g.rotation.z=Math.sin(t*1.7)*.10;}
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     C-1. 御簾境界エフェクト — 「隔てる/つなぐ」を示す半透明の揺れ。
+     api: setMood("veil"=隔て/"connect"=つなぎ) / update(t)
+  ============================================================ */
+  function createMisuBoundaryEffect(width=3.2,height=2.2){
+    const g=new THREE.Group();
+    const mat=STORY_MATS.misu.clone();mat.__ownedByStory=true;
+    const sheet=plane(width,height,mat,0,height/2,0);g.add(noShadow(sheet));
+    for(let i=0;i<=8;i++)g.add(noShadow(box(.018,height-.06,.008,STORY_MATS.woodDark,-width/2+i*(width/8),height/2,.012,false)));
+    g.add(box(width+.2,.09,.10,STORY_MATS.woodDark,0,height+.05,0));
+    const glowMat=new THREE.MeshBasicMaterial({color:0xffe9b0,transparent:true,opacity:0,depthWrite:false});glowMat.__ownedByStory=true;
+    const glow=plane(width,.18,glowMat,0,.10,.02);g.add(noShadow(glow)); // 裾の光=「つなぐ」時だけ
+    let mood="veil";
+    const api={group:g,
+      setMood(m){mood=m;mat.opacity=(m==="connect")?.30:.46;},
+      update(t){ // 風のない揺れ。connect時は裾が呼吸するように光る
+        sheet.rotation.x=Math.sin(t*.9)*.02;sheet.position.z=Math.sin(t*.7)*.012;
+        glowMat.opacity=(mood==="connect")?(.22+Math.sin(t*1.6)*.14):Math.max(0,glowMat.opacity-.02);}
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     C-2. 常世グリッチ小道具 — 第5話。反転御簾・浮遊札・壊れた建具・霧リング。
+     api: update(t) / setIntensity(0..1)
+  ============================================================ */
+  function createTokoyoGlitchProps(radius=9){
+    const g=new THREE.Group();
+    // 反転した御簾(天地逆に宙吊り)
+    const mi=createMisuBoundaryEffect(2.6,1.8);mi.group.rotation.z=Math.PI;mi.group.position.set(-radius*.45,3.4,-radius*.3);g.add(mi.group);
+    // 浮遊する札の環
+    const cards=[];
+    for(let i=0;i<8;i++){
+      const card=box(.02,.34,.11,STORY_MATS.ofuda,0,0,0);
+      card.userData.a=i*Math.PI/4;card.userData.r=radius*.55+((i%3)*.5);card.userData.h=1.2+(i%4)*.5;
+      cards.push(card);g.add(card);
+    }
+    // 壊れた建具(格子の破片が斜めに刺さる)
+    for(let i=0;i<4;i++){
+      const frag=new THREE.Group();
+      frag.add(box(.06,1.3-(i*.15),.06,STORY_MATS.woodDark,0,0,0));
+      for(let k=0;k<3;k++)frag.add(box(.5,.022,.03,STORY_MATS.woodDark,0,-.3+k*.3,0));
+      frag.position.set(Math.cos(i*1.9)*radius*.7,.4,Math.sin(i*1.9)*radius*.7);
+      frag.rotation.z=.5+i*.35;frag.rotation.y=i*1.2;g.add(frag);
+    }
+    // 低負荷の霧リング(2枚の大きな透明リング板を逆回転)
+    const rings=[];
+    for(let i=0;i<2;i++){
+      const rm=STORY_MATS.fog.clone();rm.__ownedByStory=true;rm.opacity=.13+i*.05;
+      const ring=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,1.6+i,24,1,true),rm);
+      ring.position.y=1.0+i*.7;rings.push(ring);g.add(noShadow(ring));
+    }
+    let inten=1;
+    const api={group:g,
+      setIntensity(v){inten=Math.max(0,Math.min(1,v));g.visible=inten>0.02;},
+      update(t,dt){
+        cards.forEach((c,i)=>{const a=c.userData.a+t*(.25+(i%3)*.07);
+          c.position.set(Math.cos(a)*c.userData.r,c.userData.h+Math.sin(t*1.3+i)*.25*inten,Math.sin(a)*c.userData.r);
+          c.rotation.y=a+Math.PI/2;c.rotation.z=Math.sin(t*2+i)*.3*inten;});
+        rings[0].rotation.y=t*.11;rings[1].rotation.y=-t*.08;
+        mi.update(t);
+      }
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     C-3. 脳侵食オーバーレイ — DOM/CSSで段階演出(20/40/60/80/100)。
+     Three.js側の負荷ゼロ。REDUCED_MOTION尊重。
+     api: mount() / setLevel(0-100) / dispose()
+     ※音(チャイム/逆和琴)は本体beep/SFXに接続する想定でhookだけ用意。
+  ============================================================ */
+  function createBrainErosionOverlay(opt={}){
+    const reduced=!!(global.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const css=[
+      "#stErosion{position:fixed;inset:0;pointer-events:none;z-index:52}",
+      "#stErosion .st-er-vig{position:absolute;inset:0;opacity:0;transition:opacity .8s;",
+      " background:radial-gradient(ellipse at center,transparent 55%,rgba(60,20,80,.35) 100%)}",
+      "#stErosion .st-er-glyph{position:absolute;font-family:serif;color:rgba(120,80,160,.0);font-size:15px;",
+      " writing-mode:vertical-rl;letter-spacing:.3em;transition:color .5s}",
+      "#stErosion .st-er-noise{position:absolute;inset:0;opacity:0;mix-blend-mode:overlay;",
+      " background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px)}",
+      "#stErosion.lv20 .st-er-glyph{color:rgba(120,80,160,.5)}",
+      "#stErosion.lv40 .st-er-noise{opacity:.5}",
+      "#stErosion.lv60{filter:none}",
+      "#stErosion.lv60 .st-er-vig{opacity:.6}",
+      "#stErosion.lv80 .st-er-vig{opacity:1}",
+      reduced?"":"#stErosion.lv80{animation:stErPulse 2.4s ease-in-out infinite}",
+      "@keyframes stErPulse{0%,100%{opacity:1}50%{opacity:.75}}",
+      /* 選択肢の黒塗り(80以上): ストーリーUI側が .st-er-blackout を選択肢spanに付ける */
+      ".st-er-blackout{background:#0a0708!important;color:#0a0708!important;border-radius:3px;",
+      " text-shadow:none!important;transition:none}",
+      "body.st-erosion-max #stErosion .st-er-vig{opacity:1;background:rgba(8,4,10,.88)}"
+    ].join("\n");
+    let host=null,styleEl=null,glyphTimer=0;
+    const GLYPHS=["みすゐ","ひさしを","わたどのへ","もやのうち","たれかある"]; // 旧仮名の揺らぎ
+    const api={
+      mount(){
+        if(host)return api;
+        styleEl=document.createElement("style");styleEl.textContent=css;document.head.appendChild(styleEl);
+        host=document.createElement("div");host.id="stErosion";
+        host.innerHTML='<div class="st-er-vig"></div><div class="st-er-noise"></div>';
+        for(let i=0;i<4;i++){const s=document.createElement("span");s.className="st-er-glyph";
+          s.style.left=(8+i*24)+"%";s.style.top=(12+(i%2)*55)+"%";s.textContent=GLYPHS[i];host.appendChild(s);}
+        document.body.appendChild(host);return api;
+      },
+      /* 20:旧仮名の揺らぎ 40:ノイズ 60:ビネット 80:警告脈動 100:全画面侵食 */
+      setLevel(v){
+        if(!host)api.mount();
+        host.className=v>=80?"lv20 lv40 lv60 lv80":v>=60?"lv20 lv40 lv60":v>=40?"lv20 lv40":v>=20?"lv20":"";
+        document.body.classList.toggle("st-erosion-max",v>=100);
+        if(opt.onStage)opt.onStage(v); // 音や小萩ノイズ等は本体側hookで
+      },
+      /* 20段階の「一瞬だけ」揺らぎ: 呼び出し側のループから稀に叩く */
+      flickerGlyph(){
+        if(!host||reduced)return;
+        const gs=host.querySelectorAll(".st-er-glyph");if(!gs.length)return;
+        const el=gs[(Math.random()*gs.length)|0];
+        el.style.color="rgba(150,100,190,.85)";setTimeout(()=>{el.style.color="";},420);
+      },
+      dispose(){if(host&&host.parentNode)host.parentNode.removeChild(host);
+        if(styleEl&&styleEl.parentNode)styleEl.parentNode.removeChild(styleEl);
+        document.body.classList.remove("st-erosion-max");host=null;styleEl=null;}
+    };
+    return api;
+  }
+
+  /* ============================================================
+     C-4. 歌合会場(冬夜) — 火桶・灯台・雪・判者席・題札。静物中心。
+     api: setTopic("雪") / update(t)=灯の揺らぎのみ
+  ============================================================ */
+  function createUtakaiStageProps(){
+    const g=new THREE.Group();
+    // 判者席(一段高い畳台+茵)
+    const dais=new THREE.Group();
+    dais.add(box(1.6,.16,1.2,STORY_MATS.wood,0,.08,0));
+    dais.add(box(1.4,.05,1.0,M({color:0xd9cba0,roughness:.9}),0,.19,0));
+    dais.add(box(.9,.04,.8,M({color:0x8a3a30,roughness:.85}),0,.23,0));
+    dais.position.set(0,0,-1.8);g.add(dais);
+    // 火桶×2(灰の中の熾火=emissive)
+    const embers=[];
+    [-1.6,1.6].forEach(x=>{
+      const h=new THREE.Group();
+      h.add(cyl(.34,.28,.34,STORY_MATS.wood,0,.17,0,12));
+      h.add(cyl(.30,.30,.05,M({color:0xcfc3a6,roughness:.95}),0,.335,0,12));
+      const em=M({color:0x30140a,roughness:.9,emissive:0xff5a22,emissiveIntensity:.8});em.__ownedByStory=true;
+      h.add(sph(.09,em,0,.36,0,8,6));embers.push(em);
+      h.position.set(x,0,-.6);g.add(h);
+    });
+    // 灯台×4(高灯台: 柱+皿+炎)
+    const flames=[];
+    [[-2.6,-2.4],[2.6,-2.4],[-2.6,.9],[2.6,.9]].forEach(p=>{
+      const d=new THREE.Group();
+      d.add(cyl(.03,.045,1.5,STORY_MATS.black,0,.75,0,8));
+      d.add(cyl(.14,.10,.03,STORY_MATS.black,0,1.52,0,10));
+      const fm=new THREE.MeshBasicMaterial({color:0xffc873,transparent:true,opacity:.95});fm.__ownedByStory=true;
+      const fl=new THREE.Mesh(new THREE.ConeGeometry(.045,.16,7),fm);fl.position.y=1.62;flames.push(fl);d.add(noShadow(fl));
+      d.position.set(p[0],0,p[1]);g.add(d);
+    });
+    // 題札(判者席の脇の立て札。setTopicで文字差し替え)
+    const board=new THREE.Group();
+    board.add(box(.05,1.1,.05,STORY_MATS.woodDark,0,.55,0));
+    board.add(box(.42,.62,.03,STORY_MATS.paper,0,1.15,0));
+    const tMat=new THREE.MeshBasicMaterial({transparent:true});tMat.__ownedByStory=true;
+    const tPlane=plane(.34,.54,tMat,0,1.15,.017);board.add(noShadow(tPlane));tPlane.visible=false;
+    board.position.set(1.15,0,-1.75);board.rotation.y=-.2;g.add(board);
+    // 雪(静的な白い薄片を高欄際に数枚。動く雪は本体snowFallに任せる)
+    for(let i=0;i<7;i++){const s=plane(.5+Math.random()*.6,.35,M({color:0xf4f6fa,roughness:.95}),-3.2+i*1.1,.015,1.9);
+      s.rotation.x=-Math.PI/2;g.add(noShadow(s));}
+    let topicTex=null;
+    const api={group:g,
+      setTopic(s){if(topicTex)topicTex.dispose();
+        if(!s){tPlane.visible=false;return;}
+        topicTex=textTexture("題 "+s,{w:64,h:128,fontSize:26,color:"#2a201a",bold:true});
+        tMat.map=topicTex;tMat.needsUpdate=true;tPlane.visible=true;},
+      update(t){flames.forEach((f,i)=>{f.scale.y=1+Math.sin(t*9+i*2.1)*.18;f.material.opacity=.85+Math.sin(t*11+i)*.1;});
+        embers.forEach((e,i)=>e.emissiveIntensity=.65+Math.sin(t*2.2+i*3)*.25);}
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     D-1. 大鬼(物語版) — 既存鬼と差別化: 建具を破壊する物語ボス。
+     胸に「小萩の短冊」を封じた琥珀色の窓を持つ。
+     api: setPhase(1|2|3) / chestSealPulse(t) / update(t)
+  ============================================================ */
+  function createGreatOniStoryObject(){
+    const g=new THREE.Group();
+    // 体躯(既存鬼より大きく、前傾)
+    g.add(cyl(.62,.95,1.7,STORY_MATS.oniSkin,0,1.30,0,12));
+    g.add(sph(.66,STORY_MATS.oniSkin,0,2.55,.06,12,9));
+    // 二本角(左右非対称=歪みの記号)
+    const hL=new THREE.Mesh(new THREE.ConeGeometry(.14,.62,7),STORY_MATS.oniDark);hL.position.set(-.30,3.15,.02);hL.rotation.z=.22;g.add(hL);
+    const hR=new THREE.Mesh(new THREE.ConeGeometry(.11,.48,7),STORY_MATS.oniDark);hR.position.set(.33,3.10,.02);hR.rotation.z=-.14;g.add(hR);
+    // 目(黄金)と牙
+    [-1,1].forEach(s=>{g.add(noShadow(sph(.07,new THREE.MeshBasicMaterial({color:0xffd23f}),s*.24,2.62,.52,7,5)));
+      const fang=new THREE.Mesh(new THREE.ConeGeometry(.05,.16,5),STORY_MATS.paper);fang.position.set(s*.16,2.28,.55);fang.rotation.x=Math.PI;g.add(fang);});
+    // 腕と金棒
+    [-1,1].forEach(s=>{const arm=cyl(.16,.22,1.25,STORY_MATS.oniSkin,s*.80,1.75,.1,9);arm.rotation.z=s*.5;g.add(arm);
+      g.add(sph(.20,STORY_MATS.oniSkin,s*1.18,1.16,.22,8,6));});
+    const club=new THREE.Group();
+    club.add(cyl(.09,.13,1.9,STORY_MATS.woodDark,0,.95,0,9));
+    for(let i=0;i<8;i++){const stud=sph(.045,STORY_MATS.gold,Math.cos(i*.78)*.14,1.45+((i%3)*.2),Math.sin(i*.78)*.14,6,5);club.add(stud);}
+    club.position.set(1.30,1.05,.30);club.rotation.z=-.5;g.add(club);
+    // 肩に裂いた御簾を纏う(物語ボスの記号)
+    const torn=plane(1.5,.9,STORY_MATS.misu.clone(),-.55,2.35,-.1);torn.material.__ownedByStory=true;torn.material.opacity=.5;
+    torn.rotation.z=.6;torn.rotation.y=.3;g.add(noShadow(torn));
+    // 胸の封印窓: 琥珀色の板の奥に小萩の短冊シルエット
+    const chest=new THREE.Group();
+    const amberMat=new THREE.MeshStandardMaterial({color:0xd9903a,transparent:true,opacity:.55,roughness:.35,emissive:0xa85f16,emissiveIntensity:.5});amberMat.__ownedByStory=true;
+    chest.add(box(.44,.60,.06,amberMat,0,0,0));
+    chest.add(box(.50,.66,.03,STORY_MATS.oniDark,0,0,-.045));
+    const silh=noShadow(box(.10,.42,.012,new THREE.MeshBasicMaterial({color:0x5a3f6e}),0,0,.033));chest.add(silh); // 短冊影
+    const cordDot=noShadow(sph(.028,STORY_MATS.murasakiCord,0,.16,.045,7,5));chest.add(cordDot);                    // 薄紫の結び=小萩の証
+    chest.position.set(0,1.95,.62);g.add(chest);
+    // フェーズ2: 逆さ文字の札(周回)
+    const invCards=[];
+    for(let i=0;i<5;i++){
+      const tex=textTexture(["すみ","しさひ","やも","のどたわ","こすの"][i],{w:48,h:128,fontSize:26,color:"#c03028"});
+      const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true});mat.__ownedByStory=true;
+      const card=plane(.20,.5,mat,0,0,0);card.rotation.z=Math.PI; // 逆さに表示
+      card.visible=false;invCards.push(card);g.add(noShadow(card));
+    }
+    let phase=1;
+    const api={group:g,chestSeal:chest,
+      setPhase(p){phase=p;
+        invCards.forEach(c=>c.visible=p>=2);
+        amberMat.emissiveIntensity=p>=3?1.2:.5;silh.visible=p>=3||p===1;
+        torn.material.opacity=p>=2?.7:.5;},
+      update(t){
+        g.position.y=Math.abs(Math.sin(t*1.1))*.10;g.rotation.z=Math.sin(t*.9)*.03;
+        if(phase>=2)invCards.forEach((c,i)=>{const a=t*.8+i*1.256;
+          c.position.set(Math.cos(a)*1.5,1.7+Math.sin(t*1.7+i)*.4,Math.sin(a)*1.5);c.rotation.y=a+Math.PI/2;});
+        if(phase>=3)amberMat.emissiveIntensity=1.0+Math.sin(t*5)*.4;
+      }
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     D-2. 名前の札(ネームシール) — 正しい名を呼ぶと光り、邸を再構築する。
+     api: trigger()=点灯+浮上+光輪 / update(t,dt)
+  ============================================================ */
+  function createNameSealEffect(label){
+    const g=new THREE.Group();
+    const mat=M({color:0xf0e7cc,roughness:.85,emissive:0x8a6a20,emissiveIntensity:.1});mat.__ownedByStory=true;
+    g.add(box(.03,.42,.16,mat,0,0,0));
+    const tex=textTexture(label,{w:64,h:160,fontSize:32,color:"#2a201a",bold:true});
+    const tm=new THREE.MeshBasicMaterial({map:tex,transparent:true});tm.__ownedByStory=true;
+    [1,-1].forEach(s=>{const p=plane(.13,.38,tm,s*.017,0,0);p.rotation.y=s*Math.PI/2;g.add(noShadow(p));});
+    const haloMat=new THREE.MeshBasicMaterial({color:0xffe9a8,transparent:true,opacity:0,depthWrite:false});haloMat.__ownedByStory=true;
+    const halo=new THREE.Mesh(new THREE.RingGeometry(.24,.34,20),haloMat);halo.rotation.x=Math.PI/2;halo.position.y=-.24;g.add(noShadow(halo));
+    let fired=0;
+    const api={group:g,label,
+      trigger(){fired=0.0001;},
+      get done(){return fired>=1.4;},
+      update(t,dt){
+        if(!fired){g.rotation.y=t*.4;mat.emissiveIntensity=.1+Math.sin(t*2)*.06;return;}
+        fired+=dt;
+        mat.emissiveIntensity=Math.min(2.2,mat.emissiveIntensity+dt*4);
+        g.position.y+=dt*.9;                      // 名を得て浮上
+        haloMat.opacity=Math.max(0,.85-fired*.6);halo.scale.multiplyScalar(1+dt*2.6);
+        if(fired>1.1)g.traverse(o=>{if(o.material&&o.material.transparent)o.material.opacity=Math.max(0,(o.material.opacity||1)-dt*2);});
+      }
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     D-3. 破魔の連札(最終3問用の三枚札) — 光る/割れる/燃える。
+     api: setLabels([a,b,c]) / resolve(idx,"correct"|"crack"|"burn") / update
+  ============================================================ */
+  function createFinalQuizThreeSeals(){
+    const g=new THREE.Group();
+    const seals=[];
+    for(let i=0;i<3;i++){
+      const s=new THREE.Group();
+      const mat=M({color:0xefe4c6,roughness:.85,emissive:0x6a5420,emissiveIntensity:.18});mat.__ownedByStory=true;
+      const bodyL=box(.02,.56,.095,mat,0,0,-.05);const bodyR=box(.02,.56,.095,mat,0,0,.05); // 縦割れ用に2枚構成
+      s.add(bodyL);s.add(bodyR);
+      const tm=new THREE.MeshBasicMaterial({transparent:true});tm.__ownedByStory=true;
+      const txt=plane(.16,.5,tm,.013,0,0);txt.rotation.y=Math.PI/2;s.add(noShadow(txt));
+      s.position.set((i-1)*.9,0,0);s.userData={mat,tm,txt,bodyL,bodyR,state:"idle",t:0};
+      seals.push(s);g.add(s);
+    }
+    const api={group:g,seals,
+      setLabels(list){seals.forEach((s,i)=>{
+        if(s.userData.tex)s.userData.tex.dispose();
+        s.userData.tex=textTexture(list[i]||"",{w:64,h:192,fontSize:26,color:"#3a2a1a",bold:true});
+        s.userData.tm.map=s.userData.tex;s.userData.tm.needsUpdate=true;});},
+      resolve(idx,mode){const s=seals[idx];if(s)Object.assign(s.userData,{state:mode||"correct",t:0});},
+      update(t,dt){seals.forEach((s,i)=>{
+        const u=s.userData;
+        if(u.state==="idle"){s.position.y=Math.sin(t*1.6+i*2.1)*.05;s.rotation.y=Math.sin(t*.7+i)*.15;u.mat.emissiveIntensity=.18+Math.sin(t*2.4+i)*.08;return;}
+        u.t+=dt;
+        if(u.state==="correct"){u.mat.emissiveIntensity=Math.min(2.4,u.mat.emissiveIntensity+dt*5);
+          s.position.y+=dt*.8;s.rotation.y+=dt*2.2;
+          if(u.t>.9)s.visible=false;}
+        else if(u.state==="crack"){ // 縦に割れて左右に倒れる
+          u.bodyL.position.z-=dt*.25;u.bodyR.position.z+=dt*.25;
+          u.bodyL.rotation.x-=dt*2.4;u.bodyR.rotation.x+=dt*2.4;
+          s.position.y-=dt*.5;u.txt.visible=false;
+          if(u.t>.8)s.visible=false;}
+        else if(u.state==="burn"){ // 焦げて縮む
+          u.mat.color.lerp(new THREE.Color(0x18100a),Math.min(1,dt*4));
+          u.mat.emissive.setHex(0xff5a22);u.mat.emissiveIntensity=Math.max(0,1.2-u.t*1.4);
+          s.scale.multiplyScalar(Math.max(.01,1-dt*1.3));
+          if(u.t>1.0)s.visible=false;}
+      });}
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     E. 別ロケーション(現代)セット — 病院・教室など「寝殿の外」の場面。
+     ■ 方式: 寝殿から十分離れた座標(STORY_OFFSTAGE)に密閉された内装セットを建てる。
+       部屋は内向きBoxGeometry(BackSide)なので外界は一切映らず、フォグ・空も見えない。
+       専用のPointLightを持ち、寝殿側の昼夜設定に依存しない。
+     ■ 転換手順(推奨): saigenFade("black") → プレイヤー/カメラをセットのカメラ台帳へsnap
+       → 章の終わりに disposeGroup で撤去。生成は章頭のみ。
+  ============================================================ */
+  const STORY_OFFSTAGE={
+    hospital: {x:-260,y:0,z:240},
+    classroom:{x:-260,y:0,z:300},
+    spare1:   {x:-260,y:0,z:360},
+    spare2:   {x:-200,y:0,z:360}
+  };
+
+  /* 内向きの部屋シェル。floor/wall/ceilingを別色にできる6面BackSide箱+天井灯 */
+  function createModernRoomShell(opt={}){
+    const w=opt.w||6.5,h=opt.h||3.0,d=opt.d||5.2;
+    const g=new THREE.Group();
+    const mk=c=>{const m=M({color:c,roughness:.92,side:THREE.BackSide});m.__ownedByStory=true;return m;};
+    const wall=mk(opt.wallColor!=null?opt.wallColor:0xe8ecea);
+    const mats=[wall,wall,mk(opt.ceilColor!=null?opt.ceilColor:0xf2f4f2),
+                mk(opt.floorColor!=null?opt.floorColor:0xd8d2c4),wall,wall]; // +x,-x,+y,-y,+z,-z
+    const room=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mats);
+    room.position.y=h/2;room.receiveShadow=true;g.add(room);
+    // 幅木(壁と床の境の締め)
+    const skirt=M({color:0xb9b2a2,roughness:.85});skirt.__ownedByStory=true;
+    [[0,-d/2+.02,w-.08,0],[0,d/2-.02,w-.08,0],[-w/2+.02,0,d-.08,Math.PI/2],[w/2-.02,0,d-.08,Math.PI/2]].forEach(p=>{
+      const b=box(p[2],.10,.03,skirt,p[0],.05,p[1]);b.rotation.y=p[3];g.add(b);});
+    // 天井灯(発光パネル+PointLight)。窓は各セット側で壁に貼る
+    const lm=new THREE.MeshBasicMaterial({color:opt.lightTint||0xf6f4ea});lm.__ownedByStory=true;
+    const panel=plane(w*.34,d*.22,lm,0,h-.02,0);panel.rotation.x=Math.PI/2;g.add(noShadow(panel));
+    const light=new THREE.PointLight(opt.lightTint||0xfff4e0,opt.lightPower!=null?opt.lightPower:.95,Math.max(w,d)*1.6,2);
+    light.position.set(0,h-.5,0);g.add(light);
+    g.userData.size={w,h,d};
+    return g;
+  }
+
+  /* 壁の窓: 淡い外光の発光板+桟。timeTint で朝/昼/夕の光色を変えられる */
+  function windowPane(w,h,tint){
+    const g=new THREE.Group();
+    const glow=new THREE.MeshBasicMaterial({color:tint||0xdfe9f4});glow.__ownedByStory=true;
+    g.add(noShadow(plane(w,h,glow,0,0,0)));
+    const frame=M({color:0x9aa2a8,roughness:.6});frame.__ownedByStory=true;
+    g.add(box(w+.06,.05,.04,frame,0,h/2,0));g.add(box(w+.06,.05,.04,frame,0,-h/2,0));
+    g.add(box(.05,h,.04,frame,-w/2,0,0));g.add(box(.05,h,.04,frame,w/2,0,0));
+    g.add(box(.035,h,.03,frame,0,0,0));g.add(box(w,.035,.03,frame,0,0,0));
+    return g;
+  }
+
+  /* ---- E-1. 病院の個室 ----
+     栞の現実側の真相シーン用。ベッド・点滴・心電モニタ・カーテン・
+     サイドテーブルの上に「薄紫の紐のしおり付きノート」(常世との接続)。
+     api: update(t) / setCurtain(0..1) / monitor(点滅・波形スクロール) */
+  function createHospitalRoomSet(){
+    const anchor=STORY_OFFSTAGE.hospital;
+    const g=new THREE.Group();g.position.set(anchor.x,anchor.y,anchor.z);
+    const shell=createModernRoomShell({w:6.4,h:3.0,d:5.2,wallColor:0xe6efe9,floorColor:0xdcd8ce,lightTint:0xf2f6f0,lightPower:.8});
+    g.add(shell);
+    // 窓(淡い朝光)+ブラインド
+    const win=windowPane(2.0,1.3,0xe9f2fb);win.position.set(-3.17,1.7,-.6);win.rotation.y=Math.PI/2;g.add(win);
+    const blind=M({color:0xf0f2ee,roughness:.9});blind.__ownedByStory=true;
+    for(let i=0;i<5;i++)g.add(noShadow(box(.02,.10,2.0,blind,-3.13,2.30-i*.13,-.6,false)));
+    // ベッド(枠・マット・毛布・枕・柵)
+    const bed=new THREE.Group();
+    const steel=M({color:0xcfd6da,roughness:.4,metalness:.5});steel.__ownedByStory=true;
+    bed.add(box(2.15,.09,1.05,steel,0,.42,0));
+    [[-1,-1],[-1,1],[1,-1],[1,1]].forEach(p=>bed.add(cyl(.035,.035,.42,steel,p[0]*1.0,.21,p[1]*.48,8)));
+    bed.add(box(2.05,.16,.98,M({color:0xf4f2ec,roughness:.95}),0,.545,0));                    // マット
+    const blanket=box(1.45,.10,1.00,M({color:0xbcd4c8,roughness:.9}),-.28,.665,0);bed.add(blanket); // 毛布
+    bed.add(box(.42,.09,.60,M({color:0xffffff,roughness:.95}),.78,.645,0));                   // 枕
+    [[-1],[1]].forEach(s=>{const rail=box(1.1,.05,.04,steel,-.35,.86,s[0]*.52);bed.add(rail);
+      bed.add(cyl(.02,.02,.26,steel,-.85,.72,s[0]*.52,6));bed.add(cyl(.02,.02,.26,steel,.15,.72,s[0]*.52,6));});
+    bed.add(box(.9,.5,.05,steel,1.08,.75,0));                                                 // ヘッドボード
+    bed.position.set(1.2,0,-1.3);bed.rotation.y=Math.PI/2;g.add(bed);
+    // 点滴スタンド(ポール・フック・バッグ・チューブ)
+    const iv=new THREE.Group();
+    iv.add(cyl(.018,.018,1.8,steel,0,.9,0,8));
+    iv.add(cyl(.22,.22,.02,steel,0,.03,0,10));
+    [[.16,0],[-.16,0],[0,.16],[0,-.16]].forEach(p=>iv.add(cyl(.015,.02,.05,steel,p[0],.05,p[1],6)));
+    const hook=box(.30,.02,.02,steel,0,1.80,0);iv.add(hook);
+    const bagMat=new THREE.MeshStandardMaterial({color:0xeef4f8,transparent:true,opacity:.75,roughness:.3});bagMat.__ownedByStory=true;
+    iv.add(box(.16,.26,.05,bagMat,.13,1.62,0));
+    iv.add(noShadow(box(.13,.16,.03,new THREE.MeshBasicMaterial({color:0xcfe4f0}),.13,1.58,.027)));  // 液面
+    const tube=cyl(.006,.006,.9,bagMat,.16,1.05,.10,6);tube.rotation.x=.35;iv.add(tube);
+    iv.position.set(.35,0,-2.15);g.add(iv);
+    // 心電モニタ(波形はCanvasTextureをスクロール)
+    const mon=new THREE.Group();
+    mon.add(box(.44,.34,.30,M({color:0xdfe3e6,roughness:.6}),0,1.18,0));
+    const mc=document.createElement("canvas");mc.width=128;mc.height=64;
+    const mx=mc.getContext("2d");
+    mx.fillStyle="#0c1a14";mx.fillRect(0,0,128,64);
+    mx.strokeStyle="#39e6a0";mx.lineWidth=2;mx.beginPath();
+    for(let x=0;x<=128;x++){const beat=(x%64);let y=40;
+      if(beat>26&&beat<30)y=40-(beat-26)*9;else if(beat>=30&&beat<34)y=4+(beat-30)*11;
+      else y=40+Math.sin(x*.4)*2;
+      x===0?mx.moveTo(x,y):mx.lineTo(x,y);}
+    mx.stroke();
+    const monTex=new THREE.CanvasTexture(mc);monTex.wrapS=THREE.RepeatWrapping;monTex.encoding=THREE.sRGBEncoding;
+    const monMat=new THREE.MeshBasicMaterial({map:monTex});monMat.__ownedByStory=true;
+    mon.add(noShadow(plane(.36,.24,monMat,0,1.20,.155)));
+    const dot=noShadow(sph(.014,new THREE.MeshBasicMaterial({color:0x51ffb2}),.14,1.30,.16,6,5));mon.add(dot);
+    mon.add(cyl(.03,.03,1.0,steel,0,.5,0,8));mon.add(cyl(.18,.18,.02,steel,0,.02,0,10));
+    mon.position.set(.35,0,-.35);g.add(mon);
+    // 間仕切りカーテン(レール+ヒダ=波板)。setCurtainで開閉
+    const railY=2.55;
+    const rail=cyl(.015,.015,3.4,steel,0,railY,.9,8);rail.rotation.z=Math.PI/2;g.add(rail);
+    const curtainMat=M({color:0xdfe8dd,roughness:.95,side:THREE.DoubleSide});curtainMat.__ownedByStory=true;
+    const curtain=new THREE.Group();
+    for(let i=0;i<7;i++){const fold=plane(.24,railY-.35,curtainMat,0,0,0);
+      fold.position.set(-.72+i*.24,(railY-.35)/2+.05,.9+((i%2)?.03:-.03));fold.rotation.y=(i%2?1:-1)*.18;curtain.add(fold);}
+    g.add(curtain);
+    // サイドテーブル: ノート(薄紫の紐しおり)+眼鏡+吸い飲み
+    const table=new THREE.Group();
+    table.add(box(.55,.04,.42,M({color:0xcfc4ae,roughness:.8}),0,.62,0));
+    table.add(box(.50,.58,.38,M({color:0xe3ddd0,roughness:.85}),0,.31,0));
+    const note=box(.26,.03,.34,M({color:0xf4f6f8,roughness:.95}),-.06,.66,0);note.rotation.y=.18;table.add(note);
+    table.add(box(.26,.006,.02,M({color:0x8fb4d8,roughness:.9}),-.06,.677,.05));           // 罫線の帯
+    const cordMark=createPurpleCordMotif();cordMark.attachTo(table,{x:.06,y:.685,z:-.10},.8); // 栞=薄紫の紐
+    table.position.set(1.15,0,-2.30);g.add(table);
+    // 丸椅子とスリッパ(誰かが見舞いに来ている気配)
+    g.add(cyl(.19,.19,.05,M({color:0xd8cfc0,roughness:.85}),2.35,.44,-1.0,12));
+    g.add(cyl(.03,.03,.42,steel,2.35,.21,-1.0,8));
+    [[-.02],[.14]].forEach((s,i)=>g.add(box(.11,.03,.26,M({color:0xe8e2d4,roughness:.9}),2.0+s[0],.02,.4+i*.02)));
+    let curtainOpen=1;
+    const api={group:g,anchor,
+      setCurtain(v){curtainOpen=Math.max(0,Math.min(1,v));
+        curtain.children.forEach((f,i)=>{f.position.x=-.72*curtainOpen+i*.24*curtainOpen; f.visible=curtainOpen>.05;});},
+      update(t){monTex.offset.x=(t*.14)%1;                                    // 波形が流れる
+        dot.material.color.setHex(Math.sin(t*6)>0?0x51ffb2:0x0c3a28);         // 心拍の点滅
+        curtain.children.forEach((f,i)=>f.rotation.y=(i%2?1:-1)*(.18+Math.sin(t*.8+i)*.02));
+        cordMark.update(t);}
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ---- E-2. 現代の教室 ----
+     第1話冒頭とEDの舞台。黒板には寝殿造りの平面図(Canvas描画)。
+     栞の席=窓際後方。机上のノートとシャーペンに薄紫の紐。
+     api: update(t) / setBoard("plan"|"waka") / shioriSeat(グループ参照) */
+  function createClassroomSet(){
+    const anchor=STORY_OFFSTAGE.classroom;
+    const g=new THREE.Group();g.position.set(anchor.x,anchor.y,anchor.z);
+    const shell=createModernRoomShell({w:8.2,h:3.1,d:6.6,wallColor:0xefeade,floorColor:0xc9b98f,ceilColor:0xf4f2ec,lightTint:0xf8f6ee,lightPower:1.0});
+    g.add(shell);
+    // 黒板(寝殿造り平面図をCanvasで描く)
+    const bc=document.createElement("canvas");bc.width=512;bc.height=192;
+    const bx=bc.getContext("2d");
+    bx.fillStyle="#274236";bx.fillRect(0,0,512,192);
+    bx.strokeStyle="#e8e2ce";bx.lineWidth=2;bx.font="14px 'Hiragino Mincho ProN',serif";bx.fillStyle="#e8e2ce";
+    const rect=(x,y,w,h,label)=>{bx.strokeRect(x,y,w,h);if(label)bx.fillText(label,x+w/2-14,y+h/2+5);};
+    rect(200,45,110,64,"母屋");
+    bx.strokeRect(184,29,142,96);bx.fillText("廂",192,44);
+    rect(60,45,70,64,"対屋");rect(382,45,70,64,"対屋");
+    bx.beginPath();bx.moveTo(130,77);bx.lineTo(184,77);bx.stroke();bx.fillText("渡殿",138,70);
+    bx.beginPath();bx.moveTo(326,77);bx.lineTo(382,77);bx.stroke();
+    bx.beginPath();bx.moveTo(95,109);bx.lineTo(95,160);bx.lineTo(240,168);bx.stroke();bx.fillText("遣水",100,150);
+    bx.beginPath();bx.ellipse(300,160,60,18,0,0,Math.PI*2);bx.stroke();bx.fillText("池",292,165);
+    bx.fillText("寝殿造り",228,22);
+    const boardTex=new THREE.CanvasTexture(bc);boardTex.encoding=THREE.sRGBEncoding;
+    const boardMat=new THREE.MeshBasicMaterial({map:boardTex});boardMat.__ownedByStory=true;
+    const board=new THREE.Group();
+    board.add(box(3.6,1.45,.06,M({color:0x6b5a42,roughness:.8}),0,1.75,0));
+    board.add(noShadow(plane(3.4,1.28,boardMat,0,1.75,.035)));
+    board.add(box(3.5,.05,.10,M({color:0x9a8a6a,roughness:.7}),0,1.06,.05)); // チョーク受け
+    board.add(box(.08,.025,.025,M({color:0xffffff,roughness:.9}),-.6,1.09,.05));
+    board.position.set(0,0,-3.25);g.add(board);
+    // 教卓
+    g.add(box(1.1,.75,.55,M({color:0xc8b088,roughness:.8}),0,.375,-2.4));
+    // 生徒机×6(2列×3)+椅子。窓際後方の1つが「栞の席」
+    const deskMat=M({color:0xd8c9a0,roughness:.85});deskMat.__ownedByStory=true;
+    const legMat=M({color:0x8e9499,roughness:.5,metalness:.4});legMat.__ownedByStory=true;
+    let shioriSeat=null;
+    for(let r=0;r<3;r++)for(let c=0;c<2;c++){
+      const desk=new THREE.Group();
+      desk.add(box(.62,.035,.44,deskMat,0,.70,0));
+      [[-.27,-.18],[-.27,.18],[.27,-.18],[.27,.18]].forEach(p=>desk.add(cyl(.015,.015,.70,legMat,p[0],.35,p[1],6)));
+      const chair=box(.36,.03,.34,deskMat,0,.42,.44);desk.add(chair);
+      [[-.15,.30],[-.15,.58],[.15,.30],[.15,.58]].forEach(p=>desk.add(cyl(.013,.013,.42,legMat,p[0],.21,p[1],6)));
+      desk.add(box(.36,.34,.03,deskMat,0,.62,.60));
+      desk.position.set(-1.0+c*2.0,0,-1.1+r*1.35);
+      g.add(desk);
+      if(r===2&&c===1){ // 窓際(x+側)最後列=栞の席
+        shioriSeat=desk;
+        const note=box(.24,.02,.32,M({color:0xf6f8fa,roughness:.95}),-.08,.725,-.02);note.rotation.y=-.12;desk.add(note);
+        const pen=cyl(.008,.008,.16,M({color:0x8a7ab8,roughness:.5}),.10,.725,.04,6);pen.rotation.z=Math.PI/2;pen.rotation.y=.5;desk.add(pen);
+        const cord=createPurpleCordMotif();cord.attachTo(desk,{x:.16,y:.735,z:.06},.65);   // シャーペンの紐飾り
+        desk.userData.cord=cord;
+      }
+    }
+    // 窓列(x+側の壁に3枚、外は白く飛んだ春の光)
+    for(let i=0;i<3;i++){const win=windowPane(1.5,1.35,0xf3f7fb);win.position.set(4.07,1.8,-1.8+i*1.9);win.rotation.y=-Math.PI/2;g.add(win);}
+    // 蛍光灯2本
+    for(let i=0;i<2;i++){const fl=new THREE.MeshBasicMaterial({color:0xf2f4ee});fl.__ownedByStory=true;
+      g.add(noShadow(box(1.8,.04,.12,fl,-1.2+i*2.4,3.02,0,false)));}
+    let wakaTex=null;
+    const api={group:g,anchor,shioriSeat,
+      /* 黒板を平面図/和歌の板書に切替(EDの「御簾=隔てる/つなぐ」の書き足し等) */
+      setBoard(mode,extraText){
+        if(mode==="waka"||extraText){
+          bx.fillStyle="rgba(39,66,54,.92)";bx.fillRect(330,120,178,66);
+          bx.fillStyle="#f2ecd8";bx.font="16px 'Hiragino Mincho ProN',serif";
+          bx.fillText(extraText||"御簾=隔てる/つなぐ",338,155);
+          boardTex.needsUpdate=true;
+        }
+      },
+      update(t){if(shioriSeat&&shioriSeat.userData.cord)shioriSeat.userData.cord.update(t);}
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ロケーション一括生成: kind→セット。story側は
+     createStoryLocation("hospital") だけで部屋+カメラが揃う */
+  function createStoryLocation(kind){
+    if(kind==="hospital")return createHospitalRoomSet();
+    if(kind==="classroom")return createClassroomSet();
+    return null;
+  }
+
+  /* ============================================================
+     カメラ台帳 — chapterN.json の cameraAngleId に対応する実座標。
+     寝殿の実寸(SH: cx=0,cz=-2, 母屋±8.8/z-5.8〜1.8, 廂z〜4.8, 簀子z〜5.5,
+     東の対x=35, ボス広場x=30,z=-48)に基づく。統合時は applySaigenCam 互換の
+     {pos,look} をそのまま渡せる。fovは章の演出方針(バイブル§カメラ)に従う。
+  ============================================================ */
+  const STORY_CAMERA_ANGLES={
+    /* 第1話: 低い目線=場違いさ。床すれすれから小萩を見上げる */
+    cam_main_house_inside:   {pos:[ 1.6,1.45, 3.6],look:[-0.6,1.7,-1.6],fov:58},
+    cam_ch1_low_floor:       {pos:[ 0.9,0.9 , 4.2],look:[-0.4,1.5,-1.2],fov:62},
+    cam_ch1_misu_gap:        {pos:[ 0.4,1.5 , 2.6],look:[ 0.4,1.4,-2.6],fov:50},
+    /* 第2話: 横移動と奥行き=邸を理解する気持ちよさ */
+    cam_summer_sunoko:       {pos:[-6.5,1.9 , 6.2],look:[ 3.0,1.4, 2.0],fov:60},
+    cam_ch2_watadono:        {pos:[12.0,2.1 , 0.5],look:[24.0,1.6,-6.0],fov:58},
+    cam_ch2_yarimizu:        {pos:[ 5.2,1.6 ,-6.0],look:[ 8.5,0.6,-9.5],fov:55},
+    /* 第3話: 遮蔽物越し=見える/見えないの緊張 */
+    cam_autumn_south_garden: {pos:[-4.6,1.7 , 8.5],look:[ 4.0,1.6, 0.5],fov:52},
+    cam_ch3_kaimami_gap:     {pos:[10.8,1.55, 0.2],look:[ 0.5,1.5,-1.5],fov:44},
+    cam_ch3_yarimizu_dark:   {pos:[ 6.0,1.4 ,-7.2],look:[ 9.0,0.4,-10.0],fov:58},
+    /* 第4話: 正面性=儀式。判者の扇を画面中心に */
+    cam_winter_utakai_hisashi:{pos:[ 0.0,1.75, 7.4],look:[ 0.0,1.5,-1.8],fov:48},
+    cam_ch4_judge_close:     {pos:[ 0.8,1.6 , 1.2],look:[ 0.0,1.5,-1.8],fov:40},
+    /* 第5話: 広角+俯瞰=邸全体が敵になる */
+    cam_tokoyo_north_tainoya:{pos:[22.0,3.4 ,-38.0],look:[30.0,1.8,-48.0],fov:66},
+    cam_ch5_oni_reveal:      {pos:[27.0,1.3 ,-42.0],look:[30.0,3.0,-48.0],fov:70},
+    cam_ch5_overhead:        {pos:[30.0,14.0,-40.0],look:[30.0,0.0,-48.0],fov:60},
+    /* 第6話: 静止画に近い長い間 */
+    cam_ending_morning:      {pos:[ 0.2,1.6 , 8.8],look:[ 0.0,1.9,-2.0],fov:50},
+    /* 別ロケーション(STORY_OFFSTAGE基準の絶対座標) */
+    cam_hospital_bed:        {pos:[-257.6,1.50,240.6],look:[-258.8,0.95,238.7],fov:52}, // ベッドの栞を見下ろす
+    cam_hospital_window:     {pos:[-258.2,1.30,237.8],look:[-263.0,1.70,239.4],fov:58}, // 朝光の窓へ
+    cam_hospital_door_pov:   {pos:[-257.2,1.55,242.2],look:[-258.8,1.00,238.7],fov:60}, // 入口から一望(秀頼の視点)
+    cam_classroom_board:     {pos:[-260.0,1.50,301.8],look:[-260.0,1.60,296.8],fov:55}, // 黒板の平面図
+    cam_classroom_shiori:    {pos:[-259.8,1.35,302.6],look:[-259.0,0.75,301.6],fov:50}, // 栞の席(肩越し)
+    cam_classroom_sleepy:    {pos:[-261.2,0.95,300.2],look:[-260.0,1.30,296.8],fov:62}  // 机に伏せた低い目線(1話冒頭)
+  };
+
+  /* ============ 公開 ============ */
+  global.StoryObjects={
+    MATS:STORY_MATS,
+    textTexture,disposeGroup,makePool,
+    createStoryKohagiObject,createStoryHidetoraObject,createStoryUkonObject,
+    createMinisterObject,createUtakaiJudgeObject,
+    createWhiteTanzakuObject,createTermCardObject,createWakaTanzakuObject,createPurpleCordMotif,
+    createMisuBoundaryEffect,createTokoyoGlitchProps,createBrainErosionOverlay,createUtakaiStageProps,
+    createGreatOniStoryObject,createNameSealEffect,createFinalQuizThreeSeals,
+    createModernRoomShell,createHospitalRoomSet,createClassroomSet,createStoryLocation,
+    STORY_OFFSTAGE,STORY_CAMERA_ANGLES
+  };
+})(typeof window!=="undefined"?window:globalThis);
+
+/* ============================================================
+   波M: ストーリーモード「御簾の向こうへ」統合ランタイム(試験版)
+   ■ 入口は隠しゲート: URLに ?story=1 が付いた時だけタイトルに入口ボタンが現れる。
+     通常プレイヤーには一切見えない(実機確認用の非公開モード)。?storyDebug=1 で隠しパラメータ表示。
+   ■ 章データ(STORY_EMBED)・StoryManager・StoryObjects は直前に同梱済み。
+   ■ ミニゲーム接続は第1話クイズのみ本接続。他章の試練は試験版パネル(成功/失敗を選ぶ)で
+     全章の物語・分岐・EDを通しで確認できる。
+   ■ CSS/DOMはこのランタイムが起動時に注入する(本体HTMLの構造は変えない)。
+============================================================ */
+(function(){
+"use strict";
+const STORY_TIME_MAP={morning:"dawn",day:"day",dusk:"dusk",night:"night",dawn:"dawn"};
+const STORY_ED_TEXT={
+  ED1_TRUE:  {t:"ED1 True End「御簾を上げる朝」", d:"教室の机に、白い短冊が一枚。窓の外をカモメが横切る。<br>「御簾って、ただ隠すためのものじゃないんだな。今度、ちゃんと教えてくれないか。」"},
+  ED2_NORMAL:{t:"ED2 Normal End「現の朝」", d:"古典の点は上がった。けれど小萩の声は、朝の光の中で薄れていく。<br>教科書の御簾の挿絵だけが、かすかに揺れている。"},
+  ED3_GAMEOVER:{t:"ED3 Bad End「歌なき夜」", d:"灯火は消え、御簾の向こうの声は黒い線になった。<br>言葉と戦いの備えを整えて、もう一度。"},
+  ED4_SYNC:  {t:"ED4 Bad End「常世の婿」", d:"帰る道を前に、あなたは振り返った。御簾の内は美しく、現代の音は遠ざかる。<br>——現実の教室では、隣の席だけが空いている。"},
+  ED5_SPOOKY:{t:"ED5 Spooky End「百年の夢」", d:"名をなくした人は、物語にやさしく飼われます。<br><span style='color:#b9a5e6'>あなたの席は、まだ空いています。</span>"}
+};
+let SM=null,erosionFx=null;
+function stEl(id){return document.getElementById(id);}
+/* ---- CSS/DOM 注入 ---- */
+function stInject(){
+  if(stEl("stBox"))return; // 注入済み(プレースホルダ#storyHudはHTMLに常設)
+  const css=[
+    "#storyHud{position:fixed;inset:0;z-index:45;pointer-events:none;display:none}",
+    "#storyHud .st-chip{position:fixed;top:calc(env(safe-area-inset-top) + 6px);left:50%;transform:translateX(-50%);pointer-events:auto;",
+    " background:linear-gradient(180deg,rgba(28,18,10,.94),rgba(16,10,6,.95));border:1px solid var(--kin);border-radius:7px;",
+    " padding:4px 12px;color:#e6d9bb;font-size:12px;font-family:var(--serif);letter-spacing:.08em;white-space:nowrap}",
+    "#storyHud .st-chip small{color:#9a8a6a;font-family:var(--sans);font-size:10px;margin-left:8px}",
+    "#storyHud #stQuit{position:fixed;top:calc(env(safe-area-inset-top) + 6px);right:9px;pointer-events:auto;background:var(--urushi);",
+    " color:var(--gofun);border:1px solid var(--kin);width:30px;height:30px;border-radius:50%;font-size:14px;line-height:1;cursor:pointer}",
+    "#storyHud .st-box{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 10px);transform:translateX(-50%);",
+    " width:min(720px,96vw);max-height:35vh;pointer-events:auto;background:linear-gradient(180deg,rgba(24,16,9,.95),rgba(13,9,5,.97));",
+    " border:1px solid var(--kin);border-radius:11px;box-shadow:0 8px 30px rgba(0,0,0,.55);padding:10px 13px 11px;display:none}",
+    "#storyHud .st-spk{font-size:11px;color:var(--kin);letter-spacing:.14em;margin-bottom:5px;font-family:var(--serif)}",
+    "#storyHud .st-text{font-size:14px;line-height:1.85;color:#efe6cd;font-family:var(--serif);letter-spacing:.04em;overflow-y:auto;max-height:20vh}",
+    "#storyHud .st-next{margin-top:8px;text-align:right}",
+    "#storyHud .st-next button,#storyHud .st-opt{cursor:pointer;background:linear-gradient(155deg,#4a1f14,#311309);color:var(--gofun);",
+    " border:1px solid var(--kin);padding:9px 16px;font-size:12.5px;border-radius:6px;letter-spacing:.06em;font-family:var(--serif)}",
+    "#storyHud .st-opts{display:flex;flex-direction:column;gap:8px;margin-top:8px}",
+    "#storyHud .st-opt{text-align:left;min-height:44px;line-height:1.5}",
+    "#storyHud .st-opt:hover{filter:brightness(1.15)}",
+    "#storyHud .st-panel{position:fixed;inset:0;display:none;align-items:center;justify-content:center;pointer-events:auto;",
+    " background:radial-gradient(ellipse at center,rgba(10,7,4,.75),rgba(6,4,2,.92))}",
+    "#storyHud .st-card{width:min(460px,92vw);max-height:84vh;overflow-y:auto;background:linear-gradient(180deg,rgba(28,19,11,.98),rgba(15,10,6,.99));",
+    " border:1px solid var(--kin);border-radius:14px;box-shadow:0 14px 50px rgba(0,0,0,.7);padding:22px 20px;text-align:center}",
+    "#storyHud .st-card h3{margin:0 0 10px;color:var(--kin);font-family:var(--serif);font-size:18px;letter-spacing:.1em}",
+    "#storyHud .st-card .st-body{font-size:12.5px;color:#e0d4b4;line-height:1.9;font-family:var(--serif);margin-bottom:14px}",
+    "#storyHud .st-card .st-btns{display:flex;flex-direction:column;gap:8px}",
+    "#storyFade{position:fixed;inset:0;z-index:46;pointer-events:none;opacity:0;background:#000;transition:opacity .9s ease .12s}",
+    "#storyFade.white{background:#f2ead8}",
+    "#storyFade.show{opacity:1;transition:opacity 0s}",
+    "#storyFade.quick{transition:opacity .12s ease}",
+    "body.story-mode #modeBrief{display:none}"
+  ].join("\n");
+  const st=document.createElement("style");st.id="storyCss";st.textContent=css;document.head.appendChild(st);
+  let hud=stEl("storyHud");
+  if(!hud){hud=document.createElement("div");hud.id="storyHud";document.body.appendChild(hud);}
+  hud.innerHTML=
+    '<div class="st-chip"><span id="stChTitle">物語</span><small id="stDebug"></small></div>'+
+    '<button id="stQuit" title="物語を閉じる">✕</button>'+
+    '<div class="st-box" id="stBox"><div class="st-spk" id="stSpk"></div><div class="st-text" id="stText"></div>'+
+    '<div class="st-next" id="stNextWrap"><button id="stNext">つぎへ ▶</button></div><div class="st-opts" id="stOpts"></div></div>'+
+    '<div class="st-panel" id="stPanel"><div class="st-card"><h3 id="stPanelTitle"></h3><div class="st-body" id="stPanelBody"></div><div class="st-btns" id="stPanelBtns"></div></div></div>';
+  const fade=document.createElement("div");fade.id="storyFade";document.body.appendChild(fade);
+  stEl("stQuit").onclick=()=>{beep(440,.06);stExitToTitle();};
+}
+/* ---- 転換演出(波L互換・story専用要素) ---- */
+function stFade(color){
+  const el=stEl("storyFade");if(!el)return;
+  el.className=(color==="white"?"white":"");
+  el.classList.add("show");void el.offsetWidth;
+  clearTimeout(window._stFadeT);
+  window._stFadeT=setTimeout(()=>el.classList.remove("show"),(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION)?60:340);
+}
+function stLightning(){
+  const el=stEl("storyFade");if(!el)return;
+  if(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION){if(typeof saigenSe==="function")saigenSe("thunder");return;}
+  el.className="white quick";el.classList.add("show");
+  clearTimeout(window._stFadeT);
+  setTimeout(()=>el.classList.remove("show"),90);
+  window._stFadeT=setTimeout(()=>{el.classList.add("show");setTimeout(()=>el.classList.remove("show"),70);},230);
+  if(typeof saigenSe==="function")saigenSe("thunder");
+}
+/* ---- 登場人物(StoryObjects) ---- */
+function stSpawnActors(){
+  const S=APP.story;if(S.actors)return;
+  const SO=window.StoryObjects;if(!SO)return;
+  const mk=(api,x,y,z,yaw)=>{api.group.position.set(x,y,z);api.group.rotation.y=yaw;api.group.userData.baseY=y;
+    api.group.visible=false;scene.add(api.group);return api;};
+  S.actors={
+    kohagi:  mk(SO.createStoryKohagiObject(), -0.6,1.30,-1.6, 0.40),
+    ukon:    mk(SO.createStoryUkonObject(),    1.9,1.20, 4.3,-2.60),
+    minister:mk(SO.createMinisterObject(),     2.0,1.30,-2.2, 0.15),
+    judge:   mk(SO.createUtakaiJudgeObject(),  0.0,1.30,-1.9, 0.0)
+  };
+}
+const ST_SPEAKER_ACTOR={ "小萩":"kohagi","右近":"ukon","左大臣":"minister","判者":"judge" };
+/* ---- 演出フィールド適用(fade/fx/se/emotes/shioriGhost/stage/camera) ---- */
+function stApplyPresentation(ev){
+  if(!ev)return;
+  if(ev.fade)stFade(ev.fade);
+  else if(ev.fx==="lightning")stLightning();
+  if(ev.se&&typeof saigenSe==="function")saigenSe(ev.se);
+  const S=APP.story;
+  if(S&&S.actors){
+    if(ev.emotes)Object.entries(ev.emotes).forEach(([k,e])=>{
+      const a=S.actors[k];if(!a)return;a.group.visible=true;
+      if(a.setExpression&&["neutral","smile","stern","sad","surprise"].includes(e))a.setExpression(e);
+    });
+    if(ev.shioriGhost!=null&&S.actors.kohagi&&S.actors.kohagi.setShioriGhost){S.actors.kohagi.group.visible=true;S.actors.kohagi.setShioriGhost(ev.shioriGhost);}
+    if(ev.stage){
+      const st=ev.stage;
+      if(st.judgeFanText&&S.actors.judge){S.actors.judge.group.visible=true;S.actors.judge.setFanText(st.judgeFanText);}
+      if(st.ministerShadow!=null&&S.actors.minister){S.actors.minister.group.visible=true;S.actors.minister.setShadowReach(st.ministerShadow);}
+      if(st.ministerPossessed!=null&&S.actors.minister)S.actors.minister.setPossessed(!!st.ministerPossessed);
+      if(st.erosionLevel!=null&&erosionFx)erosionFx.setLevel(st.erosionLevel);
+    }
+  }
+  if(ev.cameraAngleId)stCamera(ev.cameraAngleId);
+}
+function stCamera(id){
+  const SO=window.StoryObjects;const ang=SO&&SO.STORY_CAMERA_ANGLES&&SO.STORY_CAMERA_ANGLES[id];
+  if(!ang)return;
+  APP.view="fp";
+  if(typeof applySaigenCam==="function")applySaigenCam({pos:ang.pos,look:ang.look});
+  if(ang.fov&&typeof camera!=="undefined"){camera.fov=ang.fov;camera.updateProjectionMatrix();}
+  if(typeof snapSaigenCamera==="function")snapSaigenCamera();
+  if(typeof updateControlUI==="function")updateControlUI();
+}
+/* ---- HUD描画 ---- */
+function stShowDialogue(spk,text,ev){
+  stEl("stBox").style.display="block";stEl("stOpts").innerHTML="";stEl("stNextWrap").style.display="";
+  stEl("stSpk").textContent=spk?("— "+spk+" —"):"語り";
+  stEl("stText").textContent=text||"";
+  const actorKey=ST_SPEAKER_ACTOR[spk];
+  if(actorKey&&APP.story&&APP.story.actors&&APP.story.actors[actorKey])APP.story.actors[actorKey].group.visible=true;
+  stEl("stNext").onclick=()=>{beep(600,.045,"triangle",.07);SM.goNext(ev.next);};
+}
+function stShowChoice(text,options){
+  stEl("stBox").style.display="block";stEl("stNextWrap").style.display="none";
+  stEl("stSpk").textContent="選べ";
+  stEl("stText").textContent=text||"";
+  const host=stEl("stOpts");host.innerHTML="";
+  options.forEach((o,i)=>{
+    const b=document.createElement("button");b.className="st-opt";b.textContent=(i+1)+". "+o.text;
+    b.onclick=()=>{beep(680,.05,"triangle",.08);host.innerHTML="";SM.choose(i);};
+    host.appendChild(b);
+  });
+}
+function stPanel(title,bodyHtml,btns){
+  stEl("stPanelTitle").textContent=title;
+  stEl("stPanelBody").innerHTML=bodyHtml;
+  const host=stEl("stPanelBtns");host.innerHTML="";
+  btns.forEach(([label,fn])=>{const b=document.createElement("button");b.className="st-opt";b.style.textAlign="center";
+    b.textContent=label;b.onclick=()=>{beep(660,.05);stEl("stPanel").style.display="none";fn&&fn();};host.appendChild(b);});
+  stEl("stPanel").style.display="flex";
+}
+function stDebugRefresh(snap){
+  const el=stEl("stDebug");if(!el)return;
+  if(!/[?&]storyDebug=1/.test(location.search)){el.textContent="";return;}
+  const p=(snap&&snap.state&&snap.state.params)||{};
+  el.textContent=`現${p.realityEgo|0}/雅${p.fantasySynchro|0}/蝕${p.brainErosion|0}`;
+}
+/* ---- 収集物 ---- */
+function stSpawnCollectibles(info){
+  const S=APP.story,SO=window.StoryObjects;if(!S||!SO)return;
+  stClearCollectibles();
+  const items=(info.positions||[]).map(p=>{
+    const api=(info.kind==="waka_tanzaku")?SO.createWakaTanzakuObject(p.label||""):SO.createTermCardObject(p.label||"");
+    const y=(typeof groundH==="function"?groundH(p.x,p.z):0)+1.05;
+    api.group.position.set(p.x,y,p.z);api.group.userData.baseY=y;api.group.userData.ph=Math.random()*6;
+    scene.add(api.group);
+    return {id:p.id,api,got:false};
+  });
+  S.collect={groupId:info.groupId,items,onCollect:info.onCollect,kind:info.kind};
+  toast("光る札を集めよう("+items.length+"枚)。近づけば手に入る",3200);
+  stEl("stBox").style.display="none"; // 収集中は会話箱を畳み、歩かせる
+}
+function stClearCollectibles(){
+  const S=APP.story;if(!S||!S.collect)return;
+  S.collect.items.forEach(it=>{if(window.StoryObjects)window.StoryObjects.disposeGroup(it.api.group);});
+  S.collect=null;
+}
+/* ---- 効果(effect)フック ---- */
+function stEffect(info){
+  const S=APP.story,SO=window.StoryObjects;
+  const id=info.effectId||"";
+  if(id==="white_tanzaku_from_seagull"&&SO){
+    const api=SO.createWhiteTanzakuObject();
+    api.setText(info.payload&&info.payload.text||"");
+    api.group.position.set(player.pos.x+0.6,player.pos.y+4.5,player.pos.z-1.2);
+    scene.add(api.group);S.props.push({kind:"tanzaku",api,falling:true});
+    if(typeof saigenSe==="function")saigenSe("wind");
+    if(info.payload&&info.payload.text)setTimeout(()=>toast("白い短冊「"+info.payload.text+"」",3600),900);
+  }else if(id==="tokoyo_glitch"&&SO){
+    const api=SO.createTokoyoGlitchProps(9);
+    api.group.position.set(30,0.2,-48);scene.add(api.group);
+    S.props.push({kind:"tokoyo",api});
+  }else if(id==="oni_tears_misu"&&SO){
+    stLightning();
+    if(!S.oni){const api=SO.createGreatOniStoryObject();api.group.position.set(30,0,-48);scene.add(api.group);S.oni=api;}
+  }
+  // 他のeffectIdは現段階では演出なしで通過(effectはManager側で自動的にnextへ進む)
+}
+/* ---- ミニゲーム接続 ---- */
+function stMiniGame(info){
+  const S=APP.story;S.mini=info;
+  stEl("stBox").style.display="none";
+  if(info.gameMode==="quiz_beginner"){
+    // 既存クイズへ本接続: 対象5札の復習モード。結果画面は出さず物語へ帰す
+    APP.storyQuiz=(ok)=>{enterMode("story");info.complete({success:ok});};
+    if(typeof camera!=="undefined"){camera.fov=62;camera.updateProjectionMatrix();} // 物語カメラのfovを戻す
+    enterMode("quiz");
+    const pk=stEl("quizDiffPicker");if(pk)pk.style.display="none";
+    startQuiz(["hajitomi","misu","kichou","hisashi","moya"]);
+    toast("小萩の試験——五つの名を当てよ",3000);
+    return;
+  }
+  // 試験版プレースホルダ: 未接続の試練は成功/失敗を選んで通しの物語確認ができる
+  const label={kaimami_story:"垣間見の試練",taiji_kappa_story:"河童の主との戦い",utakai_story:"歌合 三番勝負",taiji_oni_story_final:"大鬼との決戦"}[info.gameMode]||info.gameMode;
+  stPanel("【試験版】"+label,
+    "この試練のミニゲーム接続は次段階で実装します。<br>いまは結果を選んで物語を進められます。<br><small style='color:#9a8a6a'>「成功(高評価)」はTrue End条件のPerfect評価も付与します</small>",
+    [["成功(高評価)として進む",()=>{if(S.oni&&info.gameMode==="taiji_oni_story_final"){window.StoryObjects.disposeGroup(S.oni.group);S.oni=null;}
+        info.complete({success:true,flags:info.gameMode==="utakai_story"?{utakaiPerfect:true}:info.gameMode==="taiji_oni_story_final"?{oniPerfect:true}:{}});}],
+     ["成功として進む",()=>{if(S.oni&&info.gameMode==="taiji_oni_story_final"){window.StoryObjects.disposeGroup(S.oni.group);S.oni=null;}
+        info.complete({success:true});}],
+     ["失敗として進む",()=>info.complete({success:false})]]);
+}
+/* ---- エンディング/章クリア ---- */
+function stEnding(endingId){
+  stClearCollectibles();
+  const ed=STORY_ED_TEXT[endingId]||{t:endingId,d:""};
+  if(endingId==="ED5_SPOOKY"&&erosionFx)erosionFx.setLevel(100);
+  stPanel(ed.t,ed.d,[
+    ["章をえらぶ",()=>{if(erosionFx)erosionFx.setLevel(0);SM.state.endingId=null;stChapterMenu();}],
+    ["タイトルへ戻る",()=>{if(erosionFx)erosionFx.setLevel(0);stExitToTitle();}]
+  ]);
+}
+function stChapterComplete(chapterId){
+  stClearCollectibles();
+  const next=chapterId+1,man=(window.STORY_EMBED&&STORY_EMBED.manifest&&STORY_EMBED.manifest.chapters)||[];
+  const nx=man.find(c=>c.chapterId===next);
+  const btns=[];
+  if(nx)btns.push(["次の話へ 「"+nx.chapterTitle+"」",()=>stStartChapter(next)]);
+  btns.push(["章をえらぶ",()=>stChapterMenu()],["タイトルへ戻る",()=>stExitToTitle()]);
+  stPanel("第"+chapterId+"話　了","物語は、まだ御簾の向こうに続いています。",btns);
+}
+/* ---- 章メニュー ---- */
+function stChapterMenu(){
+  const man=(window.STORY_EMBED&&STORY_EMBED.manifest&&STORY_EMBED.chapters)?STORY_EMBED.manifest.chapters:[];
+  const btns=man.map(c=>["第"+c.chapterId+"話 「"+c.chapterTitle+"」",()=>stStartChapter(c.chapterId)]);
+  const save=SM&&SM.load&&(function(){try{return JSON.parse(localStorage.getItem("shinden3d-story-save-v1"));}catch(e){return null;}})();
+  if(save&&save.state&&save.state.chapterId&&save.currentSequenceId&&save.currentSequenceId!=="chapter_complete"&&!save.state.endingId){
+    btns.unshift(["続きから (第"+save.state.chapterId+"話)",()=>{
+      SM.deserialize(save);stStartChapter(save.state.chapterId,save.currentSequenceId);}]);
+  }
+  btns.push(["タイトルへ戻る",()=>stExitToTitle()]);
+  stPanel("御簾の向こうへ — 寝殿造り異聞","<small style='color:#9a8a6a'>試験版 / この画面は ?story=1 でのみ入れます</small>",btns);
+}
+function stStartChapter(id,resumeSeq){
+  stEl("stPanel").style.display="none";
+  SM.state.endingId=null;
+  SM.startChapter(id).then(()=>{
+    if(resumeSeq&&SM.sequenceMap.has(resumeSeq)){SM.currentSequenceId=resumeSeq;SM.runCurrent();}
+  }).catch(e=>{console.error(e);toast("物語の読み込みに失敗しました",2600);});
+}
+/* ---- モード出入り ---- */
+function startStory(){
+  stInject();
+  document.body.classList.add("story-mode");
+  stEl("storyHud").style.display="block";
+  if(APP.story){stDebugRefresh(SM&&SM.snapshot());return;} // ミニゲーム帰還: 再初期化しない
+  APP.story={props:[],collect:null,actors:null,oni:null,
+    prevSeason:APP.season,prevTime:APP.time,
+    prevAutoPaused:(typeof AUTO_TIME!=="undefined")?AUTO_TIME._paused:false};
+  if(typeof AUTO_TIME!=="undefined")AUTO_TIME._paused=true;
+  stSpawnActors();
+  if(!erosionFx&&window.StoryObjects)erosionFx=window.StoryObjects.createBrainErosionOverlay({}).mount();
+  if(!SM){
+    SM=new StoryManager({hooks:{
+      onDialogue:(d)=>{stApplyPresentation(d.event);stShowDialogue(d.speaker,d.text,d.event);},
+      onChoice:(c)=>{stApplyPresentation(c.event);stShowChoice(c.text,c.options);},
+      onScene:(sc)=>{
+        stApplyPresentation(sc.event);
+        if(sc.season&&sc.season!=="tokoyo"&&typeof applySeason==="function"&&sc.season!==APP.season)applySeason(sc.season);
+        const tm=STORY_TIME_MAP[sc.timeOfDay]||(sc.season==="tokoyo"?"night":null);
+        if(sc.season==="tokoyo"&&typeof setTime==="function")setTime("night");
+        else if(tm&&typeof setTime==="function"&&tm!==APP.time)setTime(tm);
+        if(sc.playerStart){const p=sc.playerStart;
+          player.pos.set(p.x,(typeof groundH==="function"?groundH(p.x,p.z):0)+1.62,p.z);
+          if(p.yaw!=null)player.yaw=p.yaw;player.pitch=-.04;
+          if(typeof camera!=="undefined")camera.position.copy(player.pos);window.dummyCam=null;}
+      },
+      onCamera:(id)=>stCamera(id),
+      onEffect:(e)=>{stApplyPresentation(e.event);stEffect(e);},
+      onCollectibles:(info)=>stSpawnCollectibles(info),
+      onRequireCollectibles:()=>{},
+      onMiniGameStart:(info)=>stMiniGame(info),
+      onEnding:(id)=>stEnding(id),
+      onChapterComplete:(cid)=>stChapterComplete(cid),
+      onErosionWarning:(v)=>{if(erosionFx)erosionFx.setLevel(v);toast("⚠ 心が常世に呑まれかけている——次の過ちが最後になる",4200);if(typeof saigenSe==="function")saigenSe("gong");},
+      onStateChanged:(snap)=>{stDebugRefresh(snap);
+        const p=snap&&snap.state&&snap.state.params;
+        if(p&&erosionFx)erosionFx.setLevel(p.brainErosion>=80?80:p.brainErosion>=60?60:p.brainErosion>=40?40:p.brainErosion>=20?20:0);},
+      onError:(e)=>{console.error("[story]",e);}
+    }});
+  }
+  const man=(window.STORY_EMBED&&STORY_EMBED.manifest&&STORY_EMBED.manifest.chapters&&STORY_EMBED.manifest.chapters[0])||null;
+  stEl("stChTitle").textContent="御簾の向こうへ";
+  SM.hooks.onChapterLoaded=(ch)=>{stEl("stChTitle").textContent="第"+ch.chapterId+"話 "+ch.chapterTitle;};
+  stChapterMenu();
+}
+function stExitToTitle(){
+  const S=APP.story;
+  stClearCollectibles();
+  if(S){
+    (S.props||[]).forEach(p=>{if(window.StoryObjects)window.StoryObjects.disposeGroup(p.api.group);});
+    if(S.oni&&window.StoryObjects){window.StoryObjects.disposeGroup(S.oni.group);S.oni=null;}
+    if(S.actors)Object.values(S.actors).forEach(a=>{a.group.visible=false;});
+    if(S.prevSeason&&typeof applySeason==="function"&&S.prevSeason!==APP.season)applySeason(S.prevSeason);
+    if(S.prevTime&&typeof setTime==="function"&&S.prevTime!==APP.time)setTime(S.prevTime);
+    if(typeof AUTO_TIME!=="undefined")AUTO_TIME._paused=!!S.prevAutoPaused;
+  }
+  if(erosionFx)erosionFx.setLevel(0);
+  APP.story=null;APP.storyQuiz=null;
+  document.body.classList.remove("story-mode");
+  const hud=stEl("storyHud");if(hud){hud.style.display="none";stEl("stBox").style.display="none";stEl("stPanel").style.display="none";}
+  const fd=stEl("storyFade");if(fd){clearTimeout(window._stFadeT);fd.className="";}
+  if(typeof camera!=="undefined"){camera.fov=62;camera.updateProjectionMatrix();}
+  APP.mode="title";
+  const tb=stEl("topbar");if(tb)tb.style.display="none";
+  const ttl=stEl("title");if(ttl)ttl.classList.remove("hide");
+  if($("mainModes"))$("mainModes").style.display="block";
+  if(typeof careerShowSenji==="function")careerShowSenji();
+  if(typeof careerUpdateBadge==="function")careerUpdateBadge();
+  if(typeof SFX!=="undefined"&&SFX.playTheme)SFX.playTheme();
+  beep(560,.08,"sine",.1);
+}
+/* ---- 毎フレーム更新(animateから呼ばれる) ---- */
+function storyUpdate(dt){
+  const S=APP.story;if(!S)return;
+  const t=performance.now()/1000;
+  if(S.actors)Object.values(S.actors).forEach(a=>{if(a.group.visible&&a.update)a.update(t);});
+  if(S.oni&&S.oni.update)S.oni.update(t);
+  (S.props||[]).forEach(p=>{
+    if(p.kind==="tanzaku"&&p.falling){if(p.api.updateFall(dt,(typeof groundH==="function"?groundH(p.api.group.position.x,p.api.group.position.z):0)+0.10))p.falling=false;}
+    else if(p.kind==="tokoyo"&&p.api.update)p.api.update(t,dt);
+  });
+  // 収集: 近づくだけで手に入る(タップ不要・スマホ配慮)
+  if(S.collect){
+    let remain=0;
+    S.collect.items.forEach(it=>{
+      if(it.got)return;
+      if(it.api.update)it.api.update(t,dt);
+      const gp=it.api.group.position,d=Math.hypot(gp.x-player.pos.x,gp.z-player.pos.z);
+      if(d<1.5){it.got=true;
+        if(it.api.resolve)it.api.resolve();else it.api.group.visible=false;
+        beep(880,.07,"triangle",.09);beep(1320,.09,"sine",.05);
+        S.collect.onCollect(it.id);
+        const left=S.collect?S.collect.items.filter(x=>!x.got).length:0;
+        if(left>0)toast("あと "+left+" 枚",1400);
+      }else remain++;
+    });
+    // 解決演出(縮んで消える)の後始末
+    S.collect&&S.collect.items.forEach(it=>{if(it.got&&it.api.resolved&&it.api.group.parent)window.StoryObjects.disposeGroup(it.api.group);});
+  }
+  // 侵食20以上: 稀に旧仮名の揺らぎ
+  if(erosionFx&&SM&&SM.state.params.brainErosion>=20&&Math.random()<dt*.08)erosionFx.flickerGlyph();
+}
+/* ---- 公開 ---- */
+window.startStory=startStory;
+window.storyUpdate=storyUpdate;
+window.stExitToTitle=stExitToTitle;
+/* ---- 隠しゲート: ?story=1 の時だけタイトルに入口を出す ---- */
+function stGate(){
+  let on=false;
+  try{on=new URLSearchParams(location.search).get("story")==="1";}catch(e){}
+  if(!on)return;
+  const host=document.getElementById("mainModes");if(!host)return;
+  const b=document.createElement("button");
+  b.className="t-btn";b.id="btnStory";
+  b.style.borderColor="rgba(185,165,230,.75)";
+  b.innerHTML='<span class="mode-meta">物語 / 試験中</span><span>📖 御簾の向こうへ</span>';
+  b.onclick=()=>{beep(700,.08);if(typeof initAudio==="function")initAudio();enterMode("story");};
+  host.appendChild(b);
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",stGate);
+else stGate();
+})();
+
+/* ================== 波M: ストーリーモード同梱ここまで ================== */
 /* ============================================================
    [Phase0] 開発用パフォーマンス計測オーバーレイ
    後続フェーズの before/after 比較基準。`~`(Backquote)キー、または
