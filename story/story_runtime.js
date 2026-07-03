@@ -172,6 +172,7 @@ function stApplyPresentation(ev){
       if(st.ministerShadow!=null&&S.actors.minister){S.actors.minister.group.visible=true;S.actors.minister.setShadowReach(st.ministerShadow);}
       if(st.ministerPossessed!=null&&S.actors.minister)S.actors.minister.setPossessed(!!st.ministerPossessed);
       if(st.erosionLevel!=null&&erosionFx)erosionFx.setLevel(st.erosionLevel);
+      if(st.location==="classroom")stEnsureClassroom(); // 波O: 現代教室セット(ED演出)
     }
   }
   if(ev.cameraAngleId)stCamera(ev.cameraAngleId);
@@ -197,16 +198,40 @@ function stShowDialogue(spk,text,ev){
   }
   stEl("stNext").onclick=()=>{beep(600,.045,"triangle",.07);SM.goNext(ev.next);};
 }
-function stShowChoice(text,options){
+function stShowChoice(text,options,ev){
   stEl("stBox").style.display="block";stEl("stNextWrap").style.display="none";
   stEl("stSpk").textContent="選べ";
   stEl("stText").textContent=text||"";
+  // 波O: 破魔の連札(第5話最終3問)は3D札を眼前に浮かべ、選択と連動して光る/割れる/燃える
+  const isSeal=ev&&/^seq_(508|509|510)_final_quiz/.test(ev.id||"");
+  if(isSeal)stEnsureSeals();
   const host=stEl("stOpts");host.innerHTML="";
   options.forEach((o,i)=>{
     const b=document.createElement("button");b.className="st-opt";b.textContent=(i+1)+". "+o.text;
-    b.onclick=()=>{beep(680,.05,"triangle",.08);host.innerHTML="";SM.choose(i);};
+    b.onclick=()=>{
+      beep(680,.05,"triangle",.08);host.innerHTML="";
+      if(isSeal&&APP.story&&APP.story.sealFx){
+        const fail=/fail/.test(o.next||"");
+        APP.story.sealFx.resolve(i,fail?"burn":"correct");
+        if(!fail){for(let k=0;k<3;k++)if(k!==i)APP.story.sealFx.resolve(k,"crack");} // 選ばれなかった札は砕ける
+        setTimeout(()=>SM.choose(i),fail?900:750); // 札の演出を見せてから進む
+        return;
+      }
+      SM.choose(i);
+    };
     host.appendChild(b);
   });
+}
+/* 破魔の連札の3D演出(プレイヤー正面に三枚)。各問で新調する */
+function stEnsureSeals(){
+  const S=APP.story,SO=window.StoryObjects;if(!S||!SO)return;
+  if(S.sealFx)SO.disposeGroup(S.sealFx.group);
+  const api=SO.createFinalQuizThreeSeals();
+  api.setLabels(["壱","弐","参"]);
+  const fx=-Math.sin(player.yaw),fz=-Math.cos(player.yaw); // 正面方向
+  api.group.position.set(player.pos.x+fx*2.6,player.pos.y-0.25,player.pos.z+fz*2.6);
+  api.group.rotation.y=player.yaw; // 札面をプレイヤーへ向ける
+  scene.add(api.group);S.sealFx=api;
 }
 function stPanel(title,bodyHtml,btns){
   stEl("stPanelTitle").textContent=title;
@@ -264,8 +289,38 @@ function stEffect(info){
   }else if(id==="oni_tears_misu"&&SO){
     stLightning();
     if(!S.oni){const api=SO.createGreatOniStoryObject();api.group.position.set(30,0,-48);scene.add(api.group);S.oni=api;}
+  }else if(id==="yarimizu_dark_reflection"){
+    // 波O: 遣水が黒く濁り、水面に現代の教室(窓の光)が浮かぶ
+    const g=new THREE.Group();
+    const dark=new THREE.Mesh(new THREE.CircleGeometry(2.4,26),new THREE.MeshBasicMaterial({color:0x0a1218,transparent:true,opacity:0,depthWrite:false}));
+    dark.rotation.x=-Math.PI/2;g.add(dark);
+    const win=new THREE.Mesh(new THREE.PlaneGeometry(1.2,0.8),new THREE.MeshBasicMaterial({color:0xbfd4e8,transparent:true,opacity:0,depthWrite:false}));
+    win.rotation.x=-Math.PI/2;win.position.set(.3,0.012,.2);g.add(win);
+    const win2=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.34),new THREE.MeshBasicMaterial({color:0xe8eef6,transparent:true,opacity:0,depthWrite:false}));
+    win2.rotation.x=-Math.PI/2;win2.position.set(-.75,0.012,-.35);g.add(win2);
+    const fx0=-Math.sin(player.yaw),fz0=-Math.cos(player.yaw);
+    const px=player.pos.x+fx0*3.4,pz=player.pos.z+fz0*3.4;
+    g.position.set(px,(typeof groundH==="function"?groundH(px,pz):0)+0.05,pz);
+    g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+    scene.add(g);
+    S.props.push({kind:"yarimizu",api:{group:g},t:0,mats:[dark.material,win.material,win2.material]});
+    if(typeof saigenSe==="function")saigenSe("wind");
   }
-  // 他のeffectIdは現段階では演出なしで通過(effectはManager側で自動的にnextへ進む)
+  // summer_heat_haze / ending_gallery_ready は世界側の夏演出・回想UIがそのまま担う(追加なし)
+}
+/* 現代教室セット(ED1/ED2/ED4)。カメラ台帳 cam_classroom_* が絶対座標で寄る */
+function stEnsureClassroom(){
+  const S=APP.story,SO=window.StoryObjects;if(!S||!SO||S.classroom)return;
+  S.classroom=SO.createClassroomSet();
+  scene.add(S.classroom.group);
+  S.classroom.setBoard("waka","御簾=隔てる/つなぐ"); // 黒板に平面図+書き足し
+}
+/* 章をまたぐ大道具の一括後片付け(大鬼・連札・教室) */
+function stCleanupSets(){
+  const S=APP.story,SO=window.StoryObjects;if(!S||!SO)return;
+  if(S.oni){SO.disposeGroup(S.oni.group);S.oni=null;}
+  if(S.sealFx){SO.disposeGroup(S.sealFx.group);S.sealFx=null;}
+  if(S.classroom){SO.disposeGroup(S.classroom.group);S.classroom=null;}
 }
 /* ---- ミニゲーム接続 ---- */
 function stMiniGame(info){
@@ -281,19 +336,60 @@ function stMiniGame(info){
     toast("小萩の試験——五つの名を当てよ",3000);
     return;
   }
-  // 試験版プレースホルダ: 未接続の試練は成功/失敗を選んで通しの物語確認ができる
-  const label={kaimami_story:"垣間見の試練",taiji_kappa_story:"河童の主との戦い",utakai_story:"歌合 三番勝負",taiji_oni_story_final:"大鬼との決戦"}[info.gameMode]||info.gameMode;
-  stPanel("【試験版】"+label,
-    "この試練のミニゲーム接続は次段階で実装します。<br>いまは結果を選んで物語を進められます。<br><small style='color:#9a8a6a'>「成功(高評価)」はTrue End条件のPerfect評価も付与します</small>",
-    [["成功(高評価)として進む",()=>{if(S.oni&&info.gameMode==="taiji_oni_story_final"){window.StoryObjects.disposeGroup(S.oni.group);S.oni=null;}
-        info.complete({success:true,flags:info.gameMode==="utakai_story"?{utakaiPerfect:true}:info.gameMode==="taiji_oni_story_final"?{oniPerfect:true}:{}});}],
-     ["成功として進む",()=>{if(S.oni&&info.gameMode==="taiji_oni_story_final"){window.StoryObjects.disposeGroup(S.oni.group);S.oni=null;}
-        info.complete({success:true});}],
+  // ---- 波O: 全試練を実モードへ本接続 ----
+  if(info.gameMode==="kaimami_story"){
+    // 垣間見ミッション本体を起動。達成のみで復帰(警戒回数が多いほど侵食が進む)
+    APP.storyKaimami=(ok,caught)=>{
+      enterMode("story");
+      info.complete({success:ok,effects:caught>0?{brainErosion:Math.min(12,caught*3)}:{brainErosion:-2}});
+      if(caught>0)toast("見つかった回数 "+caught+"回——気配が心を削った",2600);
+    };
+    if(typeof camera!=="undefined"){camera.fov=62;camera.updateProjectionMatrix();}
+    enterMode("kaimami");
+    toast("垣間見の試練——巡回を避け、三つの観察地点から姫君を捉えよ",3600);
+    return;
+  }
+  if(info.gameMode==="taiji_kappa_story"||info.gameMode==="taiji_oni_story_final"){
+    const oniFinal=info.gameMode==="taiji_oni_story_final";
+    if(S.oni){window.StoryObjects.disposeGroup(S.oni.group);S.oni=null;} // 見せ大鬼は実戦と交代
+    APP.storyTaiji={
+      rush:[oniFinal?"autumn":"summer"], // 夏=河童の主 / 秋=大鬼(第2形態あり)
+      done:(ok,hits)=>{
+        enterMode("story");
+        if(ok&&oniFinal){ // 決戦後の連札の場: 封印の大鬼を見せ直す
+          const api=window.StoryObjects.createGreatOniStoryObject();
+          api.group.position.set(30,0,-48);api.setPhase(3);scene.add(api.group);S.oni=api;
+        }
+        const flags=(ok&&oniFinal&&hits<=5)?{oniPerfect:true}:undefined;
+        info.complete({success:ok,flags});
+        if(ok&&oniFinal&&hits<=5)toast("✨ 無傷に近い勝利——完璧な祓いだった",2800);
+      }
+    };
+    APP.taijiBossRush=true;
+    if(!APP.taijiDifficulty)APP.taijiDifficulty="normal";
+    if(typeof camera!=="undefined"){camera.fov=62;camera.updateProjectionMatrix();}
+    enterMode("taiji");
+    return;
+  }
+  if(info.gameMode==="utakai_story"){
+    APP.storyUtakai=(ok,wins)=>{
+      enterMode("story");
+      info.complete({success:ok,flags:(ok&&wins>=3)?{utakaiPerfect:true}:undefined});
+      if(ok&&wins>=3)toast("✨ 三番全勝——判者も舌を巻く完勝だった",2800);
+    };
+    if(typeof camera!=="undefined"){camera.fov=62;camera.updateProjectionMatrix();}
+    enterMode("utakai");
+    return;
+  }
+  // 未知のモードだけ従来のパネル(保険)
+  stPanel("【試験版】"+info.gameMode,"この試練は未接続です。結果を選んで進めます。",
+    [["成功として進む",()=>info.complete({success:true})],
      ["失敗として進む",()=>info.complete({success:false})]]);
 }
 /* ---- エンディング/章クリア ---- */
 function stEnding(endingId){
   stClearCollectibles();
+  if(APP.story&&APP.story.sealFx){window.StoryObjects.disposeGroup(APP.story.sealFx.group);APP.story.sealFx=null;}
   const ed=STORY_ED_TEXT[endingId]||{t:endingId,d:""};
   if(endingId==="ED5_SPOOKY"&&erosionFx)erosionFx.setLevel(100);
   stPanel(ed.t,ed.d,[
@@ -312,6 +408,7 @@ function stChapterComplete(chapterId){
 }
 /* ---- 章メニュー ---- */
 function stChapterMenu(){
+  stCleanupSets(); // 章間で大道具(大鬼・連札・教室)を片付ける
   const man=(window.STORY_EMBED&&STORY_EMBED.manifest&&STORY_EMBED.chapters)?STORY_EMBED.manifest.chapters:[];
   const btns=man.map(c=>["第"+c.chapterId+"話 「"+c.chapterTitle+"」",()=>stStartChapter(c.chapterId)]);
   const save=SM&&SM.load&&(function(){try{return JSON.parse(localStorage.getItem("shinden3d-story-save-v1"));}catch(e){return null;}})();
@@ -324,6 +421,7 @@ function stChapterMenu(){
 }
 function stStartChapter(id,resumeSeq){
   stEl("stPanel").style.display="none";
+  stCleanupSets();
   SM.state.endingId=null;
   SM.startChapter(id).then(()=>{
     if(resumeSeq&&SM.sequenceMap.has(resumeSeq)){SM.currentSequenceId=resumeSeq;SM.runCurrent();}
@@ -347,7 +445,7 @@ function startStory(){
   if(!SM){
     SM=new StoryManager({hooks:{
       onDialogue:(d)=>{stApplyPresentation(d.event);stShowDialogue(d.speaker,d.text,d.event);},
-      onChoice:(c)=>{stApplyPresentation(c.event);stShowChoice(c.text,c.options);},
+      onChoice:(c)=>{stApplyPresentation(c.event);stShowChoice(c.text,c.options,c.event);},
       onScene:(sc)=>{
         stApplyPresentation(sc.event);
         if(sc.season&&sc.season!=="tokoyo"&&typeof applySeason==="function"&&sc.season!==APP.season)applySeason(sc.season);
@@ -384,10 +482,9 @@ function startStory(){
 }
 function stExitToTitle(){
   const S=APP.story;
-  stClearCollectibles();
+  stClearCollectibles();stCleanupSets();
   if(S){
     (S.props||[]).forEach(p=>{if(window.StoryObjects)window.StoryObjects.disposeGroup(p.api.group);});
-    if(S.oni&&window.StoryObjects){window.StoryObjects.disposeGroup(S.oni.group);S.oni=null;}
     if(S.actors)Object.values(S.actors).forEach(a=>{a.group.visible=false;});
     if(S.prevSeason&&typeof applySeason==="function"&&S.prevSeason!==APP.season)applySeason(S.prevSeason);
     if(S.prevTime&&typeof setTime==="function"&&S.prevTime!==APP.time)setTime(S.prevTime);
@@ -400,6 +497,7 @@ function stExitToTitle(){
   const hud=stEl("storyHud");if(hud){hud.style.display="none";stEl("stBox").style.display="none";stEl("stPanel").style.display="none";}
   const fd=stEl("storyFade");if(fd){clearTimeout(window._stFadeT);fd.className="";}
   if(typeof camera!=="undefined"){camera.fov=62;camera.updateProjectionMatrix();}
+  if(typeof START_POS!=="undefined"){player.pos.copy(START_POS);player.yaw=0;player.pitch=-.02;} // 教室等の別地点から邸へ戻す
   APP.mode="title";
   const tb=stEl("topbar");if(tb)tb.style.display="none";
   const ttl=stEl("title");if(ttl)ttl.classList.remove("hide");
@@ -415,10 +513,19 @@ function storyUpdate(dt){
   const t=performance.now()/1000;
   if(S.actors)Object.values(S.actors).forEach(a=>{if(a.group.visible&&a.update)a.update(t);});
   if(S.oni&&S.oni.update)S.oni.update(t);
-  (S.props||[]).forEach(p=>{
+  if(S.sealFx&&S.sealFx.update)S.sealFx.update(t,dt);
+  if(S.classroom&&S.classroom.update)S.classroom.update(t);
+  for(let i=(S.props||[]).length-1;i>=0;i--){
+    const p=S.props[i];
     if(p.kind==="tanzaku"&&p.falling){if(p.api.updateFall(dt,(typeof groundH==="function"?groundH(p.api.group.position.x,p.api.group.position.z):0)+0.10))p.falling=false;}
     else if(p.kind==="tokoyo"&&p.api.update)p.api.update(t,dt);
-  });
+    else if(p.kind==="yarimizu"){ // 濁り→教室の窓が浮かぶ→静かに消える(約8秒)
+      p.t+=dt;
+      const a=p.t<1.2?p.t/1.2:p.t<6?1:Math.max(0,1-(p.t-6)/2);
+      p.mats[0].opacity=.62*a;p.mats[1].opacity=.5*a*(0.7+Math.sin(t*1.8)*.3);p.mats[2].opacity=.4*a*(0.7+Math.cos(t*2.2)*.3);
+      if(p.t>8){window.StoryObjects.disposeGroup(p.api.group);S.props.splice(i,1);}
+    }
+  }
   // 収集: 近づくだけで手に入る(タップ不要・スマホ配慮)
   if(S.collect){
     let remain=0;
