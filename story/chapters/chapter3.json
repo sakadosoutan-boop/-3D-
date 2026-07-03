@@ -9,7 +9,11 @@
       "type": "set_scene",
       "season": "autumn",
       "timeOfDay": "dusk",
-      "playerStart": { "x": -3.8, "z": 8.4, "yaw": 0.8 },
+      "playerStart": {
+        "x": -3.8,
+        "z": 8.4,
+        "yaw": 0.8
+      },
       "cameraAngleId": "cam_autumn_south_garden",
       "fade": "black",
       "next": "seq_301b"
@@ -26,7 +30,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「今宵は——見てはならぬものほど、見たくなる刻にございます」",
-      "effects": { "fantasySynchro": 3 },
+      "effects": {
+        "fantasySynchro": 3
+      },
       "next": "seq_302b"
     },
     {
@@ -63,11 +69,21 @@
       "gameMode": "kaimami_story",
       "payload": {
         "focusGauge": "bottom_center",
-        "targets": ["衣の色目", "扇の模様", "香の煙", "筆跡"],
+        "targets": [
+          "衣の色目",
+          "扇の模様",
+          "香の煙",
+          "筆跡"
+        ],
         "avoidDirectFace": true
       },
-      "successEffects": { "fantasySynchro": 8, "brainErosion": -2 },
-      "failEffects": { "brainErosion": 14 },
+      "successEffects": {
+        "fantasySynchro": 8,
+        "brainErosion": -2
+      },
+      "failEffects": {
+        "brainErosion": 14
+      },
       "successNext": "seq_305_observation_choice",
       "failNext": "seq_305_observation_choice"
     },
@@ -79,17 +95,24 @@
         {
           "text": "「顔立ちを覚えた」",
           "next": "seq_306_face_warning",
-          "effects": { "brainErosion": 12 }
+          "effects": {
+            "brainErosion": 12
+          }
         },
         {
           "text": "「扇の模様と、香の気配を覚えた」",
           "next": "seq_306_graceful",
-          "effects": { "fantasySynchro": 10 }
+          "effects": {
+            "fantasySynchro": 10
+          }
         },
         {
           "text": "「見えなかったことを、そのまま覚えた」",
           "next": "seq_306_true_observe",
-          "effects": { "realityEgo": 5, "fantasySynchro": 8 }
+          "effects": {
+            "realityEgo": 5,
+            "fantasySynchro": 8
+          }
         }
       ]
     },
@@ -119,7 +142,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……『見えなかった』と、そのまま申せる勇気。それは、今宵の月にいちばん近い答えにございます。見えぬものを見えぬまま抱えること——歌は、そこから生まれまするゆえ」",
-      "setFlag": { "respectfulKaimami": true },
+      "setFlag": {
+        "respectfulKaimami": true
+      },
       "next": "seq_307_waka_intro"
     },
     {
@@ -136,11 +161,36 @@
       "kind": "waka_tanzaku",
       "count": 5,
       "positions": [
-        { "id": "autumn", "label": "秋", "x": -4.0, "z": 9.5 },
-        { "id": "mist", "label": "霧", "x": -1.0, "z": 12.5 },
-        { "id": "wait", "label": "待つ", "x": 3.0, "z": 10.5 },
-        { "id": "sleeve", "label": "袖", "x": 6.5, "z": 13.5 },
-        { "id": "moon", "label": "月", "x": 0.0, "z": 16.0 }
+        {
+          "id": "autumn",
+          "label": "秋",
+          "x": -4.0,
+          "z": 9.5
+        },
+        {
+          "id": "mist",
+          "label": "霧",
+          "x": -1.0,
+          "z": 12.5
+        },
+        {
+          "id": "wait",
+          "label": "待つ",
+          "x": 3.0,
+          "z": 10.5
+        },
+        {
+          "id": "sleeve",
+          "label": "袖",
+          "x": 6.5,
+          "z": 13.5
+        },
+        {
+          "id": "moon",
+          "label": "月",
+          "x": 0.0,
+          "z": 16.0
+        }
       ],
       "next": "seq_308_collect_waka_check"
     },
@@ -167,18 +217,27 @@
         {
           "text": "霧の向こうの月を、ただ待つ歌",
           "next": "seq_309_r1",
-          "effects": { "fantasySynchro": 8 }
+          "effects": {
+            "fantasySynchro": 8
+          }
         },
         {
           "text": "早く会いたいと、直接迫る歌",
           "next": "seq_309_r2",
-          "effects": { "brainErosion": 10 }
+          "effects": {
+            "brainErosion": 10
+          }
         },
         {
           "text": "見えぬまま、袖に残る香を返す歌",
           "next": "seq_309_r3",
-          "effects": { "realityEgo": 3, "fantasySynchro": 12 },
-          "setFlag": { "wakaGracefulReply": true }
+          "effects": {
+            "realityEgo": 3,
+            "fantasySynchro": 12
+          },
+          "setFlag": {
+            "wakaGracefulReply": true
+          }
         }
       ]
     },
@@ -187,34 +246,59 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「待つ心を月に預ける——正しい型にございます。型は、心を守る鎧。まずはそれで、じゅうぶん」",
-      "next": "seq_310_water_distortion"
+      "next": "seq_309z"
     },
     {
       "id": "seq_309_r2",
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……お気持ちは真っ直ぐで、結構。なれど歌は、心をそのまま投げつける器ではございませぬ。受け取る側の手が、痛うございます」",
-      "next": "seq_310_water_distortion"
+      "next": "seq_309z"
     },
     {
       "id": "seq_309_r3",
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「——袖に残る香を、返す。……見えぬものを見えぬまま、たいせつに扱う歌。……どうして、あなたがそれを詠めるのでしょうね。まるで——いえ。お送りして参ります」",
+      "next": "seq_309z"
+    },
+    {
+      "id": "seq_309z",
+      "type": "set_scene",
+      "season": "autumn",
+      "timeOfDay": "dusk",
+      "playerStart": {
+        "x": -6.5,
+        "z": 22.0,
+        "yaw": 2.4
+      },
+      "cameraAngleId": "cam_ch3_pond_dark",
+      "fade": "black",
+      "next": "seq_309z2"
+    },
+    {
+      "id": "seq_309z2",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "歌を女房に託し、返事を待つあいだ——小萩に誘われて、池の汀まで下りた。月を待つには、水辺がいちばん良いのだという。",
       "next": "seq_310_water_distortion"
     },
     {
       "id": "seq_310_water_distortion",
       "type": "effect",
       "effectId": "yarimizu_dark_reflection",
-      "payload": { "showsClassroom": true, "bossHint": "kappa" },
-      "next": "seq_310b"
+      "payload": {
+        "showsClassroom": true,
+        "bossHint": "kappa"
+      },
+      "next": "seq_310b",
+      "cameraAngleId": "cam_ch3_pond_dark"
     },
     {
       "id": "seq_310b",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "歌を託して戻る道すがら——遣水の音が、変わった。さらさらではなく、ごぼり。見れば水が墨を溶いたように黒く濁り、その水面に、あろうことか、夕暮れの教室が映っている。誰もいない机の列。窓際の、二つの席。",
+      "text": "——水の音が、変わった。さらさらではなく、ごぼり。見れば池の水が墨を溶いたように黒く濁り、その水面に、あろうことか、夕暮れの教室が映っている。誰もいない机の列。窓際の、二つの席。",
       "next": "seq_311_kappa_warning"
     },
     {
@@ -243,8 +327,14 @@
         "allowLanternPartner": false,
         "storyDifficulty": "middle"
       },
-      "successEffects": { "realityEgo": 8, "fantasySynchro": 4, "brainErosion": -4 },
-      "failEffects": { "brainErosion": 22 },
+      "successEffects": {
+        "realityEgo": 8,
+        "fantasySynchro": 4,
+        "brainErosion": -4
+      },
+      "failEffects": {
+        "brainErosion": 22
+      },
       "successNext": "seq_313_shiori_reflection",
       "failNext": "seq_314_after_fail"
     },
@@ -252,9 +342,30 @@
       "id": "seq_313_shiori_reflection",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "主が水に還ると、濁りは嘘のように引いた。澄んだ水面に、月が戻る。——月と、もうひとつ。水底にゆらめくのは姫君の影ではなかった。制服の横顔が、夕霧の底から、じっとこちらを見上げていた。",
+      "text": "主が水に還ると、濁りは嘘のように引いた。澄んだ水面に、秋の月が、ゆっくりと戻ってくる。",
       "se": "koto",
-      "setFlag": { "sawShioriReflection": true, "chapter3BossCleared": true },
+      "setFlag": {
+        "sawShioriReflection": true,
+        "chapter3BossCleared": true
+      },
+      "next": "seq_313z",
+      "cameraAngleId": "cam_ch3_pond_moon"
+    },
+    {
+      "id": "seq_313z",
+      "type": "effect",
+      "effectId": "shiori_reflection",
+      "payload": {
+        "pond": true
+      },
+      "next": "seq_313z2"
+    },
+    {
+      "id": "seq_313z2",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "——月の隣に、もうひとつ。水底から浮かびあがったのは、姫君の影ではなかった。短い髪、白い襟。制服の横顔が、夕霧の底から、じっとこちらを見上げていた。",
+      "cameraAngleId": "cam_ch3_pond_dark",
       "next": "seq_313b"
     },
     {
@@ -269,7 +380,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「——見ておりませぬ。あなたも、見ておりませぬ。……今宵は、もう水辺に近づかれませぬよう」",
-      "emotes": { "kohagi": "sad" },
+      "emotes": {
+        "kohagi": "sad"
+      },
       "next": "seq_313d"
     },
     {
@@ -298,7 +411,9 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "月が、東の対の屋根の上に昇りきる。秋の夕は終わり、秋の夜が始まる。秀頼は、相手を見つめることと、相手を奪うことの違いを——そして、見なかったことにする優しさがこの世にあることを、知った。",
-      "setFlag": { "chapter3Cleared": true },
+      "setFlag": {
+        "chapter3Cleared": true
+      },
       "next": "chapter_complete"
     }
   ]

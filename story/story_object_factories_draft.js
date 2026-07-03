@@ -475,41 +475,78 @@
      C-2. 常世グリッチ小道具 — 第5話。反転御簾・浮遊札・壊れた建具・霧リング。
      api: update(t) / setIntensity(0..1)
   ============================================================ */
-  function createTokoyoGlitchProps(radius=9){
+  function createTokoyoGlitchProps(radius=22){
     const g=new THREE.Group();
-    // 反転した御簾(天地逆に宙吊り)
-    const mi=createMisuBoundaryEffect(2.6,1.8);mi.group.rotation.z=Math.PI;mi.group.position.set(-radius*.45,3.4,-radius*.3);g.add(mi.group);
-    // 浮遊する札の環
+    // 反転した御簾(天地逆に宙吊り)×3、広い空間の各所に
+    const misus=[];
+    [[-.45,-.3,3.4],[.55,.25,4.6],[-.15,.65,5.6]].forEach(p=>{
+      const mi=createMisuBoundaryEffect(2.6,1.8);mi.group.rotation.z=Math.PI;
+      mi.group.position.set(radius*p[0],p[2],radius*p[1]);g.add(mi.group);misus.push(mi);
+    });
+    // 浮遊する札の環(広範囲・多重)
     const cards=[];
-    for(let i=0;i<8;i++){
+    for(let i=0;i<14;i++){
       const card=box(.02,.34,.11,STORY_MATS.ofuda,0,0,0);
-      card.userData.a=i*Math.PI/4;card.userData.r=radius*.55+((i%3)*.5);card.userData.h=1.2+(i%4)*.5;
+      card.userData.a=i*Math.PI*2/14;card.userData.r=radius*.35+((i%5)*radius*.13);card.userData.h=1.2+(i%5)*.9;
       cards.push(card);g.add(card);
     }
-    // 壊れた建具(格子の破片が斜めに刺さる)
-    for(let i=0;i<4;i++){
+    // 壊れた建具(格子の破片)を広く散らす
+    for(let i=0;i<7;i++){
       const frag=new THREE.Group();
-      frag.add(box(.06,1.3-(i*.15),.06,STORY_MATS.woodDark,0,0,0));
+      frag.add(box(.06,1.3-((i%4)*.15),.06,STORY_MATS.woodDark,0,0,0));
       for(let k=0;k<3;k++)frag.add(box(.5,.022,.03,STORY_MATS.woodDark,0,-.3+k*.3,0));
-      frag.position.set(Math.cos(i*1.9)*radius*.7,.4,Math.sin(i*1.9)*radius*.7);
+      frag.position.set(Math.cos(i*1.9)*radius*(.35+(i%3)*.2),.4+(i%2)*.8,Math.sin(i*1.9)*radius*(.35+(i%3)*.2));
       frag.rotation.z=.5+i*.35;frag.rotation.y=i*1.2;g.add(frag);
     }
-    // 低負荷の霧リング(2枚の大きな透明リング板を逆回転)
+    // 浮遊する調度品(几帳・屏風・唐櫃・火桶・文机・高坏) — 邸の記憶が漂う
+    const furn=[];
+    function addFurn(builder,i,rMul,h){
+      const f=builder();f.userData.a=i*1.05;f.userData.r=radius*rMul;f.userData.h=h;f.userData.sp=.06+(i%4)*.03;
+      furn.push(f);g.add(f);
+    }
+    const mkKicho=()=>{const f=new THREE.Group();
+      f.add(cyl(.04,.04,1.7,STORY_MATS.woodDark,0,.85,0,6));
+      f.add(box(1.7,.06,.06,STORY_MATS.woodDark,0,1.66,0));
+      const cloth=plane(1.6,1.25,M({color:0x8a3a50,roughness:.85,side:THREE.DoubleSide}),0,1.0,0);f.add(cloth);return f;};
+    const mkByobu=()=>{const f=new THREE.Group();
+      for(let k=0;k<3;k++){const pnl=box(.62,1.35,.03,M({color:0xd9c9a2,roughness:.85}),(k-1)*.58,.7,(k%2)*.18);
+        pnl.rotation.y=(k-1)*.5;f.add(pnl);}return f;};
+    const mkKarabitsu=()=>{const f=new THREE.Group();
+      f.add(box(.9,.5,.6,M({color:0x2e1d12,roughness:.7}),0,.45,0));
+      f.add(box(.96,.1,.66,M({color:0x3a2818,roughness:.7}),0,.72,0));
+      [[-.35,-.22],[-.35,.22],[.35,-.22],[.35,.22]].forEach(p=>f.add(cyl(.04,.05,.24,STORY_MATS.woodDark,p[0],.12,p[1],6)));return f;};
+    const mkHioke=()=>{const f=new THREE.Group();
+      f.add(cyl(.32,.26,.32,STORY_MATS.wood,0,.16,0,12));
+      f.add(sph(.08,new THREE.MeshStandardMaterial({color:0x30140a,roughness:.9,emissive:0xff5a22,emissiveIntensity:.7}),0,.33,0,8,6));return f;};
+    const mkTsukue=()=>{const f=new THREE.Group();
+      f.add(box(.9,.05,.4,M({color:0x4a3722,roughness:.75}),0,.32,0));
+      [[-.38],[.38]].forEach(p=>f.add(box(.06,.3,.36,STORY_MATS.woodDark,p[0],.15,0)));
+      f.add(box(.3,.02,.22,STORY_MATS.paper,0,.36,0));return f;};
+    const mkTakatsuki=()=>{const f=new THREE.Group();
+      f.add(cyl(.22,.06,.08,M({color:0xa03a28,roughness:.6}),0,.3,0,10));
+      f.add(cyl(.05,.09,.26,M({color:0xa03a28,roughness:.6}),0,.13,0,8));return f;};
+    [mkKicho,mkByobu,mkKarabitsu,mkHioke,mkTsukue,mkTakatsuki,mkKicho,mkByobu,mkKarabitsu,mkHioke].forEach((b,i)=>{
+      addFurn(b,i,.3+(i%4)*.17,1.0+(i%5)*1.1);
+    });
+    // 低負荷の霧リング(2枚を逆回転)
     const rings=[];
     for(let i=0;i<2;i++){
       const rm=STORY_MATS.fog.clone();rm.__ownedByStory=true;rm.opacity=.13+i*.05;
-      const ring=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,1.6+i,24,1,true),rm);
-      ring.position.y=1.0+i*.7;rings.push(ring);g.add(noShadow(ring));
+      const ring=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,2.2+i,28,1,true),rm);
+      ring.position.y=1.2+i*.9;rings.push(ring);g.add(noShadow(ring));
     }
     let inten=1;
     const api={group:g,
       setIntensity(v){inten=Math.max(0,Math.min(1,v));g.visible=inten>0.02;},
       update(t,dt){
-        cards.forEach((c,i)=>{const a=c.userData.a+t*(.25+(i%3)*.07);
-          c.position.set(Math.cos(a)*c.userData.r,c.userData.h+Math.sin(t*1.3+i)*.25*inten,Math.sin(a)*c.userData.r);
+        cards.forEach((c,i)=>{const a=c.userData.a+t*(.18+(i%3)*.05);
+          c.position.set(Math.cos(a)*c.userData.r,c.userData.h+Math.sin(t*1.3+i)*.3*inten,Math.sin(a)*c.userData.r);
           c.rotation.y=a+Math.PI/2;c.rotation.z=Math.sin(t*2+i)*.3*inten;});
-        rings[0].rotation.y=t*.11;rings[1].rotation.y=-t*.08;
-        mi.update(t);
+        furn.forEach((f,i)=>{const a=f.userData.a+t*f.userData.sp;
+          f.position.set(Math.cos(a)*f.userData.r,f.userData.h+Math.sin(t*.9+i*1.7)*.45*inten,Math.sin(a)*f.userData.r);
+          f.rotation.y=a+i;f.rotation.z=Math.sin(t*.7+i)*.14*inten;f.rotation.x=Math.cos(t*.5+i*2)*.1*inten;});
+        rings[0].rotation.y=t*.09;rings[1].rotation.y=-t*.06;
+        misus.forEach(mi=>mi.update(t));
       }
     };
     g.userData.api=api;return api;
@@ -531,7 +568,7 @@
       " writing-mode:vertical-rl;letter-spacing:.3em;transition:color .5s}",
       "#stErosion .st-er-noise{position:absolute;inset:0;opacity:0;mix-blend-mode:overlay;",
       " background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 3px)}",
-      "#stErosion.lv20 .st-er-glyph{color:rgba(120,80,160,.5)}",
+      /* lv20の旧仮名は常時表示しない(flickerGlyph()が一瞬だけ色を入れる) */
       "#stErosion.lv40 .st-er-noise{opacity:.5}",
       "#stErosion.lv60{filter:none}",
       "#stErosion.lv60 .st-er-vig{opacity:.6}",
@@ -1000,6 +1037,8 @@
     cam_autumn_south_garden: {pos:[-4.6,1.7 , 8.5],look:[ 4.0,1.6, 0.5],fov:52},
     cam_ch3_kaimami_gap:     {pos:[10.8,1.55, 0.2],look:[ 0.5,1.5,-1.5],fov:44},
     cam_ch3_yarimizu_dark:   {pos:[ 6.0,1.4 ,-7.2],look:[ 9.0,0.4,-10.0],fov:58},
+    cam_ch3_pond_dark:       {pos:[-6.5,1.7 ,22.5],look:[-12.0,0.2,28.5],fov:56}, // 池の汀・濁った水面を見下ろす
+    cam_ch3_pond_moon:       {pos:[-7.0,1.35,23.5],look:[-14.0,3.2,34.0],fov:62}, // 澄んだ水面ごしに月の空へ
     /* 第4話: 正面性=儀式。判者の扇を画面中心に */
     cam_winter_utakai_hisashi:{pos:[ 0.0,1.75, 7.4],look:[ 0.0,1.5,-1.8],fov:48},
     cam_ch4_judge_close:     {pos:[ 0.8,1.6 , 1.2],look:[ 0.0,1.5,-1.8],fov:40},

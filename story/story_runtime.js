@@ -33,8 +33,21 @@ function stInject(){
     "#storyHud .st-box{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 10px);transform:translateX(-50%);",
     " width:min(720px,96vw);max-height:35vh;pointer-events:auto;background:linear-gradient(180deg,rgba(24,16,9,.95),rgba(13,9,5,.97));",
     " border:1px solid var(--kin);border-radius:11px;box-shadow:0 8px 30px rgba(0,0,0,.55);padding:10px 13px 11px;display:none}",
-    "#storyHud .st-spk{font-size:11px;color:var(--kin);letter-spacing:.14em;margin-bottom:5px;font-family:var(--serif)}",
-    "#storyHud .st-text{font-size:14px;line-height:1.85;color:#efe6cd;font-family:var(--serif);letter-spacing:.04em;overflow-y:auto;max-height:20vh}",
+    "#storyHud .st-spk{font-size:11px;color:var(--kin);letter-spacing:.14em;margin-bottom:5px;font-family:var(--serif);padding-right:150px}",
+    "#storyHud .st-text{font-size:14px;line-height:1.82;color:#efe6cd;font-family:var(--serif);letter-spacing:.04em;overflow-y:auto;max-height:26vh}",
+    /* VN操作(オート/スキップ/ログ) — 窓の右上に小さく */
+    "#storyHud .st-vn{position:absolute;top:7px;right:9px;display:flex;gap:5px}",
+    "#storyHud .st-vn button{pointer-events:auto;background:rgba(28,18,10,.92);border:1px solid rgba(201,162,63,.55);color:#cbb98f;",
+    " font-size:9.5px;padding:3px 8px;border-radius:9px;cursor:pointer;font-family:var(--sans);letter-spacing:.08em;line-height:1}",
+    "#storyHud .st-vn button.on{background:#5c4716;color:#ffe9a8;border-color:var(--kin)}",
+    /* 立ち絵(Canvas描画の胸像)。表示中は本文を右へ寄せる */
+    "#storyHud .st-box.with-face{padding-left:106px;min-height:104px}",
+    "#stFace{position:absolute;left:10px;bottom:10px;width:86px;height:86px;border-radius:9px;border:1px solid var(--kin);",
+    " background:#141009;display:none;box-shadow:0 3px 10px rgba(0,0,0,.5)}",
+    /* ログ一覧 */
+    "#storyHud .st-log-item{text-align:left;border-bottom:1px solid rgba(201,162,63,.22);padding:7px 2px}",
+    "#storyHud .st-log-item b{color:var(--kin);font-size:11px;display:block;margin-bottom:2px}",
+    "#storyHud .st-log-item span{font-size:12.5px;color:#e0d4b4;line-height:1.7}",
     "#storyHud .st-next{margin-top:8px;text-align:right}",
     "#storyHud .st-next button,#storyHud .st-opt{cursor:pointer;background:linear-gradient(155deg,#4a1f14,#311309);color:var(--gofun);",
     " border:1px solid var(--kin);padding:9px 16px;font-size:12.5px;border-radius:6px;letter-spacing:.06em;font-family:var(--serif)}",
@@ -63,13 +76,143 @@ function stInject(){
   let hud=stEl("storyHud");
   if(!hud){hud=document.createElement("div");hud.id="storyHud";document.body.appendChild(hud);}
   hud.innerHTML=
-    '<div class="st-chip"><span><span id="stChTitle">物語</span><small id="stDebug"></small></span><span class="st-goal" id="stGoal"></span></div>'+
+    '<div class="st-chip"><span><span id="stChTitle">物語</span><small id="stDebug"></small><small id="stProg" style="color:#cbb98f;margin-left:8px"></small></span><span class="st-goal" id="stGoal"></span></div>'+
+    '<button id="stMenuBtn" title="中断して章メニューへ(進行は自動保存)" style="position:fixed;top:calc(env(safe-area-inset-top) + 6px);right:46px;pointer-events:auto;background:var(--urushi);color:var(--gofun);border:1px solid var(--kin);width:30px;height:30px;border-radius:50%;font-size:13px;line-height:1;cursor:pointer">📑</button>'+
     '<button id="stQuit" title="物語を閉じる">✕</button>'+
-    '<div class="st-box" id="stBox"><div class="st-spk" id="stSpk"></div><div class="st-text" id="stText"></div>'+
+    '<div class="st-box" id="stBox"><img id="stFace" alt="">'+
+    '<div class="st-vn"><button id="stAuto">オート</button><button id="stSkip">スキップ</button><button id="stLog">ログ</button></div>'+
+    '<div class="st-spk" id="stSpk"></div><div class="st-text" id="stText"></div>'+
     '<div class="st-next" id="stNextWrap"><button id="stNext">つぎへ ▶</button></div><div class="st-opts" id="stOpts"></div></div>'+
     '<div class="st-panel" id="stPanel"><div class="st-card"><h3 id="stPanelTitle"></h3><div class="st-body" id="stPanelBody"></div><div class="st-btns" id="stPanelBtns"></div></div></div>';
   const fade=document.createElement("div");fade.id="storyFade";document.body.appendChild(fade);
   stEl("stQuit").onclick=()=>{beep(440,.06);stExitToTitle();};
+  stEl("stMenuBtn").onclick=()=>{beep(560,.05);stVnStop();stChapterMenu();};
+  stEl("stAuto").onclick=()=>{const v=APP.story&&APP.story.vn;if(!v)return;v.auto=!v.auto;v.skip=false;stVnButtons();
+    if(v.auto&&v.curEv)stVnSchedule(v.curEv);else clearTimeout(window._stAutoT);beep(620,.04);};
+  stEl("stSkip").onclick=()=>{const v=APP.story&&APP.story.vn;if(!v)return;v.skip=!v.skip;v.auto=false;stVnButtons();
+    if(v.skip&&v.curEv){clearTimeout(window._stAutoT);window._stAutoT=setTimeout(()=>stVnAdvance(),90);}beep(620,.04);};
+  stEl("stLog").onclick=()=>{stVnShowLog();beep(560,.04);};
+}
+/* ---- VN補助(オート/スキップ/ログ) ---- */
+function stVnButtons(){
+  const v=APP.story&&APP.story.vn;if(!v)return;
+  stEl("stAuto").classList.toggle("on",!!v.auto);
+  stEl("stSkip").classList.toggle("on",!!v.skip);
+}
+function stVnStop(){ // 選択肢・試練・パネルではスキップを解除
+  const v=APP.story&&APP.story.vn;if(!v)return;
+  v.skip=false;v.curEv=null;clearTimeout(window._stAutoT);stVnButtons();
+}
+function stVnAdvance(){
+  const v=APP.story&&APP.story.vn;if(!v||!v.curEv)return;
+  if(APP.mode!=="story"||stEl("stPanel").style.display==="flex")return;
+  const ev=v.curEv;v.curEv=null;SM.goNext(ev.next);
+}
+function stVnSchedule(ev){
+  const v=APP.story&&APP.story.vn;if(!v)return;
+  clearTimeout(window._stAutoT);
+  if(v.skip)window._stAutoT=setTimeout(()=>stVnAdvance(),90);
+  else if(v.auto)window._stAutoT=setTimeout(()=>stVnAdvance(),1100+Math.min(6500,(ev.text||"").length*58));
+}
+function stVnShowLog(){
+  const v=APP.story&&APP.story.vn;if(!v)return;
+  clearTimeout(window._stAutoT);
+  const html=(v.log.length?v.log:[{s:"",t:"(まだ何も語られていません)"}])
+    .map(e=>'<div class="st-log-item"><b>'+(e.s||"語り")+'</b><span>'+String(e.t).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))+'</span></div>').join("");
+  stPanel("ログ — これまでの言葉",'<div style="max-height:52vh;overflow-y:auto;text-align:left">'+html+'</div>',
+    [["とじる",()=>{const vv=APP.story&&APP.story.vn;if(vv&&vv.auto&&vv.curEv)stVnSchedule(vv.curEv);}]]);
+}
+/* ---- 立ち絵(Canvas描画・アセット不要) ----
+   小萩だけは顔を見せない(御簾越しの影+薄紫の紐)。 */
+const ST_FACE_CACHE={};
+function stFaceUrl(key){
+  if(ST_FACE_CACHE[key]!==undefined)return ST_FACE_CACHE[key];
+  const c=document.createElement("canvas");c.width=172;c.height=172;const x=c.getContext("2d");
+  const bg=(g1,g2)=>{const gr=x.createLinearGradient(0,0,0,172);gr.addColorStop(0,g1);gr.addColorStop(1,g2);x.fillStyle=gr;x.fillRect(0,0,172,172);};
+  const face=(fx,fy,r,skin="#f0d5bd")=>{x.fillStyle=skin;x.beginPath();x.ellipse(fx,fy,r*.82,r,0,0,7);x.fill();};
+  const eyes=(fx,fy,w,open=1,dy=0)=>{x.strokeStyle="#241a14";x.lineWidth=3;x.lineCap="round";
+    [-1,1].forEach(s=>{x.beginPath();
+      if(open>0.5){x.ellipse(fx+s*w,fy+dy,5.5,4*open,0,0,7);x.fillStyle="#241a14";x.fill();}
+      else{x.moveTo(fx+s*w-6,fy+dy);x.quadraticCurveTo(fx+s*w,fy+dy+4,fx+s*w+6,fy+dy);x.stroke();}});};
+  const brows=(fx,fy,w,tilt=0)=>{x.strokeStyle="#2a1c12";x.lineWidth=3.4;
+    [-1,1].forEach(s=>{x.beginPath();x.moveTo(fx+s*w-7,fy-14+s*tilt);x.quadraticCurveTo(fx+s*w,fy-18,fx+s*w+7,fy-14-s*tilt);x.stroke();});};
+  const mouth=(fx,fy,w,smile=0)=>{x.strokeStyle="#8a4038";x.lineWidth=2.6;x.beginPath();
+    x.moveTo(fx-w,fy);x.quadraticCurveTo(fx,fy+smile*7,fx+w,fy);x.stroke();};
+  if(key==="kohagi"){ // 御簾越しの影(顔は決して描かない)
+    bg("#2a1f2e","#171019");
+    x.fillStyle="rgba(46,30,44,.9)";x.beginPath();x.ellipse(86,150,52,58,0,Math.PI,0);x.fill(); // 肩
+    x.beginPath();x.ellipse(86,86,30,36,0,0,7);x.fill();                                          // 頭影
+    x.fillStyle="rgba(20,12,20,.85)";x.fillRect(52,96,68,60);                                     // 垂髪影
+    x.strokeStyle="rgba(185,165,230,.9)";x.lineWidth=3;                                            // 薄紫の紐
+    x.beginPath();x.moveTo(120,132);x.quadraticCurveTo(126,146,120,160);x.stroke();
+    x.beginPath();x.arc(120,130,4,0,7);x.fillStyle="#b9a5e6";x.fill();
+    x.strokeStyle="rgba(201,180,120,.5)";x.lineWidth=2.4;                                          // 御簾の簾線
+    for(let i=0;i<=8;i++){x.beginPath();x.moveTo(6+i*20,0);x.lineTo(6+i*20,172);x.stroke();}
+    x.fillStyle="rgba(240,228,190,.10)";x.fillRect(0,0,172,172);
+  }else if(key==="hidetora"){
+    bg("#31425e","#1a2334");
+    x.fillStyle="#4a6fa8";x.beginPath();x.ellipse(86,168,62,44,0,Math.PI,0);x.fill();             // 直衣の肩
+    x.fillStyle="#e9dfc8";x.fillRect(80,128,12,14);                                                // 襟
+    face(86,92,42);
+    x.fillStyle="#14100e";x.beginPath();x.ellipse(86,64,40,26,0,Math.PI,0);x.fill();              // 前髪
+    x.fillStyle="#17130f";x.save();x.translate(86,42);x.rotate(-.14);x.fillRect(-20,-16,40,20);x.restore(); // ずれた冠
+    x.fillRect(78,18,8,16);
+    brows(86,86,17,2);eyes(86,90,17,1);mouth(86,118,10,-1);
+  }else if(key==="ukon"){
+    bg("#3c4a30","#1d2417");
+    x.fillStyle="#55633f";x.beginPath();x.ellipse(86,168,62,42,0,Math.PI,0);x.fill();
+    face(86,94,41,"#e8c9a4");
+    x.fillStyle="#191512";x.beginPath();x.ellipse(86,66,38,24,0,Math.PI,0);x.fill();
+    x.fillStyle="#17130f";x.beginPath();x.moveTo(66,44);x.lineTo(106,44);x.lineTo(96,10);x.lineTo(76,12);x.closePath();x.fill(); // 烏帽子
+    brows(86,88,17,-3);eyes(86,92,17,1);mouth(86,118,13,6);                                       // にやり
+    x.strokeStyle="#2a1c12";x.lineWidth=2;x.beginPath();x.moveTo(74,128);x.lineTo(98,128);x.stroke(); // あごの影
+  }else if(key==="minister"){
+    bg("#3a2a52","#1c1330");
+    x.fillStyle="#432a66";x.beginPath();x.ellipse(86,170,66,46,0,Math.PI,0);x.fill();
+    x.fillStyle="#c9a23f";x.fillRect(80,132,12,12);
+    face(86,94,43,"#e6c6a0");
+    x.fillStyle="#26201a";x.beginPath();x.ellipse(86,64,40,24,0,Math.PI,0);x.fill();
+    x.fillStyle="#17130f";x.fillRect(66,26,40,20);x.fillRect(80,6,10,22);                          // 冠+巾子
+    brows(86,86,18,4);eyes(86,92,18,1);
+    x.fillStyle="#3a2c20";x.beginPath();x.ellipse(86,124,16,10,0,0,7);x.fill();                    // 髭
+    mouth(86,120,9,2);
+  }else if(key==="judge"){
+    bg("#3c3a46","#1c1a24");
+    x.fillStyle="#4c4a55";x.beginPath();x.ellipse(86,170,62,44,0,Math.PI,0);x.fill();
+    face(86,90,41,"#ecd2b0");
+    x.fillStyle="#1c1712";x.beginPath();x.ellipse(86,62,38,23,0,Math.PI,0);x.fill();
+    x.fillStyle="#17130f";x.fillRect(70,26,32,18);
+    brows(86,84,17,0);eyes(86,88,17,1);
+    x.fillStyle="#efe4c6";x.strokeStyle="#8a6a40";x.lineWidth=2;                                    // 檜扇(口元を隠す)
+    x.beginPath();x.moveTo(36,150);x.lineTo(86,102);x.lineTo(140,144);x.quadraticCurveTo(90,168,36,150);x.closePath();x.fill();x.stroke();
+    for(let i=0;i<5;i++){x.beginPath();x.moveTo(86,104);x.lineTo(48+i*22,150);x.stroke();}
+  }else if(key==="shiori"){
+    bg("#4a5a70","#232d3c");
+    x.fillStyle="#f2f5f8";x.beginPath();x.ellipse(86,170,58,42,0,Math.PI,0);x.fill();             // セーラー服
+    x.fillStyle="#3c5a80";x.beginPath();x.moveTo(50,150);x.lineTo(86,132);x.lineTo(122,150);x.lineTo(112,172);x.lineTo(60,172);x.closePath();x.fill(); // 襟
+    x.fillStyle="#b9a5e6";x.fillRect(83,146,6,14);                                                 // 薄紫のリボン
+    face(86,94,40,"#f4ddc4");
+    x.fillStyle="#241f22";x.beginPath();x.ellipse(86,66,38,26,0,Math.PI,0);x.fill();              // 前髪
+    x.fillRect(48,66,12,52);x.fillRect(112,66,12,52);                                              // ボブ
+    brows(86,88,16,-2);eyes(86,92,16,1);mouth(86,116,9,4);
+  }else if(key==="oni"){
+    bg("#3a1210","#16060a");
+    x.fillStyle="#7c1f1a";x.beginPath();x.ellipse(86,100,54,60,0,0,7);x.fill();
+    x.fillStyle="#3a0f0e";[-1,1].forEach(s=>{x.beginPath();x.moveTo(86+s*30,44);x.lineTo(86+s*46,4);x.lineTo(86+s*16,36);x.closePath();x.fill();});
+    x.fillStyle="#ffd23f";[-1,1].forEach(s=>{x.beginPath();x.ellipse(86+s*22,88,10,7,0,0,7);x.fill();});
+    x.fillStyle="#16060a";[-1,1].forEach(s=>{x.beginPath();x.arc(86+s*22,88,3.4,0,7);x.fill();});
+    x.strokeStyle="#2a0c0a";x.lineWidth=4;x.beginPath();x.moveTo(58,124);x.quadraticCurveTo(86,136,114,124);x.stroke();
+    x.fillStyle="#eadbb8";[-1,1].forEach(s=>{x.beginPath();x.moveTo(86+s*14,126);x.lineTo(86+s*20,140);x.lineTo(86+s*8,128);x.closePath();x.fill();});
+  }else{ST_FACE_CACHE[key]=null;return null;}
+  ST_FACE_CACHE[key]=c.toDataURL("image/png");
+  return ST_FACE_CACHE[key];
+}
+const ST_FACE_KEY={"小萩":"kohagi","秀頼":"hidetora","秀頼（心）":"hidetora","右近":"ukon","左大臣":"minister","判者":"judge","栞":"shiori","大鬼":"oni"};
+function stSetFace(spk){
+  const img=stEl("stFace"),box=stEl("stBox");if(!img)return;
+  const key=ST_FACE_KEY[spk],url=key?stFaceUrl(key):null;
+  if(url){img.src=url;img.style.display="block";box.classList.add("with-face");}
+  else{img.style.display="none";box.classList.remove("with-face");}
 }
 /* ---- 転換演出(波L互換・story専用要素) ---- */
 function stFade(color){
@@ -173,6 +316,9 @@ function stApplyPresentation(ev){
       if(st.ministerPossessed!=null&&S.actors.minister)S.actors.minister.setPossessed(!!st.ministerPossessed);
       if(st.erosionLevel!=null&&erosionFx)erosionFx.setLevel(st.erosionLevel);
       if(st.location==="classroom")stEnsureClassroom(); // 波O: 現代教室セット(ED演出)
+      if(st.location==="mansion"&&S.classroom){ // 教室→邸への帰還(第1話の転移)
+        window.StoryObjects.disposeGroup(S.classroom.group);S.classroom=null;
+      }
     }
   }
   if(ev.cameraAngleId)stCamera(ev.cameraAngleId);
@@ -190,17 +336,36 @@ function stCamera(id){
 function stShowDialogue(spk,text,ev){
   stEl("stBox").style.display="block";stEl("stOpts").innerHTML="";stEl("stNextWrap").style.display="";
   stEl("stSpk").textContent=spk?("— "+spk+" —"):"語り";
-  stEl("stText").textContent=text||"";
+  const te=stEl("stText");
+  te.textContent=text||"";
+  te.style.fontSize=(text&&text.length>130)?"12.5px":"14px"; // 長文は一段小さく(切れ防止)
+  te.scrollTop=0;
+  stSetFace(spk); // 立ち絵
+  const v=APP.story&&APP.story.vn;
+  if(v){v.log.push({s:spk,t:text});if(v.log.length>150)v.log.shift();v.curEv=ev;stVnSchedule(ev);}
   const actorKey=ST_SPEAKER_ACTOR[spk];
   if(actorKey&&APP.story&&APP.story.actors&&APP.story.actors[actorKey]){
     const a=APP.story.actors[actorKey];a.group.visible=true;
     if(a.pulse)a.pulse(); // 気配の間(小萩): 話す間だけ影が揺れ、紐が瞬く
   }
-  stEl("stNext").onclick=()=>{beep(600,.045,"triangle",.07);SM.goNext(ev.next);};
+  stProgRefresh();
+  stEl("stNext").onclick=()=>{beep(600,.045,"triangle",.07);
+    if(v)v.curEv=null;clearTimeout(window._stAutoT);
+    SM.goNext(ev.next);};
+}
+/* 章内の現在位置(場 x/y)をチップに出す */
+function stProgRefresh(){
+  const el=stEl("stProg");if(!el||!SM||!SM.chapter)return;
+  const seq=SM.chapter.startSequence,idx=seq.findIndex(e=>e.id===SM.currentSequenceId);
+  el.textContent=idx>=0?("場 "+(idx+1)+"/"+seq.length):"";
 }
 function stShowChoice(text,options,ev){
+  stVnStop(); // 選択肢ではオート/スキップを止める
   stEl("stBox").style.display="block";stEl("stNextWrap").style.display="none";
   stEl("stSpk").textContent="選べ";
+  stSetFace(null);
+  const v=APP.story&&APP.story.vn;if(v)v.log.push({s:"選択",t:text});
+  stProgRefresh();
   stEl("stText").textContent=text||"";
   // 波O: 破魔の連札(第5話最終3問)は3D札を眼前に浮かべ、選択と連動して光る/割れる/燃える
   const isSeal=ev&&/^seq_(508|509|510)_final_quiz/.test(ev.id||"");
@@ -234,6 +399,7 @@ function stEnsureSeals(){
   scene.add(api.group);S.sealFx=api;
 }
 function stPanel(title,bodyHtml,btns){
+  if(!/^ログ/.test(title))stVnStop(); // パネル(章メニュー/結末等)ではスキップ解除。ログは例外
   stEl("stPanelTitle").textContent=title;
   stEl("stPanelBody").innerHTML=bodyHtml;
   const host=stEl("stPanelBtns");host.innerHTML="";
@@ -283,8 +449,8 @@ function stEffect(info){
     if(typeof saigenSe==="function")saigenSe("wind");
     if(info.payload&&info.payload.text)setTimeout(()=>toast("白い短冊「"+info.payload.text+"」",3600),900);
   }else if(id==="tokoyo_glitch"&&SO){
-    const api=SO.createTokoyoGlitchProps(9);
-    api.group.position.set(30,0.2,-48);scene.add(api.group);
+    const api=SO.createTokoyoGlitchProps(24); // 常世は北の対一帯を覆う広さで
+    api.group.position.set(26,0.2,-44);scene.add(api.group);
     S.props.push({kind:"tokoyo",api});
   }else if(id==="oni_tears_misu"&&SO){
     stLightning();
@@ -298,13 +464,33 @@ function stEffect(info){
     win.rotation.x=-Math.PI/2;win.position.set(.3,0.012,.2);g.add(win);
     const win2=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.34),new THREE.MeshBasicMaterial({color:0xe8eef6,transparent:true,opacity:0,depthWrite:false}));
     win2.rotation.x=-Math.PI/2;win2.position.set(-.75,0.012,-.35);g.add(win2);
-    const fx0=-Math.sin(player.yaw),fz0=-Math.cos(player.yaw);
-    const px=player.pos.x+fx0*3.4,pz=player.pos.z+fz0*3.4;
-    g.position.set(px,(typeof groundH==="function"?groundH(px,pz):0)+0.05,pz);
+    g.position.set(-11.5,0.16,27.0); // 池の北汀の水面に固定(直前のset_sceneでプレイヤーを汀へ移す)
     g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
     scene.add(g);
     S.props.push({kind:"yarimizu",api:{group:g},t:0,mats:[dark.material,win.material,win2.material]});
     if(typeof saigenSe==="function")saigenSe("wind");
+  }else if(id==="shiori_reflection"){
+    // 波P: 澄んだ水面に浮かぶ「制服の横顔」——顔は描き込まず、月光の輪郭だけで見せる
+    const g=new THREE.Group();
+    const mk=(geoW,geoH,col,op)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(geoW,geoH),
+      new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0,depthWrite:false}));
+      m.rotation.x=-Math.PI/2;g.add(m);return m;};
+    const glow=mk(2.6,2.6,0xaec4dd,0);glow.material.userData={max:.18};              // 月光の水明かり
+    const faceOval=new THREE.Mesh(new THREE.CircleGeometry(.42,22),
+      new THREE.MeshBasicMaterial({color:0xdfe8f2,transparent:true,opacity:0,depthWrite:false}));
+    faceOval.rotation.x=-Math.PI/2;faceOval.scale.set(.72,1,1);faceOval.position.set(.1,.012,0);g.add(faceOval);
+    faceOval.material.userData={max:.35};
+    const hair=new THREE.Mesh(new THREE.RingGeometry(.34,.58,20,1,Math.PI*.7,Math.PI*.9),
+      new THREE.MeshBasicMaterial({color:0x1c2230,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
+    hair.rotation.x=-Math.PI/2;hair.position.set(.02,.014,-.05);g.add(hair);          // 短い髪の弧
+    hair.material.userData={max:.5};
+    const collar=mk(.6,.22,0xf2f5f8,0);collar.position.set(.12,.013,.42);collar.material.userData={max:.4}; // 白い襟
+    const ribbon=mk(.1,.16,0xb9a5e6,0);ribbon.position.set(.12,.015,.52);ribbon.material.userData={max:.7}; // 薄紫
+    g.position.set(-11.2,0.17,27.4);
+    g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+    scene.add(g);
+    S.props.push({kind:"shiorimirror",api:{group:g},t:0});
+    if(typeof saigenSe==="function")saigenSe("koto");
   }
   // summer_heat_haze / ending_gallery_ready は世界側の夏演出・回想UIがそのまま担う(追加なし)
 }
@@ -322,9 +508,19 @@ function stCleanupSets(){
   if(S.sealFx){SO.disposeGroup(S.sealFx.group);S.sealFx=null;}
   if(S.classroom){SO.disposeGroup(S.classroom.group);S.classroom=null;}
 }
+/* ---- 世界の住人(姫君・女房・貴公子)を物語中は隠す ---- */
+function stHideWorldFigures(on){
+  if(typeof people==="undefined")return;
+  people.forEach(p=>{
+    if(!p||!p.g)return;
+    if(on){if(p.__stVis==null)p.__stVis=p.g.visible;p.g.visible=false;}
+    else if(p.__stVis!=null){p.g.visible=p.__stVis;delete p.__stVis;}
+  });
+}
 /* ---- ミニゲーム接続 ---- */
 function stMiniGame(info){
   const S=APP.story;S.mini=info;
+  stVnStop();
   stEl("stBox").style.display="none";
   if(info.gameMode==="quiz_beginner"){
     // 既存クイズへ本接続: 対象5札の復習モード。結果画面は出さず物語へ帰す
@@ -352,9 +548,12 @@ function stMiniGame(info){
   if(info.gameMode==="taiji_kappa_story"||info.gameMode==="taiji_oni_story_final"){
     const oniFinal=info.gameMode==="taiji_oni_story_final";
     if(S.oni){window.StoryObjects.disposeGroup(S.oni.group);S.oni=null;} // 見せ大鬼は実戦と交代
+    const prevDiff=APP.taijiDifficulty;
+    if(oniFinal)APP.taijiDifficulty="hard"; // 決戦は歯応え重視(通常戦より攻撃頻度・弾数増)
     APP.storyTaiji={
       rush:[oniFinal?"autumn":"summer"], // 夏=河童の主 / 秋=大鬼(第2形態あり)
       done:(ok,hits)=>{
+        APP.taijiDifficulty=prevDiff||"normal";
         enterMode("story");
         if(ok&&oniFinal){ // 決戦後の連札の場: 封印の大鬼を見せ直す
           const api=window.StoryObjects.createGreatOniStoryObject();
@@ -432,14 +631,21 @@ function startStory(){
   stInject();
   document.body.classList.add("story-mode");
   stEl("storyHud").style.display="block";
-  if(APP.story){stDebugRefresh(SM&&SM.snapshot());return;} // ミニゲーム帰還: 再初期化しない
+  if(APP.story){ // ミニゲーム帰還: 再初期化せず、隠し直しだけ行う(垣間見等が住人の表示を戻すため)
+    stHideWorldFigures(true);
+    stDebugRefresh(SM&&SM.snapshot());
+    return;
+  }
   APP.story={props:[],collect:null,actors:null,oni:null,
+    vn:{auto:false,skip:false,log:[],curEv:null},
     prevSeason:APP.season,prevTime:APP.time,
     prevLabelMode:APP.labelMode,
     prevAutoPaused:(typeof AUTO_TIME!=="undefined")?AUTO_TIME._paused:false};
   if(typeof AUTO_TIME!=="undefined")AUTO_TIME._paused=true;
   if(typeof setLabelMode==="function")setLabelMode(0,false,true); // 名前タグは物語中は非表示
   if(typeof beacon!=="undefined")beacon.visible=false;             // 世界側の誘導・収集表示も消す
+  stHideWorldFigures(true);                                        // 姫君・女房・貴公子は物語の配役ではないので隠す
+  stVnButtons();
   stSpawnActors();
   if(!erosionFx&&window.StoryObjects)erosionFx=window.StoryObjects.createBrainErosionOverlay({}).mount();
   if(!SM){
@@ -491,6 +697,8 @@ function stExitToTitle(){
     if(typeof AUTO_TIME!=="undefined")AUTO_TIME._paused=!!S.prevAutoPaused;
     if(S.prevLabelMode!=null&&typeof setLabelMode==="function")setLabelMode(S.prevLabelMode,false,true); // 名前タグ復元
   }
+  stHideWorldFigures(false); // 姫君たちを邸へ返す
+  clearTimeout(window._stAutoT);
   if(erosionFx)erosionFx.setLevel(0);
   APP.story=null;APP.storyQuiz=null;
   document.body.classList.remove("story-mode");
@@ -525,10 +733,18 @@ function storyUpdate(dt){
       p.mats[0].opacity=.62*a;p.mats[1].opacity=.5*a*(0.7+Math.sin(t*1.8)*.3);p.mats[2].opacity=.4*a*(0.7+Math.cos(t*2.2)*.3);
       if(p.t>8){window.StoryObjects.disposeGroup(p.api.group);S.props.splice(i,1);}
     }
+    else if(p.kind==="shiorimirror"){ // 水底から浮かびあがり、揺らめいて、沈む(約10秒)
+      p.t+=dt;
+      const a=p.t<2.2?p.t/2.2:p.t<7.5?1:Math.max(0,1-(p.t-7.5)/2.5);
+      p.api.group.traverse(o=>{if(o.isMesh&&o.material.userData&&o.material.userData.max!=null)
+        o.material.opacity=o.material.userData.max*a*(0.82+Math.sin(t*1.4+o.position.x*7)*.18);});
+      p.api.group.position.y=0.17+Math.sin(t*.9)*.008; // 水面の揺らぎ
+      if(p.t>10){window.StoryObjects.disposeGroup(p.api.group);S.props.splice(i,1);}
+    }
   }
-  // 収集: 近づくだけで手に入る(タップ不要・スマホ配慮)
+  // 収集: 近づくだけで手に入る(タップ不要・スマホ配慮)。目標行に残数と最寄りの方角・距離を出す
   if(S.collect){
-    let remain=0;
+    let remain=0,nearD=Infinity,nearDx=0,nearDz=0;
     S.collect.items.forEach(it=>{
       if(it.got)return;
       if(it.api.update)it.api.update(t,dt);
@@ -540,8 +756,17 @@ function storyUpdate(dt){
         S.collect.onCollect(it.id);
         const left=S.collect?S.collect.items.filter(x=>!x.got).length:0;
         if(left>0)toast("あと "+left+" 枚",1400);
-      }else remain++;
+      }else{remain++;
+        if(d<nearD){nearD=d;nearDx=gp.x-player.pos.x;nearDz=gp.z-player.pos.z;}
+      }
     });
+    if(remain>0){
+      const dirs=["北","北東","東","南東","南","南西","西","北西"];
+      const ang=(Math.atan2(nearDx,-nearDz)+Math.PI*2)%(Math.PI*2); // 北=-z基準の八方位
+      const dir=dirs[Math.round(ang/(Math.PI/4))%8];
+      const goalEl=stEl("stGoal");
+      if(goalEl)goalEl.textContent="光る札 あと"+remain+"枚 ｜ 最寄り: "+dir+"へ "+Math.round(nearD)+"m(光の柱が目印)";
+    }
     // 解決演出(縮んで消える)の後始末
     S.collect&&S.collect.items.forEach(it=>{if(it.got&&it.api.resolved&&it.api.group.parent)window.StoryObjects.disposeGroup(it.api.group);});
   }

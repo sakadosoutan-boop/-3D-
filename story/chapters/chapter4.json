@@ -9,7 +9,11 @@
       "type": "set_scene",
       "season": "winter",
       "timeOfDay": "night",
-      "playerStart": { "x": 0.6, "z": 7.0, "yaw": 3.14 },
+      "playerStart": {
+        "x": 0.6,
+        "z": 7.0,
+        "yaw": 3.14
+      },
       "cameraAngleId": "cam_winter_utakai_hisashi",
       "fade": "black",
       "se": "gong",
@@ -26,7 +30,10 @@
       "id": "seq_402_lamp_effect",
       "type": "effect",
       "effectId": "winter_lamp_dim",
-      "payload": { "gagaku": true, "snow": true },
+      "payload": {
+        "gagaku": true,
+        "snow": true
+      },
       "next": "seq_402b"
     },
     {
@@ -83,15 +90,25 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "右近が首をすくめて三歩下がる。判者の扇が、こちらへ向いた。——始まる。",
+      "next": "seq_403f"
+    },
+    {
+      "id": "seq_403f",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「——本番の前に、そなたの心構えを試す。稽古の三問じゃ。景、心、場。歌合で問われる三つの土台を、口頭で答えてみよ」",
       "next": "seq_404_judge_intro"
     },
     {
       "id": "seq_404_judge_intro",
       "type": "dialogue",
       "speaker": "判者",
-      "text": "「一番、題は『雪』。——ただ白しと言うなかれ。見たままを言うは、報せにすぎぬ。白きものに、見えぬ心を映してこそ歌」",
+      "text": "「稽古、一の問。題は『雪』。——ただ白しと言うなかれ。見たままを言うは、報せにすぎぬ。白きものに、見えぬ心を映してこそ歌」",
       "se": "koto",
-      "stage": { "topic": "雪", "judgeFanText": "題 雪" },
+      "stage": {
+        "topic": "雪",
+        "judgeFanText": "題 雪"
+      },
       "next": "seq_405_topic_snow"
     },
     {
@@ -102,17 +119,27 @@
         {
           "text": "雪の白さに、御簾の向こうの声を重ねて詠む",
           "next": "seq_405_r1",
-          "effects": { "fantasySynchro": 8, "utakaiPrepScore": 2 }
+          "effects": {
+            "fantasySynchro": 8,
+            "utakaiPrepScore": 2
+          }
         },
         {
           "text": "庭が白くてきれいだと、素直に詠む",
           "next": "seq_405_r2",
-          "effects": { "fantasySynchro": 3, "utakaiPrepScore": 1 }
+          "effects": {
+            "fantasySynchro": 3,
+            "utakaiPrepScore": 1
+          }
         },
         {
           "text": "寒いので早く帰りたい、と詠む",
           "next": "seq_405_r3",
-          "effects": { "realityEgo": 5, "brainErosion": 4, "utakaiPrepScore": 0 }
+          "effects": {
+            "realityEgo": 5,
+            "brainErosion": 4,
+            "utakaiPrepScore": 0
+          }
         }
       ]
     },
@@ -141,9 +168,12 @@
       "id": "seq_406_topic_wait_intro",
       "type": "dialogue",
       "speaker": "判者",
-      "text": "「二番、題は『待つ』。——この世の恋は、九割が待つことでできておる。急く心は真なれど、歌は心をそのまま投げつける器にあらず」",
+      "text": "「稽古、二の問。題は『待つ』。——この世の恋は、九割が待つことでできておる。急く心は真なれど、歌は心をそのまま投げつける器にあらず」",
       "se": "koto",
-      "stage": { "topic": "待つ", "judgeFanText": "題 待" },
+      "stage": {
+        "topic": "待つ",
+        "judgeFanText": "題 待"
+      },
       "next": "seq_407_topic_wait"
     },
     {
@@ -154,17 +184,27 @@
         {
           "text": "待つ時間そのものを、月の移ろいとして詠む",
           "next": "seq_407_r1",
-          "effects": { "fantasySynchro": 7, "utakaiPrepScore2": 2 }
+          "effects": {
+            "fantasySynchro": 7,
+            "utakaiPrepScore2": 2
+          }
         },
         {
           "text": "なぜ来ないのかと、相手を責めて詠む",
           "next": "seq_407_r2",
-          "effects": { "brainErosion": 10, "utakaiPrepScore2": 0 }
+          "effects": {
+            "brainErosion": 10,
+            "utakaiPrepScore2": 0
+          }
         },
         {
           "text": "会いたい心は隠さず、季節の景に預けて詠む",
           "next": "seq_407_r3",
-          "effects": { "realityEgo": 4, "fantasySynchro": 6, "utakaiPrepScore2": 2 }
+          "effects": {
+            "realityEgo": 4,
+            "fantasySynchro": 6,
+            "utakaiPrepScore2": 2
+          }
         }
       ]
     },
@@ -193,9 +233,12 @@
       "id": "seq_408_topic_return_intro",
       "type": "dialogue",
       "speaker": "判者",
-      "text": "「三番、題は——『帰る』」",
+      "text": "「稽古、三の問。題は——『帰る』」",
       "se": "koto",
-      "stage": { "topic": "帰る", "judgeFanText": "題 帰" },
+      "stage": {
+        "topic": "帰る",
+        "judgeFanText": "題 帰"
+      },
       "next": "seq_408b"
     },
     {
@@ -213,18 +256,30 @@
         {
           "text": "帰る朝だけを、まっすぐに願う歌",
           "next": "seq_409_r1",
-          "effects": { "realityEgo": 12, "utakaiReturnTone": 1 }
+          "effects": {
+            "realityEgo": 12,
+            "utakaiReturnTone": 1
+          }
         },
         {
           "text": "帰らぬ夢だけを、ひたすらに願う歌",
           "next": "seq_409_r2",
-          "effects": { "fantasySynchro": 14, "utakaiReturnTone": 2 }
+          "effects": {
+            "fantasySynchro": 14,
+            "utakaiReturnTone": 2
+          }
         },
         {
           "text": "帰る袖にも、残る香がある——と詠む歌",
           "next": "seq_409_r3",
-          "effects": { "realityEgo": 8, "fantasySynchro": 8, "utakaiReturnTone": 3 },
-          "setFlag": { "balancedReturnPoem": true }
+          "effects": {
+            "realityEgo": 8,
+            "fantasySynchro": 8,
+            "utakaiReturnTone": 3
+          },
+          "setFlag": {
+            "balancedReturnPoem": true
+          }
         }
       ]
     },
@@ -233,20 +288,28 @@
       "type": "dialogue",
       "speaker": "判者",
       "text": "「……まっすぐな歌じゃ。帰心、矢の如し。だが問おう。帰った朝、そなたの袖に、この邸の香は一片も残らぬのか。——それは少し、寂しい歌よの」",
-      "next": "seq_410_trigger_utakai"
+      "next": "seq_409z"
     },
     {
       "id": "seq_409_r2",
       "type": "dialogue",
       "speaker": "判者",
       "text": "「美しい。……美しいが、危うい。夢だけを願う歌は、夢に願われ返すもの。——若君。その歌、誰の声で詠んだ。おのれの声か、それとも」",
-      "next": "seq_410_trigger_utakai"
+      "next": "seq_409z"
     },
     {
       "id": "seq_409_r3",
       "type": "dialogue",
       "speaker": "判者",
       "text": "「——勝ち。帰ることと、忘れぬこと。ふたつを一首に抱えたか。矛盾を捨てずに言葉へ結ぶ、それを人は成熟と呼ぶ。……見事」",
+      "next": "seq_409z"
+    },
+    {
+      "id": "seq_409z",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「稽古、これまで。よい耳と、よい心得じゃ。——さあ、これより本番。そなたは左方の詠み手。手札の短冊から、題と場にかなう一首を番ごとに選び、右方と競うのじゃ。三番のうち二番、取ってみせよ」",
+      "se": "gong",
       "next": "seq_410_trigger_utakai"
     },
     {
@@ -259,8 +322,15 @@
         "storyTheme": "return",
         "judgeExplains": true
       },
-      "successEffects": { "fantasySynchro": 10, "brainErosion": -5, "utakaiWon": true },
-      "failEffects": { "brainErosion": 25, "chapter4Lost": true },
+      "successEffects": {
+        "fantasySynchro": 10,
+        "brainErosion": -5,
+        "utakaiWon": true
+      },
+      "failEffects": {
+        "brainErosion": 25,
+        "chapter4Lost": true
+      },
       "successNext": "seq_411_win",
       "failNext": "seq_412_lose_ed3"
     },
@@ -284,7 +354,10 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "御簾の内で、深く頭を下げる気配がした。彼女がそんなふうに礼をするのを、初めて感じた。そして——簾と灯の加減か、一瞬。垂れ髪の影に重なって、短い髪と、制服の襟の影が、透けた。瞬きの間に、それは消えた。",
-      "setFlag": { "utakaiWon": true, "chapter4Cleared": true },
+      "setFlag": {
+        "utakaiWon": true,
+        "chapter4Cleared": true
+      },
       "next": "seq_411d"
     },
     {
