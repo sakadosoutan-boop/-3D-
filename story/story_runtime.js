@@ -52,13 +52,18 @@ function stInject(){
     "#storyFade.white{background:#f2ead8}",
     "#storyFade.show{opacity:1;transition:opacity 0s}",
     "#storyFade.quick{transition:opacity .12s ease}",
-    "body.story-mode #modeBrief{display:none}"
+    "body.story-mode #modeBrief{display:none}",
+    /* 物語中は既存トップバーを隠し、章チップ+✕の専用バーだけにする(被り解消) */
+    "body.story-mode #topbar{display:none!important}",
+    "body.story-mode #worldStatusBar{display:none!important}",
+    "#storyHud .st-chip{flex-direction:column;display:flex;align-items:center}",
+    "#storyHud .st-chip .st-goal{display:block;font-size:10px;color:#b9a888;font-family:var(--sans);letter-spacing:.04em;margin-top:1px}"
   ].join("\n");
   const st=document.createElement("style");st.id="storyCss";st.textContent=css;document.head.appendChild(st);
   let hud=stEl("storyHud");
   if(!hud){hud=document.createElement("div");hud.id="storyHud";document.body.appendChild(hud);}
   hud.innerHTML=
-    '<div class="st-chip"><span id="stChTitle">物語</span><small id="stDebug"></small></div>'+
+    '<div class="st-chip"><span><span id="stChTitle">物語</span><small id="stDebug"></small></span><span class="st-goal" id="stGoal"></span></div>'+
     '<button id="stQuit" title="物語を閉じる">✕</button>'+
     '<div class="st-box" id="stBox"><div class="st-spk" id="stSpk"></div><div class="st-text" id="stText"></div>'+
     '<div class="st-next" id="stNextWrap"><button id="stNext">つぎへ ▶</button></div><div class="st-opts" id="stOpts"></div></div>'+
@@ -83,17 +88,68 @@ function stLightning(){
   window._stFadeT=setTimeout(()=>{el.classList.add("show");setTimeout(()=>el.classList.remove("show"),70);},230);
   if(typeof saigenSe==="function")saigenSe("thunder");
 }
-/* ---- 登場人物(StoryObjects) ---- */
+/* ---- 登場人物(StoryObjects) ----
+   ■ 小萩は「決して姿を見せない」。立ち姿モデルは置かず、母屋南端に
+     御簾+三方几帳の「気配の間」を建て、簾越しの座り影と薄紫の紐の光だけで存在を示す。
+     背面・側面は不透明の几帳なので、どの角度から回り込んでも中は見えない。 */
+function stKohagiStation(){
+  const g=new THREE.Group();
+  const kichoMat=new THREE.MeshStandardMaterial({color:0x6e3348,roughness:.86,side:THREE.DoubleSide});
+  const kichoTop=new THREE.MeshStandardMaterial({color:0x4a3722,roughness:.8});
+  // 前面: 御簾(既製の境界エフェクトを流用。connectで裾がほのかに光る)
+  const misu=window.StoryObjects.createMisuBoundaryEffect(4.2,2.25);misu.setMood("veil");
+  misu.group.position.z=1.18;g.add(misu.group);
+  // 背面+側面: 不透明の几帳(回り込み対策)。上に横木
+  const back=new THREE.Mesh(new THREE.PlaneGeometry(4.2,2.2),kichoMat);back.position.set(0,1.1,-0.62);g.add(back);
+  [-1,1].forEach(s=>{const side=new THREE.Mesh(new THREE.PlaneGeometry(1.9,2.2),kichoMat);
+    side.rotation.y=Math.PI/2;side.position.set(s*2.08,1.1,0.28);g.add(side);
+    const bar=new THREE.Mesh(new THREE.BoxGeometry(.08,.1,1.95),kichoTop);bar.position.set(s*2.08,2.22,0.28);g.add(bar);});
+  const backBar=new THREE.Mesh(new THREE.BoxGeometry(4.3,.1,.08),kichoTop);backBar.position.set(0,2.22,-0.62);g.add(backBar);
+  // 簾越しの座り影(黒に近い、輪郭だけの人形)。misuの奥 z=0.3
+  const silMat=new THREE.MeshBasicMaterial({color:0x1d1420,transparent:true,opacity:.5});
+  const sil=new THREE.Group();
+  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.34,.58,.62,12),silMat);skirt.position.y=.31;sil.add(skirt);
+  const torso=new THREE.Mesh(new THREE.CylinderGeometry(.24,.33,.62,10),silMat);torso.position.y=.82;sil.add(torso);
+  const head=new THREE.Mesh(new THREE.SphereGeometry(.16,10,8),silMat);head.position.y=1.28;sil.add(head);
+  const hair=new THREE.Mesh(new THREE.BoxGeometry(.26,.72,.08),silMat);hair.position.set(0,.92,-.14);sil.add(hair);
+  sil.position.set(0,0,0.30);g.add(sil);
+  // 袖口の薄紫の紐(簾越しにこれだけ、ほんのり見える)
+  const cordMat=new THREE.MeshBasicMaterial({color:0xb9a5e6,transparent:true,opacity:.85});
+  const cord=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),cordMat);cord.position.set(.42,.72,.55);g.add(cord);
+  g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+  g.position.set(0.6,1.30,0.55); // 母屋南端の内側(南縁z=1.8のすぐ内)
+  g.visible=false;scene.add(g);
+  let ghost=0,pulseT=0;
+  return {
+    group:g,
+    /* 話す時のさざめき(影がわずかに揺れ、紐が瞬く) */
+    pulse(){pulseT=performance.now()+1600;},
+    /* 0=小萩 → 1=栞(影が青白く、制服の淡色へ)。shioriGhostフィールド互換名 */
+    setShioriGhost(v){ghost=Math.max(0,Math.min(1,v));
+      silMat.color.setHex(ghost>0.15?0x5a6478:0x1d1420);
+      silMat.opacity=.5-ghost*.12;
+      cordMat.opacity=.85;cord.scale.setScalar(1+ghost*.8);},
+    update(t){
+      const talking=performance.now()<pulseT;
+      sil.position.y=Math.sin(t*1.05)*.012+(talking?Math.abs(Math.sin(t*7))*.015:0);
+      sil.rotation.z=Math.sin(t*.7)*.012;
+      cordMat.opacity=.6+Math.sin(t*(talking?6:1.6))*.3;
+      misu.update(t);
+    },
+    setExpression(){}, // 互換(表情は影ゆえ持たない)
+    setMood(m){misu.setMood(m);}
+  };
+}
 function stSpawnActors(){
   const S=APP.story;if(S.actors)return;
   const SO=window.StoryObjects;if(!SO)return;
   const mk=(api,x,y,z,yaw)=>{api.group.position.set(x,y,z);api.group.rotation.y=yaw;api.group.userData.baseY=y;
     api.group.visible=false;scene.add(api.group);return api;};
   S.actors={
-    kohagi:  mk(SO.createStoryKohagiObject(), -0.6,1.30,-1.6, 0.40),
+    kohagi:  stKohagiStation(), // 気配の間(姿は決して見せない)
     ukon:    mk(SO.createStoryUkonObject(),    1.9,1.20, 4.3,-2.60),
-    minister:mk(SO.createMinisterObject(),     2.0,1.30,-2.2, 0.15),
-    judge:   mk(SO.createUtakaiJudgeObject(),  0.0,1.30,-1.9, 0.0)
+    minister:mk(SO.createMinisterObject(),     2.6,1.30,-2.2, 0.15),
+    judge:   mk(SO.createUtakaiJudgeObject(),  -1.6,1.30,-1.9, 0.0)
   };
 }
 const ST_SPEAKER_ACTOR={ "小萩":"kohagi","右近":"ukon","左大臣":"minister","判者":"judge" };
@@ -135,7 +191,10 @@ function stShowDialogue(spk,text,ev){
   stEl("stSpk").textContent=spk?("— "+spk+" —"):"語り";
   stEl("stText").textContent=text||"";
   const actorKey=ST_SPEAKER_ACTOR[spk];
-  if(actorKey&&APP.story&&APP.story.actors&&APP.story.actors[actorKey])APP.story.actors[actorKey].group.visible=true;
+  if(actorKey&&APP.story&&APP.story.actors&&APP.story.actors[actorKey]){
+    const a=APP.story.actors[actorKey];a.group.visible=true;
+    if(a.pulse)a.pulse(); // 気配の間(小萩): 話す間だけ影が揺れ、紐が瞬く
+  }
   stEl("stNext").onclick=()=>{beep(600,.045,"triangle",.07);SM.goNext(ev.next);};
 }
 function stShowChoice(text,options){
@@ -171,6 +230,10 @@ function stSpawnCollectibles(info){
     const api=(info.kind==="waka_tanzaku")?SO.createWakaTanzakuObject(p.label||""):SO.createTermCardObject(p.label||"");
     const y=(typeof groundH==="function"?groundH(p.x,p.z):0)+1.05;
     api.group.position.set(p.x,y,p.z);api.group.userData.baseY=y;api.group.userData.ph=Math.random()*6;
+    // 発見用の光柱(遠くからでも札の在処が分かる)
+    const pil=new THREE.Mesh(new THREE.CylinderGeometry(.22,.55,8,10,1,true),
+      new THREE.MeshBasicMaterial({color:0xffe9a8,transparent:true,opacity:.16,side:THREE.DoubleSide,depthWrite:false}));
+    pil.position.y=3.4;api.group.add(pil);api.group.userData.pillar=pil;
     scene.add(api.group);
     return {id:p.id,api,got:false};
   });
@@ -274,8 +337,11 @@ function startStory(){
   if(APP.story){stDebugRefresh(SM&&SM.snapshot());return;} // ミニゲーム帰還: 再初期化しない
   APP.story={props:[],collect:null,actors:null,oni:null,
     prevSeason:APP.season,prevTime:APP.time,
+    prevLabelMode:APP.labelMode,
     prevAutoPaused:(typeof AUTO_TIME!=="undefined")?AUTO_TIME._paused:false};
   if(typeof AUTO_TIME!=="undefined")AUTO_TIME._paused=true;
+  if(typeof setLabelMode==="function")setLabelMode(0,false,true); // 名前タグは物語中は非表示
+  if(typeof beacon!=="undefined")beacon.visible=false;             // 世界側の誘導・収集表示も消す
   stSpawnActors();
   if(!erosionFx&&window.StoryObjects)erosionFx=window.StoryObjects.createBrainErosionOverlay({}).mount();
   if(!SM){
@@ -307,9 +373,13 @@ function startStory(){
       onError:(e)=>{console.error("[story]",e);}
     }});
   }
-  const man=(window.STORY_EMBED&&STORY_EMBED.manifest&&STORY_EMBED.manifest.chapters&&STORY_EMBED.manifest.chapters[0])||null;
   stEl("stChTitle").textContent="御簾の向こうへ";
-  SM.hooks.onChapterLoaded=(ch)=>{stEl("stChTitle").textContent="第"+ch.chapterId+"話 "+ch.chapterTitle;};
+  SM.hooks.onChapterLoaded=(ch)=>{
+    stEl("stChTitle").textContent="第"+ch.chapterId+"話 "+ch.chapterTitle;
+    const man=(window.STORY_EMBED&&STORY_EMBED.manifest&&STORY_EMBED.manifest.chapters)||[];
+    const ent=man.find(c=>c.chapterId===ch.chapterId);
+    const goalEl=stEl("stGoal");if(goalEl)goalEl.textContent=ent&&ent.clearCondition?("目標: "+ent.clearCondition):"";
+  };
   stChapterMenu();
 }
 function stExitToTitle(){
@@ -322,6 +392,7 @@ function stExitToTitle(){
     if(S.prevSeason&&typeof applySeason==="function"&&S.prevSeason!==APP.season)applySeason(S.prevSeason);
     if(S.prevTime&&typeof setTime==="function"&&S.prevTime!==APP.time)setTime(S.prevTime);
     if(typeof AUTO_TIME!=="undefined")AUTO_TIME._paused=!!S.prevAutoPaused;
+    if(S.prevLabelMode!=null&&typeof setLabelMode==="function")setLabelMode(S.prevLabelMode,false,true); // 名前タグ復元
   }
   if(erosionFx)erosionFx.setLevel(0);
   APP.story=null;APP.storyQuiz=null;
@@ -355,7 +426,8 @@ function storyUpdate(dt){
       if(it.got)return;
       if(it.api.update)it.api.update(t,dt);
       const gp=it.api.group.position,d=Math.hypot(gp.x-player.pos.x,gp.z-player.pos.z);
-      if(d<1.5){it.got=true;
+      if(d<2.2){it.got=true;
+        if(it.api.group.userData.pillar)it.api.group.userData.pillar.visible=false;
         if(it.api.resolve)it.api.resolve();else it.api.group.visible=false;
         beep(880,.07,"triangle",.09);beep(1320,.09,"sine",.05);
         S.collect.onCollect(it.id);

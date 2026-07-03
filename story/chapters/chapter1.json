@@ -10,55 +10,94 @@
       "season": "spring",
       "timeOfDay": "morning",
       "playerStart": { "x": 0.2, "z": 4.8, "yaw": 3.14 },
-      "cameraAngleId": "cam_main_house_inside",
+      "cameraAngleId": "cam_ch1_low_floor",
       "fade": "black",
+      "next": "seq_001b"
+    },
+    {
+      "id": "seq_001b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "——五時間目、古典。窓際の席で、芹沢秀頼はノートに落書きをしていた。「母屋？　廂？　ぜんぶ部屋でよくない？」。隣の席から細い手が伸びて、間違えた「御簾」の字を、黙って直していった。",
+      "next": "seq_001c"
+    },
+    {
+      "id": "seq_001c",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "礼を言おうとして顔を上げた、その時。チャイムの音が、遠く、水の中で鳴るように歪んだ。黒板の寝殿造りの図が、ぬるりと奥行きを持つ。蛍光灯の白い光が——春の、朝の光に変わった。",
+      "se": "wind",
+      "next": "seq_001d"
+    },
+    {
+      "id": "seq_001d",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "「……は？」",
+      "next": "seq_001e"
+    },
+    {
+      "id": "seq_001e",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "板張りの床。頬に当たる、ひやりとした木の感触。見たこともない装束が、自分の体を包んでいる。立ち上がろうとした拍子に、頭から黒い冠がずり落ちた。どこかで、女たちの忍び笑い。衣擦れの音が、さらさらと近づいてくる。",
+      "se": "bell",
       "next": "seq_002"
     },
     {
       "id": "seq_002",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "これ、秀頼様。あな、見苦し。まずはその歩き方から直されよ。",
-      "cameraAngleId": "cam_main_house_inside",
-      "se": "bell",
-      "emotes": { "kohagi": "stern" },
+      "text": "「これ、秀頼様。あな、見苦し。御前で冠を落とすなど……まずは、その歩き方から直されませ」",
+      "cameraAngleId": "cam_ch1_misu_gap",
+      "next": "seq_002a"
+    },
+    {
+      "id": "seq_002a",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "声は、目の前の御簾の内から降ってきた。簾越しに、人の輪郭がほのかに透ける。若い女性——らしい。顔は、見えない。ただ、袖口に結ばれた薄紫の紐だけが、簾の下からわずかに覗いていた。",
       "next": "seq_002b"
     },
     {
       "id": "seq_002b",
       "type": "dialogue",
       "speaker": "秀頼",
-      "text": "……は？ 歩き方って——いや、待て。なんであんた、俺の名前を知ってるんだ。",
-      "cameraAngleId": "cam_ch1_low_floor",
-      "emotes": { "hidetora": "surprise" },
+      "text": "「……歩き方って。いや、待て。なんであんた、俺の名前を知ってるんだ」",
       "next": "seq_002c"
     },
     {
       "id": "seq_002c",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "名は、呼ぶものではなく、呼ばれるものにございます。……さ、背を伸ばされませ、若君。",
-      "emotes": { "kohagi": "neutral" },
+      "text": "「名は、呼ぶものではなく——呼ばれるものにございます。さ、背を伸ばされませ、若君」",
       "setFlag": { "kohagiKnewName": true },
+      "next": "seq_002d"
+    },
+    {
+      "id": "seq_002d",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（はぐらかされた。……夢か？　夢にしては、床が冷たすぎる。装束が重すぎる。そして、この簾の向こうの声は——なぜか、聞き覚えがある気がする）",
       "next": "seq_003"
     },
     {
       "id": "seq_003",
       "type": "choice",
-      "text": "（どうする…？）",
+      "text": "御簾の向こうの気配が、じっとこちらを見ている。……どうする？",
       "options": [
         {
-          "text": "ここはどこだ？と激しく問い詰める",
+          "text": "「ここはどこだ！」と激しく問い詰める",
           "next": "seq_004_rational",
           "effects": { "realityEgo": 10, "fantasySynchro": 0, "brainErosion": 5 }
         },
         {
-          "text": "御簾の向こうの気配に静かに平伏する",
+          "text": "御簾の向こうの気配に、静かに膝をつく",
           "next": "seq_004_miyabi",
           "effects": { "realityEgo": 0, "fantasySynchro": 15, "brainErosion": 0 }
         },
         {
-          "text": "まず出口と人の配置を静かに確認する",
+          "text": "まず出口と人の配置を、静かに確認する",
           "next": "seq_004_observe",
           "effects": { "realityEgo": 6, "fantasySynchro": 3, "brainErosion": 0 }
         }
@@ -68,24 +107,74 @@
       "id": "seq_004_rational",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "声を荒らぐるは、下衆のふるまひ。ここでは、まず目を伏せるものにて候。",
+      "text": "「声を荒らぐるは、下衆のふるまい。ここでは、問いはまず、目を伏せてから口にするものにて候」",
       "effects": { "brainErosion": 4 },
-      "next": "seq_005_quiz"
+      "next": "seq_004_rational2"
+    },
+    {
+      "id": "seq_004_rational2",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "簾の内の気配が、半歩、遠のいた気がした。頭の芯が、きん、と細く鳴る。——この世界で乱暴に振る舞うと、何かが削れていく。そんな予感がした。",
+      "next": "seq_004c"
     },
     {
       "id": "seq_004_miyabi",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "よろし。御簾の内外を知ること、それがこの邸で生きる第一歩にございます。",
+      "text": "「……よろし。見えぬ相手にまず礼を尽くすこと。それがこの邸で生きる、第一歩にございます」",
       "effects": { "fantasySynchro": 5 },
-      "next": "seq_005_quiz"
+      "next": "seq_004_miyabi2"
+    },
+    {
+      "id": "seq_004_miyabi2",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "簾越しの声が、ほんの少しだけ柔らかくなった。ふしぎと悪い気はしなかった。膝をついた床の冷たさまで、なにかの作法の一部であるような気がした。",
+      "next": "seq_004c"
     },
     {
       "id": "seq_004_observe",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "逃げ道を見る目に、場を荒らさぬ慎みが添えばよろし。廂と母屋、その境から覚えましょう。",
+      "text": "「……逃げ道を探す目に、場を荒らさぬ慎みが添うておりますな。よい目にございます。廂（ひさし）と母屋（もや）、その境から覚えましょう」",
       "effects": { "realityEgo": 2, "fantasySynchro": 3 },
+      "next": "seq_004c"
+    },
+    {
+      "id": "seq_004c",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「よろしいか、若君。この邸は、名で出来ております。あなたの後ろの吹き放ちが簀子（すのこ）。一段上がった板敷が廂。そしてわたくしがいる、この几帳と御簾の内が——母屋にございます」",
+      "next": "seq_004d"
+    },
+    {
+      "id": "seq_004d",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「御簾は、壁にあらず。見ぬまま相手を思うための、薄き約束。几帳は、風と視線をやわらげる衝立。名を知れば、この邸はあなたを迷わせませぬ」",
+      "effects": { "fantasySynchro": 3 },
+      "next": "seq_004e"
+    },
+    {
+      "id": "seq_004e",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "「壁じゃないなら、なおさら厄介だな。……見えないのに、そこにいるのが分かるんだから」",
+      "next": "seq_004f"
+    },
+    {
+      "id": "seq_004f",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「厄介と思えるなら、まだ帰れましょう。——さて」",
+      "next": "seq_005_intro"
+    },
+    {
+      "id": "seq_005_intro",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「名を知らぬものには、触れてはなりませぬ。それがこの邸の掟。……試しましょう。半蔀、御簾、几帳、廂、母屋。今の五つ、邸の中から探してごらんなさいませ」",
       "next": "seq_005_quiz"
     },
     {
@@ -98,31 +187,20 @@
       },
       "successEffects": { "realityEgo": 3, "fantasySynchro": 5, "brainErosion": -3 },
       "failEffects": { "brainErosion": 18 },
-      "successNext": "seq_006_voice",
+      "successNext": "seq_005_after",
       "failNext": "seq_retry_or_ed5"
     },
     {
-      "id": "seq_006_voice",
-      "type": "dialogue",
-      "speaker": "御簾の向こうの声",
-      "text": "——せりざわくん。",
-      "cameraAngleId": "cam_ch1_misu_gap",
-      "se": "wind",
-      "setFlag": { "heardRealName": true },
-      "next": "seq_007_kohagi_deny"
-    },
-    {
-      "id": "seq_007_kohagi_deny",
+      "id": "seq_retry_or_ed5",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "……風の音にございましょう。今のは、どなたの名でもありませぬ。",
-      "emotes": { "kohagi": "sad" },
-      "next": "seq_clear"
+      "text": "「……名を違えるたび、あなたの輪郭が、少し薄くなっております。お気づきですか」",
+      "next": "seq_retry_choice"
     },
     {
-      "id": "seq_retry_or_ed5",
+      "id": "seq_retry_choice",
       "type": "choice",
-      "text": "小萩は眉をひそめた。もう一度、建具の名を学び直すか。",
+      "text": "たしかに指先が、一瞬、向こう側の景色に透けた——気がした。もう一度、建具の名を学び直すか。",
       "options": [
         {
           "text": "学び直す",
@@ -130,7 +208,7 @@
           "effects": { "realityEgo": 2, "brainErosion": 4 }
         },
         {
-          "text": "もう十分だと言い張る",
+          "text": "「もう十分だ」と言い張る",
           "next": "seq_bad_manners",
           "effects": { "realityEgo": 8, "brainErosion": 12 }
         }
@@ -140,16 +218,67 @@
       "id": "seq_bad_manners",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "ならば、その『十分』が通じぬ世にて、ひとり立ってみるがよい。",
-      "emotes": { "kohagi": "stern" },
+      "text": "「ならば、その『十分』が通じぬ世にて、ひとり立ってみるがよい。——言葉は呪いにも、救いにもなりまする。今日のあなたの言葉は、前者でした」",
       "setFlag": { "skippedLessons": true },
+      "next": "seq_clear_pre"
+    },
+    {
+      "id": "seq_005_after",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……お見事。名を正しく呼ぶ声は、この邸では灯りと同じ。あなたの周りが、少し明るくなりました」",
+      "next": "seq_005_after2"
+    },
+    {
+      "id": "seq_005_after2",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（覚えただけだ。覚えただけ、なのに——名前を呼んだ場所が、さっきより「そこにある」と分かる。教科書の図が、初めて建物になった、みたいな）",
+      "next": "seq_006_voice"
+    },
+    {
+      "id": "seq_006_voice",
+      "type": "dialogue",
+      "speaker": "御簾の向こうの声",
+      "text": "「——せりざわくん」",
+      "cameraAngleId": "cam_ch1_misu_gap",
+      "se": "wind",
+      "setFlag": { "heardRealName": true },
+      "next": "seq_006b"
+    },
+    {
+      "id": "seq_006b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "たしかに、聞こえた。現代の、教室の呼び方で。振り返っても、簾は静かに垂れたまま。遠くで、チャイムに似た音が一度だけ鳴って、春の風に溶けた。",
+      "next": "seq_007_kohagi_deny"
+    },
+    {
+      "id": "seq_007_kohagi_deny",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……風の音にございましょう。今のは、どなたの名でも、ありませぬ」",
+      "next": "seq_007b"
+    },
+    {
+      "id": "seq_007b",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（嘘だ。今、この人は——聞こえなかったふりをした。声が、ほんの少し震えていた）",
+      "next": "seq_clear_pre"
+    },
+    {
+      "id": "seq_clear_pre",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「今日はここまでにいたしましょう。……秀頼様。この邸で迷われたら、覚えた名を、声に出してごらんなさいませ。名は、迷わぬための灯にございますから」",
       "next": "seq_clear"
     },
     {
       "id": "seq_clear",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "春の朝、秀頼は御簾の向こうにいる誰かの息遣いを、はじめて物語として聞いた。",
+      "text": "春の朝。桜の影が床板の上を流れ、遠くで白い鳥が——この内陸の邸にいるはずのない、カモメが一声鳴いた。秀頼は御簾の向こうにいる誰かの息遣いを、はじめて「物語」としてではなく、隣にいる人の気配として聞いた。",
       "setFlag": { "chapter1Cleared": true },
       "next": "chapter_complete"
     }

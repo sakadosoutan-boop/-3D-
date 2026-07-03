@@ -9,30 +9,52 @@
       "type": "set_scene",
       "season": "autumn",
       "timeOfDay": "dusk",
-      "playerStart": {
-        "x": -3.8,
-        "z": 1.4,
-        "yaw": 0.8
-      },
+      "playerStart": { "x": -3.8, "z": 8.4, "yaw": 0.8 },
       "cameraAngleId": "cam_autumn_south_garden",
-      "next": "seq_302_kaimami_intro",
-      "fade": "black"
+      "fade": "black",
+      "next": "seq_301b"
+    },
+    {
+      "id": "seq_301b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "秋。西日が邸を橙に染め、萩がこぼれ、薄の穂が同じ方向へなびいている。虫の声が、庭の底に敷き詰められている。——夕暮れは、この邸がいちばん美しく、いちばん危うくなる時刻らしい。空気がそう言っていた。",
+      "next": "seq_302_kaimami_intro"
     },
     {
       "id": "seq_302_kaimami_intro",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "今宵は、見てはならぬものほど見たくなる刻。見えぬまま覚えることも、礼にございます。",
-      "effects": {
-        "fantasySynchro": 3
-      },
+      "text": "「今宵は——見てはならぬものほど、見たくなる刻にございます」",
+      "effects": { "fantasySynchro": 3 },
+      "next": "seq_302b"
+    },
+    {
+      "id": "seq_302b",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「東の対に、さる姫君が滞在しておいでです。垣間見（かいまみ）という言葉は、ご存じですか。物の隙間から、見えぬはずの人を見ること。……この世の恋物語は、たいていそこから始まります」",
+      "next": "seq_302c"
+    },
+    {
+      "id": "seq_302c",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "「覗きじゃないのか、それ」",
+      "next": "seq_302d"
+    },
+    {
+      "id": "seq_302d",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……よい問いです。ならば申しましょう。見ることと、暴くことは違います。姿を見ても、心は見えませぬ。今宵あなたが試されるのは、目の慎みのほう。——見えぬまま覚えることも、礼にございます」",
       "next": "seq_303_ukon_joke"
     },
     {
       "id": "seq_303_ukon_joke",
       "type": "dialogue",
       "speaker": "右近",
-      "text": "若君、首を伸ばしすぎれば恋より先に首が落ちますぞ。高欄から半歩、下がられよ。",
+      "text": "「若君、念のため。首を伸ばしすぎれば、恋より先に首が落ちますぞ。高欄から半歩、お下がりなされ。——それと、姫君の顔を見ようなどとは、ゆめゆめ」",
       "next": "seq_304_trigger_kaimami"
     },
     {
@@ -41,50 +63,33 @@
       "gameMode": "kaimami_story",
       "payload": {
         "focusGauge": "bottom_center",
-        "targets": [
-          "衣の色目",
-          "扇の模様",
-          "香の煙",
-          "筆跡"
-        ],
+        "targets": ["衣の色目", "扇の模様", "香の煙", "筆跡"],
         "avoidDirectFace": true
       },
-      "successEffects": {
-        "fantasySynchro": 8,
-        "brainErosion": -2
-      },
-      "failEffects": {
-        "brainErosion": 14
-      },
+      "successEffects": { "fantasySynchro": 8, "brainErosion": -2 },
+      "failEffects": { "brainErosion": 14 },
       "successNext": "seq_305_observation_choice",
       "failNext": "seq_305_observation_choice"
     },
     {
       "id": "seq_305_observation_choice",
       "type": "choice",
-      "text": "あなたは、何を見たことにする？",
+      "text": "夕闇の中、御簾の奥に灯がともる。几帳の隙間、袖の色、香の煙——。あなたは、何を見たことにする？",
       "options": [
         {
-          "text": "顔立ちを覚えた",
+          "text": "「顔立ちを覚えた」",
           "next": "seq_306_face_warning",
-          "effects": {
-            "brainErosion": 12
-          }
+          "effects": { "brainErosion": 12 }
         },
         {
-          "text": "扇の模様と香の気配を覚えた",
+          "text": "「扇の模様と、香の気配を覚えた」",
           "next": "seq_306_graceful",
-          "effects": {
-            "fantasySynchro": 10
-          }
+          "effects": { "fantasySynchro": 10 }
         },
         {
-          "text": "見えなかったことを、そのまま覚えた",
+          "text": "「見えなかったことを、そのまま覚えた」",
           "next": "seq_306_true_observe",
-          "effects": {
-            "realityEgo": 5,
-            "fantasySynchro": 8
-          }
+          "effects": { "realityEgo": 5, "fantasySynchro": 8 }
         }
       ]
     },
@@ -92,24 +97,36 @@
       "id": "seq_306_face_warning",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "見たものを語るほど、見えぬ心から遠ざかります。恋は、目の勝ち負けではございませぬ。",
-      "next": "seq_307_spawn_waka"
+      "text": "「……見たものを語るほど、見えぬ心からは遠ざかります。恋は、目の勝ち負けではございませぬ。——それに」",
+      "next": "seq_306_face_warning2"
+    },
+    {
+      "id": "seq_306_face_warning2",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「見た、と言い張る口は——水底の主に、いちばん狙われまする」",
+      "next": "seq_307_waka_intro"
     },
     {
       "id": "seq_306_graceful",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "よろし。扇と香は、姿を暴かず心へ届く道しるべにございます。",
-      "next": "seq_307_spawn_waka"
+      "text": "「よろし。扇と香は、姿を暴かずに心へ届く道しるべ。あなたの目は、今宵、貴族の目にございました」",
+      "next": "seq_307_waka_intro"
     },
     {
       "id": "seq_306_true_observe",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "見えなかったと申せる勇気こそ、今宵の月に近うございます。",
-      "setFlag": {
-        "respectfulKaimami": true
-      },
+      "text": "「……『見えなかった』と、そのまま申せる勇気。それは、今宵の月にいちばん近い答えにございます。見えぬものを見えぬまま抱えること——歌は、そこから生まれまするゆえ」",
+      "setFlag": { "respectfulKaimami": true },
+      "next": "seq_307_waka_intro"
+    },
+    {
+      "id": "seq_307_waka_intro",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「さて。見たからには、返さねばなりませぬ。姿ではなく、歌を。——おや、ちょうどよい風。庭に、詞（ことば）の短冊が舞い散りました。五枚、集めてごらんなさいませ。あなたの返歌の材料になりましょう」",
       "next": "seq_307_spawn_waka"
     },
     {
@@ -119,36 +136,11 @@
       "kind": "waka_tanzaku",
       "count": 5,
       "positions": [
-        {
-          "id": "autumn",
-          "label": "秋",
-          "x": -2.4,
-          "z": -2.2
-        },
-        {
-          "id": "mist",
-          "label": "霧",
-          "x": -3.5,
-          "z": -0.6
-        },
-        {
-          "id": "wait",
-          "label": "待つ",
-          "x": -1.2,
-          "z": 0.7
-        },
-        {
-          "id": "sleeve",
-          "label": "袖",
-          "x": 1.1,
-          "z": -1.4
-        },
-        {
-          "id": "moon",
-          "label": "月",
-          "x": 2.6,
-          "z": 0.2
-        }
+        { "id": "autumn", "label": "秋", "x": -4.0, "z": 9.5 },
+        { "id": "mist", "label": "霧", "x": -1.0, "z": 12.5 },
+        { "id": "wait", "label": "待つ", "x": 3.0, "z": 10.5 },
+        { "id": "sleeve", "label": "袖", "x": 6.5, "z": 13.5 },
+        { "id": "moon", "label": "月", "x": 0.0, "z": 16.0 }
       ],
       "next": "seq_308_collect_waka_check"
     },
@@ -157,8 +149,15 @@
       "type": "require_collectibles",
       "groupId": "chapter3_waka_words",
       "count": 5,
-      "successNext": "seq_309_reply_waka",
+      "successNext": "seq_308b",
       "failNext": "seq_307_spawn_waka"
+    },
+    {
+      "id": "seq_308b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "秋、霧、待つ、袖、月。五つの詞が、手の中で仄かにあたたかい。言葉は集めるものではなく、預かるものだ——ふと、そんな気がした。",
+      "next": "seq_309_reply_waka"
     },
     {
       "id": "seq_309_reply_waka",
@@ -166,50 +165,73 @@
       "text": "集めた詞で、御簾の向こうへ返す歌を選ぶ。",
       "options": [
         {
-          "text": "霧の向こうの月を待つ歌",
-          "next": "seq_310_water_distortion",
-          "effects": {
-            "fantasySynchro": 8
-          }
+          "text": "霧の向こうの月を、ただ待つ歌",
+          "next": "seq_309_r1",
+          "effects": { "fantasySynchro": 8 }
         },
         {
-          "text": "早く会いたいと直接迫る歌",
-          "next": "seq_310_water_distortion",
-          "effects": {
-            "brainErosion": 10
-          }
+          "text": "早く会いたいと、直接迫る歌",
+          "next": "seq_309_r2",
+          "effects": { "brainErosion": 10 }
         },
         {
           "text": "見えぬまま、袖に残る香を返す歌",
-          "next": "seq_310_water_distortion",
-          "effects": {
-            "realityEgo": 3,
-            "fantasySynchro": 12
-          },
-          "setFlag": {
-            "wakaGracefulReply": true
-          }
+          "next": "seq_309_r3",
+          "effects": { "realityEgo": 3, "fantasySynchro": 12 },
+          "setFlag": { "wakaGracefulReply": true }
         }
       ]
+    },
+    {
+      "id": "seq_309_r1",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「待つ心を月に預ける——正しい型にございます。型は、心を守る鎧。まずはそれで、じゅうぶん」",
+      "next": "seq_310_water_distortion"
+    },
+    {
+      "id": "seq_309_r2",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……お気持ちは真っ直ぐで、結構。なれど歌は、心をそのまま投げつける器ではございませぬ。受け取る側の手が、痛うございます」",
+      "next": "seq_310_water_distortion"
+    },
+    {
+      "id": "seq_309_r3",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「——袖に残る香を、返す。……見えぬものを見えぬまま、たいせつに扱う歌。……どうして、あなたがそれを詠めるのでしょうね。まるで——いえ。お送りして参ります」",
+      "next": "seq_310_water_distortion"
     },
     {
       "id": "seq_310_water_distortion",
       "type": "effect",
       "effectId": "yarimizu_dark_reflection",
-      "payload": {
-        "showsClassroom": true,
-        "bossHint": "kappa"
-      },
+      "payload": { "showsClassroom": true, "bossHint": "kappa" },
+      "next": "seq_310b"
+    },
+    {
+      "id": "seq_310b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "歌を託して戻る道すがら——遣水の音が、変わった。さらさらではなく、ごぼり。見れば水が墨を溶いたように黒く濁り、その水面に、あろうことか、夕暮れの教室が映っている。誰もいない机の列。窓際の、二つの席。",
       "next": "seq_311_kappa_warning"
     },
     {
       "id": "seq_311_kappa_warning",
       "type": "dialogue",
       "speaker": "水底の声",
-      "text": "覗いた目を、水底に沈める。見たと言い張る口を、泥でふさぐ。",
-      "next": "seq_312_kappa_boss",
+      "text": "「——覗イタ目ヲ、水底ニ沈メル。見タト言イ張ル口ヲ、泥デ塞グ」",
       "se": "thunder",
-      "fx": "lightning"
+      "fx": "lightning",
+      "next": "seq_311b"
+    },
+    {
+      "id": "seq_311b",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "「若君、お下がりを！　……水底の主。垣間見の無礼が溜まって形を成す、と聞いたことはありましたが——本物を見るのは初めてでございます！　弓はそれがしが。若君は札と太刀を！」",
+      "next": "seq_312_kappa_boss"
     },
     {
       "id": "seq_312_kappa_boss",
@@ -221,14 +243,8 @@
         "allowLanternPartner": false,
         "storyDifficulty": "middle"
       },
-      "successEffects": {
-        "realityEgo": 8,
-        "fantasySynchro": 4,
-        "brainErosion": -4
-      },
-      "failEffects": {
-        "brainErosion": 22
-      },
+      "successEffects": { "realityEgo": 8, "fantasySynchro": 4, "brainErosion": -4 },
+      "failEffects": { "brainErosion": 22 },
       "successNext": "seq_313_shiori_reflection",
       "failNext": "seq_314_after_fail"
     },
@@ -236,32 +252,53 @@
       "id": "seq_313_shiori_reflection",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "水面に映ったのは姫君ではなかった。制服の横顔が、夕霧の底でこちらを見ていた。",
-      "setFlag": {
-        "sawShioriReflection": true,
-        "chapter3BossCleared": true
-      },
-      "next": "seq_315_complete",
-      "emotes": {
-        "kohagi": "sad"
-      },
-      "se": "koto"
+      "text": "主が水に還ると、濁りは嘘のように引いた。澄んだ水面に、月が戻る。——月と、もうひとつ。水底にゆらめくのは姫君の影ではなかった。制服の横顔が、夕霧の底から、じっとこちらを見上げていた。",
+      "se": "koto",
+      "setFlag": { "sawShioriReflection": true, "chapter3BossCleared": true },
+      "next": "seq_313b"
+    },
+    {
+      "id": "seq_313b",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "「……おい、今の。今の、見たか？　制服の——」",
+      "next": "seq_313c"
+    },
+    {
+      "id": "seq_313c",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「——見ておりませぬ。あなたも、見ておりませぬ。……今宵は、もう水辺に近づかれませぬよう」",
+      "emotes": { "kohagi": "sad" },
+      "next": "seq_313d"
+    },
+    {
+      "id": "seq_313d",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "袖が、すっと水面を隠した。その袖口で、薄紫の紐が一度だけ強く光った——ように見えた。",
+      "next": "seq_315_kohagi_words"
     },
     {
       "id": "seq_314_after_fail",
       "type": "dialogue",
       "speaker": "右近",
-      "text": "水底から戻られただけで上々。されど、次は足元の影をお見逃しなさるな。",
+      "text": "「お見事——とは申せませぬが、水底から戻られただけで上々でございます。あの主、次は足元の影から参りますぞ。太刀の間合いを覚えて、また挑まれませ」",
+      "next": "seq_315_kohagi_words"
+    },
+    {
+      "id": "seq_315_kohagi_words",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……若君。今宵ひとつだけ、覚えて帰ってくださいませ。恋とは、相手を見つけることではなく——相手の『見えなさ』に、耐えることにございます」",
       "next": "seq_315_complete"
     },
     {
       "id": "seq_315_complete",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "秋の夕、秀頼は相手を見つめることと、相手を奪うことの違いを知った。",
-      "setFlag": {
-        "chapter3Cleared": true
-      },
+      "text": "月が、東の対の屋根の上に昇りきる。秋の夕は終わり、秋の夜が始まる。秀頼は、相手を見つめることと、相手を奪うことの違いを——そして、見なかったことにする優しさがこの世にあることを、知った。",
+      "setFlag": { "chapter3Cleared": true },
       "next": "chapter_complete"
     }
   ]

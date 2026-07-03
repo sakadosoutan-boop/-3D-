@@ -9,62 +9,116 @@
       "type": "set_scene",
       "season": "tokoyo",
       "timeOfDay": "dawn",
-      "playerStart": {
-        "x": 1.8,
-        "z": -3.4,
-        "yaw": 0
-      },
+      "playerStart": { "x": 22.0, "z": -36.0, "yaw": 0.6 },
       "cameraAngleId": "cam_tokoyo_north_tainoya",
-      "next": "seq_502_tokoyo_effect",
-      "fade": "white"
+      "fade": "white",
+      "next": "seq_501b"
+    },
+    {
+      "id": "seq_501b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "目が覚めると、空の色がおかしかった。夜でも朝でもない、青白い黎明。雪も桜も同時に降っていて、どちらも地面に届く前に消える。邸の建具が、風もないのに浮き上がり——御簾が一枚、天地逆さまに垂れて、静かに揺れていた。",
+      "next": "seq_502_tokoyo_effect"
     },
     {
       "id": "seq_502_tokoyo_effect",
       "type": "effect",
       "effectId": "tokoyo_glitch",
-      "payload": {
-        "floatingCards": true,
-        "brokenMisu": true,
-        "fogGate": true
-      },
+      "payload": { "floatingCards": true, "brokenMisu": true, "fogGate": true },
+      "next": "seq_502b"
+    },
+    {
+      "id": "seq_502b",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "「……小萩さん。これは、なんだ。この空は。この、逆さの御簾は」",
       "next": "seq_503_kohagi_glitch"
     },
     {
       "id": "seq_503_kohagi_glitch",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "帰る道は、覚えたものを忘れぬ者にだけ開きます。わたくしの名も、どうか急いで決めませぬよう。",
-      "effects": {
-        "fantasySynchro": 4
-      },
-      "next": "seq_504_minister_possessed",
-      "emotes": {
-        "kohagi": "sad"
-      },
-      "shioriGhost": 0.6
+      "text": "「常世（とこよ）——この邸の、いちばん奥にございます。時が巡らず、名が剥がれ、忘れられたものだけが降り積もる場所。……ようこそ、と申すべきか。ごめんなさい、と申すべきか」",
+      "shioriGhost": 0.4,
+      "emotes": { "kohagi": "sad" },
+      "next": "seq_503b"
+    },
+    {
+      "id": "seq_503b",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「よく、聞いてくださいませ。帰る道は、覚えたものを忘れぬ者にだけ開きます。名を。歌を。目の慎みを。あなたがこの邸で拾ってきた、すべての——ワタシ、しおり……いえ。わたくしの、名も」",
+      "effects": { "fantasySynchro": 4 },
+      "shioriGhost": 0.7,
+      "next": "seq_503c"
+    },
+    {
+      "id": "seq_503c",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "声に、ノイズが走った。古風な言い回しの隙間から、一瞬、同い年の女の子の声がした。御簾の内の影が、十二単の輪郭と、セーラー服の輪郭のあいだで、ちらちらと明滅している。——袖の薄紫の紐だけが、どちらの輪郭でも、同じ場所で光っていた。",
+      "next": "seq_503d"
+    },
+    {
+      "id": "seq_503d",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「わたくしの名を、どうか——急いで、決めませぬよう」",
+      "next": "seq_504_minister_possessed"
     },
     {
       "id": "seq_504_minister_possessed",
       "type": "dialogue",
       "speaker": "左大臣",
-      "text": "この邸は古きものを守るためにある。新しき世へ返すものなど、ひとつもない。",
-      "next": "seq_505_oni_reveal",
-      "stage": {
-        "ministerShadow": 0.8,
-        "ministerPossessed": true
-      }
+      "text": "「——若君。ここにおられたか」",
+      "stage": { "ministerShadow": 0.5 },
+      "next": "seq_504b"
+    },
+    {
+      "id": "seq_504b",
+      "type": "dialogue",
+      "speaker": "左大臣",
+      "text": "「この邸は、古きものを守るためにある。名を。作法を。歌を。……新しき世へ返すものなど、ひとつも、ない。若君も、もう、お帰りにならずともよいのじゃ。ここで皆と、永う——」",
+      "stage": { "ministerShadow": 0.85, "ministerPossessed": true },
+      "next": "seq_504c"
+    },
+    {
+      "id": "seq_504c",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "声が、変わった。低く、岩を擦るような響きが言葉の下から滲み出す。左大臣の背後で、影が——影だけが、先に立ち上がった。二本の角の形に。",
+      "next": "seq_505_oni_reveal"
     },
     {
       "id": "seq_505_oni_reveal",
       "type": "effect",
       "effectId": "oni_tears_misu",
-      "payload": {
-        "boss": "great_oni",
-        "phase": 1
-      },
-      "next": "seq_506_oni_battle",
+      "payload": { "boss": "great_oni", "phase": 1 },
       "fx": "lightning",
-      "se": "thunder"
+      "se": "thunder",
+      "next": "seq_505b"
+    },
+    {
+      "id": "seq_505b",
+      "type": "dialogue",
+      "speaker": "大鬼",
+      "text": "「カエル、カエルト、ウルサイ小僧ダ。——名ヲ覚エタ？　歌ヲ詠ンダ？　ナラバ問オウ。ソレラヲ捨テネバ帰レヌトシタラ、貴様ハ何ヲ選ブ」",
+      "next": "seq_505c"
+    },
+    {
+      "id": "seq_505c",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "「若君！　得物を！　弓、札、太刀——この三月で覚えたすべてを使う時にございます！　あの巨躯、生半可な一当てでは倒れませぬぞ！」",
+      "next": "seq_505d"
+    },
+    {
+      "id": "seq_505d",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「若君——どうか。あれはあなたの逃げた心と、雑な言葉が形を得たもの。倒すのではなく、祓うのです。……ご武運を」",
+      "next": "seq_506_oni_battle"
     },
     {
       "id": "seq_506_oni_battle",
@@ -74,24 +128,12 @@
         "boss": "great_oni",
         "arena": "north_tainoya_wide",
         "fogGate": true,
-        "weapons": [
-          "arrow",
-          "ofuda",
-          "katana"
-        ],
+        "weapons": ["arrow", "ofuda", "katana"],
         "healingItem": "omiki",
         "requiresFinalQuiz": true
       },
-      "successEffects": {
-        "realityEgo": 12,
-        "fantasySynchro": 8,
-        "brainErosion": -8,
-        "oniWon": true
-      },
-      "failEffects": {
-        "brainErosion": 35,
-        "chapter5Lost": true
-      },
+      "successEffects": { "realityEgo": 12, "fantasySynchro": 8, "brainErosion": -8, "oniWon": true },
+      "failEffects": { "brainErosion": 35, "chapter5Lost": true },
       "successNext": "seq_507_after_battle",
       "failNext": "seq_516_lose_ed3"
     },
@@ -99,102 +141,136 @@
       "id": "seq_507_after_battle",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "大鬼の胸に、小萩の影が短冊のように封じられていた。札はまだ三枚、朝の風に震えている。",
-      "next": "seq_508_final_quiz_1",
-      "se": "wind"
+      "text": "大鬼が、膝をついた。だが、消えない。胸の琥珀色の窓の奥に——短冊がひとつ、封じられている。短冊の影は、人の形。袖のところで、薄紫の紐が弱々しく明滅していた。……小萩さんが、いない。さっきから、声がしない。",
+      "se": "wind",
+      "next": "seq_507b"
+    },
+    {
+      "id": "seq_507b",
+      "type": "dialogue",
+      "speaker": "大鬼",
+      "text": "「気ヅイタカ。коノ女ハ、貴様ノ言葉デ出来テイル。——ナラバ、貴様ノ言葉ガ乱レレバ、壊レル。サア、最後ノ問イダ。破魔ノ連札、三枚。一枚デモ違エレバ、女ゴト、夜ヘ帰ル」",
+      "next": "seq_508_intro"
+    },
+    {
+      "id": "seq_508_intro",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "目の前に、光る札が三枚、浮かんだ。これは戦いではない。この三月、あなたが本当に「わかった」のかを問う、最後の名づけだ。",
+      "next": "seq_508_final_quiz_1"
     },
     {
       "id": "seq_508_final_quiz_1",
       "type": "choice",
-      "text": "破魔の連札 一。御簾とは、何をするものか。",
+      "text": "破魔の連札、一の札。——御簾とは、何をするものか。",
       "options": [
         {
           "text": "相手を完全に隠す壁",
           "next": "seq_517_quiz_fail_ed3",
-          "effects": {
-            "brainErosion": 20
-          }
+          "effects": { "brainErosion": 20 }
         },
         {
-          "text": "見えぬ相手へ礼を保つ境",
-          "next": "seq_509_final_quiz_2",
-          "effects": {
-            "fantasySynchro": 5,
-            "realityEgo": 2
-          }
+          "text": "見えぬ相手へ、礼を保つ境",
+          "next": "seq_508_ok1",
+          "effects": { "fantasySynchro": 5, "realityEgo": 2 }
         },
         {
           "text": "偉い人だけが使う飾り",
           "next": "seq_517_quiz_fail_ed3",
-          "effects": {
-            "brainErosion": 15
-          }
+          "effects": { "brainErosion": 15 }
         }
       ]
+    },
+    {
+      "id": "seq_508_ok1",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "一枚目の札が、金色に燃えて、昇った。大鬼の左の角に、細い亀裂が走る。——御簾は、壁ではない。あの春の朝、簾越しに聞いた声が、そう教えてくれた。",
+      "se": "bell",
+      "next": "seq_509_final_quiz_2"
     },
     {
       "id": "seq_509_final_quiz_2",
       "type": "choice",
-      "text": "破魔の連札 二。返歌に必要なのは何か。",
+      "text": "二の札。——返歌に、いちばん必要なものは何か。",
       "options": [
         {
-          "text": "相手の言葉を受け、季節に返すこと",
-          "next": "seq_510_final_quiz_3",
-          "effects": {
-            "fantasySynchro": 5,
-            "realityEgo": 3
-          }
+          "text": "相手の言葉を受けて、季節に返すこと",
+          "next": "seq_509_ok2",
+          "effects": { "fantasySynchro": 5, "realityEgo": 3 }
         },
         {
-          "text": "自分の気持ちを一番強く言うこと",
+          "text": "自分の気持ちを、いちばん強く言うこと",
           "next": "seq_517_quiz_fail_ed3",
-          "effects": {
-            "brainErosion": 15
-          }
+          "effects": { "brainErosion": 15 }
         },
         {
           "text": "相手より難しい言葉を使うこと",
           "next": "seq_517_quiz_fail_ed3",
-          "effects": {
-            "brainErosion": 12
-          }
+          "effects": { "brainErosion": 12 }
         }
       ]
     },
     {
+      "id": "seq_509_ok2",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "二枚目の札が昇る。大鬼の影が、みし、と縮んだ。——歌は投げつける器ではない。冬の夜、判者の扇の向こうで教わった。受けて、季節に、返す。",
+      "se": "bell",
+      "next": "seq_510_intro"
+    },
+    {
+      "id": "seq_510_intro",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "最後の札の前で、音が、消えた。雪も桜も止まっている。胸の封印の中で、短冊の影がこちらを見ている。——十二単の女房。制服の同級生。そのどちらでもある、どちらでもない、目の前のひと。",
+      "stage": { "silence": true },
+      "next": "seq_510_final_quiz_3"
+    },
+    {
       "id": "seq_510_final_quiz_3",
       "type": "choice",
-      "text": "破魔の連札 三。目の前の人を、何と呼ぶ。",
+      "text": "三の札。——目の前の人を、何と呼ぶ。",
       "options": [
         {
-          "text": "小萩",
-          "next": "seq_511_ending_check",
-          "effects": {
-            "fantasySynchro": 14
-          }
+          "text": "「小萩」",
+          "next": "seq_510_name_kohagi",
+          "effects": { "fantasySynchro": 14 }
         },
         {
-          "text": "栞",
-          "next": "seq_511_ending_check",
-          "effects": {
-            "realityEgo": 14
-          }
+          "text": "「栞」",
+          "next": "seq_510_name_shiori",
+          "effects": { "realityEgo": 14 }
         },
         {
-          "text": "あなた",
-          "next": "seq_511_ending_check",
-          "effects": {
-            "realityEgo": 8,
-            "fantasySynchro": 8
-          },
-          "setFlag": {
-            "calledYou": true
-          }
+          "text": "「あなた」",
+          "next": "seq_510_name_you",
+          "effects": { "realityEgo": 8, "fantasySynchro": 8 },
+          "setFlag": { "calledYou": true }
         }
-      ],
-      "stage": {
-        "silence": true
-      }
+      ]
+    },
+    {
+      "id": "seq_510_name_kohagi",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "「小萩」。——短冊の影が、十二単の輪郭に固まっていく。それは正しい名で、優しい名で、そして、彼女の半分しか呼んでいない名だった。札は、鈍い金色で燃えた。",
+      "next": "seq_511_ending_check"
+    },
+    {
+      "id": "seq_510_name_shiori",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "「栞」。——短冊の影が、制服の輪郭に固まっていく。それは正しい名で、まっすぐな名で、そして、この邸で過ごした彼女の時間を、少しだけ置き去りにする名だった。札は、白く燃えた。",
+      "next": "seq_511_ending_check"
+    },
+    {
+      "id": "seq_510_name_you",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "「——あなた」。役でも、理想でもなく。今ここにいる、目の前のひとへ。……短冊の影が、ふ、と楽になったように見えた。三枚目の札は、朝の色で燃えた。大鬼の体が、光の粒になって崩れていく。",
+      "se": "gong",
+      "next": "seq_511_ending_check"
     },
     {
       "id": "seq_511_ending_check",
@@ -210,14 +286,16 @@
       "id": "seq_516_lose_ed3",
       "type": "dialogue",
       "speaker": "大鬼",
-      "text": "名を知れど、恐れを斬れぬ。ならば御簾の裂け目で、百年眠れ。",
+      "text": "「名ヲ知レド、恐レヲ斬レヌ。——ナラバ御簾ノ裂ケ目デ、百年眠レ」",
+      "fade": "black",
       "next": "seq_518_ed3"
     },
     {
       "id": "seq_517_quiz_fail_ed3",
       "type": "dialogue",
       "speaker": "判者",
-      "text": "最後の名づけを誤れば、勝ちし戦も夜へ戻る。言葉の火は、ここで消えた。",
+      "text": "「……最後の名づけを誤れば、勝ちし戦も夜へ戻る。言葉の火は、ここで消えた。——だが覚えておかれよ。消えた火は、もう一度、熾せる」",
+      "fade": "black",
       "next": "seq_518_ed3"
     },
     {

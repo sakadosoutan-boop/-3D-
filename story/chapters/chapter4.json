@@ -9,165 +9,245 @@
       "type": "set_scene",
       "season": "winter",
       "timeOfDay": "night",
-      "playerStart": {
-        "x": 0.6,
-        "z": 2.4,
-        "yaw": 3.14
-      },
+      "playerStart": { "x": 0.6, "z": 7.0, "yaw": 3.14 },
       "cameraAngleId": "cam_winter_utakai_hisashi",
-      "next": "seq_402_lamp_effect",
       "fade": "black",
-      "se": "gong"
+      "se": "gong",
+      "next": "seq_401b"
+    },
+    {
+      "id": "seq_401b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "冬の夜。雪が音を吸い、邸は一段深く静かになる。廂には火桶が据えられ、高灯台の炎が四つ、雪明かりの中で揺れている。楽の音が、低く、床を這うように流れていた。——今夜の邸は、遊びの顔をしていない。",
+      "next": "seq_402_lamp_effect"
     },
     {
       "id": "seq_402_lamp_effect",
       "type": "effect",
       "effectId": "winter_lamp_dim",
-      "payload": {
-        "gagaku": true,
-        "snow": true
-      },
+      "payload": { "gagaku": true, "snow": true },
+      "next": "seq_402b"
+    },
+    {
+      "id": "seq_402b",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「若君。今宵は——歌合（うたあわせ）にございます。歌を左右に分かち、優劣を競う、言葉の合戦。この邸で、剣より重いものがあるとすれば、それは歌にございます」",
+      "next": "seq_402c"
+    },
+    {
+      "id": "seq_402c",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "「……テストってことか。よりによって、俺のいちばん苦手な」",
+      "next": "seq_402d"
+    },
+    {
+      "id": "seq_402d",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「いいえ。テストは正しい答えを探すもの。歌合は——ふさわしい言葉を、その場に置くもの。あなたはこの三月（みつき）、名を覚え、目の慎みを覚えました。今宵はそれを、言葉にする夜です」",
       "next": "seq_403_minister_appears"
     },
     {
       "id": "seq_403_minister_appears",
       "type": "dialogue",
       "speaker": "左大臣",
-      "text": "今宵は歌にて、若君の心を量る。雪の庭に、軽き言葉は落ちて消えようぞ。",
+      "text": "「——皆の者、火を落とせ。雪の庭に、軽き言葉は落ちて消えようぞ。今宵は歌にて、若君の心を量る。……判者（はんじゃ）、これへ」",
+      "next": "seq_403b"
+    },
+    {
+      "id": "seq_403b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "衣擦れとともに現れたのは、鈍色の袍の人物だった。開いた檜扇で顔の半分を隠している。目だけが、灯を映して静かに光る。右近が小声で「あの御方が判者。歌の良し悪しを決める、今宵一番のお偉方で……」と囁きかけ——",
+      "next": "seq_403c"
+    },
+    {
+      "id": "seq_403c",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "「——なんなら判者役、それがしが買って出ても！　歌心はござらぬが、勝ち負けを声高に叫ぶのは得意でございます！」",
+      "next": "seq_403d"
+    },
+    {
+      "id": "seq_403d",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「……黙りゃ。歌は答えにあらず。問いを美しく置くものなり。——声高に叫ぶ者に、置ける問いはない」",
+      "next": "seq_403e"
+    },
+    {
+      "id": "seq_403e",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "右近が首をすくめて三歩下がる。判者の扇が、こちらへ向いた。——始まる。",
       "next": "seq_404_judge_intro"
     },
     {
       "id": "seq_404_judge_intro",
       "type": "dialogue",
       "speaker": "判者",
-      "text": "一番、題は『雪』。ただ白しと言うなかれ。白きものに、見えぬ心を映してこそ歌。",
-      "next": "seq_405_topic_snow",
+      "text": "「一番、題は『雪』。——ただ白しと言うなかれ。見たままを言うは、報せにすぎぬ。白きものに、見えぬ心を映してこそ歌」",
       "se": "koto",
-      "stage": {
-        "topic": "雪",
-        "judgeFanText": "題 雪"
-      }
+      "stage": { "topic": "雪", "judgeFanText": "題 雪" },
+      "next": "seq_405_topic_snow"
     },
     {
       "id": "seq_405_topic_snow",
       "type": "choice",
-      "text": "一番『雪』。どの趣で詠む？",
+      "text": "一番『雪』。火桶の炭が、ぱち、と爆ぜた。あなたは、どの趣で詠む？",
       "options": [
         {
-          "text": "雪の白さに、御簾の向こうの声を重ねる",
-          "next": "seq_406_topic_wait_intro",
-          "effects": {
-            "fantasySynchro": 8,
-            "utakaiPrepScore": 2
-          }
+          "text": "雪の白さに、御簾の向こうの声を重ねて詠む",
+          "next": "seq_405_r1",
+          "effects": { "fantasySynchro": 8, "utakaiPrepScore": 2 }
         },
         {
-          "text": "庭が白くてきれいだと素直に詠む",
-          "next": "seq_406_topic_wait_intro",
-          "effects": {
-            "fantasySynchro": 3,
-            "utakaiPrepScore": 1
-          }
+          "text": "庭が白くてきれいだと、素直に詠む",
+          "next": "seq_405_r2",
+          "effects": { "fantasySynchro": 3, "utakaiPrepScore": 1 }
         },
         {
-          "text": "寒いので早く帰りたいと詠む",
-          "next": "seq_406_topic_wait_intro",
-          "effects": {
-            "realityEgo": 5,
-            "brainErosion": 4,
-            "utakaiPrepScore": 0
-          }
+          "text": "寒いので早く帰りたい、と詠む",
+          "next": "seq_405_r3",
+          "effects": { "realityEgo": 5, "brainErosion": 4, "utakaiPrepScore": 0 }
         }
       ]
+    },
+    {
+      "id": "seq_405_r1",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「——勝ち。白は白のままでは景色。声なき声を重ねて、初めて雪は歌になる。……ほう。誰に習うた」",
+      "next": "seq_406_topic_wait_intro"
+    },
+    {
+      "id": "seq_405_r2",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「持（じ）——引き分けじゃ。素直は美徳なれど、見たままは報せ。歌はもう半歩、心の内へ踏み込むもの」",
+      "next": "seq_406_topic_wait_intro"
+    },
+    {
+      "id": "seq_405_r3",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「負け。……いや、正直者よの。だがその正直は、火桶にあたってから言え。歌の座に持ち込むものではない」",
+      "next": "seq_406_topic_wait_intro"
     },
     {
       "id": "seq_406_topic_wait_intro",
       "type": "dialogue",
       "speaker": "判者",
-      "text": "二番、題は『待つ』。急く心は真なれど、歌は心を投げつける器にあらず。",
-      "next": "seq_407_topic_wait",
-      "stage": {
-        "topic": "待つ",
-        "judgeFanText": "題 待"
-      }
+      "text": "「二番、題は『待つ』。——この世の恋は、九割が待つことでできておる。急く心は真なれど、歌は心をそのまま投げつける器にあらず」",
+      "se": "koto",
+      "stage": { "topic": "待つ", "judgeFanText": "題 待" },
+      "next": "seq_407_topic_wait"
     },
     {
       "id": "seq_407_topic_wait",
       "type": "choice",
-      "text": "二番『待つ』。返歌にふさわしい心は？",
+      "text": "二番『待つ』。灯火が、ふ、と揺れた。返歌にふさわしい心は——",
       "options": [
         {
           "text": "待つ時間そのものを、月の移ろいとして詠む",
-          "next": "seq_408_topic_return_intro",
-          "effects": {
-            "fantasySynchro": 7,
-            "utakaiPrepScore2": 2
-          }
+          "next": "seq_407_r1",
+          "effects": { "fantasySynchro": 7, "utakaiPrepScore2": 2 }
         },
         {
-          "text": "なぜ遅いのかと相手を責める",
-          "next": "seq_408_topic_return_intro",
-          "effects": {
-            "brainErosion": 10,
-            "utakaiPrepScore2": 0
-          }
+          "text": "なぜ来ないのかと、相手を責めて詠む",
+          "next": "seq_407_r2",
+          "effects": { "brainErosion": 10, "utakaiPrepScore2": 0 }
         },
         {
-          "text": "会いたい気持ちは隠さず、季節の景に預ける",
-          "next": "seq_408_topic_return_intro",
-          "effects": {
-            "realityEgo": 4,
-            "fantasySynchro": 6,
-            "utakaiPrepScore2": 2
-          }
+          "text": "会いたい心は隠さず、季節の景に預けて詠む",
+          "next": "seq_407_r3",
+          "effects": { "realityEgo": 4, "fantasySynchro": 6, "utakaiPrepScore2": 2 }
         }
       ]
+    },
+    {
+      "id": "seq_407_r1",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「勝ち。待つ夜の長さを、月に量らせたか。責めず、急かさず、それでいて寂しさは隠さず。——待つことを美しく言えるのは、待った者だけよ」",
+      "next": "seq_408_topic_return_intro"
+    },
+    {
+      "id": "seq_407_r2",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「負け。責める歌は、相手の袖ではなく、おのれの評判を濡らす。……覚えておかれよ。歌に書いた言葉は、消せぬ」",
+      "next": "seq_408_topic_return_intro"
+    },
+    {
+      "id": "seq_407_r3",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「勝ち。心を隠しもせず、投げつけもせず、季節に預けた。——今宵いちばん、素性のよい歌じゃ」",
+      "next": "seq_408_topic_return_intro"
     },
     {
       "id": "seq_408_topic_return_intro",
       "type": "dialogue",
       "speaker": "判者",
-      "text": "三番、題は『帰る』。この題に、今宵のすべてが潜む。",
-      "next": "seq_409_topic_return",
-      "stage": {
-        "topic": "帰る",
-        "judgeFanText": "題 帰"
-      }
+      "text": "「三番、題は——『帰る』」",
+      "se": "koto",
+      "stage": { "topic": "帰る", "judgeFanText": "題 帰" },
+      "next": "seq_408b"
+    },
+    {
+      "id": "seq_408b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "座が、しん、と冷えた。小萩の気配が、御簾の内で一度だけ揺れる。——どこか遠くで、チャイムに似た音が鳴った。この題は、偶然ではない。誰かが、あなたに訊いている。帰るのか。残るのか。",
+      "next": "seq_409_topic_return"
     },
     {
       "id": "seq_409_topic_return",
       "type": "choice",
-      "text": "三番『帰る』。あなたは何を詠む？",
+      "text": "三番『帰る』。この題に、今宵のすべてが潜んでいる。あなたは、何を詠む？",
       "options": [
         {
-          "text": "帰る朝だけを願う歌",
-          "next": "seq_410_trigger_utakai",
-          "effects": {
-            "realityEgo": 12,
-            "utakaiReturnTone": 1
-          }
+          "text": "帰る朝だけを、まっすぐに願う歌",
+          "next": "seq_409_r1",
+          "effects": { "realityEgo": 12, "utakaiReturnTone": 1 }
         },
         {
-          "text": "帰らぬ夢だけを願う歌",
-          "next": "seq_410_trigger_utakai",
-          "effects": {
-            "fantasySynchro": 14,
-            "utakaiReturnTone": 2
-          }
+          "text": "帰らぬ夢だけを、ひたすらに願う歌",
+          "next": "seq_409_r2",
+          "effects": { "fantasySynchro": 14, "utakaiReturnTone": 2 }
         },
         {
-          "text": "帰る袖にも、残る香があると詠む歌",
-          "next": "seq_410_trigger_utakai",
-          "effects": {
-            "realityEgo": 8,
-            "fantasySynchro": 8,
-            "utakaiReturnTone": 3
-          },
-          "setFlag": {
-            "balancedReturnPoem": true
-          }
+          "text": "帰る袖にも、残る香がある——と詠む歌",
+          "next": "seq_409_r3",
+          "effects": { "realityEgo": 8, "fantasySynchro": 8, "utakaiReturnTone": 3 },
+          "setFlag": { "balancedReturnPoem": true }
         }
       ]
+    },
+    {
+      "id": "seq_409_r1",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「……まっすぐな歌じゃ。帰心、矢の如し。だが問おう。帰った朝、そなたの袖に、この邸の香は一片も残らぬのか。——それは少し、寂しい歌よの」",
+      "next": "seq_410_trigger_utakai"
+    },
+    {
+      "id": "seq_409_r2",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「美しい。……美しいが、危うい。夢だけを願う歌は、夢に願われ返すもの。——若君。その歌、誰の声で詠んだ。おのれの声か、それとも」",
+      "next": "seq_410_trigger_utakai"
+    },
+    {
+      "id": "seq_409_r3",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「——勝ち。帰ることと、忘れぬこと。ふたつを一首に抱えたか。矛盾を捨てずに言葉へ結ぶ、それを人は成熟と呼ぶ。……見事」",
+      "next": "seq_410_trigger_utakai"
     },
     {
       "id": "seq_410_trigger_utakai",
@@ -179,40 +259,55 @@
         "storyTheme": "return",
         "judgeExplains": true
       },
-      "successEffects": {
-        "fantasySynchro": 10,
-        "brainErosion": -5,
-        "utakaiWon": true
-      },
-      "failEffects": {
-        "brainErosion": 25,
-        "chapter4Lost": true
-      },
+      "successEffects": { "fantasySynchro": 10, "brainErosion": -5, "utakaiWon": true },
+      "failEffects": { "brainErosion": 25, "chapter4Lost": true },
       "successNext": "seq_411_win",
       "failNext": "seq_412_lose_ed3"
     },
     {
       "id": "seq_411_win",
       "type": "dialogue",
+      "speaker": "左大臣",
+      "text": "「勝負あった！　……ふ、ふふ。異邦の若君が、当家の歌合で二勝とは。愉快、愉快。褒美は何がよい。直垂か、瓜か」",
+      "se": "bell",
+      "next": "seq_411b"
+    },
+    {
+      "id": "seq_411b",
+      "type": "dialogue",
       "speaker": "小萩",
-      "text": "あなたは、歌を点ではなく道として渡りました。その道なら、御簾の向こうにも届きましょう。",
-      "setFlag": {
-        "utakaiWon": true,
-        "chapter4Cleared": true
-      },
-      "next": "chapter_complete",
-      "emotes": {
-        "kohagi": "smile"
-      },
-      "se": "bell"
+      "text": "「……あなたは、歌を点ではなく、道として渡りました。その渡り方なら——御簾の向こうにも、届きましょう」",
+      "next": "seq_411c"
+    },
+    {
+      "id": "seq_411c",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "御簾の内で、深く頭を下げる気配がした。彼女がそんなふうに礼をするのを、初めて感じた。そして——簾と灯の加減か、一瞬。垂れ髪の影に重なって、短い髪と、制服の襟の影が、透けた。瞬きの間に、それは消えた。",
+      "setFlag": { "utakaiWon": true, "chapter4Cleared": true },
+      "next": "seq_411d"
+    },
+    {
+      "id": "seq_411d",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "帰り際、高灯台の四つの炎を、なんの気なしに数えた。……この灯の並び、どこかで見る気がする。まだ来ていない、どこかで。——冬の章、これにて。",
+      "next": "chapter_complete"
     },
     {
       "id": "seq_412_lose_ed3",
       "type": "dialogue",
+      "speaker": "語り",
+      "text": "二敗。判者の扇が、閉じられた。火桶の火が、ひとつ、またひとつ、音もなく消えていく。御簾の向こうで、女房たちの笑い声が——さざなみのように広がって、そして、それすらも遠くなる。",
+      "fade": "black",
+      "next": "seq_412b"
+    },
+    {
+      "id": "seq_412b",
+      "type": "dialogue",
       "speaker": "判者",
-      "text": "言葉を軽んじる者は、言葉のない夜へ。火桶の火まで、あなたの名を忘れた。",
-      "next": "seq_413_ed3",
-      "fade": "black"
+      "text": "「言葉を軽んじる者は、言葉のない夜へ。——火桶の火まで、あなたの名を忘れた」",
+      "next": "seq_413_ed3"
     },
     {
       "id": "seq_413_ed3",

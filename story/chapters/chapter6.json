@@ -9,128 +9,215 @@
       "type": "set_scene",
       "season": "spring",
       "timeOfDay": "morning",
-      "playerStart": {
-        "x": 0.2,
-        "z": 4.8,
-        "yaw": 3.14
-      },
+      "playerStart": { "x": 0.2, "z": 4.8, "yaw": 3.14 },
       "cameraAngleId": "cam_ending_morning",
-      "next": "seq_602_ending_gallery",
-      "fade": "white"
+      "fade": "white",
+      "next": "seq_602_ending_gallery"
     },
     {
       "id": "seq_602_ending_gallery",
       "type": "effect",
       "effectId": "ending_gallery_ready",
-      "payload": {
-        "scrollableResult": true,
-        "showTopButton": true,
-        "showRetryButton": true
-      },
+      "payload": { "scrollableResult": true, "showTopButton": true, "showRetryButton": true },
       "next": "seq_603_select_ending"
     },
     {
       "id": "seq_603_select_ending",
       "type": "choice",
-      "text": "到達した結末の演出を表示する。通常進行では第5話の判定結果から直接呼び出す。",
+      "text": "【回想の間】到達した結末を、もう一度読むことができます。通常の進行では、第5話の判定から直接それぞれの朝へ続きます。",
       "options": [
-        {
-          "text": "ED1 True End『御簾を上げる朝』",
-          "next": "seq_611_ed1"
-        },
-        {
-          "text": "ED2 Normal End『現の朝』",
-          "next": "seq_621_ed2"
-        },
-        {
-          "text": "ED3 Bad End A『歌なき夜』",
-          "next": "seq_631_ed3"
-        },
-        {
-          "text": "ED4 Bad End B『常世の婿』",
-          "next": "seq_641_ed4"
-        },
-        {
-          "text": "ED5 Spooky End『百年の夢』",
-          "next": "seq_651_ed5"
-        }
+        { "text": "ED1 True End『御簾を上げる朝』", "next": "seq_611_ed1" },
+        { "text": "ED2 Normal End『現の朝』", "next": "seq_621_ed2" },
+        { "text": "ED3 Bad End A『歌なき夜』", "next": "seq_631_ed3" },
+        { "text": "ED4 Bad End B『常世の婿』", "next": "seq_641_ed4" },
+        { "text": "ED5 Spooky End『百年の夢』", "next": "seq_651_ed5" }
       ]
     },
+
     {
       "id": "seq_611_ed1",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "秀頼は現代の教室で目を覚ました。机には白い短冊が一枚だけ残り、窓の外をカモメが横切る。",
-      "next": "seq_612_ed1_line",
+      "text": "——チャイム。頬に、ノートの感触。顔を上げると、黒板にはまだ寝殿造りの図があった。先生の声。蛍光灯。五時間目の、続き。……夢。夢だった、ことに、なるのだろう。机の上の、それさえなければ。",
       "se": "bell",
-      "stage": {
-        "purpleCord": true,
-        "seagull": true
-      }
+      "next": "seq_612_ed1_tanzaku"
     },
     {
-      "id": "seq_612_ed1_line",
+      "id": "seq_612_ed1_tanzaku",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "白い短冊が、一枚。ノートの上に、まっすぐ置かれている。表には、もう何も書かれていない。ただ、結んであった跡のように、薄紫の紐が一本、添えられていた。",
+      "stage": { "purpleCord": true },
+      "next": "seq_613_ed1_shiori"
+    },
+    {
+      "id": "seq_613_ed1_shiori",
+      "type": "dialogue",
+      "speaker": "栞",
+      "text": "「……芹沢くん。さっき、寝てた？」",
+      "next": "seq_614_ed1_line"
+    },
+    {
+      "id": "seq_614_ed1_line",
       "type": "dialogue",
       "speaker": "秀頼",
-      "text": "御簾って、ただ隠すためのものじゃないんだな。今度、ちゃんと教えてくれないか。",
-      "next": "seq_613_ed1_end"
+      "text": "「——御簾って、さ。ただ隠すためのものじゃ、ないんだな。見えない相手に、礼を尽くすための……境、っていうか」",
+      "next": "seq_615_ed1_shiori2"
     },
     {
-      "id": "seq_613_ed1_end",
+      "id": "seq_615_ed1_shiori2",
+      "type": "dialogue",
+      "speaker": "栞",
+      "text": "「…………っ。……そう。そうなの。隔てるためじゃなくて、つなぐための——…………なんで、知ってるの？」",
+      "next": "seq_616_ed1_last"
+    },
+    {
+      "id": "seq_616_ed1_last",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "「長い夢を見た。……なあ。今度、寝殿造りの図、ちゃんと教えてくれないか。——あなたの読み方で」",
+      "next": "seq_617_ed1_close"
+    },
+    {
+      "id": "seq_617_ed1_close",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "栞が、驚いて、それから少しだけ笑った。窓の外を、白い鳥が横切っていく。海のない町の、カモメが。——恋の成就ではない。これは、見えない相手を知ろうとする者の、最初の一歩の話。【ED1 True End「御簾を上げる朝」】",
+      "next": "seq_618_ed1_end"
+    },
+    {
+      "id": "seq_618_ed1_end",
       "type": "ending",
       "endingId": "ED1_TRUE"
     },
+
     {
       "id": "seq_621_ed2",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "秀頼は現実へ戻った。古典の点は上がった。けれど、小萩の声だけが、朝の光の中で薄れていく。",
-      "next": "seq_622_ed2_end"
+      "text": "——チャイム。目が覚めると、すべては元通りだった。机の上には、何もない。短冊も、紐も。ただ、次の古典の小テストで、あなたは初めて満点を取った。母屋。廂。御簾。すらすらと手が動いた。",
+      "next": "seq_622_ed2_missed"
     },
     {
-      "id": "seq_622_ed2_end",
+      "id": "seq_622_ed2_missed",
+      "type": "dialogue",
+      "speaker": "栞",
+      "text": "「芹沢くん、古典、得意になったんだね。……あのね、寝殿造りって、実はね——」",
+      "next": "seq_623_ed2_reply"
+    },
+    {
+      "id": "seq_623_ed2_reply",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "「ああ——うん。今回の範囲、意外と覚えやすかった」",
+      "next": "seq_624_ed2_close"
+    },
+    {
+      "id": "seq_624_ed2_close",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "栞は「……そっか」と少しだけ寂しそうに笑って、前を向いた。あなたは何かを言いそびれた気がしたが、それが何かは思い出せなかった。——帰り道、教科書の御簾の挿絵が、風もないのに、かすかに揺れた。【ED2 Normal End「現の朝」——知識は持ち帰った。物語は、まだ御簾の内にある】",
+      "next": "seq_625_ed2_end"
+    },
+    {
+      "id": "seq_625_ed2_end",
       "type": "ending",
       "endingId": "ED2_NORMAL"
     },
+
     {
       "id": "seq_631_ed3",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "灯火は消え、御簾の向こうの声は黒い線になった。言葉のない夜だけが、廂に残った。",
-      "next": "seq_632_ed3_end"
+      "text": "灯火が、消える。御簾の向こうの声が、読めない崩し字のような黒い線になって、ほどけていく。小萩の姿は見える。口も動いている。けれど——声だけが、届かない。",
+      "next": "seq_632_ed3_walk"
     },
     {
-      "id": "seq_632_ed3_end",
+      "id": "seq_632_ed3_walk",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "あなたは、言葉のない廂を歩き続ける。夜は明けない。だが、怖がらなくていい。これは罰ではなく、報せだ。——言葉と、戦いの備えが、まだ足りなかった。それだけのこと。",
+      "next": "seq_633_ed3_retry"
+    },
+    {
+      "id": "seq_633_ed3_retry",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「……消えた火は、もう一度、熾せる。歌合の稽古を。太刀の間合いを。そして、もう一度この夜に挑まれよ。——言葉のある朝で、待っておるぞ」【ED3 Bad End A「歌なき夜」】",
+      "next": "seq_634_ed3_end"
+    },
+    {
+      "id": "seq_634_ed3_end",
       "type": "ending",
       "endingId": "ED3_GAMEOVER"
     },
+
     {
       "id": "seq_641_ed4",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "帰る道を前に、秀頼は振り返った。御簾の内へ入ると、現代の音は美しく遠ざかった。",
-      "next": "seq_642_ed4_end",
-      "stage": {
-        "crownState": "deep"
-      }
+      "text": "帰る道は、開いていた。朝の光が、渡殿の向こうから差している。一歩、踏み出せば帰れる。——あなたは、振り返った。",
+      "next": "seq_642_ed4_kohagi"
     },
     {
-      "id": "seq_642_ed4_end",
+      "id": "seq_642_ed4_kohagi",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……ここにいれば、あなたは何者にも急かされませぬ。チャイムも、テストも、明日も。……ずっと、歌と、季節と、わたくしと」",
+      "next": "seq_643_ed4_inside"
+    },
+    {
+      "id": "seq_643_ed4_inside",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "あなたは冠を、自ら深く被り直した。御簾を上げ、内へ入る。外の世界の音が——蛍光灯の音が、チャイムが、ホイッスルが——美しく、遠ざかっていく。簾の内の微笑みは優しく、そして、その目はもう、誰の面影も宿していなかった。",
+      "stage": { "crownState": "deep" },
+      "next": "seq_644_ed4_seat"
+    },
+    {
+      "id": "seq_644_ed4_seat",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "——現代。五時間目の教室。窓際から二列目の席だけが、空いている。栞は今日も、教科書の余白に丁寧な字で邸の図を描く。その隅に、いつからか、平安装束の少年がひとり、小さく描き足されている。【ED4 Bad End B「常世の婿」——美しいまま、帰らなかった人の話】",
+      "next": "seq_645_ed4_end"
+    },
+    {
+      "id": "seq_645_ed4_end",
       "type": "ending",
       "endingId": "ED4_SYNC"
     },
+
     {
       "id": "seq_651_ed5",
       "type": "dialogue",
-      "speaker": "小萩",
-      "text": "名をなくした人は、物語にやさしく飼われます。あなたの席は、まだ空いています。",
-      "next": "seq_652_ed5_end",
-      "stage": {
-        "erosionLevel": 100
-      }
+      "speaker": "語り",
+      "text": "——アナタノ、ナマエハ、ナンデシタカ。文字が、縦に、横に、ほどけていく。トップバーも、地図も、選択肢も、読めない崩し字の帯になる。逆さに再生される雅楽。遠くで鳴り続ける、終わらないチャイム。",
+      "stage": { "erosionLevel": 100 },
+      "next": "seq_652_ed5_name"
     },
     {
-      "id": "seq_652_ed5_end",
+      "id": "seq_652_ed5_name",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……名をなくした人は、物語に、やさしく飼われます。もう、迷わなくてよいのです。もう、覚えなくて、よいのです」",
+      "next": "seq_653_ed5_map"
+    },
+    {
+      "id": "seq_653_ed5_map",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "視界が、ゆっくりと持ち上がる。邸が、庭が、池が、小さくなる。あなたは寝殿造りの俯瞰図の中の、小さな一点になる。それは教科書のページに、よく似ていた。",
+      "next": "seq_654_ed5_hint"
+    },
+    {
+      "id": "seq_654_ed5_hint",
+      "type": "dialogue",
+      "speaker": "？？？",
+      "text": "「————それでも。あなたの席は、まだ、空いています」【ED5 Spooky End「百年の夢」——目を覚ます方法は、ひとつだけ残されている】",
+      "next": "seq_655_ed5_end"
+    },
+    {
+      "id": "seq_655_ed5_end",
       "type": "ending",
       "endingId": "ED5_SPOOKY"
     }

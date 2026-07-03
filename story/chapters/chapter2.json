@@ -9,9 +9,16 @@
       "type": "set_scene",
       "season": "summer",
       "timeOfDay": "day",
-      "playerStart": { "x": -2.2, "z": 3.6, "yaw": 1.57 },
+      "playerStart": { "x": -2.2, "z": 7.2, "yaw": 0.3 },
       "cameraAngleId": "cam_summer_sunoko",
       "fade": "white",
+      "next": "seq_201b"
+    },
+    {
+      "id": "seq_201b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "夏。簀子の板が日を溜めて、素足の裏がちりりと熱い。庭の白砂は光の海になり、池の面には濃い青が沈んでいる。——蝉の声に混じって、また、あの鳥の声がした。カモメだ。それから、遠くで、ホイッスルの音。部活の、あの。",
       "next": "seq_202_heat_effect"
     },
     {
@@ -19,21 +26,63 @@
       "type": "effect",
       "effectId": "summer_heat_haze",
       "payload": { "seagull": true, "intensity": 0.45 },
+      "next": "seq_202b"
+    },
+    {
+      "id": "seq_202b",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "「なあ。この邸に、海なんてないよな」",
+      "next": "seq_202c"
+    },
+    {
+      "id": "seq_202c",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……ございませぬ。この邸には、海など。——それなのに、あの白い鳥は、どこから参るのでしょうね」",
       "next": "seq_203_kohagi_warning"
     },
     {
       "id": "seq_203_kohagi_warning",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "この邸の名が、暑さにほどけております。名を失えば、道もまた失せましょう。",
+      "text": "「それより、若君。今日は少々、困ったことが起きております。——この邸の『名』が、暑さにほどけて、庭に散らばってしまいました。名を失った場所は、道も失いまする」",
+      "next": "seq_203b"
+    },
+    {
+      "id": "seq_203b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "言われて見回すと、たしかに——渡殿のあたりの景色が、陽炎のように滲んでいる。あそこに廊下があったはずなのに、目で追うと形が定まらない。名札を失くした標本箱みたいだ、と秀頼は思った。",
       "next": "seq_204_ukon_intro"
     },
     {
       "id": "seq_204_ukon_intro",
       "type": "dialogue",
       "speaker": "右近",
-      "text": "若君、札拾いでございます。恋文なら胸躍りましょうが、今回は床と柱の名でございますな。",
+      "text": "「おお、噂の若君！　右近と申します、この邸の侍にて、弓と軽口が取り柄にございます。——して本日の御役目は札拾い。恋文なら胸も躍りましょうが、拾うは床と柱の名でございますなあ」",
       "effects": { "realityEgo": 2 },
+      "next": "seq_204b"
+    },
+    {
+      "id": "seq_204b",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "「あんたは姿が見えるんだな。……なんか、ほっとした」",
+      "next": "seq_204c"
+    },
+    {
+      "id": "seq_204c",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "「はっは。男は庭先が持ち場ゆえ。御簾の内の方々は、声と気配でお付き合いなされませ。それがこの世の——おっと、この邸の流儀」",
+      "next": "seq_204d"
+    },
+    {
+      "id": "seq_204d",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「散らばった名の札は、五枚。光って浮いておりますゆえ、遠目にも分かりましょう。近づいて、手を伸ばせば戻ります。——庭の遠くまで飛んだものもあるようです。池の汀まで、足を運ばれませ」",
       "next": "seq_205_spawn_cards"
     },
     {
@@ -43,11 +92,11 @@
       "kind": "term_card",
       "count": 5,
       "positions": [
-        { "id": "hisashi", "label": "廂", "x": -1.4, "z": 1.6 },
-        { "id": "sunoko", "label": "簀子", "x": -3.2, "z": 4.1 },
-        { "id": "watadono", "label": "渡殿", "x": 2.8, "z": 2.6 },
-        { "id": "yarimizu", "label": "遣水", "x": 4.6, "z": -2.7 },
-        { "id": "tainoya", "label": "対屋", "x": -4.4, "z": -1.8 }
+        { "id": "misu", "label": "御簾", "x": 2.3, "z": 6.2 },
+        { "id": "hisashi", "label": "廂", "x": -4.5, "z": 6.1 },
+        { "id": "sunoko", "label": "簀子", "x": -7.6, "z": 6.3 },
+        { "id": "watadono", "label": "渡殿", "x": 15.5, "z": -8.0 },
+        { "id": "yarimizu", "label": "遣水", "x": -12.0, "z": 23.0 }
       ],
       "next": "seq_206_collect_check"
     },
@@ -56,26 +105,63 @@
       "type": "require_collectibles",
       "groupId": "chapter2_terms",
       "count": 5,
-      "successNext": "seq_207_place_terms",
+      "successNext": "seq_206b",
       "failNext": "seq_205_spawn_cards"
+    },
+    {
+      "id": "seq_206b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "五枚目の札が手の中で光をほどいた瞬間、庭の景色が、ぴん、と張り直された。渡殿は渡殿の顔になり、遣水は遣水の音を取り戻した。世界に名前が戻っていく手応えが、指先に残っている。",
+      "se": "bell",
+      "next": "seq_206c"
+    },
+    {
+      "id": "seq_206c",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "「若君、札を拾うお姿、まことに立派な童（わらわ）でございましたぞ」",
+      "next": "seq_206d"
+    },
+    {
+      "id": "seq_206d",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "「……それ、褒めてないだろ」",
+      "next": "seq_206e"
+    },
+    {
+      "id": "seq_206e",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「童のように学ぶ者は、老いた賢者より遠くへ行くこともございます。——ちょうどよい。左大臣様がお渡りです。今の学び、試されませ」",
+      "next": "seq_207_minister_appears"
+    },
+    {
+      "id": "seq_207_minister_appears",
+      "type": "dialogue",
+      "speaker": "左大臣",
+      "text": "「うむ。そなたが、噂の異邦の若君か。札拾いの働き、廂より見ておったぞ。——ならば問おう。母屋と廂、何が違う」",
+      "se": "gong",
+      "next": "seq_207_place_terms"
     },
     {
       "id": "seq_207_place_terms",
       "type": "choice",
-      "text": "左大臣は廂に出て問うた。「母屋と廂、何が違う」",
+      "text": "左大臣の目が、扇の上からじっとこちらを見ている。母屋と廂、何が違う——",
       "options": [
         {
-          "text": "中心と周縁。人との距離も変わります",
+          "text": "「中心と周縁です。そこに立てる人も、人との距離も変わります」",
           "next": "seq_208_correct",
           "effects": { "realityEgo": 5, "fantasySynchro": 8, "brainErosion": -2 }
         },
         {
-          "text": "偉い人がいるところが母屋です",
+          "text": "「偉い人がいるところが母屋です」",
           "next": "seq_208_partial",
           "effects": { "brainErosion": 8 }
         },
         {
-          "text": "どちらも部屋なので同じです",
+          "text": "「どちらも部屋なので、同じです」",
           "next": "seq_208_wrong",
           "effects": { "brainErosion": 12 }
         }
@@ -84,23 +170,37 @@
     {
       "id": "seq_208_correct",
       "type": "dialogue",
-      "speaker": "判者めいた声",
-      "text": "よし。場所の名は、そこに立つ人の心の距離まで示すもの。",
+      "speaker": "左大臣",
+      "text": "「……ほう。『そこに立てる人が変わる』か。よくぞ申した。場所の名は、そこに立つ人の、心の距離まで示すもの。——若君、そなた、ただの迷い人ではないな」",
       "setFlag": { "chapter2TermMaster": true },
+      "next": "seq_209_kohagi_react"
+    },
+    {
+      "id": "seq_209_kohagi_react",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「（……今の答え、あの方に少し、似ておりました）——いえ。何でもございませぬ」",
       "next": "seq_211_white_tanzaku"
     },
     {
       "id": "seq_208_partial",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "惜しゅうございます。身分だけでなく、建物のつくりと人の隔たりを見なされませ。",
+      "text": "「惜しゅうございます。身分は結果にすぎませぬ。建物のつくりが人を分け、人の隔たりが名になる——順が逆にございます」",
       "next": "seq_211_white_tanzaku"
     },
     {
       "id": "seq_208_wrong",
       "type": "dialogue",
       "speaker": "右近",
-      "text": "若君、それを申せば大工も女房も皆、夏の庭へ倒れ伏しましょうぞ。",
+      "text": "「わ、若君！　それを申せば大工も女房も皆、暑さも忘れて夏の庭に倒れ伏しましょうぞ！」",
+      "next": "seq_208_wrong2"
+    },
+    {
+      "id": "seq_208_wrong2",
+      "type": "dialogue",
+      "speaker": "左大臣",
+      "text": "「……はっはっは。よい、よい。間違いを恐れて黙す者より、間違えて覚える者のほうが、この邸には似合いじゃ。——だが二度は許さぬぞ」",
       "next": "seq_211_white_tanzaku"
     },
     {
@@ -110,13 +210,41 @@
       "payload": { "text": "見えぬものほど、名を呼べ", "backText": "ここまで来て", "backHandwriting": "shiori" },
       "se": "wind",
       "setFlag": { "whiteTanzaku1": true },
+      "next": "seq_211b"
+    },
+    {
+      "id": "seq_211b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "空を旋回していたカモメが、すう、と高度を下げ——白いものを一枚、落としていった。ひらり、ひらり。夏の光を透かして落ちてくるそれは、短冊だった。拾い上げる。『見えぬものほど、名を呼べ』。",
+      "next": "seq_211c"
+    },
+    {
+      "id": "seq_211c",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "裏を返して、指が止まった。——ノートの切れ端だ。青い罫線。薄紫の細いマージン線。見覚えのある、几帳面な小さい字で、こう書いてある。『ここまで来て』",
+      "next": "seq_211d"
+    },
+    {
+      "id": "seq_211d",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（この字。知ってる。教室で、俺の「御簾」の字を直した——隣の席の。……栞、だっけ。なんで、あいつのノートが、ここに）",
+      "next": "seq_211e"
+    },
+    {
+      "id": "seq_211e",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……若君。その短冊、大切になさいませ。外から届くものは、この邸では、とても稀にございますから」",
       "next": "seq_212_complete"
     },
     {
       "id": "seq_212_complete",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "夏の昼、秀頼は邸を歩くための名を拾った。空の白い鳥だけが、この邸に海がないことを知っていた。",
+      "text": "夏の昼が、ゆっくりと傾いていく。秀頼は邸を歩くための名を拾い、そして、拾ってはいけないような気がする問いをひとつ、袖の内に隠した。——空の白い鳥だけが、この邸に海がないことを知っている。",
       "setFlag": { "chapter2Cleared": true },
       "next": "chapter_complete"
     }
