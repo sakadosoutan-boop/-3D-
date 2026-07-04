@@ -393,7 +393,7 @@ const ST_SPEAKER_ACTOR={ "小萩":"kohagi","右近":"ukon","左大臣":"minister
 function stApplyPresentation(ev){
   if(!ev)return;
   if(ev.fade)stFade(ev.fade);
-  else if(ev.fx==="lightning")stLightning();
+  if(ev.fx==="lightning")stLightning();
   if(ev.se&&typeof saigenSe==="function")saigenSe(ev.se);
   const S=APP.story;
   if(S&&S.actors){
@@ -629,6 +629,10 @@ function stCleanupSets(){
   if(S.oni){SO.disposeGroup(S.oni.group);S.oni=null;}
   if(S.sealFx){SO.disposeGroup(S.sealFx.group);S.sealFx=null;}
   if(S.classroom){SO.disposeGroup(S.classroom.group);S.classroom=null;}
+  if(S.props&&S.props.length){ // 章転換で残留した大道具(着地後の短冊等)を確実に破棄しリーク防止
+    S.props.forEach(p=>{if(p&&p.api&&p.api.group)SO.disposeGroup(p.api.group);});
+    S.props=[];
+  }
 }
 /* ---- 世界の住人(姫君・女房・貴公子)を物語中は隠す ---- */
 function stHideWorldFigures(on){
@@ -792,11 +796,12 @@ function startStory(){
           player.pos.set(p.x,(typeof groundH==="function"?groundH(p.x,p.z):0)+1.62,p.z);
           if(p.yaw!=null)player.yaw=p.yaw;player.pitch=-.04;
           if(typeof camera!=="undefined")camera.position.copy(player.pos);window.dummyCam=null;}
-        // 舞台に応じて当たり判定セットを切替(教室=stApplyPresentationで設定済み)
+        // 舞台に応じて当たり判定セットを切替
         const loc=sc.event&&sc.event.stage&&sc.event.stage.location;
-        if(loc!=="classroom"){
-          if(sc.season==="tokoyo")stBuildSolidsTokoyo();else stBuildSolids();
-        }
+        if(loc==="classroom"){
+          // 教室の移動可能域はテレポート後の実座標を中心に張り直す(旧位置中心バグ修正)
+          if(typeof stBuildSolidsRoom==="function")stBuildSolidsRoom(player.pos.x,player.pos.z);
+        }else if(sc.season==="tokoyo")stBuildSolidsTokoyo();else stBuildSolids();
       },
       onCamera:(id)=>stCamera(id),
       onEffect:(e)=>{stApplyPresentation(e.event);stEffect(e);},
