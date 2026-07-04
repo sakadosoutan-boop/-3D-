@@ -1318,6 +1318,8 @@ body.taiji-mode #taijiMood{display:block}
 #bossBar{position:fixed;z-index:43;left:50%;transform:translateX(-50%);top:calc(var(--topbar-h,8px) + 10px + env(safe-area-inset-top));
   width:min(620px,92vw);display:none;text-align:center;font-family:var(--sans)}
 #bossName{color:#f0d8e6;font-size:clamp(12px,3.2vw,14px);letter-spacing:.04em;line-height:1.34;text-shadow:0 2px 6px #000;margin-bottom:5px;white-space:normal;overflow-wrap:anywhere}
+#bossName ruby,#bossName2 ruby,#tjfxNameCard ruby{ruby-align:center}
+#bossName rt,#bossName2 rt{font-size:.58em;letter-spacing:0;color:#ffd7e8;text-shadow:0 1px 4px #000}
 #bossHpWrap{height:9px;background:rgba(20,8,12,.85);border:1px solid rgba(180,60,70,.8);border-radius:1px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.7)}
 #bossHpFill{height:100%;width:100%;background:linear-gradient(90deg,#7a1020,#c8324a);transition:width .25s}
 /* 2体目のボスHPバー(夏: 提灯お化け) — 1体目の直下に配置 */
@@ -1370,6 +1372,7 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 #tjfxNameCard .tjfx-nc-name{font-family:var(--serif);font-size:clamp(24px,7vw,44px);font-weight:900;letter-spacing:.12em;color:#fff8ea;line-height:1.2;
   text-shadow:0 0 3px #000,0 0 10px rgba(210,170,76,.9),0 0 22px rgba(210,170,76,.5),0 3px 10px rgba(0,0,0,.9);
   padding:10px 26px;background:linear-gradient(90deg,rgba(8,5,4,0),rgba(16,9,7,.72) 20%,rgba(16,9,7,.72) 80%,rgba(8,5,4,0));white-space:normal;overflow:visible;overflow-wrap:anywhere}
+#tjfxNameCard .tjfx-nc-name rt{font-size:.34em;letter-spacing:0;color:#ffe1ba;text-shadow:0 1px 5px #000}
 #tjfxNameCard.show{display:block;animation:tjfxNameIn .4s ease both}
 #tjfxNameCard.hide{display:block;animation:tjfxNameOut .5s ease both}
 @keyframes tjfxNameIn{0%{opacity:0;transform:translateX(-50%) translateY(10px) scale(.96)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
@@ -2727,6 +2730,17 @@ body.renai-mode #modeBrief{display:none!important}
     bottom:auto;width:min(360px,42vw)}
   .mb-lead{display:none}.mb-goals{gap:4px}.mb-controls{margin-top:7px}.mb-actions{margin-top:7px}
 }
+#modeBrief.blocking{left:0;right:0;top:0;bottom:0;width:auto;display:flex;align-items:center;justify-content:center;
+  padding:max(18px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
+  background:radial-gradient(ellipse at 50% 44%,rgba(70,28,58,.34),rgba(5,3,7,.72) 62%,rgba(0,0,0,.86));pointer-events:auto;
+  visibility:hidden;transform:none;backdrop-filter:blur(5px)}
+#modeBrief.blocking.show{opacity:1;visibility:visible;transform:none}
+#modeBrief.blocking .mb-card{width:min(520px,94vw);max-height:calc(100dvh - 36px);overflow-y:auto;overscroll-behavior:contain}
+#modeBrief.blocking .mb-lead{display:block}
+#modeBrief.blocking .mb-actions{position:sticky;bottom:-12px;margin:12px -14px -12px;padding:10px 14px 12px;
+  background:linear-gradient(180deg,rgba(24,18,12,0),rgba(24,18,12,.96) 42%,rgba(24,18,12,.98));justify-content:center}
+#modeBrief.blocking #modeBriefOk{min-width:150px;background:linear-gradient(180deg,rgba(148,47,92,.92),rgba(70,20,48,.94));border-color:rgba(255,129,185,.68)}
+body.taiji-brief-blocked #taijiHud .er-act,body.taiji-brief-blocked #taijiHud .er-slot{filter:grayscale(.45) brightness(.7);pointer-events:none}
 /* ============ 波B: ゲームジュース演出(判定スタンプ/紙吹雪/コンボ/画面シェイク) ============ */
 @keyframes juiceStampIn{from{transform:scale(2.6) rotate(-8deg);opacity:0}60%{transform:scale(.94) rotate(1deg);opacity:1}to{transform:scale(1) rotate(0)}}
 .juice-stamp{animation:juiceStampIn .45s cubic-bezier(.2,.9,.3,1.2)}
@@ -3149,7 +3163,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 </div>
 <div id="dodgeFlash"></div>
 <div id="parryFlash"></div>
-<div id="parryText">⚔ パリィ！</div>
+<div id="parryText">⚔ 弾き！</div>
 <div id="taijiMood"></div>
 <div id="taijiBlind"></div>
 <div id="taijiDmgLayer"></div>
@@ -9295,6 +9309,20 @@ function showLoading(){$("loadingScreen").classList.add("show");clearTimeout(_lo
 function hideLoadingSoon(ms=650){clearTimeout(_loadTimer);_loadTimer=setTimeout(()=>$("loadingScreen").classList.remove("show"),ms);}
 let modeBriefTimer=0,modeBriefCurrent="";
 function mbEsc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
+function mbRuby(text,kana){return `<ruby>${mbEsc(text)}<rt>${mbEsc(kana)}</rt></ruby>`;}
+function taijiNameRuby(s){
+  let html=mbEsc(s);
+  [["九尾の狐","きゅうびのきつね"],["河童の主","かっぱのぬし"],["提灯お化け","ちょうちんおばけ"],["合体人魂","がったいひとだま"],["雪女王","ゆきおんな"],["大鬼","おおおに"]].forEach(([kan,kana])=>{
+    html=html.replace(new RegExp(kan+"(?:\\s*\\([^)]*\\))?","g"),`<ruby>${kan}<rt>${kana}</rt></ruby>`);
+  });
+  return html;
+}
+function taijiSetBossName(id,name){const el=$(id);if(el)el.innerHTML=taijiNameRuby(name||"");}
+function taijiSetBriefBlocked(on){
+  const k=APP.taiji;document.body.classList.toggle("taiji-brief-blocked",!!on);
+  if(k){k.tutorialBlocked=!!on;if(!on){const now=performance.now();k.tutorialGraceUntil=now+1200;k.guarding=false;(k.spirits||[]).forEach(sp=>{sp.nextHit=now+1200;});taijiBossList(k).forEach(b=>{b.nextAtk=Math.max(b.nextAtk||0,now+1300);});updateTaijiControlsUi&&updateTaijiControlsUi();}}
+}
+function taijiTutorialBlocked(k=APP.taiji){return !!(k&&k.tutorialBlocked);}
 function modeBriefMuted(m){try{return localStorage.getItem("shinden3d-modebrief-v1-"+m)==="hide";}catch(e){return false;}}
 function modeBriefData(m){
   if(m==="walk")return {kicker:"EXPLORATION",title:"寝殿を歩き、発見を積み上げる",
@@ -9324,28 +9352,33 @@ function modeBriefData(m){
   if(m==="taiji"){
     const rush=!!APP.taijiBossRush;
     return {kicker:rush?"BOSS RUSH":"EXORCISM",title:rush?"四季の主を連戦で祓う":"物の怪を祓い、夜の邸を守る",
-      lead:"敵の閃光(予兆)を読み、回避・ガード・パリィで立ち回る討伐戦です。倒されても、攻めの読みは残ります。",
-      goals:["✦金の閃光=見切りの好機。閃光に合わせてガードを短く押すとパリィ","✸赤の閃光=ガード不能。回避(無敵時間)で間合いを外す","金予兆中にパリィが決まると「見切り」——敵が体勢を崩し大ダメージの好機"],
-      controls:["1/2/3:弓・札・太刀を切替","Shift / 構え長押し:ガード(押した瞬間がパリィ)","Space / フリック:回避","お神酒×3・晴明の加護:回復"]};
+      lead:"この説明を閉じるまで敵もこちらも攻撃しません。敵の閃光を読み、回避・受け・弾きで立ち回る討伐戦です。",
+      goals:[`✦${mbRuby("桃霞","ももがすみ")}の閃き=見切りの好機。閃きに合わせて構えを短く押すと弾き返せます`,"✸赤の閃光=受け不能。回避の無敵時間で間合いを外す",`${mbRuby("桃霞","ももがすみ")}中に弾きが決まると「見切り」——敵が体勢を崩し大ダメージの好機`],
+      controls:["1/2/3:弓・札・太刀を切替","Shift / 構え長押し:受け(押した瞬間が弾き)","Space / フリック:回避","お神酒×3・晴明の加護:回復"]};
   }
   return null;
 }
 function hideModeBrief(fast=false){
   const el=$("modeBrief");if(!el)return;clearTimeout(modeBriefTimer);
-  if(fast){el.classList.remove("show");modeBriefCurrent="";return;}
-  el.classList.remove("show");modeBriefTimer=setTimeout(()=>{modeBriefCurrent="";},320);
+  const blocking=el.classList.contains("blocking");
+  if(blocking)taijiSetBriefBlocked(false);
+  if(fast){el.classList.remove("show","blocking");modeBriefCurrent="";return;}
+  el.classList.remove("show");modeBriefTimer=setTimeout(()=>{el.classList.remove("blocking");modeBriefCurrent="";},320);
 }
 function showModeBrief(m,opt={}){
   const data=modeBriefData(m);const el=$("modeBrief");if(!data||!el||APP.mode==="renaiShort"||APP.mode==="renaiSim")return;
   if(!opt.force&&modeBriefMuted(m))return;
+  const blocking=!!(opt.blocking||m==="taiji");
   modeBriefCurrent=m;
+  el.classList.toggle("blocking",blocking);
+  taijiSetBriefBlocked(blocking);
   $("mbKicker").textContent=data.kicker||"MISSION";
   $("mbTitle").textContent=data.title||"";
   $("mbLead").textContent=data.lead||"";
-  $("mbGoals").innerHTML=(data.goals||[]).map((g,i)=>`<li><span>${i+1}</span><b>${mbEsc(g)}</b></li>`).join("");
+  $("mbGoals").innerHTML=(data.goals||[]).map((g,i)=>`<li><span>${i+1}</span><b>${blocking?g:mbEsc(g)}</b></li>`).join("");
   $("mbControls").innerHTML=(data.controls||[]).map(c=>`<span>${mbEsc(c)}</span>`).join("");
   clearTimeout(modeBriefTimer);el.classList.add("show");
-  modeBriefTimer=setTimeout(()=>hideModeBrief(),opt.ms||7600);
+  if(!blocking)modeBriefTimer=setTimeout(()=>hideModeBrief(),opt.ms||7600);
 }
 function scheduleModeBrief(m){
   if(m==="walk"||m==="quest"||m==="kaimami")setTimeout(()=>{if(APP.mode===m)showModeBrief(m);},520);
@@ -10340,7 +10373,7 @@ const TAIJI_TUNING={
   parryCdMs:460,           // パリィの再受付までの間隔(連打防止)
   parryCounterDmg:16,      // パリィ成功時の反撃ダメージ(最寄りボス)
   parryCounterStunMs:1500, // パリィ反撃後、ボスの次攻撃を遅らせる時間
-  goldSignWindowMs:950,    // 金予兆(✦): この時間内のパリィで「見切り」成立
+  goldSignWindowMs:950,    // 桃霞予兆(✦): この時間内の弾きで「見切り」成立
   mikiriStaggerMs:2600,    // 見切り成功: ボスの体勢崩れ継続時間
   mikiriDmgMul:1.5,        // 体勢崩れ中にボスへ与えるダメージ倍率
   mikiriBonusDmg:10,       // 見切り成立時の即時ダメージ
@@ -10421,7 +10454,7 @@ function startTaiji(){
     taijiCine("物の怪退治", taijiStageLabel(APP.taiji), 1700);
   }
   setTimeout(()=>{if($("taijiMsg"))$("taijiMsg").textContent="";},3500);
-  /* 波I: 開幕シネ演出の後に任務カード(金/赤予兆・パリィ・回避のルール提示)を出す */
+  /* 波I: 開幕シネ演出の後に任務カード(桃霞/赤予兆・弾き・回避のルール提示)を出す */
   setTimeout(()=>{if(APP.mode==="taiji"&&APP.taiji&&!APP.taiji.done)showModeBrief("taiji");},2300);
 }
 function taijiSetLightScene(on){
@@ -10508,10 +10541,12 @@ function taijiTriggerHealPunish(k){
 /* 敵の接触ダメージ */
 function taijiDamage(amt){
   const k=APP.taiji;if(!k||k.done)return;
-  if(performance.now()<(k.dodgeUntil||0)){taijiMsg("回避！(無敵)",500);taijiFloat("回避", "guard",50,58);return;} // ローリング回避の無敵時間
-  if(k.guarding&&performance.now()<(k.parryUntil||0)){taijiParry();k.parryUntil=0;return;} // ジャストガード=パリィ(完全無効＋反撃)
+  const now=performance.now();
+  if(taijiTutorialBlocked(k)||now<(k.tutorialGraceUntil||0))return;
+  if(now<(k.dodgeUntil||0)){taijiMsg("回避！(無敵)",500);taijiFloat("回避", "guard",50,58);return;} // ローリング回避の無敵時間
+  if(k.guarding&&now<(k.parryUntil||0)){taijiParry();k.parryUntil=0;return;} // ジャスト受け=弾き(完全無効＋反撃)
   let dmg=amt*(k.diff?k.diff.dmgMul:1);
-  if(performance.now()<(k.vulnerableUntil||0))dmg*=1.28;
+  if(now<(k.vulnerableUntil||0))dmg*=1.28;
   let guarded=false;
   if(k.guarding&&(k.guardMeter||0)>0){ // ガード成立: 大幅軽減＆ノックバック無効
     guarded=true;k.guards=(k.guards||0)+1;dmg*=0.22;k.guardMeter=Math.max(0,k.guardMeter-(amt*3.4+8));
@@ -10532,6 +10567,7 @@ function taijiDamage(amt){
 }
 function taijiDodge(flickDir){
   const k=APP.taiji,now=performance.now();if(!k||k.done)return;
+  if(taijiTutorialBlocked(k))return;
   if(taijiIsDrinking(k)){taijiMsg("飲み終えるまで動けない",520);return;}
   if(now<(k.dodgeCd||0)){taijiMsg("回避の体勢が整わない",600);beep(200,.06,"square",.05);return;}
   if(!taijiSpendStamina(32,"回避"))return;
@@ -10556,6 +10592,7 @@ function taijiDodge(flickDir){
 const TAIJI_PARRY_WINDOW=TAIJI_TUNING.parryWindowMs; // パリィ受付(ms): ガードを押した瞬間からこの時間内の被弾を弾く
 function taijiSetGuard(on){
   const k=APP.taiji,now=performance.now();if(!k||k.done)return;
+  if(taijiTutorialBlocked(k)){k.guarding=false;updateTaijiControlsUi();return;}
   if(on){
     if(taijiIsDrinking(k)){taijiMsg("飲み終えるまで構えられない",520);return;}
     if((k.guardMeter||0)<=4){beep(180,.08,"square",.06);return;} // メーター切れでは構えられない
@@ -10576,7 +10613,7 @@ function taijiParry(reflectProj=null){
   k.parries=(k.parries||0)+1;
   k.guardMeter=Math.min(100,(k.guardMeter||0)+24); // パリィ成功で受けが回復
   k.stamina=Math.min(k.staminaMax||100,(k.stamina||0)+18);k.exhausted=false;updateTaijiStaminaUi();
-  // 演出: 金色フラッシュ＋「パリィ！」の大きな文字＋火花リング
+  // 演出: 閃光フラッシュ＋「パリィ！」の大きな文字＋火花リング
   const pf=$("parryFlash");if(pf){pf.classList.remove("show");void pf.offsetWidth;pf.classList.add("show");}
   const pt=$("parryText");if(pt){pt.classList.remove("show");void pt.offsetWidth;pt.classList.add("show");}
   taijiMsg("",1); // 中央メッセージは大文字演出に任せる
@@ -10592,7 +10629,7 @@ function taijiParry(reflectProj=null){
     if(nb&&nd<16){damageBoss(nb,TAIJI_TUNING.parryCounterDmg,"parry");nb.nextAtk=performance.now()+TAIJI_TUNING.parryCounterStunMs;}}
   const dv=$("dangerVignette");if(dv){dv.style.opacity=0;} // 被弾ビネットは出さない
   const gb=$("tjGuardBtn");if(gb){gb.classList.add("parry");setTimeout(()=>{if(!APP.taiji||performance.now()>=(APP.taiji.parryUntil||0))gb.classList.remove("parry");},300);}
-  /* 波G: 金予兆中のパリィ=見切り。体勢を崩して火力チャンスを作る */
+  /* 波G: 桃霞予兆中の弾き=見切り。体勢を崩して火力チャンスを作る */
   const nowMK=performance.now();
   if(APP.taiji)taijiBossList(APP.taiji).forEach(bb=>{
     if(!bb.dead&&nowMK<(bb._tjf3SignUntil||0)){
@@ -10724,13 +10761,14 @@ function taijiTrySeimeiHeal(sx,sy){
 }
 function taijiQuit(){
   const k=APP.taiji;if(!k)return;k.done=true;
+  hideModeBrief(true);
   k.spirits.forEach(sp=>{if(sp.alive){const i=rayTargets.indexOf(sp.g.userData.inner);if(i>=0)rayTargets.splice(i,1);}scene.remove(sp.g);});
   taijiBossList(k).forEach(b=>{if(b.g)scene.remove(b.g);});
   _clearTaijiFx();
   creatures.oni.forEach(o=>{o.taijiAlive=true;o.dispelledUntil=0;});
   taijiClearBossGate(k);
   taijiSetLightScene(false);AUTO_TIME._paused=false;AUTO_TIME._last=performance.now();
-  document.body.classList.remove("taiji-mode","taiji-lock");
+  document.body.classList.remove("taiji-mode","taiji-lock","taiji-brief-blocked");
   renderer.shadowMap.autoUpdate=true;renderer.shadowMap.needsUpdate=true;
   $("bossBar").style.display="none";$("bossBar2").style.display="none";$("taijiHud").style.display="none";
   document.body.classList.remove("guarding-now","taiji-lock","taiji-weapon-bow","taiji-weapon-seal","taiji-weapon-sword");
@@ -10748,6 +10786,7 @@ function _clearTaijiFx(){
 }
 function endTaiji(failed){
   const k=APP.taiji;if(!k)return;
+  hideModeBrief(true);
   renderer.shadowMap.autoUpdate=true;renderer.shadowMap.needsUpdate=true;
   $("bossBar").style.display="none";$("bossBar2").style.display="none";
   if($("tjf2LockMark"))$("tjf2LockMark").style.display="none";
@@ -10762,7 +10801,7 @@ function endTaiji(failed){
     if(sp.alive){const idx=rayTargets.indexOf(sp.g.userData.inner);if(idx>=0)rayTargets.splice(idx,1);}
     scene.remove(sp.g);
   });
-  document.body.classList.remove("taiji-mode","guarding-now","taiji-lock","taiji-weapon-bow","taiji-weapon-seal","taiji-weapon-sword");
+  document.body.classList.remove("taiji-mode","guarding-now","taiji-lock","taiji-brief-blocked","taiji-weapon-bow","taiji-weapon-seal","taiji-weapon-sword");
   if(APP._prevJoyDyn!==undefined){joy.dynamic=APP._prevJoyDyn;joyRelease();if(typeof updateControlUI==="function")updateControlUI();}
   const elapsed=(performance.now()-k.tStart)/1000,total=k.total||TAIJI_SPOTS.length,hit=k.shot;
   /* 波O: ストーリー内ボス戦は結果画面を出さず、勝敗と被弾数だけ物語へ返す */
@@ -10840,7 +10879,7 @@ function taijiCine(title,sub,ms=1700){
 /* 波E: ボス戦三大演出(見参ネームカード・祓討の金文字・力尽きの赤文字) */
 function tjfxBossIntro(name,iconUrl){
   const card=$("tjfxNameCard");if(!card)return;
-  const nameEl=card.querySelector(".tjfx-nc-name");if(nameEl)nameEl.textContent=name||"";
+  const nameEl=card.querySelector(".tjfx-nc-name");if(nameEl)nameEl.innerHTML=taijiNameRuby(name||"");
   const iconEl=card.querySelector(".tjfx-nc-icon");
   if(iconEl){if(iconUrl){iconEl.src=iconUrl;iconEl.style.display="block";}else iconEl.style.display="none";}
   clearTimeout(window._tjfxNameT);clearTimeout(window._tjfxNameT2);
@@ -10986,7 +11025,7 @@ function taijiResultPolish(k){
   if(!k)return "";
   const best=k.bestCombo||0,par=k.parries||0,hit=k.hitsTaken||0,guard=k.guards||0;
   const title=best>=16?"祓いの型: 神楽":best>=9?"祓いの型: 連舞":par>=3?"祓いの型: 返し札":"祓いの型: 堅実";
-  return `<br><span style="font-size:11px;color:#aa88cc">${title} / 最大連撃: <b>${best}</b>　パリィ: <b>${par}</b>　ガード: <b>${guard}</b>　お神酒: <b>${k.sakeUsed||0}</b>　被弾: <b>${hit}</b></span>`;
+  return `<br><span style="font-size:11px;color:#aa88cc">${title} / 最大連撃: <b>${best}</b>　弾き: <b>${par}</b>　受け: <b>${guard}</b>　お神酒: <b>${k.sakeUsed||0}</b>　被弾: <b>${hit}</b></span>`;
 }
 function updateTaijiFudaUi(){
   const k=APP.taiji,btn=$("twSeal");if(!btn||!k)return;
@@ -11091,6 +11130,7 @@ function taijiSwordStep(combo){
 }
 function taijiUseSake(){
   const k=APP.taiji,now=performance.now();if(!k||k.done)return;
+  if(taijiTutorialBlocked(k))return;
   if((k.sake||0)<=0){taijiMsg("お神酒はもう残っていない",850);beep(140,.08,"square",.05);return;}
   if(now<(k.sakeCd||0)){taijiMsg("まだ飲めない",620);return;}
   if(k.hp>=k.maxHp-1){taijiMsg("体力は十分だ",620);return;}
@@ -11104,6 +11144,7 @@ function taijiUseSake(){
 }
 function taijiShoot(sx,sy){
   const k=APP.taiji;if(!k||k.done)return;
+  if(taijiTutorialBlocked(k))return;
   if(taijiTrySeimeiHeal(sx,sy))return;
   if(sy<innerHeight*0.13){taijiSetWeapon(sx<innerWidth/3?"bow":sx<innerWidth*2/3?"seal":"sword");return;} // 上部隅タップで武器切替(スマホ/タブレット)
   if(k.weapon==="seal")taijiFuda();else if(k.weapon==="sword")taijiSword();else taijiArrow(sx,sy);
@@ -11111,6 +11152,7 @@ function taijiShoot(sx,sy){
 /* 太刀: 近距離・前方扇形。危険だが体幹を大きく削る */
 function taijiSword(){
   const k=APP.taiji,now=performance.now();if(!k||k.done)return;
+  if(taijiTutorialBlocked(k))return;
   if(taijiIsDrinking(k)){taijiMsg("飲み終えるまで斬れない",520);return;}
   if(now<(k.swordCd||0)){taijiMsg("太刀の構えが戻らない",520);return;}
   const combo=(now-(k.swordAt||0)<900)?Math.min(3,(k.swordCombo||0)+1):1;
@@ -11136,6 +11178,7 @@ function taijiSword(){
 function taijiArrow(sx,sy){
   const k=APP.taiji,now=performance.now();
   if(taijiIsDrinking(k)){taijiMsg("飲み終えるまで射てない",520);return;}
+  if(taijiTutorialBlocked(k))return;
   if(now<(k.arrowCd||0)){taijiMsg("弦を引き絞っている…",520);return;}
   if(!taijiSpendStamina(12,"破魔の矢"))return;
   k.arrowCd=now+720;
@@ -11189,6 +11232,7 @@ function taijiHitOni(o,dmg){
 /* 破魔の札: 自分中心の衝撃波(クールタイムあり) */
 function taijiFuda(){
   const k=APP.taiji;const now=performance.now();
+  if(taijiTutorialBlocked(k))return;
   if(taijiIsDrinking(k)){taijiMsg("飲み終えるまで札を切れない",520);return;}
   if(k.fudaBurst&&now>=(k.fudaCd||0)&&(!k.fudaChain||k.fudaChain<=0))k.fudaChain=2;
   const charged=k.fudaBurst&&(k.fudaChain||0)>0;
@@ -11432,7 +11476,7 @@ function taijiClampBossArena(x,z){
   return{x,z};
 }
 const BOSS_CFG={
-  spring:{name:"九尾の狐 (きゅうびのきつね)",hp:86,col:0xff7a1e,attack:"dart"},
+  spring:{name:"九尾の狐",hp:86,col:0xff7a1e,attack:"dart"},
   summer:{name:"河童の主と提灯お化け",hp:118,col:0x33b866,attack:"duo"},
   autumn:{name:"合体人魂 (がったいひとだま)",hp:88,col:0x7a66ff,attack:"souls"},
   winter:{name:"雪女王 (ゆきおんな)",hp:104,col:0xbfe0ff,attack:"blizzard"}
@@ -11544,7 +11588,7 @@ function makeBoss(season){
   return g;
 }
 function autumnBossPhase2(b){
-  if(!b||b.phase2)return;b.phase2=true;b.cfg.name="大鬼と化した人魂";$("bossName").textContent=b.cfg.name;
+  if(!b||b.phase2)return;b.phase2=true;b.cfg.name="大鬼と化した人魂";taijiSetBossName("bossName",b.cfg.name);
   const g=b.g;g.scale.setScalar(1.28);b.baseScale=g.scale.clone();b.hp=Math.ceil(b.maxHp*.82);b.maxHp=Math.ceil(b.maxHp*1.18);updateBossBar(b);
   b._tjf2Rage=false;const rw=$(b&&b.wrapId?b.wrapId:"bossBar");if(rw)rw.classList.remove("tjf2-rage");
   b._tjf3Stagger=0;b._tjf3SignUntil=0; // 波G: 第2形態移行で見切り状態をリセット
@@ -11580,9 +11624,9 @@ function spawnBoss(k){
     combined.position.set(A.x,0,A.z);scene.add(combined);
     combined.userData.faceLocal=TAIJI_BOSS_FACE.kappa.clone();
     const kHp=Math.ceil(104*mul); // 単体なのでHPを厚めに
-    const kappa={g:combined,cfg:{name:"河童の主 (かっぱのぬし)",col:0x33c884,attack:"kappa"},hp:kHp,maxHp:kHp,nextAtk:now+3600,dead:false,movePhase:Math.random()*9,role:"kappa",faceLocal:TAIJI_BOSS_FACE.kappa.clone(),barId:"bossHpFill",nameId:"bossName",wrapId:"bossBar",baseScale:combined.scale.clone()};
+    const kappa={g:combined,cfg:{name:"河童の主",col:0x33c884,attack:"kappa"},hp:kHp,maxHp:kHp,nextAtk:now+3600,dead:false,movePhase:Math.random()*9,role:"kappa",faceLocal:TAIJI_BOSS_FACE.kappa.clone(),barId:"bossHpFill",nameId:"bossName",wrapId:"bossBar",baseScale:combined.scale.clone()};
     k.bosses=[kappa];
-    $("bossName").textContent=kappa.cfg.name;$("bossHpFill").style.width="100%";$("bossBar").style.display="block";
+    taijiSetBossName("bossName",kappa.cfg.name);$("bossHpFill").style.width="100%";$("bossBar").style.display="block";
     $("bossBar").classList.remove("boss-low");$("bossBar2").classList.remove("boss-low");$("bossBar2").style.display="none";
   }else if(k.season==="summer"){
     // 河童の主と提灯お化けを「別個体」に分離(別HPバー・別の動き・別の攻撃)
@@ -11591,22 +11635,22 @@ function spawnBoss(k){
     combined.position.set(A.x-4,0,A.z+2);scene.add(combined);
     const kHp=Math.ceil(78*mul);
     combined.userData.faceLocal=TAIJI_BOSS_FACE.kappa.clone();
-    const kappa={g:combined,cfg:{name:"河童の主 (かっぱのぬし)",col:0x33c884,attack:"kappa"},hp:kHp,maxHp:kHp,nextAtk:now+2200,dead:false,movePhase:Math.random()*9,role:"kappa",faceLocal:TAIJI_BOSS_FACE.kappa.clone(),barId:"bossHpFill",nameId:"bossName",wrapId:"bossBar",baseScale:combined.scale.clone()};
+    const kappa={g:combined,cfg:{name:"河童の主",col:0x33c884,attack:"kappa"},hp:kHp,maxHp:kHp,nextAtk:now+2200,dead:false,movePhase:Math.random()*9,role:"kappa",faceLocal:TAIJI_BOSS_FACE.kappa.clone(),barId:"bossHpFill",nameId:"bossName",wrapId:"bossBar",baseScale:combined.scale.clone()};
     const cg=new THREE.Group();
     if(ch){ch.position.set(0,1.5,0);cg.add(ch);cg.userData.core=ch.children.find(o=>o.geometry&&o.geometry.type==="CylinderGeometry")||null;}
     cg.userData.faceLocal=TAIJI_BOSS_FACE.chochin.clone();
     cg.position.set(A.x+5,0,A.z-3);scene.add(cg);
     const cHp=Math.ceil(62*mul);
-    const chochin={g:cg,cfg:{name:"提灯お化け (ちょうちん)",col:0xff7a33,attack:"chochin"},hp:cHp,maxHp:cHp,nextAtk:now+3000,dead:false,movePhase:Math.random()*9+3,role:"chochin",faceLocal:TAIJI_BOSS_FACE.chochin.clone(),barId:"bossHpFill2",nameId:"bossName2",wrapId:"bossBar2",baseScale:cg.scale.clone()};
+    const chochin={g:cg,cfg:{name:"提灯お化け",col:0xff7a33,attack:"chochin"},hp:cHp,maxHp:cHp,nextAtk:now+3000,dead:false,movePhase:Math.random()*9+3,role:"chochin",faceLocal:TAIJI_BOSS_FACE.chochin.clone(),barId:"bossHpFill2",nameId:"bossName2",wrapId:"bossBar2",baseScale:cg.scale.clone()};
     k.bosses=[kappa,chochin];
-    $("bossName").textContent=kappa.cfg.name;$("bossHpFill").style.width="100%";$("bossBar").style.display="block";
-    $("bossName2").textContent=chochin.cfg.name;$("bossHpFill2").style.width="100%";$("bossBar2").style.display="block";
+    taijiSetBossName("bossName",kappa.cfg.name);$("bossHpFill").style.width="100%";$("bossBar").style.display="block";
+    taijiSetBossName("bossName2",chochin.cfg.name);$("bossHpFill2").style.width="100%";$("bossBar2").style.display="block";
     $("bossBar").classList.remove("boss-low");$("bossBar2").classList.remove("boss-low");
   }else{
     const g=makeBoss(k.season);g.position.set(A.x,0,A.z);scene.add(g);
     const hp=Math.ceil(cfg.hp*mul);
     k.bosses=[{g,cfg:Object.assign({},cfg),hp,maxHp:hp,nextAtk:now+2400,dead:false,movePhase:Math.random()*9,faceLocal:(TAIJI_BOSS_FACE[k.season]||new THREE.Vector3(0,2,.8)).clone(),barId:"bossHpFill",nameId:"bossName",wrapId:"bossBar",baseScale:g.scale.clone()}];
-    $("bossName").textContent=cfg.name;$("bossHpFill").style.width="100%";$("bossBar").style.display="block";
+    taijiSetBossName("bossName",cfg.name);$("bossHpFill").style.width="100%";$("bossBar").style.display="block";
     $("bossBar").classList.remove("boss-low");$("bossBar2").classList.remove("boss-low");$("bossBar2").style.display="none";
   }
   k.boss=k.bosses[0];
@@ -11615,7 +11659,7 @@ function spawnBoss(k){
   taijiCine("開戦", "霧の結界が閉じた。退く道はない", 1500);
   // 波Y: 描き下ろしボスアイコン(軽量WebP)。夏=河童単体は専用絵、夏=通常戦は提灯お化け側、秋=巨大人魂
   const bossIcon=storyKappa?"icons/kappa_icon.webp":(k.season==="summer"?"icons/chochin_concept.webp":k.season==="autumn"?"icons/hitodama_concept.webp":null);
-  tjfxBossIntro(storyKappa?"河童の主 (かっぱのぬし)":(k.season==="summer"?"河童の主と提灯お化け":(k.bosses[0].cfg&&k.bosses[0].cfg.name)||"ボス"),bossIcon); // 波E: 見参ネームカード
+  tjfxBossIntro(storyKappa?"河童の主":(k.season==="summer"?"河童の主と提灯お化け":(k.bosses[0].cfg&&k.bosses[0].cfg.name)||"ボス"),bossIcon); // 波E: 見参ネームカード
   if(typeof SFX!=="undefined")SFX.playBossBgm(k.season); // 季節別ボス戦BGM
 }
 function updateBossBar(b){
@@ -15988,7 +16032,7 @@ function animate(now){
       const step=t*1.48+o.phase*2.3;
       const a=t*.085+o.phase;                                       // [fix] 広い範囲をゆっくり巡回(反復感を抑制)
       const px=o.g.position.x, pz=o.g.position.z;
-      if(APP.mode==="taiji"&&APP.taiji&&!APP.taiji.done){
+      if(APP.mode==="taiji"&&APP.taiji&&!APP.taiji.done&&!taijiTutorialBlocked(APP.taiji)){
         const dx=player.pos.x-o.g.position.x,dz=player.pos.z-o.g.position.z,d=Math.hypot(dx,dz);
         if(d<38&&d>1.4){const s=(3.0+((APP.taiji.diff&&APP.taiji.diff.burst)||0)*.45)*dt;o.g.position.x+=dx/d*s;o.g.position.z+=dz/d*s;}
         if(d<2.1&&performance.now()>(o.atkCd||0)){o.atkCd=performance.now()+1200;taijiDamage(18);taijiMsg("鬼の金棒が迫る！");}
@@ -16072,7 +16116,7 @@ function animate(now){
       if(yk.g.userData.aura)yk.g.userData.aura.material.opacity=(0.12+Math.sin(ph*1.5)*0.06)*nightFade;
     }
     /* 退治モード: 近づくと配置妖怪が特徴的な攻撃をしてくる */
-    if(APP.mode==="taiji"&&APP.taiji&&!APP.taiji.done){
+    if(APP.mode==="taiji"&&APP.taiji&&!APP.taiji.done&&!taijiTutorialBlocked(APP.taiji)){
       const dd=Math.hypot(player.pos.x-yk.g.position.x,player.pos.z-yk.g.position.z);
       if(dd<2.0){const nw=performance.now();if(nw>(yk.atkCd||0)){yk.atkCd=nw+1500;taijiYokaiAttack(def.type);}}
     }
@@ -16087,6 +16131,8 @@ function animate(now){
     if(K.fudaBurst&&now>=(K.fudaCd||0)&&(!K.fudaChain||K.fudaChain<=0)){K.fudaChain=2;updateTaijiFudaUi();}
     // 破魔の札クールタイム表示
     if($("tjCoolFill")){const cd=4000,rem=(K.fudaCd||0)-now;$("tjCoolFill").style.width=(rem>0?(1-rem/cd):1)*100+"%";}
+    if(taijiTutorialBlocked(K)){updateTaijiControlsUi();}
+    else{
     let nearestD=1e9;
     for(const sp of APP.taiji.spirits){
       if(!sp.alive)continue;
@@ -16111,6 +16157,7 @@ function animate(now){
     /* 接近警告音: 近いほど速く鳴る */
     if(nearestD<10){const interval=Math.max(220,nearestD*90);if(now>(K.warnT||0)){K.warnT=now+interval;beep(nearestD<4?300:200,.05,"triangle",.05);}}
     if(K.boss)updateBoss(K,t,now,dt);
+    }
   }
 
   /* --- 水鳥 --- */
