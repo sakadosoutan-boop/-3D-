@@ -11206,7 +11206,7 @@ function taijiFuda(){
 /* ボス戦アリーナ: 北の対に挟まれた狭い窪地を避け、東の奥の開けた庭へ移動(建物に当たらない広い円) */
 const TAIJI_BOSS_ARENA={x:30,z:-48,r:18,gateZ:-30};
 const TAIJI_BOSS_ASSETS={
-  spring:{file:"Manex3D-generated-model_9a0f501e9f5a_1782132793278.glb",scale:4.2,y:1.58,rotY:Math.PI*1.5},
+  spring:{file:"Manex3D-generated-model_9a0f501e9f5a_1782132793278.glb",scale:4.2,y:1.58,rotY:Math.PI*1.5,liteRig:true},
   winter:{file:"Manex3D-generated-model_f8c11fd36f62_1782133320333.glb",scale:3.8,y:1.90,rotY:Math.PI}
 };
 const TAIJI_BOSS_FACE={
@@ -11218,6 +11218,7 @@ const TAIJI_BOSS_FACE={
   chochin:new THREE.Vector3(0,1.6,.72)
 };
 const taijiGlbCache={};
+const TAIJI_KITSUNE_LITE_RIG=/[?&]kitsuneLite=1(?:&|$)/.test(location.search);
 function taijiCompArray(t){return t===5126?Float32Array:t===5125?Uint32Array:t===5123?Uint16Array:t===5121?Uint8Array:Int16Array;}
 function taijiItemSize(t){return t==="SCALAR"?1:t==="VEC2"?2:t==="VEC3"?3:t==="VEC4"?4:1;}
 function taijiReadAccessor(json,bin,i){
@@ -11258,6 +11259,54 @@ async function taijiLoadSimpleGlb(url){
   })();
   return taijiGlbCache[url];
 }
+function taijiApplyKitsuneLiteRig(model){
+  if(!model||model.userData.kitsuneLiteRig)return;
+  const uniforms=[];
+  model.traverse(o=>{
+    if(!o.isMesh||!o.geometry||!o.material)return;
+    if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();
+    const bb=o.geometry.boundingBox;
+    const mn=bb.min.clone(),sz=bb.max.clone().sub(bb.min);
+    const uTime={value:0};
+    const mat=o.material.clone();
+    mat.onBeforeCompile=shader=>{
+      shader.uniforms.uKitsuneTime=uTime;
+      shader.uniforms.uKitsuneMin={value:mn};
+      shader.uniforms.uKitsuneSize={value:sz};
+      shader.vertexShader=shader.vertexShader.replace(
+        "#include <common>",
+        "#include <common>\nuniform float uKitsuneTime;\nuniform vec3 uKitsuneMin;\nuniform vec3 uKitsuneSize;"
+      ).replace(
+        "#include <begin_vertex>",
+        `#include <begin_vertex>
+        vec3 kp=(position-uKitsuneMin)/max(uKitsuneSize,vec3(0.0001));
+        float side=step(0.5,kp.x)*2.0-1.0;
+        float tailMask=smoothstep(0.38,0.72,kp.y)*(1.0-smoothstep(0.46,0.72,kp.z));
+        float legMask=(1.0-smoothstep(0.20,0.42,kp.y))*smoothstep(0.12,0.34,abs(kp.x-0.5));
+        float headMask=smoothstep(0.60,0.86,kp.z)*smoothstep(0.42,0.66,kp.y);
+        float tailWave=sin(uKitsuneTime*3.4+kp.x*10.5+kp.y*4.0);
+        float stepWave=sin(uKitsuneTime*6.8+side*1.5708+kp.z*3.0);
+        transformed.x+=tailMask*tailWave*0.026;
+        transformed.y+=tailMask*cos(uKitsuneTime*2.7+kp.x*8.0)*0.010;
+        transformed.y+=legMask*max(stepWave,0.0)*0.022;
+        transformed.z+=legMask*stepWave*0.013;
+        transformed.y+=headMask*sin(uKitsuneTime*2.2)*0.006;
+        transformed.z+=headMask*cos(uKitsuneTime*2.2)*0.006;`
+      );
+    };
+    mat.customProgramCacheKey=()=>"taiji-kitsune-lite-rig-v1";
+    mat.needsUpdate=true;
+    o.material=mat;
+    uniforms.push(uTime);
+  });
+  model.userData.kitsuneLiteRig={uniforms};
+}
+function taijiUpdateKitsuneLiteRig(g,t){
+  const model=g&&g.userData&&g.userData.assetModel;
+  const rig=model&&model.userData&&model.userData.kitsuneLiteRig;
+  if(!rig)return;
+  rig.uniforms.forEach(u=>{u.value=t;});
+}
 function taijiAttachBossAsset(season,g){
   const opt=TAIJI_BOSS_ASSETS[season];if(!opt)return;
   const fallback=g.children.slice();
@@ -11267,6 +11316,7 @@ function taijiAttachBossAsset(season,g){
     const model=src.clone(true);model.name="taiji-glb-"+season;
     model.position.set(0,opt.y||1.6,0);model.rotation.y=opt.rotY||0;model.scale.setScalar(opt.scale||3.5);
     model.traverse(o=>{if(o.isMesh){o.renderOrder=6;o.castShadow=false;o.receiveShadow=false;}});
+    if(opt.liteRig&&TAIJI_KITSUNE_LITE_RIG)taijiApplyKitsuneLiteRig(model);
     fallback.forEach(o=>{if(o!==g.userData.aura)o.visible=false;});
     if(g.userData.aura)g.userData.aura.visible=true;
     g.add(model);g.userData.assetModel=model;taijiAddBossPresence(season,g);g.userData.assetReady=true;g.userData.assetLoading=false;
@@ -11317,6 +11367,7 @@ function taijiUpdateBossPresence(g,t){
   fx.tailTips.forEach((tip,i)=>{const b=tip.userData.base;if(b){tip.position.set(b.x+Math.sin(t*1.6+i)*.045,b.y+Math.sin(t*2.2+i*.4)*.08,b.z+Math.cos(t*1.3+i)*.035);}tip.scale.setScalar(1+Math.sin(t*3.1+i)*.12);});
   fx.wisps.forEach((w,i)=>{const u=w.userData,a=t*(.62+i*.012)+u.phase;w.position.set(Math.cos(a)*u.rad,u.high+Math.sin(t*1.9+u.phase)*.42,Math.sin(a)*u.rad);w.scale.setScalar(.88+Math.sin(t*2.7+u.phase)*.18);w.rotation.y=-a;if(w.children[0]&&w.children[0].material)w.children[0].material.opacity=.42+Math.sin(t*3+u.phase)*.18;});
   fx.snow.forEach((s,i)=>{const u=s.userData,a=t*(.35+i*.004)+u.phase;s.position.set(Math.cos(a)*u.rad,u.high+Math.sin(t*1.25+u.phase)*.24,Math.sin(a)*u.rad);s.rotation.y+=.02*u.spin;s.rotation.x+=.013*u.spin;if(s.material)s.material.opacity=.30+Math.sin(t*2.4+u.phase)*.14;});
+  taijiUpdateKitsuneLiteRig(g,t);
 }
 function taijiPreloadBossAsset(season){
   const opt=TAIJI_BOSS_ASSETS[season];return opt?taijiLoadSimpleGlb(opt.file).catch(()=>null):Promise.resolve(null);
