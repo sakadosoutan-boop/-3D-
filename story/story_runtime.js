@@ -46,7 +46,7 @@ function stInject(){
     /* 立ち絵(Canvas描画の胸像)。表示中は本文を右へ寄せる */
     "#storyHud .st-box.with-face{padding-left:106px;min-height:104px}",
     "#stFace{position:absolute;left:10px;bottom:10px;width:86px;height:86px;border-radius:9px;border:1px solid var(--kin);",
-    " background:#141009;display:none;box-shadow:0 3px 10px rgba(0,0,0,.5)}",
+    " background:#141009;display:none;box-shadow:0 3px 10px rgba(0,0,0,.5);object-fit:cover}",
     /* ログ一覧 */
     "#storyHud .st-log-item{text-align:left;border-bottom:1px solid rgba(201,162,63,.22);padding:7px 2px}",
     "#storyHud .st-log-item b{color:var(--kin);font-size:11px;display:block;margin-bottom:2px}",
@@ -192,8 +192,9 @@ window.storyBoundClamp=function(x,z){
 function stBuildSolids(){
   const S=[];
   // ── 建物本体を「壁」として矩形化。すり抜け不可。プレイヤーは南庭を歩き、建物を回り込む ──
-  // 寝殿(簀子まで含む台。南端 z≈6.4)。小萩の気配の間もこの中で守られる
-  S.push({x:0,z:-2,hw:13.6,hd:8.6});
+  // 寝殿(母屋の核のみ)。南面の簀子・廂は開放し、南庭から出入りできるようにする
+  // (旧: hd8.6で南端z6.6まで塞ぎ、playerStartや札の出現点を囲い込んで進行不能にしていた)
+  S.push({x:0,z:-4.5,hw:13.6,hd:6.1});
   // 三つの対屋
   S.push({x:35,z:-12,hw:10,hd:7});S.push({x:-35,z:-12,hw:10,hd:7});S.push({x:0,z:-39,hw:11,hd:6.5});
   // 中門廊(南へ伸びる細い廊)
@@ -301,9 +302,30 @@ function stFaceUrl(key){
   return ST_FACE_CACHE[key];
 }
 const ST_FACE_KEY={"小萩":"kohagi","秀頼":"hidetora","秀頼（心）":"hidetora","右近":"ukon","左大臣":"minister","判者":"judge","栞":"shiori","大鬼":"oni"};
-function stSetFace(spk){
+/* 波Y: 描き下ろしアイコン(軽量WebP・相対パス参照。単一HTMLは肥大化させない) */
+const ST_ICON_FILES={
+  kohagi:"icons/kohagi_silhouette.webp",
+  ukon:"icons/ukon.webp",
+  minister:"icons/sadaijin_fan.webp",
+  shiori:"icons/shiori.webp",
+  hidetora_neutral:"icons/hidetora_neutral.webp",
+  hidetora_worried:"icons/hidetora_worried.webp",
+  hidetora_blush:"icons/hidetora_blush.webp",
+  hidetora_modern:"icons/hidetora_modern.webp"
+};
+function stHidetoraIcon(ev){
+  const e=ev&&ev.emotes&&ev.emotes.hidetora;
+  if(e&&ST_ICON_FILES["hidetora_"+e])return "hidetora_"+e;
+  const S=APP.story;
+  if(S&&S.classroom)return "hidetora_modern"; // 現代の教室シーンでは現在の彼の姿
+  return "hidetora_neutral";
+}
+function stSetFace(spk,ev){
   const img=stEl("stFace"),box=stEl("stBox");if(!img)return;
-  const key=ST_FACE_KEY[spk],url=key?stFaceUrl(key):null;
+  const key=ST_FACE_KEY[spk];
+  let iconKey=key==="hidetora"?stHidetoraIcon(ev):key;
+  const iconFile=iconKey?ST_ICON_FILES[iconKey]:null;
+  const url=iconFile||(key?stFaceUrl(key):null); // 描き下ろしが無い話者(判者・大鬼)はCanvas影絵で代用
   if(url){img.src=url;img.style.display="block";box.classList.add("with-face");}
   else{img.style.display="none";box.classList.remove("with-face");}
 }
@@ -410,8 +432,13 @@ function stApplyPresentation(ev){
       if(st.erosionLevel!=null&&erosionFx)erosionFx.setLevel(st.erosionLevel);
       if(st.location==="classroom"){stEnsureClassroom(); // 波O: 現代教室セット(ED演出)
         if(typeof stBuildSolidsRoom==="function")stBuildSolidsRoom(player.pos.x,player.pos.z);} // 教室は移動を極小域に閉じる
+      if(st.location==="hospital"){stEnsureHospital(); // 波W: 現実の病室(第6話 回想の間の枠)
+        if(typeof stBuildSolidsRoom==="function")stBuildSolidsRoom(player.pos.x,player.pos.z);}
       if(st.location==="mansion"&&S.classroom){ // 教室→邸への帰還(第1話の転移)
         window.StoryObjects.disposeGroup(S.classroom.group);S.classroom=null;
+      }
+      if((st.location==="mansion"||st.location==="classroom")&&S.hospital){ // 病室→他所へ移ったら畳む
+        window.StoryObjects.disposeGroup(S.hospital.group);S.hospital=null;
       }
     }
   }
@@ -439,7 +466,7 @@ function stShowDialogue(spk,text,ev){
   const full=text||"";
   te.style.fontSize=(full.length>130)?"12.5px":"14px"; // 長文は一段小さく(切れ防止)
   te.scrollTop=0;
-  stSetFace(spk); // 立ち絵
+  stSetFace(spk,ev); // 立ち絵
   const v=APP.story&&APP.story.vn;
   if(v){v.log.push({s:spk,t:full,ch:SM&&SM.chapter?SM.chapter.chapterId:0});if(v.log.length>300)v.log.shift();v.curEv=ev;}
   const actorKey=ST_SPEAKER_ACTOR[spk];
@@ -586,10 +613,15 @@ function stEffect(info){
     win.rotation.x=-Math.PI/2;win.position.set(.3,0.012,.2);g.add(win);
     const win2=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.34),new THREE.MeshBasicMaterial({color:0xe8eef6,transparent:true,opacity:0,depthWrite:false}));
     win2.rotation.x=-Math.PI/2;win2.position.set(-.75,0.012,-.35);g.add(win2);
+    // 波X: ボス出現前の予兆——水底に赤く光る眼が二つ、遅れて浮かぶ
+    const eyeMat1=new THREE.MeshBasicMaterial({color:0xff2010,transparent:true,opacity:0,depthWrite:false});
+    const eyeMat2=eyeMat1.clone();eyeMat2.__ownedByStory=eyeMat1.__ownedByStory=true;
+    const eye1=new THREE.Mesh(new THREE.CircleGeometry(.06,10),eyeMat1);eye1.rotation.x=-Math.PI/2;eye1.position.set(-.14,0.014,.55);g.add(eye1);
+    const eye2=new THREE.Mesh(new THREE.CircleGeometry(.06,10),eyeMat2);eye2.rotation.x=-Math.PI/2;eye2.position.set(.02,0.014,.55);g.add(eye2);
     g.position.set(-11.5,0.16,27.0); // 池の北汀の水面に固定(直前のset_sceneでプレイヤーを汀へ移す)
     g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
     scene.add(g);
-    S.props.push({kind:"yarimizu",api:{group:g},t:0,mats:[dark.material,win.material,win2.material]});
+    S.props.push({kind:"yarimizu",api:{group:g},t:0,mats:[dark.material,win.material,win2.material,eyeMat1,eyeMat2]});
     if(typeof saigenSe==="function")saigenSe("wind");
   }else if(id==="shiori_reflection"){
     // 波P: 澄んだ水面に浮かぶ「制服の横顔」——顔は描き込まず、月光の輪郭だけで見せる
@@ -613,6 +645,17 @@ function stEffect(info){
     scene.add(g);
     S.props.push({kind:"shiorimirror",api:{group:g},t:0});
     if(typeof saigenSe==="function")saigenSe("koto");
+  }else if(id==="winter_lamp_dim"&&SO){
+    // 第4話 歌合の舞台装飾: 判者席・火桶・高灯台・雪・題札を廂に据える(雅楽の気配)
+    if(!(S.props||[]).some(p=>p.kind==="utakaistage")){
+      const api=SO.createUtakaiStageProps();
+      const fy=(typeof groundH==="function"?groundH(0,-1.8):0);
+      api.group.position.set(0,fy,0);
+      api.setTopic("雪"); // 初番の題(narrationと同じ「雪」)
+      scene.add(api.group);
+      S.props.push({kind:"utakaistage",api});
+    }
+    if(typeof saigenSe==="function")saigenSe("koto"); // 楽の音、床を這うように
   }
   // summer_heat_haze / ending_gallery_ready は世界側の夏演出・回想UIがそのまま担う(追加なし)
 }
@@ -622,6 +665,13 @@ function stEnsureClassroom(){
   S.classroom=SO.createClassroomSet();
   scene.add(S.classroom.group);
   S.classroom.setBoard("waka","御簾=隔てる/つなぐ"); // 黒板に平面図+書き足し
+  if(typeof saigenSe==="function")saigenSe("chalk"); // 波Y: チョークの音で黒板の気配を添える
+}
+/* 波W: 現実の病室セット(第6話 回想の間の枠)。cam_hospital_* が絶対座標で寄る */
+function stEnsureHospital(){
+  const S=APP.story,SO=window.StoryObjects;if(!S||!SO||S.hospital)return;
+  S.hospital=SO.createHospitalRoomSet(); // 心電モニタ・点滴・薄紫紐のしおり付きノート
+  scene.add(S.hospital.group);
 }
 /* 章をまたぐ大道具の一括後片付け(大鬼・連札・教室) */
 function stCleanupSets(){
@@ -629,6 +679,7 @@ function stCleanupSets(){
   if(S.oni){SO.disposeGroup(S.oni.group);S.oni=null;}
   if(S.sealFx){SO.disposeGroup(S.sealFx.group);S.sealFx=null;}
   if(S.classroom){SO.disposeGroup(S.classroom.group);S.classroom=null;}
+  if(S.hospital){SO.disposeGroup(S.hospital.group);S.hospital=null;}
   if(S.props&&S.props.length){ // 章転換で残留した大道具(着地後の短冊等)を確実に破棄しリーク防止
     S.props.forEach(p=>{if(p&&p.api&&p.api.group)SO.disposeGroup(p.api.group);});
     S.props=[];
@@ -866,14 +917,21 @@ function storyUpdate(dt){
   if(S.oni&&S.oni.update)S.oni.update(t);
   if(S.sealFx&&S.sealFx.update)S.sealFx.update(t,dt);
   if(S.classroom&&S.classroom.update)S.classroom.update(t);
+  if(S.hospital&&S.hospital.update)S.hospital.update(t); // 心電波形・見舞いの気配
   for(let i=(S.props||[]).length-1;i>=0;i--){
     const p=S.props[i];
     if(p.kind==="tanzaku"&&p.falling){if(p.api.updateFall(dt,(typeof groundH==="function"?groundH(p.api.group.position.x,p.api.group.position.z):0)+0.10))p.falling=false;}
+    else if(p.kind==="utakaistage"){if(p.api.update)p.api.update(t);} // 灯の揺らぎ
     else if(p.kind==="tokoyo"&&p.api.update)p.api.update(t,dt);
-    else if(p.kind==="yarimizu"){ // 濁り→教室の窓が浮かぶ→静かに消える(約8秒)
+    else if(p.kind==="yarimizu"){ // 濁り→教室の窓が浮かぶ→赤い眼が遅れて浮かぶ→静かに消える(約8秒)
       p.t+=dt;
       const a=p.t<1.2?p.t/1.2:p.t<6?1:Math.max(0,1-(p.t-6)/2);
       p.mats[0].opacity=.62*a;p.mats[1].opacity=.5*a*(0.7+Math.sin(t*1.8)*.3);p.mats[2].opacity=.4*a*(0.7+Math.cos(t*2.2)*.3);
+      if(p.mats[3]&&p.mats[4]){ // ボスの予兆(河童の主): 濁りが十分深まってから、じわりと灯る
+        const eyeA=p.t<2.4?0:p.t<6?Math.min(1,(p.t-2.4)/1.4):Math.max(0,1-(p.t-6)/2);
+        const pulse=0.7+Math.sin(t*3.4)*.3;
+        p.mats[3].opacity=eyeA*pulse;p.mats[4].opacity=eyeA*pulse;
+      }
       if(p.t>8){window.StoryObjects.disposeGroup(p.api.group);S.props.splice(i,1);}
     }
     else if(p.kind==="shiorimirror"){ // 水底から浮かびあがり、揺らめいて、沈む(約10秒)

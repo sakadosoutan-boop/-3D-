@@ -861,7 +861,7 @@
   function createHospitalRoomSet(){
     const anchor=STORY_OFFSTAGE.hospital;
     const g=new THREE.Group();g.position.set(anchor.x,anchor.y,anchor.z);
-    const shell=createModernRoomShell({w:6.4,h:3.0,d:5.2,wallColor:0xe6efe9,floorColor:0xdcd8ce,lightTint:0xf2f6f0,lightPower:.8});
+    const shell=createModernRoomShell({w:6.4,h:3.0,d:5.2,wallColor:0xd6e6dc,floorColor:0xc7bfa8,lightTint:0xf0ecd8,lightPower:.8});
     g.add(shell);
     // 窓(淡い朝光)+ブラインド
     const win=windowPane(2.0,1.3,0xe9f2fb);win.position.set(-3.17,1.7,-.6);win.rotation.y=Math.PI/2;g.add(win);
@@ -911,7 +911,7 @@
     // 間仕切りカーテン(レール+ヒダ=波板)。setCurtainで開閉
     const railY=2.55;
     const rail=cyl(.015,.015,3.4,steel,0,railY,.9,8);rail.rotation.z=Math.PI/2;g.add(rail);
-    const curtainMat=M({color:0xdfe8dd,roughness:.95,side:THREE.DoubleSide});curtainMat.__ownedByStory=true;
+    const curtainMat=M({color:0xc3d8c8,roughness:.95,side:THREE.DoubleSide});curtainMat.__ownedByStory=true;
     const curtain=new THREE.Group();
     for(let i=0;i<7;i++){const fold=plane(.24,railY-.35,curtainMat,0,0,0);
       fold.position.set(-.72+i*.24,(railY-.35)/2+.05,.9+((i%2)?.03:-.03));fold.rotation.y=(i%2?1:-1)*.18;curtain.add(fold);}
@@ -947,8 +947,13 @@
   function createClassroomSet(){
     const anchor=STORY_OFFSTAGE.classroom;
     const g=new THREE.Group();g.position.set(anchor.x,anchor.y,anchor.z);
-    const shell=createModernRoomShell({w:8.2,h:3.1,d:6.6,wallColor:0xefeade,floorColor:0xc9b98f,ceilColor:0xf4f2ec,lightTint:0xf8f6ee,lightPower:1.0});
+    const shell=createModernRoomShell({w:8.2,h:3.1,d:6.6,wallColor:0xe6dcb8,floorColor:0xb89a68,ceilColor:0xece6d4,lightTint:0xf5ecd2,lightPower:1.0});
     g.add(shell);
+    // 腰壁(和製教室の定番=淡い緑青の帯)。白すぎる箱を教室らしい色味にする
+    const waMat=M({color:0x7f9c8f,roughness:.88});waMat.__ownedByStory=true;
+    const waH=1.0,waY=waH/2;
+    [[0,-3.28,8.12,0],[0,3.28,8.12,0],[-4.08,0,6.52,Math.PI/2],[4.08,0,6.52,Math.PI/2]].forEach(p=>{
+      const b=box(p[2],waH,.03,waMat,p[0],waY,p[1]);b.rotation.y=p[3];g.add(b);});
     // 黒板(寝殿造り平面図をCanvasで描く)
     const bc=document.createElement("canvas");bc.width=512;bc.height=192;
     const bx=bc.getContext("2d");

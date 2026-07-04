@@ -16,6 +16,40 @@
       },
       "cameraAngleId": "cam_ending_morning",
       "fade": "white",
+      "next": "seq_601h1_hospital"
+    },
+    {
+      "id": "seq_601h1_hospital",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "——電子音が、規則正しく鳴っている。白い天井、消毒の匂い。五時間目の古典の途中、窓際の席で崩れるように倒れて、それから、ずいぶん長い夢を見ていたらしい。海のない町の病室に、春の朝の光が、そっと差している。",
+      "se": "bell",
+      "stage": {
+        "location": "hospital"
+      },
+      "cameraAngleId": "cam_hospital_bed",
+      "next": "seq_601h2_note"
+    },
+    {
+      "id": "seq_601h2_note",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "枕元のテーブルに、青い罫線のノートが一冊。薄紫の紐のしおりが、寝殿造りの間取りを写したページにはさまっている。丸椅子とスリッパ——毎日、誰かが見舞いに来ていたことを、それらが静かに告げていた。ノートの端の几帳面な字に、たしかに見覚えがある。",
+      "stage": {
+        "location": "hospital"
+      },
+      "cameraAngleId": "cam_hospital_window",
+      "next": "seq_601h3_recall"
+    },
+    {
+      "id": "seq_601h3_recall",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（御簾の向こうの声。夢のあいだ、ずっと俺の名を呼んでいた——あれは、この枕元から話しかけていた、あんたの声だったのかもしれない）……見た夢を、もう一度、初めから思い返してみよう。どんな朝に、たどり着いたのかを。",
+      "stage": {
+        "location": "hospital"
+      },
+      "cameraAngleId": "cam_hospital_door_pov",
       "next": "seq_602_ending_gallery"
     },
     {
