@@ -16,13 +16,6 @@
       },
       "cameraAngleId": "cam_tokoyo_north_tainoya",
       "fade": "white",
-      "next": "seq_501b"
-    },
-    {
-      "id": "seq_501b",
-      "type": "dialogue",
-      "speaker": "語り",
-      "text": "目が覚めると、空の色がおかしかった。夜でも朝でもない、青白い黎明。雪も桜も同時に降っていて、どちらも地面に届く前に消える。邸の建具が、風もないのに浮き上がり——御簾が一枚、天地逆さまに垂れて、静かに揺れていた。",
       "next": "seq_502_tokoyo_effect"
     },
     {
@@ -34,6 +27,13 @@
         "brokenMisu": true,
         "fogGate": true
       },
+      "next": "seq_501b"
+    },
+    {
+      "id": "seq_501b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "目が覚めると、空の色がおかしかった。夜でも朝でもない、赤黒く禍々しい黎明。雪も桜も同時に降っていて、どちらも地面に届く前に消える。邸の建具が、風もないのに浮き上がり——御簾が一枚、天地逆さまに垂れて、静かに揺れていた。",
       "next": "seq_502b"
     },
     {
@@ -291,6 +291,7 @@
         },
         {
           "text": "「栞」",
+          "glitchText": true,
           "next": "seq_510_name_shiori",
           "effects": {
             "realityEgo": 14

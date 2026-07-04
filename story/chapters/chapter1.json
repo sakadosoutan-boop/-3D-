@@ -35,7 +35,8 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "礼を言おうとして顔を上げた、その時。チャイムの音が、遠く、水の中で鳴るように歪んだ。黒板の寝殿造りの図が、ぬるりと奥行きを持つ。蛍光灯の白い光が——春の、朝の光に変わった。",
-      "se": "wind",
+      "se": "chime",
+      "seDelayMs": 500,
       "next": "seq_001t",
       "cameraAngleId": "cam_classroom_board"
     },
@@ -323,6 +324,8 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "たしかに、聞こえた。現代の、教室の呼び方で。振り返っても、簾は静かに垂れたまま。遠くで、チャイムに似た音が一度だけ鳴って、春の風に溶けた。",
+      "se": "chime",
+      "seDelayMs": 900,
       "next": "seq_007_kohagi_deny"
     },
     {

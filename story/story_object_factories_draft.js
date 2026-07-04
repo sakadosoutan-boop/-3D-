@@ -59,6 +59,16 @@
   function sph(r,mat,x=0,y=0,z=0,w=8,h=6){const m=new THREE.Mesh(new THREE.SphereGeometry(r,w,h),mat);m.position.set(x,y,z);m.castShadow=true;return m;}
   function plane(w,h,mat,x=0,y=0,z=0){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);m.position.set(x,y,z);return m;}
   function noShadow(o){o.castShadow=false;o.receiveShadow=false;return o;}
+  /* ノートを破いた紙片のような不揃いな上端を持つ形状(短冊ではなく「切れ端」らしく見せる) */
+  function tornPaperShape(w,h){
+    const shp=new THREE.Shape(),hw=w/2,hh=h/2;
+    shp.moveTo(-hw,-hh);shp.lineTo(hw,-hh);shp.lineTo(hw,hh*.5);
+    const teeth=5;
+    for(let i=1;i<=teeth;i++){const x=hw-(w*i/teeth);const y=(i%2===1)?hh*.98:hh*.58;shp.lineTo(x,y);}
+    shp.lineTo(-hw,-hh);
+    return shp;
+  }
+  function tornPaperMesh(w,h,mat){const g=new THREE.ShapeGeometry(tornPaperShape(w,h));return new THREE.Mesh(g,mat);}
 
   /* 縦書き/横書きテキストのCanvasTexture(小さく生成し、にじみ防止に2x) */
   function textTexture(text,opt={}){
@@ -348,18 +358,19 @@
   ============================================================ */
   function createWhiteTanzakuObject(){
     const g=new THREE.Group();
-    const front=plane(.16,.55,M({color:0xf6f0dd,roughness:.92}),0,0,.002);g.add(front);
-    // 裏面: ノート(青い罫線+薄紫のマージン線=栞の記号)
-    const c=document.createElement("canvas");c.width=64;c.height=192;const x=c.getContext("2d");
-    x.fillStyle="#f4f6f8";x.fillRect(0,0,64,192);
-    x.strokeStyle="#b8c9de";x.lineWidth=1;
-    for(let i=1;i<10;i++){x.beginPath();x.moveTo(6,i*19);x.lineTo(60,i*19);x.stroke();}
-    x.strokeStyle="#b9a5e6";x.beginPath();x.moveTo(10,0);x.lineTo(10,192);x.stroke();
+    const W=.30,H=.36; // 短冊ではなく、破いたノートの切れ端らしい比率(縦長すぎない)
+    const front=tornPaperMesh(W,H,M({color:0xf6f0dd,roughness:.92}));front.position.z=.002;g.add(front);
+    // 裏面: ノート(青い罫線+薄紫のマージン線=栞の記号)。同じ破れ形状に描く
+    const c=document.createElement("canvas");c.width=128;c.height=160;const x=c.getContext("2d");
+    x.fillStyle="#f4f6f8";x.fillRect(0,0,128,160);
+    x.strokeStyle="#b8c9de";x.lineWidth=1.4;
+    for(let i=1;i<8;i++){x.beginPath();x.moveTo(10,i*19);x.lineTo(120,i*19);x.stroke();}
+    x.strokeStyle="#b9a5e6";x.lineWidth=2;x.beginPath();x.moveTo(20,0);x.lineTo(20,160);x.stroke();
     const backTex=new THREE.CanvasTexture(c);backTex.encoding=THREE.sRGBEncoding;
-    const back=plane(.16,.55,new THREE.MeshStandardMaterial({map:backTex,roughness:.92}),0,0,-.002);
-    back.rotation.y=Math.PI;g.add(back);
+    const back=tornPaperMesh(W,H,new THREE.MeshStandardMaterial({map:backTex,roughness:.92}));
+    back.position.z=-.002;back.rotation.y=Math.PI;g.add(back);
     let inkTex=null;const inkMat=new THREE.MeshBasicMaterial({transparent:true});inkMat.__ownedByStory=true;
-    const ink=plane(.13,.5,inkMat,0,0,.004);ink.visible=false;g.add(noShadow(ink));
+    const ink=plane(W*.8,H*.7,inkMat,0,-H*.04,.004);ink.visible=false;g.add(noShadow(ink));
     g.userData.fallT=0;
     const api={
       group:g,
