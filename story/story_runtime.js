@@ -192,8 +192,9 @@ window.storyBoundClamp=function(x,z){
 function stBuildSolids(){
   const S=[];
   // ── 建物本体を「壁」として矩形化。すり抜け不可。プレイヤーは南庭を歩き、建物を回り込む ──
-  // 寝殿(簀子まで含む台。南端 z≈6.4)。小萩の気配の間もこの中で守られる
-  S.push({x:0,z:-2,hw:13.6,hd:8.6});
+  // 寝殿(母屋の核のみ)。南面の簀子・廂は開放し、南庭から出入りできるようにする
+  // (旧: hd8.6で南端z6.6まで塞ぎ、playerStartや札の出現点を囲い込んで進行不能にしていた)
+  S.push({x:0,z:-4.5,hw:13.6,hd:6.1});
   // 三つの対屋
   S.push({x:35,z:-12,hw:10,hd:7});S.push({x:-35,z:-12,hw:10,hd:7});S.push({x:0,z:-39,hw:11,hd:6.5});
   // 中門廊(南へ伸びる細い廊)
@@ -591,10 +592,15 @@ function stEffect(info){
     win.rotation.x=-Math.PI/2;win.position.set(.3,0.012,.2);g.add(win);
     const win2=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.34),new THREE.MeshBasicMaterial({color:0xe8eef6,transparent:true,opacity:0,depthWrite:false}));
     win2.rotation.x=-Math.PI/2;win2.position.set(-.75,0.012,-.35);g.add(win2);
+    // 波X: ボス出現前の予兆——水底に赤く光る眼が二つ、遅れて浮かぶ
+    const eyeMat1=new THREE.MeshBasicMaterial({color:0xff2010,transparent:true,opacity:0,depthWrite:false});
+    const eyeMat2=eyeMat1.clone();eyeMat2.__ownedByStory=eyeMat1.__ownedByStory=true;
+    const eye1=new THREE.Mesh(new THREE.CircleGeometry(.06,10),eyeMat1);eye1.rotation.x=-Math.PI/2;eye1.position.set(-.14,0.014,.55);g.add(eye1);
+    const eye2=new THREE.Mesh(new THREE.CircleGeometry(.06,10),eyeMat2);eye2.rotation.x=-Math.PI/2;eye2.position.set(.02,0.014,.55);g.add(eye2);
     g.position.set(-11.5,0.16,27.0); // 池の北汀の水面に固定(直前のset_sceneでプレイヤーを汀へ移す)
     g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
     scene.add(g);
-    S.props.push({kind:"yarimizu",api:{group:g},t:0,mats:[dark.material,win.material,win2.material]});
+    S.props.push({kind:"yarimizu",api:{group:g},t:0,mats:[dark.material,win.material,win2.material,eyeMat1,eyeMat2]});
     if(typeof saigenSe==="function")saigenSe("wind");
   }else if(id==="shiori_reflection"){
     // 波P: 澄んだ水面に浮かぶ「制服の横顔」——顔は描き込まず、月光の輪郭だけで見せる
@@ -895,10 +901,15 @@ function storyUpdate(dt){
     if(p.kind==="tanzaku"&&p.falling){if(p.api.updateFall(dt,(typeof groundH==="function"?groundH(p.api.group.position.x,p.api.group.position.z):0)+0.10))p.falling=false;}
     else if(p.kind==="utakaistage"){if(p.api.update)p.api.update(t);} // 灯の揺らぎ
     else if(p.kind==="tokoyo"&&p.api.update)p.api.update(t,dt);
-    else if(p.kind==="yarimizu"){ // 濁り→教室の窓が浮かぶ→静かに消える(約8秒)
+    else if(p.kind==="yarimizu"){ // 濁り→教室の窓が浮かぶ→赤い眼が遅れて浮かぶ→静かに消える(約8秒)
       p.t+=dt;
       const a=p.t<1.2?p.t/1.2:p.t<6?1:Math.max(0,1-(p.t-6)/2);
       p.mats[0].opacity=.62*a;p.mats[1].opacity=.5*a*(0.7+Math.sin(t*1.8)*.3);p.mats[2].opacity=.4*a*(0.7+Math.cos(t*2.2)*.3);
+      if(p.mats[3]&&p.mats[4]){ // ボスの予兆(河童の主): 濁りが十分深まってから、じわりと灯る
+        const eyeA=p.t<2.4?0:p.t<6?Math.min(1,(p.t-2.4)/1.4):Math.max(0,1-(p.t-6)/2);
+        const pulse=0.7+Math.sin(t*3.4)*.3;
+        p.mats[3].opacity=eyeA*pulse;p.mats[4].opacity=eyeA*pulse;
+      }
       if(p.t>8){window.StoryObjects.disposeGroup(p.api.group);S.props.splice(i,1);}
     }
     else if(p.kind==="shiorimirror"){ // 水底から浮かびあがり、揺らめいて、沈む(約10秒)
