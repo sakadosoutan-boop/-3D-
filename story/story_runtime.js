@@ -648,6 +648,7 @@ function stMiniGame(info){
   const S=APP.story;S.mini=info;
   stVnStop();
   stEl("stBox").style.display="none";
+  {const hud=stEl("storyHud");if(hud)hud.style.display="none";} // ミニゲーム中は章メニュー📑/終了✕を隠して状態破壊を防止
   if(info.gameMode==="quiz_beginner"){
     // 既存クイズへ本接続: 対象5札の復習モード。結果画面は出さず物語へ帰す
     APP.storyQuiz=(ok)=>{enterMode("story");info.complete({success:ok});};
@@ -765,6 +766,7 @@ function startStory(){
   document.body.classList.add("story-mode");
   stEl("storyHud").style.display="block";
   if(APP.story){ // ミニゲーム帰還: 再初期化せず、隠し直しだけ行う(垣間見等が住人の表示を戻すため)
+    APP.story.mini=null; // ミニゲーム終了——中断/終了ボタンを再び有効化
     stHideWorldFigures(true);
     stDebugRefresh(SM&&SM.snapshot());
     return;

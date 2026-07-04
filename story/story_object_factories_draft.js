@@ -165,6 +165,11 @@
   /* ============================================================
      A-1. 小萩 — 若い女房。薄紫の紐飾り(栞との接続)を袖に必ず付ける。
      api: setExpression / setShioriGhost(0..1) / setFan(deg) / update(t)
+
+     ⚠️ 使用禁止(旧ドラフト): この関数は小萩の「顔」を持つ全身モデルを作る。
+        設計原則「小萩は決して姿を見せない」に反するため、本編では一切呼ばない。
+        実際の小萩は story_runtime.js の stKohagiStation()(御簾越しの影＋薄紫の紐
+        のみ、表情は非表示)で表現する。将来の統合でこちらを接続しないこと。
   ============================================================ */
   function createStoryKohagiObject(){
     const g=baseFigure({outer:STORY_MATS.kohagiOuter,mid:STORY_MATS.kohagiMid,inner:STORY_MATS.kohagiInner,female:true});
