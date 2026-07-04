@@ -11268,36 +11268,38 @@ function taijiApplyKitsuneLiteRig(model){
     const bb=o.geometry.boundingBox;
     const mn=bb.min.clone(),sz=bb.max.clone().sub(bb.min);
     const uTime={value:0};
+    const uOmen={value:0};
     const mat=o.material.clone();
     mat.onBeforeCompile=shader=>{
       shader.uniforms.uKitsuneTime=uTime;
+      shader.uniforms.uKitsuneOmen=uOmen;
       shader.uniforms.uKitsuneMin={value:mn};
       shader.uniforms.uKitsuneSize={value:sz};
       shader.vertexShader=shader.vertexShader.replace(
         "#include <common>",
-        "#include <common>\nuniform float uKitsuneTime;\nuniform vec3 uKitsuneMin;\nuniform vec3 uKitsuneSize;"
+        "#include <common>\nuniform float uKitsuneTime;\nuniform float uKitsuneOmen;\nuniform vec3 uKitsuneMin;\nuniform vec3 uKitsuneSize;"
       ).replace(
         "#include <begin_vertex>",
         `#include <begin_vertex>
         vec3 kp=(position-uKitsuneMin)/max(uKitsuneSize,vec3(0.0001));
         float side=step(0.5,kp.x)*2.0-1.0;
         float tailMask=smoothstep(0.38,0.72,kp.y)*(1.0-smoothstep(0.46,0.72,kp.z));
-        float legMask=(1.0-smoothstep(0.20,0.42,kp.y))*smoothstep(0.12,0.34,abs(kp.x-0.5));
-        float headMask=smoothstep(0.60,0.86,kp.z)*smoothstep(0.42,0.66,kp.y);
+        float legMask=(1.0-smoothstep(0.16,0.34,kp.y))*smoothstep(0.16,0.36,abs(kp.x-0.5));
+        float headMask=smoothstep(0.70,0.84,kp.z)*smoothstep(0.50,0.64,kp.y);
         float tailWave=sin(uKitsuneTime*3.4+kp.x*10.5+kp.y*4.0);
         float stepWave=sin(uKitsuneTime*6.8+side*1.5708+kp.z*3.0);
-        transformed.x+=tailMask*tailWave*0.026;
-        transformed.y+=tailMask*cos(uKitsuneTime*2.7+kp.x*8.0)*0.010;
-        transformed.y+=legMask*max(stepWave,0.0)*0.022;
-        transformed.z+=legMask*stepWave*0.013;
-        transformed.y+=headMask*sin(uKitsuneTime*2.2)*0.006;
-        transformed.z+=headMask*cos(uKitsuneTime*2.2)*0.006;`
+        transformed.x+=tailMask*tailWave*0.022;
+        transformed.y+=tailMask*cos(uKitsuneTime*2.7+kp.x*8.0)*0.006;
+        transformed.y+=legMask*max(stepWave,0.0)*0.010;
+        transformed.z+=legMask*stepWave*0.020;
+        transformed.y+=headMask*uKitsuneOmen*(0.010+sin(uKitsuneTime*12.0)*0.004);
+        transformed.z+=headMask*uKitsuneOmen*(0.030+cos(uKitsuneTime*10.0)*0.006);`
       );
     };
-    mat.customProgramCacheKey=()=>"taiji-kitsune-lite-rig-v1";
+    mat.customProgramCacheKey=()=>"taiji-kitsune-lite-rig-v2";
     mat.needsUpdate=true;
     o.material=mat;
-    uniforms.push(uTime);
+    uniforms.push({time:uTime,omen:uOmen});
   });
   model.userData.kitsuneLiteRig={uniforms};
 }
@@ -11305,7 +11307,9 @@ function taijiUpdateKitsuneLiteRig(g,t){
   const model=g&&g.userData&&g.userData.assetModel;
   const rig=model&&model.userData&&model.userData.kitsuneLiteRig;
   if(!rig)return;
-  rig.uniforms.forEach(u=>{u.value=t;});
+  const now=performance.now(),until=(g.userData&&g.userData.kitsuneOmenUntil)||0;
+  const omen=until>now?Math.max(0,Math.min(1,(until-now)/520)):0;
+  rig.uniforms.forEach(u=>{u.time.value=t;u.omen.value=omen;});
 }
 function taijiAttachBossAsset(season,g){
   const opt=TAIJI_BOSS_ASSETS[season];if(!opt)return;
@@ -11854,9 +11858,9 @@ function updateBossMotion(K,b,t,now,dt){
     if(dist<6.2){goal.x=g.position.x-toP.x*5.0;goal.z=g.position.z-toP.z*5.0;}
     bossMoveToward(g,bossArenaClampVec(goal),dt,2.45+phase*.85,4.3);
     bossTurnToward(g,pp,dt,0,5.4);
-    g.position.y=.16+Math.sin(t*3.4+p)*.12+Math.max(0,Math.sin(t*1.05+p))*phase*.22;
-    g.rotation.z=Math.sin(t*2.4+p)*.045;
-    if(g.userData.assetModel)g.userData.assetModel.rotation.x=Math.sin(t*5.2+p)*.018;
+    g.position.y=.045+Math.max(0,Math.sin(t*6.8+p))*.025;
+    g.rotation.z=Math.sin(t*2.4+p)*.020;
+    if(g.userData.assetModel)g.userData.assetModel.rotation.x=Math.sin(t*5.2+p)*.010;
   }else if(K.season==="winter"){
     const ideal=11.5,orbit=Math.sin(t*.38+p);
     const goal=new THREE.Vector3(pp.x-toP.x*ideal+side.x*orbit*5.2,0,pp.z-toP.z*ideal+side.z*orbit*5.2);
@@ -11905,6 +11909,7 @@ function tjOmenHint(kind){
 /* 波G: ボス攻撃の光予兆。金=ジャストガードで見切り好機、赤=回避専用 */
 function tjf3Sign(b,kind,now){
   const el=$("tjf3Sign");if(!el||!b||!b.g)return;
+  if(TAIJI_KITSUNE_LITE_RIG&&b.cfg&&b.cfg.attack==="dart"&&b.g.userData)b.g.userData.kitsuneOmenUntil=now+720;
   const pos=(typeof taijiBossAimPoint==="function"&&taijiBossAimPoint(b))||b.g.position;
   const p=pos.clone();p.project(camera);
   if(p.z<-1||p.z>1)return; // 画面外は出さない(音だけ鳴らすと混乱するので何もしない)
