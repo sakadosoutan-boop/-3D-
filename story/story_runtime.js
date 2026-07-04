@@ -410,8 +410,13 @@ function stApplyPresentation(ev){
       if(st.erosionLevel!=null&&erosionFx)erosionFx.setLevel(st.erosionLevel);
       if(st.location==="classroom"){stEnsureClassroom(); // 波O: 現代教室セット(ED演出)
         if(typeof stBuildSolidsRoom==="function")stBuildSolidsRoom(player.pos.x,player.pos.z);} // 教室は移動を極小域に閉じる
+      if(st.location==="hospital"){stEnsureHospital(); // 波W: 現実の病室(第6話 回想の間の枠)
+        if(typeof stBuildSolidsRoom==="function")stBuildSolidsRoom(player.pos.x,player.pos.z);}
       if(st.location==="mansion"&&S.classroom){ // 教室→邸への帰還(第1話の転移)
         window.StoryObjects.disposeGroup(S.classroom.group);S.classroom=null;
+      }
+      if((st.location==="mansion"||st.location==="classroom")&&S.hospital){ // 病室→他所へ移ったら畳む
+        window.StoryObjects.disposeGroup(S.hospital.group);S.hospital=null;
       }
     }
   }
@@ -634,12 +639,19 @@ function stEnsureClassroom(){
   scene.add(S.classroom.group);
   S.classroom.setBoard("waka","御簾=隔てる/つなぐ"); // 黒板に平面図+書き足し
 }
+/* 波W: 現実の病室セット(第6話 回想の間の枠)。cam_hospital_* が絶対座標で寄る */
+function stEnsureHospital(){
+  const S=APP.story,SO=window.StoryObjects;if(!S||!SO||S.hospital)return;
+  S.hospital=SO.createHospitalRoomSet(); // 心電モニタ・点滴・薄紫紐のしおり付きノート
+  scene.add(S.hospital.group);
+}
 /* 章をまたぐ大道具の一括後片付け(大鬼・連札・教室) */
 function stCleanupSets(){
   const S=APP.story,SO=window.StoryObjects;if(!S||!SO)return;
   if(S.oni){SO.disposeGroup(S.oni.group);S.oni=null;}
   if(S.sealFx){SO.disposeGroup(S.sealFx.group);S.sealFx=null;}
   if(S.classroom){SO.disposeGroup(S.classroom.group);S.classroom=null;}
+  if(S.hospital){SO.disposeGroup(S.hospital.group);S.hospital=null;}
   if(S.props&&S.props.length){ // 章転換で残留した大道具(着地後の短冊等)を確実に破棄しリーク防止
     S.props.forEach(p=>{if(p&&p.api&&p.api.group)SO.disposeGroup(p.api.group);});
     S.props=[];
@@ -877,6 +889,7 @@ function storyUpdate(dt){
   if(S.oni&&S.oni.update)S.oni.update(t);
   if(S.sealFx&&S.sealFx.update)S.sealFx.update(t,dt);
   if(S.classroom&&S.classroom.update)S.classroom.update(t);
+  if(S.hospital&&S.hospital.update)S.hospital.update(t); // 心電波形・見舞いの気配
   for(let i=(S.props||[]).length-1;i>=0;i--){
     const p=S.props[i];
     if(p.kind==="tanzaku"&&p.falling){if(p.api.updateFall(dt,(typeof groundH==="function"?groundH(p.api.group.position.x,p.api.group.position.z):0)+0.10))p.falling=false;}
