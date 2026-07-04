@@ -143,29 +143,77 @@ function stVnShowLog(chId){
   requestAnimationFrame(()=>{const sc=stEl("stLogScroll");if(sc)sc.scrollTop=sc.scrollHeight;});
 }
 window.__stLog=function(c){stVnShowLog(c);};
-/* ---- 物語モードの障害物コリジョン ----
-   本体の移動処理から window.storySolidHit(x,z) が毎フレーム呼ばれる。
-   円 {x,z,r} の中に入ろうとする移動を弾く。地面レベルの立木・柱・灯籠・気配の間など、
-   床の高さでは判定できない「すり抜け」を塞ぐ。 */
+/* ---- 物語モードの当たり判定(押し出し式・絶対に嵌まらない) ----
+   本体の移動処理から毎フレーム window.storySolidResolve(x,z) と window.storyBoundClamp(x,z) が呼ばれる。
+   ・storySolidResolve: 目標地点が障害物円 {x,z,r} の中なら、必ず円の外へ放射状に押し出す(双方向)。
+     もし現在地が円内に埋まっていても、外へ向かう移動は許容されるため決して閉じ込めない。
+   ・storyBoundClamp: 歩行可能域(円形)の外へ出ようとしたら内側へ引き戻す。高欄の外や敷地外への
+     落下・迷子を根絶する。 */
 window.STORY_SOLIDS=[];
-window.storySolidHit=function(x,z){
-  const S=window.STORY_SOLIDS;if(!S)return false;
-  for(let i=0;i<S.length;i++){const o=S[i];const dx=x-o.x,dz=z-o.z;if(dx*dx+dz*dz<o.r*o.r)return true;}
-  return false;
+window.STORY_BOUND={x:0,z:8,r:44}; // 舞台ごとに更新する歩行可能域(既定=南庭中心)
+/* 障害物は円 {x,z,r} または矩形(壁・建物) {x,z,hw,hd} を混在可。
+   矩形は最も近い辺の外へ押し出すので、建物の壁・柱をすり抜けられない。 */
+window.storySolidResolve=function(x,z){
+  const S=window.STORY_SOLIDS;if(!S||!S.length)return {x,z};
+  for(let it=0;it<5;it++){
+    let moved=false;
+    for(let i=0;i<S.length;i++){
+      const o=S[i];
+      if(o.hw!=null){ // 矩形(壁)
+        const ax=Math.abs(x-o.x),az=Math.abs(z-o.z);
+        if(ax<o.hw-1e-4&&az<o.hd-1e-4){
+          const px=o.hw-ax,pz=o.hd-az; // 各辺までの侵入深さ
+          if(px<pz)x=o.x+Math.sign(x-o.x||1)*o.hw;
+          else z=o.z+Math.sign(z-o.z||1)*o.hd;
+          moved=true;
+        }
+      }else{ // 円
+        const dx=x-o.x,dz=z-o.z,d2=dx*dx+dz*dz;
+        if(d2<o.r*o.r-1e-4){
+          if(d2<1e-6){x=o.x+o.r;z=o.z;} // ちょうど中心: 既定方向(+x)へ押し出す
+          else{const d=Math.sqrt(d2);x=o.x+dx/d*o.r;z=o.z+dz/d*o.r;}
+          moved=true;
+        }
+      }
+    }
+    if(!moved)break;
+  }
+  return {x,z};
+};
+window.storyBoundClamp=function(x,z){
+  const B=window.STORY_BOUND;if(!B)return {x,z};
+  const dx=x-B.x,dz=z-B.z,d=Math.hypot(dx,dz);
+  if(d>B.r){x=B.x+dx/d*B.r;z=B.z+dz/d*B.r;}
+  return {x,z};
 };
 /* 章開始時に、その舞台の主要な固形物を障害物として登録する。
-   寝殿(母屋核)・三対屋・釣殿・中門・小萩の気配の間・南庭の主だった立木/灯籠 を円で覆う。 */
+   寝殿(母屋核)・三対屋・小萩の気配の間・南庭の主だった立木/灯籠 を円で覆う。
+   歩行可能域(BOUND)は南庭を広くカバーし、池・敷地外への落下を防ぐ。 */
 function stBuildSolids(){
   const S=[];
-  // 小萩の気配の間(母屋南端)は絶対に近づけない(母屋自体は床の段差でも塞がれる)
-  S.push({x:0.6,z:0.55,r:3.2});
-  // 母屋北〜中核(南庭の収集物には掛からない位置だけ)
-  S.push({x:0,z:-4,r:6.0});
-  // 三つの対屋(南庭からは離れており収集動線に干渉しない)
-  S.push({x:35,z:-12,r:10});S.push({x:-35,z:-12,r:10});S.push({x:0,z:-39,r:10});
-  // 南庭の篝火・大石・主要な立木(散策の障害になる代表点。収集カード座標は避けてある)
-  [[9,9],[-10,11],[13,17],[-15,19],[7,22],[-7,26],[17,27],[-18,29]].forEach(p=>S.push({x:p[0],z:p[1],r:1.3}));
+  // ── 建物本体を「壁」として矩形化。すり抜け不可。プレイヤーは南庭を歩き、建物を回り込む ──
+  // 寝殿(簀子まで含む台。南端 z≈6.4)。小萩の気配の間もこの中で守られる
+  S.push({x:0,z:-2,hw:13.6,hd:8.6});
+  // 三つの対屋
+  S.push({x:35,z:-12,hw:10,hd:7});S.push({x:-35,z:-12,hw:10,hd:7});S.push({x:0,z:-39,hw:11,hd:6.5});
+  // 中門廊(南へ伸びる細い廊)
+  S.push({x:24,z:12,hw:2.2,hd:9});S.push({x:-24,z:12,hw:2.2,hd:9});
+  // 南庭の篝火・大石・主要な立木(円)。収集カード座標は避けてある
+  [[9,9],[-10,11],[13,17],[-15,19],[7,23],[-7,27],[18,28],[-19,30]].forEach(p=>S.push({x:p[0],z:p[1],r:1.3}));
   window.STORY_SOLIDS=S;
+  window.STORY_BOUND={x:0,z:12,r:46}; // 南庭中心・広め。池の外縁や築地の外へは出られない
+}
+/* 常世(第5話)は北の対エリアが舞台。障害物と歩行域を切り替える */
+function stBuildSolidsTokoyo(){
+  window.STORY_SOLIDS=[
+    {x:35,z:-12,hw:9,hd:6.5},{x:-35,z:-12,hw:9,hd:6.5},{x:0,z:-39,hw:10,hd:6}
+  ];
+  window.STORY_BOUND={x:26,z:-42,r:28}; // 北の対〜ボス広場一帯
+}
+/* 教室など内装セット中は移動を極小域に閉じる(カメラは固定、歩き回らせない) */
+function stBuildSolidsRoom(cx,cz){
+  window.STORY_SOLIDS=[];
+  window.STORY_BOUND={x:cx,z:cz,r:3.0};
 }
 /* ---- 立ち絵(Canvas描画・アセット不要) ----
    小萩だけは顔を見せない(御簾越しの影+薄紫の紐)。 */
@@ -360,7 +408,8 @@ function stApplyPresentation(ev){
       if(st.ministerShadow!=null&&S.actors.minister){S.actors.minister.group.visible=true;S.actors.minister.setShadowReach(st.ministerShadow);}
       if(st.ministerPossessed!=null&&S.actors.minister)S.actors.minister.setPossessed(!!st.ministerPossessed);
       if(st.erosionLevel!=null&&erosionFx)erosionFx.setLevel(st.erosionLevel);
-      if(st.location==="classroom")stEnsureClassroom(); // 波O: 現代教室セット(ED演出)
+      if(st.location==="classroom"){stEnsureClassroom(); // 波O: 現代教室セット(ED演出)
+        if(typeof stBuildSolidsRoom==="function")stBuildSolidsRoom(player.pos.x,player.pos.z);} // 教室は移動を極小域に閉じる
       if(st.location==="mansion"&&S.classroom){ // 教室→邸への帰還(第1話の転移)
         window.StoryObjects.disposeGroup(S.classroom.group);S.classroom=null;
       }
@@ -718,6 +767,11 @@ function startStory(){
           player.pos.set(p.x,(typeof groundH==="function"?groundH(p.x,p.z):0)+1.62,p.z);
           if(p.yaw!=null)player.yaw=p.yaw;player.pitch=-.04;
           if(typeof camera!=="undefined")camera.position.copy(player.pos);window.dummyCam=null;}
+        // 舞台に応じて当たり判定セットを切替(教室=stApplyPresentationで設定済み)
+        const loc=sc.event&&sc.event.stage&&sc.event.stage.location;
+        if(loc!=="classroom"){
+          if(sc.season==="tokoyo")stBuildSolidsTokoyo();else stBuildSolids();
+        }
       },
       onCamera:(id)=>stCamera(id),
       onEffect:(e)=>{stApplyPresentation(e.event);stEffect(e);},
