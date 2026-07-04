@@ -16873,7 +16873,6 @@ window.STORY_EMBED={"manifest":{"version":1,"basePath":"story/chapters/","chapte
 
   global.StoryManager = StoryManager;
 })(typeof window !== "undefined" ? window : globalThis);
-
 /*
  * ストーリーモード用 Three.js オブジェクトファクトリ（ドラフト）
  * 対象: 寝殿造り3D探訪_統合版.html（Three.js r128 / スマホ優先 / 低ポリ和風）
@@ -17946,7 +17945,6 @@ window.STORY_EMBED={"manifest":{"version":1,"basePath":"story/chapters/","chapte
     STORY_OFFSTAGE,STORY_CAMERA_ANGLES
   };
 })(typeof window!=="undefined"?window:globalThis);
-
 /* ============================================================
    波M: ストーリーモード「御簾の向こうへ」統合ランタイム(試験版)
    ■ 入口は隠しゲート: URLに ?story=1 が付いた時だけタイトルに入口ボタンが現れる。
@@ -18376,28 +18374,53 @@ function stCamera(id){
   if(typeof updateControlUI==="function")updateControlUI();
 }
 /* ---- HUD描画 ---- */
+/* 話者ごとの名札色(市販ノベル風のキャラ識別) */
+const ST_SPK_COLOR={"小萩":"#c9a2d8","秀頼":"#8fb8e8","秀頼（心）":"#7fa0c8","右近":"#a8c88a","左大臣":"#d8b25a","判者":"#b8b0c8","栞":"#9ec8e0","大鬼":"#e07a6a","水底の声":"#5ad0a0","御簾の向こうの声":"#d8c090","？？？":"#c0c0c0"};
 function stShowDialogue(spk,text,ev){
   const box=stEl("stBox");box.style.display="block";box.classList.remove("choosing");
   stEl("stOpts").innerHTML="";
-  stEl("stSpk").textContent=spk?("— "+spk+" —"):"語り";
+  const sp=stEl("stSpk");
+  sp.textContent=spk?("— "+spk+" —"):"語り";
+  sp.style.color=ST_SPK_COLOR[spk]||"var(--kin)";
   const te=stEl("stText");
-  te.textContent=text||"";
-  te.classList.add("tapadv"); // 本文タップで送れる合図(末尾▼)
-  te.style.fontSize=(text&&text.length>130)?"12.5px":"14px"; // 長文は一段小さく(切れ防止)
+  const full=text||"";
+  te.style.fontSize=(full.length>130)?"12.5px":"14px"; // 長文は一段小さく(切れ防止)
   te.scrollTop=0;
   stSetFace(spk); // 立ち絵
   const v=APP.story&&APP.story.vn;
-  if(v){v.log.push({s:spk,t:text,ch:SM&&SM.chapter?SM.chapter.chapterId:0});if(v.log.length>300)v.log.shift();v.curEv=ev;stVnSchedule(ev);}
+  if(v){v.log.push({s:spk,t:full,ch:SM&&SM.chapter?SM.chapter.chapterId:0});if(v.log.length>300)v.log.shift();v.curEv=ev;}
   const actorKey=ST_SPEAKER_ACTOR[spk];
   if(actorKey&&APP.story&&APP.story.actors&&APP.story.actors[actorKey]){
     const a=APP.story.actors[actorKey];a.group.visible=true;
     if(a.pulse)a.pulse(); // 気配の間(小萩): 話す間だけ影が揺れ、紐が瞬く
   }
   stProgRefresh();
-  // 本文(＝窓の広い領域)をタップで送る。次へボタンは廃止
-  const advance=()=>{beep(600,.045,"triangle",.07);if(v)v.curEv=null;clearTimeout(window._stAutoT);SM.goNext(ev.next);};
-  te.onclick=advance;
-  stEl("stSpk").onclick=advance;
+  // ── タイプライター表示(市販ノベル風) ──
+  clearInterval(window._stType);clearTimeout(window._stAutoT);
+  te.classList.remove("tapadv");
+  const reduced=(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION);
+  let revealed=false;
+  const onRevealDone=()=>{
+    revealed=true;te.classList.add("tapadv");
+    if(v&&v.skip)window._stAutoT=setTimeout(()=>stVnAdvance(),120);
+    else if(v&&v.auto)window._stAutoT=setTimeout(()=>stVnAdvance(),900+Math.min(4200,full.length*45));
+  };
+  if(reduced||(v&&v.skip)){te.textContent=full;onRevealDone();}
+  else{
+    te.textContent="";let i=0,tick=0;
+    const step=Math.max(1,Math.round(full.length/90)); // 長文は複数文字ずつで一定時間に収める
+    window._stType=setInterval(()=>{
+      i+=step;te.textContent=full.slice(0,i);
+      if((tick++%3)===0&&typeof beep==="function")beep(1400,.006,"square",.008); // 微かな文字送り音
+      if(i>=full.length){clearInterval(window._stType);onRevealDone();}
+    },24);
+  }
+  // タップ: 表示中なら一括表示、表示済みなら次へ
+  const tap=()=>{
+    if(!revealed){clearInterval(window._stType);te.textContent=full;onRevealDone();return;}
+    beep(600,.045,"triangle",.07);if(v)v.curEv=null;clearTimeout(window._stAutoT);clearInterval(window._stType);SM.goNext(ev.next);
+  };
+  te.onclick=tap;sp.onclick=tap;
 }
 /* 章内の現在位置(場 x/y)をチップに出す */
 function stProgRefresh(){
@@ -18854,7 +18877,6 @@ function stGate(){
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",stGate);
 else stGate();
 })();
-
 /* ================== 波M: ストーリーモード同梱ここまで ================== */
 /* ============================================================
    [Phase0] 開発用パフォーマンス計測オーバーレイ
