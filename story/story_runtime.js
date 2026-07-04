@@ -613,6 +613,17 @@ function stEffect(info){
     scene.add(g);
     S.props.push({kind:"shiorimirror",api:{group:g},t:0});
     if(typeof saigenSe==="function")saigenSe("koto");
+  }else if(id==="winter_lamp_dim"&&SO){
+    // 第4話 歌合の舞台装飾: 判者席・火桶・高灯台・雪・題札を廂に据える(雅楽の気配)
+    if(!(S.props||[]).some(p=>p.kind==="utakaistage")){
+      const api=SO.createUtakaiStageProps();
+      const fy=(typeof groundH==="function"?groundH(0,-1.8):0);
+      api.group.position.set(0,fy,0);
+      api.setTopic("雪"); // 初番の題(narrationと同じ「雪」)
+      scene.add(api.group);
+      S.props.push({kind:"utakaistage",api});
+    }
+    if(typeof saigenSe==="function")saigenSe("koto"); // 楽の音、床を這うように
   }
   // summer_heat_haze / ending_gallery_ready は世界側の夏演出・回想UIがそのまま担う(追加なし)
 }
@@ -869,6 +880,7 @@ function storyUpdate(dt){
   for(let i=(S.props||[]).length-1;i>=0;i--){
     const p=S.props[i];
     if(p.kind==="tanzaku"&&p.falling){if(p.api.updateFall(dt,(typeof groundH==="function"?groundH(p.api.group.position.x,p.api.group.position.z):0)+0.10))p.falling=false;}
+    else if(p.kind==="utakaistage"){if(p.api.update)p.api.update(t);} // 灯の揺らぎ
     else if(p.kind==="tokoyo"&&p.api.update)p.api.update(t,dt);
     else if(p.kind==="yarimizu"){ // 濁り→教室の窓が浮かぶ→静かに消える(約8秒)
       p.t+=dt;
