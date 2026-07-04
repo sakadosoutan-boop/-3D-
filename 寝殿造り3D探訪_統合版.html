@@ -1316,19 +1316,19 @@ body.taiji-mode.taiji-lock #crosshair{border-color:rgba(255,214,106,.98);box-sha
 body.taiji-mode #taijiMood{display:block}
 /* ボスHPバー(エルデンリング風・上部) */
 #bossBar{position:fixed;z-index:43;left:50%;transform:translateX(-50%);top:calc(var(--topbar-h,8px) + 10px + env(safe-area-inset-top));
-  width:min(560px,82vw);display:none;text-align:center;font-family:var(--sans)}
-#bossName{color:#f0d8e6;font-size:14px;letter-spacing:.18em;text-shadow:0 2px 6px #000;margin-bottom:4px}
+  width:min(620px,92vw);display:none;text-align:center;font-family:var(--sans)}
+#bossName{color:#f0d8e6;font-size:clamp(12px,3.2vw,14px);letter-spacing:.04em;line-height:1.34;text-shadow:0 2px 6px #000;margin-bottom:5px;white-space:normal;overflow-wrap:anywhere}
 #bossHpWrap{height:9px;background:rgba(20,8,12,.85);border:1px solid rgba(180,60,70,.8);border-radius:1px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.7)}
 #bossHpFill{height:100%;width:100%;background:linear-gradient(90deg,#7a1020,#c8324a);transition:width .25s}
 /* 2体目のボスHPバー(夏: 提灯お化け) — 1体目の直下に配置 */
 #bossBar2{position:fixed;z-index:43;left:50%;transform:translateX(-50%);top:calc(var(--topbar-h,8px) + 34px + env(safe-area-inset-top));
-  width:min(440px,68vw);display:none;text-align:center;font-family:var(--sans)}
-#bossName2{color:#ffdca8;font-size:12px;letter-spacing:.14em;text-shadow:0 2px 6px #000;margin-bottom:3px}
+  width:min(520px,86vw);display:none;text-align:center;font-family:var(--sans)}
+#bossName2{color:#ffdca8;font-size:clamp(11px,2.9vw,12px);letter-spacing:.04em;line-height:1.32;text-shadow:0 2px 6px #000;margin-bottom:3px;white-space:normal;overflow-wrap:anywhere}
 #bossBar2 .boss-hp-wrap{height:7px;background:rgba(20,12,6,.85);border:1px solid rgba(220,150,60,.8);border-radius:1px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.7)}
 #bossHpFill2{height:100%;width:100%;background:linear-gradient(90deg,#7a4410,#e0a23a);transition:width .25s}
 /* 退治中はトップバー非表示。ボスバーはダイナミックアイランド/左上HPと被らない位置へ */
 body.taiji-mode #bossBar{top:calc(env(safe-area-inset-top) + 48px)}
-body.taiji-mode #bossBar2{top:calc(env(safe-area-inset-top) + 72px)}
+body.taiji-mode #bossBar2{top:calc(env(safe-area-inset-top) + 78px)}
 #bossLoad{position:fixed;z-index:44;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none;
   background:radial-gradient(ellipse at 50% 44%,rgba(245,235,255,.06),rgba(15,8,20,.58) 62%,rgba(4,2,8,.86));
   color:#f0e8ff;font-family:var(--serif);letter-spacing:.18em;text-shadow:0 2px 12px #000}
@@ -1369,7 +1369,7 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 #tjfxNameCard .tjfx-nc-kanji{font-family:var(--sans);font-size:clamp(11px,2.6vw,15px);letter-spacing:.55em;color:#d2aa4c;text-shadow:0 2px 8px #000;margin-bottom:6px}
 #tjfxNameCard .tjfx-nc-name{font-family:var(--serif);font-size:clamp(24px,7vw,44px);font-weight:900;letter-spacing:.12em;color:#fff8ea;line-height:1.2;
   text-shadow:0 0 3px #000,0 0 10px rgba(210,170,76,.9),0 0 22px rgba(210,170,76,.5),0 3px 10px rgba(0,0,0,.9);
-  padding:10px 26px;background:linear-gradient(90deg,rgba(8,5,4,0),rgba(16,9,7,.72) 20%,rgba(16,9,7,.72) 80%,rgba(8,5,4,0));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  padding:10px 26px;background:linear-gradient(90deg,rgba(8,5,4,0),rgba(16,9,7,.72) 20%,rgba(16,9,7,.72) 80%,rgba(8,5,4,0));white-space:normal;overflow:visible;overflow-wrap:anywhere}
 #tjfxNameCard.show{display:block;animation:tjfxNameIn .4s ease both}
 #tjfxNameCard.hide{display:block;animation:tjfxNameOut .5s ease both}
 @keyframes tjfxNameIn{0%{opacity:0;transform:translateX(-50%) translateY(10px) scale(.96)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
@@ -2769,7 +2769,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 @media (prefers-reduced-motion:reduce){.tjf2-rage{animation:none}}
 /* 波G: ボス攻撃の光予兆(桃霞=見切り好機/赤=回避専用)＋見切り演出 */
 #tjf3Sign{position:fixed;z-index:45;display:none;transform:translate(-50%,-50%);pointer-events:none;font-size:34px;font-weight:bold}
-.tjf3-gold{color:#ffb7d7;text-shadow:0 0 14px rgba(255,126,190,.98),0 0 30px rgba(255,65,150,.68)}
+.tjf3-gold{color:#ff4fa3;text-shadow:0 0 10px rgba(255,60,155,1),0 0 24px rgba(220,0,110,.9),0 2px 5px #000}
 .tjf3-red{color:#ff5a4a;text-shadow:0 0 14px rgba(255,70,50,.9),0 0 30px rgba(200,30,20,.6)}
 @keyframes tjf3Flash{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.35)}60%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.1)}}
 .tjf3-anim{animation:tjf3Flash .6s ease-out forwards}
@@ -11355,14 +11355,6 @@ function taijiAddBossPresence(season,g){
       const tail=new THREE.Mesh(new THREE.ConeGeometry(.075,.32,6),taijiFxMat(isBlue?0x64dfff:0xff5d8f,.38));tail.position.y=-.20;tail.rotation.x=Math.PI;w.add(tail);
       root.add(w);fx.wisps.push(w);
     }
-    const pawMat=new THREE.MeshBasicMaterial({color:0x201014,transparent:true,opacity:.30,depthWrite:false,side:THREE.DoubleSide});
-    const stepMat=taijiFxMat(0xff78b6,.18,false);
-    [[-.42,.92,0],[.42,.92,Math.PI],[-.52,.06,Math.PI],[.52,.06,0]].forEach(([x,z,phase])=>{
-      const p=new THREE.Group();p.userData={base:new THREE.Vector3(x,.16,z),phase};
-      const pad=new THREE.Mesh(new THREE.SphereGeometry(.12,7,5),pawMat.clone());pad.scale.set(1.55,.18,.76);p.add(pad);
-      const ring=new THREE.Mesh(new THREE.RingGeometry(.11,.18,16),stepMat.clone());ring.rotation.x=-Math.PI/2;ring.position.y=-.055;p.add(ring);
-      root.add(p);fx.paws.push(p);
-    });
     const key=new THREE.PointLight(0xff9a55,1.15,7,2);key.position.set(0,2.6,1.5);root.add(key);
   }else if(season==="winter"){
     const cold=taijiFxMat(0xbcecff,.30),pale=taijiFxMat(0xf8fbff,.48),blue=taijiFxMat(0x68b8ff,.34);
@@ -11379,16 +11371,6 @@ function taijiAddBossPresence(season,g){
 }
 function taijiUpdateBossPresence(g,t){
   const fx=g&&g.userData&&g.userData.bossPresence;if(!fx)return;
-  if(fx.paws&&fx.paws.length){
-    const last=fx.lastPos,dt=Math.max(.016,Math.min(.08,t-(fx.lastT||t))),dx=last?g.position.x-last.x:0,dz=last?g.position.z-last.z:0;
-    const speed=Math.min(1,Math.hypot(dx,dz)/(dt*5.2));fx.moveAmt=(fx.moveAmt||0)*.82+speed*.18;fx.lastPos={x:g.position.x,z:g.position.z};fx.lastT=t;
-    const move=Math.max(fx.moveAmt||0,(g.userData&&g.userData.kitsuneStepBoost)||0),stride=.11*move;
-    fx.paws.forEach((p,i)=>{const b=p.userData.base,ph=t*10.5+p.userData.phase,lift=Math.max(0,Math.sin(ph))*move*.13,plant=1-Math.min(1,lift/.13);
-      p.position.set(b.x,b.y+lift,b.z+Math.cos(ph)*stride);p.scale.set(1+plant*.08,1,1+plant*.05);
-      if(p.children[0])p.children[0].rotation.x=Math.sin(ph)*.12*move;
-      if(p.children[1]&&p.children[1].material)p.children[1].material.opacity=.08+plant*.22;
-    });
-  }
   fx.rings.forEach((r,i)=>{r.rotation.x=Math.PI/2;r.rotation.z+=.002*((i%2)?-1:1);if(r.material)r.material.opacity=(i===0?.22:.28)+Math.sin(t*1.7+i)*.05;});
   fx.tailTips.forEach((tip,i)=>{const b=tip.userData.base;if(b){tip.position.set(b.x+Math.sin(t*1.6+i)*.045,b.y+Math.sin(t*2.2+i*.4)*.08,b.z+Math.cos(t*1.3+i)*.035);}tip.scale.setScalar(1+Math.sin(t*3.1+i)*.12);});
   fx.wisps.forEach((w,i)=>{const u=w.userData,a=t*(.62+i*.012)+u.phase;w.position.set(Math.cos(a)*u.rad,u.high+Math.sin(t*1.9+u.phase)*.42,Math.sin(a)*u.rad);w.scale.setScalar(.88+Math.sin(t*2.7+u.phase)*.18);w.rotation.y=-a;if(w.children[0]&&w.children[0].material)w.children[0].material.opacity=.42+Math.sin(t*3+u.phase)*.18;});
@@ -11430,7 +11412,12 @@ function taijiTriggerBossGate(k){
   taijiMsg("霧を越えた。退路は閉ざされた…",1400);seFuda();
   const waitAsset=Promise.race([taijiPreloadBossAsset(k.season),new Promise(r=>setTimeout(r,1800))]);
   const minWait=new Promise(r=>setTimeout(r,850));
-  Promise.all([waitAsset,minWait]).then(()=>{if(APP.mode==="taiji"&&APP.taiji===k&&!k.done&&!k.boss){if(ov)ov.classList.remove("show");k.bossLoading=false;spawnBoss(k);}});
+  Promise.all([waitAsset,minWait]).then(()=>{if(APP.mode==="taiji"&&APP.taiji===k&&!k.done&&!k.boss){taijiPlacePlayerAtBossApproach();if(ov)ov.classList.remove("show");k.bossLoading=false;spawnBoss(k);}});
+}
+function taijiPlacePlayerAtBossApproach(){
+  const A=TAIJI_BOSS_ARENA;
+  player.pos.x=A.x;player.pos.z=A.z+10.8;player.pos.y=groundH(player.pos.x,player.pos.z)+1.62;
+  player.yaw=Math.atan2(-(A.x-player.pos.x),-(A.z-player.pos.z));
 }
 function taijiUpdateBossGate(k,t){
   const gate=k&&k.bossGate;if(!gate||!gate.g)return;
@@ -11624,9 +11611,8 @@ function spawnBoss(k){
   }
   k.boss=k.bosses[0];
   taijiAutoLockBoss(k);
-  const bossTitle=storyKappa?"河童の主":(k.season==="summer"?"河童の主・提灯お化け":(k.bosses[0].cfg&&k.bosses[0].cfg.name)||"ボス");
   $("taijiRemain").textContent="ボス";taijiMsg(storyKappa?"遣水の底から、水底の主が姿を現す…！":"東の奥に強大な気配…！ ボス戦へ",2800);seFuda();
-  taijiCine(bossTitle, "霧の結界が閉じた。退く道はない", 2300);
+  taijiCine("開戦", "霧の結界が閉じた。退く道はない", 1500);
   // 波Y: 描き下ろしボスアイコン(軽量WebP)。夏=河童単体は専用絵、夏=通常戦は提灯お化け側、秋=巨大人魂
   const bossIcon=storyKappa?"icons/kappa_icon.webp":(k.season==="summer"?"icons/chochin_concept.webp":k.season==="autumn"?"icons/hitodama_concept.webp":null);
   tjfxBossIntro(storyKappa?"河童の主 (かっぱのぬし)":(k.season==="summer"?"河童の主と提灯お化け":(k.bosses[0].cfg&&k.bosses[0].cfg.name)||"ボス"),bossIcon); // 波E: 見参ネームカード
@@ -11708,15 +11694,18 @@ function bossUpdateAction(K,b,now,dt){
   return false;
 }
 const bossProjs=[],bossHazards=[],BOSS_PROJ_UP=new THREE.Vector3(0,1,0);
-const TAIJI_PARRY_PINK=0xff78b6;
-function bossFxMat(col,op){return new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false,depthTest:false,blending:THREE.AdditiveBlending});}
+const TAIJI_PARRY_PINK=0xff2f9f;
+function bossFxMat(col,op){
+  const parry=col===TAIJI_PARRY_PINK;
+  return new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:parry?Math.max(op||0,.98):op,side:THREE.DoubleSide,depthWrite:false,depthTest:false,blending:parry?THREE.NormalBlending:THREE.AdditiveBlending});
+}
 function bossSetFxOpacity(o,op){
   if(!o)return;
   if(o.material)o.material.opacity=op;
   if(o.traverse)o.traverse(c=>{if(c.material)c.material.opacity=op;});
 }
 function bossProjMesh(col,opt={}){
-  const s=opt.size||0.3,shape=opt.shape||(opt.cone?"rock":"orb"),mat=bossFxMat(col,opt.opacity||.92);
+  const parry=col===TAIJI_PARRY_PINK,s=(opt.size||0.3)*(parry?1.14:1),shape=opt.shape||(opt.cone?"rock":"orb"),mat=bossFxMat(col,parry?Math.max(opt.opacity||0,.98):(opt.opacity||.92));
   let geo,alignY=false;
   if(shape==="fox"||shape==="flame"){geo=new THREE.ConeGeometry(s*.72,s*2.85,7);alignY=true;}
   else if(shape==="ice"){geo=new THREE.ConeGeometry(s*.36,s*3.65,5);alignY=true;}
@@ -11777,7 +11766,7 @@ function spawnBossProj(from,to,col,dmg,spd,opt={}){
   m.position.copy(src);m.renderOrder=8;scene.add(m);
   const dir=dst.clone().sub(src);if(dir.lengthSq()<0.01)dir.set(0,0,1);dir.normalize();
   if(m.userData.alignY)m.quaternion.setFromUnitVectors(BOSS_PROJ_UP,dir.clone());
-  bossProjs.push({m,dir,spd:spd||9,born:performance.now(),dmg,lifetime:opt.lifetime||4500,homing:opt.homing||0,slow:opt.slow||0,wobble:opt.wobble||0,pulse:opt.pulse||0,phase:Math.random()*9,hit2d:!!opt.hit2d,hitR:opt.hitR||1.7});
+  bossProjs.push({m,dir,spd:spd||9,born:performance.now(),dmg,lifetime:opt.lifetime||4500,homing:opt.homing||0,slow:opt.slow||0,wobble:opt.wobble||0,pulse:opt.pulse||0,phase:Math.random()*9,hit2d:!!opt.hit2d,hitR:opt.hitR||1.7,parryable:opt.parryable===true||col===TAIJI_PARRY_PINK});
 }
 function spawnBossProjDir(from,dir,col,dmg,spd,opt={}){
   const to=from.clone().add(dir.clone().normalize().multiplyScalar(10));
@@ -11878,6 +11867,7 @@ function bossMoveToward(g,goal,dt,speed,accel=4.8){
 }
 function updateBossMotion(K,b,t,now,dt){
   const g=b.g,pp=player.pos,phase=1-b.hp/Math.max(1,b.maxHp),p=b.movePhase||0,dist=Math.hypot(pp.x-g.position.x,pp.z-g.position.z);
+  const bs=b.baseScale||g.scale,cue=Math.max(0,Math.min(1,((b._motionCueUntil||0)-now)/720));
   const toP=new THREE.Vector3(pp.x-g.position.x,0,pp.z-g.position.z);if(toP.lengthSq()<.01)toP.set(0,0,1);toP.normalize();
   const side=new THREE.Vector3(-toP.z,0,toP.x);
   if(K.season==="spring"){
@@ -11888,16 +11878,18 @@ function updateBossMotion(K,b,t,now,dt){
     bossMoveToward(g,bossArenaClampVec(goal),dt,(2.05+phase*.58)*stepDrive,7.2);
     bossTurnToward(g,pp,dt,0,5.4);
     g.userData.kitsuneStepBoost=.18+step*.48;
-    g.position.y=.012+step*.014;
-    g.rotation.z=Math.sin(t*2.4+p)*.014;
-    if(g.userData.assetModel)g.userData.assetModel.rotation.x=Math.sin(t*5.2+p)*.006;
+    g.position.y=.006+step*.010;
+    g.rotation.x=-cue*.035;g.rotation.z=Math.sin(t*2.4+p)*.014+cue*.018;
+    g.scale.set(bs.x*(1+step*.012+cue*.026),bs.y*(1-step*.018-cue*.055),bs.z*(1+step*.008+cue*.018));
+    if(g.userData.assetModel)g.userData.assetModel.rotation.x=Math.sin(t*5.2+p)*.006-cue*.035;
   }else if(K.season==="winter"){
     const ideal=11.5,orbit=Math.sin(t*.38+p);
     const goal=new THREE.Vector3(pp.x-toP.x*ideal+side.x*orbit*5.2,0,pp.z-toP.z*ideal+side.z*orbit*5.2);
     bossMoveToward(g,bossArenaClampVec(goal),dt,1.35+phase*.45,3.1);
     bossTurnToward(g,pp,dt,Math.PI,4.2);
-    g.position.y=.34+Math.sin(t*1.55+p)*.28;
-    g.rotation.z=Math.sin(t*.95+p)*.055;g.rotation.x=Math.sin(t*.72+p)*.018;
+    g.position.y=.34+Math.sin(t*1.55+p)*.28+cue*.16;
+    g.rotation.z=Math.sin(t*.95+p)*.055+cue*.035;g.rotation.x=Math.sin(t*.72+p)*.018+cue*.045;
+    g.scale.set(bs.x*(1+cue*.025),bs.y*(1+cue*.045),bs.z*(1+cue*.025));
   }else if(K.season==="summer"){
     if(b.role==="chochin"){
       // 提灯お化けは浮遊して距離を取りながら旋回(遠隔・撹乱役)
@@ -11906,24 +11898,29 @@ function updateBossMotion(K,b,t,now,dt){
       bossMoveToward(g,bossArenaClampVec(goal),dt,1.65+phase*.55,3.5);
       bossTurnToward(g,pp,dt,0,4.0);
       g.position.y=1.05+Math.sin(t*1.6+p)*.42;g.rotation.z=Math.sin(t*1.2+p)*.09;
+      g.rotation.x=cue*.05;g.scale.set(bs.x*(1+cue*.075),bs.y*(1-cue*.04),bs.z*(1+cue*.075));
     }else{
       // 河童の主は積極的に間合いを詰める(突進・接近役)
       const surge=Math.max(0,Math.sin(t*1.25+p)),ideal=surge>.72?4.6:9.0;
       const goal=new THREE.Vector3(pp.x-toP.x*ideal+side.x*Math.sin(t*.9+p)*3.2,0,pp.z-toP.z*ideal+side.z*Math.sin(t*.9+p)*3.2);
       bossMoveToward(g,bossArenaClampVec(goal),dt,2.05+surge*1.15+phase*.45,4.2);
       bossTurnToward(g,pp,dt,0,5.2);
-      g.position.y=.08+Math.sin(t*2.2+p)*.11;g.rotation.z=Math.sin(t*3.1+p)*.06;
+      g.position.y=Math.max(.025,.08+Math.sin(t*2.2+p)*.11-cue*.035);g.rotation.x=-cue*.08;g.rotation.z=Math.sin(t*3.1+p)*.06;
+      g.scale.set(bs.x*(1+cue*.045),bs.y*(1-cue*.07),bs.z*(1+cue*.035));
     }
   }else if(K.season==="autumn"&&b.phase2){
     const goal=new THREE.Vector3(pp.x-toP.x*4.7,0,pp.z-toP.z*4.7);
     bossMoveToward(g,bossArenaClampVec(goal),dt,1.9+phase*.8,3.9);
     bossTurnToward(g,pp,dt,0,5.0);
-    const stomp=Math.max(0,Math.sin(t*2.9+p));g.position.y=stomp*.18;g.rotation.x=-stomp*.08;g.rotation.z=Math.sin(t*1.8+p)*.04;
+    const stomp=Math.max(0,Math.sin(t*2.9+p));g.position.y=stomp*.18+cue*.07;g.rotation.x=-stomp*.08-cue*.06;g.rotation.z=Math.sin(t*1.8+p)*.04;
+    g.scale.set(bs.x*(1+cue*.055),bs.y*(1-cue*.045),bs.z*(1+cue*.04));
   }else{
     const goal=new THREE.Vector3(TAIJI_BOSS_ARENA.x+Math.sin(t*.55+p)*8,0,TAIJI_BOSS_ARENA.z+Math.cos(t*.42+p)*5);
     bossMoveToward(g,bossArenaClampVec(goal),dt,1.55+phase*.55,3.4);
     bossTurnToward(g,pp,dt,0,4.4);
-    g.position.y=.24+Math.sin(t*2.4+p)*.22;g.rotation.z=Math.sin(t*1.7+p)*.08;
+    const pulse=(K.season==="autumn"?.03*Math.sin(t*4+p):0)+cue*.055;
+    g.position.y=.24+Math.sin(t*2.4+p)*.22+cue*.04;g.rotation.x=-cue*.035;g.rotation.z=Math.sin(t*1.7+p)*.08+cue*.025;
+    g.scale.set(bs.x*(1+pulse),bs.y*(1+pulse*.55),bs.z*(1+pulse));
   }
 }
 /* 波I: 桃霞/赤予兆の初回教示 — 各色とも最初の3回だけ意味をトーストで示す(以後は消音)。localStorageで永続 */
@@ -11940,6 +11937,7 @@ function tjOmenHint(kind){
 function tjf3Sign(b,kind,now){
   const el=$("tjf3Sign");if(!el||!b||!b.g)return;
   if(TAIJI_KITSUNE_LITE_RIG&&b.cfg&&b.cfg.attack==="dart"&&b.g.userData)b.g.userData.kitsuneOmenUntil=now+720;
+  b._motionCueUntil=now+720;b._motionCueKind=kind;
   const pos=(typeof taijiBossAimPoint==="function"&&taijiBossAimPoint(b))||b.g.position;
   const p=pos.clone();p.project(camera);
   if(p.z<-1||p.z>1)return; // 画面外は出さない(音だけ鳴らすと混乱するので何もしない)
@@ -12083,7 +12081,7 @@ function updateBoss(K,t,now,dt){
     if(p.pulse)p.m.scale.setScalar(1+Math.sin((now-p.born)*.012+p.phase)*p.pulse);
     const dd=p.hit2d?Math.hypot(p.m.position.x-player.pos.x,p.m.position.z-player.pos.z):p.m.position.distanceTo(new THREE.Vector3(player.pos.x,player.pos.y,player.pos.z));
     if(!p.reflected&&dd<(p.hitR||1.7)){
-      if(K.guarding&&now<(K.parryUntil||0)){taijiParry(p);K.parryUntil=0;continue;}
+      if(p.parryable&&K.guarding&&now<(K.parryUntil||0)){taijiParry(p);K.parryUntil=0;continue;}
       if(p.slow)K.slowUntil=now+p.slow;taijiDamage(p.dmg);taijiDisposeFx(p.m);bossProjs.splice(i,1);continue;
     }
     if(now-p.born>p.lifetime){taijiDisposeFx(p.m);bossProjs.splice(i,1);}}
