@@ -30,6 +30,11 @@ CC BY 等を採用する場合は出典・作者・ライセンスを明記す�
 | shou.mp3 | sho | 西の対でタップ時 |
 | ryuteki.mp3 | ryuteki | 西の対でタップ時 |
 | 悠久の伎楽.mp3 | theme | タイトル画面の小音量ループ |
+| Japanese_School_Bell04-6(Far-Short).mp3 | se: "chime"(旧"bell"を実音源化) | 章転換のチャイム・名の復元の鐘 |
+| カモメの鳴き声-効果音.mp3 | se: "seagull" | 物語モードでカモメが登場する場面 |
+| sei_ge_choku_kaku01.mp3 | se: "chalk" | 教室セットの黒板が現れる時 |
+| sei_ge_spen_kaku02.mp3 | se: "pencil" | 栞がペンで字を直す場面 |
+| 刀剣・斬る07.mp3 | se: "slash"(剣で斬る2.mp3から更新) | 退治モードの太刀斬撃 |
 
 ## 出典・ライセンス（要確定）
 

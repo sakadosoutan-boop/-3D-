@@ -46,7 +46,7 @@ function stInject(){
     /* 立ち絵(Canvas描画の胸像)。表示中は本文を右へ寄せる */
     "#storyHud .st-box.with-face{padding-left:106px;min-height:104px}",
     "#stFace{position:absolute;left:10px;bottom:10px;width:86px;height:86px;border-radius:9px;border:1px solid var(--kin);",
-    " background:#141009;display:none;box-shadow:0 3px 10px rgba(0,0,0,.5)}",
+    " background:#141009;display:none;box-shadow:0 3px 10px rgba(0,0,0,.5);object-fit:cover}",
     /* ログ一覧 */
     "#storyHud .st-log-item{text-align:left;border-bottom:1px solid rgba(201,162,63,.22);padding:7px 2px}",
     "#storyHud .st-log-item b{color:var(--kin);font-size:11px;display:block;margin-bottom:2px}",
@@ -302,9 +302,30 @@ function stFaceUrl(key){
   return ST_FACE_CACHE[key];
 }
 const ST_FACE_KEY={"小萩":"kohagi","秀頼":"hidetora","秀頼（心）":"hidetora","右近":"ukon","左大臣":"minister","判者":"judge","栞":"shiori","大鬼":"oni"};
-function stSetFace(spk){
+/* 波Y: 描き下ろしアイコン(軽量WebP・相対パス参照。単一HTMLは肥大化させない) */
+const ST_ICON_FILES={
+  kohagi:"icons/kohagi_silhouette.webp",
+  ukon:"icons/ukon.webp",
+  minister:"icons/sadaijin_fan.webp",
+  shiori:"icons/shiori.webp",
+  hidetora_neutral:"icons/hidetora_neutral.webp",
+  hidetora_worried:"icons/hidetora_worried.webp",
+  hidetora_blush:"icons/hidetora_blush.webp",
+  hidetora_modern:"icons/hidetora_modern.webp"
+};
+function stHidetoraIcon(ev){
+  const e=ev&&ev.emotes&&ev.emotes.hidetora;
+  if(e&&ST_ICON_FILES["hidetora_"+e])return "hidetora_"+e;
+  const S=APP.story;
+  if(S&&S.classroom)return "hidetora_modern"; // 現代の教室シーンでは現在の彼の姿
+  return "hidetora_neutral";
+}
+function stSetFace(spk,ev){
   const img=stEl("stFace"),box=stEl("stBox");if(!img)return;
-  const key=ST_FACE_KEY[spk],url=key?stFaceUrl(key):null;
+  const key=ST_FACE_KEY[spk];
+  let iconKey=key==="hidetora"?stHidetoraIcon(ev):key;
+  const iconFile=iconKey?ST_ICON_FILES[iconKey]:null;
+  const url=iconFile||(key?stFaceUrl(key):null); // 描き下ろしが無い話者(判者・大鬼)はCanvas影絵で代用
   if(url){img.src=url;img.style.display="block";box.classList.add("with-face");}
   else{img.style.display="none";box.classList.remove("with-face");}
 }
@@ -445,7 +466,7 @@ function stShowDialogue(spk,text,ev){
   const full=text||"";
   te.style.fontSize=(full.length>130)?"12.5px":"14px"; // 長文は一段小さく(切れ防止)
   te.scrollTop=0;
-  stSetFace(spk); // 立ち絵
+  stSetFace(spk,ev); // 立ち絵
   const v=APP.story&&APP.story.vn;
   if(v){v.log.push({s:spk,t:full,ch:SM&&SM.chapter?SM.chapter.chapterId:0});if(v.log.length>300)v.log.shift();v.curEv=ev;}
   const actorKey=ST_SPEAKER_ACTOR[spk];
@@ -644,6 +665,7 @@ function stEnsureClassroom(){
   S.classroom=SO.createClassroomSet();
   scene.add(S.classroom.group);
   S.classroom.setBoard("waka","御簾=隔てる/つなぐ"); // 黒板に平面図+書き足し
+  if(typeof saigenSe==="function")saigenSe("chalk"); // 波Y: チョークの音で黒板の気配を添える
 }
 /* 波W: 現実の病室セット(第6話 回想の間の枠)。cam_hospital_* が絶対座標で寄る */
 function stEnsureHospital(){
