@@ -23,7 +23,7 @@ function stEl(id){return document.getElementById(id);}
 function stInject(){
   if(stEl("stBox"))return; // 注入済み(プレースホルダ#storyHudはHTMLに常設)
   const css=[
-    "#storyHud{position:fixed;inset:0;z-index:45;pointer-events:none;display:none}",
+    "#storyHud{position:fixed;inset:0;z-index:55;pointer-events:none;display:none}",
     "#storyHud .st-chip{position:fixed;top:calc(env(safe-area-inset-top) + 6px);left:50%;transform:translateX(-50%);pointer-events:auto;",
     " background:linear-gradient(180deg,rgba(28,18,10,.94),rgba(16,10,6,.95));border:1px solid var(--kin);border-radius:7px;",
     " padding:4px 12px;color:#e6d9bb;font-size:12px;font-family:var(--serif);letter-spacing:.08em;white-space:nowrap}",
@@ -31,10 +31,13 @@ function stInject(){
     "#storyHud #stQuit{position:fixed;top:calc(env(safe-area-inset-top) + 6px);right:9px;pointer-events:auto;background:var(--urushi);",
     " color:var(--gofun);border:1px solid var(--kin);width:30px;height:30px;border-radius:50%;font-size:14px;line-height:1;cursor:pointer}",
     "#storyHud .st-box{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 10px);transform:translateX(-50%);",
-    " width:min(720px,96vw);max-height:35vh;pointer-events:auto;background:linear-gradient(180deg,rgba(24,16,9,.95),rgba(13,9,5,.97));",
-    " border:1px solid var(--kin);border-radius:11px;box-shadow:0 8px 30px rgba(0,0,0,.55);padding:10px 13px 11px;display:none}",
+    " width:min(720px,96vw);max-height:52vh;box-sizing:border-box;pointer-events:auto;background:linear-gradient(180deg,rgba(24,16,9,.96),rgba(13,9,5,.98));",
+    " border:1px solid var(--kin);border-radius:11px;box-shadow:0 8px 30px rgba(0,0,0,.55);padding:10px 13px 12px;display:none}",
     "#storyHud .st-spk{font-size:11px;color:var(--kin);letter-spacing:.14em;margin-bottom:5px;font-family:var(--serif);padding-right:150px}",
-    "#storyHud .st-text{font-size:14px;line-height:1.82;color:#efe6cd;font-family:var(--serif);letter-spacing:.04em;overflow-y:auto;max-height:26vh}",
+    /* 本文をタップで送る(領域全体が送りボタン)。末尾に小さな▼ */
+    "#storyHud .st-text{font-size:14px;line-height:1.82;color:#efe6cd;font-family:var(--serif);letter-spacing:.04em;overflow-y:auto;max-height:30vh;cursor:pointer}",
+    "#storyHud .st-text.tapadv::after{content:'　▼';color:var(--kin);font-size:12px;animation:stBlink 1.1s infinite}",
+    "@keyframes stBlink{0%,100%{opacity:.3}50%{opacity:1}}",
     /* VN操作(オート/スキップ/ログ) — 窓の右上に小さく */
     "#storyHud .st-vn{position:absolute;top:7px;right:9px;display:flex;gap:5px}",
     "#storyHud .st-vn button{pointer-events:auto;background:rgba(28,18,10,.92);border:1px solid rgba(201,162,63,.55);color:#cbb98f;",
@@ -48,14 +51,16 @@ function stInject(){
     "#storyHud .st-log-item{text-align:left;border-bottom:1px solid rgba(201,162,63,.22);padding:7px 2px}",
     "#storyHud .st-log-item b{color:var(--kin);font-size:11px;display:block;margin-bottom:2px}",
     "#storyHud .st-log-item span{font-size:12.5px;color:#e0d4b4;line-height:1.7}",
-    "#storyHud .st-next{margin-top:8px;text-align:right}",
-    "#storyHud .st-next button,#storyHud .st-opt{cursor:pointer;background:linear-gradient(155deg,#4a1f14,#311309);color:var(--gofun);",
-    " border:1px solid var(--kin);padding:9px 16px;font-size:12.5px;border-radius:6px;letter-spacing:.06em;font-family:var(--serif)}",
-    "#storyHud .st-opts{display:flex;flex-direction:column;gap:8px;margin-top:8px}",
-    "#storyHud .st-opt{text-align:left;min-height:44px;line-height:1.5}",
+    "#storyHud .st-next{display:none}", /* 次へボタンは廃止(本文タップで送る) */
+    /* 選択肢: 縦画面ではみ出さないよう窓内でスクロール */
+    "#storyHud .st-opts{display:flex;flex-direction:column;gap:7px;margin-top:9px;overflow-y:auto;max-height:34vh}",
+    "#storyHud .st-opt{cursor:pointer;background:linear-gradient(155deg,#4a1f14,#311309);color:var(--gofun);",
+    " border:1px solid var(--kin);padding:9px 13px;font-size:12.5px;border-radius:6px;letter-spacing:.04em;font-family:var(--serif);",
+    " text-align:left;min-height:42px;line-height:1.45;flex:0 0 auto}",
     "#storyHud .st-opt:hover{filter:brightness(1.15)}",
-    "#storyHud .st-panel{position:fixed;inset:0;display:none;align-items:center;justify-content:center;pointer-events:auto;",
-    " background:radial-gradient(ellipse at center,rgba(10,7,4,.75),rgba(6,4,2,.92))}",
+    "#storyHud .st-box.choosing{max-height:70vh}", /* 選択肢表示中は窓を広げる */
+    "#storyHud .st-panel{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;pointer-events:auto;",
+    " background:radial-gradient(ellipse at center,rgba(10,7,4,.82),rgba(6,4,2,.96))}", /* 侵食演出(z52)より前面。ED5でも必ず読める */
     "#storyHud .st-card{width:min(460px,92vw);max-height:84vh;overflow-y:auto;background:linear-gradient(180deg,rgba(28,19,11,.98),rgba(15,10,6,.99));",
     " border:1px solid var(--kin);border-radius:14px;box-shadow:0 14px 50px rgba(0,0,0,.7);padding:22px 20px;text-align:center}",
     "#storyHud .st-card h3{margin:0 0 10px;color:var(--kin);font-family:var(--serif);font-size:18px;letter-spacing:.1em}",
@@ -114,13 +119,53 @@ function stVnSchedule(ev){
   if(v.skip)window._stAutoT=setTimeout(()=>stVnAdvance(),90);
   else if(v.auto)window._stAutoT=setTimeout(()=>stVnAdvance(),1100+Math.min(6500,(ev.text||"").length*58));
 }
-function stVnShowLog(){
+function stVnShowLog(chId){
   const v=APP.story&&APP.story.vn;if(!v)return;
   clearTimeout(window._stAutoT);
-  const html=(v.log.length?v.log:[{s:"",t:"(まだ何も語られていません)"}])
+  const curCh=(SM&&SM.chapter?SM.chapter.chapterId:0);
+  const ch=(chId!=null)?chId:curCh;
+  const man=(window.STORY_EMBED&&STORY_EMBED.manifest&&STORY_EMBED.manifest.chapters)||[];
+  // 章タブ(この物語で語られた章のみ)
+  const chapters=[...new Set(v.log.map(e=>e.ch||0))].filter(c=>c>0).sort((a,b)=>a-b);
+  const tabs=chapters.map(c=>{
+    const t=(man.find(m=>m.chapterId===c)||{}).chapterTitle||("第"+c+"話");
+    return '<button class="st-opt" style="display:inline-block;width:auto;min-height:0;padding:5px 10px;margin:0 4px 6px 0;font-size:11px;'+
+      (c===ch?'background:#5c4716;border-color:var(--kin)':'')+'" onclick="window.__stLog('+c+')">第'+c+'話</button>';
+  }).join("");
+  const items=v.log.filter(e=>(e.ch||0)===ch);
+  const html=(items.length?items:[{s:"",t:"(この話ではまだ何も語られていません)"}])
     .map(e=>'<div class="st-log-item"><b>'+(e.s||"語り")+'</b><span>'+String(e.t).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))+'</span></div>').join("");
-  stPanel("ログ — これまでの言葉",'<div style="max-height:52vh;overflow-y:auto;text-align:left">'+html+'</div>',
+  stPanel("ログ — 第"+ch+"話",
+    '<div style="text-align:left;margin-bottom:6px">'+(tabs||"")+'</div>'+
+    '<div id="stLogScroll" style="max-height:48vh;overflow-y:auto;text-align:left">'+html+'</div>',
     [["とじる",()=>{const vv=APP.story&&APP.story.vn;if(vv&&vv.auto&&vv.curEv)stVnSchedule(vv.curEv);}]]);
+  // 開いた瞬間に最後のメッセージまでスクロール
+  requestAnimationFrame(()=>{const sc=stEl("stLogScroll");if(sc)sc.scrollTop=sc.scrollHeight;});
+}
+window.__stLog=function(c){stVnShowLog(c);};
+/* ---- 物語モードの障害物コリジョン ----
+   本体の移動処理から window.storySolidHit(x,z) が毎フレーム呼ばれる。
+   円 {x,z,r} の中に入ろうとする移動を弾く。地面レベルの立木・柱・灯籠・気配の間など、
+   床の高さでは判定できない「すり抜け」を塞ぐ。 */
+window.STORY_SOLIDS=[];
+window.storySolidHit=function(x,z){
+  const S=window.STORY_SOLIDS;if(!S)return false;
+  for(let i=0;i<S.length;i++){const o=S[i];const dx=x-o.x,dz=z-o.z;if(dx*dx+dz*dz<o.r*o.r)return true;}
+  return false;
+};
+/* 章開始時に、その舞台の主要な固形物を障害物として登録する。
+   寝殿(母屋核)・三対屋・釣殿・中門・小萩の気配の間・南庭の主だった立木/灯籠 を円で覆う。 */
+function stBuildSolids(){
+  const S=[];
+  // 小萩の気配の間(母屋南端)は絶対に近づけない(母屋自体は床の段差でも塞がれる)
+  S.push({x:0.6,z:0.55,r:3.2});
+  // 母屋北〜中核(南庭の収集物には掛からない位置だけ)
+  S.push({x:0,z:-4,r:6.0});
+  // 三つの対屋(南庭からは離れており収集動線に干渉しない)
+  S.push({x:35,z:-12,r:10});S.push({x:-35,z:-12,r:10});S.push({x:0,z:-39,r:10});
+  // 南庭の篝火・大石・主要な立木(散策の障害になる代表点。収集カード座標は避けてある)
+  [[9,9],[-10,11],[13,17],[-15,19],[7,22],[-7,26],[17,27],[-18,29]].forEach(p=>S.push({x:p[0],z:p[1],r:1.3}));
+  window.STORY_SOLIDS=S;
 }
 /* ---- 立ち絵(Canvas描画・アセット不要) ----
    小萩だけは顔を見せない(御簾越しの影+薄紫の紐)。 */
@@ -334,24 +379,27 @@ function stCamera(id){
 }
 /* ---- HUD描画 ---- */
 function stShowDialogue(spk,text,ev){
-  stEl("stBox").style.display="block";stEl("stOpts").innerHTML="";stEl("stNextWrap").style.display="";
+  const box=stEl("stBox");box.style.display="block";box.classList.remove("choosing");
+  stEl("stOpts").innerHTML="";
   stEl("stSpk").textContent=spk?("— "+spk+" —"):"語り";
   const te=stEl("stText");
   te.textContent=text||"";
+  te.classList.add("tapadv"); // 本文タップで送れる合図(末尾▼)
   te.style.fontSize=(text&&text.length>130)?"12.5px":"14px"; // 長文は一段小さく(切れ防止)
   te.scrollTop=0;
   stSetFace(spk); // 立ち絵
   const v=APP.story&&APP.story.vn;
-  if(v){v.log.push({s:spk,t:text});if(v.log.length>150)v.log.shift();v.curEv=ev;stVnSchedule(ev);}
+  if(v){v.log.push({s:spk,t:text,ch:SM&&SM.chapter?SM.chapter.chapterId:0});if(v.log.length>300)v.log.shift();v.curEv=ev;stVnSchedule(ev);}
   const actorKey=ST_SPEAKER_ACTOR[spk];
   if(actorKey&&APP.story&&APP.story.actors&&APP.story.actors[actorKey]){
     const a=APP.story.actors[actorKey];a.group.visible=true;
     if(a.pulse)a.pulse(); // 気配の間(小萩): 話す間だけ影が揺れ、紐が瞬く
   }
   stProgRefresh();
-  stEl("stNext").onclick=()=>{beep(600,.045,"triangle",.07);
-    if(v)v.curEv=null;clearTimeout(window._stAutoT);
-    SM.goNext(ev.next);};
+  // 本文(＝窓の広い領域)をタップで送る。次へボタンは廃止
+  const advance=()=>{beep(600,.045,"triangle",.07);if(v)v.curEv=null;clearTimeout(window._stAutoT);SM.goNext(ev.next);};
+  te.onclick=advance;
+  stEl("stSpk").onclick=advance;
 }
 /* 章内の現在位置(場 x/y)をチップに出す */
 function stProgRefresh(){
@@ -361,12 +409,12 @@ function stProgRefresh(){
 }
 function stShowChoice(text,options,ev){
   stVnStop(); // 選択肢ではオート/スキップを止める
-  stEl("stBox").style.display="block";stEl("stNextWrap").style.display="none";
+  const box=stEl("stBox");box.style.display="block";box.classList.add("choosing");
   stEl("stSpk").textContent="選べ";
   stSetFace(null);
-  const v=APP.story&&APP.story.vn;if(v)v.log.push({s:"選択",t:text});
+  const v=APP.story&&APP.story.vn;if(v)v.log.push({s:"選択",t:text,ch:SM&&SM.chapter?SM.chapter.chapterId:0});
   stProgRefresh();
-  stEl("stText").textContent=text||"";
+  const te=stEl("stText");te.textContent=text||"";te.classList.remove("tapadv");te.onclick=null;
   // 波O: 破魔の連札(第5話最終3問)は3D札を眼前に浮かべ、選択と連動して光る/割れる/燃える
   const isSeal=ev&&/^seq_(508|509|510)_final_quiz/.test(ev.id||"");
   if(isSeal)stEnsureSeals();
@@ -529,7 +577,7 @@ function stMiniGame(info){
     enterMode("quiz");
     const pk=stEl("quizDiffPicker");if(pk)pk.style.display="none";
     startQuiz(["hajitomi","misu","kichou","hisashi","moya"]);
-    toast("小萩の試験——五つの名を当てよ",3000);
+    toast("小萩の試験——五つの名を当てよ",1600); // 短めに(誤タップ誤答を避ける)
     return;
   }
   // ---- 波O: 全試練を実モードへ本接続 ----
@@ -552,6 +600,8 @@ function stMiniGame(info){
     if(oniFinal)APP.taijiDifficulty="hard"; // 決戦は歯応え重視(通常戦より攻撃頻度・弾数増)
     APP.storyTaiji={
       rush:[oniFinal?"autumn":"summer"], // 夏=河童の主 / 秋=大鬼(第2形態あり)
+      kappaOnly:!oniFinal,               // 波Q: 第3話は河童単体(提灯お化けを出さない)
+      swordOnly:!oniFinal,               // 波Q: 第3話は太刀限定(弓は右近が受け持つ)
       done:(ok,hits)=>{
         APP.taijiDifficulty=prevDiff||"normal";
         enterMode("story");
@@ -587,13 +637,15 @@ function stMiniGame(info){
 }
 /* ---- エンディング/章クリア ---- */
 function stEnding(endingId){
-  stClearCollectibles();
+  stClearCollectibles();stVnStop();
   if(APP.story&&APP.story.sealFx){window.StoryObjects.disposeGroup(APP.story.sealFx.group);APP.story.sealFx=null;}
   const ed=STORY_ED_TEXT[endingId]||{t:endingId,d:""};
-  if(endingId==="ED5_SPOOKY"&&erosionFx)erosionFx.setLevel(100);
-  stPanel(ed.t,ed.d,[
-    ["章をえらぶ",()=>{if(erosionFx)erosionFx.setLevel(0);SM.state.endingId=null;stChapterMenu();}],
-    ["タイトルへ戻る",()=>{if(erosionFx)erosionFx.setLevel(0);stExitToTitle();}]
+  // 結末カードは必ず読めるよう、侵食演出はここで解除(前段の演出で役目は果たしている)
+  if(erosionFx)erosionFx.setLevel(0);
+  stPanel("《 "+ed.t+" 》",ed.d,[
+    ["結末の回想へ（他の結末を見る）",()=>{SM.state.endingId=null;stStartChapter(6);}],
+    ["章をえらぶ",()=>{SM.state.endingId=null;stChapterMenu();}],
+    ["タイトルへ戻る",()=>{stExitToTitle();}]
   ]);
 }
 function stChapterComplete(chapterId){
@@ -608,13 +660,16 @@ function stChapterComplete(chapterId){
 /* ---- 章メニュー ---- */
 function stChapterMenu(){
   stCleanupSets(); // 章間で大道具(大鬼・連札・教室)を片付ける
+  if(erosionFx)erosionFx.setLevel(0);
   const man=(window.STORY_EMBED&&STORY_EMBED.manifest&&STORY_EMBED.chapters)?STORY_EMBED.manifest.chapters:[];
-  const btns=man.map(c=>["第"+c.chapterId+"話 「"+c.chapterTitle+"」",()=>stStartChapter(c.chapterId)]);
+  // 第6話(帰る朝＝回想の間)は本編の章リストから外し、別項目にする
+  const btns=man.filter(c=>c.chapterId<=5).map(c=>["第"+c.chapterId+"話 「"+c.chapterTitle+"」",()=>stStartChapter(c.chapterId)]);
   const save=SM&&SM.load&&(function(){try{return JSON.parse(localStorage.getItem("shinden3d-story-save-v1"));}catch(e){return null;}})();
-  if(save&&save.state&&save.state.chapterId&&save.currentSequenceId&&save.currentSequenceId!=="chapter_complete"&&!save.state.endingId){
-    btns.unshift(["続きから (第"+save.state.chapterId+"話)",()=>{
+  if(save&&save.state&&save.state.chapterId&&save.state.chapterId<=5&&save.currentSequenceId&&save.currentSequenceId!=="chapter_complete"&&!save.state.endingId){
+    btns.unshift(["▶ 続きから (第"+save.state.chapterId+"話)",()=>{
       SM.deserialize(save);stStartChapter(save.state.chapterId,save.currentSequenceId);}]);
   }
+  btns.push(["🌸 結末の回想（回想の間）",()=>stStartChapter(6)]);
   btns.push(["タイトルへ戻る",()=>stExitToTitle()]);
   stPanel("御簾の向こうへ — 寝殿造り異聞","<small style='color:#9a8a6a'>試験版 / この画面は ?story=1 でのみ入れます</small>",btns);
 }
@@ -645,6 +700,7 @@ function startStory(){
   if(typeof setLabelMode==="function")setLabelMode(0,false,true); // 名前タグは物語中は非表示
   if(typeof beacon!=="undefined")beacon.visible=false;             // 世界側の誘導・収集表示も消す
   stHideWorldFigures(true);                                        // 姫君・女房・貴公子は物語の配役ではないので隠す
+  stBuildSolids();                                                 // 物語モードの障害物コリジョンを有効化
   stVnButtons();
   stSpawnActors();
   if(!erosionFx&&window.StoryObjects)erosionFx=window.StoryObjects.createBrainErosionOverlay({}).mount();
@@ -698,6 +754,7 @@ function stExitToTitle(){
     if(S.prevLabelMode!=null&&typeof setLabelMode==="function")setLabelMode(S.prevLabelMode,false,true); // 名前タグ復元
   }
   stHideWorldFigures(false); // 姫君たちを邸へ返す
+  window.STORY_SOLIDS=[];     // 障害物コリジョン解除
   clearTimeout(window._stAutoT);
   if(erosionFx)erosionFx.setLevel(0);
   APP.story=null;APP.storyQuiz=null;
@@ -771,7 +828,8 @@ function storyUpdate(dt){
     S.collect&&S.collect.items.forEach(it=>{if(it.got&&it.api.resolved&&it.api.group.parent)window.StoryObjects.disposeGroup(it.api.group);});
   }
   // 侵食20以上: 稀に旧仮名の揺らぎ
-  if(erosionFx&&SM&&SM.state.params.brainErosion>=20&&Math.random()<dt*.08)erosionFx.flickerGlyph();
+  // 侵食40以上のときだけ、ごく稀に旧仮名が一瞬揺らぐ(20台の通常プレイでは出さない)
+  if(erosionFx&&SM&&SM.state.params.brainErosion>=40&&Math.random()<dt*.03)erosionFx.flickerGlyph();
 }
 /* ---- 公開 ---- */
 window.startStory=startStory;
