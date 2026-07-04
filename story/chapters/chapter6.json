@@ -78,7 +78,7 @@
         },
         {
           "text": "ED3 Bad End A『歌なき夜』",
-          "next": "seq_631_ed3"
+          "next": "seq_630_ed3_fire"
         },
         {
           "text": "ED4 Bad End B『常世の婿』",
@@ -86,7 +86,7 @@
         },
         {
           "text": "ED5 Spooky End『百年の夢』",
-          "next": "seq_651_ed5"
+          "next": "seq_650_ed5_bridge"
         }
       ]
     },
@@ -194,6 +194,12 @@
       "endingId": "ED2_NORMAL"
     },
     {
+      "id": "seq_630_ed3_fire",
+      "type": "effect",
+      "effectId": "ed3_fire_dies",
+      "next": "seq_631_ed3"
+    },
+    {
       "id": "seq_631_ed3",
       "type": "dialogue",
       "speaker": "語り",
@@ -259,6 +265,13 @@
       "id": "seq_645_ed4_end",
       "type": "ending",
       "endingId": "ED4_SYNC"
+    },
+    {
+      "id": "seq_650_ed5_bridge",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "見て見ぬふりを重ね、名を呼ぶことを怠るたび、邸はほんの少しずつ、あなたの心を覆っていった。積もった小さな過ちが、ついに胸の内側を満たしきった夜——それが今宵だった。",
+      "next": "seq_651_ed5"
     },
     {
       "id": "seq_651_ed5",

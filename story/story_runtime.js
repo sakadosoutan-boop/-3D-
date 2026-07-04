@@ -15,7 +15,7 @@ const STORY_ED_TEXT={
   ED2_NORMAL:{t:"ED2 Normal End「現の朝」", d:"古典の点は上がった。けれど小萩の声は、朝の光の中で薄れていく。<br>教科書の御簾の挿絵だけが、かすかに揺れている。"},
   ED3_GAMEOVER:{t:"ED3 Bad End「歌なき夜」", d:"灯火は消え、御簾の向こうの声は黒い線になった。<br>言葉と戦いの備えを整えて、もう一度。"},
   ED4_SYNC:  {t:"ED4 Bad End「常世の婿」", d:"帰る道を前に、あなたは振り返った。御簾の内は美しく、現代の音は遠ざかる。<br>——現実の教室では、隣の席だけが空いている。"},
-  ED5_SPOOKY:{t:"ED5 Spooky End「百年の夢」", d:"名をなくした人は、物語にやさしく飼われます。<br><span style='color:#b9a5e6'>あなたの席は、まだ空いています。</span>"}
+  ED5_SPOOKY:{t:"ED5 Spooky End「百年の夢」", d:"見て見ぬふりを重ねた小さな過ちが、静かに積もっていた。名をなくした人は、物語にやさしく飼われます。<br><span style='color:#b9a5e6'>あなたの席は、まだ空いています。</span>"}
 };
 let SM=null,erosionFx=null;
 function stEl(id){return document.getElementById(id);}
@@ -58,6 +58,13 @@ function stInject(){
     " border:1px solid var(--kin);padding:9px 13px;font-size:12.5px;border-radius:6px;letter-spacing:.04em;font-family:var(--serif);",
     " text-align:left;min-height:42px;line-height:1.45;flex:0 0 auto}",
     "#storyHud .st-opt:hover{filter:brightness(1.15)}",
+    /* 波Z: 名を呼ぶ選択肢の崩れ(常世が名を拒むような不穏なグリッチ) */
+    "#storyHud .st-glitch{position:relative;display:inline-block}",
+    "#storyHud .st-glitch::before,#storyHud .st-glitch::after{content:attr(data-text);position:absolute;left:0;top:0;width:100%;overflow:hidden;background:inherit}",
+    "#storyHud .st-glitch::before{color:#ff3b5c;clip-path:inset(0 0 60% 0);animation:stGlitchA 2.6s infinite linear}",
+    "#storyHud .st-glitch::after{color:#3bdcff;clip-path:inset(60% 0 0 0);animation:stGlitchB 3.1s infinite linear}",
+    "@keyframes stGlitchA{0%,90%,100%{transform:translate(0,0)}91%{transform:translate(2px,-1px)}93%{transform:translate(-2px,1px)}95%{transform:translate(1px,1px)}}",
+    "@keyframes stGlitchB{0%,88%,100%{transform:translate(0,0)}89%{transform:translate(-2px,1px)}92%{transform:translate(2px,-1px)}94%{transform:translate(-1px,-1px)}}",
     "#storyHud .st-box.choosing{max-height:70vh}", /* 選択肢表示中は窓を広げる */
     "#storyHud .st-panel{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;pointer-events:auto;",
     " background:radial-gradient(ellipse at center,rgba(10,7,4,.82),rgba(6,4,2,.96))}", /* 侵食演出(z52)より前面。ED5でも必ず読める */
@@ -281,10 +288,12 @@ function stFaceUrl(key){
     x.beginPath();x.moveTo(36,150);x.lineTo(86,102);x.lineTo(140,144);x.quadraticCurveTo(90,168,36,150);x.closePath();x.fill();x.stroke();
     for(let i=0;i<5;i++){x.beginPath();x.moveTo(86,104);x.lineTo(48+i*22,150);x.stroke();}
   }else if(key==="shiori"){
+    // 波Z: セーラー服ではなくブレザー(紺・白シャツ襟・臙脂のリボン)。実際は icons/shiori.webp を使うため、
+    // これは画像読込に失敗した時のみのフォールバック。
     bg("#4a5a70","#232d3c");
-    x.fillStyle="#f2f5f8";x.beginPath();x.ellipse(86,170,58,42,0,Math.PI,0);x.fill();             // セーラー服
-    x.fillStyle="#3c5a80";x.beginPath();x.moveTo(50,150);x.lineTo(86,132);x.lineTo(122,150);x.lineTo(112,172);x.lineTo(60,172);x.closePath();x.fill(); // 襟
-    x.fillStyle="#b9a5e6";x.fillRect(83,146,6,14);                                                 // 薄紫のリボン
+    x.fillStyle="#20304a";x.beginPath();x.ellipse(86,170,58,42,0,Math.PI,0);x.fill();             // 紺のブレザー
+    x.fillStyle="#f2f5f8";x.beginPath();x.moveTo(58,150);x.lineTo(86,138);x.lineTo(114,150);x.lineTo(104,172);x.lineTo(68,172);x.closePath();x.fill(); // 白いシャツの襟
+    x.fillStyle="#8a2030";x.fillRect(83,146,6,14);                                                 // 臙脂のリボン
     face(86,94,40,"#f4ddc4");
     x.fillStyle="#241f22";x.beginPath();x.ellipse(86,66,38,26,0,Math.PI,0);x.fill();              // 前髪
     x.fillRect(48,66,12,52);x.fillRect(112,66,12,52);                                              // ボブ
@@ -306,7 +315,8 @@ const ST_FACE_KEY={"小萩":"kohagi","秀頼":"hidetora","秀頼（心）":"hide
 const ST_ICON_FILES={
   kohagi:"icons/kohagi_silhouette.webp",
   ukon:"icons/ukon.webp",
-  minister:"icons/sadaijin_fan.webp",
+  minister:"icons/sadaijin_full.webp", // 波Z: 左大臣は素顔を通常アイコンに
+  judge:"icons/sadaijin_fan.webp",     // 波Z: 判者は「扇で顔を隠す」役どころに合わせて扇の絵を専用に割当て
   shiori:"icons/shiori.webp",
   hidetora_neutral:"icons/hidetora_neutral.webp",
   hidetora_worried:"icons/hidetora_worried.webp",
@@ -332,10 +342,21 @@ function stSetFace(spk,ev){
 /* ---- 転換演出(波L互換・story専用要素) ---- */
 function stFade(color){
   const el=stEl("storyFade");if(!el)return;
+  el.style.transition="";el.style.opacity=""; // stSlowFadeToWhite等の一時的な直接指定を必ず解除
   el.className=(color==="white"?"white":"");
   el.classList.add("show");void el.offsetWidth;
   clearTimeout(window._stFadeT);
   window._stFadeT=setTimeout(()=>el.classList.remove("show"),(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION)?60:340);
+}
+/* 波Z: バッドエンド演出用——一瞬の切替でなく、ゆっくり白んでいく(ms=所要時間) */
+function stSlowFadeToWhite(ms){
+  const el=stEl("storyFade");if(!el)return;
+  clearTimeout(window._stFadeT);
+  el.className="white";el.classList.remove("show");
+  el.style.transition="none";el.style.opacity="0";
+  void el.offsetWidth;
+  el.style.transition="opacity "+(ms/1000)+"s ease";
+  el.style.opacity="1";
 }
 function stLightning(){
   const el=stEl("storyFade");if(!el)return;
@@ -416,7 +437,10 @@ function stApplyPresentation(ev){
   if(!ev)return;
   if(ev.fade)stFade(ev.fade);
   if(ev.fx==="lightning")stLightning();
-  if(ev.se&&typeof saigenSe==="function")saigenSe(ev.se);
+  if(ev.se&&typeof saigenSe==="function"){
+    if(ev.seDelayMs)setTimeout(()=>saigenSe(ev.se),ev.seDelayMs); // 波Z: 台詞中の描写に合わせて音を少し遅らせる
+    else saigenSe(ev.se);
+  }
   const S=APP.story;
   if(S&&S.actors){
     if(ev.emotes)Object.entries(ev.emotes).forEach(([k,e])=>{
@@ -452,6 +476,40 @@ function stCamera(id){
   if(ang.fov&&typeof camera!=="undefined"){camera.fov=ang.fov;camera.updateProjectionMatrix();}
   if(typeof snapSaigenCamera==="function")snapSaigenCamera();
   if(typeof updateControlUI==="function")updateControlUI();
+}
+/* 波Z: プレイヤー位置基準のカメラ切替(場所を問わないカット用。座標は現在地からの相対オフセット) */
+function stCamRelative(posOff,lookOff,fov){
+  const base=player.pos.clone();
+  APP.view="fp";
+  if(typeof applySaigenCam==="function")applySaigenCam({
+    pos:[base.x+posOff[0],base.y+posOff[1],base.z+posOff[2]],
+    look:[base.x+lookOff[0],base.y+lookOff[1],base.z+lookOff[2]]
+  });
+  if(fov&&typeof camera!=="undefined"){camera.fov=fov;camera.updateProjectionMatrix();}
+  if(typeof snapSaigenCamera==="function")snapSaigenCamera();
+  if(typeof updateControlUI==="function")updateControlUI();
+}
+/* 波Z: カモメが上空を横切り、翼の下から白い紙が零れ落ちる一連の演出。onDrop(位置)は落下開始の合図 */
+function stSeagullFlyover(onDrop){
+  const S=APP.story;if(!S)return;
+  if(typeof makeSeagull!=="function"){onDrop(new THREE.Vector3(player.pos.x+0.6,player.pos.y+4.5,player.pos.z-1.2));return;}
+  const base=player.pos.clone();
+  const startX=base.x-9,endX=base.x+9,flyY=base.y+6.8,flyZ=base.z-4;
+  const g=makeSeagull(1.3);g.rotation.y=Math.PI/2;g.position.set(startX,flyY,flyZ);
+  scene.add(g);
+  let t=0;const dur=3.0;let dropped=false;
+  S.seagullFly={
+    group:g,
+    update(dt){
+      t+=dt;const p=Math.min(1,t/dur);
+      g.position.x=startX+(endX-startX)*p;
+      g.position.y=flyY+Math.sin(p*Math.PI)*1.1;
+      const flap=Math.abs(Math.sin(t*7));
+      g.children.forEach(ch=>{if(ch.userData&&ch.userData.wingSide)ch.rotation.z=ch.userData.wingSide*(.15+flap*.4);});
+      if(!dropped&&p>=0.5){dropped=true;onDrop(g.position.clone());}
+      if(p>=1){if(g.parent)scene.remove(g);S.seagullFly=null;}
+    }
+  };
 }
 /* ---- HUD描画 ---- */
 /* 話者ごとの名札色(市販ノベル風のキャラ識別) */
@@ -521,7 +579,12 @@ function stShowChoice(text,options,ev){
   if(isSeal)stEnsureSeals();
   const host=stEl("stOpts");host.innerHTML="";
   options.forEach((o,i)=>{
-    const b=document.createElement("button");b.className="st-opt";b.textContent=(i+1)+". "+o.text;
+    const b=document.createElement("button");b.className="st-opt";
+    if(o.glitchText){ // 波Z: 名を呼ぶ選択肢が崩れて見える(常世が名を拒むような不穏さ)
+      const label=(i+1)+". ";
+      const safe=String(o.text).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
+      b.innerHTML=label+'<span class="st-glitch" data-text="'+safe+'">'+safe+'</span>';
+    }else b.textContent=(i+1)+". "+o.text;
     b.onclick=()=>{
       beep(680,.05,"triangle",.08);host.innerHTML="";
       if(isSeal&&APP.story&&APP.story.sealFx){
@@ -591,12 +654,18 @@ function stEffect(info){
   const S=APP.story,SO=window.StoryObjects;
   const id=info.effectId||"";
   if(id==="white_tanzaku_from_seagull"&&SO){
-    const api=SO.createWhiteTanzakuObject();
-    api.setText(info.payload&&info.payload.text||"");
-    api.group.position.set(player.pos.x+0.6,player.pos.y+4.5,player.pos.z-1.2);
-    scene.add(api.group);S.props.push({kind:"tanzaku",api,falling:true});
-    if(typeof saigenSe==="function")saigenSe("wind");
-    if(info.payload&&info.payload.text)setTimeout(()=>toast("白い短冊「"+info.payload.text+"」",3600),900);
+    // 波Z: カモメが上空を横切る様子をまず見せ(見上げるカメラ)、翼の下から紙片が
+    // こぼれた瞬間にカメラを地面へ切り替えて、落下〜着地までを追わせる。
+    stCamRelative([0,-0.2,1.4],[0,7,-4],54); // 見上げる画
+    stSeagullFlyover((dropPos)=>{
+      stCamRelative([0.3,2.6,0.6],[0.6,-1.4,-0.8],50); // 見下ろす画へ切替
+      const api=SO.createWhiteTanzakuObject();
+      api.setText(info.payload&&info.payload.text||"");
+      api.group.position.copy(dropPos);
+      scene.add(api.group);S.props.push({kind:"tanzaku",api,falling:true});
+      if(typeof saigenSe==="function")saigenSe("wind");
+      if(info.payload&&info.payload.text)setTimeout(()=>toast("白い短冊「"+info.payload.text+"」",3600),900);
+    });
   }else if(id==="tokoyo_glitch"&&SO){
     const api=SO.createTokoyoGlitchProps(24); // 常世は北の対一帯を覆う広さで
     api.group.position.set(26,0.2,-44);scene.add(api.group);
@@ -605,41 +674,46 @@ function stEffect(info){
     stLightning();
     if(!S.oni){const api=SO.createGreatOniStoryObject();api.group.position.set(30,0,-48);scene.add(api.group);S.oni=api;}
   }else if(id==="yarimizu_dark_reflection"){
-    // 波O: 遣水が黒く濁り、水面に現代の教室(窓の光)が浮かぶ
+    // 波O/Z: 遣水が黒く濁り、水面に現代の教室(窓・机)が浮かぶ。「窓際の、二つの席」を具体的な形で見せる
     const g=new THREE.Group();
-    const dark=new THREE.Mesh(new THREE.CircleGeometry(2.4,26),new THREE.MeshBasicMaterial({color:0x0a1218,transparent:true,opacity:0,depthWrite:false}));
-    dark.rotation.x=-Math.PI/2;g.add(dark);
-    const win=new THREE.Mesh(new THREE.PlaneGeometry(1.2,0.8),new THREE.MeshBasicMaterial({color:0xbfd4e8,transparent:true,opacity:0,depthWrite:false}));
-    win.rotation.x=-Math.PI/2;win.position.set(.3,0.012,.2);g.add(win);
-    const win2=new THREE.Mesh(new THREE.PlaneGeometry(0.5,0.34),new THREE.MeshBasicMaterial({color:0xe8eef6,transparent:true,opacity:0,depthWrite:false}));
-    win2.rotation.x=-Math.PI/2;win2.position.set(-.75,0.012,-.35);g.add(win2);
+    const mkFlat=(w,h,color,x,z,y=.012)=>{const m=new THREE.MeshBasicMaterial({color,transparent:true,opacity:0,depthWrite:false});m.__ownedByStory=true;
+      const mesh=new THREE.Mesh(new THREE.PlaneGeometry(w,h),m);mesh.rotation.x=-Math.PI/2;mesh.position.set(x,y,z);g.add(mesh);return m;};
+    const dark=mkFlat(2.7,2.7,0x0a1218,0,0,0.010);
+    const roomMats=[];
+    // 窓が二つ並ぶ列(桟の井桁つき)+その手前に机が二つ=「窓際の、二つの席」
+    [-0.55,0.55].forEach(sx=>{
+      roomMats.push(mkFlat(.78,.58,0xc7dcf0,sx,.45));                 // 窓ガラスの淡い光
+      roomMats.push(mkFlat(.03,.58,0x1c2430,sx,.45,.013));            // 窓の桟(縦)
+      roomMats.push(mkFlat(.78,.03,0x1c2430,sx,.45,.013));            // 窓の桟(横)
+      roomMats.push(mkFlat(.40,.28,0x9a8560,sx,-.05,.011));           // 机の天板
+      roomMats.push(mkFlat(.32,.05,0x76644a,sx,-.24,.011));           // 椅子の背
+    });
     // 波X: ボス出現前の予兆——水底に赤く光る眼が二つ、遅れて浮かぶ
-    const eyeMat1=new THREE.MeshBasicMaterial({color:0xff2010,transparent:true,opacity:0,depthWrite:false});
-    const eyeMat2=eyeMat1.clone();eyeMat2.__ownedByStory=eyeMat1.__ownedByStory=true;
-    const eye1=new THREE.Mesh(new THREE.CircleGeometry(.06,10),eyeMat1);eye1.rotation.x=-Math.PI/2;eye1.position.set(-.14,0.014,.55);g.add(eye1);
-    const eye2=new THREE.Mesh(new THREE.CircleGeometry(.06,10),eyeMat2);eye2.rotation.x=-Math.PI/2;eye2.position.set(.02,0.014,.55);g.add(eye2);
+    const eyeMat1=mkFlat(.12,.12,0xff2010,-.14,.85,.014);
+    const eyeMat2=mkFlat(.12,.12,0xff2010,.02,.85,.014);
     g.position.set(-11.5,0.16,27.0); // 池の北汀の水面に固定(直前のset_sceneでプレイヤーを汀へ移す)
     g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
     scene.add(g);
-    S.props.push({kind:"yarimizu",api:{group:g},t:0,mats:[dark.material,win.material,win2.material,eyeMat1,eyeMat2]});
+    S.props.push({kind:"yarimizu",api:{group:g},t:0,darkMat:dark,roomMats,eyeMats:[eyeMat1,eyeMat2]});
     if(typeof saigenSe==="function")saigenSe("wind");
   }else if(id==="shiori_reflection"){
-    // 波P: 澄んだ水面に浮かぶ「制服の横顔」——顔は描き込まず、月光の輪郭だけで見せる
+    // 波Z: 制服アイコンを低解像度化して意図的にぼかし、水面に揺らめく記憶として見せる
     const g=new THREE.Group();
-    const mk=(geoW,geoH,col,op)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(geoW,geoH),
-      new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0,depthWrite:false}));
-      m.rotation.x=-Math.PI/2;g.add(m);return m;};
-    const glow=mk(2.6,2.6,0xaec4dd,0);glow.material.userData={max:.18};              // 月光の水明かり
-    const faceOval=new THREE.Mesh(new THREE.CircleGeometry(.42,22),
-      new THREE.MeshBasicMaterial({color:0xdfe8f2,transparent:true,opacity:0,depthWrite:false}));
-    faceOval.rotation.x=-Math.PI/2;faceOval.scale.set(.72,1,1);faceOval.position.set(.1,.012,0);g.add(faceOval);
-    faceOval.material.userData={max:.35};
-    const hair=new THREE.Mesh(new THREE.RingGeometry(.34,.58,20,1,Math.PI*.7,Math.PI*.9),
-      new THREE.MeshBasicMaterial({color:0x1c2230,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
-    hair.rotation.x=-Math.PI/2;hair.position.set(.02,.014,-.05);g.add(hair);          // 短い髪の弧
-    hair.material.userData={max:.5};
-    const collar=mk(.6,.22,0xf2f5f8,0);collar.position.set(.12,.013,.42);collar.material.userData={max:.4}; // 白い襟
-    const ribbon=mk(.1,.16,0xb9a5e6,0);ribbon.position.set(.12,.015,.52);ribbon.material.userData={max:.7}; // 薄紫
+    const glow=new THREE.Mesh(new THREE.PlaneGeometry(2.6,2.6),
+      new THREE.MeshBasicMaterial({color:0xaec4dd,transparent:true,opacity:0,depthWrite:false}));
+    glow.rotation.x=-Math.PI/2;glow.material.userData={max:.18};g.add(glow); // 月光の水明かり
+    const img=new Image();
+    img.onload=()=>{
+      const small=document.createElement("canvas");small.width=28;small.height=28;
+      const sx=small.getContext("2d");sx.imageSmoothingEnabled=true;sx.imageSmoothingQuality="high";
+      sx.drawImage(img,0,0,28,28); // 低解像度に落として引き伸ばすことで「ぼやけ」を作る(GPUのブラーなし)
+      const tex=new THREE.CanvasTexture(small);tex.encoding=THREE.sRGBEncoding;
+      const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:0,depthWrite:false});
+      mat.__ownedByStory=true;mat.userData={max:.5};
+      const portrait=new THREE.Mesh(new THREE.PlaneGeometry(.9,.9),mat);
+      portrait.rotation.x=-Math.PI/2;portrait.position.set(.08,.013,0);g.add(portrait);
+    };
+    img.src="icons/shiori.webp";
     g.position.set(-11.2,0.17,27.4);
     g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
     scene.add(g);
@@ -656,6 +730,23 @@ function stEffect(info){
       S.props.push({kind:"utakaistage",api});
     }
     if(typeof saigenSe==="function")saigenSe("koto"); // 楽の音、床を這うように
+  }else if(id==="ed3_fire_dies"){
+    // 波Z: ED3(歌なき夜)——火桶の熾火が消えていき、視界がゆっくり白んでいく
+    const g=new THREE.Group();
+    const potMat=new THREE.MeshStandardMaterial({color:0x4a3722,roughness:.85});potMat.__ownedByStory=true;
+    const pot=new THREE.Mesh(new THREE.CylinderGeometry(.34,.28,.34,12),potMat);pot.position.y=.17;g.add(pot);
+    const ashMat=new THREE.MeshStandardMaterial({color:0xcfc3a6,roughness:.95});ashMat.__ownedByStory=true;
+    const ash=new THREE.Mesh(new THREE.CylinderGeometry(.30,.30,.05,12),ashMat);ash.position.y=.335;g.add(ash);
+    const emberMat=new THREE.MeshBasicMaterial({color:0xff5a22,transparent:true,opacity:1});emberMat.__ownedByStory=true;
+    const ember=new THREE.Mesh(new THREE.SphereGeometry(.09,10,8),emberMat);ember.position.y=.36;g.add(ember);
+    const emberLight=new THREE.PointLight(0xff6a30,1.2,3,2);emberLight.position.set(0,.4,0);g.add(emberLight);
+    g.position.set(player.pos.x+0.35,0,player.pos.z-1.0);
+    g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+    scene.add(g);
+    stCamRelative([0.15,0.55,0.5],[0.35,0.3,-1.0],44); // 火桶を見つめる画
+    S.props.push({kind:"ed3fire",api:{group:g},t:0,emberMat,emberLight});
+    if(typeof saigenSe==="function")saigenSe("wind");
+    setTimeout(()=>stSlowFadeToWhite(3400),1400); // 火が弱まり始めた頃から、ゆっくり画面が白む
   }
   // summer_heat_haze / ending_gallery_ready は世界側の夏演出・回想UIがそのまま担う(追加なし)
 }
@@ -680,6 +771,7 @@ function stCleanupSets(){
   if(S.sealFx){SO.disposeGroup(S.sealFx.group);S.sealFx=null;}
   if(S.classroom){SO.disposeGroup(S.classroom.group);S.classroom=null;}
   if(S.hospital){SO.disposeGroup(S.hospital.group);S.hospital=null;}
+  if(S.seagullFly){if(S.seagullFly.group&&S.seagullFly.group.parent)SO.disposeGroup(S.seagullFly.group);S.seagullFly=null;}
   if(S.props&&S.props.length){ // 章転換で残留した大道具(着地後の短冊等)を確実に破棄しリーク防止
     S.props.forEach(p=>{if(p&&p.api&&p.api.group)SO.disposeGroup(p.api.group);});
     S.props=[];
@@ -726,6 +818,10 @@ function stMiniGame(info){
   if(info.gameMode==="taiji_kappa_story"||info.gameMode==="taiji_oni_story_final"){
     const oniFinal=info.gameMode==="taiji_oni_story_final";
     if(S.oni){window.StoryObjects.disposeGroup(S.oni.group);S.oni=null;} // 見せ大鬼は実戦と交代
+    if(S.props&&S.props.length){ // 波Z: 池の反射演出(赤い眼等)がボス戦アリーナへ持ち越されないよう片付ける
+      S.props.forEach(p=>{if(p&&p.api&&p.api.group)window.StoryObjects.disposeGroup(p.api.group);});
+      S.props=[];
+    }
     const prevDiff=APP.taijiDifficulty;
     if(oniFinal)APP.taijiDifficulty="hard"; // 決戦は歯応え重視(通常戦より攻撃頻度・弾数増)
     APP.storyTaiji={
@@ -751,7 +847,9 @@ function stMiniGame(info){
     return;
   }
   if(info.gameMode==="utakai_story"){
+    APP.storyUtakaiFullDeck=true; // 波Z: 手札を全歌から引けるようにし、運ゲー感を緩和
     APP.storyUtakai=(ok,wins)=>{
+      APP.storyUtakaiFullDeck=false;
       enterMode("story");
       info.complete({success:ok,flags:(ok&&wins>=3)?{utakaiPerfect:true}:undefined});
       if(ok&&wins>=3)toast("✨ 三番全勝——判者も舌を巻く完勝だった",2800);
@@ -772,11 +870,15 @@ function stEnding(endingId){
   const ed=STORY_ED_TEXT[endingId]||{t:endingId,d:""};
   // 結末カードは必ず読めるよう、侵食演出はここで解除(前段の演出で役目は果たしている)
   if(erosionFx)erosionFx.setLevel(0);
-  stPanel("《 "+ed.t+" 》",ed.d,[
+  const showPanel=()=>stPanel("《 "+ed.t+" 》",ed.d,[
     ["結末の回想へ（他の結末を見る）",()=>{SM.state.endingId=null;stStartChapter(6);}],
     ["章をえらぶ",()=>{SM.state.endingId=null;stChapterMenu();}],
     ["タイトルへ戻る",()=>{stExitToTitle();}]
   ]);
+  if(endingId==="ED3_GAMEOVER"){ // 波Z: 初回到達時も火桶が消える演出を見せてからカードを出す
+    stEffect({effectId:"ed3_fire_dies",payload:{}});
+    setTimeout(showPanel,4200);
+  }else showPanel();
 }
 function stChapterComplete(chapterId){
   stClearCollectibles();
@@ -809,6 +911,11 @@ function stStartChapter(id,resumeSeq){
   SM.state.endingId=null;
   SM.startChapter(id).then(()=>{
     if(resumeSeq&&SM.sequenceMap.has(resumeSeq)){SM.currentSequenceId=resumeSeq;SM.runCurrent();}
+    // 波Z: 第5話開始時、侵食が高いまま進むとED5に繋がることを明示し、唐突感をなくす
+    if(id===5&&!resumeSeq){
+      const ero=SM.state&&SM.state.params&&SM.state.params.brainErosion||0;
+      if(ero>=60)setTimeout(()=>{toast(ero>=80?"⚠ このまま心が保てねば、常世の夢に沈んだまま戻れなくなる":"⚠ 積み重ねた過ちが、まだ胸の奥でくすぶっている",4400);if(typeof saigenSe==="function")saigenSe("gong");},2200);
+    }
   }).catch(e=>{console.error(e);toast("物語の読み込みに失敗しました",2600);});
 }
 /* ---- モード出入り ---- */
@@ -818,6 +925,7 @@ function startStory(){
   stEl("storyHud").style.display="block";
   if(APP.story){ // ミニゲーム帰還: 再初期化せず、隠し直しだけ行う(垣間見等が住人の表示を戻すため)
     APP.story.mini=null; // ミニゲーム終了——中断/終了ボタンを再び有効化
+    if(typeof AUTO_TIME!=="undefined")AUTO_TIME._paused=true; // 波Z: endTaiji等が解除した時刻自動進行を物語復帰時に再固定
     stHideWorldFigures(true);
     stDebugRefresh(SM&&SM.snapshot());
     return;
@@ -842,6 +950,8 @@ function startStory(){
       onScene:(sc)=>{
         stApplyPresentation(sc.event);
         if(sc.season&&sc.season!=="tokoyo"&&typeof applySeason==="function"&&sc.season!==APP.season)applySeason(sc.season);
+        APP.storyTokoyoSky=(sc.season==="tokoyo"); // 波Z: 常世は赤黒く禍々しい空(通常季節の空色を上書き)
+        if(sc.season==="tokoyo"&&typeof snowFall!=="undefined"&&typeof petals!=="undefined"){snowFall.visible=true;petals.visible=true;} // 雪と桜が同時に降る
         const tm=STORY_TIME_MAP[sc.timeOfDay]||(sc.season==="tokoyo"?"night":null);
         if(sc.season==="tokoyo"&&typeof setTime==="function")setTime("night");
         else if(tm&&typeof setTime==="function"&&tm!==APP.time)setTime(tm);
@@ -881,6 +991,7 @@ function startStory(){
 }
 function stExitToTitle(){
   const S=APP.story;
+  APP.storyTokoyoSky=false;
   stClearCollectibles();stCleanupSets();
   if(S){
     (S.props||[]).forEach(p=>{if(window.StoryObjects)window.StoryObjects.disposeGroup(p.api.group);});
@@ -918,21 +1029,24 @@ function storyUpdate(dt){
   if(S.sealFx&&S.sealFx.update)S.sealFx.update(t,dt);
   if(S.classroom&&S.classroom.update)S.classroom.update(t);
   if(S.hospital&&S.hospital.update)S.hospital.update(t); // 心電波形・見舞いの気配
+  if(S.seagullFly&&S.seagullFly.update)S.seagullFly.update(dt); // 波Z: カモメの飛来演出
   for(let i=(S.props||[]).length-1;i>=0;i--){
     const p=S.props[i];
     if(p.kind==="tanzaku"&&p.falling){if(p.api.updateFall(dt,(typeof groundH==="function"?groundH(p.api.group.position.x,p.api.group.position.z):0)+0.10))p.falling=false;}
     else if(p.kind==="utakaistage"){if(p.api.update)p.api.update(t);} // 灯の揺らぎ
     else if(p.kind==="tokoyo"&&p.api.update)p.api.update(t,dt);
-    else if(p.kind==="yarimizu"){ // 濁り→教室の窓が浮かぶ→赤い眼が遅れて浮かぶ→静かに消える(約8秒)
+    else if(p.kind==="yarimizu"){ // 濁り→教室の窓と机が浮かぶ→赤い眼が灯って持続(ボス戦突入まで台詞のペース次第で消えないよう長く保つ)
       p.t+=dt;
-      const a=p.t<1.2?p.t/1.2:p.t<6?1:Math.max(0,1-(p.t-6)/2);
-      p.mats[0].opacity=.62*a;p.mats[1].opacity=.5*a*(0.7+Math.sin(t*1.8)*.3);p.mats[2].opacity=.4*a*(0.7+Math.cos(t*2.2)*.3);
-      if(p.mats[3]&&p.mats[4]){ // ボスの予兆(河童の主): 濁りが十分深まってから、じわりと灯る
-        const eyeA=p.t<2.4?0:p.t<6?Math.min(1,(p.t-2.4)/1.4):Math.max(0,1-(p.t-6)/2);
+      const a=p.t<1.2?p.t/1.2:1; // 一度濁ったら、プレイヤーが読み終わるまで消えない
+      p.darkMat.opacity=.62*a;
+      const shimmer=0.75+Math.sin(t*1.8)*.25;
+      p.roomMats.forEach((m,i)=>{m.opacity=(i%5<3?.5:.4)*a*shimmer;}); // 窓ガラス/桟はやや明るく、机はやや控えめ
+      if(p.eyeMats){ // ボスの予兆(河童の主): 濁りが十分深まってから灯り、以後は消えずボス戦突入まで残る
+        const eyeA=p.t<1.8?0:Math.min(1,(p.t-1.8)/1.2);
         const pulse=0.7+Math.sin(t*3.4)*.3;
-        p.mats[3].opacity=eyeA*pulse;p.mats[4].opacity=eyeA*pulse;
+        p.eyeMats.forEach(m=>{m.opacity=eyeA*pulse;});
       }
-      if(p.t>8){window.StoryObjects.disposeGroup(p.api.group);S.props.splice(i,1);}
+      if(p.t>30){window.StoryObjects.disposeGroup(p.api.group);S.props.splice(i,1);} // 安全弁(通常はボス戦開始/章転換のstCleanupSetsで片付く)
     }
     else if(p.kind==="shiorimirror"){ // 水底から浮かびあがり、揺らめいて、沈む(約10秒)
       p.t+=dt;
@@ -941,6 +1055,13 @@ function storyUpdate(dt){
         o.material.opacity=o.material.userData.max*a*(0.82+Math.sin(t*1.4+o.position.x*7)*.18);});
       p.api.group.position.y=0.17+Math.sin(t*.9)*.008; // 水面の揺らぎ
       if(p.t>10){window.StoryObjects.disposeGroup(p.api.group);S.props.splice(i,1);}
+    }
+    else if(p.kind==="ed3fire"){ // ED3: 火桶の熾火が消えていく(約4秒)
+      p.t+=dt;
+      const a=Math.max(0,1-p.t/3.2);
+      p.emberMat.opacity=a;p.emberMat.color.setHex(a>0.4?0xff5a22:0x662410);
+      p.emberLight.intensity=1.2*a;
+      if(p.t>4.2){window.StoryObjects.disposeGroup(p.api.group);S.props.splice(i,1);}
     }
   }
   // 収集: 近づくだけで手に入る(タップ不要・スマホ配慮)。目標行に残数と最寄りの方角・距離を出す
