@@ -11707,7 +11707,8 @@ function bossUpdateAction(K,b,now,dt){
   }
   return false;
 }
-const bossProjs=[],bossHazards=[];
+const bossProjs=[],bossHazards=[],BOSS_PROJ_UP=new THREE.Vector3(0,1,0);
+const TAIJI_PARRY_PINK=0xff78b6;
 function bossFxMat(col,op){return new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false,depthTest:false,blending:THREE.AdditiveBlending});}
 function bossSetFxOpacity(o,op){
   if(!o)return;
@@ -11775,7 +11776,7 @@ function spawnBossProj(from,to,col,dmg,spd,opt={}){
   if(opt.height!=null){src.y=opt.height;dst.y=opt.height;}
   m.position.copy(src);m.renderOrder=8;scene.add(m);
   const dir=dst.clone().sub(src);if(dir.lengthSq()<0.01)dir.set(0,0,1);dir.normalize();
-  if(m.userData.alignY)m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.clone());
+  if(m.userData.alignY)m.quaternion.setFromUnitVectors(BOSS_PROJ_UP,dir.clone());
   bossProjs.push({m,dir,spd:spd||9,born:performance.now(),dmg,lifetime:opt.lifetime||4500,homing:opt.homing||0,slow:opt.slow||0,wobble:opt.wobble||0,pulse:opt.pulse||0,phase:Math.random()*9,hit2d:!!opt.hit2d,hitR:opt.hitR||1.7});
 }
 function spawnBossProjDir(from,dir,col,dmg,spd,opt={}){
@@ -11795,7 +11796,7 @@ function bossLine(from,to,width,col,dmg,delay=420,dur=280,opt={}){
   const a=new THREE.Vector3(from.x,.22,from.z),b=new THREE.Vector3(to.x,.22,to.z),len=Math.max(.1,a.distanceTo(b));
   const m=bossLineMesh(len,width,col,opt);
   m.position.copy(a).lerp(b,.5);
-  if(m.userData.alignY)m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),b.clone().sub(a).normalize());
+  if(m.userData.alignY)m.quaternion.setFromUnitVectors(BOSS_PROJ_UP,b.clone().sub(a).normalize());
   else m.rotation.y=-Math.atan2(b.z-a.z,b.x-a.x);
   m.renderOrder=9;scene.add(m);
   bossHazards.push({kind:"line",fx:opt.fx||"line",m,a,b,width,dmg,born:performance.now(),delay,dur,hit:false,slow:opt.slow||0});
@@ -11883,11 +11884,13 @@ function updateBossMotion(K,b,t,now,dt){
     const strafe=Math.sin(t*.62+p)>0?1:-1,ideal=9.8-phase*2.4;
     const goal=new THREE.Vector3(pp.x-toP.x*ideal+side.x*strafe*(3.2+Math.sin(t*1.7+p)*1.3),0,pp.z-toP.z*ideal+side.z*strafe*(3.2+Math.sin(t*1.7+p)*1.3));
     if(dist<6.2){goal.x=g.position.x-toP.x*5.0;goal.z=g.position.z-toP.z*5.0;}
-    bossMoveToward(g,bossArenaClampVec(goal),dt,2.45+phase*.85,4.3);
+    const step=Math.max(0,Math.sin(t*7.1+p)),stepDrive=.36+step*.64;
+    bossMoveToward(g,bossArenaClampVec(goal),dt,(2.05+phase*.58)*stepDrive,7.2);
     bossTurnToward(g,pp,dt,0,5.4);
-    g.position.y=.045+Math.max(0,Math.sin(t*6.8+p))*.025;
-    g.rotation.z=Math.sin(t*2.4+p)*.020;
-    if(g.userData.assetModel)g.userData.assetModel.rotation.x=Math.sin(t*5.2+p)*.010;
+    g.userData.kitsuneStepBoost=.18+step*.48;
+    g.position.y=.012+step*.014;
+    g.rotation.z=Math.sin(t*2.4+p)*.014;
+    if(g.userData.assetModel)g.userData.assetModel.rotation.x=Math.sin(t*5.2+p)*.006;
   }else if(K.season==="winter"){
     const ideal=11.5,orbit=Math.sin(t*.38+p);
     const goal=new THREE.Vector3(pp.x-toP.x*ideal+side.x*orbit*5.2,0,pp.z-toP.z*ideal+side.z*orbit*5.2);
@@ -11923,7 +11926,7 @@ function updateBossMotion(K,b,t,now,dt){
     g.position.y=.24+Math.sin(t*2.4+p)*.22;g.rotation.z=Math.sin(t*1.7+p)*.08;
   }
 }
-/* 波I: 金/赤予兆の初回教示 — 各色とも最初の3回だけ意味をトーストで示す(以後は消音)。localStorageで永続 */
+/* 波I: 桃霞/赤予兆の初回教示 — 各色とも最初の3回だけ意味をトーストで示す(以後は消音)。localStorageで永続 */
 const TJ_OMEN_HINT_KEY="shinden3d-tjomen-v1";
 let _tjOmenSeen=null;
 function tjOmenHint(kind){
@@ -11960,51 +11963,51 @@ function bossAttack(K,b,now){
   /* 波H: 死に覚え化 — patは35%で1〜2歩スキップし固定循環を崩す。荒魂中は流れ弾が全難易度で+1 */
   const phase=1-b.hp/Math.max(1,b.maxHp),pat=(b.pattern=(b.pattern||0)+1+(Math.random()<TAIJI_TUNING.patSkipProb?1+Math.floor(Math.random()*2):0)),hard=(K.diff&&K.diff.burst||0)+(b._tjf2Rage?1:0);
   if(at==="dart"){
-    if(pat%6===0){tjf3Sign(b,"gold",now);seBossCast("slash");taijiMsg("九尾が姿をかすませ、一直線に駆ける！",1200);bossStartDash(b,pp,now,{col:0xff6f92,fx:"spiritBand",width:1.25,dmg:13,tele:680+(Math.random()<TAIJI_TUNING.dashDelayProb?TAIJI_TUNING.dashDelayMs:0),dur:240,len:13});return;} /* 波H: 溜めが一定確率で延び、早回避を釣る */
+    if(pat%6===0){tjf3Sign(b,"gold",now);seBossCast("slash");taijiMsg("九尾が姿をかすませ、一直線に駆ける！",1200);bossStartDash(b,pp,now,{col:TAIJI_PARRY_PINK,fx:"spiritBand",width:1.25,dmg:13,tele:680+(Math.random()<TAIJI_TUNING.dashDelayProb?TAIJI_TUNING.dashDelayMs:0),dur:240,len:13});return;} /* 波H: 溜めが一定確率で延び、早回避を釣る */
     if(pat%5===1){tjf3Sign(b,"gold",now);seBossCast("fire");taijiMsg("九尾が狐火を放つ。火が追ってくる！",1300);
-      const aim=pp.clone();aim.y=.85;const n=bossLiteCount(5+(phase>.45?2:0)+hard);for(let i=0;i<n;i++){const a=i*Math.PI*2/n;const from=bp.clone().add(new THREE.Vector3(Math.cos(a)*1.45,.72+Math.sin(i)*.08,Math.sin(a)*1.45));spawnBossProj(from,aim,0xff78b6,7,5.2,{shape:"fox",homing:.045,wobble:.35,pulse:.2,size:.24,lifetime:5600,height:.85,hit2d:true,hitR:1.25});}}
+      const aim=pp.clone();aim.y=.78;const n=bossLiteCount(5+(phase>.45?2:0)+hard);for(let i=0;i<n;i++){const a=i*Math.PI*2/n;const from=bp.clone().add(new THREE.Vector3(Math.cos(a)*1.45,.58+Math.sin(i)*.05,Math.sin(a)*1.45));spawnBossProj(from,aim,TAIJI_PARRY_PINK,7,5.2,{shape:"fox",homing:.045,wobble:.35,pulse:.2,size:.24,lifetime:5600,height:.78,hit2d:true,hitR:1.25});}}
     else if(pat%5===2){tjf3Sign(b,"gold",now);seBossCast("fire");taijiMsg("九尾扇状弾。尻尾の間を抜けろ！",1200);
-      bossFan(bp.clone().add(new THREE.Vector3(0,.7,0)),pp,0xffd26a,6,9,phase>.55?1.00:1.32,10.8,{shape:"flame",size:.18,pulse:.12});}
+      bossFan(bp.clone(),pp,TAIJI_PARRY_PINK,6,9,phase>.55?1.00:1.32,10.8,{shape:"flame",size:.20,pulse:.12,height:.72,hit2d:true,hitR:1.18});}
     else if(pat%5===3){tjf3Sign(b,"red",now);seBossCast("thunder");taijiMsg("狐火陣が足元に浮かぶ！",1200);bossCircle(pp,2.4,0xff6f92,12,820,260,{fx:"sigil",slow:700});bossCircleRing(pp,phase>.5?4:3,4.2,1.35,0xffb15a,8,120,{fx:"flame",slow:500});}
     else if(pat%5===4){tjf3Sign(b,"red",now);seBossCast("fire");taijiMsg("九尾が十字の狐火を刻む！",1200);const dir=pp.clone().sub(bp).setY(0).normalize();const side=new THREE.Vector3(-dir.z,0,dir.x);bossLine(bp,pp.clone().add(dir.clone().multiplyScalar(5)),.95,0xff8048,10,760,360,{fx:"spiritBand"});bossLine(pp.clone().add(side.clone().multiplyScalar(-5)),pp.clone().add(side.clone().multiplyScalar(5)),.78,0xffc06a,8,980,320,{fx:"spiritBand"});}
-    else{tjf3Sign(b,"gold",now);seBossCast("fire");taijiMsg("薄紅の狐弾が低く追いすがる！",1200);const aim=pp.clone();aim.y=.85;for(let i=0,n=bossLiteCount(3+hard);i<n;i++){const off=new THREE.Vector3((Math.random()-.5)*4,.82+i*.04,(Math.random()-.5)*4);spawnBossProj(bp.clone().add(off),aim,0xff78b6,7,6.8,{shape:"fox",homing:.055,wobble:.28,size:.22,lifetime:5800,height:.85,hit2d:true,hitR:1.25});}}
+    else{tjf3Sign(b,"gold",now);seBossCast("fire");taijiMsg("薄紅の狐弾が低く追いすがる！",1200);const aim=pp.clone();aim.y=.78;for(let i=0,n=bossLiteCount(3+hard);i<n;i++){const off=new THREE.Vector3((Math.random()-.5)*4,.70+i*.03,(Math.random()-.5)*4);spawnBossProj(bp.clone().add(off),aim,TAIJI_PARRY_PINK,7,6.8,{shape:"fox",homing:.055,wobble:.28,size:.22,lifetime:5800,height:.78,hit2d:true,hitR:1.25});}}
   }else if(at==="blizzard"){
     if(d<5.4&&pat%3===0){tjf3Sign(b,"red",now);seBossCast("ice");taijiMsg("雪女王の足元から氷のトゲが走る！",1200);bossCircleRing(b.g.position,6,2.7,1.15,0xdff8ff,10,80,{fx:"pillar",slow:1200});const kb=pp.clone().sub(b.g.position).setY(0);if(kb.lengthSq()>0.01){kb.normalize();player.pos.x+=kb.x*2.2;player.pos.z+=kb.z*2.2;}return;}
     if(pat%5===1){tjf3Sign(b,"red",now);seBossCast("ice");taijiMsg("氷柱が落ちる。影から離れろ！",1300);const n=bossLiteCount(4+(phase>.45?2:0)+hard);for(let i=0;i<n;i++)bossCircle(pp.clone().add(new THREE.Vector3((Math.random()-.5)*8,0,(Math.random()-.5)*8)),1.35,0xbfeeff,8,720+i*90,220,{fx:"pillar",slow:1100});}
     else if(pat%5===2){tjf3Sign(b,"red",now);seBossCast("ice");taijiMsg("雪女王の氷霧。踏み込むと凍える！",1300);bossCircle(pp,3.1,0x9edcff,3,260,2600,{fx:"mist",kind:"mist",tick:560,slow:1200,opacity:.34});}
     else if(pat%5===3){tjf3Sign(b,"red",now);seBossCast("ice");taijiMsg("凍てつく吐息が一直線に走る！",1100);bossLine(bp.clone().add(new THREE.Vector3(0,.2,0)),pp.clone().add(pp.clone().sub(bp).setY(0).normalize().multiplyScalar(5)),1.25,0xdff8ff,11,520,360,{fx:"iceBeam",slow:1700});}
-    else if(pat%5===4){tjf3Sign(b,"gold",now);seBossCast("ice");taijiMsg("氷刃が扇状に走る！",1200);bossFan(bp.clone().add(new THREE.Vector3(0,.35,0)),pp,0xdff8ff,7,7,1.05,9.2,{shape:"ice",size:.16,slow:900});}
+    else if(pat%5===4){tjf3Sign(b,"gold",now);seBossCast("ice");taijiMsg("桃霞の氷刃が低く走る！",1200);bossFan(bp.clone(),pp,TAIJI_PARRY_PINK,7,7,1.05,9.2,{shape:"ice",size:.18,slow:900,height:.72,hit2d:true,hitR:1.18});}
     else{tjf3Sign(b,"red",now);seBossCast("ice");taijiMsg("凍結の輪が広がる！",1200);bossWave(b.g.position,0xbfeeff,10,9+(phase>.55?3:0),900);}
   }else if(at==="kappa"){
     // 河童の主: 水流・引き寄せ・水弾(接近戦)
     if(phase>.42&&pat%5===0){bossStartDefense(b,now);return;}
     if(pat%4===1){tjf3Sign(b,"red",now);seBossCast("blunt");taijiMsg("河童の水流が足を取る！",1200);bossCircle(pp,3.0,0x37c884,3,220,2200,{fx:"pool",kind:"pool",tick:520,pull:.45,slow:850,opacity:.32});if(d<15){const dir=bp.clone().sub(pp).setY(0).normalize();player.pos.x+=dir.x*1.5;player.pos.z+=dir.z*1.5;}}
-    else if(pat%4===2){tjf3Sign(b,"gold",now);seBossCast("blunt");taijiMsg("河童が水弾を連射！",1100);for(let i=0,n=bossLiteCount(2+(phase>.5?1:0)+hard);i<n;i++)spawnBossProj(bp.clone().add(new THREE.Vector3((Math.random()-.5)*1.2,.3,(Math.random()-.5)*1.2)),pp,0x37c884,7,9.6,{shape:"water",slow:700,size:.25});}
+    else if(pat%4===2){tjf3Sign(b,"gold",now);seBossCast("blunt");taijiMsg("河童が桃霞の水弾を連射！",1100);for(let i=0,n=bossLiteCount(2+(phase>.5?1:0)+hard);i<n;i++){const aim=pp.clone();aim.y=.76;spawnBossProj(bp.clone().add(new THREE.Vector3((Math.random()-.5)*1.2,.45,(Math.random()-.5)*1.2)),aim,TAIJI_PARRY_PINK,7,9.6,{shape:"water",slow:700,size:.25,height:.76,hit2d:true,hitR:1.22});}}
     else if(pat%4===3){tjf3Sign(b,"red",now);seBossCast("blunt");taijiMsg("河童が泥水を噴き上げる！",1200);bossCircleRing(pp,4,3.4,1.25,0x52d89a,7,110,{fx:"geyser",slow:900});}
-    else{tjf3Sign(b,"gold",now);seBossCast("blunt");taijiMsg("河童が低く構えて突進する！",1100);bossStartDash(b,pp,now,{col:0x37c884,fx:"waterCut",width:1.45,dmg:14,slow:1000,tele:760+(Math.random()<TAIJI_TUNING.dashDelayProb?TAIJI_TUNING.dashDelayMs:0),dur:320,len:11});return;} /* 波H: 溜めディレイで釣る */
+    else{tjf3Sign(b,"gold",now);seBossCast("blunt");taijiMsg("河童が低く構えて突進する！",1100);bossStartDash(b,pp,now,{col:TAIJI_PARRY_PINK,fx:"waterCut",width:1.45,dmg:14,slow:1000,tele:760+(Math.random()<TAIJI_TUNING.dashDelayProb?TAIJI_TUNING.dashDelayMs:0),dur:320,len:11});return;} /* 波H: 溜めディレイで釣る */
   }else if(at==="chochin"){
     // 提灯お化け: 長い舌の薙ぎ払い・怪火の追尾弾(遠隔)
     if(pat%5===0){bossStartBlind(K,b,now);return;}
     if(pat%4===1){tjf3Sign(b,"red",now);seBossCast("fire");taijiMsg("提灯の長い舌が薙ぎ払う！",1200);bossLine(bp.clone().add(new THREE.Vector3(0,.2,0)),pp,1.1,0xff553d,9,360,320,{fx:"tongue"});}
-    else if(pat%4===2){tjf3Sign(b,"gold",now);seBossCast("fire");taijiMsg("提灯お化けの怪火が追ってくる！",1100);for(let i=0,n=bossLiteCount(1+(phase>.5?1:0)+hard);i<n;i++)spawnBossProj(bp.clone().add(new THREE.Vector3((Math.random()-.5)*1.2,.5,(Math.random()-.5)*1.2)),pp,0xff9a33,7,7.2,{shape:"flame",homing:.045,wobble:.7,size:.24,lifetime:5200});}
+    else if(pat%4===2){tjf3Sign(b,"gold",now);seBossCast("fire");taijiMsg("提灯お化けの桃霞火が追ってくる！",1100);for(let i=0,n=bossLiteCount(1+(phase>.5?1:0)+hard);i<n;i++){const aim=pp.clone();aim.y=.78;spawnBossProj(bp.clone().add(new THREE.Vector3((Math.random()-.5)*1.2,.58,(Math.random()-.5)*1.2)),aim,TAIJI_PARRY_PINK,7,7.2,{shape:"flame",homing:.045,wobble:.55,size:.24,lifetime:5200,height:.78,hit2d:true,hitR:1.22});}}
     else if(pat%4===3){tjf3Sign(b,"red",now);seBossCast("fire");taijiMsg("提灯が怪火をばら撒く！",1100);bossCircleRing(pp,3+(phase>.5?1:0),3.8,1.15,0xff7a33,7,100,{fx:"flame"});}
     else{tjf3Sign(b,"red",now);seBossCast("fire");taijiMsg("提灯の舌が横一文字に伸びる！",1100);const dir=pp.clone().sub(bp).setY(0).normalize();const side=new THREE.Vector3(-dir.z,0,dir.x);bossLine(pp.clone().add(side.clone().multiplyScalar(-5)),pp.clone().add(side.clone().multiplyScalar(5)),.86,0xff553d,10,820,340,{fx:"tongue"});}
   }else if(at==="duo"){
     if(pat%4===1){tjf3Sign(b,"red",now);seBossCast("blunt");taijiMsg("河童の水流が足を取る！",1200);bossCircle(pp,3.0,0x37c884,3,220,2200,{fx:"pool",kind:"pool",tick:520,pull:.45,slow:850,opacity:.32});if(d<15){const dir=bp.clone().sub(pp).setY(0).normalize();player.pos.x+=dir.x*1.5;player.pos.z+=dir.z*1.5;}}
-    else if(pat%4===2){tjf3Sign(b,"gold",now);seBossCast("fire");taijiMsg("提灯の舌と怪火が同時に伸びる！",1200);bossLine(bp.clone().add(new THREE.Vector3(1.0,.2,0)),pp,1.05,0xff553d,10,360,300,{fx:"tongue"});spawnBossProj(bp.clone().add(new THREE.Vector3(-1,.4,0)),pp,0xff9a33,7,7.2,{shape:"flame",homing:.035,wobble:.6,size:.24,lifetime:5200});}
-    else if(pat%4===3){tjf3Sign(b,"gold",now);seBossCast("fire");taijiMsg("河童の水弾と提灯の怪火が挟み撃ち！",1200);spawnBossProj(bp.clone().add(new THREE.Vector3(-1,.2,0)),pp,0x37c884,7,9.5,{shape:"water",slow:900,size:.25});spawnBossProj(bp.clone().add(new THREE.Vector3(1.1,.55,0)),pp.clone().add(new THREE.Vector3((Math.random()-.5)*3,0,(Math.random()-.5)*3)),0xff7a33,7,11.5,{shape:"flame",homing:.025,size:.22});}
+    else if(pat%4===2){tjf3Sign(b,"gold",now);seBossCast("fire");taijiMsg("提灯の舌と桃霞火が同時に伸びる！",1200);bossLine(bp.clone().add(new THREE.Vector3(1.0,.2,0)),pp,1.05,TAIJI_PARRY_PINK,10,360,300,{fx:"tongue"});const aim=pp.clone();aim.y=.78;spawnBossProj(bp.clone().add(new THREE.Vector3(-1,.55,0)),aim,TAIJI_PARRY_PINK,7,7.2,{shape:"flame",homing:.035,wobble:.5,size:.24,lifetime:5200,height:.78,hit2d:true,hitR:1.22});}
+    else if(pat%4===3){tjf3Sign(b,"gold",now);seBossCast("fire");taijiMsg("桃霞の水弾と怪火が挟み撃ち！",1200);const aim=pp.clone();aim.y=.78;spawnBossProj(bp.clone().add(new THREE.Vector3(-1,.45,0)),aim,TAIJI_PARRY_PINK,7,9.5,{shape:"water",slow:900,size:.25,height:.78,hit2d:true,hitR:1.22});spawnBossProj(bp.clone().add(new THREE.Vector3(1.1,.58,0)),aim.clone().add(new THREE.Vector3((Math.random()-.5)*3,0,(Math.random()-.5)*3)),TAIJI_PARRY_PINK,7,11.5,{shape:"flame",homing:.025,size:.22,height:.78,hit2d:true,hitR:1.18});}
     else{tjf3Sign(b,"red",now);seBossCast("fire");taijiMsg("水場に怪火が灯る。足元を見ろ！",1200);bossCircle(pp,2.8,0x37c884,3,760,1800,{fx:"pool",kind:"pool",tick:560,pull:.25,slow:700,opacity:.32});bossCircleRing(pp,3,4.0,1.15,0xff7a33,7,140,{fx:"flame"});}
   }else if(at==="souls"){
-    seBossCast("thunder");if(pat%4===1){tjf3Sign(b,"gold",now);taijiMsg("人魂が波打って襲いかかる！",1100);for(let i=0,n=bossLiteCount(4+hard);i<n;i++){const off=new THREE.Vector3((i-1.5)*.8,Math.random()*1.8,(Math.random()-.5)*1.2);spawnBossProj(bp.clone().add(off),pp,0xbb88ff,7,7.8,{shape:"soul",homing:.025,wobble:1.1,pulse:.2,lifetime:5200});}}
+    seBossCast("thunder");if(pat%4===1){tjf3Sign(b,"gold",now);taijiMsg("桃霞の人魂が波打って襲いかかる！",1100);for(let i=0,n=bossLiteCount(4+hard);i<n;i++){const aim=pp.clone();aim.y=.82;const off=new THREE.Vector3((i-1.5)*.8,.62+Math.random()*.32,(Math.random()-.5)*1.2);spawnBossProj(bp.clone().add(off),aim,TAIJI_PARRY_PINK,7,7.8,{shape:"soul",homing:.025,wobble:.65,pulse:.2,lifetime:5200,height:.82,hit2d:true,hitR:1.24});}}
     else if(pat%4===2){tjf3Sign(b,"red",now);taijiMsg("怨念の火種が地面から噴き上がる！",1200);for(let i=0,n=bossLiteCount(3+(phase>.45?2:0));i<n;i++)bossCircle(pp.clone().add(new THREE.Vector3((Math.random()-.5)*7,0,(Math.random()-.5)*7)),1.5,0xaa66ff,8,760+i*120,260,{fx:"pillar",slow:800});}
     else if(pat%4===3){tjf3Sign(b,"red",now);taijiMsg("人魂が輪になって迫る！",1200);bossCircleRing(pp,5,4.4,1.25,0xbb88ff,8,100,{fx:"sigil",slow:700});}
     else{tjf3Sign(b,"red",now);taijiMsg("怨念の帯が横切る！",1100);bossLine(bp.clone().add(new THREE.Vector3(-3,.2,0)),pp.clone().add(new THREE.Vector3(3,0,0)),1.15,0xaa66ff,10,840,360,{fx:"spiritBand",slow:1000});}
   }else if(at==="oni"){
     if(pat%4===1){tjf3Sign(b,"red",now);seBossCast("blunt");taijiMsg("大鬼が地を踏み割る！ 衝撃波を避けろ",1200);bossWave(b.g.position,0xff6a33,13,12+(phase>.5?4:0));}
     else if(pat%4===2){tjf3Sign(b,"red",now);seBossCast("slash");taijiMsg("金棒の叩きつけ！ 正面から外れろ",1100);bossLine(bp,pp.clone().add(pp.clone().sub(bp).setY(0).normalize().multiplyScalar(4)),1.75,0xff3d2e,14,500,340,{fx:"smash"});}
-    else if(pat%4===3){tjf3Sign(b,"gold",now);seBossCast("blunt");taijiMsg("大鬼が岩を投げつける！",1000);for(let i=0,n=bossLiteCount(2+(phase>.4?1:0));i<n;i++)spawnBossProj(bp.clone().add(new THREE.Vector3((Math.random()-.5)*1.2,.9,(Math.random()-.5)*1.2)),pp.clone().add(new THREE.Vector3((Math.random()-.5)*2,0,(Math.random()-.5)*2)),0x8a4a32,10,8.8,{shape:"rock",size:.34});}
+    else if(pat%4===3){tjf3Sign(b,"gold",now);seBossCast("blunt");taijiMsg("大鬼が桃霞の岩を投げつける！",1000);for(let i=0,n=bossLiteCount(2+(phase>.4?1:0));i<n;i++){const aim=pp.clone().add(new THREE.Vector3((Math.random()-.5)*2,0,(Math.random()-.5)*2));aim.y=.86;spawnBossProj(bp.clone().add(new THREE.Vector3((Math.random()-.5)*1.2,.72,(Math.random()-.5)*1.2)),aim,TAIJI_PARRY_PINK,10,8.8,{shape:"rock",size:.34,height:.86,hit2d:true,hitR:1.32});}}
     else{tjf3Sign(b,"red",now);seBossCast("slash");taijiMsg("大鬼の二連叩きつけ！",1200);const f=pp.clone().sub(bp).setY(0).normalize();const side=new THREE.Vector3(-f.z,0,f.x);bossLine(bp.clone().add(side.clone().multiplyScalar(-1.2)),pp.clone().add(f.clone().multiplyScalar(3)),1.35,0xff6a33,11,760,320,{fx:"smash"});bossLine(bp.clone().add(side.clone().multiplyScalar(1.2)),pp.clone().add(f.clone().multiplyScalar(4)),1.35,0xff3d2e,12,1080,320,{fx:"smash"});}
-  }else{ tjf3Sign(b,"gold",now); seBossCast("fire"); spawnBossProj(bp,pp,b.cfg.col,9,13); }
+  }else{ tjf3Sign(b,"gold",now); seBossCast("fire"); const aim=pp.clone();aim.y=.8;spawnBossProj(bp,aim,TAIJI_PARRY_PINK,9,13,{height:.8,hit2d:true,hitR:1.22}); }
   for(let i=0;i<hard;i++){const off=new THREE.Vector3((Math.random()-.5)*5,Math.random()*1.5,(Math.random()-.5)*5);spawnBossProj(bp.clone().add(off),pp,b.cfg.col,6,8+Math.random()*4,{shape:at==="blizzard"?"ice":at==="oni"?"rock":at==="kappa"?"water":at==="souls"?"soul":"flame",homing:.015,size:.18});}
   /* 波H: 連携チェーン — 一定確率(荒魂中は増)で間髪入れず次撃が来る。連鎖は1回まで。荒魂中は通常間隔も短縮 */
   if(!b._tjhChain&&Math.random()<(b._tjf2Rage?TAIJI_TUNING.chainProbRage:TAIJI_TUNING.chainProb)){b._tjhChain=true;b.nextAtk=now+TAIJI_TUNING.chainDelayMs+Math.random()*TAIJI_TUNING.chainDelayRangeMs;}
@@ -12074,6 +12077,7 @@ function updateBoss(K,t,now,dt){
         taijiDisposeFx(p.m);bossProjs.splice(i,1);continue;
       }
     }else if(p.homing){const want=new THREE.Vector3(player.pos.x,player.pos.y,player.pos.z).sub(p.m.position);if(want.lengthSq()>0.01){want.normalize();p.dir.lerp(want,p.homing).normalize();}}
+    if(p.m.userData&&p.m.userData.alignY)p.m.quaternion.setFromUnitVectors(BOSS_PROJ_UP,p.dir.clone());
     p.m.position.addScaledVector(p.dir,p.spd*dt);
     if(p.wobble){p.m.position.x+=Math.sin((now-p.born)*.006+p.phase)*p.wobble*dt;p.m.position.z+=Math.cos((now-p.born)*.005+p.phase)*p.wobble*dt;}
     if(p.pulse)p.m.scale.setScalar(1+Math.sin((now-p.born)*.012+p.phase)*p.pulse);
