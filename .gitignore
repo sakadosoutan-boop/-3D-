@@ -8,6 +8,7 @@ ehthumbs.db
 # 作業バックアップ・一時ファイル
 *.bak
 _phase0_work.bak
+.asset_work/
 
 # エディタ
 .vscode/
