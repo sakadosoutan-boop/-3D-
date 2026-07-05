@@ -25,6 +25,27 @@ const ST_ENDINGS_KEY="shinden3d-story-endings-v1";
 const ST_ENDING_ORDER=["ED1_TRUE","ED2_NORMAL","ED3_GAMEOVER","ED4_SYNC","ED5_SPOOKY"];
 function stLoadEndings(){try{const a=JSON.parse(localStorage.getItem(ST_ENDINGS_KEY));return Array.isArray(a)?a:[];}catch(e){return[];}}
 function stSaveEnding(id){try{const a=stLoadEndings();if(id&&a.indexOf(id)<0){a.push(id);localStorage.setItem(ST_ENDINGS_KEY,JSON.stringify(a));}}catch(e){}}
+/* ---- 波AG: テキスト速度(遅/普/速/瞬)。タイプライターのtick間隔msとして持つ(0=即時表示) ---- */
+const ST_SPEED_KEY="shinden3d-story-textspeed-v1";
+const ST_SPEEDS=[["遅",36],["普",24],["速",12],["瞬",0]];
+let stSpeedIdx=1;
+try{const s=parseInt(localStorage.getItem(ST_SPEED_KEY));if(s>=0&&s<ST_SPEEDS.length)stSpeedIdx=s;}catch(e){}
+function stSpeedMs(){return ST_SPEEDS[stSpeedIdx][1];}
+/* ---- 波AG: 既読管理。既読ノードではスキップ継続、未読到達でスキップ自動解除(市販VNの標準挙動) ---- */
+const ST_READ_KEY="shinden3d-story-read-v1";
+let stReadMap=null;
+function stReadLoad(){if(stReadMap)return stReadMap;try{stReadMap=JSON.parse(localStorage.getItem(ST_READ_KEY))||{};}catch(e){stReadMap={};}return stReadMap;}
+function stIsRead(ev){if(!ev||!ev.id||!SM)return false;return !!stReadLoad()[(SM.state.chapterId||0)+":"+ev.id];}
+function stMarkRead(ev){if(!ev||!ev.id||!SM)return;const m=stReadLoad();const k=(SM.state.chapterId||0)+":"+ev.id;
+  if(!m[k]){m[k]=1;try{localStorage.setItem(ST_READ_KEY,JSON.stringify(m));}catch(e){}}}
+/* ---- 波AG: 話者ボイスブリップ。文字送り音を人物ごとの声色に(語り・心内は極小音) ---- */
+const ST_VOICE={
+  "小萩":[1560,"sine",.007],"栞":[1500,"sine",.007],"御簾の向こうの声":[1520,"sine",.006],
+  "秀頼":[980,"triangle",.008],"秀頼（心）":[980,"triangle",.004],
+  "右近":[1180,"square",.006],"左大臣":[620,"sine",.009],"判者":[700,"triangle",.008],
+  "大鬼":[240,"square",.009],"水底の声":[300,"square",.008],"？？？":[1520,"sine",.005],
+  "語り":[1300,"square",.004]
+};
 /* ---- ED4「冠を深く被り直す」画面演出 ----
    一人称ゆえ冠そのものは映らない。画面上辺から降りる暗い翳り(#stCrownVeil)と、
    3D描画canvas(#c)のわずかな彩度低下で「外界の音が遠ざかる」感覚を表す。
@@ -84,6 +105,22 @@ function stInject(){
     " background:linear-gradient(180deg,rgba(6,4,10,.82),rgba(6,4,10,.5) 26%,rgba(6,4,10,0) 58%)}",
     "body.st-crown-deep #stCrownVeil{opacity:1}",
     "body.st-crown-deep #c{filter:saturate(.72) brightness(.92)}",
+    /* 波AG: 章題カットイン(縦書き)。暗幕の上に章番号+章題+季節の一字 */
+    "#stChCard{position:fixed;inset:0;z-index:58;pointer-events:none;display:flex;align-items:center;justify-content:center;",
+    " background:rgba(8,5,3,.86);opacity:0;transition:opacity .55s ease}",
+    "#stChCard.show{opacity:1}",
+    "#stChCard .st-ch-v{writing-mode:vertical-rl;font-family:var(--serif);color:#efe6cd;letter-spacing:.34em;",
+    " display:flex;gap:26px;align-items:center}",
+    "#stChCard .st-ch-no{font-size:15px;color:#cbb98f}",
+    "#stChCard .st-ch-title{font-size:24px;text-shadow:0 0 18px rgba(201,162,63,.25)}",
+    "#stChCard .st-ch-season{font-size:13px;color:#9a8a6a;border:1px solid rgba(201,162,63,.45);border-radius:50%;",
+    " width:34px;height:34px;display:flex;align-items:center;justify-content:center;writing-mode:horizontal-tb}",
+    /* 波AG: 既読マーク(話者名の横にさりげなく) */
+    "#storyHud .st-read{color:#7a6a4a;font-size:9px;margin-left:7px;letter-spacing:0}",
+    /* 波AG: ED1の朝光——画面右上からの柔らかい暖色光(白フェードとは別レイヤー) */
+    "#stEd1Glow{position:fixed;inset:0;z-index:44;pointer-events:none;opacity:0;transition:opacity 2.4s ease;",
+    " background:radial-gradient(ellipse 90% 70% at 84% 8%,rgba(255,238,196,.34),rgba(255,238,196,.10) 45%,transparent 72%)}",
+    "body.st-ed1-glow #stEd1Glow{opacity:1}",
     /* 波Z: 名を呼ぶ選択肢の崩れ(常世が名を拒むような不穏なグリッチ) */
     "#storyHud .st-glitch{position:relative;display:inline-block}",
     "#storyHud .st-glitch::before,#storyHud .st-glitch::after{content:attr(data-text);position:absolute;left:0;top:0;width:100%;overflow:hidden;background:inherit}",
@@ -118,12 +155,13 @@ function stInject(){
     '<button id="stMenuBtn" title="中断して章メニューへ(進行は自動保存)" style="position:fixed;top:calc(env(safe-area-inset-top) + 6px);right:46px;pointer-events:auto;background:var(--urushi);color:var(--gofun);border:1px solid var(--kin);width:30px;height:30px;border-radius:50%;font-size:13px;line-height:1;cursor:pointer">📑</button>'+
     '<button id="stQuit" title="物語を閉じる">✕</button>'+
     '<div class="st-box" id="stBox"><img id="stFace" alt="">'+
-    '<div class="st-vn"><button id="stAuto">オート</button><button id="stSkip">スキップ</button><button id="stLog">ログ</button></div>'+
+    '<div class="st-vn"><button id="stAuto">オート</button><button id="stSkip">スキップ</button><button id="stSpeed" title="文字送りの速さ">普</button><button id="stLog">ログ</button></div>'+
     '<div class="st-spk" id="stSpk"></div><div class="st-text" id="stText"></div>'+
     '<div class="st-next" id="stNextWrap"><button id="stNext">つぎへ ▶</button></div><div class="st-opts" id="stOpts"></div></div>'+
     '<div class="st-panel" id="stPanel"><div class="st-card"><h3 id="stPanelTitle"></h3><div class="st-body" id="stPanelBody"></div><div class="st-btns" id="stPanelBtns"></div></div></div>';
   const fade=document.createElement("div");fade.id="storyFade";document.body.appendChild(fade);
   const crownVeil=document.createElement("div");crownVeil.id="stCrownVeil";document.body.appendChild(crownVeil); // ED4の翳り
+  const ed1Glow=document.createElement("div");ed1Glow.id="stEd1Glow";document.body.appendChild(ed1Glow); // ED1の朝光
   stEl("stQuit").onclick=()=>{beep(440,.06);stExitToTitle();};
   stEl("stMenuBtn").onclick=()=>{beep(560,.05);stVnStop();stChapterMenu();};
   stEl("stAuto").onclick=()=>{const v=APP.story&&APP.story.vn;if(!v)return;v.auto=!v.auto;v.skip=false;stVnButtons();
@@ -131,12 +169,18 @@ function stInject(){
   stEl("stSkip").onclick=()=>{const v=APP.story&&APP.story.vn;if(!v)return;v.skip=!v.skip;v.auto=false;stVnButtons();
     if(v.skip&&v.curEv){clearTimeout(window._stAutoT);window._stAutoT=setTimeout(()=>stVnAdvance(),90);}beep(620,.04);};
   stEl("stLog").onclick=()=>{stVnShowLog();beep(560,.04);};
+  stEl("stSpeed").onclick=()=>{ // 波AG: 文字送り速度を4段階でサイクル(永続化)
+    stSpeedIdx=(stSpeedIdx+1)%ST_SPEEDS.length;
+    try{localStorage.setItem(ST_SPEED_KEY,String(stSpeedIdx));}catch(e){}
+    stVnButtons();beep(700,.04);
+  };
 }
 /* ---- VN補助(オート/スキップ/ログ) ---- */
 function stVnButtons(){
   const v=APP.story&&APP.story.vn;if(!v)return;
   stEl("stAuto").classList.toggle("on",!!v.auto);
   stEl("stSkip").classList.toggle("on",!!v.skip);
+  const sp=stEl("stSpeed");if(sp){sp.textContent=ST_SPEEDS[stSpeedIdx][0];sp.classList.toggle("on",stSpeedIdx!==1);} // 既定(普)以外は点灯
 }
 function stVnStop(){ // 選択肢・試練・パネルではスキップを解除
   const v=APP.story&&APP.story.vn;if(!v)return;
@@ -470,9 +514,11 @@ function stApplyPresentation(ev){
   if(ev.fade)stFade(ev.fade);
   if(ev.fx==="lightning")stLightning();
   if(ev.se&&typeof saigenSe==="function"){
-    // 波AA: オート/スキップ/縮小モーションでは全文が即表示されるため、遅延させず即再生する
-    const instantText=(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION)||(APP.story&&APP.story.vn&&APP.story.vn.skip);
-    if(ev.seDelayMs&&!instantText)setTimeout(()=>saigenSe(ev.se),ev.seDelayMs); // 台詞中の描写に合わせて音を少し遅らせる
+    // 波AA/AG: スキップ/縮小モーション/速度「瞬」では全文が即表示されるため遅延させず即再生。
+    // seDelayMsは24ms tick基準で調律されているので、速度設定に応じて遅延を比例伸縮する
+    const iv=stSpeedMs();
+    const instantText=(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION)||(APP.story&&APP.story.vn&&APP.story.vn.skip)||iv===0;
+    if(ev.seDelayMs&&!instantText)setTimeout(()=>saigenSe(ev.se),Math.round(ev.seDelayMs*iv/24));
     else saigenSe(ev.se);
   }
   const S=APP.story;
@@ -576,20 +622,30 @@ function stRenderText(te,revealed,glitchWord){
 function stShowDialogue(spk,text,ev){
   const box=stEl("stBox");box.style.display="block";box.classList.remove("choosing");
   stEl("stOpts").innerHTML="";
+  const v=APP.story&&APP.story.vn;
+  // 波AG: 既読管理——未読ノードに到達したらスキップを自動解除(市販VNの標準挙動)
+  const wasRead=stIsRead(ev);
+  if(v&&v.skip&&!wasRead){v.skip=false;stVnButtons();toast("未読の場面——スキップを解除しました",1500);}
+  stMarkRead(ev);
   const sp=stEl("stSpk");
-  sp.textContent=spk?("— "+spk+" —"):"語り";
+  sp.innerHTML="";
+  sp.appendChild(document.createTextNode(spk?("— "+spk+" —"):"語り"));
+  if(wasRead){const rm=document.createElement("span");rm.className="st-read";rm.textContent="✓";sp.appendChild(rm);} // 既読はさりげなく✓
   sp.style.color=ST_SPK_COLOR[spk]||"var(--kin)";
   const te=stEl("stText");
   const full=text||"";
   te.style.fontSize=(full.length>130)?"12.5px":"14px"; // 長文は一段小さく(切れ防止)
   te.scrollTop=0;
   stSetFace(spk,ev); // 立ち絵
-  const v=APP.story&&APP.story.vn;
   if(v){v.log.push({s:spk,t:full,ch:SM&&SM.chapter?SM.chapter.chapterId:0});if(v.log.length>300)v.log.shift();v.curEv=ev;}
   const actorKey=ST_SPEAKER_ACTOR[spk];
   if(actorKey&&APP.story&&APP.story.actors&&APP.story.actors[actorKey]){
     const a=APP.story.actors[actorKey];a.group.visible=true;
     if(a.pulse)a.pulse(); // 気配の間(小萩): 話す間だけ影が揺れ、紐が瞬く
+    // 波AG: 小萩の台詞開始時、ごく小さな衣擦れの気配(スキップ中は鳴らさない)
+    if(actorKey==="kohagi"&&!(v&&v.skip)&&typeof beep==="function"){
+      beep(300,.22,"sine",.011);setTimeout(()=>beep(214,.28,"sine",.008),110);
+    }
   }
   stProgRefresh();
   // ── タイプライター表示(市販ノベル風) ──
@@ -603,15 +659,17 @@ function stShowDialogue(spk,text,ev){
     else if(v&&v.auto)window._stAutoT=setTimeout(()=>stVnAdvance(),900+Math.min(4200,full.length*45));
   };
   const glitchWord=ev&&ev.glitchWord;
-  if(reduced||(v&&v.skip)){stRenderText(te,full,glitchWord);onRevealDone();}
+  const iv=stSpeedMs(); // 波AG: テキスト速度設定(0=瞬時)
+  if(reduced||(v&&v.skip)||iv===0){stRenderText(te,full,glitchWord);onRevealDone();}
   else{
     te.textContent="";let i=0,tick=0;
     const step=Math.max(1,Math.round(full.length/90)); // 長文は複数文字ずつで一定時間に収める
+    const voice=ST_VOICE[spk]||[1400,"square",.008]; // 波AG: 話者ごとの声色(文字送り音)
     window._stType=setInterval(()=>{
       i+=step;stRenderText(te,full.slice(0,i),glitchWord);
-      if((tick++%3)===0&&typeof beep==="function")beep(1400,.006,"square",.008); // 微かな文字送り音
+      if((tick++%3)===0&&typeof beep==="function"&&voice[2]>0)beep(voice[0]*(0.97+Math.random()*.06),.006,voice[1],voice[2]);
       if(i>=full.length){clearInterval(window._stType);onRevealDone();}
-    },24);
+    },iv);
   }
   // タップ: 表示中なら一括表示、表示済みなら次へ
   const tap=()=>{
@@ -619,6 +677,26 @@ function stShowDialogue(spk,text,ev){
     beep(600,.045,"triangle",.07);if(v)v.curEv=null;clearTimeout(window._stAutoT);clearInterval(window._stType);SM.goNext(ev.next);
   };
   te.onclick=tap;sp.onclick=tap;
+}
+/* 波AG: 章題カットイン——章開始時に縦書きの章題カードを約2.6秒。REDUCED_MOTIONは短く簡素に */
+const ST_CH_NO=["","一","二","三","四","五","六"];
+const ST_CH_SEASON={1:"春",2:"夏",3:"秋",4:"冬",5:"常",6:"朝"};
+function stChapterCard(id){
+  const man=(window.STORY_EMBED&&STORY_EMBED.manifest&&STORY_EMBED.manifest.chapters)||[];
+  const ent=man.find(c=>c.chapterId===id);if(!ent)return;
+  const reduced=(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION);
+  let card=stEl("stChCard");
+  if(!card){card=document.createElement("div");card.id="stChCard";document.body.appendChild(card);}
+  card.innerHTML='<div class="st-ch-v">'+
+    '<span class="st-ch-season">'+(ST_CH_SEASON[id]||"")+'</span>'+
+    '<span class="st-ch-title">'+String(ent.chapterTitle).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]))+'</span>'+
+    '<span class="st-ch-no">第'+(ST_CH_NO[id]||id)+'話</span>'+
+    '</div>';
+  if(reduced)card.style.transition="none";
+  clearTimeout(window._stChCardT);clearTimeout(window._stChCardT2);
+  card.classList.add("show");
+  if(typeof saigenSe==="function")saigenSe("koto");
+  window._stChCardT=setTimeout(()=>card.classList.remove("show"),reduced?1100:2600);
 }
 /* 章内の現在位置(場 x/y)をチップに出す */
 function stProgRefresh(){
@@ -903,6 +981,7 @@ function stCleanupSets(){
   if(typeof SFX!=="undefined"&&SFX.stopEd5Chaos)SFX.stopEd5Chaos(); // ED5のチャイム2倍速/逆再生BGMを必ず止める
   if(typeof camera!=="undefined")camera.rotation.z=0; // ED5の微ロールを必ず0へ戻す
   stSetCrownDeep(false); // ED4の翳りを必ず解除
+  document.body.classList.remove("st-ed1-glow");clearTimeout(window._stEd1GlowT); // ED1の朝光も畳む
   stSetMinimalUi(false); // ED3で隠したトップバー等を必ず復元
   if(S.oni){SO.disposeGroup(S.oni.group);S.oni=null;}
   if(S.sealFx){SO.disposeGroup(S.sealFx.group);S.sealFx=null;}
@@ -1005,6 +1084,11 @@ function stMiniGame(info){
 function stEnding(endingId){
   stClearCollectibles();stVnStop();
   stSaveEnding(endingId); // 到達を永続化(回想の間のネタバレ防止に使う)
+  if(endingId==="ED1_TRUE"){ // 波AG: 朝光——結末カードの背後に、右上から柔らかい暖色光を差し込ませる
+    document.body.classList.add("st-ed1-glow");
+    clearTimeout(window._stEd1GlowT);
+    window._stEd1GlowT=setTimeout(()=>document.body.classList.remove("st-ed1-glow"),9000);
+  }
   // ED5の漂流とカメラの微ロールをここで止める(結末カードは静かに見せる)
   if(APP.story&&APP.story.props){for(let i=APP.story.props.length-1;i>=0;i--){
     const p=APP.story.props[i];if(p&&p.kind==="ed5debris"){window.StoryObjects.disposeGroup(p.api.group);APP.story.props.splice(i,1);}}}
@@ -1038,21 +1122,29 @@ function stChapterMenu(){
   stCleanupSets(); // 章間で大道具(大鬼・連札・教室)を片付ける
   if(erosionFx)erosionFx.setLevel(0);
   const man=(window.STORY_EMBED&&STORY_EMBED.manifest&&STORY_EMBED.chapters)?STORY_EMBED.manifest.chapters:[];
-  // 第6話(帰る朝＝回想の間)は本編の章リストから外し、別項目にする
-  const btns=man.filter(c=>c.chapterId<=5).map(c=>["第"+c.chapterId+"話 「"+c.chapterTitle+"」",()=>stStartChapter(c.chapterId)]);
   const save=SM&&SM.load&&(function(){try{return JSON.parse(localStorage.getItem("shinden3d-story-save-v1"));}catch(e){return null;}})();
+  // 波AG: 進捗表示——読了章にはしるしを、続きからには現在の心の在り処(現/雅/蝕)を添える
+  const done=(save&&save.state&&save.state.completedChapters)||{};
+  // 第6話(帰る朝＝回想の間)は本編の章リストから外し、別項目にする
+  const btns=man.filter(c=>c.chapterId<=5).map(c=>[
+    (done[c.chapterId]?"✓ ":"")+"第"+c.chapterId+"話 「"+c.chapterTitle+"」",()=>stStartChapter(c.chapterId)]);
   if(save&&save.state&&save.state.chapterId&&save.state.chapterId<=5&&save.currentSequenceId&&save.currentSequenceId!=="chapter_complete"&&!save.state.endingId){
-    btns.unshift(["▶ 続きから (第"+save.state.chapterId+"話)",()=>{
+    const p=save.state.params||{};
+    btns.unshift(["▶ 続きから (第"+save.state.chapterId+"話 ｜ 現"+(p.realityEgo|0)+"/雅"+(p.fantasySynchro|0)+"/蝕"+(p.brainErosion|0)+")",()=>{
       SM.deserialize(save);stStartChapter(save.state.chapterId,save.currentSequenceId);}]);
   }
-  btns.push(["🌸 結末の回想（回想の間）",()=>stStartChapter(6)]);
+  const edN=stLoadEndings().length;
+  btns.push(["🌸 結末の回想（回想の間） 結末 "+edN+"/5",()=>stStartChapter(6)]);
   btns.push(["タイトルへ戻る",()=>stExitToTitle()]);
-  stPanel("御簾の向こうへ — 寝殿造り異聞","<small style='color:#9a8a6a'>試験版 / この画面は ?story=1 でのみ入れます</small>",btns);
+  const doneN=[1,2,3,4,5].filter(i=>done[i]).length;
+  stPanel("御簾の向こうへ — 寝殿造り異聞",
+    "<small style='color:#9a8a6a'>読了 "+doneN+"/5話 ｜ 結末 "+edN+"/5 ｜ 試験版 (?story=1)</small>",btns);
 }
 function stStartChapter(id,resumeSeq){
   stEl("stPanel").style.display="none";
   stCleanupSets();
   SM.state.endingId=null;
+  if(id<=5)stChapterCard(id); // 波AG: 章題カットイン(第6話=回想の間とED直行では出さない)
   SM.startChapter(id).then(()=>{
     if(resumeSeq&&SM.sequenceMap.has(resumeSeq)){SM.currentSequenceId=resumeSeq;SM.runCurrent();}
     // 波Z: 第5話開始時、侵食が高いまま進むとED5に繋がることを明示し、唐突感をなくす
@@ -1160,6 +1252,8 @@ function stExitToTitle(){
   clearTimeout(window._stAutoT);
   if(erosionFx)erosionFx.setLevel(0);
   stSetCrownDeep(false); // ED4の翳り・彩度低下を必ず解除
+  document.body.classList.remove("st-ed1-glow");clearTimeout(window._stEd1GlowT); // ED1の朝光も畳む
+  const chc=stEl("stChCard");if(chc)chc.classList.remove("show"); // 章題カードの残留防止
   if(typeof camera!=="undefined")camera.rotation.z=0; // ED5のロールを必ず戻す
   APP.story=null;APP.storyQuiz=null;
   document.body.classList.remove("story-mode");
@@ -1269,6 +1363,19 @@ function storyUpdate(dt){
     }
     // 解決演出(縮んで消える)の後始末
     S.collect&&S.collect.items.forEach(it=>{if(it.got&&it.api.resolved&&it.api.group.parent)window.StoryObjects.disposeGroup(it.api.group);});
+  }
+  // 波AG: 章の空気(環境楽音レイヤー)——章の気分に合う楽の音を、ごく稀に小さく流す。
+  // ch5(常世)/ch6(現実)は無音の緊張を保つため鳴らさない。屋内・試練中・スキップ中も鳴らさない
+  if(!S.air)S.air={wait:24+Math.random()*36};
+  S.air.wait-=dt;
+  if(S.air.wait<=0){
+    S.air.wait=60+Math.random()*60;
+    const ch=SM&&SM.state?SM.state.chapterId:0;
+    const pools={1:["koto"],2:["sho"],3:["biwa"],4:["koto","sho"]}[ch];
+    const vn=S.vn;
+    if(pools&&!APP.storyIndoor&&!S.mini&&!(vn&&vn.skip)&&typeof SFX!=="undefined"&&SFX.playCall){
+      SFX.playCall(pools[(Math.random()*pools.length)|0],.14); // 遠くの対屋から、微かに
+    }
   }
   // 侵食20以上: 稀に旧仮名の揺らぎ
   // 侵食40以上のときだけ、ごく稀に旧仮名が一瞬揺らぐ(20台の通常プレイでは出さない)
