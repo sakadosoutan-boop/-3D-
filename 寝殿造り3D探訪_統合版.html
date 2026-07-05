@@ -1358,7 +1358,7 @@ body.taiji-mode #bossBar2{top:calc(env(safe-area-inset-top) + 78px)}
   padding:5px 12px;border:1px solid rgba(255,216,134,.58);background:linear-gradient(90deg,rgba(38,14,24,.38),rgba(82,30,44,.62),rgba(38,14,24,.38));
   color:#ffe8b2;font-family:var(--sans);font-size:12px;letter-spacing:.12em;text-shadow:0 2px 6px #000;transition:opacity .18s ease,transform .18s ease}
 #taijiCombatRank.show{opacity:1;transform:translateX(-50%) translateY(-2px)}
-#bossStatusChips{position:fixed;z-index:44;left:50%;top:calc(env(safe-area-inset-top) + 88px);transform:translateX(-50%);display:none;gap:6px;justify-content:center;max-width:92vw;pointer-events:none;font-family:var(--sans)}
+#bossStatusChips{position:fixed;z-index:44;left:50%;top:calc(env(safe-area-inset-top) + 88px);transform:translateX(-50%);display:none!important;gap:6px;justify-content:center;max-width:92vw;pointer-events:none;font-family:var(--sans)}
 .boss-chip{font-size:10.5px;letter-spacing:.08em;color:#f7eadc;background:rgba(20,10,14,.74);border:1px solid rgba(230,184,116,.45);padding:3px 8px;border-radius:2px;text-shadow:0 1px 5px #000;white-space:nowrap}
 #bossBar.boss-low #bossHpFill,#bossBar2.boss-low #bossHpFill2{background:linear-gradient(90deg,#5c0710,#ff3a4f);box-shadow:0 0 12px rgba(255,42,64,.55)}
 body.taiji-lowhp #taijiMood{background:radial-gradient(ellipse at 50% 36%,rgba(40,0,8,0) 28%,rgba(145,0,18,.55) 100%);animation:moodPulse .95s ease-in-out infinite}
@@ -9404,8 +9404,14 @@ function syncTopbarH(){
 }
 window.addEventListener('resize',syncTopbarH,{passive:true});
 let _loadTimer=0;
-function showLoading(){$("loadingScreen").classList.add("show");clearTimeout(_loadTimer);}
-function hideLoadingSoon(ms=650){clearTimeout(_loadTimer);_loadTimer=setTimeout(()=>$("loadingScreen").classList.remove("show"),ms);}
+function showLoading(text){
+  const el=$("loadingScreen");if(!el)return;
+  const tx=el.querySelector(".load-text");if(tx&&text)tx.textContent=text;
+  el.classList.add("show");clearTimeout(_loadTimer);
+}
+function hideLoadingSoon(ms=650){
+  clearTimeout(_loadTimer);_loadTimer=setTimeout(()=>{const el=$("loadingScreen");if(!el)return;el.classList.remove("show");const tx=el.querySelector(".load-text");if(tx)tx.textContent="読み込み中…";},ms);
+}
 let modeBriefTimer=0,modeBriefCurrent="";
 function mbEsc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
 function mbRuby(text,kana){return `<ruby>${mbEsc(text)}<rt>${mbEsc(kana)}</rt></ruby>`;}
@@ -9687,14 +9693,27 @@ function showTaijiSeasonPicker(){
       const b=document.createElement("button");
       b.className="tj-season-card";b.dataset.season=s;
       b.innerHTML='<div class="ss-label">'+label+'</div><div class="ss-boss">ボス: '+desc+'</div>';
-      b.onclick=()=>{ov.style.display="none";beep(440,.09,"sawtooth");initAudio();APP.taijiBossRush=false;APP.taijiSeason=s;applySeason(s);PREFS.set("season",s);enterMode("taiji");};
+      b.onclick=()=>taijiStartFromPicker(ov,s,false);
       ov.querySelector("#ssRow").appendChild(b);});
-    ov.querySelector("#ssBossRush").onclick=()=>{ov.style.display="none";beep(330,.14,"sawtooth",.06);initAudio();APP.taijiBossRush=true;APP.taijiSeason="spring";applySeason("spring");PREFS.set("season","spring");enterMode("taiji");};
+    ov.querySelector("#ssBossRush").onclick=()=>taijiStartFromPicker(ov,"spring",true);
     ov.querySelector("#ssCancel").onclick=()=>{ov.style.display="none";};
   }
   const diff=APP.taijiDifficulty||"normal";
   ov.querySelectorAll("#tjDiffRow button").forEach(b=>b.classList.toggle("selected",b.dataset.diff===diff));
   ov.style.display="flex";
+  if(typeof taijiWarmInitialBossAssets==="function")taijiWarmInitialBossAssets();
+}
+async function taijiStartFromPicker(ov,season,bossRush){
+  if(ov)ov.style.display="none";
+  showLoading(bossRush?"四季の主を準備中…":"ボスモデルを準備中…");
+  beep(bossRush?330:440,bossRush ? .14 : .09,"sawtooth",bossRush ? .06 : undefined);
+  initAudio();
+  APP.taijiBossRush=!!bossRush;APP.taijiSeason=season||"spring";
+  applySeason(APP.taijiSeason);PREFS.set("season",APP.taijiSeason);
+  const warm=bossRush?taijiWarmBossSet(["spring","summer"]):taijiWarmBossSeason(APP.taijiSeason);
+  await Promise.race([warm,new Promise(r=>setTimeout(r,IS_TOUCH?4200:2600))]);
+  if(bossRush)taijiWarmBossSet(["autumn","winter"]);
+  enterMode("taiji");
 }
 function taijiSetWeapon(w,opt={}){
   if(!APP.taiji)return;
@@ -11098,32 +11117,7 @@ function taijiUpdatePolish(k,now){
   if(!k)return;
   document.body.classList.toggle("taiji-lowhp",APP.mode==="taiji"&&!k.done&&(k.hp/k.maxHp)<.28);
   const rank=$("taijiCombatRank");if(rank&&k.comboUiUntil&&now>k.comboUiUntil)rank.classList.remove("show");
-  const chips=$("bossStatusChips");if(!chips)return;
-  const labels=[];
-  if(APP.mode==="taiji")labels.push("武器: "+(TAIJI_WEAPON_LABEL[k.weapon]||"破魔の矢"));
-  if(k.sake!=null)labels.push("お神酒 "+Math.max(0,k.sake));
-  if(now<(k.sakeDrinkUntil||0))labels.push("飲酒中");
-  else if(now<(k.vulnerableUntil||0))labels.push("無防備");
-  if(k.bossLoading)labels.push("霧門 読込中");
-  if(k.blindUntil&&now<k.blindUntil)labels.push("視界封じ");
-  if(k.lockOn&&k.lockTarget&&!k.lockTarget.dead)labels.push("自動注視: "+taijiBossTone(k.lockTarget));
-  if(typeof taijiBossList==="function"){
-    taijiBossList(k).forEach(b=>{
-      if(!b||b.dead)return;
-      if(now<(b.defenseUntil||0)&&!labels.includes("甲羅防御"))labels.push("甲羅防御");
-      else if(now<(b.invulnUntil||0)&&!labels.includes("無敵"))labels.push("無敵");
-      if(b.state==="dash"&&!labels.includes("突進"))labels.push("突進");
-      if(b.state==="blind"&&!labels.includes("暗幕接近"))labels.push("暗幕接近");
-      if(b.phase2&&!labels.includes("第2形態"))labels.push("第2形態");
-    });
-  }
-  const shown=labels.slice(0,4);
-  const sig=shown.join("|");
-  if(chips.dataset.sig!==sig){
-    chips.dataset.sig=sig;
-    chips.innerHTML=shown.map(s=>`<span class="boss-chip">${s}</span>`).join("");
-  }
-  chips.style.display=shown.length?"flex":"none";
+  const chips=$("bossStatusChips");if(chips){chips.style.display="none";chips.textContent="";chips.dataset.sig="";}
 }
 function taijiClearPolish(){
   document.body.classList.remove("taiji-lowhp");
@@ -11243,11 +11237,10 @@ function taijiUseSake(){
   if(taijiTutorialBlocked(k))return;
   if((k.sake||0)<=0){taijiMsg("お神酒はもう残っていない",850);beep(140,.08,"square",.05);return;}
   if(now<(k.sakeCd||0)){taijiMsg("まだ飲めない",620);return;}
-  if(k.hp>=k.maxHp-1){taijiMsg("体力は十分だ",620);return;}
   k.sake--;k.sakeUsed=(k.sakeUsed||0)+1;k.sakeCd=now+2600;k.sakeDrinkUntil=now+560;k.vulnerableUntil=now+980;k.guarding=false;k.staminaDelay=.95;
   const heal=(k.diff&&k.diff.sakeHeal)||36;
-  k.hp=Math.min(k.maxHp,k.hp+heal);updateTaijiHp();updateTaijiSakeUi();
-  taijiFloat("お神酒 +"+heal,"guard",50,52);
+  const before=k.hp;k.hp=Math.min(k.maxHp,k.hp+heal);k.slowUntil=Math.max(k.slowUntil||0,now+260);updateTaijiHp();updateTaijiSakeUi();
+  taijiFloat(before>=k.maxHp-1?"お神酒 構え直し":"お神酒 +"+(k.hp-before),"guard",50,52);
   taijiMsg("お神酒で息を整えた",1000);toast("お神酒: 残り "+k.sake,1200);
   if(!(typeof SFX!=="undefined"&&SFX.playSe("heal",.52)))beep(620,.18,"sine",.07);
   if(k.bossSpawned)taijiTriggerHealPunish(k);
@@ -11369,8 +11362,8 @@ const TAIJI_BOSS_ASSETS={
 };
 const TAIJI_ROLE_BOSS_ASSETS={
   kappa:{file:"assets/bosses/kappa_boss_2048.glb",scale:4.15,y:.03,groundY:.035,rotY:0,hideProcedural:true,keepAura:true},
-  chochin:{file:"assets/bosses/chochin_boss_2048.glb",scale:4.35,y:.05,groundY:.035,rotX:Math.PI/2,rotY:0,hideProcedural:true},
-  autumn:{file:"assets/bosses/hitodama_boss_2048.glb",scale:4.25,y:.14,groundY:.035,rotY:Math.PI,hideProcedural:true,keepAura:true},
+  chochin:{file:"assets/bosses/chochin_boss_2048.glb",scale:4.35,y:.16,groundY:.035,rotX:Math.PI/2,rotY:0,hideProcedural:true},
+  autumn:{file:"assets/bosses/hitodama_boss_2048.glb",scale:4.25,y:.14,groundY:.035,rotY:Math.PI,rotZ:Math.PI,hideProcedural:true,keepAura:true},
   oni:{file:"assets/bosses/oni_boss_2048.glb",scale:4.45,y:.04,groundY:.035,rotX:Math.PI/2,rotY:0,hideProcedural:true}
 };
 const TAIJI_BOSS_FACE={
@@ -11383,7 +11376,7 @@ const TAIJI_BOSS_FACE={
 };
 const taijiGlbCache={};
 const TAIJI_KITSUNE_LITE_RIG=/[?&]kitsuneLite=1(?:&|$)/.test(location.search);
-const TAIJI_EXTRA_BOSS_GLB=/[?&]bossGlb=1(?:&|$)/.test(location.search);
+const TAIJI_EXTRA_BOSS_GLB=!/[?&]bossGlb=0(?:&|$)/.test(location.search);
 function taijiBossAssetOption(season){
   if(TAIJI_ROLE_BOSS_ASSETS[season]&&!TAIJI_EXTRA_BOSS_GLB)return null;
   return TAIJI_ROLE_BOSS_ASSETS[season]||TAIJI_BOSS_ASSETS[season]||null;
@@ -11573,6 +11566,21 @@ function taijiPreloadBossEncounter(k){
   const audio=(typeof SFX!=="undefined"&&SFX.preloadBossAudio)?SFX.preloadBossAudio(season).catch(()=>null):Promise.resolve(null);
   return Promise.all([asset,audio]).then(()=>null);
 }
+const taijiBossWarmPromises={};
+function taijiWarmBossSeason(season){
+  if(!season)return Promise.resolve(null);
+  if(!taijiBossWarmPromises[season])taijiBossWarmPromises[season]=taijiPreloadBossEncounter({season}).catch(()=>null);
+  return taijiBossWarmPromises[season];
+}
+function taijiWarmBossSet(seasons){
+  const list=[...new Set((seasons||[]).filter(Boolean))];
+  return list.reduce((p,s)=>p.then(()=>taijiWarmBossSeason(s)),Promise.resolve(null));
+}
+function taijiWarmInitialBossAssets(){
+  const run=()=>taijiWarmBossSet(["spring","summer"]).then(()=>taijiWarmBossSet(["autumn","winter"]));
+  if("requestIdleCallback" in window)requestIdleCallback(run,{timeout:1800});
+  else setTimeout(run,900);
+}
 function taijiClearBossGate(k){
   const gate=k&&k.bossGate;if(gate&&gate.g){scene.remove(gate.g);}
   if(k)k.bossGate=null;
@@ -11603,8 +11611,8 @@ function taijiTriggerBossGate(k){
   if(player.pos.z>TAIJI_BOSS_ARENA.gateZ-1)player.pos.z=TAIJI_BOSS_ARENA.gateZ-1;
   const ov=$("bossLoad");if(ov)ov.classList.add("show");
   taijiMsg("霧を越えた。退路は閉ざされた…",1400);seFuda();
-  const waitAsset=taijiPreloadBossEncounter(k);
-  const minWait=new Promise(r=>setTimeout(r,850));
+  const waitAsset=taijiWarmBossSeason(k.season);
+  const minWait=new Promise(r=>setTimeout(r,360));
   Promise.all([waitAsset,minWait]).then(()=>{if(APP.mode==="taiji"&&APP.taiji===k&&!k.done&&!k.boss){taijiPlacePlayerAtBossApproach();if(ov)ov.classList.remove("show");k.bossLoading=false;spawnBoss(k);}});
 }
 function taijiPlacePlayerAtBossApproach(){
@@ -11784,7 +11792,7 @@ function spawnBoss(k){
     // 河童の主と提灯お化けを「別個体」に分離(別HPバー・別の動き・別の攻撃)
     const combined=makeBoss("summer");                 // 河童本体＋提灯(ch)を含む
     const ch=combined.userData.chochin; if(ch)combined.remove(ch);
-    combined.position.set(A.x-4,0,A.z+2);scene.add(combined);
+    combined.position.set(A.x-7.5,0,A.z+3.6);scene.add(combined);
     const kHp=Math.ceil(78*mul);
     combined.userData.faceLocal=TAIJI_BOSS_FACE.kappa.clone();
     const kappa={g:combined,cfg:{name:"河童の主",col:0x33c884,attack:"kappa"},hp:kHp,maxHp:kHp,nextAtk:now+2200,dead:false,movePhase:Math.random()*9,role:"kappa",faceLocal:TAIJI_BOSS_FACE.kappa.clone(),barId:"bossHpFill",nameId:"bossName",wrapId:"bossBar",baseScale:combined.scale.clone()};
@@ -11792,7 +11800,7 @@ function spawnBoss(k){
     const cg=new THREE.Group();
     if(ch){ch.position.set(0,1.5,0);cg.add(ch);cg.userData.core=ch.children.find(o=>o.geometry&&o.geometry.type==="CylinderGeometry")||null;}
     cg.userData.faceLocal=TAIJI_BOSS_FACE.chochin.clone();
-    cg.position.set(A.x+5,0,A.z-3);scene.add(cg);
+    cg.position.set(A.x+8.5,0,A.z-4.4);scene.add(cg);
     const cHp=Math.ceil(62*mul);
     const chochin={g:cg,cfg:{name:"提灯お化け",col:0xff7a33,attack:"chochin"},hp:cHp,maxHp:cHp,nextAtk:now+3000,dead:false,movePhase:Math.random()*9+3,role:"chochin",faceLocal:TAIJI_BOSS_FACE.chochin.clone(),barId:"bossHpFill2",nameId:"bossName2",wrapId:"bossBar2",baseScale:cg.scale.clone()};
     taijiAttachBossAsset("chochin",cg);
@@ -12063,6 +12071,18 @@ function bossMoveToward(g,goal,dt,speed,accel=4.8){
   if(Math.abs(g.position.x-beforeX)<Math.abs(vel.x*dt)*.35)vel.x*=.25;
   if(Math.abs(g.position.z-beforeZ)<Math.abs(vel.z*dt)*.35)vel.z*=.25;
 }
+function taijiBossSeparationGoal(K,b,goal,min=7.2,push=4.4){
+  if(!K||!b||!goal||typeof taijiBossList!=="function")return goal;
+  taijiBossList(K).forEach(o=>{
+    if(!o||o===b||o.dead||!o.g||!b.g)return;
+    const dx=b.g.position.x-o.g.position.x,dz=b.g.position.z-o.g.position.z,d=Math.hypot(dx,dz);
+    if(d>.01&&d<min){
+      const f=(min-d)/min*push;
+      goal.x+=(dx/d)*f;goal.z+=(dz/d)*f;
+    }
+  });
+  return goal;
+}
 function updateBossMotion(K,b,t,now,dt){
   const g=b.g,pp=player.pos,phase=1-b.hp/Math.max(1,b.maxHp),p=b.movePhase||0,dist=Math.hypot(pp.x-g.position.x,pp.z-g.position.z);
   const bs=b.baseScale||g.scale,cue=Math.max(0,Math.min(1,((b._motionCueUntil||0)-now)/720));
@@ -12093,6 +12113,7 @@ function updateBossMotion(K,b,t,now,dt){
       // 提灯お化けは浮遊して距離を取りながら旋回(遠隔・撹乱役)
       const ideal=12.5,orbit=Math.sin(t*.5+p);
       const goal=new THREE.Vector3(pp.x-toP.x*ideal+side.x*orbit*5.6,0,pp.z-toP.z*ideal+side.z*orbit*5.6);
+      taijiBossSeparationGoal(K,b,goal,7.8,5.2);
       bossMoveToward(g,bossArenaClampVec(goal),dt,1.65+phase*.55,3.5);
       bossTurnToward(g,pp,dt,0,4.0);
       g.position.y=1.05+Math.sin(t*1.6+p)*.42;g.rotation.z=Math.sin(t*1.2+p)*.09;
@@ -12101,6 +12122,7 @@ function updateBossMotion(K,b,t,now,dt){
       // 河童の主は積極的に間合いを詰める(突進・接近役)
       const surge=Math.max(0,Math.sin(t*1.25+p)),ideal=surge>.72?4.6:9.0;
       const goal=new THREE.Vector3(pp.x-toP.x*ideal+side.x*Math.sin(t*.9+p)*3.2,0,pp.z-toP.z*ideal+side.z*Math.sin(t*.9+p)*3.2);
+      taijiBossSeparationGoal(K,b,goal,7.8,5.2);
       bossMoveToward(g,bossArenaClampVec(goal),dt,2.05+surge*1.15+phase*.45,4.2);
       bossTurnToward(g,pp,dt,0,5.2);
       g.position.y=Math.max(.025,.08+Math.sin(t*2.2+p)*.11-cue*.035);g.rotation.x=-cue*.08;g.rotation.z=Math.sin(t*3.1+p)*.06;
