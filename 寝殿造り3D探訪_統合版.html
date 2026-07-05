@@ -11333,6 +11333,12 @@ const TAIJI_BOSS_ASSETS={
   spring:{file:"Manex3D-generated-model_9a0f501e9f5a_1782132793278.glb",scale:4.2,y:1.58,rotY:Math.PI*1.5,liteRig:false},
   winter:{file:"Manex3D-generated-model_f8c11fd36f62_1782133320333.glb",scale:3.8,y:1.90,rotY:Math.PI}
 };
+const TAIJI_ROLE_BOSS_ASSETS={
+  kappa:{file:"assets/bosses/kappa_boss_1024.glb",scale:4.55,y:.05,rotY:Math.PI,hideProcedural:true,keepAura:true},
+  chochin:{file:"assets/bosses/chochin_boss_1024.glb",scale:4.15,y:.58,rotY:Math.PI,hideProcedural:true},
+  autumn:{file:"assets/bosses/hitodama_boss_1024.glb",scale:4.30,y:.28,rotY:Math.PI,hideProcedural:true,keepAura:true},
+  oni:{file:"assets/bosses/oni_boss_1024.glb",scale:4.55,y:.05,rotY:Math.PI,hideProcedural:true}
+};
 const TAIJI_BOSS_FACE={
   spring:new THREE.Vector3(0,2.0,.95),
   winter:new THREE.Vector3(0,3.05,.42),
@@ -11351,7 +11357,9 @@ function taijiReadAccessor(json,bin,i){
   return new Arr(bin,off,n);
 }
 function taijiTextureFromGlb(json,bin,idx){
-  const texDef=json.textures&&json.textures[idx||0],imgDef=texDef&&json.images&&json.images[texDef.source];
+  const texDef=json.textures&&json.textures[idx||0],webp=texDef&&texDef.extensions&&texDef.extensions.EXT_texture_webp;
+  const source=texDef&&(texDef.source!=null?texDef.source:(webp&&webp.source));
+  const imgDef=source!=null&&json.images&&json.images[source];
   if(!imgDef||imgDef.bufferView==null)return Promise.resolve(null);
   const bv=json.bufferViews[imgDef.bufferView],blob=new Blob([bin.slice(bv.byteOffset||0,(bv.byteOffset||0)+bv.byteLength)],{type:imgDef.mimeType||"image/jpeg"});
   const url=URL.createObjectURL(blob);
@@ -11376,7 +11384,9 @@ async function taijiLoadSimpleGlb(url){
     if(uv)geo.setAttribute("uv",new THREE.BufferAttribute(uv,2));
     if(prim.indices!=null){const ind=taijiReadAccessor(json,bin,prim.indices);geo.setIndex(new THREE.BufferAttribute(ind,1));}
     geo.computeBoundingSphere();geo.computeBoundingBox();
-    const tex=await taijiTextureFromGlb(json,bin,0);
+    const matDef=(json.materials&&json.materials[prim.material])||null;
+    const baseTexIdx=matDef&&matDef.pbrMetallicRoughness&&matDef.pbrMetallicRoughness.baseColorTexture?matDef.pbrMetallicRoughness.baseColorTexture.index:0;
+    const tex=await taijiTextureFromGlb(json,bin,baseTexIdx);
     const mat=new THREE.MeshBasicMaterial({map:tex||null,color:tex?0xffffff:0xf2e8df,side:THREE.DoubleSide});
     const mesh=new THREE.Mesh(geo,mat);mesh.name=url;mesh.frustumCulled=true;
     const root=new THREE.Group();root.add(mesh);return root;
@@ -11436,7 +11446,7 @@ function taijiUpdateKitsuneLiteRig(g,t){
   rig.uniforms.forEach(u=>{u.time.value=t;u.omen.value=omen;});
 }
 function taijiAttachBossAsset(season,g){
-  const opt=TAIJI_BOSS_ASSETS[season];if(!opt)return;
+  const opt=TAIJI_ROLE_BOSS_ASSETS[season]||TAIJI_BOSS_ASSETS[season];if(!opt||!g||!g.userData||g.userData.assetReady||g.userData.assetLoading)return;
   const fallback=g.children.slice();
   g.userData.assetFallback=fallback;g.userData.assetLoading=true;
   taijiLoadSimpleGlb(opt.file).then(src=>{
@@ -11445,9 +11455,9 @@ function taijiAttachBossAsset(season,g){
     model.position.set(0,opt.y||1.6,0);model.rotation.y=opt.rotY||0;model.scale.setScalar(opt.scale||3.5);
     model.traverse(o=>{if(o.isMesh){o.renderOrder=6;o.castShadow=false;o.receiveShadow=false;}});
     if(opt.liteRig&&TAIJI_KITSUNE_LITE_RIG)taijiApplyKitsuneLiteRig(model);
-    fallback.forEach(o=>{if(o!==g.userData.aura)o.visible=false;});
-    if(g.userData.aura)g.userData.aura.visible=true;
-    g.add(model);g.userData.assetModel=model;taijiAddBossPresence(season,g);g.userData.assetReady=true;g.userData.assetLoading=false;
+    fallback.forEach(o=>{o.visible=!!(opt.keepAura&&o===g.userData.aura);});
+    if(opt.keepAura&&g.userData.aura){g.userData.aura.visible=true;if(g.userData.aura.material)g.userData.aura.material.opacity=Math.min(g.userData.aura.material.opacity||.12,.08);}
+    g.add(model);g.userData.assetModel=model;if(season==="spring"||season==="winter")taijiAddBossPresence(season,g);g.userData.assetReady=true;g.userData.assetLoading=false;
   }).catch(()=>{g.userData.assetLoading=false;});
 }
 function taijiFxMat(color,opacity,additive=true){
@@ -11498,7 +11508,11 @@ function taijiUpdateBossPresence(g,t){
   taijiUpdateKitsuneLiteRig(g,t);
 }
 function taijiPreloadBossAsset(season){
-  const opt=TAIJI_BOSS_ASSETS[season];return opt?taijiLoadSimpleGlb(opt.file).catch(()=>null):Promise.resolve(null);
+  const keys=[season];
+  if(season==="summer")keys.push("kappa","chochin");
+  if(season==="autumn")keys.push("autumn","oni");
+  const loads=keys.map(k=>TAIJI_ROLE_BOSS_ASSETS[k]||TAIJI_BOSS_ASSETS[k]).filter(Boolean).map(opt=>taijiLoadSimpleGlb(opt.file).catch(()=>null));
+  return loads.length?Promise.all(loads).then(()=>null):Promise.resolve(null);
 }
 function taijiClearBossGate(k){
   const gate=k&&k.bossGate;if(gate&&gate.g){scene.remove(gate.g);}
@@ -11670,6 +11684,7 @@ function autumnBossPhase2(b){
   b._tjf3Stagger=0;b._tjf3SignUntil=0; // 波G: 第2形態移行で見切り状態をリセット
   while(g.children.length)g.remove(g.children[0]);
   g.userData.core=null;g.userData.aura=null;
+  g.userData.assetReady=false;g.userData.assetLoading=false;g.userData.assetModel=null;g.userData.assetFallback=null;g.userData.bossPresence=null;
   g.userData.faceLocal=TAIJI_BOSS_FACE.oni.clone();
   const mb2=(color,opacity=1)=>new THREE.MeshBasicMaterial({color,transparent:opacity<1,opacity,side:THREE.DoubleSide});
   const wrath=new THREE.Mesh(new THREE.SphereGeometry(1.55,12,8),mb2(0x8f1010,.16));wrath.position.y=1.72;g.add(wrath);
@@ -11687,6 +11702,7 @@ function autumnBossPhase2(b){
   const club=new THREE.Mesh(new THREE.CylinderGeometry(0.10,0.17,2.35,7),mb2(0x2a1914));club.position.set(.98,1.8,.12);club.rotation.z=-.58;g.add(club);
   for(let i=0;i<6;i++){const spike=new THREE.Mesh(new THREE.ConeGeometry(.045,.16,4),mb2(0x1a0d09));spike.position.set(.98+Math.sin(i)*.13,1.05+i*.22,.18);spike.rotation.x=Math.PI/2;g.add(spike);}
   for(let i=0;i<10;i++){const spark=new THREE.Mesh(new THREE.SphereGeometry(.12,7,5),mb2(0xff8a3c,.6));spark.position.set(Math.cos(i*.63)*1.45,1.8+Math.sin(i)*.9,Math.sin(i*.63)*1.45);g.add(spark);}
+  taijiAttachBossAsset("oni",g);
   b.cfg.attack="oni";taijiCine("第2形態", "怨念が肉を得て大鬼となる", 2100);taijiMsg("人魂が一度散り、怨念をまとった大鬼として復活した！",3000);seFuda();
 }
 function spawnBoss(k){
@@ -11699,6 +11715,7 @@ function spawnBoss(k){
     const combined=makeBoss("summer");const ch=combined.userData.chochin;if(ch)combined.remove(ch);
     combined.position.set(A.x,0,A.z);scene.add(combined);
     combined.userData.faceLocal=TAIJI_BOSS_FACE.kappa.clone();
+    taijiAttachBossAsset("kappa",combined);
     const kHp=Math.ceil(104*mul); // 単体なのでHPを厚めに
     const kappa={g:combined,cfg:{name:"河童の主",col:0x33c884,attack:"kappa"},hp:kHp,maxHp:kHp,nextAtk:now+3600,dead:false,movePhase:Math.random()*9,role:"kappa",faceLocal:TAIJI_BOSS_FACE.kappa.clone(),barId:"bossHpFill",nameId:"bossName",wrapId:"bossBar",baseScale:combined.scale.clone()};
     k.bosses=[kappa];
@@ -11712,12 +11729,14 @@ function spawnBoss(k){
     const kHp=Math.ceil(78*mul);
     combined.userData.faceLocal=TAIJI_BOSS_FACE.kappa.clone();
     const kappa={g:combined,cfg:{name:"河童の主",col:0x33c884,attack:"kappa"},hp:kHp,maxHp:kHp,nextAtk:now+2200,dead:false,movePhase:Math.random()*9,role:"kappa",faceLocal:TAIJI_BOSS_FACE.kappa.clone(),barId:"bossHpFill",nameId:"bossName",wrapId:"bossBar",baseScale:combined.scale.clone()};
+    taijiAttachBossAsset("kappa",combined);
     const cg=new THREE.Group();
     if(ch){ch.position.set(0,1.5,0);cg.add(ch);cg.userData.core=ch.children.find(o=>o.geometry&&o.geometry.type==="CylinderGeometry")||null;}
     cg.userData.faceLocal=TAIJI_BOSS_FACE.chochin.clone();
     cg.position.set(A.x+5,0,A.z-3);scene.add(cg);
     const cHp=Math.ceil(62*mul);
     const chochin={g:cg,cfg:{name:"提灯お化け",col:0xff7a33,attack:"chochin"},hp:cHp,maxHp:cHp,nextAtk:now+3000,dead:false,movePhase:Math.random()*9+3,role:"chochin",faceLocal:TAIJI_BOSS_FACE.chochin.clone(),barId:"bossHpFill2",nameId:"bossName2",wrapId:"bossBar2",baseScale:cg.scale.clone()};
+    taijiAttachBossAsset("chochin",cg);
     k.bosses=[kappa,chochin];
     taijiSetBossName("bossName",kappa.cfg.name);$("bossHpFill").style.width="100%";$("bossBar").style.display="block";
     taijiSetBossName("bossName2",chochin.cfg.name);$("bossHpFill2").style.width="100%";$("bossBar2").style.display="block";
