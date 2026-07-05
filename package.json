@@ -4,6 +4,8 @@
   "scripts": {
     "verify:html": "node scripts/verify-html.js",
     "smoke": "node scripts/smoke-playwright.js",
+    "preflight": "node scripts/preflight.js",
+    "preflight:bench": "node scripts/preflight.js --bench",
     "test": "npm run verify:html && npm run smoke"
   },
   "devDependencies": {

@@ -17,6 +17,10 @@ async function launchBrowser() {
     () => chromium.launch({ headless: true, channel: 'chrome' }),
     () => chromium.launch({ headless: true, channel: 'msedge' }),
   ];
+  // Playwrightの既定リビジョンが無い環境(CIコンテナ等)向け: PW_CHROMIUM でバイナリを直接指定できる
+  if (process.env.PW_CHROMIUM) {
+    attempts.unshift(() => chromium.launch({ headless: true, executablePath: process.env.PW_CHROMIUM }));
+  }
   let lastError;
   for (const attempt of attempts) {
     try {
