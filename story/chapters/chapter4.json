@@ -385,8 +385,8 @@
     },
     {
       "id": "seq_413_ed3",
-      "type": "ending",
-      "endingId": "ED3_GAMEOVER"
+      "type": "ending_check",
+      "requirements": {}
     }
   ]
 }

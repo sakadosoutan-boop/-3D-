@@ -357,12 +357,15 @@
       "speaker": "判者",
       "text": "「……最後の名づけを誤れば、勝ちし戦も夜へ戻る。言葉の火は、ここで消えた。——だが覚えておかれよ。消えた火は、もう一度、熾せる」",
       "fade": "black",
+      "setFlag": {
+        "chapter5Lost": true
+      },
       "next": "seq_518_ed3"
     },
     {
       "id": "seq_518_ed3",
-      "type": "ending",
-      "endingId": "ED3_GAMEOVER"
+      "type": "ending_check",
+      "requirements": {}
     }
   ]
 }
