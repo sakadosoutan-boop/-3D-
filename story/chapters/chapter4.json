@@ -62,6 +62,20 @@
       "type": "dialogue",
       "speaker": "左大臣",
       "text": "「——皆の者、火を落とせ。雪の庭に、軽き言葉は落ちて消えようぞ。今宵は歌にて、若君の心を量る。……判者（はんじゃ）、これへ」",
+      "next": "seq_403ax_recall_branch"
+    },
+    {
+      "id": "seq_403ax_recall_branch",
+      "type": "flag_branch",
+      "flag": "chapter2TermMaster",
+      "trueNext": "seq_403ax_recall",
+      "falseNext": "seq_403b"
+    },
+    {
+      "id": "seq_403ax_recall",
+      "type": "dialogue",
+      "speaker": "左大臣",
+      "text": "「……そういえば、若君。夏の日、母屋と廂の違いを見事に言い当てたな。——あの答え、まだ忘れておらぬぞ」",
       "next": "seq_403b"
     },
     {
@@ -97,6 +111,20 @@
       "type": "dialogue",
       "speaker": "判者",
       "text": "「——本番の前に、そなたの心構えを試す。稽古の三問じゃ。景、心、場。歌合で問われる三つの土台を、口頭で答えてみよ」",
+      "next": "seq_403fx_waka_branch"
+    },
+    {
+      "id": "seq_403fx_waka_branch",
+      "type": "flag_branch",
+      "flag": "wakaGracefulReply",
+      "trueNext": "seq_403fx_waka",
+      "falseNext": "seq_404_judge_intro"
+    },
+    {
+      "id": "seq_403fx_waka",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「……そなた、秋の夕べ、良き返し歌を詠んだそうじゃな。噂は、判者の耳にも届く。——さて、その耳が誤っておらぬか、確かめようぞ」",
       "next": "seq_404_judge_intro"
     },
     {
@@ -312,6 +340,21 @@
       "speaker": "判者",
       "text": "「稽古、これまで。よい耳と、よい心得じゃ。——さあ、これより本番。そなたは左方の詠み手。手札の短冊から、題と場にかなう一首を番ごとに選び、右方と競うのじゃ。三番のうち二番、取ってみせよ」",
       "se": "gong",
+      "next": "seq_409zx_prep_branch"
+    },
+    {
+      "id": "seq_409zx_prep_branch",
+      "type": "flag_branch",
+      "flag": "utakaiPrepScore",
+      "min": 2,
+      "trueNext": "seq_409zx_prep",
+      "falseNext": "seq_410_trigger_utakai"
+    },
+    {
+      "id": "seq_409zx_prep",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「……『雪』の答え、良き風であった。その風、本番でも見失うでないぞ」",
       "next": "seq_410_trigger_utakai"
     },
     {
@@ -356,8 +399,7 @@
       "speaker": "語り",
       "text": "御簾の内で、深く頭を下げる気配がした。彼女がそんなふうに礼をするのを、初めて感じた。そして——簾と灯の加減か、一瞬。垂れ髪の影に重なって、短い髪と、制服の襟の影が、透けた。瞬きの間に、それは消えた。",
       "setFlag": {
-        "utakaiWon": true,
-        "chapter4Cleared": true
+        "utakaiWon": true
       },
       "next": "seq_411d"
     },

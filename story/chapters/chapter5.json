@@ -71,6 +71,34 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "声に、ノイズが走った。古風な言い回しの隙間から、一瞬、同い年の女の子の声がした。御簾の内の影が、十二単の輪郭と、セーラー服の輪郭のあいだで、ちらちらと明滅している。——袖の薄紫の紐だけが、どちらの輪郭でも、同じ場所で光っていた。",
+      "next": "seq_503cx_realname_branch"
+    },
+    {
+      "id": "seq_503cx_realname_branch",
+      "type": "flag_branch",
+      "flag": "heardRealName",
+      "trueNext": "seq_503cx_realname",
+      "falseNext": "seq_503cx_reflect_branch"
+    },
+    {
+      "id": "seq_503cx_realname",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（——あの春の朝、御簾越しに聞こえた「せりざわくん」という声。同じだ。今のノイズの奥にあった声と、同じだ）",
+      "next": "seq_503cx_reflect_branch"
+    },
+    {
+      "id": "seq_503cx_reflect_branch",
+      "type": "flag_branch",
+      "flag": "sawShioriReflection",
+      "trueNext": "seq_503cx_reflect",
+      "falseNext": "seq_503d"
+    },
+    {
+      "id": "seq_503cx_reflect",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（水面で見た、あの制服の横顔——やっぱり。見間違いなんかじゃ、なかった）",
       "next": "seq_503d"
     },
     {
@@ -125,6 +153,20 @@
       "type": "dialogue",
       "speaker": "大鬼",
       "text": "「カエル、カエルト、ウルサイ小僧ダ。——名ヲ覚エタ？　歌ヲ詠ンダ？　ナラバ問オウ。ソレラヲ捨テネバ帰レヌトシタラ、貴様ハ何ヲ選ブ」",
+      "next": "seq_505bx_poem_branch"
+    },
+    {
+      "id": "seq_505bx_poem_branch",
+      "type": "flag_branch",
+      "flag": "balancedReturnPoem",
+      "trueNext": "seq_505bx_poem",
+      "falseNext": "seq_505c"
+    },
+    {
+      "id": "seq_505bx_poem",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（——帰る袖にも、残る香がある。あの冬の夜、おれが詠んだ歌だ。捨てろと言われて、捨てられるものかよ）",
       "next": "seq_505c"
     },
     {

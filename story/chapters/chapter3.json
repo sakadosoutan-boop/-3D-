@@ -418,9 +418,6 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "月が、東の対の屋根の上に昇りきる。秋の夕は終わり、秋の夜が始まる。秀頼は、相手を見つめることと、相手を奪うことの違いを——そして、見なかったことにする優しさがこの世にあることを、知った。",
-      "setFlag": {
-        "chapter3Cleared": true
-      },
       "next": "chapter_complete"
     }
   ]

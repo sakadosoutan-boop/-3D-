@@ -202,6 +202,21 @@
       "type": "dialogue",
       "speaker": "栞",
       "text": "「……おかえり、芹沢くん。まだ少し、寝ぼけてる？」",
+      "next": "seq_613x_kaimami_branch",
+      "cameraAngleId": "cam_classroom_shiori"
+    },
+    {
+      "id": "seq_613x_kaimami_branch",
+      "type": "flag_branch",
+      "flag": "respectfulKaimami",
+      "trueNext": "seq_613x_kaimami_line",
+      "falseNext": "seq_614_ed1_line"
+    },
+    {
+      "id": "seq_613x_kaimami_line",
+      "type": "dialogue",
+      "speaker": "栞",
+      "text": "「……あなた、見えないものを、ちゃんと待てる人だったんだね」",
       "next": "seq_614_ed1_line",
       "cameraAngleId": "cam_classroom_shiori"
     },
