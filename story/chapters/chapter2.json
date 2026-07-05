@@ -121,9 +121,9 @@
       "kind": "term_card",
       "count": 5,
       "positions": [
-        { "id": "misu", "label": "御簾", "x": 4.0, "z": 9.5 },
-        { "id": "hisashi", "label": "廂", "x": -7.0, "z": 10.0 },
-        { "id": "sunoko", "label": "簀子", "x": -7.6, "z": 6.3 },
+        { "id": "misu", "label": "御簾", "x": 5.0, "z": 11.0 },
+        { "id": "hisashi", "label": "廂", "x": -9.5, "z": 14.5 },
+        { "id": "sunoko", "label": "簀子", "x": -3.0, "z": 15.0 },
         { "id": "watadono", "label": "渡殿", "x": 15.5, "z": -8.0 },
         { "id": "yarimizu", "label": "遣水", "x": -12.0, "z": 23.0 }
       ],
@@ -143,7 +143,7 @@
       "speaker": "語り",
       "text": "五枚目の札が手の中で光をほどいた瞬間、庭の景色が、ぴん、と張り直された。渡殿は渡殿の顔になり、遣水は遣水の音を取り戻した。世界に名前が戻っていく手応えが、指先に残っている。",
       "se": "chime",
-      "seDelayMs": 700,
+      "seDelayMs": 600,
       "next": "seq_206c"
     },
     {

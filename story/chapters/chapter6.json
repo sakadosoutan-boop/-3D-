@@ -23,7 +23,6 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "——電子音が、規則正しく鳴っている。白い天井、消毒の匂い。五時間目の古典の途中、窓際の席で崩れるように倒れて、それから、ずいぶん長い夢を見ていたらしい。海のない町の病室に、春の朝の光が、そっと差している。",
-      "se": "bell",
       "stage": {
         "location": "hospital"
       },
@@ -38,7 +37,7 @@
       "stage": {
         "location": "hospital"
       },
-      "cameraAngleId": "cam_hospital_window",
+      "cameraAngleId": "cam_hospital_table",
       "next": "seq_601h3_recall"
     },
     {
@@ -281,6 +280,7 @@
       "stage": {
         "erosionLevel": 100
       },
+      "effectId": "ed5_world_break",
       "next": "seq_652_ed5_name"
     },
     {

@@ -37,7 +37,7 @@
     // 左大臣: 濃紫の袍
     ministerRobe:M({color:0x432a66,roughness:.75}),
     // 判者: 鈍色(にびいろ)の落ち着いた袍
-    judgeRobe: M({color:0x4c4a55,roughness:.8}),
+    judgeRobe: M({color:0x2c3050,roughness:.78}), // 波AA: 描き下ろしアイコン(紺の袍)に寄せた色
     gold:      M({color:0xc9a23f,roughness:.5,metalness:.35}),
     black:     M({color:0x17130f,roughness:.7}),
     wood:      M({color:0x6b4a2c,roughness:.85}),
@@ -360,13 +360,24 @@
     const g=new THREE.Group();
     const W=.30,H=.36; // 短冊ではなく、破いたノートの切れ端らしい比率(縦長すぎない)
     const front=tornPaperMesh(W,H,M({color:0xf6f0dd,roughness:.92}));front.position.z=.002;g.add(front);
-    // 裏面: ノート(青い罫線+薄紫のマージン線=栞の記号)。同じ破れ形状に描く
+    // 裏面: ノート(青い罫線+薄紫の細いマージン線+几帳面な手書き文字)。同じ破れ形状に描く
     const c=document.createElement("canvas");c.width=128;c.height=160;const x=c.getContext("2d");
-    x.fillStyle="#f4f6f8";x.fillRect(0,0,128,160);
-    x.strokeStyle="#b8c9de";x.lineWidth=1.4;
-    for(let i=1;i<8;i++){x.beginPath();x.moveTo(10,i*19);x.lineTo(120,i*19);x.stroke();}
-    x.strokeStyle="#b9a5e6";x.lineWidth=2;x.beginPath();x.moveTo(20,0);x.lineTo(20,160);x.stroke();
     const backTex=new THREE.CanvasTexture(c);backTex.encoding=THREE.sRGBEncoding;
+    const drawBack=(text)=>{
+      x.clearRect(0,0,128,160);
+      x.fillStyle="#f4f6f8";x.fillRect(0,0,128,160);
+      x.strokeStyle="rgba(150,178,212,.6)";x.lineWidth=1; // 青い罫線(淡く・細く)
+      for(let i=1;i<8;i++){x.beginPath();x.moveTo(10,i*19);x.lineTo(120,i*19);x.stroke();}
+      x.strokeStyle="rgba(185,165,230,.85)";x.lineWidth=1; // 薄紫の"細い"マージン線(罫線より太くしない)
+      x.beginPath();x.moveTo(20,0);x.lineTo(20,160);x.stroke();
+      if(text){
+        x.fillStyle="#3a3230";x.font="italic 12px 'Hiragino Mincho ProN',serif";x.textBaseline="alphabetic";
+        const perLine=Math.max(4,Math.floor((128-30)/12.5));
+        for(let i=0;i*perLine<text.length&&i<7;i++)x.fillText(text.slice(i*perLine,(i+1)*perLine),26,17+i*19);
+      }
+      backTex.needsUpdate=true;
+    };
+    drawBack(null);
     const back=tornPaperMesh(W,H,new THREE.MeshStandardMaterial({map:backTex,roughness:.92}));
     back.position.z=-.002;back.rotation.y=Math.PI;g.add(back);
     let inkTex=null;const inkMat=new THREE.MeshBasicMaterial({transparent:true});inkMat.__ownedByStory=true;
@@ -377,6 +388,7 @@
       setText(s){if(inkTex)inkTex.dispose();
         inkTex=textTexture(s,{w:64,h:224,fontSize:15,color:"#3a3230"});
         inkMat.map=inkTex;inkMat.needsUpdate=true;ink.visible=!!s;},
+      setBackText(s){drawBack(s);}, // 波AA: 裏面に「見覚えのある、几帳面な小さな字」を実際に描く
       flipTo(side){g.rotation.y=(side==="modern")?Math.PI:0;},
       /* ひらひら落下(fromY→toY)。返り値true=着地 */
       updateFall(dt,toY=0.06){
@@ -927,24 +939,41 @@
     for(let i=0;i<7;i++){const fold=plane(.24,railY-.35,curtainMat,0,0,0);
       fold.position.set(-.72+i*.24,(railY-.35)/2+.05,.9+((i%2)?.03:-.03));fold.rotation.y=(i%2?1:-1)*.18;curtain.add(fold);}
     g.add(curtain);
-    // サイドテーブル: ノート(薄紫の紐しおり)+眼鏡+吸い飲み
+    // サイドテーブル: ノート(青い罫線+寝殿造りの間取り略図)+薄紫の紐のしおり
     const table=new THREE.Group();
     table.add(box(.55,.04,.42,M({color:0xcfc4ae,roughness:.8}),0,.62,0));
     table.add(box(.50,.58,.38,M({color:0xe3ddd0,roughness:.85}),0,.31,0));
     const note=box(.26,.03,.34,M({color:0xf4f6f8,roughness:.95}),-.06,.66,0);note.rotation.y=.18;table.add(note);
-    table.add(box(.26,.006,.02,M({color:0x8fb4d8,roughness:.9}),-.06,.677,.05));           // 罫線の帯
+    // ノートの見開きページ: 青い罫線+薄紫のマージン線+寝殿造りの間取り略図(手書き風)
+    const nc=document.createElement("canvas");nc.width=104;nc.height=136;const nx=nc.getContext("2d");
+    nx.fillStyle="#f4f6f8";nx.fillRect(0,0,104,136);
+    nx.strokeStyle="rgba(150,178,212,.55)";nx.lineWidth=1;
+    for(let i=1;i<7;i++){nx.beginPath();nx.moveTo(8,i*18);nx.lineTo(98,i*18);nx.stroke();}
+    nx.strokeStyle="rgba(185,165,230,.8)";nx.lineWidth=1;nx.beginPath();nx.moveTo(16,4);nx.lineTo(16,132);nx.stroke();
+    nx.strokeStyle="#5a4a3a";nx.lineWidth=1.1; // 寝殿造りの間取り略図(母屋・廂・対屋を簡略に)
+    nx.strokeRect(38,22,44,26);nx.strokeRect(30,16,60,38);
+    nx.strokeRect(20,26,10,16);nx.strokeRect(88,26,10,16);
+    nx.beginPath();nx.moveTo(20,34);nx.lineTo(30,34);nx.moveTo(88,34);nx.lineTo(98,34);nx.stroke();
+    nx.font="italic 7px 'Hiragino Mincho ProN',serif";nx.fillStyle="#5a4a3a";
+    nx.fillText("寝殿造り",34,66);
+    const noteTex=new THREE.CanvasTexture(nc);noteTex.encoding=THREE.sRGBEncoding;
+    const noteTexMat=new THREE.MeshBasicMaterial({map:noteTex});noteTexMat.__ownedByStory=true;
+    const notePage=plane(.24,.31,noteTexMat,0,.017,0);notePage.rotation.x=-Math.PI/2;note.add(noShadow(notePage));
     const cordMark=createPurpleCordMotif();cordMark.attachTo(table,{x:.06,y:.685,z:-.10},.8); // 栞=薄紫の紐
-    table.position.set(1.15,0,-2.30);g.add(table);
+    table.position.set(0.55,0,-1.55);g.add(table); // 波AA: 枕元(ベッド寄り)に置き直し、主なカメラでも見えるように
     // 丸椅子とスリッパ(誰かが見舞いに来ている気配)
     g.add(cyl(.19,.19,.05,M({color:0xd8cfc0,roughness:.85}),2.35,.44,-1.0,12));
     g.add(cyl(.03,.03,.42,steel,2.35,.21,-1.0,8));
-    [[-.02],[.14]].forEach((s,i)=>g.add(box(.11,.03,.26,M({color:0xe8e2d4,roughness:.9}),2.0+s[0],.02,.4+i*.02)));
-    let curtainOpen=1;
+    [[-.02],[.14]].forEach((s,i)=>g.add(box(.11,.03,.26,M({color:0x3a6b4a,roughness:.9}),2.0+s[0],.02,.4+i*.02))); // 波AA: 緑のスリッパ
+    let curtainOpen=1,beepUp=false;
     const api={group:g,anchor,
       setCurtain(v){curtainOpen=Math.max(0,Math.min(1,v));
         curtain.children.forEach((f,i)=>{f.position.x=-.72*curtainOpen+i*.24*curtainOpen; f.visible=curtainOpen>.05;});},
       update(t){monTex.offset.x=(t*.14)%1;                                    // 波形が流れる
-        dot.material.color.setHex(Math.sin(t*6)>0?0x51ffb2:0x0c3a28);         // 心拍の点滅
+        const up=Math.sin(t*6)>0;
+        dot.material.color.setHex(up?0x51ffb2:0x0c3a28);                     // 心拍の点滅
+        if(up&&!beepUp&&typeof beep==="function")beep(880,.05,"sine",.05);   // 波AA: 心電図の電子音
+        beepUp=up;
         curtain.children.forEach((f,i)=>f.rotation.y=(i%2?1:-1)*(.18+Math.sin(t*.8+i)*.02));
         cordMark.update(t);}
     };
@@ -1072,6 +1101,7 @@
     /* 別ロケーション(STORY_OFFSTAGE基準の絶対座標) */
     cam_hospital_bed:        {pos:[-257.6,1.50,240.6],look:[-258.8,0.95,238.7],fov:52}, // ベッドの栞を見下ろす
     cam_hospital_window:     {pos:[-258.2,1.30,237.8],look:[-263.0,1.70,239.4],fov:58}, // 朝光の窓へ
+    cam_hospital_table:      {pos:[-259.0,1.05,239.0],look:[-259.5,0.68,238.45],fov:40}, // 波AA: 枕元のノートと薄紫の紐を寄って映す
     cam_hospital_door_pov:   {pos:[-257.2,1.55,242.2],look:[-258.8,1.00,238.7],fov:60}, // 入口から一望(秀頼の視点)
     cam_classroom_board:     {pos:[-260.0,1.50,301.8],look:[-260.0,1.60,296.8],fov:55}, // 黒板の平面図
     cam_classroom_shiori:    {pos:[-259.8,1.35,302.6],look:[-259.0,0.75,301.6],fov:50}, // 栞の席(肩越し)
