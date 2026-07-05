@@ -7540,7 +7540,7 @@ const SFX = {
   preloadBossAudio(season){
     const files=new Set();
     if(this.bossBgm&&this.bossBgm[season])files.add(this.bossBgm[season]);
-    if(this.se)Object.values(this.se).forEach(f=>files.add(f));
+    if(this.se)Object.values(this.se).forEach(f=>this.preloadFile(f));
     return Promise.all(Array.from(files).map(f=>this.preloadFile(f))).then(()=>null);
   },
   /* ボス戦BGM(ループ・遅延ロード)。環境ベッドを退避して戻す */
@@ -11364,14 +11364,14 @@ function taijiFuda(){
 /* ボス戦アリーナ: 北の対に挟まれた狭い窪地を避け、東の奥の開けた庭へ移動(建物に当たらない広い円) */
 const TAIJI_BOSS_ARENA={x:30,z:-48,r:18,gateZ:-30};
 const TAIJI_BOSS_ASSETS={
-  spring:{file:"Manex3D-generated-model_9a0f501e9f5a_1782132793278.glb",scale:4.2,y:1.58,rotY:Math.PI*1.5,liteRig:false},
-  winter:{file:"Manex3D-generated-model_f8c11fd36f62_1782133320333.glb",scale:3.8,y:1.90,rotY:Math.PI}
+  spring:{file:"assets/bosses/kitsune_boss_balanced.glb",scale:4.2,y:.04,groundY:.035,rotY:Math.PI*1.5,liteRig:false},
+  winter:{file:"assets/bosses/yuki_boss_balanced.glb",scale:3.8,y:.04,groundY:.035,rotY:Math.PI}
 };
 const TAIJI_ROLE_BOSS_ASSETS={
-  kappa:{file:"assets/bosses/kappa_boss_2048.glb",scale:4.15,y:.03,groundY:.035,rotY:Math.PI,hideProcedural:true,keepAura:true},
-  chochin:{file:"assets/bosses/chochin_boss_2048.glb",scale:4.35,y:.05,groundY:.035,rotY:Math.PI,rotZ:Math.PI/2,hideProcedural:true},
+  kappa:{file:"assets/bosses/kappa_boss_2048.glb",scale:4.15,y:.03,groundY:.035,rotY:0,hideProcedural:true,keepAura:true},
+  chochin:{file:"assets/bosses/chochin_boss_2048.glb",scale:4.35,y:.05,groundY:.035,rotX:Math.PI/2,rotY:0,hideProcedural:true},
   autumn:{file:"assets/bosses/hitodama_boss_2048.glb",scale:4.25,y:.14,groundY:.035,rotY:Math.PI,hideProcedural:true,keepAura:true},
-  oni:{file:"assets/bosses/oni_boss_2048.glb",scale:4.45,y:.04,groundY:.035,rotY:Math.PI,rotZ:Math.PI/2,hideProcedural:true}
+  oni:{file:"assets/bosses/oni_boss_2048.glb",scale:4.45,y:.04,groundY:.035,rotX:Math.PI/2,rotY:0,hideProcedural:true}
 };
 const TAIJI_BOSS_FACE={
   spring:new THREE.Vector3(0,2.0,.95),
