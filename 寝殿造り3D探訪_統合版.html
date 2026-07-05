@@ -11361,9 +11361,9 @@ const TAIJI_BOSS_ASSETS={
   winter:{file:"assets/bosses/yuki_boss_balanced.glb",scale:3.8,y:.04,groundY:.035,rotY:Math.PI}
 };
 const TAIJI_ROLE_BOSS_ASSETS={
-  kappa:{file:"assets/bosses/kappa_boss_2048.glb",scale:4.15,y:.03,groundY:.035,rotY:0,hideProcedural:true,keepAura:true},
+  kappa:{file:"assets/bosses/kappa_boss_2048.glb",scale:4.15,y:.03,groundY:.035,rotX:Math.PI/2,rotY:0,hideProcedural:true},
   chochin:{file:"assets/bosses/chochin_boss_2048.glb",scale:4.35,y:.16,groundY:.035,rotX:Math.PI/2,rotY:0,hideProcedural:true},
-  autumn:{file:"assets/bosses/hitodama_boss_2048.glb",scale:4.25,y:.14,groundY:.035,rotY:Math.PI,rotZ:Math.PI,hideProcedural:true,keepAura:true},
+  autumn:{file:"assets/bosses/hitodama_boss_2048.glb",scale:4.25,y:.14,groundY:.035,rotY:Math.PI,rotZ:Math.PI,hideProcedural:true,whiteKey:true},
   oni:{file:"assets/bosses/oni_boss_2048.glb",scale:4.45,y:.04,groundY:.035,rotX:Math.PI/2,rotY:0,hideProcedural:true}
 };
 const TAIJI_BOSS_FACE={
@@ -11491,6 +11491,24 @@ function taijiPlaceBossAssetModel(model,opt){
     model.position.y=opt.y||0;
   }
 }
+function taijiApplyBossAssetMaterial(model,opt){
+  if(!model||!opt)return;
+  model.traverse(o=>{
+    if(!o.isMesh||!o.material)return;
+    const mat=o.material.clone();
+    if(opt.whiteKey){
+      mat.transparent=true;mat.depthWrite=false;mat.alphaTest=Math.max(mat.alphaTest||0,.02);
+      mat.onBeforeCompile=shader=>{
+        shader.fragmentShader=shader.fragmentShader.replace(
+          "#include <alphatest_fragment>",
+          "if(diffuseColor.r>0.965&&diffuseColor.g>0.965&&diffuseColor.b>0.965) discard;\n#include <alphatest_fragment>"
+        );
+      };
+      mat.customProgramCacheKey=()=>"taiji-boss-white-key-v1";
+    }
+    o.material=mat;
+  });
+}
 function taijiAttachBossAsset(season,g){
   const opt=taijiBossAssetOption(season);if(!opt||!g||!g.userData||g.userData.assetReady||g.userData.assetLoading)return;
   const fallback=g.children.slice();
@@ -11499,6 +11517,7 @@ function taijiAttachBossAsset(season,g){
     if(!g.userData||g.userData.assetReady||!g.parent)return;
     const model=src.clone(true);model.name="taiji-glb-"+season;
     taijiPlaceBossAssetModel(model,opt);
+    taijiApplyBossAssetMaterial(model,opt);
     model.traverse(o=>{if(o.isMesh){o.renderOrder=6;o.castShadow=false;o.receiveShadow=false;}});
     if(opt.liteRig&&TAIJI_KITSUNE_LITE_RIG)taijiApplyKitsuneLiteRig(model);
     fallback.forEach(o=>{o.visible=!!(opt.keepAura&&o===g.userData.aura);});
@@ -11533,8 +11552,8 @@ function taijiAddBossPresence(season,g){
     }
     const key=new THREE.PointLight(0xff9a55,1.15,7,2);key.position.set(0,2.6,1.5);root.add(key);
   }else if(season==="winter"){
-    const cold=taijiFxMat(0xbcecff,.30),pale=taijiFxMat(0xf8fbff,.48),blue=taijiFxMat(0x68b8ff,.34);
-    const veil=new THREE.Mesh(new THREE.CylinderGeometry(1.28,1.88,3.9,18,1,true),cold);veil.position.y=1.95;root.add(veil);fx.rings.push(veil);
+    const cold=taijiFxMat(0xbcecff,.30),veilMat=taijiFxMat(0xbcecff,.16,false),pale=taijiFxMat(0xf8fbff,.48),blue=taijiFxMat(0x68b8ff,.34);
+    const veil=new THREE.Mesh(new THREE.CylinderGeometry(1.28,1.88,3.9,18,1,true),veilMat);veil.position.y=1.95;veil.userData.uprightAura=true;root.add(veil);fx.rings.push(veil);
     for(let i=0;i<3;i++){const ring=new THREE.Mesh(new THREE.TorusGeometry(1.28+i*.36,.018,5,54),i%2?pale:blue);ring.position.y=.55+i*.82;ring.rotation.x=Math.PI/2;ring.userData.spin=(i%2?-1:1)*(.45+i*.12);root.add(ring);fx.rings.push(ring);}
     for(let i=0;i<34;i++){
       const flake=new THREE.Mesh(new THREE.OctahedronGeometry(.045+(i%3)*.018,0),i%2?pale:cold);
@@ -11547,7 +11566,7 @@ function taijiAddBossPresence(season,g){
 }
 function taijiUpdateBossPresence(g,t){
   const fx=g&&g.userData&&g.userData.bossPresence;if(!fx)return;
-  fx.rings.forEach((r,i)=>{r.rotation.x=Math.PI/2;r.rotation.z+=.002*((i%2)?-1:1);if(r.material)r.material.opacity=(i===0?.22:.28)+Math.sin(t*1.7+i)*.05;});
+  fx.rings.forEach((r,i)=>{if(!r.userData.uprightAura)r.rotation.x=Math.PI/2;r.rotation.z+=.002*((i%2)?-1:1);if(r.material){const base=r.userData.uprightAura?.12:(i===0?.22:.28);r.material.opacity=base+Math.sin(t*1.7+i)*.04;}});
   fx.tailTips.forEach((tip,i)=>{const b=tip.userData.base;if(b){tip.position.set(b.x+Math.sin(t*1.6+i)*.045,b.y+Math.sin(t*2.2+i*.4)*.08,b.z+Math.cos(t*1.3+i)*.035);}tip.scale.setScalar(1+Math.sin(t*3.1+i)*.12);});
   fx.wisps.forEach((w,i)=>{const u=w.userData,a=t*(.62+i*.012)+u.phase;w.position.set(Math.cos(a)*u.rad,u.high+Math.sin(t*1.9+u.phase)*.42,Math.sin(a)*u.rad);w.scale.setScalar(.88+Math.sin(t*2.7+u.phase)*.18);w.rotation.y=-a;if(w.children[0]&&w.children[0].material)w.children[0].material.opacity=.42+Math.sin(t*3+u.phase)*.18;});
   fx.snow.forEach((s,i)=>{const u=s.userData,a=t*(.35+i*.004)+u.phase;s.position.set(Math.cos(a)*u.rad,u.high+Math.sin(t*1.25+u.phase)*.24,Math.sin(a)*u.rad);s.rotation.y+=.02*u.spin;s.rotation.x+=.013*u.spin;if(s.material)s.material.opacity=.30+Math.sin(t*2.4+u.phase)*.14;});
@@ -12104,7 +12123,7 @@ function updateBossMotion(K,b,t,now,dt){
     const ideal=11.5,orbit=Math.sin(t*.38+p);
     const goal=new THREE.Vector3(pp.x-toP.x*ideal+side.x*orbit*5.2,0,pp.z-toP.z*ideal+side.z*orbit*5.2);
     bossMoveToward(g,bossArenaClampVec(goal),dt,1.35+phase*.45,3.1);
-    bossTurnToward(g,pp,dt,Math.PI,4.2);
+    bossTurnToward(g,pp,dt,0,4.2);
     g.position.y=.34+Math.sin(t*1.55+p)*.28+cue*.16;
     g.rotation.z=Math.sin(t*.95+p)*.055+cue*.035;g.rotation.x=Math.sin(t*.72+p)*.018+cue*.045;
     g.scale.set(bs.x*(1+cue*.025),bs.y*(1+cue*.045),bs.z*(1+cue*.025));
