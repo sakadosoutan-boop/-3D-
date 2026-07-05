@@ -7517,6 +7517,32 @@ const SFX = {
       s.play().catch(()=>{}); const done=()=>{try{s.onended=null;s.removeAttribute("src");s.load();}catch(e){}}; s.onended=done; s.onerror=done; return true;
     }catch(e){ return false; }
   },
+  preloadFile(file){
+    if(!file)return Promise.resolve(null);
+    let a=this.media[file];
+    if(!a){
+      a=new Audio();a.preload="auto";a.src=this.base+encodeURIComponent(file);a.muted=this._muted;
+      a.addEventListener("error",()=>{delete this.media[file];},{once:true});
+      this.media[file]=a;
+    }
+    try{a.load();}catch(e){}
+    if(a.readyState>=2)return Promise.resolve(a);
+    return new Promise(resolve=>{
+      let done=false;
+      const finish=()=>{if(done)return;done=true;resolve(a);};
+      const fail=()=>{if(done)return;done=true;resolve(null);};
+      a.addEventListener("canplay",finish,{once:true});
+      a.addEventListener("canplaythrough",finish,{once:true});
+      a.addEventListener("error",fail,{once:true});
+      setTimeout(finish,4500);
+    });
+  },
+  preloadBossAudio(season){
+    const files=new Set();
+    if(this.bossBgm&&this.bossBgm[season])files.add(this.bossBgm[season]);
+    if(this.se)Object.values(this.se).forEach(f=>files.add(f));
+    return Promise.all(Array.from(files).map(f=>this.preloadFile(f))).then(()=>null);
+  },
   /* ボス戦BGM(ループ・遅延ロード)。環境ベッドを退避して戻す */
   playBossBgm(season){
     const f=this.bossBgm&&this.bossBgm[season]; if(!f) return;
@@ -11084,19 +11110,20 @@ function taijiUpdatePolish(k,now){
   if(typeof taijiBossList==="function"){
     taijiBossList(k).forEach(b=>{
       if(!b||b.dead)return;
-      if(now<(b.defenseUntil||0))labels.push("甲羅防御");
-      else if(now<(b.invulnUntil||0))labels.push("無敵");
-      if(b.state==="dash")labels.push("突進");
-      if(b.state==="blind")labels.push("暗幕接近");
-      if(b.phase2)labels.push("第2形態");
+      if(now<(b.defenseUntil||0)&&!labels.includes("甲羅防御"))labels.push("甲羅防御");
+      else if(now<(b.invulnUntil||0)&&!labels.includes("無敵"))labels.push("無敵");
+      if(b.state==="dash"&&!labels.includes("突進"))labels.push("突進");
+      if(b.state==="blind"&&!labels.includes("暗幕接近"))labels.push("暗幕接近");
+      if(b.phase2&&!labels.includes("第2形態"))labels.push("第2形態");
     });
   }
-  const sig=labels.join("|");
+  const shown=labels.slice(0,4);
+  const sig=shown.join("|");
   if(chips.dataset.sig!==sig){
     chips.dataset.sig=sig;
-    chips.innerHTML=labels.slice(0,6).map(s=>`<span class="boss-chip">${s}</span>`).join("");
+    chips.innerHTML=shown.map(s=>`<span class="boss-chip">${s}</span>`).join("");
   }
-  chips.style.display=labels.length?"flex":"none";
+  chips.style.display=shown.length?"flex":"none";
 }
 function taijiClearPolish(){
   document.body.classList.remove("taiji-lowhp");
@@ -11341,10 +11368,10 @@ const TAIJI_BOSS_ASSETS={
   winter:{file:"Manex3D-generated-model_f8c11fd36f62_1782133320333.glb",scale:3.8,y:1.90,rotY:Math.PI}
 };
 const TAIJI_ROLE_BOSS_ASSETS={
-  kappa:{file:"assets/bosses/kappa_boss_2048.glb",scale:4.55,y:.05,rotY:Math.PI,hideProcedural:true,keepAura:true},
-  chochin:{file:"assets/bosses/chochin_boss_2048.glb",scale:4.15,y:.58,rotY:Math.PI,hideProcedural:true},
-  autumn:{file:"assets/bosses/hitodama_boss_2048.glb",scale:4.30,y:.28,rotY:Math.PI,hideProcedural:true,keepAura:true},
-  oni:{file:"assets/bosses/oni_boss_2048.glb",scale:4.55,y:.05,rotY:Math.PI,hideProcedural:true}
+  kappa:{file:"assets/bosses/kappa_boss_2048.glb",scale:4.15,y:.03,groundY:.035,rotY:Math.PI,hideProcedural:true,keepAura:true},
+  chochin:{file:"assets/bosses/chochin_boss_2048.glb",scale:4.35,y:.05,groundY:.035,rotY:Math.PI,rotZ:Math.PI/2,hideProcedural:true},
+  autumn:{file:"assets/bosses/hitodama_boss_2048.glb",scale:4.25,y:.14,groundY:.035,rotY:Math.PI,hideProcedural:true,keepAura:true},
+  oni:{file:"assets/bosses/oni_boss_2048.glb",scale:4.45,y:.04,groundY:.035,rotY:Math.PI,rotZ:Math.PI/2,hideProcedural:true}
 };
 const TAIJI_BOSS_FACE={
   spring:new THREE.Vector3(0,2.0,.95),
@@ -11457,6 +11484,20 @@ function taijiUpdateKitsuneLiteRig(g,t){
   const omen=until>now?Math.max(0,Math.min(1,(until-now)/520)):0;
   rig.uniforms.forEach(u=>{u.time.value=t;u.omen.value=omen;});
 }
+function taijiPlaceBossAssetModel(model,opt){
+  model.position.set(opt.x||0,0,opt.z||0);
+  model.rotation.set(opt.rotX||0,opt.rotY||0,opt.rotZ||0);
+  model.scale.setScalar(opt.scale||3.5);
+  model.updateMatrixWorld(true);
+  const box=new THREE.Box3().setFromObject(model);
+  if(isFinite(box.min.y)&&isFinite(box.max.y)){
+    const ground=(opt.groundY==null ? .035 : opt.groundY),extra=opt.y||0;
+    model.position.y+=(ground-box.min.y)+extra;
+    model.updateMatrixWorld(true);
+  }else{
+    model.position.y=opt.y||0;
+  }
+}
 function taijiAttachBossAsset(season,g){
   const opt=taijiBossAssetOption(season);if(!opt||!g||!g.userData||g.userData.assetReady||g.userData.assetLoading)return;
   const fallback=g.children.slice();
@@ -11464,7 +11505,7 @@ function taijiAttachBossAsset(season,g){
   taijiLoadSimpleGlb(opt.file).then(src=>{
     if(!g.userData||g.userData.assetReady||!g.parent)return;
     const model=src.clone(true);model.name="taiji-glb-"+season;
-    model.position.set(0,opt.y||1.6,0);model.rotation.y=opt.rotY||0;model.scale.setScalar(opt.scale||3.5);
+    taijiPlaceBossAssetModel(model,opt);
     model.traverse(o=>{if(o.isMesh){o.renderOrder=6;o.castShadow=false;o.receiveShadow=false;}});
     if(opt.liteRig&&TAIJI_KITSUNE_LITE_RIG)taijiApplyKitsuneLiteRig(model);
     fallback.forEach(o=>{o.visible=!!(opt.keepAura&&o===g.userData.aura);});
@@ -11526,6 +11567,12 @@ function taijiPreloadBossAsset(season){
   const loads=keys.map(k=>taijiBossAssetOption(k)).filter(Boolean).map(opt=>taijiLoadSimpleGlb(opt.file).catch(()=>null));
   return loads.length?Promise.all(loads).then(()=>null):Promise.resolve(null);
 }
+function taijiPreloadBossEncounter(k){
+  const season=k&&k.season;
+  const asset=taijiPreloadBossAsset(season);
+  const audio=(typeof SFX!=="undefined"&&SFX.preloadBossAudio)?SFX.preloadBossAudio(season).catch(()=>null):Promise.resolve(null);
+  return Promise.all([asset,audio]).then(()=>null);
+}
 function taijiClearBossGate(k){
   const gate=k&&k.bossGate;if(gate&&gate.g){scene.remove(gate.g);}
   if(k)k.bossGate=null;
@@ -11556,7 +11603,7 @@ function taijiTriggerBossGate(k){
   if(player.pos.z>TAIJI_BOSS_ARENA.gateZ-1)player.pos.z=TAIJI_BOSS_ARENA.gateZ-1;
   const ov=$("bossLoad");if(ov)ov.classList.add("show");
   taijiMsg("霧を越えた。退路は閉ざされた…",1400);seFuda();
-  const waitAsset=Promise.race([taijiPreloadBossAsset(k.season),new Promise(r=>setTimeout(r,1800))]);
+  const waitAsset=taijiPreloadBossEncounter(k);
   const minWait=new Promise(r=>setTimeout(r,850));
   Promise.all([waitAsset,minWait]).then(()=>{if(APP.mode==="taiji"&&APP.taiji===k&&!k.done&&!k.boss){taijiPlacePlayerAtBossApproach();if(ov)ov.classList.remove("show");k.bossLoading=false;spawnBoss(k);}});
 }
@@ -16607,6 +16654,7 @@ function animate(now){
       if(APP.labelMode===2)vis=true;
       else if(APP.labelMode===1)vis=(APP.view==="ov")?ITEMS[L.id].cat==="b":d<13;
       if(APP.mode==="quiz")vis=false;
+      if(APP.mode==="taiji")vis=false;
       if(!present)vis=false;
       if(APP.mode==="walk"&&APP.view==="fp"&&present&&d<9&&ITEMS[L.id].cat!=="b"&&d<focusD){
         focusD=d;focusPos=it.labelPos;

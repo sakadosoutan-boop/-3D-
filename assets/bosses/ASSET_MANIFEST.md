@@ -17,8 +17,8 @@ Optimization:
 
 Mappings:
 
-- `kappa_boss_2048.glb`: shape-preserving optimized derivative of `boss_candidate_a.glb`
-- `chochin_boss_2048.glb`: shape-preserving optimized derivative of `boss_candidate_b.glb`
-- `hitodama_boss_2048.glb`: shape-preserving optimized derivative of `boss_candidate_c.glb`
-- `oni_boss_2048.glb`: shape-preserving optimized derivative of `boss_candidate_d.glb`
+- `kappa_boss_2048.glb`: shape-preserving optimized derivative of the prior `chochin_boss_2048.glb`
+- `chochin_boss_2048.glb`: shape-preserving optimized derivative of the prior `oni_boss_2048.glb`
+- `hitodama_boss_2048.glb`: shape-preserving optimized derivative of the prior `kappa_boss_2048.glb`
+- `oni_boss_2048.glb`: shape-preserving optimized derivative of the prior `hitodama_boss_2048.glb`
 
