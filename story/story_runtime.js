@@ -933,15 +933,10 @@ function stEnding(endingId){
     ["タイトルへ戻る",()=>{stExitToTitle();}]
   ]);
   if(typeof SFX!=="undefined"&&SFX.stopEd5Chaos)SFX.stopEd5Chaos(); // 波AA: どの結末に着地してもED5の混沌演出を必ず止める
-  if(endingId==="ED3_GAMEOVER"){ // 波Z/AA: 初回到達時も火桶が消え、白む画面の中で心音が途絶えるところまで見せてからカードを出す
-    stEffect({effectId:"ed3_fire_dies",payload:{}});
-    setTimeout(showPanel,6200);
-  }else{
-    // 波AB: 最後の台詞から結末カードが同一フレームで唐突に出ていたのを解消。
-    // 一呼吸(暗転/白転)を挟んでからエピローグとカードをつなげる
-    stFade(endingId==="ED5_SPOOKY"?"black":"white");
-    setTimeout(showPanel,780);
-  }
+  // 波AB: ED3は今やseq_630_ed3_fire(章6の自然な流れ)で火桶が消える演出を既に見せ終えているため、
+  // ここで再度エフェクトを発火させない(二重発火防止)。全結末共通で一呼吸(暗転/白転)を挟んでからカードを出す
+  stFade(endingId==="ED5_SPOOKY"?"black":"white");
+  setTimeout(showPanel,780);
 }
 function stChapterComplete(chapterId){
   stClearCollectibles();

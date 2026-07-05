@@ -90,11 +90,96 @@
       ]
     },
     {
+      "id": "seq_ed1_wake0",
+      "type": "set_scene",
+      "season": "spring",
+      "timeOfDay": "morning",
+      "playerStart": { "x": 0.2, "z": 4.8, "yaw": 3.14 },
+      "cameraAngleId": "cam_hospital_bed",
+      "fade": "white",
+      "stage": { "location": "hospital" },
+      "next": "seq_ed1_wake1"
+    },
+    {
+      "id": "seq_ed1_wake1",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "——電子音が、規則正しく鳴っている。白い天井、消毒の匂い。五時間目の古典の途中、窓際の席で崩れるように倒れて、それから、ずいぶん長い夢を見ていたらしい。海のない町の病室に、春の朝の光が、そっと差している。",
+      "stage": { "location": "hospital" },
+      "cameraAngleId": "cam_hospital_bed",
+      "next": "seq_ed1_wake2"
+    },
+    {
+      "id": "seq_ed1_wake2",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "枕元のテーブルに、青い罫線のノートが一冊。薄紫の紐のしおりが、寝殿造りの間取りを写したページにはさまっている。丸椅子とスリッパ——毎日、誰かが見舞いに来ていたことを、それらが静かに告げていた。ノートの端の几帳面な字に、たしかに見覚えがある。",
+      "stage": { "location": "hospital" },
+      "cameraAngleId": "cam_hospital_table",
+      "next": "seq_ed1_wake3"
+    },
+    {
+      "id": "seq_ed1_wake3",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（御簾の向こうの声。夢のあいだ、ずっと俺の名を呼んでいた——あれは、この枕元から話しかけていた、あんたの声だったのかもしれない）",
+      "stage": { "location": "hospital" },
+      "cameraAngleId": "cam_hospital_door_pov",
+      "next": "seq_ed1_wake4"
+    },
+    {
+      "id": "seq_ed1_wake4",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "——このノートの罫線も、几帳面な字も、結ばれた薄紫の紐も。見覚えがあるどころじゃない。毎日、隣の席で見ていたものだ。……まさか。あの邸で聞いていた声も、御簾の向こうの気配も、ぜんぶ——栞。お前だったのか。",
+      "stage": { "location": "hospital" },
+      "next": "seq_611_ed1"
+    },
+    {
+      "id": "seq_ed2_wake0",
+      "type": "set_scene",
+      "season": "spring",
+      "timeOfDay": "morning",
+      "playerStart": { "x": 0.2, "z": 4.8, "yaw": 3.14 },
+      "cameraAngleId": "cam_hospital_bed",
+      "fade": "white",
+      "stage": { "location": "hospital" },
+      "next": "seq_ed2_wake1"
+    },
+    {
+      "id": "seq_ed2_wake1",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "——電子音が、規則正しく鳴っている。白い天井、消毒の匂い。五時間目の古典の途中、窓際の席で崩れるように倒れて、それから、ずいぶん長い夢を見ていたらしい。海のない町の病室に、春の朝の光が、そっと差している。",
+      "stage": { "location": "hospital" },
+      "cameraAngleId": "cam_hospital_bed",
+      "next": "seq_ed2_wake2"
+    },
+    {
+      "id": "seq_ed2_wake2",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "枕元のテーブルに、青い罫線のノートが一冊。薄紫の紐のしおりが、寝殿造りの間取りを写したページにはさまっている。丸椅子とスリッパ——毎日、誰かが見舞いに来ていたことを、それらが静かに告げていた。ノートの端の几帳面な字に、たしかに見覚えがある——気がしたが、うまく像を結ばない。",
+      "stage": { "location": "hospital" },
+      "cameraAngleId": "cam_hospital_table",
+      "next": "seq_ed2_wake3"
+    },
+    {
+      "id": "seq_ed2_wake3",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（御簾の向こうの声。夢のあいだ、ずっと俺の名を呼んでいた——あれは、この枕元から話しかけていた、誰かの声だったのかもしれない）……思い出せそうで、思い出せない。まあいい。とにかく、教室に戻ろう。",
+      "stage": { "location": "hospital" },
+      "cameraAngleId": "cam_hospital_door_pov",
+      "next": "seq_621_ed2"
+    },
+    {
       "id": "seq_611_ed1",
       "type": "dialogue",
       "speaker": "語り",
       "text": "——チャイム。頬に、ノートの感触。顔を上げると、黒板にはまだ寝殿造りの図があった。先生の声。蛍光灯。五時間目の、続き。……夢。夢だった、ことに、なるのだろう。机の上の、それさえなければ。",
       "se": "bell",
+      "fade": "white",
       "next": "seq_612_ed1_tanzaku",
       "stage": {
         "location": "classroom"
@@ -159,6 +244,7 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "——チャイム。目が覚めると、すべては元通りだった。机の上には、何もない。短冊も、紐も。ただ、次の古典の小テストで、あなたは初めて満点を取った。母屋。廂。御簾。すらすらと手が動いた。",
+      "fade": "white",
       "next": "seq_622_ed2_missed",
       "stage": {
         "location": "classroom"

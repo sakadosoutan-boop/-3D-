@@ -23,6 +23,17 @@
     SPOOKY: "ED5_SPOOKY"
   });
 
+  /* 波AB: 第5話の判定から、結末カードへ直行せず、第6話の該当エピローグへ直接つなげる入口。
+     ED1/ED2は現実へ戻るため、病室(昏睡の種明かし)を経て教室панелへ。
+     ED3/ED4/ED5は夢から戻らない結末のため、常世(第5話の続き)からそのまま。 */
+  const STORY_ENDING_ENTRY = Object.freeze({
+    ED1_TRUE: "seq_ed1_wake0",
+    ED2_NORMAL: "seq_ed2_wake0",
+    ED3_GAMEOVER: "seq_630_ed3_fire",
+    ED4_SYNC: "seq_641_ed4",
+    ED5_SPOOKY: "seq_650_ed5_bridge"
+  });
+
   function clamp(value, min, max){
     return Math.max(min, Math.min(max, value));
   }
@@ -66,6 +77,7 @@
       this.manifest = null;
       this.sequenceMap = new Map();
       this.currentSequenceId = null;
+      this._forceEndingId = null; // 波AB: applyEffects中のbrainErosion100到達で予約される結末エピローグ遷移先
       this.state = {
         chapterId: null,
         chapterTitle: "",
@@ -155,6 +167,11 @@
       if(!event)throw new Error(`Story sequence not found: ${this.currentSequenceId}`);
       this.state.history.push({ chapterId: this.state.chapterId, sequenceId: event.id, type: event.type });
       this.applyEffects(event.effects);
+      /* 波AB: applyEffects中にbrainErosion100到達でエピローグ遷移が予約された場合、
+         この場のダイアログ/選択肢フックを発火させず、予約された遷移を優先する */
+      const forced = this._takeForcedEnding();
+      if(forced)return forced;
+      if(this.state.endingId)return { type: "ending", endingId: this.state.endingId };
       this.applyFlag(event.setFlag);
 
       switch(event.type){
@@ -271,7 +288,7 @@
 
     handleEndingCheck(event){
       const endingId = this.determineEnding(event.requirements || {});
-      return this.triggerEnding(endingId);
+      return this.continueToEndingEpilogue(endingId);
     }
 
     choose(optionIndex){
@@ -281,6 +298,8 @@
       const option = (event.options || [])[optionIndex];
       if(!option)throw new Error(`Choice option not found: ${optionIndex}`);
       this.applyEffects(option.effects);
+      const forced = this._takeForcedEnding();
+      if(forced)return forced;
       if(this.state.endingId)return { type: "ending", endingId: this.state.endingId };
       this.applyFlag(option.setFlag);
       return this.goNext(option.next);
@@ -292,11 +311,38 @@
       const success = !!result.success;
       this.state.lastMiniGame = Object.assign({}, mini, { result });
       this.applyEffects(success ? mini.successEffects : mini.failEffects);
+      let forced = this._takeForcedEnding();
+      if(forced)return forced;
       if(this.state.endingId)return { type: "ending", endingId: this.state.endingId };
       if(result.effects)this.applyEffects(result.effects);
+      forced = this._takeForcedEnding();
+      if(forced)return forced;
       if(this.state.endingId)return { type: "ending", endingId: this.state.endingId };
       if(result.flags)this.applyFlag(result.flags);
       return this.goNext(success ? mini.successNext : mini.failNext);
+    }
+
+    /* 波AB: 第5話の判定(ending_check)や侵食100到達時、結末カードへ即座に飛ばず、
+       第6話の該当エピローグ(ED1/ED2は病室からの目覚め、ED3-5は常世の続き)へ自然につなげる。
+       実際の結末カード(triggerEnding)は、そのエピローグの最後のtype:"ending"ノードに
+       到達した時に、通常のダイアログ送りの流れの中で発火する */
+    async continueToEndingEpilogue(endingId){
+      if(this.state.endingId)return { type: "ending", endingId: this.state.endingId };
+      const entry = STORY_ENDING_ENTRY[endingId];
+      if(!entry)return this.triggerEnding(endingId); // 未知の結末IDへの保険
+      await this.loadChapter(6);
+      this.currentSequenceId = entry;
+      this.save();
+      return this.runCurrent();
+    }
+
+    /* applyEffects()内でbrainErosion100到達により立った予約フラグを取り出し、
+       立っていればエピローグへの遷移Promiseを返す(呼び出し側は同期ガードの直後にこれを確認する) */
+    _takeForcedEnding(){
+      if(!this._forceEndingId)return null;
+      const id = this._forceEndingId;
+      this._forceEndingId = null;
+      return this.continueToEndingEpilogue(id);
     }
 
     collect(groupId, itemId){
@@ -327,7 +373,10 @@
         }
       });
       if(this.state.params.brainErosion >= 100){
-        this.triggerEnding(STORY_ENDINGS.SPOOKY);
+        /* 波AB: ここで即座にtriggerEndingせず予約するだけにする。applyEffectsは同期関数だが
+           エピローグ遷移(continueToEndingEpilogue)は章6のロードを伴うため非同期。
+           呼び出し側(runCurrent/choose/resumeFromMiniGame)がこの直後に_takeForcedEnding()で拾う */
+        this._forceEndingId = STORY_ENDINGS.SPOOKY;
         return;
       }
       /* ED5の1段手前(80)を跨いだら一度だけ警告hook(QA改善候補4)。理不尽な即死を避ける */
