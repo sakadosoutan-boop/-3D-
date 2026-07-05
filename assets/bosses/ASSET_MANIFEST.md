@@ -7,15 +7,18 @@ These files are optimized derivatives of user-provided local GLB files. The orig
 Optimization:
 
 - Tool: `@gltf-transform/cli` 4.4.1
-- Texture size: 1024
+- Texture size: 2048
 - Texture format: embedded WebP
-- Mesh compression: disabled, to keep compatibility with the game's lightweight custom GLB loader
+- Mesh simplification: disabled
+- Geometry compression: disabled
+- Vertex attributes: preserved from the raw GLBs; position, normal, UV, and index arrays were verified byte-for-byte after conversion
+- Vertex layout: separate/tightly packed, to keep compatibility with the game's lightweight custom GLB loader
 - Raw working files are excluded from git under `.asset_work/`
 
 Mappings:
 
-- `kappa_boss_1024.glb`: optimized from `boss_candidate_a.glb`
-- `chochin_boss_1024.glb`: optimized from `boss_candidate_b.glb`
-- `hitodama_boss_1024.glb`: optimized from `boss_candidate_c.glb`
-- `oni_boss_1024.glb`: optimized from `boss_candidate_d.glb`
+- `kappa_boss_2048.glb`: shape-preserving optimized derivative of `boss_candidate_a.glb`
+- `chochin_boss_2048.glb`: shape-preserving optimized derivative of `boss_candidate_b.glb`
+- `hitodama_boss_2048.glb`: shape-preserving optimized derivative of `boss_candidate_c.glb`
+- `oni_boss_2048.glb`: shape-preserving optimized derivative of `boss_candidate_d.glb`
 
