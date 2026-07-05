@@ -581,6 +581,54 @@
   }
 
   /* ============================================================
+     C-2b. 常世の禍々しい空(波AB) — 通常のfog/sky色上書きだけでは弱いという
+     実機FBを受け、赤黒いグラデーション+ひび割れ状のメッシュ模様をCanvasTextureで
+     描き、プレイヤーを覆う巨大な逆向き球(スカイドーム)として追加する。
+     api: update(camPos,elapsedT) — 毎フレーム、カメラ位置に追従させ、ごく緩慢に回転
+  ============================================================ */
+  function createTokoyoSkyDome(){
+    const cv=document.createElement("canvas");cv.width=512;cv.height=512;
+    const cx=cv.getContext("2d");
+    const grad=cx.createLinearGradient(0,0,0,512); // 天頂=漆黒 → 地平寄り=禍々しい赤
+    grad.addColorStop(0,"#020000");
+    grad.addColorStop(0.40,"#170203");
+    grad.addColorStop(0.72,"#4d0608");
+    grad.addColorStop(1,"#8a0c0c");
+    cx.fillStyle=grad;cx.fillRect(0,0,512,512);
+    cx.strokeStyle="rgba(0,0,0,.55)"; // 黒いひび割れメッシュ(天頂側)
+    cx.lineWidth=1.4;
+    for(let i=0;i<26;i++){
+      let x=Math.random()*512,y=Math.random()*260;cx.beginPath();cx.moveTo(x,y);
+      const segs=3+((Math.random()*3)|0);
+      for(let s=0;s<segs;s++){x+=(Math.random()-.5)*90;y+=Math.random()*60+10;cx.lineTo(x,y);}
+      cx.stroke();
+    }
+    cx.strokeStyle="rgba(255,40,20,.30)"; // 赤い脈動状メッシュ(地平側)
+    cx.lineWidth=2;
+    for(let i=0;i<18;i++){
+      let x=Math.random()*512,y=300+Math.random()*200;cx.beginPath();cx.moveTo(x,y);
+      const segs=3+((Math.random()*3)|0);
+      for(let s=0;s<segs;s++){x+=(Math.random()-.5)*110;y+=(Math.random()-.5)*50;cx.lineTo(x,y);}
+      cx.stroke();
+    }
+    const tex=new THREE.CanvasTexture(cv);tex.encoding=THREE.sRGBEncoding;
+    const mat=new THREE.MeshBasicMaterial({map:tex,side:THREE.BackSide,fog:false,depthWrite:false,transparent:true,opacity:0});
+    mat.__ownedByStory=true;
+    const mesh=new THREE.Mesh(new THREE.SphereGeometry(700,24,16),mat);
+    const g=new THREE.Group();g.add(mesh);g.renderOrder=-9000;
+    let age=0;
+    const api={group:g,
+      update(camPos,t){
+        g.position.copy(camPos);
+        age=Math.min(1,age+0.02); // ふわっと出現
+        mat.opacity=0.85*age;
+        mesh.rotation.y=t*0.006; // ごく緩慢な回転で「生きている」不穏さを出す
+      }
+    };
+    return api;
+  }
+
+  /* ============================================================
      C-3. 脳侵食オーバーレイ — DOM/CSSで段階演出(20/40/60/80/100)。
      Three.js側の負荷ゼロ。REDUCED_MOTION尊重。
      api: mount() / setLevel(0-100) / dispose()
@@ -1115,7 +1163,7 @@
     createStoryKohagiObject,createStoryHidetoraObject,createStoryUkonObject,
     createMinisterObject,createUtakaiJudgeObject,
     createWhiteTanzakuObject,createTermCardObject,createWakaTanzakuObject,createPurpleCordMotif,
-    createMisuBoundaryEffect,createTokoyoGlitchProps,createBrainErosionOverlay,createUtakaiStageProps,
+    createMisuBoundaryEffect,createTokoyoGlitchProps,createTokoyoSkyDome,createBrainErosionOverlay,createUtakaiStageProps,
     createGreatOniStoryObject,createNameSealEffect,createFinalQuizThreeSeals,
     createModernRoomShell,createHospitalRoomSet,createClassroomSet,createStoryLocation,
     STORY_OFFSTAGE,STORY_CAMERA_ANGLES

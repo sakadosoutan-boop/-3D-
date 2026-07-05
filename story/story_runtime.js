@@ -636,6 +636,9 @@ function stEnsureSeals(){
   api.group.position.set(player.pos.x+fx*2.6,player.pos.y-0.25,player.pos.z+fz*2.6);
   api.group.rotation.y=player.yaw; // 札面をプレイヤーへ向ける
   scene.add(api.group);S.sealFx=api;
+  // 波AB: 直前のcam_ch5_overhead(俯瞰)のまま固定され地面を向き続けるバグ修正。
+  // 三問とも(呼び出しのたび)、正面の札を見る画へ必ず戻す
+  if(typeof stCamRelative==="function")stCamRelative([0,0.3,0],[fx*2.6,-0.1,fz*2.6],52);
 }
 function stPanel(title,bodyHtml,btns){
   if(!/^ログ/.test(title))stVnStop(); // パネル(章メニュー/結末等)ではスキップ解除。ログは例外
@@ -825,6 +828,7 @@ function stCleanupSets(){
   if(S.classroom){SO.disposeGroup(S.classroom.group);S.classroom=null;}
   if(S.hospital){SO.disposeGroup(S.hospital.group);S.hospital=null;}
   if(S.seagullFly){if(S.seagullFly.group&&S.seagullFly.group.parent)SO.disposeGroup(S.seagullFly.group);S.seagullFly=null;}
+  if(S.skyDome){SO.disposeGroup(S.skyDome.group);S.skyDome=null;} // 波AB: 常世スカイドームの後片付け
   if(S.props&&S.props.length){ // 章転換で残留した大道具(着地後の短冊等)を確実に破棄しリーク防止
     S.props.forEach(p=>{if(p&&p.api&&p.api.group)SO.disposeGroup(p.api.group);});
     S.props=[];
@@ -932,7 +936,12 @@ function stEnding(endingId){
   if(endingId==="ED3_GAMEOVER"){ // 波Z/AA: 初回到達時も火桶が消え、白む画面の中で心音が途絶えるところまで見せてからカードを出す
     stEffect({effectId:"ed3_fire_dies",payload:{}});
     setTimeout(showPanel,6200);
-  }else showPanel();
+  }else{
+    // 波AB: 最後の台詞から結末カードが同一フレームで唐突に出ていたのを解消。
+    // 一呼吸(暗転/白転)を挟んでからエピローグとカードをつなげる
+    stFade(endingId==="ED5_SPOOKY"?"black":"white");
+    setTimeout(showPanel,780);
+  }
 }
 function stChapterComplete(chapterId){
   stClearCollectibles();
@@ -1004,7 +1013,17 @@ function startStory(){
       onScene:(sc)=>{
         stApplyPresentation(sc.event);
         if(sc.season&&sc.season!=="tokoyo"&&typeof applySeason==="function"&&sc.season!==APP.season)applySeason(sc.season);
+        const wasTokoyoSky=APP.storyTokoyoSky;
         APP.storyTokoyoSky=(sc.season==="tokoyo"); // 波Z: 常世は赤黒く禍々しい空(通常季節の空色を上書き)
+        if(APP.storyTokoyoSky&&!wasTokoyoSky){ // 波AB: 赤黒いグラデーション+ひび割れメッシュのスカイドームを追加
+          const S2=APP.story;
+          if(S2&&!S2.skyDome&&window.StoryObjects&&window.StoryObjects.createTokoyoSkyDome){
+            S2.skyDome=window.StoryObjects.createTokoyoSkyDome();scene.add(S2.skyDome.group);
+          }
+        }else if(!APP.storyTokoyoSky&&wasTokoyoSky){
+          const S2=APP.story;
+          if(S2&&S2.skyDome){window.StoryObjects.disposeGroup(S2.skyDome.group);S2.skyDome=null;}
+        }
         if(sc.season==="tokoyo"&&typeof snowFall!=="undefined"&&typeof petals!=="undefined"){snowFall.visible=true;petals.visible=true;} // 雪と桜が同時に降る
         const tm=STORY_TIME_MAP[sc.timeOfDay]||(sc.season==="tokoyo"?"night":null);
         if(sc.season==="tokoyo"&&typeof setTime==="function")setTime("night");
@@ -1084,6 +1103,7 @@ function storyUpdate(dt){
   if(S.classroom&&S.classroom.update)S.classroom.update(t);
   if(S.hospital&&S.hospital.update)S.hospital.update(t); // 心電波形・見舞いの気配
   if(S.seagullFly&&S.seagullFly.update)S.seagullFly.update(dt); // 波Z: カモメの飛来演出
+  if(S.skyDome&&S.skyDome.update&&typeof camera!=="undefined")S.skyDome.update(camera.position,t); // 波AB: 常世の禍々しいスカイドーム
   if(S.boardPull){ // 波AA: 黒板に吸い込まれるズーム
     const bp=S.boardPull;bp.t+=dt;const p=Math.min(1,bp.t/bp.dur);
     const e=p*p*(3-2*p); // smoothstep
