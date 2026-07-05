@@ -16,6 +16,34 @@
       },
       "cameraAngleId": "cam_tokoyo_north_tainoya",
       "fade": "white",
+      "next": "seq_501_maku1"
+    },
+    {
+      "id": "seq_501_maku1",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「……ここからは、いちばん長い章にございます。頁も、残り少のうなって参りました。しおりを、深く挟んで」",
+      "next": "seq_501_maku2"
+    },
+    {
+      "id": "seq_501_maku2",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「常世の章は、いちばん奥の話。名の剥がれた場所で、逃げた心と向き合い、それを祓う——そういう、対決の話にございます」",
+      "next": "seq_501_maku3"
+    },
+    {
+      "id": "seq_501_maku3",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「読み手のわたくしにも、少し、こわい頁です。声が、震えるかもしれませぬ。それでも、途中でやめはいたしませぬ」",
+      "next": "seq_501_maku4"
+    },
+    {
+      "id": "seq_501_maku4",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「あなたが物語の果てで、目を開けてくれると信じて。……最後まで、読みます。どうか、帰り道を、忘れませぬよう」",
       "next": "seq_502_tokoyo_effect"
     },
     {
@@ -113,6 +141,7 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「わたくしの名を、どうか——急いで、決めませぬよう」",
+      "emotes": { "kohagi": "sad" },
       "next": "seq_504_minister_possessed"
     },
     {
@@ -130,6 +159,7 @@
       "type": "dialogue",
       "speaker": "左大臣",
       "text": "「この邸は、古きものを守るためにある。名を。作法を。歌を。……新しき世へ返すものなど、ひとつも、ない。若君も、もう、お帰りにならずともよいのじゃ。ここで皆と、永う——」",
+      "emotes": { "minister": "stern" },
       "stage": {
         "ministerShadow": 0.85,
         "ministerPossessed": true
@@ -181,6 +211,7 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「若君！　得物を！　弓、札、太刀——この三月で覚えたすべてを使う時にございます！　あの巨躯、生半可な一当てでは倒れませぬぞ！」",
+      "emotes": { "ukon": "stern" },
       "next": "seq_505d"
     },
     {
@@ -188,6 +219,7 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「若君——どうか。あれはあなたの逃げた心と、雑な言葉が形を得たもの。倒すのではなく、祓うのです。……ご武運を」",
+      "emotes": { "kohagi": "stern" },
       "next": "seq_506_oni_battle"
     },
     {

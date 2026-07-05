@@ -77,6 +77,7 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「これ、秀頼様。あな、見苦し。御前で冠を落とすなど……まずは、その歩き方から直されませ」",
+      "emotes": { "kohagi": "stern" },
       "cameraAngleId": "cam_ch1_misu_gap",
       "next": "seq_002a"
     },
@@ -174,6 +175,7 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……よろし。見えぬ相手にまず礼を尽くすこと。それがこの邸で生きる、第一歩にございます」",
+      "emotes": { "kohagi": "smile" },
       "effects": {
         "fantasySynchro": 5
       },
@@ -305,6 +307,7 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……お見事。名を正しく呼ぶ声は、この邸では灯りと同じ。あなたの周りが、少し明るくなりました」",
+      "emotes": { "kohagi": "smile" },
       "next": "seq_005_aftx1"
     },
     {
@@ -312,6 +315,7 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「はい、よくできました——…………いえ。ようできました、と申しましょう。……お忘れくださいませ、今のは」",
+      "emotes": { "kohagi": "smile" },
       "next": "seq_005_aftx2"
     },
     {
@@ -354,6 +358,7 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……風の音にございましょう。今のは、どなたの名でも、ありませぬ」",
+      "emotes": { "kohagi": "sad" },
       "next": "seq_007b"
     },
     {

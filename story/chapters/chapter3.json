@@ -16,6 +16,34 @@
       },
       "cameraAngleId": "cam_autumn_south_garden",
       "fade": "black",
+      "next": "seq_301_maku1"
+    },
+    {
+      "id": "seq_301_maku1",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「……前の頁は、ここで閉じました。しおりを挟んだところから、また参りましょう。あなたに、届くように」",
+      "next": "seq_301_maku2"
+    },
+    {
+      "id": "seq_301_maku2",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「秋の章は、見ることの慎みを説く話にございます。見えぬものを、見えぬまま、たいせつに抱える——そういう夕べの話」",
+      "next": "seq_301_maku3"
+    },
+    {
+      "id": "seq_301_maku3",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「垣間見、と申します。隙間から、そっと窺うこと。……わたくしも今、頁の隙間から、あなたの寝顔を窺うております」",
+      "next": "seq_301_maku4"
+    },
+    {
+      "id": "seq_301_maku4",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「まぶたは閉じたまま。それでも耳だけは、こちらを向いていると信じて。……読みますね。この、秋のところを」",
       "next": "seq_301b"
     },
     {
@@ -76,6 +104,7 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「若君、念のため。首を伸ばしすぎれば、恋より先に首が落ちますぞ。高欄から半歩、お下がりなされ。——それと、姫君の顔を見ようなどとは、ゆめゆめ」",
+      "emotes": { "ukon": "smile" },
       "next": "seq_304_trigger_kaimami"
     },
     {
@@ -157,6 +186,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……『見えなかった』と、そのまま申せる勇気。それは、今宵の月にいちばん近い答えにございます。見えぬものを見えぬまま抱えること——歌は、そこから生まれまするゆえ」",
+      "emotes": {
+        "kohagi": "smile"
+      },
       "setFlag": {
         "respectfulKaimami": true
       },
@@ -275,6 +307,7 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「——袖に残る香を、返す。……見えぬものを見えぬまま、たいせつに扱う歌。……どうして、あなたがそれを詠めるのでしょうね。まるで——いえ。お送りして参ります」",
+      "emotes": { "kohagi": "sad" },
       "next": "seq_309z"
     },
     {
@@ -330,6 +363,7 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「若君、お下がりを！　……水底の主。垣間見の無礼が溜まって形を成す、と聞いたことはありましたが——本物を見るのは初めてでございます！　弓はそれがしが。若君は札と太刀を！」",
+      "emotes": { "ukon": "stern" },
       "next": "seq_312_kappa_boss"
     },
     {
@@ -426,6 +460,7 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……若君。今宵ひとつだけ、覚えて帰ってくださいませ。恋とは、相手を見つけることではなく——相手の『見えなさ』に、耐えることにございます」",
+      "emotes": { "kohagi": "sad" },
       "next": "seq_315_complete"
     },
     {
