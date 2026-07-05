@@ -461,6 +461,7 @@ function stApplyPresentation(ev){
       if(st.ministerShadow!=null&&S.actors.minister){S.actors.minister.group.visible=true;S.actors.minister.setShadowReach(st.ministerShadow);}
       if(st.ministerPossessed!=null&&S.actors.minister)S.actors.minister.setPossessed(!!st.ministerPossessed);
       if(st.erosionLevel!=null&&erosionFx)erosionFx.setLevel(st.erosionLevel);
+      if(st.silence&&typeof SFX!=="undefined"&&SFX.duckAmbient)SFX.duckAmbient(4200); // 波AE: 破魔の連札直前の静寂(第5話)
       if(st.location==="classroom"||st.location==="hospital")APP.storyIndoor=true; // 波AA: 屋内では鳥・虫の環境音を止める
       else if(st.location)APP.storyIndoor=false;
       if(st.location==="classroom"){stEnsureClassroom(); // 波O: 現代教室セット(ED演出)
