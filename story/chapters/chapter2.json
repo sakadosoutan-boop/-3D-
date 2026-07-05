@@ -69,6 +69,20 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……ございませぬ。この邸に、海などございませぬ。——それなのに、あの白い鳥は、いったいどこから参るのでしょうね」",
+      "next": "seq_202cx_grudge_branch"
+    },
+    {
+      "id": "seq_202cx_grudge_branch",
+      "type": "flag_branch",
+      "flag": "skippedLessons",
+      "trueNext": "seq_202cx_grudge",
+      "falseNext": "seq_203_kohagi_warning"
+    },
+    {
+      "id": "seq_202cx_grudge",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……ときに若君。先だっての、学びを厭われたあの意地——まだ、お持ちでいらっしゃいますか」",
       "next": "seq_203_kohagi_warning"
     },
     {
@@ -282,7 +296,6 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "夏の昼が、ゆっくりと傾いていく。秀頼は邸を歩くための名を拾い、そして、拾ってはいけないような気がする問いをひとつ、袖の内に隠した。——空の白い鳥だけが、この邸に海がないことを知っている。",
-      "setFlag": { "chapter2Cleared": true },
       "next": "chapter_complete"
     }
   ]

@@ -193,6 +193,8 @@
           return this.handleEffect(event);
         case "set_flag":
           return this.goNext(event.next);
+        case "flag_branch":
+          return this.handleFlagBranch(event);
         case "ending_check":
           return this.handleEndingCheck(event);
         case "ending":
@@ -257,6 +259,17 @@
       const ok = count >= (event.count || 0);
       this.hooks.onRequireCollectibles({ event, count, ok }, this.snapshot());
       return this.goNext(ok ? event.successNext : event.failNext);
+    }
+
+    /* flag_branch: {id,type:"flag_branch",flag,trueNext,falseNext,min?}
+       routeFlagsに立てたsetFlagの値を後段で読み返し、台詞を分岐させるための薄いノード。
+       min指定があれば数値しきい値判定、なければtruthiness判定。 */
+    handleFlagBranch(event){
+      const raw = this.state.routeFlags[event.flag];
+      const ok = (typeof event.min === "number")
+        ? (Number(raw) || 0) >= event.min
+        : !!raw;
+      return this.goNext(ok ? event.trueNext : event.falseNext);
     }
 
     handleMiniGame(event){

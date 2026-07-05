@@ -19,6 +19,22 @@ const STORY_ED_TEXT={
 };
 let SM=null,erosionFx=null;
 function stEl(id){return document.getElementById(id);}
+/* ---- 到達済みエンディングの永続化(回想の間のネタバレ防止に使う) ---- */
+const ST_ENDINGS_KEY="shinden3d-story-endings-v1";
+/* seq_603_select_ending の選択肢並び(ED1〜ED5)に対応する endingId */
+const ST_ENDING_ORDER=["ED1_TRUE","ED2_NORMAL","ED3_GAMEOVER","ED4_SYNC","ED5_SPOOKY"];
+function stLoadEndings(){try{const a=JSON.parse(localStorage.getItem(ST_ENDINGS_KEY));return Array.isArray(a)?a:[];}catch(e){return[];}}
+function stSaveEnding(id){try{const a=stLoadEndings();if(id&&a.indexOf(id)<0){a.push(id);localStorage.setItem(ST_ENDINGS_KEY,JSON.stringify(a));}}catch(e){}}
+/* ---- ED4「冠を深く被り直す」画面演出 ----
+   一人称ゆえ冠そのものは映らない。画面上辺から降りる暗い翳り(#stCrownVeil)と、
+   3D描画canvas(#c)のわずかな彩度低下で「外界の音が遠ざかる」感覚を表す。
+   REDUCED_MOTION時はトランジションなしの即時適用。stCleanupSets/stExitToTitleで必ず解除。 */
+function stSetCrownDeep(on){
+  const reduced=(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION);
+  const veil=stEl("stCrownVeil");if(veil)veil.style.transition=reduced?"none":"opacity 1.2s ease";
+  const cv=document.getElementById("c");if(cv)cv.style.transition=reduced?"none":"filter 1.2s ease";
+  document.body.classList.toggle("st-crown-deep",!!on);
+}
 /* ---- CSS/DOM 注入 ---- */
 function stInject(){
   if(stEl("stBox"))return; // 注入済み(プレースホルダ#storyHudはHTMLに常設)
@@ -58,6 +74,16 @@ function stInject(){
     " border:1px solid var(--kin);padding:9px 13px;font-size:12.5px;border-radius:6px;letter-spacing:.04em;font-family:var(--serif);",
     " text-align:left;min-height:42px;line-height:1.45;flex:0 0 auto}",
     "#storyHud .st-opt:hover{filter:brightness(1.15)}",
+    /* 回想の間: 未到達の結末は押せない伏せ札に(ネタバレ防止) */
+    "#storyHud .st-opt.locked{opacity:.5;cursor:default;filter:grayscale(.7);color:#9a8f7a;",
+    " background:linear-gradient(155deg,#2a2420,#1c1814);border-color:rgba(120,110,90,.5)}",
+    "#storyHud .st-opt.locked:hover{filter:grayscale(.7)}",
+    "#storyHud .st-opt.st-opt-back{background:linear-gradient(155deg,#2f2a20,#1c1810);color:#cbb98f;text-align:center}",
+    /* ED4: 冠を深く被り直す翳り。上辺から降りる暗さ+canvasの彩度低下 */
+    "#stCrownVeil{position:fixed;inset:0;z-index:45;pointer-events:none;opacity:0;",
+    " background:linear-gradient(180deg,rgba(6,4,10,.82),rgba(6,4,10,.5) 26%,rgba(6,4,10,0) 58%)}",
+    "body.st-crown-deep #stCrownVeil{opacity:1}",
+    "body.st-crown-deep #c{filter:saturate(.72) brightness(.92)}",
     /* 波Z: 名を呼ぶ選択肢の崩れ(常世が名を拒むような不穏なグリッチ) */
     "#storyHud .st-glitch{position:relative;display:inline-block}",
     "#storyHud .st-glitch::before,#storyHud .st-glitch::after{content:attr(data-text);position:absolute;left:0;top:0;width:100%;overflow:hidden;background:inherit}",
@@ -97,6 +123,7 @@ function stInject(){
     '<div class="st-next" id="stNextWrap"><button id="stNext">つぎへ ▶</button></div><div class="st-opts" id="stOpts"></div></div>'+
     '<div class="st-panel" id="stPanel"><div class="st-card"><h3 id="stPanelTitle"></h3><div class="st-body" id="stPanelBody"></div><div class="st-btns" id="stPanelBtns"></div></div></div>';
   const fade=document.createElement("div");fade.id="storyFade";document.body.appendChild(fade);
+  const crownVeil=document.createElement("div");crownVeil.id="stCrownVeil";document.body.appendChild(crownVeil); // ED4の翳り
   stEl("stQuit").onclick=()=>{beep(440,.06);stExitToTitle();};
   stEl("stMenuBtn").onclick=()=>{beep(560,.05);stVnStop();stChapterMenu();};
   stEl("stAuto").onclick=()=>{const v=APP.story&&APP.story.vn;if(!v)return;v.auto=!v.auto;v.skip=false;stVnButtons();
@@ -474,6 +501,11 @@ function stApplyPresentation(ev){
       if((st.location==="mansion"||st.location==="classroom")&&S.hospital){ // 病室→他所へ移ったら畳む
         window.StoryObjects.disposeGroup(S.hospital.group);S.hospital=null;
       }
+      // ED4: 冠を深く被り直す=画面上辺からの翳り+彩度低下(一人称ゆえ冠は映さず、感覚で示す)
+      if(st.crownState==="deep")stSetCrownDeep(true);
+      else if(st.crownState!=null)stSetCrownDeep(false);
+      // ED1: 机上に白い短冊と、添えられた薄紫の紐を実際に置いて寄る
+      if(st.purpleCord)stPlaceEd1Tanzaku();
     }
   }
   if(ev.cameraAngleId)stCamera(ev.cameraAngleId);
@@ -605,9 +637,15 @@ function stShowChoice(text,options,ev){
   // 波O: 破魔の連札(第5話最終3問)は3D札を眼前に浮かべ、選択と連動して光る/割れる/燃える
   const isSeal=ev&&/^seq_(508|509|510)_final_quiz/.test(ev.id||"");
   if(isSeal)stEnsureSeals();
+  // 回想の間(seq_603_select_ending): 未到達の結末はネタバレ防止のため伏せ札にして押せなくする
+  const gating=ev&&ev.id==="seq_603_select_ending";
+  const reached=gating?stLoadEndings():null;
   const host=stEl("stOpts");host.innerHTML="";
   options.forEach((o,i)=>{
     const b=document.createElement("button");b.className="st-opt";
+    if(gating&&reached&&reached.indexOf(ST_ENDING_ORDER[i])<0){ // 未到達=伏せ札(onclick無し)
+      b.classList.add("locked");b.textContent=(i+1)+". ？？？（未到達）";host.appendChild(b);return;
+    }
     if(o.glitchText){ // 波Z: 名を呼ぶ選択肢が崩れて見える(常世が名を拒むような不穏さ)
       const label=(i+1)+". ";
       const safe=String(o.text).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
@@ -626,6 +664,12 @@ function stShowChoice(text,options,ev){
     };
     host.appendChild(b);
   });
+  if(gating){ // 全ての結末が未到達でも「章をえらぶ」へ戻れる導線を必ず用意する
+    const back=document.createElement("button");back.className="st-opt st-opt-back";
+    back.textContent="（章をえらぶへ戻る）";
+    back.onclick=()=>{beep(520,.05);stChapterMenu();};
+    host.appendChild(back);
+  }
 }
 /* 破魔の連札の3D演出(プレイヤー正面に三枚)。各問で新調する */
 function stEnsureSeals(){
@@ -800,6 +844,14 @@ function stEffect(info){
       S._ed5FlickerT=setInterval(()=>erosionFx.flickerGlyph(),260); // 通常より高頻度で旧仮名が揺らぐ=崩壊感
     }
     if(typeof SFX!=="undefined"&&SFX.startEd5Chaos)SFX.startEd5Chaos();
+    // 3D空間側の崩壊感: プレイヤー周囲に「ほどけた文字」の板ポリを漂わせる
+    if(SO&&SO.createEd5GlyphDebris&&!S.props.some(p=>p&&p.kind==="ed5debris")){
+      const reduced=(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION);
+      const api=SO.createEd5GlyphDebris(reduced?10:13);
+      api.group.position.set(player.pos.x,player.pos.y-1.6,player.pos.z); // 足元基準に空間へ散らす
+      scene.add(api.group);
+      S.props.push({kind:"ed5debris",api,reduced});
+    }
   }
   // summer_heat_haze / ending_gallery_ready は世界側の夏演出・回想UIがそのまま担う(追加なし)
 }
@@ -810,6 +862,32 @@ function stEnsureClassroom(){
   scene.add(S.classroom.group);
   S.classroom.setBoard("waka","御簾=隔てる/つなぐ"); // 黒板に平面図+書き足し
   if(typeof saigenSe==="function")saigenSe("chalk"); // 波Y: チョークの音で黒板の気配を添える
+}
+/* ED1(御簾を上げる朝): 栞の机の上に、白い短冊(表は無地)と、添えられた薄紫の紐を置いて寄る。
+   短冊+紐は S.props に kind:"ed1tanzaku" で積み、章転換の stCleanupSets で破棄される。 */
+function stPlaceEd1Tanzaku(){
+  const S=APP.story,SO=window.StoryObjects;if(!S||!SO)return;
+  stEnsureClassroom(); // 直前のノートで生成済みだが保険
+  if(!S.props.some(p=>p&&p.kind==="ed1tanzaku")){
+    const a=(S.classroom&&S.classroom.anchor)||{x:-260,y:0,z:300};
+    const dx=a.x+1.0,dz=a.z+1.6,topY=a.y+0.73; // 栞の席(窓際最後列)の机上
+    const wrap=new THREE.Group();
+    const tan=SO.createWhiteTanzakuObject();tan.setText(""); // 表には、もう何も書かれていない
+    tan.group.position.set(dx-0.05,topY+0.006,dz-0.03);
+    tan.group.rotation.set(-Math.PI/2,0,0.16);              // 机に伏せて置く
+    wrap.add(tan.group);
+    const cord=SO.createPurpleCordMotif();
+    cord.group.position.set(dx+0.12,topY+0.012,dz+0.05);
+    cord.group.rotation.set(-Math.PI/2,0,0.5);              // 結ばれた跡のように、短冊に添える
+    cord.group.scale.setScalar(0.9);
+    wrap.add(cord.group);
+    wrap.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+    scene.add(wrap);
+    S.props.push({kind:"ed1tanzaku",api:{group:wrap},cord});
+    if(typeof saigenSe==="function")saigenSe("chalk");
+  }
+  // 机上の短冊へ寄る。ノードの cameraAngleId(cam_classroom_shiori)より後に効かせたいので次tickで上書き
+  setTimeout(()=>{if(APP.mode==="story"&&APP.story&&APP.story.props.some(p=>p&&p.kind==="ed1tanzaku"))stCamera("cam_classroom_tanzaku");},0);
 }
 /* 波W: 現実の病室セット(第6話 回想の間の枠)。cam_hospital_* が絶対座標で寄る */
 function stEnsureHospital(){
@@ -823,6 +901,8 @@ function stCleanupSets(){
   if(S._ed3HbTimers){S._ed3HbTimers.forEach(clearTimeout);S._ed3HbTimers=null;} // ED3の心音/心電音タイマー
   if(S._ed5FlickerT){clearInterval(S._ed5FlickerT);S._ed5FlickerT=null;} // ED5の崩壊フリッカー
   if(typeof SFX!=="undefined"&&SFX.stopEd5Chaos)SFX.stopEd5Chaos(); // ED5のチャイム2倍速/逆再生BGMを必ず止める
+  if(typeof camera!=="undefined")camera.rotation.z=0; // ED5の微ロールを必ず0へ戻す
+  stSetCrownDeep(false); // ED4の翳りを必ず解除
   stSetMinimalUi(false); // ED3で隠したトップバー等を必ず復元
   if(S.oni){SO.disposeGroup(S.oni.group);S.oni=null;}
   if(S.sealFx){SO.disposeGroup(S.sealFx.group);S.sealFx=null;}
@@ -924,6 +1004,11 @@ function stMiniGame(info){
 /* ---- エンディング/章クリア ---- */
 function stEnding(endingId){
   stClearCollectibles();stVnStop();
+  stSaveEnding(endingId); // 到達を永続化(回想の間のネタバレ防止に使う)
+  // ED5の漂流とカメラの微ロールをここで止める(結末カードは静かに見せる)
+  if(APP.story&&APP.story.props){for(let i=APP.story.props.length-1;i>=0;i--){
+    const p=APP.story.props[i];if(p&&p.kind==="ed5debris"){window.StoryObjects.disposeGroup(p.api.group);APP.story.props.splice(i,1);}}}
+  if(typeof camera!=="undefined")camera.rotation.z=0;
   if(APP.story&&APP.story.sealFx){window.StoryObjects.disposeGroup(APP.story.sealFx.group);APP.story.sealFx=null;}
   const ed=STORY_ED_TEXT[endingId]||{t:endingId,d:""};
   // 結末カードは必ず読めるよう、侵食演出はここで解除(前段の演出で役目は果たしている)
@@ -1074,6 +1159,8 @@ function stExitToTitle(){
   window.STORY_SOLIDS=[];     // 障害物コリジョン解除
   clearTimeout(window._stAutoT);
   if(erosionFx)erosionFx.setLevel(0);
+  stSetCrownDeep(false); // ED4の翳り・彩度低下を必ず解除
+  if(typeof camera!=="undefined")camera.rotation.z=0; // ED5のロールを必ず戻す
   APP.story=null;APP.storyQuiz=null;
   document.body.classList.remove("story-mode");
   const hud=stEl("storyHud");if(hud){hud.style.display="none";stEl("stBox").style.display="none";stEl("stPanel").style.display="none";}
@@ -1140,6 +1227,19 @@ function storyUpdate(dt){
       p.emberMat.opacity=a;p.emberMat.color.setHex(a>0.4?0xff5a22:0x662410);
       p.emberLight.intensity=1.2*a;
       if(p.t>4.2){window.StoryObjects.disposeGroup(p.api.group);S.props.splice(i,1);}
+    }
+    else if(p.kind==="ed1tanzaku"){ // ED1: 添えられた薄紫の紐だけが、そっと揺れる
+      if(p.cord&&p.cord.update)p.cord.update(t);
+    }
+    else if(p.kind==="ed5debris"){ // ED5: ほどけた文字が逆さのまま漂い上昇する+カメラの微ロール
+      if(!p.reduced){
+        p.api.group.children.forEach(pl=>{const u=pl.userData;if(!u)return;
+          pl.rotation.y+=dt*u.spin;
+          pl.rotation.z=Math.PI+Math.sin(t*.6+u.ph)*.25;       // 逆さのまま揺らぐ
+          pl.position.y+=dt*u.rise;if(pl.position.y>3.6)pl.position.y=0.2; // ゆっくり上昇してループ
+        });
+        if(typeof camera!=="undefined")camera.rotation.z=Math.sin(t*.7)*.02; // 世界が傾ぐ微ロール
+      }
     }
   }
   // 収集: 近づくだけで手に入る(タップ不要・スマホ配慮)。目標行に残数と最寄りの方角・距離を出す

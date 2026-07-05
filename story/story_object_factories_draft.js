@@ -1013,6 +1013,22 @@
     g.add(cyl(.19,.19,.05,M({color:0xd8cfc0,roughness:.85}),2.35,.44,-1.0,12));
     g.add(cyl(.03,.03,.42,steel,2.35,.21,-1.0,8));
     [[-.02],[.14]].forEach((s,i)=>g.add(box(.11,.03,.26,M({color:0x3a6b4a,roughness:.9}),2.0+s[0],.02,.4+i*.02))); // 波AA: 緑のスリッパ
+    // 春の朝の光——窓から斜めに差す光条(加算合成でふわりと明るむ)。「そっと差している」を視覚化
+    const shaftMat=new THREE.MeshBasicMaterial({color:0xfff4dc,transparent:true,opacity:.08,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});shaftMat.__ownedByStory=true;
+    const shafts=new THREE.Group();
+    [[-2.05,1.25,-.72,.52,.09],[-1.72,1.12,-.50,.42,.07]].forEach(p=>{
+      shaftMat.opacity=p[4]; // 二条それぞれ濃さを変える(共有matだが最後の値でまとめて描かれるのは可)
+      const beam=plane(p[3],3.7,shaftMat,p[0],p[1],p[2]);beam.rotation.z=-.55;shafts.add(noShadow(beam));
+    });
+    shaftMat.opacity=.085;
+    g.add(shafts);
+    // 光条の中を漂う塵(小さな加算プレーンをゆっくり上下)
+    const moteMat=new THREE.MeshBasicMaterial({color:0xfff2d4,transparent:true,opacity:.5,blending:THREE.AdditiveBlending,depthWrite:false});moteMat.__ownedByStory=true;
+    const motes=[];
+    for(let i=0;i<6;i++){
+      const mo=plane(.022,.022,moteMat,-2.3+Math.random()*1.05,.7+Math.random()*1.5,-.78+Math.random()*.4);
+      mo.userData={y0:mo.position.y,ph:Math.random()*6,sp:.4+Math.random()*.5};motes.push(noShadow(mo));shafts.add(mo);
+    }
     let curtainOpen=1,beepUp=false;
     const api={group:g,anchor,
       setCurtain(v){curtainOpen=Math.max(0,Math.min(1,v));
@@ -1023,6 +1039,8 @@
         if(up&&!beepUp&&typeof beep==="function")beep(880,.05,"sine",.05);   // 波AA: 心電図の電子音
         beepUp=up;
         curtain.children.forEach((f,i)=>f.rotation.y=(i%2?1:-1)*(.18+Math.sin(t*.8+i)*.02));
+        if(!(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION))    // 塵はゆっくり上下に漂う(REDUCED_MOTION時は静止)
+          motes.forEach(mo=>{const u=mo.userData;mo.position.y=u.y0+Math.sin(t*u.sp+u.ph)*.14;mo.material.opacity=.35+Math.sin(t*u.sp*1.7+u.ph)*.2;});
         cordMark.update(t);}
     };
     g.userData.api=api;return api;
@@ -1092,6 +1110,15 @@
     // 蛍光灯2本
     for(let i=0;i<2;i++){const fl=new THREE.MeshBasicMaterial({color:0xf2f4ee});fl.__ownedByStory=true;
       g.add(noShadow(box(1.8,.04,.12,fl,-1.2+i*2.4,3.02,0,false)));}
+    // 窓の外を舞う桜(ED1の春の朝)。薄桃色の小さな花びらが緩やかに落ちてループする
+    const petalMat=new THREE.MeshBasicMaterial({color:0xf7cdd8,transparent:true,opacity:.9,side:THREE.DoubleSide,depthWrite:false});petalMat.__ownedByStory=true;
+    const petals=[];
+    for(let i=0;i<8;i++){
+      const pt=plane(.09,.06,petalMat,0,0,0);
+      pt.userData={x0:4.28+Math.random()*.5,ph:Math.random()*6,fall:.16+Math.random()*.14,sw:.2+Math.random()*.3};
+      pt.position.set(pt.userData.x0,2.4-Math.random()*3,-1.9+Math.random()*3.8);
+      petals.push(noShadow(pt));g.add(pt);
+    }
     let wakaTex=null;
     const api={group:g,anchor,shioriSeat,
       /* 黒板を平面図/和歌の板書に切替(EDの「御簾=隔てる/つなぐ」の書き足し等) */
@@ -1103,9 +1130,52 @@
           boardTex.needsUpdate=true;
         }
       },
-      update(t){if(shioriSeat&&shioriSeat.userData.cord)shioriSeat.userData.cord.update(t);}
+      update(t){
+        if(shioriSeat&&shioriSeat.userData.cord)shioriSeat.userData.cord.update(t);
+        if(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION)return; // 静止配置のまま(初期位置)
+        petals.forEach(pt=>{const u=pt.userData;
+          pt.position.y=2.6-((t*u.fall+u.ph)%3.2);                    // 上端2.6→下端-0.6を落ち続けてループ
+          pt.position.x=u.x0+Math.sin(t*u.sw+u.ph)*.13;              // 横にゆらめきながら舞う
+          pt.rotation.z=t*u.sw+u.ph;pt.rotation.y=t*.6+u.ph;});
+      }
     };
     g.userData.api=api;return api;
+  }
+
+  /* ============================================================
+     E-3. ED5「ほどけた文字」の漂流 — 世界崩壊(ed5_world_break)の3D側の強化。
+     崩し字風の縦線・かな断片を描いた板ポリを空間に散らし、逆さのままゆっくり漂わせる。
+     生成のみここで担い、回転・上昇は runtime の storyUpdate が行う(userData を参照)。
+     api: group / children[].userData={spin,rise,ph} を持つ
+  ============================================================ */
+  function createEd5GlyphDebris(count){
+    count=count||12;
+    const g=new THREE.Group();
+    const frags=["いろは","ちりぬる","をわかよ","たれそつ","ねならむ","うゐのお"]; // ほどけていく手習い歌
+    // CanvasTextureは数種を使い回す(枚数ぶん生成しない=低負荷)
+    const mats=[];
+    for(let k=0;k<3;k++){
+      const c=document.createElement("canvas");c.width=64;c.height=168;const x=c.getContext("2d");
+      x.clearRect(0,0,64,168);
+      x.strokeStyle="rgba(38,26,20,.68)";x.lineWidth=2.2;x.lineCap="round";
+      for(let i=0;i<3;i++){const bx=16+i*17;x.beginPath();x.moveTo(bx+(Math.random()-.5)*6,12); // ほどけた縦線(崩し字の名残)
+        for(let y=22;y<156;y+=17)x.lineTo(bx+(Math.random()-.5)*13,y);x.stroke();}
+      x.fillStyle="rgba(30,22,18,.82)";x.font="21px 'Hiragino Mincho ProN',serif";x.textAlign="center";x.textBaseline="middle";
+      const frag=frags[(Math.random()*frags.length)|0];
+      for(let i=0;i<frag.length&&i<4;i++)x.fillText(frag[i],32,30+i*36);
+      const tex=new THREE.CanvasTexture(c);tex.encoding=THREE.sRGBEncoding;
+      const m=new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:.82,side:THREE.DoubleSide,depthWrite:false});m.__ownedByStory=true;mats.push(m);
+    }
+    for(let i=0;i<count;i++){
+      const pl=new THREE.Mesh(new THREE.PlaneGeometry(.34,.86),mats[i%mats.length]);
+      const a=i*Math.PI*2/count+Math.random()*.5,r=2.2+Math.random()*2.8;
+      pl.position.set(Math.cos(a)*r,.4+Math.random()*2.7,Math.sin(a)*r);
+      pl.rotation.z=Math.PI+(Math.random()-.5)*.6;      // 逆さに漂う
+      pl.rotation.y=Math.random()*Math.PI*2;
+      pl.userData={spin:(Math.random()-.5)*.5,rise:.12+Math.random()*.18,ph:Math.random()*6};
+      noShadow(pl);g.add(pl);
+    }
+    const api={group:g};g.userData.api=api;return api;
   }
 
   /* ロケーション一括生成: kind→セット。story側は
@@ -1153,6 +1223,7 @@
     cam_hospital_door_pov:   {pos:[-257.2,1.55,242.2],look:[-258.8,1.00,238.7],fov:60}, // 入口から一望(秀頼の視点)
     cam_classroom_board:     {pos:[-260.0,1.50,301.8],look:[-260.0,1.60,296.8],fov:55}, // 黒板の平面図
     cam_classroom_shiori:    {pos:[-259.8,1.35,302.6],look:[-259.0,0.75,301.6],fov:50}, // 栞の席(肩越し)
+    cam_classroom_tanzaku:   {pos:[-258.75,1.12,302.15],look:[-259.05,0.72,301.58],fov:38}, // ED1: 机上の白い短冊と薄紫の紐へ寄る
     cam_classroom_sleepy:    {pos:[-261.2,0.95,300.2],look:[-260.0,1.30,296.8],fov:62}  // 机に伏せた低い目線(1話冒頭)
   };
 
@@ -1165,7 +1236,7 @@
     createWhiteTanzakuObject,createTermCardObject,createWakaTanzakuObject,createPurpleCordMotif,
     createMisuBoundaryEffect,createTokoyoGlitchProps,createTokoyoSkyDome,createBrainErosionOverlay,createUtakaiStageProps,
     createGreatOniStoryObject,createNameSealEffect,createFinalQuizThreeSeals,
-    createModernRoomShell,createHospitalRoomSet,createClassroomSet,createStoryLocation,
+    createModernRoomShell,createHospitalRoomSet,createClassroomSet,createStoryLocation,createEd5GlyphDebris,
     STORY_OFFSTAGE,STORY_CAMERA_ANGLES
   };
 })(typeof window!=="undefined"?window:globalThis);
