@@ -254,7 +254,7 @@
           "next": "seq_407_r1",
           "effects": {
             "fantasySynchro": 7,
-            "utakaiPrepScore2": 2
+            "utakaiPrepScore": 2
           }
         },
         {
@@ -262,7 +262,7 @@
           "next": "seq_407_r2",
           "effects": {
             "brainErosion": 10,
-            "utakaiPrepScore2": 0
+            "utakaiPrepScore": 0
           }
         },
         {
@@ -271,7 +271,7 @@
           "effects": {
             "realityEgo": 4,
             "fantasySynchro": 6,
-            "utakaiPrepScore2": 2
+            "utakaiPrepScore": 2
           }
         }
       ]
@@ -340,6 +340,9 @@
           "effects": {
             "fantasySynchro": 14,
             "utakaiReturnTone": 2
+          },
+          "setFlag": {
+            "desireToStayForever": true
           }
         },
         {
@@ -392,7 +395,7 @@
       "id": "seq_409zx_prep_branch",
       "type": "flag_branch",
       "flag": "utakaiPrepScore",
-      "min": 2,
+      "min": 3,
       "trueNext": "seq_409zx_prep",
       "falseNext": "seq_410_trigger_utakai"
     },
@@ -400,7 +403,7 @@
       "id": "seq_409zx_prep",
       "type": "dialogue",
       "speaker": "判者",
-      "text": "「……『雪』の答え、良き風であった。その風、本番でも見失うでないぞ」",
+      "text": "「……稽古の二問、良き風が吹いておった。その風、本番でも見失うでないぞ」",
       "next": "seq_410_trigger_utakai"
     },
     {

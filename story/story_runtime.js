@@ -139,6 +139,8 @@ function stInject(){
     "#stEd1Glow{position:fixed;inset:0;z-index:44;pointer-events:none;opacity:0;transition:opacity 2.4s ease;",
     " background:radial-gradient(ellipse 90% 70% at 84% 8%,rgba(255,238,196,.34),rgba(255,238,196,.10) 45%,transparent 72%)}",
     "body.st-ed1-glow #stEd1Glow{opacity:1}",
+    /* 波AJ: ED5——3Dの質感が剥がれ、世界が白黒の線画(教科書の挿絵)に潰されていく */
+    "body.st-ed5-lineart #c{filter:grayscale(1) contrast(1.75) brightness(1.12);transition:filter 6s ease}",
     /* 波Z/AI: 名を呼ぶ選択肢/台詞の崩れ(常世が名を拒むような不穏なグリッチ)。
        波AI: 実機で文字が判読できてしまっていたため、強いぼかし+透過+ジッターで完全に読めなくする
        (以前の強化が埋め込みコピー側にだけ入っておりソース再埋め込みで消えていた——ソースへ正しく反映) */
@@ -859,7 +861,9 @@ function stDebugRefresh(snap){
 function stSpawnCollectibles(info){
   const S=APP.story,SO=window.StoryObjects;if(!S||!SO)return;
   stClearCollectibles();
-  const items=(info.positions||[]).map(p=>{
+  // 波AJ: セーブ復帰などで再スポーンする際、取得済みの札は再出現させない(二重取得防止)
+  const got=(SM&&SM.state&&SM.state.collected&&SM.state.collected[info.groupId])||{};
+  const items=(info.positions||[]).filter(p=>!got[p.id]).map(p=>{
     const api=(info.kind==="waka_tanzaku")?SO.createWakaTanzakuObject(p.label||""):SO.createTermCardObject(p.label||"");
     const y=(typeof groundH==="function"?groundH(p.x,p.z):0)+1.05;
     api.group.position.set(p.x,y,p.z);api.group.userData.baseY=y;api.group.userData.ph=Math.random()*6;
@@ -1000,6 +1004,7 @@ function stEffect(info){
       S._ed5FlickerT=setInterval(()=>erosionFx.flickerGlyph(),260); // 通常より高頻度で旧仮名が揺らぐ=崩壊感
     }
     if(typeof SFX!=="undefined"&&SFX.startEd5Chaos)SFX.startEd5Chaos();
+    document.body.classList.add("st-ed5-lineart"); // 波AJ: 3D質感が剥がれ、白黒の線画=教科書のページへ潰されていく
     // 3D空間側の崩壊感: プレイヤー周囲に「ほどけた文字」の板ポリを漂わせる
     if(SO&&SO.createEd5GlyphDebris&&!S.props.some(p=>p&&p.kind==="ed5debris")){
       const reduced=(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION);
@@ -1060,6 +1065,7 @@ function stCleanupSets(){
   if(typeof camera!=="undefined")camera.rotation.z=0; // ED5の微ロールを必ず0へ戻す
   stSetCrownDeep(false); // ED4の翳りを必ず解除
   document.body.classList.remove("st-ed1-glow");clearTimeout(window._stEd1GlowT); // ED1の朝光も畳む
+  document.body.classList.remove("st-ed5-lineart"); // ED5の線画化も解除
   stSetMinimalUi(false); // ED3で隠したトップバー等を必ず復元
   if(S.oni){SO.disposeGroup(S.oni.group);S.oni=null;}
   if(S.sealFx){SO.disposeGroup(S.sealFx.group);S.sealFx=null;}
@@ -1125,6 +1131,10 @@ function stMiniGame(info){
     }
     const prevDiff=APP.taijiDifficulty;
     if(oniFinal)APP.taijiDifficulty="hard"; // 決戦は歯応え重視(通常戦より攻撃頻度・弾数増)
+    else if(SM&&SM.state&&SM.state.routeFlags&&SM.state.routeFlags.tabooFaceObserved){ // 波AJ: 「顔立ちを覚えた」と言い張った者には水底の主が牙を剥く(禁忌の代償)
+      APP.taijiDifficulty="hard";
+      setTimeout(()=>toast("……「見た」と言い張った口を、水底の主が憶えている。水が、重い",3200),1200);
+    }
     APP.storyTaiji={
       rush:[oniFinal?"autumn":"summer"], // 夏=河童の主 / 秋=大鬼(第2形態あり)
       kappaOnly:!oniFinal,               // 波Q: 第3話は河童単体(提灯お化けを出さない)
@@ -1434,6 +1444,7 @@ function stExitToTitle(){
   if(erosionFx)erosionFx.setLevel(0);
   stSetCrownDeep(false); // ED4の翳り・彩度低下を必ず解除
   document.body.classList.remove("st-ed1-glow");clearTimeout(window._stEd1GlowT); // ED1の朝光も畳む
+  document.body.classList.remove("st-ed5-lineart"); // ED5の線画化も解除
   const chc=stEl("stChCard");if(chc)chc.classList.remove("show"); // 章題カードの残留防止
   if(typeof camera!=="undefined")camera.rotation.z=0; // ED5のロールを必ず戻す
   APP.story=null;APP.storyQuiz=null;

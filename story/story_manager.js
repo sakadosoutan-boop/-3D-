@@ -382,7 +382,11 @@
           const max = key === "brainErosion" ? 100 : 999;
           this.state.params[key] = clamp((this.state.params[key] || 0) + Number(effects[key] || 0), 0, max);
         }else{
-          this.state.routeFlags[key] = effects[key];
+          /* 波AJ: 数値のrouteFlag(稽古スコア等)は代入でなく加算して蓄積する。
+             初回代入(undefined→値)と真偽値/文字列の代入は従来どおり */
+          const prev = this.state.routeFlags[key];
+          this.state.routeFlags[key] =
+            (typeof effects[key] === "number" && typeof prev === "number") ? prev + effects[key] : effects[key];
         }
       });
       if(this.state.params.brainErosion >= 100){
@@ -447,7 +451,10 @@
          最終問で相手を「あなた」と呼べた者(calledYou)は、同調値が高くても
          理想化を脱しているため、婿入りではなく現へ帰す(ED2へ)。
          これがないと、良プレイほど fantasySynchro が先行して最良プレイがED4に落ちる */
-      if(!f.calledYou && p.fantasySynchro >= p.realityEgo + (requirements.syncGap || 25)){
+      /* 波AJ: 第4話で「帰らぬ夢だけを願う歌」を詠んだ者(desireToStayForever)は、
+         永住願望が既に言葉になっているため、より小さな同調差でも常世の婿(ED4)へ傾く */
+      const gap = f.desireToStayForever ? 10 : (requirements.syncGap || 25);
+      if(!f.calledYou && p.fantasySynchro >= p.realityEgo + gap){
         return STORY_ENDINGS.BAD_SYNC;
       }
 

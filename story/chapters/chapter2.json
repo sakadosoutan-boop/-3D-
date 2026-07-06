@@ -120,13 +120,23 @@
       "type": "flag_branch",
       "flag": "skippedLessons",
       "trueNext": "seq_202cx_grudge",
-      "falseNext": "seq_203_kohagi_warning"
+      "falseNext": "seq_202cx_praise"
     },
     {
       "id": "seq_202cx_grudge",
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……ときに若君。先だっての、学びを厭われたあの意地——まだ、お持ちでいらっしゃいますか」",
+      "next": "seq_203_kohagi_warning"
+    },
+    {
+      "id": "seq_202cx_praise",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……先だっては、邸の名を、熱心に覚えてくださいました。その健気さがあれば——今日の異変も、きっと乗り越えられましょう」",
+      "emotes": {
+        "kohagi": "smile"
+      },
       "next": "seq_203_kohagi_warning"
     },
     {
