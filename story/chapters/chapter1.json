@@ -25,7 +25,7 @@
       "id": "seq_001b",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "——五時間目、古典。窓際の席で、芹沢秀頼はノートに落書きをしていた。「母屋？　廂？　ぜんぶ部屋でよくない？」。隣の席から細い手が伸びて、間違えた「御簾」の字を、黙って直していった。",
+      "text": "——五時間目、古典。窓際の席で、時任蓮（ときとう・れん）はノートに落書きをしていた。「母屋？　廂？　ぜんぶ部屋でよくない？」。隣の席から細い手が伸びて、間違えた「御簾」の字を、黙って直していった。",
       "se": "pencil",
       "next": "seq_001c",
       "cameraAngleId": "cam_classroom_shiori"
@@ -70,6 +70,27 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "板張りの床。頬に当たる、ひやりとした木の感触。見たこともない装束が、自分の体を包んでいる。立ち上がろうとした拍子に、頭から黒い冠がずり落ちた。どこかで、女たちの忍び笑い。衣擦れの音が、さらさらと近づいてくる。",
+      "next": "seq_001f1"
+    },
+    {
+      "id": "seq_001f1",
+      "type": "dialogue",
+      "speaker": "侍",
+      "text": "「秀頼様——？　いや、様子がおかしい。歩みも、言葉も……皆、出会え！　出会えッ！」",
+      "next": "seq_001f2"
+    },
+    {
+      "id": "seq_001f2",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「——お控えなされ。秀頼様は、狐に憑かれなさっただけ。しばし言葉が乱れましょうが、じきに戻られます。手荒なことは、無用に願います」",
+      "next": "seq_001f3"
+    },
+    {
+      "id": "seq_001f3",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "侍たちが顔を見合わせ、槍の穂先が下がる。狐憑き——都合のいい病名に、命を救われたらしい。この混乱の中で、御簾の向こうの声だけが、ひとつも慌てていなかった。",
       "next": "seq_002"
     },
     {
@@ -77,7 +98,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「これ、秀頼様。あな、見苦し。御前で冠を落とすなど……まずは、その歩き方から直されませ」",
-      "emotes": { "kohagi": "stern" },
+      "emotes": {
+        "kohagi": "stern"
+      },
       "cameraAngleId": "cam_ch1_misu_gap",
       "next": "seq_002a"
     },
@@ -99,7 +122,7 @@
       "id": "seq_002b",
       "type": "dialogue",
       "speaker": "秀頼",
-      "text": "「……歩き方って。いや、待て。なんであんた、俺の名前を知ってるんだ」",
+      "text": "「……歩き方って。いや、待て。秀頼って、誰だ。俺は時任蓮——のはずだ。なのに、なんでこの体は、その名に振り向くんだ」",
       "next": "seq_002c"
     },
     {
@@ -175,7 +198,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……よろし。見えぬ相手にまず礼を尽くすこと。それがこの邸で生きる、第一歩にございます」",
-      "emotes": { "kohagi": "smile" },
+      "emotes": {
+        "kohagi": "smile"
+      },
       "effects": {
         "fantasySynchro": 5
       },
@@ -307,7 +332,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……お見事。名を正しく呼ぶ声は、この邸では灯りと同じ。あなたの周りが、少し明るくなりました」",
-      "emotes": { "kohagi": "smile" },
+      "emotes": {
+        "kohagi": "smile"
+      },
       "next": "seq_005_aftx1"
     },
     {
@@ -315,7 +342,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「はい、よくできました——…………いえ。ようできました、と申しましょう。……お忘れくださいませ、今のは」",
-      "emotes": { "kohagi": "smile" },
+      "emotes": {
+        "kohagi": "smile"
+      },
       "next": "seq_005_aftx2"
     },
     {
@@ -336,7 +365,7 @@
       "id": "seq_006_voice",
       "type": "dialogue",
       "speaker": "御簾の向こうの声",
-      "text": "「——せりざわくん」",
+      "text": "「——ときとうくん」",
       "cameraAngleId": "cam_ch1_misu_gap",
       "se": "wind",
       "setFlag": {
@@ -358,7 +387,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……風の音にございましょう。今のは、どなたの名でも、ありませぬ」",
-      "emotes": { "kohagi": "sad" },
+      "emotes": {
+        "kohagi": "sad"
+      },
       "next": "seq_007b"
     },
     {

@@ -22,7 +22,7 @@
       "id": "seq_601h1_hospital",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "——電子音が、規則正しく鳴っている。白い天井、消毒の匂い。五時間目の古典の途中、窓際の席で崩れるように倒れて、それから、ずいぶん長い夢を見ていたらしい。海のない町の病室に、春の朝の光が、そっと差している。",
+      "text": "——電子音が、規則正しく鳴っている。白い天井、消毒の匂い。五時間目の古典の途中、窓際の席で崩れるように倒れて、それから、ずいぶん長い夢を見ていたらしい。海のない町の病室に、春の朝の光が、そっと差している。ベッドの脇の医療の機械に、小さな灯りが四つ、静かに並んで瞬いている。——ああ。あの雪の夜、高灯台に数えた並びだ。",
       "stage": {
         "location": "hospital"
       },
@@ -94,18 +94,26 @@
       "type": "set_scene",
       "season": "spring",
       "timeOfDay": "morning",
-      "playerStart": { "x": 0.2, "z": 4.8, "yaw": 3.14 },
+      "playerStart": {
+        "x": 0.2,
+        "z": 4.8,
+        "yaw": 3.14
+      },
       "cameraAngleId": "cam_hospital_bed",
       "fade": "white",
-      "stage": { "location": "hospital" },
+      "stage": {
+        "location": "hospital"
+      },
       "next": "seq_ed1_wake1"
     },
     {
       "id": "seq_ed1_wake1",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "——電子音が、規則正しく鳴っている。白い天井、消毒の匂い。五時間目の古典の途中、窓際の席で崩れるように倒れて、それから、ずいぶん長い夢を見ていたらしい。海のない町の病室に、春の朝の光が、そっと差している。",
-      "stage": { "location": "hospital" },
+      "text": "——電子音が、規則正しく鳴っている。白い天井、消毒の匂い。五時間目の古典の途中、窓際の席で崩れるように倒れて、それから、ずいぶん長い夢を見ていたらしい。海のない町の病室に、春の朝の光が、そっと差している。ベッドの脇の医療の機械に、小さな灯りが四つ、静かに並んで瞬いている。——ああ。あの雪の夜、高灯台に数えた並びだ。",
+      "stage": {
+        "location": "hospital"
+      },
       "cameraAngleId": "cam_hospital_bed",
       "next": "seq_ed1_wake2"
     },
@@ -114,7 +122,9 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "枕元のテーブルに、青い罫線のノートが一冊。薄紫の紐のしおりが、寝殿造りの間取りを写したページにはさまっている。丸椅子とスリッパ——毎日、誰かが見舞いに来ていたことを、それらが静かに告げていた。ノートの端の几帳面な字に、たしかに見覚えがある。",
-      "stage": { "location": "hospital" },
+      "stage": {
+        "location": "hospital"
+      },
       "cameraAngleId": "cam_hospital_table",
       "next": "seq_ed1_wake3"
     },
@@ -123,7 +133,9 @@
       "type": "dialogue",
       "speaker": "秀頼（心）",
       "text": "（御簾の向こうの声。夢のあいだ、ずっと俺の名を呼んでいた——あれは、この枕元から話しかけていた、あんたの声だったのかもしれない）",
-      "stage": { "location": "hospital" },
+      "stage": {
+        "location": "hospital"
+      },
       "cameraAngleId": "cam_hospital_door_pov",
       "next": "seq_ed1_wake4"
     },
@@ -132,7 +144,9 @@
       "type": "dialogue",
       "speaker": "秀頼（心）",
       "text": "——このノートの罫線も、几帳面な字も、結ばれた薄紫の紐も。見覚えがあるどころじゃない。毎日、隣の席で見ていたものだ。……まさか。あの邸で聞いていた声も、御簾の向こうの気配も、ぜんぶ——栞。お前だったのか。",
-      "stage": { "location": "hospital" },
+      "stage": {
+        "location": "hospital"
+      },
       "next": "seq_611_ed1"
     },
     {
@@ -140,18 +154,26 @@
       "type": "set_scene",
       "season": "spring",
       "timeOfDay": "morning",
-      "playerStart": { "x": 0.2, "z": 4.8, "yaw": 3.14 },
+      "playerStart": {
+        "x": 0.2,
+        "z": 4.8,
+        "yaw": 3.14
+      },
       "cameraAngleId": "cam_hospital_bed",
       "fade": "white",
-      "stage": { "location": "hospital" },
+      "stage": {
+        "location": "hospital"
+      },
       "next": "seq_ed2_wake1"
     },
     {
       "id": "seq_ed2_wake1",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "——電子音が、規則正しく鳴っている。白い天井、消毒の匂い。五時間目の古典の途中、窓際の席で崩れるように倒れて、それから、ずいぶん長い夢を見ていたらしい。海のない町の病室に、春の朝の光が、そっと差している。",
-      "stage": { "location": "hospital" },
+      "text": "——電子音が、規則正しく鳴っている。白い天井、消毒の匂い。五時間目の古典の途中、窓際の席で崩れるように倒れて、それから、ずいぶん長い夢を見ていたらしい。海のない町の病室に、春の朝の光が、そっと差している。ベッドの脇の医療の機械に、小さな灯りが四つ、静かに並んで瞬いている。——ああ。あの雪の夜、高灯台に数えた並びだ。",
+      "stage": {
+        "location": "hospital"
+      },
       "cameraAngleId": "cam_hospital_bed",
       "next": "seq_ed2_wake2"
     },
@@ -160,7 +182,9 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "枕元のテーブルに、青い罫線のノートが一冊。薄紫の紐のしおりが、寝殿造りの間取りを写したページにはさまっている。丸椅子とスリッパ——毎日、誰かが見舞いに来ていたことを、それらが静かに告げていた。ノートの端の几帳面な字に、たしかに見覚えがある——気がしたが、うまく像を結ばない。",
-      "stage": { "location": "hospital" },
+      "stage": {
+        "location": "hospital"
+      },
       "cameraAngleId": "cam_hospital_table",
       "next": "seq_ed2_wake3"
     },
@@ -169,7 +193,9 @@
       "type": "dialogue",
       "speaker": "秀頼（心）",
       "text": "（御簾の向こうの声。夢のあいだ、ずっと俺の名を呼んでいた——あれは、この枕元から話しかけていた、誰かの声だったのかもしれない）……思い出せそうで、思い出せない。まあいい。とにかく、教室に戻ろう。",
-      "stage": { "location": "hospital" },
+      "stage": {
+        "location": "hospital"
+      },
       "cameraAngleId": "cam_hospital_door_pov",
       "next": "seq_621_ed2"
     },
@@ -201,7 +227,7 @@
       "id": "seq_613_ed1_shiori",
       "type": "dialogue",
       "speaker": "栞",
-      "text": "「……おかえり、芹沢くん。まだ少し、寝ぼけてる？」",
+      "text": "「……おかえり、時任くん。まだ少し、寝ぼけてる？」",
       "next": "seq_613x_kaimami_branch",
       "cameraAngleId": "cam_classroom_shiori"
     },
@@ -292,7 +318,7 @@
       "id": "seq_622_ed2_missed",
       "type": "dialogue",
       "speaker": "栞",
-      "text": "「芹沢くん、古典、得意になったんだね。……あのね、寝殿造りって、実はね——」",
+      "text": "「時任くん、古典、得意になったんだね。……あのね、寝殿造りって、実はね——」",
       "next": "seq_623_ed2_reply"
     },
     {
@@ -354,7 +380,9 @@
       "type": "dialogue",
       "speaker": "判者",
       "text": "「……消えた火は、もう一度、熾せる。歌合の稽古を。太刀の間合いを。そして、もう一度この夜に挑まれよ。——言葉のある朝で、待っておるぞ」【ED3 Bad End A「歌なき夜」】",
-      "emotes": { "judge": "stern" },
+      "emotes": {
+        "judge": "stern"
+      },
       "next": "seq_634_ed3_end"
     },
     {
@@ -374,7 +402,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……ここにいれば、あなたは何者にも急かされませぬ。チャイムも、テストも、明日も。……ずっと、歌と、季節と、わたくしと」",
-      "emotes": { "kohagi": "smile" },
+      "emotes": {
+        "kohagi": "smile"
+      },
       "next": "seq_643_ed4_inside"
     },
     {
@@ -392,7 +422,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……ずっと、こうしていとうございました。誰にも急かされず、誰の名も呼び違えず。あなたと、歌と、季節と」",
-      "emotes": { "kohagi": "smile" },
+      "emotes": {
+        "kohagi": "smile"
+      },
       "next": "seq_643x2"
     },
     {
@@ -442,7 +474,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……名をなくした人は、物語に、やさしく飼われます。もう、迷わなくてよいのです。もう、覚えなくて、よいのです」",
-      "emotes": { "kohagi": "sad" },
+      "emotes": {
+        "kohagi": "sad"
+      },
       "next": "seq_652x"
     },
     {
