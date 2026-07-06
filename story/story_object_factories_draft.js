@@ -478,6 +478,42 @@
   }
 
   /* ============================================================
+     B-5. 栞(しおり) — 漆塗りに桜の蒔絵、上部に小さな薄紫の紐。
+     参考画像(黒/臙脂の漆しおり+桜+薄紫リボン)に寄せる。
+     「短冊がペンのように細い/紐がマスコット大で変に動く」FBへの回答:
+     平たい札の比率に、紐は小さく、動きは静かに。
+     api: group / update(t)
+  ============================================================ */
+  function createShioriBookmark(variant){
+    const g=new THREE.Group();
+    const lacquer=(variant==="black")?0x1a1620:0x6e1f22; // 黒漆 or 臙脂漆
+    // 平たい札(ペン状に細くしない。しおりらしい幅と厚み)
+    g.add(box(.078,.34,.012,M({color:lacquer,roughness:.34,metalness:.14}),0,0,0));
+    g.add(noShadow(box(.084,.346,.006,M({color:0x2a1010,roughness:.5}),0,0,-.007))); // 裏当て
+    // 桜の蒔絵(白×薄紅の小花を三輪、縦に散らす)
+    const sakuraW=new THREE.MeshBasicMaterial({color:0xf6e2ea});sakuraW.__ownedByStory=true;
+    const sakuraP=new THREE.MeshBasicMaterial({color:0xe89bb4});sakuraP.__ownedByStory=true;
+    const putSakura=(y,r)=>{for(let p=0;p<5;p++){const a=p/5*Math.PI*2-Math.PI/2;
+      g.add(noShadow(sph(r,(p%2?sakuraP:sakuraW),Math.cos(a)*r*1.7,y+Math.sin(a)*r*1.7,.008,6,5)));}
+      g.add(noShadow(sph(r*.6,sakuraP,0,y,.009,6,5)));}; // 花芯
+    putSakura(.095,.011);putSakura(-.01,.009);putSakura(-.10,.012);
+    // 上部の穴を通した小さな薄紫の紐(輪+短い二本の垂れ)。マスコット大にしない。
+    const cordMat=(STORY_MATS.murasakiCord&&STORY_MATS.murasakiCord.clone)?STORY_MATS.murasakiCord.clone():M({color:0xb9a5e6});
+    cordMat.__ownedByStory=true;
+    const cord=new THREE.Group();
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.016,.0045,6,14),cordMat);noShadow(ring);cord.add(ring);
+    cord.add(noShadow(cyl(.0045,.0045,.06,cordMat,-.009,-.038,0,5)));  // 垂れ1
+    cord.add(noShadow(cyl(.0045,.0045,.05,cordMat,.010,-.032,0,5)));   // 垂れ2
+    cord.position.set(0,.182,.006);g.add(cord);g.userData.cord=cord;
+    g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+    const api={group:g,
+      // 静かなたたずまい(以前の「マスコットが変に動く」を排し、ごく僅かな揺れに)
+      update(t){cord.rotation.z=Math.sin(t*.9)*.05;}
+    };
+    g.userData.api=api;return api;
+  }
+
+  /* ============================================================
      C-1. 御簾境界エフェクト — 「隔てる/つなぐ」を示す半透明の揺れ。
      api: setMood("veil"=隔て/"connect"=つなぎ) / update(t)
   ============================================================ */
@@ -769,13 +805,29 @@
     // 肩に裂いた御簾を纏う(物語ボスの記号)
     const torn=plane(1.5,.9,STORY_MATS.misu.clone(),-.55,2.35,-.1);torn.material.__ownedByStory=true;torn.material.opacity=.5;
     torn.rotation.z=.6;torn.rotation.y=.3;g.add(noShadow(torn));
-    // 胸の封印窓: 琥珀色の板の奥に小萩の短冊シルエット
+    // 胸の琥珀色の窓——奥に、封じられた短冊。その影は「人の形」。袖のところで薄紫の紐が弱々しく明滅する。
     const chest=new THREE.Group();
     const amberMat=new THREE.MeshStandardMaterial({color:0xd9903a,transparent:true,opacity:.55,roughness:.35,emissive:0xa85f16,emissiveIntensity:.5});amberMat.__ownedByStory=true;
-    chest.add(box(.44,.60,.06,amberMat,0,0,0));
-    chest.add(box(.50,.66,.03,STORY_MATS.oniDark,0,0,-.045));
-    const silh=noShadow(box(.10,.42,.012,new THREE.MeshBasicMaterial({color:0x5a3f6e}),0,0,.033));chest.add(silh); // 短冊影
-    const cordDot=noShadow(sph(.028,STORY_MATS.murasakiCord,0,.16,.045,7,5));chest.add(cordDot);                    // 薄紫の結び=小萩の証
+    chest.add(box(.44,.60,.06,amberMat,0,0,0));                       // 琥珀の窓(半透明)
+    chest.add(box(.50,.66,.03,STORY_MATS.oniDark,0,0,-.045));         // 窓枠の闇
+    // 封じられた短冊(細長い白紙)。その手前に「人の形」の影を精密に重ねる
+    const tanMat=new THREE.MeshBasicMaterial({color:0xe9dcc2,transparent:true,opacity:.55});tanMat.__ownedByStory=true;
+    chest.add(noShadow(box(.11,.44,.010,tanMat,0,-.02,.026)));         // 短冊そのもの
+    const silMat=new THREE.MeshBasicMaterial({color:0x4a3358,transparent:true,opacity:.9});silMat.__ownedByStory=true;
+    const silh=new THREE.Group();                                     // 短冊の影=人の形(頭・肩・裾・垂髪)
+    silh.add(noShadow(sph(.045,silMat,0,.15,.034,8,6)));               // 頭
+    silh.add(noShadow(box(.11,.16,.010,silMat,0,.02,.033)));           // 肩〜胴
+    silh.add(noShadow(box(.14,.14,.010,silMat,0,-.13,.033)));          // 十二単の裾(下ですぼまる台形代わり)
+    silh.add(noShadow(box(.05,.30,.008,silMat,0,-.02,.030)));          // 背へ落ちる垂髪
+    chest.add(silh);
+    // 袖のあたりの薄紫の紐(結び目+二筋の垂れ)。updateで弱々しく明滅
+    const cordMat=(STORY_MATS.murasakiCord&&STORY_MATS.murasakiCord.clone)?STORY_MATS.murasakiCord.clone():new THREE.MeshBasicMaterial({color:0xb9a5e6});
+    cordMat.transparent=true;cordMat.__ownedByStory=true;
+    const cord=new THREE.Group();
+    cord.add(noShadow(sph(.026,cordMat,0,0,.045,7,5)));               // 結び目
+    cord.add(noShadow(box(.010,.11,.008,cordMat,-.012,-.07,.045)));    // 垂れ1
+    cord.add(noShadow(box(.010,.09,.008,cordMat,.014,-.06,.045)));     // 垂れ2
+    cord.position.set(.13,.05,0);chest.add(cord);                     // 右袖のあたり
     chest.position.set(0,1.95,.62);g.add(chest);
     // フェーズ2: 逆さ文字の札(周回)
     const invCards=[];
@@ -789,10 +841,13 @@
     const api={group:g,chestSeal:chest,
       setPhase(p){phase=p;
         invCards.forEach(c=>c.visible=p>=2);
-        amberMat.emissiveIntensity=p>=3?1.2:.5;silh.visible=p>=3||p===1;
+        amberMat.emissiveIntensity=p>=3?1.2:.5;silh.visible=p>=3||p===1; // 人の形の影は封印が生きている間だけ
         torn.material.opacity=p>=2?.7:.5;},
       update(t){
         g.position.y=Math.abs(Math.sin(t*1.1))*.10;g.rotation.z=Math.sin(t*.9)*.03;
+        // 袖の薄紫の紐が「弱々しく明滅」する(封印の中の小萩の証)
+        cordMat.opacity=.35+Math.abs(Math.sin(t*1.3))*.5;
+        cord.rotation.z=Math.sin(t*1.1)*.10;
         if(phase>=2)invCards.forEach((c,i)=>{const a=t*.8+i*1.256;
           c.position.set(Math.cos(a)*1.5,1.7+Math.sin(t*1.7+i)*.4,Math.sin(a)*1.5);c.rotation.y=a+Math.PI/2;});
         if(phase>=3)amberMat.emissiveIntensity=1.0+Math.sin(t*5)*.4;
@@ -1007,10 +1062,11 @@
     const noteTex=new THREE.CanvasTexture(nc);noteTex.encoding=THREE.sRGBEncoding;
     const noteTexMat=new THREE.MeshBasicMaterial({map:noteTex});noteTexMat.__ownedByStory=true;
     const notePage=plane(.24,.31,noteTexMat,0,.017,0);notePage.rotation.x=-Math.PI/2;note.add(noShadow(notePage));
-    // 波AL: 「枕に突き刺さって見える」FB対応——直立していた紐を、ノートの頁の上に
-    // 平らに寝かせ、栞紐らしく机上へ置き直す(結び目と房が頁の縁から覗く姿)
-    const cordMark=createPurpleCordMotif();cordMark.attachTo(table,{x:.12,y:.700,z:.03},.55);
-    cordMark.group.rotation.x=-Math.PI/2; // 頁に沿わせて寝かせる(垂れは奥へ流れる)
+    // 波AM: 「栞がしおりに見えない」FB対応——薄紫の紐飾りではなく、桜蒔絵の漆しおりを
+    // ノートの頁に挟んで置く。札は上端がページから覗き、薄紫の小さな紐が垂れる姿。
+    const cordMark=createShioriBookmark("vermilion");
+    cordMark.group.position.set(.10,.700,-.02);cordMark.group.rotation.set(-Math.PI/2,0,.12); // 頁に沿わせて寝かせる
+    cordMark.group.scale.setScalar(.9);table.add(cordMark.group);
     table.position.set(0.55,0,-1.55);g.add(table); // 波AA: 枕元(ベッド寄り)に置き直し、主なカメラでも見えるように
     // 丸椅子とスリッパ(誰かが見舞いに来ている気配)
     g.add(cyl(.19,.19,.05,M({color:0xd8cfc0,roughness:.85}),2.35,.44,-1.0,12));
@@ -1103,8 +1159,11 @@
       if(r===2&&c===1){ // 窓際(x+側)最後列=栞の席
         shioriSeat=desk;
         const note=box(.24,.02,.32,M({color:0xf6f8fa,roughness:.95}),-.08,.725,-.02);note.rotation.y=-.12;desk.add(note);
-        const pen=cyl(.008,.008,.16,M({color:0x8a7ab8,roughness:.5}),.10,.725,.04,6);pen.rotation.z=Math.PI/2;pen.rotation.y=.5;desk.add(pen);
-        const cord=createPurpleCordMotif();cord.attachTo(desk,{x:.16,y:.735,z:.06},.65);   // シャーペンの紐飾り
+        // 波AM: 「栞がしおりに見えない」FB——ペン+マスコット大の紐をやめ、桜蒔絵の漆しおりを
+        // ノートに挟んで置く(上端が頁から覗き、小さな薄紫の紐が垂れる)
+        const cord=createShioriBookmark("black");
+        cord.group.position.set(.05,.742,-.05);cord.group.rotation.set(-Math.PI/2,0,-.14);cord.group.scale.setScalar(.92);
+        desk.add(cord.group);
         desk.userData.cord=cord;
       }
     }
@@ -1236,7 +1295,7 @@
     textTexture,disposeGroup,makePool,
     createStoryKohagiObject,createStoryHidetoraObject,createStoryUkonObject,
     createMinisterObject,createUtakaiJudgeObject,
-    createWhiteTanzakuObject,createTermCardObject,createWakaTanzakuObject,createPurpleCordMotif,
+    createWhiteTanzakuObject,createTermCardObject,createWakaTanzakuObject,createPurpleCordMotif,createShioriBookmark,
     createMisuBoundaryEffect,createTokoyoGlitchProps,createTokoyoSkyDome,createBrainErosionOverlay,createUtakaiStageProps,
     createGreatOniStoryObject,createNameSealEffect,createFinalQuizThreeSeals,
     createModernRoomShell,createHospitalRoomSet,createClassroomSet,createStoryLocation,createEd5GlyphDebris,

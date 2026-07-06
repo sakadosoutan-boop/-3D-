@@ -598,11 +598,32 @@
       "id": "seq_412b",
       "type": "dialogue",
       "speaker": "判者",
-      "text": "「言葉を軽んじる者は、言葉のない夜へ。——火桶の火まで、あなたの名を忘れた」",
+      "text": "「言葉を軽んじる者は、言葉のない夜へ。——だが。火桶の火は、まだ、ひとつ残っておる」",
       "emotes": {
         "judge": "stern"
       },
-      "next": "seq_413_ed3"
+      "next": "seq_412c_retry"
+    },
+    {
+      "id": "seq_412c_retry",
+      "type": "choice",
+      "text": "消えかけた火が、ひとつだけ、まだ揺れている。——もう一度、歌で応えるか。",
+      "options": [
+        {
+          "text": "もう一度、歌合の座に戻る",
+          "next": "seq_410_trigger_utakai",
+          "effects": {
+            "brainErosion": -25
+          },
+          "setFlag": {
+            "chapter4Lost": false
+          }
+        },
+        {
+          "text": "もう、言葉が続かない。このまま目を閉じる",
+          "next": "seq_413_ed3"
+        }
+      ]
     },
     {
       "id": "seq_413_ed3",
