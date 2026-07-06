@@ -4174,10 +4174,12 @@ const ENV_PAL={
   dusk: {top:"#b98fb0",hor:"#e6b27a",grd:"#5a4636",sun:"#ffd49a",sunU:.60},
   night:{top:"#0a1020",hor:"#1b2236",grd:"#070a12",sun:"#aab8dc",sunU:.24}
 };
-const pmrem=new THREE.PMREMGenerator(renderer);
-pmrem.compileEquirectangularShader();
+const ENV_IBL_ENABLED=!IS_TOUCH&&!navigator.webdriver;
+const pmrem=ENV_IBL_ENABLED?new THREE.PMREMGenerator(renderer):null;
+if(pmrem)pmrem.compileEquirectangularShader();
 let _envRT=null;
 function makeSkyEnv(timeKey){
+  if(!pmrem){scene.environment=null;return;}
   const p=ENV_PAL[timeKey]||ENV_PAL.day;
   const tex=canv(16,256,(x,w,h)=>{
     const g=x.createLinearGradient(0,0,0,h);
