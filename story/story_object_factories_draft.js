@@ -1007,7 +1007,10 @@
     const noteTex=new THREE.CanvasTexture(nc);noteTex.encoding=THREE.sRGBEncoding;
     const noteTexMat=new THREE.MeshBasicMaterial({map:noteTex});noteTexMat.__ownedByStory=true;
     const notePage=plane(.24,.31,noteTexMat,0,.017,0);notePage.rotation.x=-Math.PI/2;note.add(noShadow(notePage));
-    const cordMark=createPurpleCordMotif();cordMark.attachTo(table,{x:.06,y:.685,z:-.10},.8); // 栞=薄紫の紐
+    // 波AL: 「枕に突き刺さって見える」FB対応——直立していた紐を、ノートの頁の上に
+    // 平らに寝かせ、栞紐らしく机上へ置き直す(結び目と房が頁の縁から覗く姿)
+    const cordMark=createPurpleCordMotif();cordMark.attachTo(table,{x:.12,y:.700,z:.03},.55);
+    cordMark.group.rotation.x=-Math.PI/2; // 頁に沿わせて寝かせる(垂れは奥へ流れる)
     table.position.set(0.55,0,-1.55);g.add(table); // 波AA: 枕元(ベッド寄り)に置き直し、主なカメラでも見えるように
     // 丸椅子とスリッパ(誰かが見舞いに来ている気配)
     g.add(cyl(.19,.19,.05,M({color:0xd8cfc0,roughness:.85}),2.35,.44,-1.0,12));

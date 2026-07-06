@@ -151,7 +151,8 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "言われて見回すと、たしかに——渡殿のあたりも、遣水の細い流れも、陽炎のように輪郭がほどけている。あそこに廊下があったはずなのに、水音がしていたはずなのに、目で追うほど形が定まらない。名前という札を失くした標本箱の中身みたいだ、と秀頼は思った。",
-      "next": "seq_204_ukon_intro"
+      "next": "seq_204_ukon_intro",
+      "effectId": "names_melt_pan"
     },
     {
       "id": "seq_204_ukon_intro",
