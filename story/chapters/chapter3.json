@@ -59,6 +59,20 @@
       "speaker": "語り",
       "text": "薄の穂の上を、白い影がひとつ渡っていく。カモメだ。秋の夕の、海のない邸の空を。——もう驚かなくなっている自分に、ふと気づいた。それが、少しだけ怖い。",
       "se": "seagull",
+      "next": "seq_301d1"
+    },
+    {
+      "id": "seq_301d1",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「日暮れを、誰そ彼時（たそかれどき）と申します。——誰そ、彼。あれは誰か、と問わねば分からぬ刻。人の顔が翳り、人と物の怪の見分けが、つかなくなる刻にございます」",
+      "next": "seq_301d2"
+    },
+    {
+      "id": "seq_301d2",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「境の刻には、境のものが動きまする。ゆえに今宵の学びは——目の慎み。見えぬものと、どう向き合うか、にございます」",
       "next": "seq_302_kaimami_intro"
     },
     {
@@ -104,7 +118,9 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「若君、念のため。首を伸ばしすぎれば、恋より先に首が落ちますぞ。高欄から半歩、お下がりなされ。——それと、姫君の顔を見ようなどとは、ゆめゆめ」",
-      "emotes": { "ukon": "smile" },
+      "emotes": {
+        "ukon": "smile"
+      },
       "next": "seq_304_trigger_kaimami"
     },
     {
@@ -128,8 +144,36 @@
       "failEffects": {
         "brainErosion": 14
       },
-      "successNext": "seq_305_observation_choice",
-      "failNext": "seq_305_observation_choice"
+      "successNext": "seq_304b1",
+      "failNext": "seq_304b1"
+    },
+    {
+      "id": "seq_304b1",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "几帳の隙間の姫君は、灯りも呼ばず、同じ文を何度も、畳んでは開いていた。袖口が、時折、目元へ上がる。——泣いて、いるのか。",
+      "next": "seq_304b2"
+    },
+    {
+      "id": "seq_304b2",
+      "type": "dialogue",
+      "speaker": "姫君",
+      "text": "「……つれなき人は、夢にだに……」",
+      "next": "seq_304b3"
+    },
+    {
+      "id": "seq_304b3",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……返りの絶えた文にございましょう。想いは、行き場を失うと、夕闇に形を持ちまする。——今宵の霧の重さ。あれは、あの方の溜め息かもしれませぬ」",
+      "next": "seq_304b4"
+    },
+    {
+      "id": "seq_304b4",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（霧の原因は、物の怪じゃなくて——人の想い、なのか。だとしたら、祓うだけじゃ足りない。誰かが、返事をしないと）",
+      "next": "seq_305_observation_choice"
     },
     {
       "id": "seq_305_observation_choice",
@@ -307,7 +351,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「——袖に残る香を、返す。……見えぬものを見えぬまま、たいせつに扱う歌。……どうして、あなたがそれを詠めるのでしょうね。まるで——いえ。お送りして参ります」",
-      "emotes": { "kohagi": "sad" },
+      "emotes": {
+        "kohagi": "sad"
+      },
       "next": "seq_309z"
     },
     {
@@ -363,7 +409,9 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「若君、お下がりを！　……水底の主。垣間見の無礼が溜まって形を成す、と聞いたことはありましたが——本物を見るのは初めてでございます！　弓はそれがしが。若君は札と太刀を！」",
-      "emotes": { "ukon": "stern" },
+      "emotes": {
+        "ukon": "stern"
+      },
       "next": "seq_312_kappa_boss"
     },
     {
@@ -446,6 +494,23 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「……若君。今宵、水面のことは、それがし何も見ておりませぬ。侍の目は、主の見たものを、見なかったことにもできまする。——それも、御役目のうちにございますれば」",
+      "next": "seq_313f"
+    },
+    {
+      "id": "seq_313f",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "——渡殿の向こう、姫君の御簾の内から、ほのかに薫物の香が流れてきた。あなたの返歌が、届いたしるし。行き場を失っていた想いが、今夜はじめて、返事をもらえたのだ。",
+      "next": "seq_313g"
+    },
+    {
+      "id": "seq_313g",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「霧のもとが、ひとつ、鎮まりましてございます。……言葉は、遅れて届いても、薬になりまする」",
+      "emotes": {
+        "kohagi": "smile"
+      },
       "next": "seq_315_kohagi_words"
     },
     {
@@ -460,7 +525,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……若君。今宵ひとつだけ、覚えて帰ってくださいませ。恋とは、相手を見つけることではなく——相手の『見えなさ』に、耐えることにございます」",
-      "emotes": { "kohagi": "sad" },
+      "emotes": {
+        "kohagi": "sad"
+      },
       "next": "seq_315_complete"
     },
     {

@@ -44,6 +44,7 @@ const ST_VOICE={
   "秀頼":[980,"triangle",.008],"秀頼（心）":[980,"triangle",.004],
   "右近":[1180,"square",.006],"左大臣":[620,"sine",.009],"判者":[700,"triangle",.008],
   "大鬼":[240,"square",.009],"水底の声":[300,"square",.008],"？？？":[1520,"sine",.005],
+  "侍":[880,"square",.007],"姫君":[1440,"sine",.005],
   "語り":[1300,"square",.004]
 };
 /* ---- ED4「冠を深く被り直す」画面演出 ----
@@ -122,10 +123,10 @@ function stInject(){
     " background:linear-gradient(180deg,rgba(6,4,10,.82),rgba(6,4,10,.5) 26%,rgba(6,4,10,0) 58%)}",
     "body.st-crown-deep #stCrownVeil{opacity:1}",
     "body.st-crown-deep #c{filter:saturate(.72) brightness(.92)}",
-    /* 波AG: 章題カットイン(縦書き)。暗幕の上に章番号+章題+季節の一字 */
+    /* 波AG/AI: 章題カットイン(縦書き)。表示中はタップを吸い込み、下の台詞送りが誤爆しないようにする */
     "#stChCard{position:fixed;inset:0;z-index:58;pointer-events:none;display:flex;align-items:center;justify-content:center;",
     " background:rgba(8,5,3,.86);opacity:0;transition:opacity .55s ease}",
-    "#stChCard.show{opacity:1}",
+    "#stChCard.show{opacity:1;pointer-events:auto}",
     "#stChCard .st-ch-v{writing-mode:vertical-rl;font-family:var(--serif);color:#efe6cd;letter-spacing:.34em;",
     " display:flex;gap:26px;align-items:center}",
     "#stChCard .st-ch-no{font-size:15px;color:#cbb98f}",
@@ -138,13 +139,16 @@ function stInject(){
     "#stEd1Glow{position:fixed;inset:0;z-index:44;pointer-events:none;opacity:0;transition:opacity 2.4s ease;",
     " background:radial-gradient(ellipse 90% 70% at 84% 8%,rgba(255,238,196,.34),rgba(255,238,196,.10) 45%,transparent 72%)}",
     "body.st-ed1-glow #stEd1Glow{opacity:1}",
-    /* 波Z: 名を呼ぶ選択肢の崩れ(常世が名を拒むような不穏なグリッチ) */
-    "#storyHud .st-glitch{position:relative;display:inline-block}",
+    /* 波Z/AI: 名を呼ぶ選択肢/台詞の崩れ(常世が名を拒むような不穏なグリッチ)。
+       波AI: 実機で文字が判読できてしまっていたため、強いぼかし+透過+ジッターで完全に読めなくする
+       (以前の強化が埋め込みコピー側にだけ入っておりソース再埋め込みで消えていた——ソースへ正しく反映) */
+    "#storyHud .st-glitch{position:relative;display:inline-block;filter:blur(7px) saturate(.55);opacity:.55;animation:stGlitchJitter 2.4s infinite steps(1)}",
     "#storyHud .st-glitch::before,#storyHud .st-glitch::after{content:attr(data-text);position:absolute;left:0;top:0;width:100%;overflow:hidden;background:inherit}",
     "#storyHud .st-glitch::before{color:#ff3b5c;clip-path:inset(0 0 60% 0);animation:stGlitchA 2.6s infinite linear}",
     "#storyHud .st-glitch::after{color:#3bdcff;clip-path:inset(60% 0 0 0);animation:stGlitchB 3.1s infinite linear}",
     "@keyframes stGlitchA{0%,90%,100%{transform:translate(0,0)}91%{transform:translate(2px,-1px)}93%{transform:translate(-2px,1px)}95%{transform:translate(1px,1px)}}",
     "@keyframes stGlitchB{0%,88%,100%{transform:translate(0,0)}89%{transform:translate(-2px,1px)}92%{transform:translate(2px,-1px)}94%{transform:translate(-1px,-1px)}}",
+    "@keyframes stGlitchJitter{0%,100%{transform:translate(0,0) scaleX(1)}20%{transform:translate(-2px,1px) scaleX(1.05)}40%{transform:translate(2px,-1px) scaleX(.95)}60%{transform:translate(-1px,-1px) scaleX(1.04)}80%{transform:translate(1px,2px) scaleX(.97)}}",
     "#storyHud .st-box.choosing{max-height:70vh}", /* 選択肢表示中は窓を広げる */
     "#storyHud .st-panel{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;pointer-events:auto;",
     " background:radial-gradient(ellipse at center,rgba(10,7,4,.82),rgba(6,4,2,.96))}", /* 侵食演出(z52)より前面。ED5でも必ず読める */
@@ -402,6 +406,7 @@ const ST_FACE_KEY={"小萩":"kohagi","秀頼":"hidetora","秀頼（心）":"hide
 /* 波Y: 描き下ろしアイコン(軽量WebP・相対パス参照。単一HTMLは肥大化させない) */
 const ST_ICON_FILES={
   kohagi:"icons/kohagi_silhouette.webp",
+  oni:"icons/hitodama_concept.webp", // 波AI: 大鬼=四季モード秋ボス(人魂→大鬼)のコンセプト画をアイコンに
   ukon:"icons/ukon.webp",
   minister:"icons/sadaijin_full.webp", // 波Z: 左大臣は素顔を通常アイコンに
   judge:"icons/sadaijin_fan.webp",     // 波Z: 判者は「扇で顔を隠す」役どころに合わせて扇の絵を専用に割当て
@@ -645,7 +650,7 @@ function stSeagullFlyover(anchor,onDrop){
 }
 /* ---- HUD描画 ---- */
 /* 話者ごとの名札色(市販ノベル風のキャラ識別) */
-const ST_SPK_COLOR={"小萩":"#c9a2d8","小萩（独白）":"#b9a5e6","秀頼":"#8fb8e8","秀頼（心）":"#7fa0c8","右近":"#a8c88a","左大臣":"#d8b25a","判者":"#b8b0c8","栞":"#9ec8e0","大鬼":"#e07a6a","水底の声":"#5ad0a0","御簾の向こうの声":"#d8c090","？？？":"#c0c0c0"};
+const ST_SPK_COLOR={"小萩":"#c9a2d8","小萩（独白）":"#b9a5e6","秀頼":"#8fb8e8","秀頼（心）":"#7fa0c8","右近":"#a8c88a","左大臣":"#d8b25a","判者":"#b8b0c8","栞":"#9ec8e0","大鬼":"#e07a6a","水底の声":"#5ad0a0","御簾の向こうの声":"#d8c090","？？？":"#c0c0c0","侍":"#a0a890","姫君":"#e0b8c8"};
 /* 波AA: 台詞中の特定の語だけをグリッチ表示にする(例: 名の秘密が思わず漏れる場面) */
 function stEscapeHtml(s){return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));}
 function stRenderText(te,revealed,glitchWord){
@@ -733,6 +738,7 @@ function stChapterCard(id){
   if(reduced)card.style.transition="none";
   clearTimeout(window._stChCardT);clearTimeout(window._stChCardT2);
   card.classList.add("show");
+  card.onclick=()=>{clearTimeout(window._stChCardT);card.classList.remove("show");}; // 波AI: タップは「カードを早めに閉じる」だけ。下の台詞へは絶対に透過させない
   if(typeof saigenSe==="function")saigenSe("koto");
   window._stChCardT=setTimeout(()=>card.classList.remove("show"),reduced?1100:2600);
 }
@@ -756,11 +762,26 @@ function stShowChoice(text,options,ev){
   // 回想の間(seq_603_select_ending): 未到達の結末はネタバレ防止のため伏せ札にして押せなくする
   const gating=ev&&ev.id==="seq_603_select_ending";
   const reached=gating?stLoadEndings():null;
+  // 波AI: 最終の名づけ(seq_510_final_quiz_3)——心の傾きが、呼べる名を狭める。
+  // 雅(fantasySynchro)が現(realityEgo)を大きく上回ると「栞」の名がグリッチして選べず、
+  // 現が雅を大きく上回ると「小萩」の名が選べない。均衡した者だけが三つ全てを選べる
+  let nameLock=-1;
+  if(ev&&ev.id==="seq_510_final_quiz_3"&&SM&&SM.state&&SM.state.params){
+    const p=SM.state.params;
+    if((p.fantasySynchro|0)-(p.realityEgo|0)>=25)nameLock=1;      // 選択肢2「栞」が読めない
+    else if((p.realityEgo|0)-(p.fantasySynchro|0)>=25)nameLock=0; // 選択肢1「小萩」が読めない
+  }
   const host=stEl("stOpts");host.innerHTML="";
   options.forEach((o,i)=>{
     const b=document.createElement("button");b.className="st-opt";
     if(gating&&reached&&reached.indexOf(ST_ENDING_ORDER[i])<0){ // 未到達=伏せ札(onclick無し)
       b.classList.add("locked");b.textContent=(i+1)+". ？？？（未到達）";host.appendChild(b);return;
+    }
+    if(i===nameLock){ // 波AI: 傾いた心では、その名がもう読めない(グリッチ+選択不可)
+      const safe=String(o.text).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
+      b.classList.add("locked");
+      b.innerHTML=(i+1)+'. <span class="st-glitch" data-text="'+safe+'">'+safe+'</span>';
+      host.appendChild(b);return;
     }
     if(o.glitchText){ // 波Z: 名を呼ぶ選択肢が崩れて見える(常世が名を拒むような不穏さ)
       const label=(i+1)+". ";
@@ -787,19 +808,37 @@ function stShowChoice(text,options,ev){
     host.appendChild(back);
   }
 }
+/* 波AI: 物語の見せ大鬼を、四季モード秋ボスと同じGLB(oni_boss_2048)の姿に差し替える。
+   読み込みは非同期・キャッシュ共有(taijiLoadSimpleGlb)。失敗時は従来の手続き生成モデルのまま。 */
+function stOniGlbSkin(api){
+  if(typeof taijiLoadSimpleGlb!=="function"||!api||!api.group)return;
+  taijiLoadSimpleGlb("assets/bosses/oni_boss_2048.glb").then(root=>{
+    if(!api.group.parent)return; // 読み込み完了前に片付けられていたら何もしない
+    const skin=root.clone();
+    skin.scale.setScalar(4.45);skin.rotation.x=Math.PI/2;skin.rotation.y=0;skin.position.y=.04; // 四季モードの実戦と同じ姿勢
+    api.group.traverse(o=>{if(o.isMesh)o.visible=false;}); // 手続き生成の体は隠す(オーラ等の透明素材も含め、GLBに一本化)
+    api.group.add(skin);
+  }).catch(()=>{});
+}
 /* 破魔の連札の3D演出(プレイヤー正面に三枚)。各問で新調する */
 function stEnsureSeals(){
   const S=APP.story,SO=window.StoryObjects;if(!S||!SO)return;
   if(S.sealFx)SO.disposeGroup(S.sealFx.group);
   const api=SO.createFinalQuizThreeSeals();
   api.setLabels(["壱","弐","参"]);
-  const fx=-Math.sin(player.yaw),fz=-Math.cos(player.yaw); // 正面方向
-  api.group.position.set(player.pos.x+fx*2.6,player.pos.y-0.25,player.pos.z+fz*2.6);
-  api.group.rotation.y=player.yaw; // 札面をプレイヤーへ向ける
+  // 波AI: 直前のカットで player.pos が俯瞰などの空中へ動かされていても破綻しないよう、
+  // 基準点を検査する。地に足がついていなければ、大鬼の正面(常世アリーナの固定点)へ立て直す
+  let bx=player.pos.x,by=player.pos.y,bz=player.pos.z,yaw=player.yaw;
+  const groundY=(typeof groundH==="function"?groundH(bx,bz):0)+1.62;
+  if(by>groundY+2.5||by<groundY-2.5){ // 俯瞰カメラ等の名残り=空中
+    bx=30;bz=-42;by=(typeof groundH==="function"?groundH(bx,bz):0)+1.62;yaw=Math.PI; // 大鬼(30,-48)を望む位置
+  }
+  const fx=-Math.sin(yaw),fz=-Math.cos(yaw); // 正面方向
+  api.group.position.set(bx+fx*2.6,by-0.25,bz+fz*2.6);
+  api.group.rotation.y=yaw; // 札面をプレイヤーへ向ける
   scene.add(api.group);S.sealFx=api;
-  // 波AB: 直前のcam_ch5_overhead(俯瞰)のまま固定され地面を向き続けるバグ修正。
-  // 三問とも(呼び出しのたび)、正面の札を見る画へ必ず戻す
-  if(typeof stCamRelative==="function")stCamRelative([0,0.3,0],[fx*2.6,-0.1,fz*2.6],52);
+  // 波AB/AI: 三問とも(呼び出しのたび)、正面の札を見る画へ必ず絶対座標で戻す
+  if(typeof stCamAt==="function")stCamAt([bx,by+0.3,bz],[bx+fx*2.6,by+0.2,bz+fz*2.6],52);
 }
 function stPanel(title,bodyHtml,btns){
   if(!/^ログ/.test(title))stVnStop(); // パネル(章メニュー/結末等)ではスキップ解除。ログは例外
@@ -867,7 +906,7 @@ function stEffect(info){
     S.props.push({kind:"tokoyo",api});
   }else if(id==="oni_tears_misu"&&SO){
     stLightning();
-    if(!S.oni){const api=SO.createGreatOniStoryObject();api.group.position.set(30,0,-48);scene.add(api.group);S.oni=api;}
+    if(!S.oni){const api=SO.createGreatOniStoryObject();api.group.position.set(30,0,-48);scene.add(api.group);S.oni=api;stOniGlbSkin(api);}
   }else if(id==="yarimizu_dark_reflection"){
     // 波O/Z: 遣水が黒く濁り、水面に現代の教室(窓・机)が浮かぶ。「窓際の、二つの席」を具体的な形で見せる
     const g=new THREE.Group();
@@ -876,16 +915,17 @@ function stEffect(info){
     const dark=mkFlat(2.7,2.7,0x0a1218,0,0,0.010);
     const roomMats=[];
     // 窓が二つ並ぶ列(桟の井桁つき)+その手前に机が二つ=「窓際の、二つの席」
-    [-0.55,0.55].forEach(sx=>{
+    // 波AI: 実機で「机が一つに見える」FBを受け、席の間隔を広げ天板を大きくして二席を明確に
+    [-0.75,0.75].forEach(sx=>{
       roomMats.push(mkFlat(.78,.58,0xc7dcf0,sx,.45));                 // 窓ガラスの淡い光
       roomMats.push(mkFlat(.03,.58,0x1c2430,sx,.45,.013));            // 窓の桟(縦)
       roomMats.push(mkFlat(.78,.03,0x1c2430,sx,.45,.013));            // 窓の桟(横)
-      roomMats.push(mkFlat(.40,.28,0x9a8560,sx,-.05,.011));           // 机の天板
-      roomMats.push(mkFlat(.32,.05,0x76644a,sx,-.24,.011));           // 椅子の背
+      roomMats.push(mkFlat(.54,.36,0x9a8560,sx,-.10,.011));           // 机の天板(大きく)
+      roomMats.push(mkFlat(.44,.06,0x76644a,sx,-.34,.011));           // 椅子の背
     });
-    // 波X: ボス出現前の予兆——水底に赤く光る眼が二つ、遅れて浮かぶ
-    const eyeMat1=mkFlat(.12,.12,0xff2010,-.14,.85,.014);
-    const eyeMat2=mkFlat(.12,.12,0xff2010,.02,.85,.014);
+    // 波X/AI: ボス出現前の予兆——水底に赤く光る眼。FBを受け大きく、出現は机の描写を読み終えた頃に
+    const eyeMat1=mkFlat(.30,.30,0xff2010,-.22,.85,.014);
+    const eyeMat2=mkFlat(.30,.30,0xff2010,.18,.85,.014);
     g.position.set(-11.5,0.16,27.0); // 池の北汀の水面に固定(直前のset_sceneでプレイヤーを汀へ移す)
     g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
     scene.add(g);
@@ -1034,11 +1074,16 @@ function stCleanupSets(){
 }
 /* ---- 世界の住人(姫君・女房・貴公子)を物語中は隠す ---- */
 function stHideWorldFigures(on){
-  if(typeof people==="undefined")return;
-  people.forEach(p=>{
+  if(typeof people!=="undefined")people.forEach(p=>{
     if(!p||!p.g)return;
     if(on){if(p.__stVis==null)p.__stVis=p.g.visible;p.g.visible=false;}
     else if(p.__stVis!=null){p.g.visible=p.__stVis;delete p.__stVis;}
+  });
+  // 波AI: 絵巻断片(探索モードの収集物)は物語の書割りに不要なので隠す。復帰時は収集状況に応じた表示へ戻す
+  if(typeof emakiFragments!=="undefined")emakiFragments.forEach(g=>{
+    if(!g)return;
+    if(on){if(g.__stVis==null)g.__stVis=g.visible;g.visible=false;}
+    else if(g.__stVis!=null){g.visible=g.__stVis;delete g.__stVis;}
   });
 }
 /* ---- ミニゲーム接続 ---- */
@@ -1090,6 +1135,7 @@ function stMiniGame(info){
         if(ok&&oniFinal){ // 決戦後の連札の場: 封印の大鬼を見せ直す
           const api=window.StoryObjects.createGreatOniStoryObject();
           api.group.position.set(30,0,-48);api.setPhase(3);scene.add(api.group);S.oni=api;
+          stOniGlbSkin(api); // 波AI: 四季モード秋ボスと同じGLBの姿に
         }
         const flags=(ok&&oniFinal&&hits<=5)?{oniPerfect:true}:undefined;
         info.complete({success:ok,flags});
@@ -1267,6 +1313,13 @@ function stStartChapter(id,resumeSeq){
   stEl("stPanel").style.display="none";
   stCleanupSets();
   SM.state.endingId=null;
+  // 波AI: 敗北フラグの残留バグ修正——一度負けてED3を見た後に再挑戦して勝っても、
+  // chapter4Lost/chapter5Lost が routeFlags に残り続け、determineEnding が永遠にED3を
+  // 返してしまっていた(勝ったのにやり直しED行き)。章の再開時に該当章の敗北フラグを拭う
+  if(SM.state.routeFlags){
+    if(id<=4)delete SM.state.routeFlags.chapter4Lost;
+    if(id<=5)delete SM.state.routeFlags.chapter5Lost;
+  }
   if(typeof ST_BGM!=="undefined")ST_BGM.start(id); // 章別プロシージャルBGM(ch5常世/ch6現実は無音)。ST_BGM側で二重start/章替えを処理
   if(id<=5)stChapterCard(id); // 波AG: 章題カットイン(第6話=回想の間とED直行では出さない)
   SM.startChapter(id).then(()=>{
@@ -1429,7 +1482,7 @@ function storyUpdate(dt){
       const shimmer=0.75+Math.sin(t*1.8)*.25;
       p.roomMats.forEach((m,i)=>{m.opacity=(i%5<3?.5:.4)*a*shimmer;}); // 窓ガラス/桟はやや明るく、机はやや控えめ
       if(p.eyeMats){ // ボスの予兆(河童の主): 濁りが十分深まってから灯り、以後は消えずボス戦突入まで残る
-        const eyeA=p.t<1.8?0:Math.min(1,(p.t-1.8)/1.2);
+        const eyeA=p.t<6.5?0:Math.min(1,(p.t-6.5)/1.4); // 波AI: 机の描写を読み終えた頃に、初めて灯る
         const pulse=0.7+Math.sin(t*3.4)*.3;
         p.eyeMats.forEach(m=>{m.opacity=eyeA*pulse;});
       }

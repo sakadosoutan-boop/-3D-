@@ -9,7 +9,11 @@
       "type": "set_scene",
       "season": "summer",
       "timeOfDay": "day",
-      "playerStart": { "x": -2.2, "z": 7.2, "yaw": 0.3 },
+      "playerStart": {
+        "x": -2.2,
+        "z": 7.2,
+        "yaw": 0.3
+      },
       "cameraAngleId": "cam_summer_sunoko",
       "fade": "white",
       "next": "seq_201_maku1"
@@ -76,13 +80,18 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "その残響にまじって、チャイムに似た音が半分だけ鳴り、蝉の声に呑まれた。学校というものを思い出しかけて——やめた。思い出すと、この庭の光が、すこし薄くなる気がしたから。",
-      "next": "seq_202_heat_effect"
+      "next": "seq_202_heat_effect",
+      "se": "chime",
+      "seDelayMs": 240
     },
     {
       "id": "seq_202_heat_effect",
       "type": "effect",
       "effectId": "summer_heat_haze",
-      "payload": { "seagull": true, "intensity": 0.45 },
+      "payload": {
+        "seagull": true,
+        "intensity": 0.45
+      },
       "next": "seq_202b"
     },
     {
@@ -139,8 +148,12 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「おお、噂の若君！　右近と申します、この邸の侍にて、弓と軽口が取り柄にございます。——して本日の御役目は札拾い。恋文なら胸も躍りましょうが、拾うは床と柱の名でございますなあ」",
-      "emotes": { "ukon": "smile" },
-      "effects": { "realityEgo": 2 },
+      "emotes": {
+        "ukon": "smile"
+      },
+      "effects": {
+        "realityEgo": 2
+      },
       "next": "seq_204b"
     },
     {
@@ -171,11 +184,36 @@
       "kind": "term_card",
       "count": 5,
       "positions": [
-        { "id": "misu", "label": "御簾", "x": 5.0, "z": 11.0 },
-        { "id": "hisashi", "label": "廂", "x": -9.5, "z": 14.5 },
-        { "id": "sunoko", "label": "簀子", "x": -3.0, "z": 15.0 },
-        { "id": "watadono", "label": "渡殿", "x": 15.5, "z": -8.0 },
-        { "id": "yarimizu", "label": "遣水", "x": -12.0, "z": 23.0 }
+        {
+          "id": "misu",
+          "label": "御簾",
+          "x": 5.0,
+          "z": 11.0
+        },
+        {
+          "id": "hisashi",
+          "label": "廂",
+          "x": -9.5,
+          "z": 14.5
+        },
+        {
+          "id": "sunoko",
+          "label": "簀子",
+          "x": -3.0,
+          "z": 15.0
+        },
+        {
+          "id": "watadono",
+          "label": "渡殿",
+          "x": 15.5,
+          "z": -8.0
+        },
+        {
+          "id": "yarimizu",
+          "label": "遣水",
+          "x": -12.0,
+          "z": 23.0
+        }
       ],
       "next": "seq_206_collect_check"
     },
@@ -192,8 +230,7 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "五枚目の札が手の中で光をほどいた瞬間、庭の景色が、ぴん、と張り直された。渡殿は渡殿の顔になり、遣水は遣水の音を取り戻した。世界に名前が戻っていく手応えが、指先に残っている。",
-      "se": "chime",
-      "seDelayMs": 600,
+      "se": "koto",
       "next": "seq_206c"
     },
     {
@@ -214,7 +251,7 @@
       "id": "seq_206e",
       "type": "dialogue",
       "speaker": "小萩",
-      "text": "「よう手が挙が——……いえ。よう手が伸びる童にございました。童のように学ぶ者は、老いた賢者より遠くへ行くこともございます」",
+      "text": "「……ふふ。満点、です——…………いえ。見事なお働きにございました、と申すのでした。童のように学ぶ者は、老いた賢者より遠くへ行くこともございます」",
       "next": "seq_206f"
     },
     {
@@ -229,7 +266,9 @@
       "type": "dialogue",
       "speaker": "左大臣",
       "text": "「うむ。そなたが、噂の異邦の若君か。札拾いの働き、廂より見ておったぞ。——ならば問おう。母屋と廂、何が違う」",
-      "emotes": { "minister": "stern" },
+      "emotes": {
+        "minister": "stern"
+      },
       "se": "gong",
       "next": "seq_207_place_terms"
     },
@@ -241,17 +280,25 @@
         {
           "text": "「中心と周縁です。そこに立てる人も、人との距離も変わります」",
           "next": "seq_208_correct",
-          "effects": { "realityEgo": 5, "fantasySynchro": 8, "brainErosion": -2 }
+          "effects": {
+            "realityEgo": 5,
+            "fantasySynchro": 8,
+            "brainErosion": -2
+          }
         },
         {
           "text": "「偉い人がいるところが母屋です」",
           "next": "seq_208_partial",
-          "effects": { "brainErosion": 8 }
+          "effects": {
+            "brainErosion": 8
+          }
         },
         {
           "text": "「どちらも部屋なので、同じです」",
           "next": "seq_208_wrong",
-          "effects": { "brainErosion": 12 }
+          "effects": {
+            "brainErosion": 12
+          }
         }
       ]
     },
@@ -260,8 +307,12 @@
       "type": "dialogue",
       "speaker": "左大臣",
       "text": "「……ほう。『そこに立てる人が変わる』か。よくぞ申した。場所の名は、そこに立つ人の、心の距離まで示すもの。——若君、そなた、ただの迷い人ではないな」",
-      "emotes": { "minister": "smile" },
-      "setFlag": { "chapter2TermMaster": true },
+      "emotes": {
+        "minister": "smile"
+      },
+      "setFlag": {
+        "chapter2TermMaster": true
+      },
       "next": "seq_209_kohagi_react"
     },
     {
@@ -269,7 +320,9 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「（……今の答え、あの方に少し、似ておりました）——いえ。何でもございませぬ」",
-      "emotes": { "kohagi": "surprise" },
+      "emotes": {
+        "kohagi": "surprise"
+      },
       "next": "seq_211_white_tanzaku"
     },
     {
@@ -284,7 +337,9 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「わ、若君！　それを申せば大工も女房も皆、暑さも忘れて夏の庭に倒れ伏しましょうぞ！」",
-      "emotes": { "ukon": "surprise" },
+      "emotes": {
+        "ukon": "surprise"
+      },
       "next": "seq_208_wrong2"
     },
     {
@@ -292,15 +347,23 @@
       "type": "dialogue",
       "speaker": "左大臣",
       "text": "「……はっはっは。よい、よい。間違いを恐れて黙す者より、間違えて覚える者のほうが、この邸には似合いじゃ。——だが二度は許さぬぞ」",
-      "emotes": { "minister": "smile" },
+      "emotes": {
+        "minister": "smile"
+      },
       "next": "seq_211_white_tanzaku"
     },
     {
       "id": "seq_211_white_tanzaku",
       "type": "effect",
       "effectId": "white_tanzaku_from_seagull",
-      "payload": { "text": "見えぬものほど、名を呼べ", "backText": "ここまで来て", "backHandwriting": "shiori" },
-      "setFlag": { "whiteTanzaku1": true },
+      "payload": {
+        "text": "見えぬものほど、名を呼べ",
+        "backText": "ここまで来て",
+        "backHandwriting": "shiori"
+      },
+      "setFlag": {
+        "whiteTanzaku1": true
+      },
       "next": "seq_211a"
     },
     {
@@ -344,7 +407,9 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「……若君。それがし、軽口ばかりの侍にございますがな。守るべき御方が退屈しておられぬ夏は、侍にとって、良い夏にございます。——札拾い、お供できて何よりでした」",
-      "emotes": { "ukon": "smile" },
+      "emotes": {
+        "ukon": "smile"
+      },
       "next": "seq_212_complete"
     },
     {
