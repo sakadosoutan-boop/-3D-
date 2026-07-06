@@ -8008,6 +8008,16 @@ function joyRelease(){joy.active=false;joy.vx=joy.vy=0;joy.id=null;knob.style.tr
 /* ドラッグ視点 + タップ/クリック判定 */
 const drag={on:false,id:null,x:0,y:0,moved:0,t0:0,_lp:null,_lpFired:false};
 const cv=renderer.domElement;
+function resetInputState(){
+  Object.keys(keys).forEach(k=>{keys[k]=false;});
+  ["w","a","s","d","arrowup","arrowdown","arrowleft","arrowright","shift"," "].forEach(k=>{keys[k]=false;});
+  joyRelease();
+  if(drag._lp){clearTimeout(drag._lp);drag._lp=null;}
+  drag.on=false;drag.id=null;drag.moved=0;drag._lpFired=false;
+  if(APP.taiji){APP.taiji.guarding=false;APP.taiji.rollDir=null;APP.taiji.rollUntil=0;APP.taiji.dodgeUntil=0;if(typeof updateTaijiControlsUi==="function")updateTaijiControlsUi();}
+}
+addEventListener("blur",resetInputState);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)resetInputState();});
 /* 俯瞰モード長押しワープ */
 function ovWarp(sx,sy){
   const rect=cv.getBoundingClientRect();
@@ -8040,9 +8050,17 @@ function pup(x,y){
   if(drag._lp){clearTimeout(drag._lp);drag._lp=null;}
   if(drag.moved<14&&performance.now()-drag.t0<450&&!drag._lpFired)pick(x,y);
 }
-cv.addEventListener("mousedown",e=>pdown(e.clientX,e.clientY,"m"));
+cv.addEventListener("contextmenu",e=>{if(APP.mode==="taiji"&&APP.taiji){e.preventDefault();e.stopPropagation();}});
+cv.addEventListener("mousedown",e=>{
+  if(APP.mode==="taiji"&&APP.taiji&&e.button===2){e.preventDefault();e.stopPropagation();taijiSetGuard(true);return;}
+  if(e.button!==0)return;
+  pdown(e.clientX,e.clientY,"m");
+});
 addEventListener("mousemove",e=>pmove(e.clientX,e.clientY));
-addEventListener("mouseup",e=>pup(e.clientX,e.clientY));
+addEventListener("mouseup",e=>{
+  if(APP.mode==="taiji"&&APP.taiji&&e.button===2){e.preventDefault();taijiSetGuard(false);return;}
+  pup(e.clientX,e.clientY);
+});
 let pinch0=0;
 cv.addEventListener("touchstart",e=>{e.preventDefault();
   if(APP.view==="ov"&&e.touches.length>=2){pinch0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);drag.on=false;return;} // ピンチズームは俯瞰のみ
@@ -9729,7 +9747,7 @@ function enterMode(m){
     if(typeof camera!=="undefined"&&camera&&camera.fov!==62){camera.fov=62;camera.updateProjectionMatrix();}
     if(typeof UK_BGM!=="undefined")UK_BGM.stop(); // 歌合を離れたらBGM停止
   }
-  if(m!=="taiji")document.body.classList.remove("taiji-mode","taiji-lock","guarding-now");
+  if(m!=="taiji"){document.body.classList.remove("taiji-mode","taiji-lock","guarding-now");resetInputState();}
   $("dangerVignette").style.opacity=0;
   closeInfo();closeCodex();
   $("modeTag").textContent=m==="quest"?(APP.questRole==="female"?"女性貴族の一日":"男性貴族の一日"):
@@ -11123,6 +11141,7 @@ function taijiQuit(){
   $("bossBar").style.display="none";$("bossBar2").style.display="none";$("taijiHud").style.display="none";
   document.body.classList.remove("guarding-now","taiji-lock","taiji-weapon-bow","taiji-weapon-seal","taiji-weapon-sword");
   if(APP._prevJoyDyn!==undefined){joy.dynamic=APP._prevJoyDyn;joyRelease();if(typeof updateControlUI==="function")updateControlUI();}
+  resetInputState();
   APP.taiji=null;APP.mode="walk";$("modeTag").textContent="自由散策";
 }
 function taijiBossList(k){return (k&&k.bosses)?k.bosses:(k&&k.boss?[k.boss]:[]);}
@@ -11152,6 +11171,7 @@ function endTaiji(failed){
   });
   document.body.classList.remove("taiji-mode","guarding-now","taiji-lock","taiji-brief-blocked","taiji-weapon-bow","taiji-weapon-seal","taiji-weapon-sword");
   if(APP._prevJoyDyn!==undefined){joy.dynamic=APP._prevJoyDyn;joyRelease();if(typeof updateControlUI==="function")updateControlUI();}
+  resetInputState();
   const elapsed=(performance.now()-k.tStart)/1000,total=k.total||TAIJI_SPOTS.length,hit=k.shot;
   /* 波O: ストーリー内ボス戦は結果画面を出さず、勝敗と被弾数だけ物語へ返す */
   if(APP.storyTaiji){

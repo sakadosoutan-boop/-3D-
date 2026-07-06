@@ -80,6 +80,15 @@ async function launchBrowser() {
       const taijiGuardOk = !!APP.taiji?.guarding;
       sendTaijiKeyUp('f');
       const taijiGuardReleaseOk = !APP.taiji?.guarding;
+      const canvas = document.querySelector('canvas');
+      const rightDown = new MouseEvent('mousedown', { button: 2, clientX: innerWidth / 2, clientY: innerHeight / 2, bubbles: true, cancelable: true });
+      canvas?.dispatchEvent(rightDown);
+      const taijiRightGuardOk = !!APP.taiji?.guarding && rightDown.defaultPrevented;
+      const ctx = new MouseEvent('contextmenu', { button: 2, clientX: innerWidth / 2, clientY: innerHeight / 2, bubbles: true, cancelable: true });
+      canvas?.dispatchEvent(ctx);
+      const taijiContextBlockedOk = ctx.defaultPrevented;
+      window.dispatchEvent(new MouseEvent('mouseup', { button: 2, clientX: innerWidth / 2, clientY: innerHeight / 2, bubbles: true, cancelable: true }));
+      const taijiRightReleaseOk = !APP.taiji?.guarding;
       sendTaijiKey(' ');
       const taijiDodgeOk = !!APP.taiji && APP.taiji.dodgeUntil > performance.now();
       if (APP.taiji) {
@@ -91,9 +100,12 @@ async function launchBrowser() {
       sendTaijiKey('r');
       await new Promise((resolve) => setTimeout(resolve, 80));
       const taijiSakeOk = !!APP.taiji && APP.taiji.sake === sakeBefore - 1 && APP.taiji.hp > 50;
+      sendTaijiKey('w');
+      const taijiKeyStuckSetupOk = keys.w === true;
       if (typeof endTaiji === 'function') endTaiji(true);
       await new Promise((resolve) => setTimeout(resolve, 120));
       const taijiEndOk = APP.mode === 'walk' && !APP.taiji && getComputedStyle(document.getElementById('taijiHud')).display === 'none';
+      const taijiKeyResetOk = keys.w === false && keys.shift === false;
       const taijiResultOk = getComputedStyle(document.getElementById('result')).display !== 'none';
       if (typeof closeResultPanel === 'function') closeResultPanel();
       if (typeof applySeason === 'function') applySeason('summer');
@@ -117,8 +129,13 @@ async function launchBrowser() {
         taijiPrevOk,
         taijiGuardOk,
         taijiGuardReleaseOk,
+        taijiRightGuardOk,
+        taijiContextBlockedOk,
+        taijiRightReleaseOk,
         taijiDodgeOk,
         taijiSakeOk,
+        taijiKeyStuckSetupOk,
+        taijiKeyResetOk,
         taijiEndOk,
         taijiResultOk,
         tourouOk,
@@ -139,8 +156,11 @@ async function launchBrowser() {
     if (!status.taijiSwordOk) errors.push('taiji key 3 did not select sword');
     if (!status.taijiNextOk || !status.taijiPrevOk) errors.push('taiji Q/E weapon cycling failed');
     if (!status.taijiGuardOk || !status.taijiGuardReleaseOk) errors.push('taiji F guard press/release failed');
+    if (!status.taijiRightGuardOk || !status.taijiRightReleaseOk) errors.push('taiji right-click guard press/release failed');
+    if (!status.taijiContextBlockedOk) errors.push('taiji context menu was not blocked');
     if (!status.taijiDodgeOk) errors.push('taiji Space dodge failed');
     if (!status.taijiSakeOk) errors.push('taiji R sake failed');
+    if (!status.taijiKeyStuckSetupOk || !status.taijiKeyResetOk) errors.push('taiji key state reset failed after battle');
     if (!status.taijiEndOk || !status.taijiResultOk) errors.push('taiji end/reset flow failed');
     if (!status.tourouOk) errors.push('tourou lanterns did not appear in summer night');
     if (status.tourouRipples !== 8) errors.push(`unexpected tourou ripple count: ${status.tourouRipples}`);
