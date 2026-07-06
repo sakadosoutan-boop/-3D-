@@ -180,6 +180,113 @@
       "type": "dialogue",
       "speaker": "秀頼（心）",
       "text": "（霧の原因は、物の怪じゃなくて——人の想い、なのか。だとしたら、祓うだけじゃ足りない。誰かが、返事をしないと）",
+      "next": "seq_304c_letter_intro"
+    },
+    {
+      "id": "seq_304c_letter_intro",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「返事をする前に、相手の嘆きの形を知りましょう。庭に、破れた文の端が三つ落ちております。顔ではなく、言葉の欠片を拾うのです」",
+      "next": "seq_304d_spawn_letter_fragments"
+    },
+    {
+      "id": "seq_304d_spawn_letter_fragments",
+      "type": "spawn_collectibles",
+      "groupId": "chapter3_letter_fragments",
+      "kind": "letter_fragment",
+      "count": 3,
+      "positions": [
+        {
+          "id": "fragment_waiting",
+          "label": "待つ夜",
+          "x": -5.5,
+          "z": 11
+        },
+        {
+          "id": "fragment_no_reply",
+          "label": "返らぬ文",
+          "x": 2.5,
+          "z": 12.5
+        },
+        {
+          "id": "fragment_wet_sleeve",
+          "label": "濡れた袖",
+          "x": 7.5,
+          "z": 18
+        }
+      ],
+      "next": "seq_304e_require_letter_fragments"
+    },
+    {
+      "id": "seq_304e_require_letter_fragments",
+      "type": "require_collectibles",
+      "groupId": "chapter3_letter_fragments",
+      "count": 3,
+      "successNext": "seq_304f_read_fragments",
+      "failNext": "seq_304d_spawn_letter_fragments"
+    },
+    {
+      "id": "seq_304f_read_fragments",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "破れた文を合わせると、たった三行だけ読めた。『待つ夜を、責めるつもりはありません』『ただ、届かなかったのなら』『わたしは、誰に向けて歌えばよいのでしょう』。墨の滲みは、涙とも水ともつかなかった。",
+      "next": "seq_304g_infer_choice"
+    },
+    {
+      "id": "seq_304g_infer_choice",
+      "type": "choice",
+      "text": "姫君の嘆きは、どこから来ているのだろう。",
+      "options": [
+        {
+          "text": "顔を見てもらえなかった悲しみ",
+          "next": "seq_304h_infer_face",
+          "effects": {
+            "brainErosion": 6
+          }
+        },
+        {
+          "text": "言葉が届いたか分からない不安",
+          "next": "seq_304h_infer_words",
+          "effects": {
+            "realityEgo": 4,
+            "fantasySynchro": 8
+          },
+          "setFlag": {
+            "understoodUnansweredLetter": true
+          }
+        },
+        {
+          "text": "相手を責めたいのに責められない怒り",
+          "next": "seq_304h_infer_anger",
+          "effects": {
+            "realityEgo": 3,
+            "brainErosion": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "seq_304h_infer_face",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「顔を見られることだけが、恋の証ではございませぬ。むしろ、姿ばかり欲しがる声ほど、文の余白を読み落としまする」",
+      "next": "seq_305_observation_choice"
+    },
+    {
+      "id": "seq_304h_infer_words",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……そうです。届いたか分からぬ言葉ほど、人を長く苦しめます。だから返歌は、返事である前に、あなたの言葉は届いていた、と告げる灯なのです」",
+      "emotes": {
+        "kohagi": "sad"
+      },
+      "next": "seq_305_observation_choice"
+    },
+    {
+      "id": "seq_304h_infer_anger",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "「怒りもまた、袖を濡らす水にございますな。されど若君、濡れた袖を絞る前に、まず誰が濡らしたかを見ねばなりませぬぞ」",
       "next": "seq_305_observation_choice"
     },
     {
@@ -265,31 +372,31 @@
         {
           "id": "autumn",
           "label": "秋",
-          "x": -7.0,
-          "z": 9.0
+          "x": -7,
+          "z": 9
         },
         {
           "id": "mist",
           "label": "霧",
-          "x": -8.0,
+          "x": -8,
           "z": 14.5
         },
         {
           "id": "wait",
           "label": "待つ",
-          "x": 0.0,
+          "x": 0,
           "z": 17.5
         },
         {
           "id": "sleeve",
           "label": "袖",
-          "x": 8.0,
-          "z": 14.0
+          "x": 8,
+          "z": 14
         },
         {
           "id": "moon",
           "label": "月",
-          "x": 6.0,
+          "x": 6,
           "z": 8.5
         }
       ],
@@ -373,7 +480,7 @@
       "timeOfDay": "dusk",
       "playerStart": {
         "x": -6.5,
-        "z": 22.0,
+        "z": 22,
         "yaw": 2.4
       },
       "cameraAngleId": "cam_ch3_pond_dark",

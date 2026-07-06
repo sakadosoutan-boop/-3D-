@@ -27,6 +27,17 @@
         "location": "hospital"
       },
       "cameraAngleId": "cam_hospital_bed",
+      "next": "seq_601h1b_hospital_reason"
+    },
+    {
+      "id": "seq_601h1b_hospital_reason",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "医師の説明では、短い発作と長い眠り。けれど、その言葉だけでは足りない。眠っているあいだ、誰かが毎日ここへ来て、教科書の余白に描いた邸の続きを、声にして置いていった。その声が、夢の中で御簾になり、小萩になったのだ。",
+      "stage": {
+        "location": "hospital"
+      },
+      "cameraAngleId": "cam_hospital_bed",
       "next": "seq_601h2_note"
     },
     {
@@ -115,6 +126,17 @@
         "location": "hospital"
       },
       "cameraAngleId": "cam_hospital_bed",
+      "next": "seq_ed1_wake1b_hospital_reason"
+    },
+    {
+      "id": "seq_ed1_wake1b_hospital_reason",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "医師の説明では、短い発作と長い眠り。けれど、その言葉だけでは足りない。眠っているあいだ、誰かが毎日ここへ来て、教科書の余白に描いた邸の続きを、声にして置いていった。その声が、夢の中で御簾になり、小萩になったのだ。",
+      "stage": {
+        "location": "hospital"
+      },
+      "cameraAngleId": "cam_hospital_bed",
       "next": "seq_ed1_wake2"
     },
     {
@@ -126,17 +148,6 @@
         "location": "hospital"
       },
       "cameraAngleId": "cam_hospital_table",
-      "next": "seq_ed1_wake2b"
-    },
-    {
-      "id": "seq_ed1_wake2b",
-      "type": "dialogue",
-      "speaker": "語り",
-      "text": "窓の外、遠くでカモメが鳴いた。……そうか。海のないあの邸の空を渡っていた白い鳥は——この病室の窓から届いていた、ほんものの海の声だったのか。チャイムも、ホイッスルも、頁をめくる音も。ぜんぶ、こちら側から。",
-      "se": "seagull",
-      "stage": {
-        "location": "hospital"
-      },
       "next": "seq_ed1_wake3"
     },
     {
@@ -186,6 +197,17 @@
         "location": "hospital"
       },
       "cameraAngleId": "cam_hospital_bed",
+      "next": "seq_ed2_wake1b_hospital_reason"
+    },
+    {
+      "id": "seq_ed2_wake1b_hospital_reason",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "医師の説明では、短い発作と長い眠り。誰かが何度も見舞いに来ていたらしい、と聞いた。けれど、その誰かの輪郭は、夢から持ち帰った知識の明るさの向こうで、うまく焦点を結ばなかった。",
+      "stage": {
+        "location": "hospital"
+      },
+      "cameraAngleId": "cam_hospital_bed",
       "next": "seq_ed2_wake2"
     },
     {
@@ -197,17 +219,6 @@
         "location": "hospital"
       },
       "cameraAngleId": "cam_hospital_table",
-      "next": "seq_ed2_wake2b"
-    },
-    {
-      "id": "seq_ed2_wake2b",
-      "type": "dialogue",
-      "speaker": "語り",
-      "text": "窓の外で、カモメが鳴いた。海の近いこの町の、聞き慣れた声。……なぜだか、その声に、胸の奥が少しだけあたたかくなった。理由は、思い出せない。",
-      "se": "seagull",
-      "stage": {
-        "location": "hospital"
-      },
       "next": "seq_ed2_wake3"
     },
     {
@@ -294,8 +305,36 @@
       "type": "dialogue",
       "speaker": "秀頼",
       "text": "「長い夢を見た。……なあ。今度、寝殿造りの図、ちゃんと教えてくれないか。——あなたの読み方で」",
-      "next": "seq_616x1",
+      "next": "seq_616a_balanced_branch",
       "cameraAngleId": "cam_classroom_board"
+    },
+    {
+      "id": "seq_616a_balanced_branch",
+      "type": "flag_branch",
+      "flag": "balancedReturnPoem",
+      "trueNext": "seq_616a_balanced_line",
+      "falseNext": "seq_616b_white_branch"
+    },
+    {
+      "id": "seq_616a_balanced_line",
+      "type": "dialogue",
+      "speaker": "栞",
+      "text": "「……帰っても、残る香がある。そういう読み方、私、好き。夢って言葉で片づけないでくれて、ありがとう」",
+      "next": "seq_616b_white_branch"
+    },
+    {
+      "id": "seq_616b_white_branch",
+      "type": "flag_branch",
+      "flag": "whiteTanzaku1",
+      "trueNext": "seq_616b_white_line",
+      "falseNext": "seq_616x1"
+    },
+    {
+      "id": "seq_616b_white_line",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "机の白い短冊を裏返すと、消えたはずの字が、光の角度で一文字だけ浮かんだ。——「来」。ここまで来て、の最後の一字。栞はそれを見て、泣きそうに笑った。",
+      "next": "seq_616x1"
     },
     {
       "id": "seq_616x1",
@@ -394,7 +433,7 @@
       "id": "seq_632_ed3_walk",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "あなたは、言葉のない廂を歩き続ける。夜は明けない。だが、怖がらなくていい。これは罰ではなく、報せだ。——言葉と、戦いの備えと、そして左大臣の背後で蠢いていた政争の影への備えが、まだ足りなかった。それだけのこと。",
+      "text": "あなたは、言葉のない廂を歩き続ける。夜は明けない。だが、怖がらなくていい。これは罰ではなく、報せだ。——言葉と、戦いの備えと、左大臣の背後で膨らんでいた「古きものを失いたくない」という恐れへの備えが、まだ足りなかった。それだけのこと。",
       "next": "seq_632x"
     },
     {

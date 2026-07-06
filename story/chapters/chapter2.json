@@ -151,8 +151,7 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "言われて見回すと、たしかに——渡殿のあたりも、遣水の細い流れも、陽炎のように輪郭がほどけている。あそこに廊下があったはずなのに、水音がしていたはずなのに、目で追うほど形が定まらない。名前という札を失くした標本箱の中身みたいだ、と秀頼は思った。",
-      "next": "seq_204_ukon_intro",
-      "effectId": "names_melt_pan"
+      "next": "seq_204_ukon_intro"
     },
     {
       "id": "seq_204_ukon_intro",
@@ -192,38 +191,68 @@
       "id": "seq_205_spawn_cards",
       "type": "spawn_collectibles",
       "groupId": "chapter2_terms",
-      "kind": "term_card",
+      "kind": "term_card_place",
       "count": 5,
       "positions": [
         {
           "id": "misu",
           "label": "御簾",
-          "x": 5.0,
-          "z": 11.0
+          "x": 5,
+          "z": 11,
+          "placeTarget": {
+            "x": 0.8,
+            "z": 5.4,
+            "r": 1.6,
+            "label": "母屋と廂のあいだ"
+          }
         },
         {
           "id": "hisashi",
           "label": "廂",
           "x": -9.5,
-          "z": 14.5
+          "z": 14.5,
+          "placeTarget": {
+            "x": -1.8,
+            "z": 7.0,
+            "r": 1.8,
+            "label": "母屋を囲む板敷"
+          }
         },
         {
           "id": "sunoko",
           "label": "簀子",
-          "x": -3.0,
-          "z": 15.0
+          "x": -3,
+          "z": 15,
+          "placeTarget": {
+            "x": -3.6,
+            "z": 10.8,
+            "r": 1.8,
+            "label": "高欄の内側の外縁"
+          }
         },
         {
           "id": "watadono",
           "label": "渡殿",
           "x": 15.5,
-          "z": -8.0
+          "z": -8,
+          "placeTarget": {
+            "x": 11.8,
+            "z": -3.8,
+            "r": 2.0,
+            "label": "建物をつなぐ細い通路"
+          }
         },
         {
           "id": "yarimizu",
           "label": "遣水",
-          "x": -12.0,
-          "z": 23.0
+          "x": -12,
+          "z": 23,
+          "placeTarget": {
+            "x": -11.5,
+            "z": 27.0,
+            "r": 2.0,
+            "label": "庭を流れる水筋"
+          }
         }
       ],
       "next": "seq_206_collect_check"
@@ -242,6 +271,98 @@
       "speaker": "語り",
       "text": "五枚目の札が手の中で光をほどいた瞬間、庭の景色が、ぴん、と張り直された。渡殿は渡殿の顔になり、遣水は遣水の音を取り戻した。世界に名前が戻っていく手応えが、指先に残っている。",
       "se": "koto",
+      "next": "seq_206_place_intro"
+    },
+    {
+      "id": "seq_206_place_intro",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「拾うただけでは、まだ半ば。名は、あるべき場所へ戻して初めて灯ります。若君、札を持って、邸に名を返してさしあげませ」",
+      "next": "seq_206_place_choice"
+    },
+    {
+      "id": "seq_206_place_choice",
+      "type": "choice",
+      "text": "五枚の札が手の中で鳴っている。最後に確かめるべき「置き場所」はどこだろう。",
+      "options": [
+        {
+          "text": "御簾を、母屋の声と廂の足音のあいだへ戻す",
+          "next": "seq_206_place_misu",
+          "effects": {
+            "realityEgo": 4,
+            "fantasySynchro": 7,
+            "brainErosion": -2
+          },
+          "setFlag": {
+            "placedMisuAsBoundary": true
+          }
+        },
+        {
+          "text": "廂を、母屋を囲む余白として戻す",
+          "next": "seq_206_place_hisashi",
+          "effects": {
+            "realityEgo": 6,
+            "fantasySynchro": 4,
+            "brainErosion": -2
+          },
+          "setFlag": {
+            "placedHisashiAsMargin": true
+          }
+        },
+        {
+          "text": "いちばん偉そうな場所へ、まとめて貼ってしまう",
+          "next": "seq_206_place_wrong",
+          "effects": {
+            "brainErosion": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "seq_206_place_misu",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "御簾の札を戻すと、簾の影がすっと落ち着いた。向こう側の気配は隠れたままなのに、不思議と遠くなってはいない。隔てるものが、つなぐものにもなる——春に聞いた言葉が、夏の光の中で輪郭を持った。",
+      "next": "seq_206_place_close"
+    },
+    {
+      "id": "seq_206_place_hisashi",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "廂の札を戻すと、床板の鳴りが変わった。母屋へ踏み込む前に、心を整えるための余白。そこに名前が戻っただけで、邸の呼吸まで穏やかになる。",
+      "next": "seq_206_place_close"
+    },
+    {
+      "id": "seq_206_place_wrong",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "「若君、名札を権勢順に並べてはなりませぬ！　それでは邸ではなく、役所の帳面でございます！」",
+      "emotes": {
+        "ukon": "surprise"
+      },
+      "next": "seq_206_place_wrong2"
+    },
+    {
+      "id": "seq_206_place_wrong2",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「けれど、間違えて置いたからこそ分かることもあります。名は偉さの札ではなく、働きの札。次は、ものの役目を見て戻しましょう」",
+      "next": "seq_206_place_close"
+    },
+    {
+      "id": "seq_206_place_close",
+      "type": "effect",
+      "effectId": "term_cards_return_home",
+      "payload": {
+        "stabilizeGarden": true,
+        "showCorrectLocations": [
+          "御簾",
+          "廂",
+          "簀子",
+          "渡殿",
+          "遣水"
+        ]
+      },
       "next": "seq_206c"
     },
     {

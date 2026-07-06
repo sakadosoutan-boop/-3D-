@@ -11,7 +11,7 @@
       "timeOfDay": "night",
       "playerStart": {
         "x": 0.6,
-        "z": 7.0,
+        "z": 7,
         "yaw": 3.14
       },
       "cameraAngleId": "cam_winter_utakai_hisashi",
@@ -389,7 +389,80 @@
       "speaker": "判者",
       "text": "「稽古、これまで。よい耳と、よい心得じゃ。——さあ、これより本番。そなたは左方の詠み手。手札の短冊から、題と場にかなう一首を番ごとに選び、右方と競うのじゃ。三番のうち二番、取ってみせよ」",
       "se": "gong",
-      "next": "seq_409zx_prep_branch"
+      "next": "seq_409a_opponent_poems"
+    },
+    {
+      "id": "seq_409a_opponent_poems",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "本番の短冊が配られる。右方の歌も、扇の陰から三首だけ示された。雪を白さだけで詠む歌。待つ人を責める歌。帰らぬ夢を甘く誘う歌。どれも悪くはない。けれど、どれも少しだけ、相手の沈黙を急かしている。",
+      "next": "seq_409b_select_sleeve_cards"
+    },
+    {
+      "id": "seq_409b_select_sleeve_cards",
+      "type": "choice",
+      "text": "本番へ持ち込む心構えとして、どの短冊を袖に忍ばせる？",
+      "options": [
+        {
+          "text": "「雪」 見えない声を、白さに重ねる短冊",
+          "next": "seq_409c_sleeve_snow",
+          "effects": {
+            "fantasySynchro": 4,
+            "utakaiPrepScore": 1
+          },
+          "setFlag": {
+            "sleeveCardSnow": true
+          }
+        },
+        {
+          "text": "「待つ」 急かさず、届いたことだけを返す短冊",
+          "next": "seq_409c_sleeve_wait",
+          "effects": {
+            "realityEgo": 2,
+            "fantasySynchro": 5,
+            "utakaiPrepScore": 1
+          },
+          "setFlag": {
+            "sleeveCardWait": true
+          }
+        },
+        {
+          "text": "「帰る」 忘れずに帰るための短冊",
+          "next": "seq_409c_sleeve_return",
+          "effects": {
+            "realityEgo": 5,
+            "fantasySynchro": 5,
+            "utakaiPrepScore": 2
+          },
+          "setFlag": {
+            "sleeveCardReturn": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "seq_409c_sleeve_snow",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「白は、塗りつぶす色ではない。余白を残す色じゃ。よい、雪の座では、その余白を忘れるでないぞ」",
+      "next": "seq_410_trigger_utakai"
+    },
+    {
+      "id": "seq_409c_sleeve_wait",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「届いた、と告げるだけで救われる夜がある。待つ題では、その灯を消すでないぞ」",
+      "next": "seq_410_trigger_utakai"
+    },
+    {
+      "id": "seq_409c_sleeve_return",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……帰るための歌を、忘れぬために袖へ。よい選び方にございます。どうか、その袖の香まで、連れてお帰りくださいませ」",
+      "emotes": {
+        "kohagi": "sad"
+      },
+      "next": "seq_410_trigger_utakai"
     },
     {
       "id": "seq_409zx_prep_branch",
@@ -397,23 +470,13 @@
       "flag": "utakaiPrepScore",
       "min": 3,
       "trueNext": "seq_409zx_prep",
-      "falseNext": "seq_409zx_prep_low"
+      "falseNext": "seq_410_trigger_utakai"
     },
     {
       "id": "seq_409zx_prep",
       "type": "dialogue",
       "speaker": "判者",
       "text": "「……稽古の二問、良き風が吹いておった。その風、本番でも見失うでないぞ」",
-      "next": "seq_410_trigger_utakai"
-    },
-    {
-      "id": "seq_409zx_prep_low",
-      "type": "dialogue",
-      "speaker": "判者",
-      "text": "「……稽古は稽古。座に着けば、また別の風が吹く。——気を引き締めてまいれ」",
-      "emotes": {
-        "judge": "stern"
-      },
       "next": "seq_410_trigger_utakai"
     },
     {
@@ -424,7 +487,17 @@
         "rounds": 3,
         "needWins": 2,
         "storyTheme": "return",
-        "judgeExplains": true
+        "judgeExplains": true,
+        "opponentPoems": [
+          "snow_plain_white",
+          "wait_accusing",
+          "return_never_wake"
+        ],
+        "prepFlags": [
+          "sleeveCardSnow",
+          "sleeveCardWait",
+          "sleeveCardReturn"
+        ]
       },
       "successEffects": {
         "fantasySynchro": 10,

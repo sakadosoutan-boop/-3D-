@@ -10,8 +10,8 @@
       "season": "tokoyo",
       "timeOfDay": "dawn",
       "playerStart": {
-        "x": 22.0,
-        "z": -36.0,
+        "x": 22,
+        "z": -36,
         "yaw": 0.6
       },
       "cameraAngleId": "cam_tokoyo_north_tainoya",
@@ -144,6 +144,95 @@
       "emotes": {
         "kohagi": "sad"
       },
+      "next": "seq_503e_corridor_intro"
+    },
+    {
+      "id": "seq_503e_corridor_intro",
+      "type": "effect",
+      "effectId": "inverted_memory_corridor",
+      "payload": {
+        "mirrorsPastChoices": true,
+        "floatingTerms": [
+          "半蔀",
+          "御簾",
+          "几帳",
+          "廂",
+          "母屋",
+          "待つ",
+          "帰る"
+        ]
+      },
+      "next": "seq_503f_skipped_branch"
+    },
+    {
+      "id": "seq_503f_skipped_branch",
+      "type": "flag_branch",
+      "flag": "skippedLessons",
+      "trueNext": "seq_503f_skipped",
+      "falseNext": "seq_503g_face_branch"
+    },
+    {
+      "id": "seq_503f_skipped",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "回廊の壁に、春の日の自分が映った。「もう十分だ」と言い張った口元だけが、墨で黒く塗られている。言葉を軽く扱った瞬間は、消えずにここまで付いてきていた。",
+      "next": "seq_503g_face_branch"
+    },
+    {
+      "id": "seq_503g_face_branch",
+      "type": "flag_branch",
+      "flag": "tabooFaceObserved",
+      "trueNext": "seq_503g_face",
+      "falseNext": "seq_503h_letter_branch"
+    },
+    {
+      "id": "seq_503g_face",
+      "type": "dialogue",
+      "speaker": "水底の声",
+      "text": "「見タ、見タト言ッタ目ハ、何ヲ見落トシタ」",
+      "se": "water_drop",
+      "next": "seq_503h_letter_branch"
+    },
+    {
+      "id": "seq_503h_letter_branch",
+      "type": "flag_branch",
+      "flag": "understoodUnansweredLetter",
+      "trueNext": "seq_503h_letter",
+      "falseNext": "seq_503i_stay_branch"
+    },
+    {
+      "id": "seq_503h_letter",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "秋に拾った破れ文が、足元で淡く光った。届いたか分からない言葉は、人を夜に縫いとめる。だからこそ、返す言葉が道になるのだと、今なら分かる。",
+      "next": "seq_503i_stay_branch"
+    },
+    {
+      "id": "seq_503i_stay_branch",
+      "type": "flag_branch",
+      "flag": "desireToStayForever",
+      "trueNext": "seq_503i_stay",
+      "falseNext": "seq_503j_return_branch"
+    },
+    {
+      "id": "seq_503i_stay",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "冬の歌が、耳元で甘くほどけた。帰らぬ夢を願った自分の声が、驚くほど心地よく、驚くほど危うい。夢は、願われるとこちらを願い返す。",
+      "next": "seq_503j_return_branch"
+    },
+    {
+      "id": "seq_503j_return_branch",
+      "type": "flag_branch",
+      "flag": "balancedReturnPoem",
+      "trueNext": "seq_503j_return",
+      "falseNext": "seq_504_minister_possessed"
+    },
+    {
+      "id": "seq_503j_return",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "けれど、袖の奥にまだ一首残っていた。帰る袖にも、残る香がある。帰ることは、捨てることではない。覚えたものを連れて、別の朝へ渡すことだ。",
       "next": "seq_504_minister_possessed"
     },
     {
@@ -160,7 +249,7 @@
       "id": "seq_504b",
       "type": "dialogue",
       "speaker": "左大臣",
-      "text": "「この邸は、古きものを守るためにある。名を。作法を。歌を。……新しき世へ返すものなど、ひとつも、ない。若君も、もう、お帰りにならずともよいのじゃ。ここで皆と、永う——」",
+      "text": "「この邸は、古きものを守るためにある。名を。作法を。歌を。……誰にも読まれぬ歌は、塵になる。誰にも呼ばれぬ名は、闇になる。新しき世へ返せば、いずれ笑われ、忘れられ、消えてしまう。ならば若君も、もう、お帰りにならずともよいのじゃ。ここで皆と、永う——」",
       "emotes": {
         "minister": "stern"
       },

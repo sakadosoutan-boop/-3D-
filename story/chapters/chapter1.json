@@ -253,6 +253,112 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「厄介と思えるなら、まだ帰れましょう。——さて」",
+      "next": "seq_004g_tactile_intro"
+    },
+    {
+      "id": "seq_004g_tactile_intro",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「厄介と思えるなら、次は手で覚えませ。紙の上で知る名と、膝をつき、指先で確かめた名とは、まるで重さが違いまする」",
+      "next": "seq_004h_tactile_effect"
+    },
+    {
+      "id": "seq_004h_tactile_effect",
+      "type": "effect",
+      "effectId": "tactile_learning_highlight",
+      "payload": {
+        "targets": [
+          "半蔀",
+          "几帳",
+          "廂"
+        ],
+        "glow": "soft_gold",
+        "camera": "slow_pan_floor_to_misu"
+      },
+      "next": "seq_004i_half_shitomi"
+    },
+    {
+      "id": "seq_004i_half_shitomi",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "まず、半蔀に触れた。上へ吊り上げられた板戸は、教室の窓とは違い、外を切り取るのではなく、光だけをそっと招き入れている。指をかけると、木は朝の冷たさを残していた。",
+      "next": "seq_004j_half_shitomi"
+    },
+    {
+      "id": "seq_004j_half_shitomi",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「半ば蔀（しとみ）を上ぐるゆえ、半蔀。閉ざすものにも、開き方がございます。すべてを見せぬからこそ、朝の光はやさしく入るのです」",
+      "effects": {
+        "fantasySynchro": 2
+      },
+      "next": "seq_004k_kichou"
+    },
+    {
+      "id": "seq_004k_kichou",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "次に几帳の布へ手を伸ばす。薄い。けれど、その薄さが不思議なほど強い。布一枚の向こうで、誰かが息をひそめれば、こちらの軽率な一歩が、その人の静けさを壊してしまうと分かる。",
+      "next": "seq_004l_kichou"
+    },
+    {
+      "id": "seq_004l_kichou",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「几帳は、ただ隠す布ではございませぬ。風を和らげ、視線を和らげ、言葉が届く速さまで和らげまする。急く人ほど、この布にぶつかるのです」",
+      "next": "seq_004m_hisashi"
+    },
+    {
+      "id": "seq_004m_hisashi",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "廂へ足を移すと、床の高さと板の鳴りが変わった。母屋の内でも、庭の外でもない。誰かに近づきたい気持ちと、近づきすぎてはいけない作法が、ちょうど釣り合う場所。",
+      "next": "seq_004n_learning_choice"
+    },
+    {
+      "id": "seq_004n_learning_choice",
+      "type": "choice",
+      "text": "小萩が問う。「いま触れた名のうち、もっとも不思議に思われたものは？」",
+      "options": [
+        {
+          "text": "「半蔀。閉じるものにも、開き方があるってこと」",
+          "next": "seq_004o_learning_close",
+          "effects": {
+            "realityEgo": 3,
+            "fantasySynchro": 3
+          },
+          "setFlag": {
+            "learnedByTouchHalfShitomi": true
+          }
+        },
+        {
+          "text": "「几帳。薄いのに、人との距離を守ってること」",
+          "next": "seq_004o_learning_close",
+          "effects": {
+            "fantasySynchro": 6
+          },
+          "setFlag": {
+            "learnedByTouchKichou": true
+          }
+        },
+        {
+          "text": "「廂。内でも外でもない場所があること」",
+          "next": "seq_004o_learning_close",
+          "effects": {
+            "realityEgo": 4,
+            "fantasySynchro": 2
+          },
+          "setFlag": {
+            "learnedByTouchHisashi": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "seq_004o_learning_close",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「よろし。名を覚えるとは、音を丸暗記することにあらず。ものの働きと、人の心の置き場所を、一緒に覚えることにございます」",
       "next": "seq_005_intro"
     },
     {
@@ -413,7 +519,7 @@
       "text": "春の朝。桜の影が床板の上を流れ、遠くで白い鳥が——この内陸の邸にいるはずのない、カモメが一声鳴いた。秀頼は御簾の向こうにいる誰かの息遣いを、はじめて「物語」としてではなく、隣にいる人の気配として聞いた。",
       "se": "seagull",
       "next": "chapter_complete",
-      "note": "Clue for the real-world connection: seagull SE = Shiori's hospital town near the sea. Paid off in ch2 tanzaku / ch6 ED1."
+      "note": "Clue for the real-world connection: the impossible seagull is an outside signal that does not belong to the mansion or the inland classroom."
     }
   ]
 }

@@ -29,7 +29,7 @@
 | `seq_105_learn_boundaries` | dialogue | 御簾/几帳/廂/母屋の意味説明。 | 各建具が淡く縁取り発光。 | fantasySynchro +3 |
 | `seq_106_quiz_intro` | dialogue | 小萩「名を知らぬものは、触れてはなりませぬ。」 | UI目標更新。 | なし |
 | `seq_107_minigame_quiz` | trigger_minigame | 初級名称当て5問。 | 既存クイズへ接続。 | 成功/失敗 |
-| `seq_108_after_quiz_success` | dialogue | 御簾の向こうから「せりざわくん」。 | 現代チャイムが一瞬混じる。 | flag `heardRealName` |
+| `seq_108_after_quiz_success` | dialogue | 御簾の向こうから「ときとうくん」。 | 現代チャイムが一瞬混じる。 | flag `heardRealName` |
 | `seq_109_complete` | dialogue | 春の朝を越える。 | 桜花びら、カモメの遠声を初出。 | chapter1Cleared |
 
 ### `seq_104_first_choice` 選択肢
@@ -284,3 +284,23 @@
 - 選択肢で3パラメータの意味が体感できる。
 - ED3/ED4/ED5にも専用の美しさがある。
 - True Endが恋愛成就の断定ではなく、相手を知ろうとする始まりになっている。
+
+## 小説品質ボリュームアップ反映メモ
+
+### 第1話
+`seq_004g_tactile_intro` から `seq_004o_learning_close` を追加。半蔀、几帳、廂を実際に触って覚える場面を入れ、用語暗記ではなく身体感覚として学習する導線にした。
+
+### 第2話
+`seq_206_place_intro` から `seq_206_place_close` を追加。用語カードを拾うだけでなく、あるべき場所へ戻す配置パズルに拡張した。御簾/廂の理解を、空間と人間関係の距離へ接続する。
+
+### 第3話
+`seq_304c_letter_intro` から `seq_304h_infer_*` を追加。姫君の破れ文を拾い、返歌前に「届いたか分からない言葉」の痛みを推理する。河童戦の動機を、単なる怪異退治ではなく未返信の嘆きの鎮魂へ寄せた。
+
+### 第4話
+`seq_409a_opponent_poems` から `seq_409c_sleeve_*` を追加。本番前に右方の歌と袖に忍ばせる短冊を提示し、稽古選択が本番の心構えへつながるようにした。
+
+### 第5話
+`seq_503e_corridor_intro` から `seq_503j_return` を追加。過去フラグに応じて、春の学び拒否、秋の覗き、冬の残留願望、帰る歌が逆さの回廊に映る。ラスボス戦をプレイヤー自身の選択の総決算にする。
+
+### 第6話
+病室の読み聞かせ理由を補足する `seq_601h1b_hospital_reason` / `seq_ed*_wake1b_hospital_reason` と、ED1のフラグ差分 `seq_616a_balanced_*` / `seq_616b_white_*` を追加。True Endは「夢だった」ではなく、「誰かの声が御簾になって届いていた」結末として読めるようにした。
