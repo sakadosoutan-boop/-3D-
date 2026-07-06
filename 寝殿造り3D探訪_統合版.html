@@ -18830,9 +18830,9 @@ window.STORY_EMBED={"manifest":{"version":1,"basePath":"story/chapters/","chapte
   };
 })(typeof window!=="undefined"?window:globalThis);
 /* ============================================================
-   波M: ストーリーモード「御簾の向こうへ」統合ランタイム(試験版)
-   ■ 入口は隠しゲート: URLに ?story=1 が付いた時だけタイトルに入口ボタンが現れる。
-     通常プレイヤーには一切見えない(実機確認用の非公開モード)。?storyDebug=1 で隠しパラメータ表示。
+   波M: ストーリーモード「御簾の向こうへ」統合ランタイム(デモ版)
+   ■ 入口: タイトルのメインメニュー最上段に「御簾の向こうへ（デモ版）」として常設。
+     ?storyDebug=1 で隠しパラメータ表示。
    ■ 章データ(STORY_EMBED)・StoryManager・StoryObjects は直前に同梱済み。
    ■ ミニゲーム接続は第1話クイズのみ本接続。他章の試練は試験版パネル(成功/失敗を選ぶ)で
      全章の物語・分岐・EDを通しで確認できる。
@@ -20271,7 +20271,7 @@ function stChapterMenu(){
   // 波AL: 一度でも結末に到達したら、章メニューにも現在の心の在り処を常時明示する
   const paramLine=edN>0?("<br>現在の心 — 現"+(pNow.realityEgo|0)+" / 雅"+(pNow.fantasySynchro|0)+" / 蝕"+(pNow.brainErosion|0)):"";
   stPanel("御簾の向こうへ — 寝殿造り異聞",
-    "<small style='color:#9a8a6a'>読了 "+doneN+"/5話 ｜ 結末 "+edN+"/5 ｜ 試験版 (?story=1)"+paramLine+"</small>",btns);
+    "<small style='color:#9a8a6a'>読了 "+doneN+"/5話 ｜ 結末 "+edN+"/5 ｜ デモ版"+paramLine+"</small>",btns);
 }
 function stStartChapter(id,resumeSeq){
   stEl("stPanel").style.display="none";
@@ -20596,18 +20596,17 @@ function storyUpdate(dt){
 window.startStory=startStory;
 window.storyUpdate=storyUpdate;
 window.stExitToTitle=stExitToTitle;
-/* ---- 隠しゲート: ?story=1 の時だけタイトルに入口を出す ---- */
+/* ---- タイトル入口: メインメニュー最上段に常設(デモ版表記) ---- */
 function stGate(){
-  let on=false;
-  try{on=new URLSearchParams(location.search).get("story")==="1";}catch(e){}
-  if(!on)return;
-  const host=document.getElementById("mainModes");if(!host)return;
+  const host=document.querySelector("#mainModes .t-modes");if(!host)return;
   const b=document.createElement("button");
-  b.className="t-btn";b.id="btnStory";
-  b.style.borderColor="rgba(185,165,230,.75)";
-  b.innerHTML='<span class="mode-meta">物語 / 試験中</span><span>📖 御簾の向こうへ</span>';
+  b.className="t-btn t-cat-btn gold recommended";b.id="btnStory";
+  b.style.borderColor="rgba(185,165,230,.9)";
+  b.innerHTML='<span class="mode-meta">物語 / 新機能</span>'
+    +'<div class="cat-icon">📖</div><span class="mode-name">御簾の向こうへ（デモ版）</span>'
+    +'<small>平安と現代をつなぐ、隠された物語を読む</small>';
   b.onclick=()=>{beep(700,.08);if(typeof initAudio==="function")initAudio();enterMode("story");};
-  host.appendChild(b);
+  host.insertBefore(b,host.firstChild);
 }
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",stGate);
 else stGate();
