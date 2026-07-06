@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "codex": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["mcp/codex-bridge/index.js"]
+    }
+  }
+}
