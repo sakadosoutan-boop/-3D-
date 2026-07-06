@@ -27,17 +27,6 @@
         "location": "hospital"
       },
       "cameraAngleId": "cam_hospital_bed",
-      "next": "seq_601h1b_hospital_reason"
-    },
-    {
-      "id": "seq_601h1b_hospital_reason",
-      "type": "dialogue",
-      "speaker": "語り",
-      "text": "医師の説明では、短い発作と長い眠り。けれど、その言葉だけでは足りない。眠っているあいだ、誰かが毎日ここへ来て、教科書の余白に描いた邸の続きを、声にして置いていった。その声が、夢の中で御簾になり、小萩になったのだ。",
-      "stage": {
-        "location": "hospital"
-      },
-      "cameraAngleId": "cam_hospital_bed",
       "next": "seq_601h2_note"
     },
     {
@@ -126,17 +115,6 @@
         "location": "hospital"
       },
       "cameraAngleId": "cam_hospital_bed",
-      "next": "seq_ed1_wake1b_hospital_reason"
-    },
-    {
-      "id": "seq_ed1_wake1b_hospital_reason",
-      "type": "dialogue",
-      "speaker": "語り",
-      "text": "医師の説明では、短い発作と長い眠り。けれど、その言葉だけでは足りない。眠っているあいだ、誰かが毎日ここへ来て、教科書の余白に描いた邸の続きを、声にして置いていった。その声が、夢の中で御簾になり、小萩になったのだ。",
-      "stage": {
-        "location": "hospital"
-      },
-      "cameraAngleId": "cam_hospital_bed",
       "next": "seq_ed1_wake2"
     },
     {
@@ -169,6 +147,17 @@
       "stage": {
         "location": "hospital"
       },
+      "next": "seq_ed1_wake1b_hospital_reason"
+    },
+    {
+      "id": "seq_ed1_wake1b_hospital_reason",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "医師の説明では、短い発作と長い眠り。けれど、その言葉だけでは足りない。眠っているあいだ、誰かが毎日ここへ来て、教科書の余白に描いた邸の続きを、声にして置いていった。その声が、夢の中で御簾になり、小萩になったのだ。",
+      "stage": {
+        "location": "hospital"
+      },
+      "cameraAngleId": "cam_hospital_bed",
       "next": "seq_611_ed1"
     },
     {

@@ -139,6 +139,9 @@ function stInject(){
     "#stEd1Glow{position:fixed;inset:0;z-index:44;pointer-events:none;opacity:0;transition:opacity 2.4s ease;",
     " background:radial-gradient(ellipse 90% 70% at 84% 8%,rgba(255,238,196,.34),rgba(255,238,196,.10) 45%,transparent 72%)}",
     "body.st-ed1-glow #stEd1Glow{opacity:1}",
+    /* 波AL: 2話——名がほどけ、渡殿や遣水の輪郭が陽炎のように滲む */
+    "body.st-haze #c{animation:stHazePulse 2.6s ease-in-out infinite}",
+    "@keyframes stHazePulse{0%,100%{filter:blur(1.4px) saturate(.94)}50%{filter:blur(3px) saturate(.88)}}",
     /* 波AJ: ED5——3Dの質感が剥がれ、世界が白黒の線画(教科書の挿絵)に潰されていく */
     "body.st-ed5-lineart #c{filter:grayscale(1) contrast(1.75) brightness(1.12);transition:filter 6s ease}",
     /* 波Z/AI: 名を呼ぶ選択肢/台詞の崩れ(常世が名を拒むような不穏なグリッチ)。
@@ -853,7 +856,10 @@ function stPanel(title,bodyHtml,btns){
 }
 function stDebugRefresh(snap){
   const el=stEl("stDebug");if(!el)return;
-  if(!/[?&]storyDebug=1/.test(location.search)){el.textContent="";return;}
+  // 波AL: いずれかの結末に一度でも到達した後は、隠しパラメータを常時HUDに明示する
+  // (「蝕がたまってED5行きになった後、どう戻すか分からない」への回答——まず見えるように)
+  const unlocked=/[?&]storyDebug=1/.test(location.search)||stLoadEndings().length>0;
+  if(!unlocked){el.textContent="";return;}
   const p=(snap&&snap.state&&snap.state.params)||{};
   el.textContent=`現${p.realityEgo|0}/雅${p.fantasySynchro|0}/蝕${p.brainErosion|0}`;
 }
@@ -1009,6 +1015,7 @@ function stEffect(info){
     const eyeMat1=mkFlat(.30,.30,0xff2010,-.22,.85,.014);
     const eyeMat2=mkFlat(.30,.30,0xff2010,.18,.85,.014);
     g.position.set(-11.5,0.16,27.0); // 池の北汀の水面に固定(直前のset_sceneでプレイヤーを汀へ移す)
+    g.scale.set(2.4,1,2.4); // 波AL: 反射は水面いっぱいに大きく映す(実機FB)
     g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
     scene.add(g);
     S.props.push({kind:"yarimizu",api:{group:g},t:0,darkMat:dark,roomMats,eyeMats:[eyeMat1,eyeMat2]});
@@ -1073,6 +1080,17 @@ function stEffect(info){
     S._ed3HbTimers=[900,1650,2500,3450,4550].map(ms=>setTimeout(hbBeat,ms));
     S._ed3HbTimers.push(setTimeout(()=>beep(50,2.8,"sine",.09),5600)); // フラットライン
     setTimeout(()=>stSlowFadeToWhite(3400),1400); // 火が弱まり始めた頃から、ゆっくり画面が白む
+  }else if(id==="names_melt_pan"){
+    // 波AL: 2話「輪郭がほどけている」——渡殿のあたり→遣水の流れへ、陽炎のぼかしの中を
+    // ゆっくり視線が渡る。カメラ位置は動かさず、向き(yaw/pitch)だけを補間する
+    const reduced=(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION);
+    const anchor=player.pos.clone();
+    S.namePan={t:0,dur:reduced?0.01:6.5,anchor,
+      from:new THREE.Vector3(15.5,1.6,-8.0),  // 渡殿のあたり
+      to:new THREE.Vector3(-12.0,0.6,23.0)};  // 遣水の流れ
+    document.body.classList.add("st-haze");
+    clearTimeout(window._stHazeT);
+    window._stHazeT=setTimeout(()=>document.body.classList.remove("st-haze"),reduced?2600:8000); // 台詞を読み終える頃に晴れる
   }else if(id==="ed5_world_break"){
     // 波AA: ED5(百年の夢)——世界が壊れていく感じを強化。チャイムを2倍速で鳴らし続け、雅楽と風を逆再生で流す
     if(!erosionFx&&window.StoryObjects)erosionFx=window.StoryObjects.createBrainErosionOverlay({}).mount();
@@ -1134,9 +1152,17 @@ function stEnsureHospital(){
   S.hospital=SO.createHospitalRoomSet(); // 心電モニタ・点滴・薄紫紐のしおり付きノート
   scene.add(S.hospital.group);
 }
+/* 波AL: モード切替でWキー等が押しっぱなし判定のまま残り、壁ぎわでヘッドボブが
+   揺れ続ける不具合の根治。物語⇄試練の出入りで移動キーの状態を必ずリセットする */
+function stResetMoveKeys(){
+  if(typeof keys==="undefined")return;
+  ["w","a","s","d","shift","arrowup","arrowdown","arrowleft","arrowright"].forEach(k=>{keys[k]=false;});
+}
 /* 章をまたぐ大道具の一括後片付け(大鬼・連札・教室) */
 function stCleanupSets(){
   const S=APP.story,SO=window.StoryObjects;if(!S||!SO)return;
+  if(S.actors)Object.values(S.actors).forEach(a=>{if(a&&a.group)a.group.visible=false;}); // 波AL: 章をまたいで役者が立ち残らないように(台詞で再登場する)
+  document.body.classList.remove("st-haze");S.namePan=null; // 波AL: 陽炎パンの後片付け
   if(S._ed3HbTimers){S._ed3HbTimers.forEach(clearTimeout);S._ed3HbTimers=null;} // ED3の心音/心電音タイマー
   if(S._ed5FlickerT){clearInterval(S._ed5FlickerT);S._ed5FlickerT=null;} // ED5の崩壊フリッカー
   if(typeof SFX!=="undefined"&&SFX.stopEd5Chaos)SFX.stopEd5Chaos(); // ED5のチャイム2倍速/逆再生BGMを必ず止める
@@ -1175,6 +1201,7 @@ function stMiniGame(info){
   const S=APP.story;S.mini=info;
   stVnStop();
   if(typeof ST_BGM!=="undefined")ST_BGM.stop(); // 章BGMを止める(歌合はUK_BGM、退治はボスBGMが鳴るため)。復帰時にstartStoryで再開
+  stResetMoveKeys(); // 波AL: 試練へ入る際も移動キー状態を拭う
   stEl("stBox").style.display="none";
   {const hud=stEl("storyHud");if(hud)hud.style.display="none";} // ミニゲーム中は章メニュー📑/終了✕を隠して状態破壊を防止
   if(info.gameMode==="quiz_beginner"){
@@ -1392,10 +1419,23 @@ function stChapterMenu(){
   const edN=stLoadEndings().length;
   btns.push(["🌸 結末の回想（回想の間） 結末 "+edN+"/5",()=>stStartChapter(6)]);
   btns.push(["📜 記録の間（手動セーブ/ロード）",()=>{stSlotArmed=0;stRecordRoom();}]);
+  // 波AL: 蝕がたまってED5圏へ入った後の「戻し方」——禊。結末到達後(パラメータ可視化後)かつ蝕60以上で現れる
+  const pNow=(SM&&SM.state&&SM.state.params)||{};
+  if(edN>0&&(pNow.brainErosion|0)>=60){
+    btns.push(["⛩ 禊（みそぎ）——心の蝕れを清める（蝕→0）",()=>{
+      SM.state.params.brainErosion=0;SM.save();
+      if(erosionFx)erosionFx.setLevel(0);
+      toast("川の水で身を清めた。……胸の内の靄が、引いていく（蝕 0）",3200);
+      if(typeof saigenSe==="function")saigenSe("koto");
+      stChapterMenu();
+    }]);
+  }
   btns.push(["タイトルへ戻る",()=>stExitToTitle()]);
   const doneN=[1,2,3,4,5].filter(i=>done[i]).length;
+  // 波AL: 一度でも結末に到達したら、章メニューにも現在の心の在り処を常時明示する
+  const paramLine=edN>0?("<br>現在の心 — 現"+(pNow.realityEgo|0)+" / 雅"+(pNow.fantasySynchro|0)+" / 蝕"+(pNow.brainErosion|0)):"";
   stPanel("御簾の向こうへ — 寝殿造り異聞",
-    "<small style='color:#9a8a6a'>読了 "+doneN+"/5話 ｜ 結末 "+edN+"/5 ｜ 試験版 (?story=1)</small>",btns);
+    "<small style='color:#9a8a6a'>読了 "+doneN+"/5話 ｜ 結末 "+edN+"/5 ｜ 試験版 (?story=1)"+paramLine+"</small>",btns);
 }
 function stStartChapter(id,resumeSeq){
   stEl("stPanel").style.display="none";
@@ -1407,9 +1447,14 @@ function stStartChapter(id,resumeSeq){
   if(SM.state.routeFlags){
     if(id<=4)delete SM.state.routeFlags.chapter4Lost;
     if(id<=5)delete SM.state.routeFlags.chapter5Lost;
+    if(id<=4)delete SM.state.routeFlags.utakaiPrepScore; // 波AL: 加算式になった稽古スコアを再走時に持ち越さない
   }
   if(typeof ST_BGM!=="undefined")ST_BGM.start(id); // 章別プロシージャルBGM(ch5常世/ch6現実は無音)。ST_BGM側で二重start/章替えを処理
   if(id<=5)stChapterCard(id); // 波AG: 章題カットイン(第6話=回想の間とED直行では出さない)
+  if(typeof taijiLoadSimpleGlb==="function"){ // 波AL: ボスGLBを章の冒頭で温めておく(戦闘直前の読み込みヒッチ=一瞬固まる対策)
+    if(id===3)taijiLoadSimpleGlb("assets/bosses/kappa_boss_2048.glb").catch(()=>{});
+    if(id===5){taijiLoadSimpleGlb("assets/bosses/hitodama_boss_2048.glb").catch(()=>{});taijiLoadSimpleGlb("assets/bosses/oni_boss_2048.glb").catch(()=>{});}
+  }
   SM.startChapter(id).then(()=>{
     if(resumeSeq&&SM.sequenceMap.has(resumeSeq)){SM.currentSequenceId=resumeSeq;SM.runCurrent();}
     // 波Z: 第5話開始時、侵食が高いまま進むとED5に繋がることを明示し、唐突感をなくす
@@ -1427,6 +1472,7 @@ function startStory(){
   if(APP.story){ // ミニゲーム帰還: 再初期化せず、隠し直しだけ行う(垣間見等が住人の表示を戻すため)
     APP.story.mini=null; // ミニゲーム終了——中断/終了ボタンを再び有効化
     if(typeof AUTO_TIME!=="undefined")AUTO_TIME._paused=true; // 波Z: endTaiji等が解除した時刻自動進行を物語復帰時に再固定
+    stResetMoveKeys(); // 波AL: 戦闘中に押しっぱなしのまま残った移動キーを拭う(カメラ揺れの根治)
     stHideWorldFigures(true);
     if(typeof ST_BGM!=="undefined"&&SM&&SM.state)ST_BGM.start(SM.state.chapterId); // ミニゲームから物語へ復帰: 章BGMを再開
     stDebugRefresh(SM&&SM.snapshot());
@@ -1551,6 +1597,16 @@ function storyUpdate(dt){
   if(S.hospital&&S.hospital.update)S.hospital.update(t); // 心電波形・見舞いの気配
   if(S.seagullFly&&S.seagullFly.update)S.seagullFly.update(dt); // 波Z: カモメの飛来演出
   if(S.skyDome&&S.skyDome.update&&typeof camera!=="undefined")S.skyDome.update(camera.position,t); // 波AB: 常世の禍々しいスカイドーム
+  if(S.namePan){ // 波AL: 渡殿→遣水へ、向きだけをゆっくり渡す(位置は固定)
+    const np=S.namePan;np.t+=dt;const p=Math.min(1,np.t/np.dur);
+    const e=p*p*(3-2*p);
+    const tx=np.from.x+(np.to.x-np.from.x)*e,ty=np.from.y+(np.to.y-np.from.y)*e,tz=np.from.z+(np.to.z-np.from.z)*e;
+    player.pos.copy(np.anchor); // 押しっぱなしキー等での位置ずれを許さない
+    const dx=tx-np.anchor.x,dy=ty-np.anchor.y,dz=tz-np.anchor.z,len=Math.hypot(dx,dy,dz)||1;
+    player.yaw=Math.atan2(-dx,-dz);
+    player.pitch=Math.max(-1.2,Math.min(1.2,Math.asin(dy/len)));
+    if(p>=1)S.namePan=null;
+  }
   if(S.boardPull){ // 波AA: 黒板に吸い込まれるズーム
     const bp=S.boardPull;bp.t+=dt;const p=Math.min(1,bp.t/bp.dur);
     const e=p*p*(3-2*p); // smoothstep
@@ -1616,7 +1672,7 @@ function storyUpdate(dt){
   if(S.collect){
     let remain=0,nearD=Infinity,nearDx=0,nearDz=0;
     S.collect.items.forEach(it=>{
-      if(it.got)return;
+      if(it.got){if(!it.api.resolved&&it.api.update)it.api.update(t,dt);return;} // 解決演出(溶けて消える)を最後まで進める
       if(S.collect.placing){
         if(it.carrying){
           const fx=-Math.sin(player.yaw),fz=-Math.cos(player.yaw);

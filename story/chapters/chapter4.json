@@ -445,14 +445,14 @@
       "type": "dialogue",
       "speaker": "判者",
       "text": "「白は、塗りつぶす色ではない。余白を残す色じゃ。よい、雪の座では、その余白を忘れるでないぞ」",
-      "next": "seq_410_trigger_utakai"
+      "next": "seq_409zx_prep_branch"
     },
     {
       "id": "seq_409c_sleeve_wait",
       "type": "dialogue",
       "speaker": "判者",
       "text": "「届いた、と告げるだけで救われる夜がある。待つ題では、その灯を消すでないぞ」",
-      "next": "seq_410_trigger_utakai"
+      "next": "seq_409zx_prep_branch"
     },
     {
       "id": "seq_409c_sleeve_return",
@@ -462,21 +462,31 @@
       "emotes": {
         "kohagi": "sad"
       },
-      "next": "seq_410_trigger_utakai"
+      "next": "seq_409zx_prep_branch"
     },
     {
       "id": "seq_409zx_prep_branch",
       "type": "flag_branch",
       "flag": "utakaiPrepScore",
-      "min": 3,
+      "min": 4,
       "trueNext": "seq_409zx_prep",
-      "falseNext": "seq_410_trigger_utakai"
+      "falseNext": "seq_409zx_prep_low"
     },
     {
       "id": "seq_409zx_prep",
       "type": "dialogue",
       "speaker": "判者",
-      "text": "「……稽古の二問、良き風が吹いておった。その風、本番でも見失うでないぞ」",
+      "text": "「……稽古の風も、袖の短冊も、良き備えじゃ。その風、本番でも見失うでないぞ」",
+      "next": "seq_410_trigger_utakai"
+    },
+    {
+      "id": "seq_409zx_prep_low",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「……稽古は稽古。座に着けば、また別の風が吹く。——気を引き締めてまいれ」",
+      "emotes": {
+        "judge": "stern"
+      },
       "next": "seq_410_trigger_utakai"
     },
     {
