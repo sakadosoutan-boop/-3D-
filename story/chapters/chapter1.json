@@ -412,7 +412,8 @@
       "speaker": "語り",
       "text": "春の朝。桜の影が床板の上を流れ、遠くで白い鳥が——この内陸の邸にいるはずのない、カモメが一声鳴いた。秀頼は御簾の向こうにいる誰かの息遣いを、はじめて「物語」としてではなく、隣にいる人の気配として聞いた。",
       "se": "seagull",
-      "next": "chapter_complete"
+      "next": "chapter_complete",
+      "note": "Clue for the real-world connection: seagull SE = Shiori's hospital town near the sea. Paid off in ch2 tanzaku / ch6 ED1."
     }
   ]
 }

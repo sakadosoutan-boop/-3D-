@@ -145,7 +145,14 @@
         "brainErosion": 14
       },
       "successNext": "seq_304b1",
-      "failNext": "seq_304b1"
+      "failNext": "seq_304_fail"
+    },
+    {
+      "id": "seq_304_fail",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "焦るあまり、身を乗り出しすぎた。にわかに立ちこめた霧が視界を塞ぎ、頭の奥が、どく、と脈打つ。——息を整え、もう一度だけ、几帳の隙間へ目を細める。",
+      "next": "seq_304b1"
     },
     {
       "id": "seq_304b1",
@@ -185,6 +192,9 @@
           "next": "seq_306_face_warning",
           "effects": {
             "brainErosion": 12
+          },
+          "setFlag": {
+            "tabooFaceObserved": true
           }
         },
         {
@@ -517,8 +527,11 @@
       "id": "seq_314_after_fail",
       "type": "dialogue",
       "speaker": "右近",
-      "text": "「お見事——とは申せませぬが、水底から戻られただけで上々でございます。あの主、次は足元の影から参りますぞ。太刀の間合いを覚えて、また挑まれませ」",
-      "next": "seq_315_kohagi_words"
+      "text": "「お見事——とは申せませぬが、水底から戻られただけで上々でございます。あの主、次は足元の影から参りますぞ。太刀の間合いを思い出されませ。——参りますぞ、若君！　仕切り直しにございます！」",
+      "next": "seq_312_kappa_boss",
+      "emotes": {
+        "ukon": "stern"
+      }
     },
     {
       "id": "seq_315_kohagi_words",
