@@ -397,13 +397,23 @@
       "flag": "utakaiPrepScore",
       "min": 3,
       "trueNext": "seq_409zx_prep",
-      "falseNext": "seq_410_trigger_utakai"
+      "falseNext": "seq_409zx_prep_low"
     },
     {
       "id": "seq_409zx_prep",
       "type": "dialogue",
       "speaker": "判者",
       "text": "「……稽古の二問、良き風が吹いておった。その風、本番でも見失うでないぞ」",
+      "next": "seq_410_trigger_utakai"
+    },
+    {
+      "id": "seq_409zx_prep_low",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「……稽古は稽古。座に着けば、また別の風が吹く。——気を引き締めてまいれ」",
+      "emotes": {
+        "judge": "stern"
+      },
       "next": "seq_410_trigger_utakai"
     },
     {

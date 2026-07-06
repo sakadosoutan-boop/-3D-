@@ -126,6 +126,17 @@
         "location": "hospital"
       },
       "cameraAngleId": "cam_hospital_table",
+      "next": "seq_ed1_wake2b"
+    },
+    {
+      "id": "seq_ed1_wake2b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "窓の外、遠くでカモメが鳴いた。……そうか。海のないあの邸の空を渡っていた白い鳥は——この病室の窓から届いていた、ほんものの海の声だったのか。チャイムも、ホイッスルも、頁をめくる音も。ぜんぶ、こちら側から。",
+      "se": "seagull",
+      "stage": {
+        "location": "hospital"
+      },
       "next": "seq_ed1_wake3"
     },
     {
@@ -186,6 +197,17 @@
         "location": "hospital"
       },
       "cameraAngleId": "cam_hospital_table",
+      "next": "seq_ed2_wake2b"
+    },
+    {
+      "id": "seq_ed2_wake2b",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "窓の外で、カモメが鳴いた。海の近いこの町の、聞き慣れた声。……なぜだか、その声に、胸の奥が少しだけあたたかくなった。理由は、思い出せない。",
+      "se": "seagull",
+      "stage": {
+        "location": "hospital"
+      },
       "next": "seq_ed2_wake3"
     },
     {
