@@ -60,6 +60,42 @@ async function launchBrowser() {
       const kaimamiOk = typeof APP !== 'undefined' && APP.mode === 'kaimami';
       const kaimamiRoutes = Array.isArray(KAIMAMI_SECRETS) ? KAIMAMI_SECRETS.map((route) => route.id) : [];
       const kaimamiText = document.getElementById('questText')?.textContent || '';
+      localStorage.setItem('shinden3d-modebrief-v1-taiji', 'hide');
+      if (typeof enterMode === 'function') enterMode('taiji');
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      if (typeof hideModeBrief === 'function') hideModeBrief(true);
+      if (APP.taiji) {
+        APP.taiji.tutorialBlocked = false;
+        APP.taiji.tutorialGraceUntil = 0;
+      }
+      const sendTaijiKey = (key) => window.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+      const sendTaijiKeyUp = (key) => window.dispatchEvent(new KeyboardEvent('keyup', { key, bubbles: true }));
+      sendTaijiKey('3');
+      const taijiSwordOk = APP.taiji?.weapon === 'sword';
+      sendTaijiKey('e');
+      const taijiNextOk = APP.taiji?.weapon === 'bow';
+      sendTaijiKey('q');
+      const taijiPrevOk = APP.taiji?.weapon === 'sword';
+      sendTaijiKey('f');
+      const taijiGuardOk = !!APP.taiji?.guarding;
+      sendTaijiKeyUp('f');
+      const taijiGuardReleaseOk = !APP.taiji?.guarding;
+      sendTaijiKey(' ');
+      const taijiDodgeOk = !!APP.taiji && APP.taiji.dodgeUntil > performance.now();
+      if (APP.taiji) {
+        APP.taiji.hp = 50;
+        APP.taiji.sakeCd = 0;
+        APP.taiji.sakeDrinkUntil = 0;
+      }
+      const sakeBefore = APP.taiji?.sake ?? 0;
+      sendTaijiKey('r');
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      const taijiSakeOk = !!APP.taiji && APP.taiji.sake === sakeBefore - 1 && APP.taiji.hp > 50;
+      if (typeof endTaiji === 'function') endTaiji(true);
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      const taijiEndOk = APP.mode === 'walk' && !APP.taiji && getComputedStyle(document.getElementById('taijiHud')).display === 'none';
+      const taijiResultOk = getComputedStyle(document.getElementById('result')).display !== 'none';
+      if (typeof closeResultPanel === 'function') closeResultPanel();
       if (typeof applySeason === 'function') applySeason('summer');
       if (typeof setTime === 'function') setTime('night');
       await new Promise((resolve) => setTimeout(resolve, 500));
@@ -76,6 +112,15 @@ async function launchBrowser() {
         kaimamiOk,
         kaimamiRoutes,
         kaimamiTextOk: kaimamiText.includes('三つの観察地点'),
+        taijiSwordOk,
+        taijiNextOk,
+        taijiPrevOk,
+        taijiGuardOk,
+        taijiGuardReleaseOk,
+        taijiDodgeOk,
+        taijiSakeOk,
+        taijiEndOk,
+        taijiResultOk,
         tourouOk,
         tourouRipples,
         emakiCount,
@@ -91,6 +136,12 @@ async function launchBrowser() {
     if (!status.kaimamiOk) errors.push('kaimami mode did not start');
     if (status.kaimamiRoutes.join(',') !== 'east,north,tsumado') errors.push(`unexpected kaimami routes: ${status.kaimamiRoutes.join(',')}`);
     if (!status.kaimamiTextOk) errors.push('kaimami instructions did not mention the three observation points');
+    if (!status.taijiSwordOk) errors.push('taiji key 3 did not select sword');
+    if (!status.taijiNextOk || !status.taijiPrevOk) errors.push('taiji Q/E weapon cycling failed');
+    if (!status.taijiGuardOk || !status.taijiGuardReleaseOk) errors.push('taiji F guard press/release failed');
+    if (!status.taijiDodgeOk) errors.push('taiji Space dodge failed');
+    if (!status.taijiSakeOk) errors.push('taiji R sake failed');
+    if (!status.taijiEndOk || !status.taijiResultOk) errors.push('taiji end/reset flow failed');
     if (!status.tourouOk) errors.push('tourou lanterns did not appear in summer night');
     if (status.tourouRipples !== 8) errors.push(`unexpected tourou ripple count: ${status.tourouRipples}`);
     if (status.emakiCount !== 6 || status.emakiVisible !== 6) errors.push(`unexpected emaki fragments: ${status.emakiVisible}/${status.emakiCount}`);
