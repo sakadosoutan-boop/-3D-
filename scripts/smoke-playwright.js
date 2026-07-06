@@ -11,6 +11,10 @@ try {
 
 const target = process.argv[2] || pathToFileURL(path.join(process.cwd(), '寝殿造り3D探訪_統合版.html')).toString();
 
+function isIgnorableConsoleError(text) {
+  return /^THREE\.WebGLProgram: shader error:/.test(text);
+}
+
 async function launchBrowser() {
   const attempts = [
     () => chromium.launch({ headless: true }),
@@ -34,7 +38,7 @@ async function launchBrowser() {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
+    if (message.type() === 'error' && !isIgnorableConsoleError(message.text())) errors.push(message.text());
   });
 
   try {
@@ -43,6 +47,54 @@ async function launchBrowser() {
     const status = await page.evaluate(async () => {
       const ids = ['btnWalk', 'btnQuiz', 'tbTime', 'tbSeason', 'btnKaimami', 'btnCodex', 'tbGfx', 'tbCodex'];
       const missing = ids.filter((id) => !document.getElementById(id));
+      const storyManager = {
+        available: typeof StoryManager === 'function' && !!window.STORY_EMBED,
+        startOk: false,
+        choiceOk: false,
+        miniStartOk: false,
+        miniResumeOk: false,
+        collectOk: false,
+        endingRouteOk: false,
+        error: null,
+      };
+      try {
+        localStorage.removeItem('shinden3d-story-smoke-manager-v1');
+        const sm = new StoryManager({ saveKey: 'shinden3d-story-smoke-manager-v1' });
+        const firstEvent = await sm.startChapter(1);
+        storyManager.startOk = sm.state.chapterId === 1 && sm.currentSequenceId === 'seq_001b' && firstEvent?.type === 'dialogue';
+
+        sm.currentSequenceId = 'seq_003';
+        await sm.runCurrent();
+        const beforeChoice = { ...sm.state.params };
+        await sm.choose(2);
+        storyManager.choiceOk = sm.currentSequenceId === 'seq_004_observe'
+          && sm.state.params.realityEgo > beforeChoice.realityEgo
+          && sm.state.params.fantasySynchro > beforeChoice.fantasySynchro;
+
+        sm.currentSequenceId = 'seq_005_quiz';
+        await sm.runCurrent();
+        storyManager.miniStartOk = sm.state.lastMiniGame?.gameMode === 'quiz_beginner';
+        await sm.resumeFromMiniGame({ success: true, flags: { smokeFlag: true } });
+        storyManager.miniResumeOk = sm.currentSequenceId === 'seq_005_after' && sm.state.routeFlags.smokeFlag === true;
+
+        await sm.loadChapter(2);
+        sm.currentSequenceId = 'seq_205_spawn_cards';
+        await sm.runCurrent();
+        const cards = window.STORY_EMBED.chapters[2].startSequence.find((event) => event.id === 'seq_205_spawn_cards').positions;
+        cards.forEach((card) => sm.collect('chapter2_terms', card.id));
+        storyManager.collectOk = sm.currentSequenceId === 'seq_206b';
+
+        await sm.loadChapter(5);
+        Object.assign(sm.state.params, { realityEgo: 80, fantasySynchro: 80, brainErosion: 0 });
+        Object.assign(sm.state.routeFlags, { utakaiPerfect: true, oniPerfect: true, calledYou: true });
+        sm.currentSequenceId = 'seq_511_ending_check';
+        await sm.runCurrent();
+        storyManager.endingRouteOk = sm.state.chapterId === 6 && sm.currentSequenceId === 'seq_ed1_wake1';
+      } catch (error) {
+        storyManager.error = error.message || String(error);
+      } finally {
+        localStorage.removeItem('shinden3d-story-smoke-manager-v1');
+      }
       if (typeof enterMode === 'function') enterMode('walk');
       await new Promise((resolve) => setTimeout(resolve, 500));
       const walkOk = typeof APP !== 'undefined' && APP.mode === 'walk';
@@ -116,6 +168,57 @@ async function launchBrowser() {
       const tourouRipples = tourou?.userData?.lanterns?.filter((lantern) => !!lantern.ripple).length || 0;
       const emakiCount = typeof EMAKI_FRAGMENT_IDS !== 'undefined' ? EMAKI_FRAGMENT_IDS.length : 0;
       const emakiVisible = typeof emakiFragments !== 'undefined' ? emakiFragments.filter((fragment) => fragment.visible).length : 0;
+
+      const storyKeys = [
+        'shinden3d-story-save-v1',
+        'shinden3d-story-read-v1',
+        'shinden3d-story-endings-v1',
+        'shinden3d-story-slot1-v1',
+        'shinden3d-story-slot2-v1',
+        'shinden3d-story-slot3-v1',
+      ];
+      storyKeys.forEach((key) => localStorage.removeItem(key));
+      localStorage.setItem('shinden3d-story-textspeed-v1', '0');
+      const storyButtonOk = !!document.getElementById('btnStory') && document.getElementById('btnStory').textContent.includes('御簾の向こうへ');
+      if (typeof enterMode === 'function') enterMode('story');
+      await new Promise((resolve) => setTimeout(resolve, 700));
+      const storyModeOk = APP.mode === 'story' && document.body.classList.contains('story-mode');
+      const storyHudOk = !!document.getElementById('storyHud') && getComputedStyle(document.getElementById('storyHud')).display !== 'none';
+      const storyMenuTitle = document.getElementById('stPanelTitle')?.textContent || '';
+      const storyMenuBody = document.getElementById('stPanelBody')?.textContent || '';
+      let storyMenuButtons = [...document.querySelectorAll('#stPanelBtns .st-opt')];
+      const storyMenuOk = storyMenuTitle.includes('御簾の向こうへ') && storyMenuBody.includes('デモ版') && storyMenuButtons.length >= 7;
+      const storyMenuGaugeOk = document.querySelectorAll('#stPanelBody .st-ed-orb').length === 3
+        && storyMenuBody.includes('現在の予兆')
+        && storyMenuBody.includes('現 60以上')
+        && storyMenuBody.includes('蝕 20以下');
+      const galleryButton = storyMenuButtons.find((button) => button.textContent.includes('結末の回想'));
+      if (galleryButton) galleryButton.click();
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const storyGalleryLockOk = (document.getElementById('stText')?.textContent || '').includes('伏せ札')
+        && document.querySelectorAll('#stOpts .st-opt.locked').length === 5
+        && [...document.querySelectorAll('#stOpts .st-opt.locked')].every((button) => button.textContent.includes('？？？'))
+        && !!document.querySelector('#stOpts .st-opt-back');
+      document.querySelector('#stOpts .st-opt-back')?.click();
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      storyMenuButtons = [...document.querySelectorAll('#stPanelBtns .st-opt')];
+      const storyChapterButton = storyMenuButtons.find((button) => button.textContent.includes('第1話'));
+      if (storyChapterButton) storyChapterButton.click();
+      await new Promise((resolve) => setTimeout(resolve, 3500));
+      let storySaveOk = false;
+      try {
+        const save = JSON.parse(localStorage.getItem('shinden3d-story-save-v1') || '{}');
+        storySaveOk = save?.state?.chapterId === 1 && typeof save.currentSequenceId === 'string';
+      } catch (_) {}
+      const storyChapterTitle = document.getElementById('stChTitle')?.textContent || '';
+      const storyText = document.getElementById('stText')?.textContent || '';
+      const storySpeaker = document.getElementById('stSpk')?.textContent || '';
+      const storyChapterStartedOk = storyChapterTitle.includes('第1話') && storySaveOk;
+      const storyDialogueOk = getComputedStyle(document.getElementById('stBox')).display !== 'none' && (storyText.length > 0 || storySpeaker.length > 0);
+      const storyHudGaugeOk = document.querySelectorAll('#stParamViz .st-ed-orb').length === 3;
+      if (typeof stExitToTitle === 'function') stExitToTitle();
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      const storyExitOk = APP.mode === 'title' && !document.body.classList.contains('story-mode');
       return {
         missing,
         walkOk,
@@ -142,6 +245,17 @@ async function launchBrowser() {
         tourouRipples,
         emakiCount,
         emakiVisible,
+        storyManager,
+        storyButtonOk,
+        storyModeOk,
+        storyHudOk,
+        storyMenuOk,
+        storyMenuGaugeOk,
+        storyGalleryLockOk,
+        storyChapterStartedOk,
+        storyDialogueOk,
+        storyHudGaugeOk,
+        storyExitOk,
         canvas: !!document.querySelector('canvas'),
         objects: typeof scene !== 'undefined' ? scene.children.length : null,
       };
@@ -165,6 +279,22 @@ async function launchBrowser() {
     if (!status.tourouOk) errors.push('tourou lanterns did not appear in summer night');
     if (status.tourouRipples !== 8) errors.push(`unexpected tourou ripple count: ${status.tourouRipples}`);
     if (status.emakiCount !== 6 || status.emakiVisible !== 6) errors.push(`unexpected emaki fragments: ${status.emakiVisible}/${status.emakiCount}`);
+    if (!status.storyManager.available) errors.push('StoryManager or STORY_EMBED was not available');
+    if (status.storyManager.error) errors.push(`StoryManager smoke failed: ${status.storyManager.error}`);
+    if (!status.storyManager.startOk) errors.push('StoryManager did not start chapter 1 correctly');
+    if (!status.storyManager.choiceOk) errors.push('StoryManager choice effects/routing failed');
+    if (!status.storyManager.miniStartOk || !status.storyManager.miniResumeOk) errors.push('StoryManager mini-game start/resume failed');
+    if (!status.storyManager.collectOk) errors.push('StoryManager collectible completion failed');
+    if (!status.storyManager.endingRouteOk) errors.push('StoryManager true ending epilogue routing failed');
+    if (!status.storyButtonOk) errors.push('story mode title button was missing or mislabeled');
+    if (!status.storyModeOk || !status.storyHudOk) errors.push('story mode did not start cleanly');
+    if (!status.storyMenuOk) errors.push('story chapter menu did not render expected controls');
+    if (!status.storyMenuGaugeOk) errors.push('story ending forecast gauge did not render in the chapter menu');
+    if (!status.storyGalleryLockOk) errors.push('story ending gallery did not lock unreached endings');
+    if (!status.storyChapterStartedOk) errors.push('story chapter 1 did not start or save progress');
+    if (!status.storyDialogueOk) errors.push('story chapter 1 did not show dialogue text');
+    if (!status.storyHudGaugeOk) errors.push('story ending gauge did not render in the HUD');
+    if (!status.storyExitOk) errors.push('story mode did not return to title cleanly');
     if (errors.length) {
       console.error(JSON.stringify({ status, errors }, null, 2));
       process.exit(1);

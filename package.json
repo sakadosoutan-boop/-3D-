@@ -3,8 +3,9 @@
   "private": true,
   "scripts": {
     "verify:html": "node scripts/verify-html.js",
+    "verify:story": "node scripts/verify-story.js",
     "smoke": "node scripts/smoke-playwright.js",
-    "test": "npm run verify:html && npm run smoke"
+    "test": "npm run verify:html && npm run verify:story && npm run smoke"
   },
   "devDependencies": {
     "playwright": "1.61.1"
