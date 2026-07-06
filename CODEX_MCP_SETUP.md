@@ -30,3 +30,12 @@
   `403 Forbidden: Host not in allowlist` を返す）。
 - 以前試作していた自作ラッパー（`codex exec` をシェル経由で叩くカスタムMCPサーバー）は
   `codex mcp-server` のネイティブ機能で完全に代替できるため削除した。
+
+## 動作確認済み（2026-07-06）
+
+- 環境のネットワーク許可ドメインに `api.openai.com` / `auth.openai.com` / `chatgpt.com` を
+  追加後、新しいセッションで `api.openai.com` 等への到達を確認（403/407なし）。
+- `npm install -g @openai/codex` でインストール、`codex login --device-auth` で認証完了。
+- `codex exec` で実際にモデル応答を取得できることを確認。
+- `codex mcp-server` を直接JSON-RPCで叩き、`tools/list`（`codex`/`codex-reply`）と
+  `tools/call`（`codex`、実プロンプト→実応答）が想定通り動作することを確認済み。
