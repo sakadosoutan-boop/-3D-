@@ -40,7 +40,7 @@ function stMarkRead(ev){if(!ev||!ev.id||!SM)return;const m=stReadLoad();const k=
   if(!m[k]){m[k]=1;try{localStorage.setItem(ST_READ_KEY,JSON.stringify(m));}catch(e){}}}
 /* ---- 波AG: 話者ボイスブリップ。文字送り音を人物ごとの声色に(語り・心内は極小音) ---- */
 const ST_VOICE={
-  "小萩":[1560,"sine",.007],"栞":[1500,"sine",.007],"御簾の向こうの声":[1520,"sine",.006],
+  "小萩":[1560,"sine",.007],"小萩（独白）":[1500,"sine",.005],"栞":[1500,"sine",.007],"御簾の向こうの声":[1520,"sine",.006],
   "秀頼":[980,"triangle",.008],"秀頼（心）":[980,"triangle",.004],
   "右近":[1180,"square",.006],"左大臣":[620,"sine",.009],"判者":[700,"triangle",.008],
   "大鬼":[240,"square",.009],"水底の声":[300,"square",.008],"？？？":[1520,"sine",.005],
@@ -84,6 +84,23 @@ function stInject(){
     "#storyHud .st-box.with-face{padding-left:106px;min-height:104px}",
     "#stFace{position:absolute;left:10px;bottom:10px;width:86px;height:86px;border-radius:9px;border:1px solid var(--kin);",
     " background:#141009;display:none;box-shadow:0 3px 10px rgba(0,0,0,.5);object-fit:cover}",
+    /* 波AH: 立ち絵リアクション(表情に応じた軽いCSS。次の台詞でクラスを外してリセット) */
+    "#stFace.st-face-sad{filter:saturate(.8) brightness(.95)}",
+    "#stFace.st-face-smile{filter:brightness(1.06)}",
+    "#stFace.st-face-stern{filter:brightness(.94)}",
+    "#stFace.st-face-surprise{animation:stFaceBounce .42s ease}",
+    "@keyframes stFaceBounce{0%{transform:translateY(0)}30%{transform:translateY(-6px)}55%{transform:translateY(0)}74%{transform:translateY(-2px)}100%{transform:translateY(0)}}",
+    /* 記録の間(手動セーブスロット): スロットごとに1行。情報+小さな操作ボタン群 */
+    "#storyHud .st-slot-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;justify-content:space-between;",
+    " border-bottom:1px solid rgba(201,162,63,.22);padding:8px 2px}",
+    "#storyHud .st-slot-info{font-size:11.5px;color:#e0d4b4;flex:1 1 100%;line-height:1.55;text-align:left}",
+    "#storyHud .st-slot-info b{color:var(--kin);margin-right:6px;letter-spacing:.06em}",
+    "#storyHud .st-slot-empty{color:#9a8f7a}",
+    "#storyHud .st-slot-acts{display:flex;gap:6px;flex:1 1 auto;justify-content:flex-end}",
+    "#storyHud .st-slot-btn{min-height:0;padding:6px 12px;font-size:11.5px;flex:0 0 auto;text-align:center}",
+    "#storyHud .st-slot-btn.dim{opacity:.5;filter:grayscale(.4)}", /* 保存不可の局面のヒント(押下時はtoastで説明) */
+    "#storyHud .st-slot-btn.arm{background:linear-gradient(155deg,#6a1414,#3a0a0a);border-color:#e07a6a;color:#ffd9cf}",
+    "#storyHud .st-slot-note{color:#c8a2a2;font-size:11px;margin-bottom:8px;text-align:left;line-height:1.5}",
     /* ログ一覧 */
     "#storyHud .st-log-item{text-align:left;border-bottom:1px solid rgba(201,162,63,.22);padding:7px 2px}",
     "#storyHud .st-log-item b{color:var(--kin);font-size:11px;display:block;margin-bottom:2px}",
@@ -409,6 +426,27 @@ function stSetFace(spk,ev){
   const url=iconFile||(key?stFaceUrl(key):null); // 描き下ろしが無い話者(判者・大鬼)はCanvas影絵で代用
   if(url){img.src=url;img.style.display="block";box.classList.add("with-face");}
   else{img.style.display="none";box.classList.remove("with-face");}
+  stFaceReact(spk,ev,img); // 立ち絵の軽いリアクション(表情に応じたCSS。次の台詞で必ずリセット)
+}
+/* 波AH: 立ち絵リアクション——dialogueノードの emotes に、話者に対応するアクターの表情が
+   指定されている場合、立ち絵(#stFace)へ軽いCSSリアクションを添える。
+   surprise=一瞬の小バウンス / sad=彩度を落とす / smile=ごく僅かに明るく / stern=僅かに暗く。
+   話者→アクターは ST_SPEAKER_ACTOR(小萩→kohagi 等)、無ければ ST_FACE_KEY(秀頼→hidetora 等)で解決。
+   REDUCED_MOTION 時はバウンスなし(色の変化のみ)。呼び出しのたび前回分を必ず外して次の台詞へ持ち越さない。 */
+const ST_FACE_REACT_CLASSES=["st-face-surprise","st-face-sad","st-face-smile","st-face-stern"];
+function stFaceReact(spk,ev,img){
+  img=img||stEl("stFace");if(!img)return;
+  ST_FACE_REACT_CLASSES.forEach(c=>img.classList.remove(c)); // 前の台詞のリアクションを必ずリセット
+  if(!spk||!ev||!ev.emotes)return;
+  const actorKey=ST_SPEAKER_ACTOR[spk]||ST_FACE_KEY[spk];
+  const emote=actorKey&&ev.emotes[actorKey];
+  if(!emote)return;
+  const reduced=(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION);
+  if(emote==="surprise"){ if(!reduced){void img.offsetWidth;img.classList.add("st-face-surprise");} } // リフロー強制で連続surpriseも再発火
+  else if(emote==="sad")img.classList.add("st-face-sad");
+  else if(emote==="smile")img.classList.add("st-face-smile");
+  else if(emote==="stern")img.classList.add("st-face-stern");
+  // neutral(や worried/blush 等の対象外表情)は変化なし
 }
 /* ---- 転換演出(波L互換・story専用要素) ---- */
 function stFade(color){
@@ -607,7 +645,7 @@ function stSeagullFlyover(anchor,onDrop){
 }
 /* ---- HUD描画 ---- */
 /* 話者ごとの名札色(市販ノベル風のキャラ識別) */
-const ST_SPK_COLOR={"小萩":"#c9a2d8","秀頼":"#8fb8e8","秀頼（心）":"#7fa0c8","右近":"#a8c88a","左大臣":"#d8b25a","判者":"#b8b0c8","栞":"#9ec8e0","大鬼":"#e07a6a","水底の声":"#5ad0a0","御簾の向こうの声":"#d8c090","？？？":"#c0c0c0"};
+const ST_SPK_COLOR={"小萩":"#c9a2d8","小萩（独白）":"#b9a5e6","秀頼":"#8fb8e8","秀頼（心）":"#7fa0c8","右近":"#a8c88a","左大臣":"#d8b25a","判者":"#b8b0c8","栞":"#9ec8e0","大鬼":"#e07a6a","水底の声":"#5ad0a0","御簾の向こうの声":"#d8c090","？？？":"#c0c0c0"};
 /* 波AA: 台詞中の特定の語だけをグリッチ表示にする(例: 名の秘密が思わず漏れる場面) */
 function stEscapeHtml(s){return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));}
 function stRenderText(te,revealed,glitchWord){
@@ -1007,6 +1045,7 @@ function stHideWorldFigures(on){
 function stMiniGame(info){
   const S=APP.story;S.mini=info;
   stVnStop();
+  if(typeof ST_BGM!=="undefined")ST_BGM.stop(); // 章BGMを止める(歌合はUK_BGM、退治はボスBGMが鳴るため)。復帰時にstartStoryで再開
   stEl("stBox").style.display="none";
   {const hud=stEl("storyHud");if(hud)hud.style.display="none";} // ミニゲーム中は章メニュー📑/終了✕を隠して状態破壊を防止
   if(info.gameMode==="quiz_beginner"){
@@ -1083,6 +1122,7 @@ function stMiniGame(info){
 /* ---- エンディング/章クリア ---- */
 function stEnding(endingId){
   stClearCollectibles();stVnStop();
+  if(typeof ST_BGM!=="undefined")ST_BGM.stop(); // 結末では章BGMを畳む(結末カードは静かに見せる)
   stSaveEnding(endingId); // 到達を永続化(回想の間のネタバレ防止に使う)
   if(endingId==="ED1_TRUE"){ // 波AG: 朝光——結末カードの背後に、右上から柔らかい暖色光を差し込ませる
     document.body.classList.add("st-ed1-glow");
@@ -1117,9 +1157,91 @@ function stChapterComplete(chapterId){
   btns.push(["章をえらぶ",()=>stChapterMenu()],["タイトルへ戻る",()=>stExitToTitle()]);
   stPanel("第"+chapterId+"話　了","物語は、まだ御簾の向こうに続いています。",btns);
 }
+/* ---- 記録の間(手動セーブスロット3つ) ----
+   オートセーブ(shinden3d-story-save-v1)とは別に、任意の局面を手で保存/再開できる3枠。
+   キー: shinden3d-story-slot1-v1 〜 slot3-v1。中身は {data:SM.serialize()(文字列), meta:{ch,seq,params,savedAt}}。
+   全ての読み書きは try/catch で保護し、失敗してもスロットや進行を壊さない。 */
+const ST_SLOT_N=[1,2,3];
+function stSlotKey(n){return "shinden3d-story-slot"+n+"-v1";}
+function stSlotLoad(n){try{const r=JSON.parse(localStorage.getItem(stSlotKey(n)));return (r&&r.meta&&r.data)?r:null;}catch(e){return null;}}
+function stSlotSave(n){
+  try{
+    if(!SM||!SM.state||!stStoryInProgress())return false;
+    const st=SM.state;
+    const rec={data:SM.serialize(), // SM.serialize()は文字列(JSON)を返す
+      meta:{ch:st.chapterId,seq:SM.currentSequenceId,params:Object.assign({},st.params||{}),savedAt:Date.now()}};
+    localStorage.setItem(stSlotKey(n),JSON.stringify(rec));
+    return true;
+  }catch(e){return false;}
+}
+function stSlotDelete(n){try{localStorage.removeItem(stSlotKey(n));return true;}catch(e){return false;}}
+/* 物語が「途中」か(章1〜5を進行中で、結末にも章クリアにも達していない)。保存可否の判定に使う */
+function stStoryInProgress(){
+  return !!(SM&&SM.state&&SM.state.chapterId>=1&&SM.state.chapterId<=5&&
+    SM.currentSequenceId&&SM.currentSequenceId!=="chapter_complete"&&!SM.state.endingId);
+}
+function stFmtSaveTime(ms){
+  try{const d=new Date(ms),p=n=>String(n).padStart(2,"0");
+    return p(d.getMonth()+1)+"/"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
+  }catch(e){return "";}
+}
+let stSlotArmed=0; // 削除の二度押し待機中スロット(0=なし)
+function stRecordRoom(){
+  const inProg=stStoryInProgress();
+  const esc=s=>String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
+  const rows=ST_SLOT_N.map(n=>{
+    const rec=stSlotLoad(n);
+    let info;
+    if(!rec){info='<span class="st-slot-empty">（空き）</span>';}
+    else{const m=rec.meta,p=m.params||{};
+      info='第'+esc(m.ch||"?")+'話 ｜ 現'+(p.realityEgo|0)+'/雅'+(p.fantasySynchro|0)+'/蝕'+(p.brainErosion|0)+
+           ' ｜ '+esc(stFmtSaveTime(m.savedAt));}
+    const acts=[];
+    // 保存ボタンは無効化せず常に押せる。進行中でない時に押すと理由をtoastで説明する(stSlotAction参照)
+    acts.push('<button class="st-opt st-slot-btn'+(inProg?'':' dim')+'" data-act="save" data-n="'+n+'">ここに保存</button>');
+    if(rec){
+      acts.push('<button class="st-opt st-slot-btn" data-act="load" data-n="'+n+'">ここから再開</button>');
+      acts.push('<button class="st-opt st-slot-btn'+(stSlotArmed===n?' arm':'')+'" data-act="del" data-n="'+n+'">'+(stSlotArmed===n?'本当に消す':'消す')+'</button>');
+    }
+    return '<div class="st-slot-row"><div class="st-slot-info"><b>記録 '+n+'</b>'+info+'</div>'+
+           '<div class="st-slot-acts">'+acts.join("")+'</div></div>';
+  }).join("");
+  const note=inProg?"":'<div class="st-slot-note">保存できるのは物語の途中だけです。（章メニューから開いた時は「ここから再開」「消す」のみ使えます）</div>';
+  stPanel("📜 記録の間",note+rows,[["章をえらぶへ戻る",()=>{stSlotArmed=0;stChapterMenu();}]]);
+  // stPanelがbodyHtmlを差し込んだ後、埋め込みボタンへ挙動を配線する
+  const host=stEl("stPanelBody");
+  if(host)host.querySelectorAll(".st-slot-btn").forEach(b=>{
+    b.onclick=()=>stSlotAction(b.getAttribute("data-act"),+b.getAttribute("data-n"));
+  });
+}
+function stSlotAction(act,n){
+  try{
+    if(act==="save"){
+      beep(700,.05,"triangle",.07);
+      if(!stStoryInProgress()){toast("保存できるのは物語の途中だけです",2200);return;}
+      if(stSlotSave(n))toast("記録 "+n+" に保存しました",1800);
+      else toast("保存に失敗しました",2200);
+      stSlotArmed=0;stRecordRoom();
+    }else if(act==="load"){
+      const rec=stSlotLoad(n);
+      if(!rec){toast("この記録は空です",1800);return;}
+      let ok=false;
+      try{SM.deserialize(rec.data);ok=true;}catch(e){toast("記録の読み込みに失敗しました",2600);} // 失敗時はスロットを壊さない
+      if(!ok)return;
+      beep(660,.05);
+      const m=rec.meta||{};
+      stSlotArmed=0;stEl("stPanel").style.display="none";
+      stStartChapter(m.ch!=null?m.ch:SM.state.chapterId, m.seq!=null?m.seq:SM.currentSequenceId);
+    }else if(act==="del"){
+      if(stSlotArmed!==n){stSlotArmed=n;stRecordRoom();toast("もう一度押すと消えます",1800);return;} // 二度押しで誤操作を防ぐ
+      stSlotDelete(n);stSlotArmed=0;beep(320,.08,"square",.06);toast("記録 "+n+" を消しました",1600);stRecordRoom();
+    }
+  }catch(e){toast("操作に失敗しました",2000);}
+}
 /* ---- 章メニュー ---- */
 function stChapterMenu(){
   stCleanupSets(); // 章間で大道具(大鬼・連札・教室)を片付ける
+  if(typeof ST_BGM!=="undefined")ST_BGM.stop(); // 章メニューでは章BGMを止める
   if(erosionFx)erosionFx.setLevel(0);
   const man=(window.STORY_EMBED&&STORY_EMBED.manifest&&STORY_EMBED.chapters)?STORY_EMBED.manifest.chapters:[];
   const save=SM&&SM.load&&(function(){try{return JSON.parse(localStorage.getItem("shinden3d-story-save-v1"));}catch(e){return null;}})();
@@ -1135,6 +1257,7 @@ function stChapterMenu(){
   }
   const edN=stLoadEndings().length;
   btns.push(["🌸 結末の回想（回想の間） 結末 "+edN+"/5",()=>stStartChapter(6)]);
+  btns.push(["📜 記録の間（手動セーブ/ロード）",()=>{stSlotArmed=0;stRecordRoom();}]);
   btns.push(["タイトルへ戻る",()=>stExitToTitle()]);
   const doneN=[1,2,3,4,5].filter(i=>done[i]).length;
   stPanel("御簾の向こうへ — 寝殿造り異聞",
@@ -1144,6 +1267,7 @@ function stStartChapter(id,resumeSeq){
   stEl("stPanel").style.display="none";
   stCleanupSets();
   SM.state.endingId=null;
+  if(typeof ST_BGM!=="undefined")ST_BGM.start(id); // 章別プロシージャルBGM(ch5常世/ch6現実は無音)。ST_BGM側で二重start/章替えを処理
   if(id<=5)stChapterCard(id); // 波AG: 章題カットイン(第6話=回想の間とED直行では出さない)
   SM.startChapter(id).then(()=>{
     if(resumeSeq&&SM.sequenceMap.has(resumeSeq)){SM.currentSequenceId=resumeSeq;SM.runCurrent();}
@@ -1163,6 +1287,7 @@ function startStory(){
     APP.story.mini=null; // ミニゲーム終了——中断/終了ボタンを再び有効化
     if(typeof AUTO_TIME!=="undefined")AUTO_TIME._paused=true; // 波Z: endTaiji等が解除した時刻自動進行を物語復帰時に再固定
     stHideWorldFigures(true);
+    if(typeof ST_BGM!=="undefined"&&SM&&SM.state)ST_BGM.start(SM.state.chapterId); // ミニゲームから物語へ復帰: 章BGMを再開
     stDebugRefresh(SM&&SM.snapshot());
     return;
   }
@@ -1232,12 +1357,15 @@ function startStory(){
     const man=(window.STORY_EMBED&&STORY_EMBED.manifest&&STORY_EMBED.manifest.chapters)||[];
     const ent=man.find(c=>c.chapterId===ch.chapterId);
     const goalEl=stEl("stGoal");if(goalEl)goalEl.textContent=ent&&ent.clearCondition?("目標: "+ent.clearCondition):"";
+    // 波AH: 第6話はED直行(continueToEndingEpilogue)でもここを必ず通る。前章のBGMをエピローグへ持ち越さない
+    if(ch.chapterId===6&&typeof ST_BGM!=="undefined")ST_BGM.stop();
   };
   stChapterMenu();
 }
 function stExitToTitle(){
   const S=APP.story;
   APP.storyTokoyoSky=false;APP.storyIndoor=false;
+  if(typeof ST_BGM!=="undefined")ST_BGM.stop(); // 物語を閉じる際は章BGMを必ず畳む
   stClearCollectibles();stCleanupSets();
   if(S){
     (S.props||[]).forEach(p=>{if(window.StoryObjects)window.StoryObjects.disposeGroup(p.api.group);});
@@ -1365,7 +1493,9 @@ function storyUpdate(dt){
     S.collect&&S.collect.items.forEach(it=>{if(it.got&&it.api.resolved&&it.api.group.parent)window.StoryObjects.disposeGroup(it.api.group);});
   }
   // 波AG: 章の空気(環境楽音レイヤー)——章の気分に合う楽の音を、ごく稀に小さく流す。
-  // ch5(常世)/ch6(現実)は無音の緊張を保つため鳴らさない。屋内・試練中・スキップ中も鳴らさない
+  // ch5(常世)/ch6(現実)は無音の緊張を保つため鳴らさない。屋内・試練中・スキップ中も鳴らさない。
+  // ※ 章別プロシージャルBGM(ST_BGM)が鳴っている間(1〜4章)は、二重に音が重ならないよう発音をスキップする。
+  //   STORY_AIRのプールも1〜4章のみで、ST_BGMの対象章と完全に一致するため、BGM稼働中は実質全スキップになる。
   if(!S.air)S.air={wait:24+Math.random()*36};
   S.air.wait-=dt;
   if(S.air.wait<=0){
@@ -1373,8 +1503,9 @@ function storyUpdate(dt){
     const ch=SM&&SM.state?SM.state.chapterId:0;
     const pools={1:["koto"],2:["sho"],3:["biwa"],4:["koto","sho"]}[ch];
     const vn=S.vn;
-    if(pools&&!APP.storyIndoor&&!S.mini&&!(vn&&vn.skip)&&typeof SFX!=="undefined"&&SFX.playCall){
-      SFX.playCall(pools[(Math.random()*pools.length)|0],.14); // 遠くの対屋から、微かに
+    const bgmOn=(typeof ST_BGM!=="undefined"&&ST_BGM.on); // ST_BGM稼働中は環境楽音を鳴らさない(併存させない)
+    if(pools&&!bgmOn&&!APP.storyIndoor&&!S.mini&&!(vn&&vn.skip)&&typeof SFX!=="undefined"&&SFX.playCall){
+      SFX.playCall(pools[(Math.random()*pools.length)|0],.14); // 遠くの対屋から、微かに(ST_BGMが鳴らせない環境でのフォールバック)
     }
   }
   // 侵食20以上: 稀に旧仮名の揺らぎ

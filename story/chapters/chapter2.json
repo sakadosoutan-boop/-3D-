@@ -12,6 +12,34 @@
       "playerStart": { "x": -2.2, "z": 7.2, "yaw": 0.3 },
       "cameraAngleId": "cam_summer_sunoko",
       "fade": "white",
+      "next": "seq_201_maku1"
+    },
+    {
+      "id": "seq_201_maku1",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「……昨日は、ここまで参りました。読んだところに、しおりを挟んで。ページの角は、折らぬように、そっと」",
+      "next": "seq_201_maku2"
+    },
+    {
+      "id": "seq_201_maku2",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「あなたの眠りは、深うございます。けれど、もし聞こえているなら——今日の続きを、始めましょう」",
+      "next": "seq_201_maku3"
+    },
+    {
+      "id": "seq_201_maku3",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「夏の章は、名を拾う話にございます。庭に散らばった名を、ひとつずつ、また拾いに参りましょう」",
+      "next": "seq_201_maku4"
+    },
+    {
+      "id": "seq_201_maku4",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「あなたの好きだった、あの庭の話。……声が届くと信じて、読みます。どうか、迷子になりませぬよう」",
       "next": "seq_201b"
     },
     {
@@ -111,6 +139,7 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「おお、噂の若君！　右近と申します、この邸の侍にて、弓と軽口が取り柄にございます。——して本日の御役目は札拾い。恋文なら胸も躍りましょうが、拾うは床と柱の名でございますなあ」",
+      "emotes": { "ukon": "smile" },
       "effects": { "realityEgo": 2 },
       "next": "seq_204b"
     },
@@ -200,6 +229,7 @@
       "type": "dialogue",
       "speaker": "左大臣",
       "text": "「うむ。そなたが、噂の異邦の若君か。札拾いの働き、廂より見ておったぞ。——ならば問おう。母屋と廂、何が違う」",
+      "emotes": { "minister": "stern" },
       "se": "gong",
       "next": "seq_207_place_terms"
     },
@@ -230,6 +260,7 @@
       "type": "dialogue",
       "speaker": "左大臣",
       "text": "「……ほう。『そこに立てる人が変わる』か。よくぞ申した。場所の名は、そこに立つ人の、心の距離まで示すもの。——若君、そなた、ただの迷い人ではないな」",
+      "emotes": { "minister": "smile" },
       "setFlag": { "chapter2TermMaster": true },
       "next": "seq_209_kohagi_react"
     },
@@ -238,6 +269,7 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「（……今の答え、あの方に少し、似ておりました）——いえ。何でもございませぬ」",
+      "emotes": { "kohagi": "surprise" },
       "next": "seq_211_white_tanzaku"
     },
     {
@@ -252,6 +284,7 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「わ、若君！　それを申せば大工も女房も皆、暑さも忘れて夏の庭に倒れ伏しましょうぞ！」",
+      "emotes": { "ukon": "surprise" },
       "next": "seq_208_wrong2"
     },
     {
@@ -259,6 +292,7 @@
       "type": "dialogue",
       "speaker": "左大臣",
       "text": "「……はっはっは。よい、よい。間違いを恐れて黙す者より、間違えて覚える者のほうが、この邸には似合いじゃ。——だが二度は許さぬぞ」",
+      "emotes": { "minister": "smile" },
       "next": "seq_211_white_tanzaku"
     },
     {
@@ -310,6 +344,7 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「……若君。それがし、軽口ばかりの侍にございますがな。守るべき御方が退屈しておられぬ夏は、侍にとって、良い夏にございます。——札拾い、お供できて何よりでした」",
+      "emotes": { "ukon": "smile" },
       "next": "seq_212_complete"
     },
     {

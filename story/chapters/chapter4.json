@@ -17,6 +17,34 @@
       "cameraAngleId": "cam_winter_utakai_hisashi",
       "fade": "black",
       "se": "gong",
+      "next": "seq_401_maku1"
+    },
+    {
+      "id": "seq_401_maku1",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「……冷えて参りました。頁をめくる指が、少しかじかむほどに。しおりの紐を握り直して、続きを読みます」",
+      "next": "seq_401_maku2"
+    },
+    {
+      "id": "seq_401_maku2",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「冬の章は、歌を競う話——歌合にございます。言葉を左右に分かち、どちらが深く心に届くかを競う、そういう夜の話」",
+      "next": "seq_401_maku3"
+    },
+    {
+      "id": "seq_401_maku3",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「言葉は、呪いにも、救いにもなりまする。だからこそ一字も違えぬよう、声に出して読みたいのです。あなたの枕辺で」",
+      "next": "seq_401_maku4"
+    },
+    {
+      "id": "seq_401_maku4",
+      "type": "dialogue",
+      "speaker": "小萩（独白）",
+      "text": "「聞こえておりますか。返す言葉は、いりませぬ。ただ、聞いていてくださいませ。今宵の分を、読み終えるまで」",
       "next": "seq_401b"
     },
     {
@@ -90,6 +118,7 @@
       "type": "dialogue",
       "speaker": "右近",
       "text": "「——なんなら判者役、それがしが買って出ても！　歌心はござらぬが、勝ち負けを声高に叫ぶのは得意でございます！」",
+      "emotes": { "ukon": "smile" },
       "next": "seq_403d"
     },
     {
@@ -97,6 +126,7 @@
       "type": "dialogue",
       "speaker": "判者",
       "text": "「……黙りゃ。歌は答えにあらず。問いを美しく置くものなり。——声高に叫ぶ者に、置ける問いはない」",
+      "emotes": { "judge": "stern" },
       "next": "seq_403e"
     },
     {
@@ -176,6 +206,7 @@
       "type": "dialogue",
       "speaker": "判者",
       "text": "「——勝ち。白は白のままでは景色。声なき声を重ねて、初めて雪は歌になる。……ほう。誰に習うた」",
+      "emotes": { "judge": "smile" },
       "next": "seq_406_topic_wait_intro"
     },
     {
@@ -190,6 +221,7 @@
       "type": "dialogue",
       "speaker": "判者",
       "text": "「負け。……いや、正直者よの。だがその正直は、火桶にあたってから言え。歌の座に持ち込むものではない」",
+      "emotes": { "judge": "stern" },
       "next": "seq_406_topic_wait_intro"
     },
     {
@@ -241,6 +273,7 @@
       "type": "dialogue",
       "speaker": "判者",
       "text": "「勝ち。待つ夜の長さを、月に量らせたか。責めず、急かさず、それでいて寂しさは隠さず。——待つことを美しく言えるのは、待った者だけよ」",
+      "emotes": { "judge": "smile" },
       "next": "seq_408_topic_return_intro"
     },
     {
@@ -332,6 +365,7 @@
       "type": "dialogue",
       "speaker": "判者",
       "text": "「——勝ち。帰ることと、忘れぬこと。ふたつを一首に抱えたか。矛盾を捨てずに言葉へ結ぶ、それを人は成熟と呼ぶ。……見事」",
+      "emotes": { "judge": "smile" },
       "next": "seq_409z"
     },
     {
@@ -384,6 +418,7 @@
       "type": "dialogue",
       "speaker": "左大臣",
       "text": "「勝負あった！　……ふ、ふふ。異邦の若君が、当家の歌合で二勝とは。愉快、愉快。褒美は何がよい。直垂か、瓜か」",
+      "emotes": { "minister": "smile" },
       "next": "seq_411w1"
     },
     {
@@ -405,6 +440,7 @@
       "type": "dialogue",
       "speaker": "小萩",
       "text": "「……あなたは、歌を点ではなく、道として渡りました。その渡り方なら——御簾の向こうにも、届きましょう」",
+      "emotes": { "kohagi": "smile" },
       "next": "seq_411bx"
     },
     {
@@ -451,6 +487,7 @@
       "type": "dialogue",
       "speaker": "判者",
       "text": "「言葉を軽んじる者は、言葉のない夜へ。——火桶の火まで、あなたの名を忘れた」",
+      "emotes": { "judge": "stern" },
       "next": "seq_413_ed3"
     },
     {
