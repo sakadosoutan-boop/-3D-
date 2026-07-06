@@ -19709,6 +19709,7 @@ function stSpawnCollectibles(info){
     // 発見用の光柱(遠くからでも札の在処が分かる)
     const pil=new THREE.Mesh(new THREE.CylinderGeometry(.22,.55,8,10,1,true),
       new THREE.MeshBasicMaterial({color:0xffe9a8,transparent:true,opacity:.16,side:THREE.DoubleSide,depthWrite:false}));
+    pil.material.__ownedByStory=true;
     pil.position.y=3.4;api.group.add(pil);api.group.userData.pillar=pil;
     let targetMarker=null;
     if(placing&&p.placeTarget){
@@ -19720,6 +19721,7 @@ function stSpawnCollectibles(info){
       targetMarker.add(ring);
       const beam=new THREE.Mesh(new THREE.CylinderGeometry(.10,.32,3.2,10,1,true),
         new THREE.MeshBasicMaterial({color:0x9dd7ff,transparent:true,opacity:.10,side:THREE.DoubleSide,depthWrite:false}));
+      beam.material.__ownedByStory=true;
       beam.position.y=1.55;targetMarker.add(beam);
       targetMarker.position.set(p.placeTarget.x,(typeof groundH==="function"?groundH(p.placeTarget.x,p.placeTarget.z):0)+.035,p.placeTarget.z);
       targetMarker.visible=false;
@@ -19769,7 +19771,10 @@ function stEffect(info){
       g.add(api.group);
       if(api.resolve)setTimeout(()=>api.resolve(),450+i*120);
     });
-    const api={group:g,t:0,update(t,dt){this.t+=dt;g.children.forEach((c,i)=>{c.rotation.y=t*1.1+i;});return this.t>2.4;}};
+    const api={group:g,t:0,update(t,dt){this.t+=dt;g.children.forEach((c,i)=>{
+      const a=c.userData&&c.userData.api;if(a&&a.update)a.update(t,dt); // resolve後の溶滅演出を進める
+      if(!a||!a.resolved)c.rotation.y=t*1.1+i;
+    });return this.t>2.4;}};
     scene.add(g);S.props.push({kind:"storyfx",api});
     if(typeof saigenSe==="function")saigenSe("koto");
   }else if(id==="inverted_memory_corridor"&&SO){
@@ -20515,7 +20520,7 @@ function storyUpdate(dt){
             it.targetMarker.scale.setScalar(1+Math.sin(t*2.2)*.035);
           }
           const td=it.target?Math.hypot(player.pos.x-it.target.x,player.pos.z-it.target.z):Infinity;
-          if(td<=(it.target.r||1.2)){
+          if(it.target&&td<=(it.target.r||1.2)){
             if(it.api.tryPlace)it.api.tryPlace({x:player.pos.x,z:player.pos.z});
             it.got=true;it.carrying=false;S.collect.held=null;
             if(it.targetMarker)it.targetMarker.visible=false;
