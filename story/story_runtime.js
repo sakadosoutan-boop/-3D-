@@ -105,7 +105,11 @@ function stInject(){
     " border-bottom:1px solid rgba(201,162,63,.22);padding:8px 2px}",
     "#storyHud .st-slot-info{font-size:11.5px;color:#e0d4b4;flex:1 1 100%;line-height:1.55;text-align:left}",
     "#storyHud .st-slot-info b{color:var(--kin);margin-right:6px;letter-spacing:.06em}",
-    "#storyHud .st-slot-empty{color:#9a8f7a}",
+    "#storyHud .st-slot-empty{color:#9a8f7a;margin-right:6px}",
+    /* 波AN: オートセーブ行は手動記録と区別して淡い金枠で強調。ED予兆は控えめな金字 */
+    "#storyHud .st-slot-auto{background:rgba(201,162,63,.07);border-radius:6px;border-bottom-color:rgba(201,162,63,.4)}",
+    "#storyHud .st-slot-auto .st-slot-info b{color:#e8c66a}",
+    "#storyHud .st-slot-fc{color:#cbb98f}",
     "#storyHud .st-slot-acts{display:flex;gap:6px;flex:1 1 auto;justify-content:flex-end}",
     "#storyHud .st-slot-btn{min-height:0;padding:6px 12px;font-size:11.5px;flex:0 0 auto;text-align:center}",
     "#storyHud .st-slot-btn.dim{opacity:.5;filter:grayscale(.4)}", /* 保存不可の局面のヒント(押下時はtoastで説明) */
@@ -148,6 +152,12 @@ function stInject(){
     "#stEd1Glow{position:fixed;inset:0;z-index:44;pointer-events:none;opacity:0;transition:opacity 2.4s ease;",
     " background:radial-gradient(ellipse 90% 70% at 84% 8%,rgba(255,238,196,.34),rgba(255,238,196,.10) 45%,transparent 72%)}",
     "body.st-ed1-glow #stEd1Glow{opacity:1}",
+    /* 波AN: ED2(現の朝)——帰還したが少し色褪せた、冷たい薄暮の余韻。ED3(歌なき夜)——夜の闇が四方から閉じる */
+    "#stEdVig{position:fixed;inset:0;z-index:44;pointer-events:none;opacity:0;transition:opacity 3s ease}",
+    "body.st-ed2-fade #stEdVig{opacity:1;background:radial-gradient(ellipse 125% 105% at 50% 52%,transparent 42%,rgba(74,92,122,.30) 100%)}",
+    "body.st-ed3-dark #stEdVig{opacity:1;background:radial-gradient(ellipse 100% 92% at 50% 50%,transparent 16%,rgba(6,8,16,.74) 100%)}",
+    "body.st-ed2-fade #c{filter:saturate(.72) contrast(.97);transition:filter 3s ease}",
+    "body.st-ed3-dark #c{filter:brightness(.6) saturate(.5) contrast(1.08);transition:filter 4.5s ease}",
     /* 波AL: 2話——名がほどけ、渡殿や遣水の輪郭が陽炎のように滲む */
     "body.st-haze #c{animation:stHazePulse 2.6s ease-in-out infinite}",
     "@keyframes stHazePulse{0%,100%{filter:blur(1.4px) saturate(.94)}50%{filter:blur(3px) saturate(.88)}}",
@@ -215,6 +225,7 @@ function stInject(){
   const fade=document.createElement("div");fade.id="storyFade";document.body.appendChild(fade);
   const crownVeil=document.createElement("div");crownVeil.id="stCrownVeil";document.body.appendChild(crownVeil); // ED4の翳り
   const ed1Glow=document.createElement("div");ed1Glow.id="stEd1Glow";document.body.appendChild(ed1Glow); // ED1の朝光
+  const edVig=document.createElement("div");edVig.id="stEdVig";document.body.appendChild(edVig); // 波AN: ED2/ED3のヴィネット
   stEl("stQuit").onclick=()=>{beep(440,.06);stExitToTitle();};
   stEl("stMenuBtn").onclick=()=>{beep(560,.05);stVnStop();stChapterMenu();};
   stEl("stAuto").onclick=()=>{const v=APP.story&&APP.story.vn;if(!v)return;v.auto=!v.auto;v.skip=false;stVnButtons();
@@ -1348,6 +1359,7 @@ function stCleanupSets(){
   stSetCrownDeep(false); // ED4の翳りを必ず解除
   document.body.classList.remove("st-ed1-glow");clearTimeout(window._stEd1GlowT); // ED1の朝光も畳む
   document.body.classList.remove("st-ed5-lineart"); // ED5の線画化も解除
+  document.body.classList.remove("st-ed2-fade");document.body.classList.remove("st-ed3-dark"); // 波AN: ED2/ED3の余韻演出も畳む
   stSetMinimalUi(false); // ED3で隠したトップバー等を必ず復元
   if(S.oni){SO.disposeGroup(S.oni.group);S.oni=null;}
   if(S.sealFx){SO.disposeGroup(S.sealFx.group);S.sealFx=null;}
@@ -1439,6 +1451,10 @@ function stMiniGame(info){
     if(!APP.taijiDifficulty)APP.taijiDifficulty="normal";
     if(typeof camera!=="undefined"){camera.fov=62;camera.updateProjectionMatrix();}
     enterMode("taiji");
+    // 波AN: 初見でも操作が分かるよう、戦闘の要点を一度だけ簡潔に(モード転換後に表示)
+    setTimeout(()=>toast(oniFinal
+      ?"大鬼祓い——タップで攻撃／画面を長押し(右クリック)で防御／回避で捌く。弓・札・太刀は 1 / 2 / 3 で持ち替え"
+      :"河童の主——太刀で挑む。タップで斬り、長押し(右)で防御、回避で水弾をかわせ",4600),750);
     return;
   }
   if(info.gameMode==="utakai_story"){
@@ -1451,6 +1467,8 @@ function stMiniGame(info){
     };
     if(typeof camera!=="undefined"){camera.fov=62;camera.updateProjectionMatrix();}
     enterMode("utakai");
+    // 波AN: 歌合の目的を初見向けに簡潔に(手札から題・場に合う一首を選ぶ／三番中二番で勝ち)
+    setTimeout(()=>toast("歌合——手札から、題と場にかなう一首を選ぶ。三番のうち二番取れば勝ち",4200),750);
     return;
   }
   // 未知のモードだけ従来のパネル(保険)
@@ -1487,6 +1505,10 @@ function stEnding(endingId){
     clearTimeout(window._stEd1GlowT);
     window._stEd1GlowT=setTimeout(()=>document.body.classList.remove("st-ed1-glow"),9000);
   }
+  // 波AN: ED2(現の朝)は冷たく色褪せた薄暮の余韻、ED3(歌なき夜)は四方から閉じる夜の闇。
+  // それぞれ固有のヴィネット+#cのフィルタで、ED1朝光/ED4冠翳り/ED5線画に並ぶ署名を与える
+  if(endingId==="ED2_NORMAL")document.body.classList.add("st-ed2-fade");
+  if(endingId==="ED3_GAMEOVER")document.body.classList.add("st-ed3-dark");
   // ED5の漂流とカメラの微ロールをここで止める(結末カードは静かに見せる)
   if(APP.story&&APP.story.props){for(let i=APP.story.props.length-1;i>=0;i--){
     const p=APP.story.props[i];if(p&&p.kind==="ed5debris"){window.StoryObjects.disposeGroup(p.api.group);APP.story.props.splice(i,1);}}}
@@ -1569,7 +1591,8 @@ function stSlotSave(n){
     if(!SM||!SM.state||!stStoryInProgress())return false;
     const st=SM.state;
     const rec={data:SM.serialize(), // SM.serialize()は文字列(JSON)を返す
-      meta:{ch:st.chapterId,seq:SM.currentSequenceId,params:Object.assign({},st.params||{}),savedAt:Date.now()}};
+      meta:{ch:st.chapterId,seq:SM.currentSequenceId,params:Object.assign({},st.params||{}),
+            flags:Object.assign({},st.routeFlags||{}),savedAt:Date.now()}}; // 波AN: ED予兆表示のため routeFlags も保存
     localStorage.setItem(stSlotKey(n),JSON.stringify(rec));
     return true;
   }catch(e){return false;}
@@ -1589,25 +1612,44 @@ let stSlotArmed=0; // 削除の二度押し待機中スロット(0=なし)
 function stRecordRoom(){
   const inProg=stStoryInProgress();
   const esc=s=>String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
+  // 波AN: 保存済みの局面から現在のED予兆を短く出す(結末到達後=解放済みのみ。未クリアは伏せる)
+  const unlocked=/[?&]storyDebug=1/.test(location.search)||stLoadEndings().length>0;
+  const fcLabel=(p,f)=>{if(!unlocked||typeof stEndingForecast!=="function")return "";
+    try{const fc=stEndingForecast(p||{},f||{});return ' ｜ <span class="st-slot-fc">予兆 '+esc(fc.id)+' '+esc(fc.name)+'</span>';}catch(e){return "";}};
+  // 波AN: 「オートセーブ(いつでも自動)」を手動記録と区別して先頭に明示
+  let autoRow="";
+  try{
+    const asv=JSON.parse(localStorage.getItem("shinden3d-story-save-v1")||"null");
+    const s=asv&&asv.state;
+    if(s&&s.chapterId){
+      const p=s.params||{},done=s.endingId?"（結末到達済み）":(s.currentSequenceId==="chapter_complete"?"（章クリア）":"進行中");
+      autoRow='<div class="st-slot-row st-slot-auto"><div class="st-slot-info"><b>▶ オートセーブ</b>'+
+        '<span class="st-slot-empty">自動・常に最新</span>第'+esc(s.chapterId)+'話 '+esc(done)+
+        ' ｜ 現'+(p.realityEgo|0)+'/雅'+(p.fantasySynchro|0)+'/蝕'+(p.brainErosion|0)+fcLabel(p,s.routeFlags)+
+        '</div><div class="st-slot-acts"><span class="st-slot-empty">「続きから」で再開</span></div></div>';
+    }
+  }catch(e){}
   const rows=ST_SLOT_N.map(n=>{
     const rec=stSlotLoad(n);
     let info;
     if(!rec){info='<span class="st-slot-empty">（空き）</span>';}
     else{const m=rec.meta,p=m.params||{};
       info='第'+esc(m.ch||"?")+'話 ｜ 現'+(p.realityEgo|0)+'/雅'+(p.fantasySynchro|0)+'/蝕'+(p.brainErosion|0)+
-           ' ｜ '+esc(stFmtSaveTime(m.savedAt));}
+           ' ｜ '+esc(stFmtSaveTime(m.savedAt))+fcLabel(p,m.flags);}
     const acts=[];
     // 保存ボタンは無効化せず常に押せる。進行中でない時に押すと理由をtoastで説明する(stSlotAction参照)
-    acts.push('<button class="st-opt st-slot-btn'+(inProg?'':' dim')+'" data-act="save" data-n="'+n+'">ここに保存</button>');
+    acts.push('<button class="st-opt st-slot-btn'+(inProg?'':' dim')+'" data-act="save" data-n="'+n+'">ここに手動保存</button>');
     if(rec){
       acts.push('<button class="st-opt st-slot-btn" data-act="load" data-n="'+n+'">ここから再開</button>');
       acts.push('<button class="st-opt st-slot-btn'+(stSlotArmed===n?' arm':'')+'" data-act="del" data-n="'+n+'">'+(stSlotArmed===n?'本当に消す':'消す')+'</button>');
     }
-    return '<div class="st-slot-row"><div class="st-slot-info"><b>記録 '+n+'</b>'+info+'</div>'+
+    return '<div class="st-slot-row"><div class="st-slot-info"><b>手動記録 '+n+'</b>'+info+'</div>'+
            '<div class="st-slot-acts">'+acts.join("")+'</div></div>';
   }).join("");
-  const note=inProg?"":'<div class="st-slot-note">保存できるのは物語の途中だけです。（章メニューから開いた時は「ここから再開」「消す」のみ使えます）</div>';
-  stPanel("📜 記録の間",note+rows,[["章をえらぶへ戻る",()=>{stSlotArmed=0;stChapterMenu();}]]);
+  const note=inProg
+    ?'<div class="st-slot-note">オートセーブは常に自動更新。ここぞの局面は手動記録に取り分けておけます。</div>'
+    :'<div class="st-slot-note">手動保存できるのは物語の<b>途中だけ</b>です（章メニューから開いた今は「ここから再開」「消す」のみ）。オートセーブは常に最新の局面を保持しています。</div>';
+  stPanel("📜 記録の間",note+autoRow+rows,[["章をえらぶへ戻る",()=>{stSlotArmed=0;stChapterMenu();}]]);
   // stPanelがbodyHtmlを差し込んだ後、埋め込みボタンへ挙動を配線する
   const host=stEl("stPanelBody");
   if(host)host.querySelectorAll(".st-slot-btn").forEach(b=>{
@@ -1825,6 +1867,7 @@ function stExitToTitle(){
   stSetCrownDeep(false); // ED4の翳り・彩度低下を必ず解除
   document.body.classList.remove("st-ed1-glow");clearTimeout(window._stEd1GlowT); // ED1の朝光も畳む
   document.body.classList.remove("st-ed5-lineart"); // ED5の線画化も解除
+  document.body.classList.remove("st-ed2-fade");document.body.classList.remove("st-ed3-dark"); // 波AN: ED2/ED3の余韻演出も畳む
   const chc=stEl("stChCard");if(chc)chc.classList.remove("show"); // 章題カードの残留防止
   if(typeof camera!=="undefined")camera.rotation.z=0; // ED5のロールを必ず戻す
   APP.story=null;APP.storyQuiz=null;
