@@ -66,10 +66,14 @@ function stInject(){
     " background:linear-gradient(180deg,rgba(28,18,10,.94),rgba(16,10,6,.95));border:1px solid var(--kin);border-radius:7px;",
     " padding:4px 12px;color:#e6d9bb;font-size:12px;font-family:var(--serif);letter-spacing:.08em;white-space:nowrap}",
     "#storyHud .st-chip small{color:#9a8a6a;font-family:var(--sans);font-size:10px;margin-left:8px}",
-    "#storyHud .st-param-viz{display:flex;gap:5px;align-items:center;justify-content:center;margin-top:3px}",
+    /* 波AN: HUDのED分岐ゲージは横長・低背に。スマホで画面上部を埋めすぎないよう小さな円を一列で */
+    "#storyHud .st-param-viz{display:flex;gap:4px;align-items:center;justify-content:center;margin:1px 0 0;flex-wrap:nowrap}",
     "#storyHud .st-param-viz .st-edviz{margin:0;padding:0;background:transparent;border:0;box-shadow:none}",
-    "#storyHud .st-param-viz .st-ed-orb{width:28px;height:28px;font-size:8px}",
-    "#storyHud .st-param-viz .st-ed-orb b{font-size:9px}",
+    "#storyHud .st-param-viz .st-ed-row{gap:4px;flex-wrap:nowrap}",
+    "#storyHud .st-param-viz .st-ed-cell{min-width:0;gap:0}",
+    "#storyHud .st-param-viz .st-ed-orb{width:22px;height:22px;font-size:7px}",
+    "#storyHud .st-param-viz .st-ed-orb:after{inset:3px}",
+    "#storyHud .st-param-viz .st-ed-orb b{font-size:8px}",
     "#storyHud .st-param-viz .st-ed-label{display:none}",
     "#storyHud #stQuit{position:fixed;top:calc(env(safe-area-inset-top) + 6px);right:9px;pointer-events:auto;background:var(--urushi);",
     " color:var(--gofun);border:1px solid var(--kin);width:30px;height:30px;border-radius:50%;font-size:14px;line-height:1;cursor:pointer}",
@@ -574,8 +578,8 @@ function stKohagiStation(){
 function stBuildUkonFigure(){
   const SO=window.StoryObjects;
   if(typeof makeHeianFigure!=="function"){return SO.createStoryUkonObject();} // 保険: 旧簡易モデル
-  // 貴公子の作り(雲立涌の袍・引目の顔・冠)をそのまま土台に。右近は少し渋い青鈍+香色。
-  const fig=makeHeianFigure({role:"kikoshi",palette:[0x2b3a4a,0x6a5a3e,0xb8944a],scale:1.12,prop:"shaku"});
+  // 貴公子の作り(雲立涌の袍・引目の顔・冠)をそのまま土台に。右近は黄緑(萌黄)の狩衣で識別性を上げる。
+  const fig=makeHeianFigure({role:"kikoshi",palette:[0x8fb63c,0x5f7a2a,0xc7d67a],scale:1.12,prop:"shaku"});
   const g=new THREE.Group();g.add(fig);
   const wood=(typeof MAT!=="undefined"&&MAT.woodDark)?MAT.woodDark:new THREE.MeshStandardMaterial({color:0x4a3526,roughness:.8});
   const wood2=(typeof MAT!=="undefined"&&MAT.wood)?MAT.wood:new THREE.MeshStandardMaterial({color:0x8a6a44,roughness:.75});
@@ -629,7 +633,16 @@ function stApplyPresentation(ev){
   const S=APP.story;
   if(S&&S.actors){
     if(ev.emotes)Object.entries(ev.emotes).forEach(([k,e])=>{
-      const a=S.actors[k];if(!a)return;a.group.visible=true;
+      const a=S.actors[k];if(!a)return;
+      // 波AN: 右近は「登場」時、プレイヤーの真正面(視線の先)へ現れて向き合う=それと認識できる
+      if(k==="ukon"&&!a.group.visible&&typeof player!=="undefined"){
+        const fx=-Math.sin(player.yaw),fz=-Math.cos(player.yaw);
+        const gx=player.pos.x+fx*2.7,gz=player.pos.z+fz*2.7;
+        const gy=(typeof groundH==="function"?groundH(gx,gz):player.pos.y-1.2)+1.2;
+        a.group.position.set(gx,gy,gz);a.group.userData.baseY=gy;
+        a.group.rotation.y=Math.atan2(player.pos.x-gx,player.pos.z-gz); // プレイヤーへ向き直る
+      }
+      a.group.visible=true;
       if(a.setExpression&&["neutral","smile","stern","sad","surprise"].includes(e))a.setExpression(e);
     });
     if(ev.shioriGhost!=null&&S.actors.kohagi&&S.actors.kohagi.setShioriGhost){S.actors.kohagi.group.visible=true;S.actors.kohagi.setShioriGhost(ev.shioriGhost);}
@@ -980,10 +993,11 @@ function stPanel(title,bodyHtml,btns){
 }
 function stDebugRefresh(snap){
   const el=stEl("stDebug");if(!el)return;
-  const viz=stEl("stParamViz");if(viz)viz.innerHTML=(SM&&SM.state)?stEdGaugeHtml(snap,true):"";
   // 波AL: いずれかの結末に一度でも到達した後は、隠しパラメータを常時HUDに明示する
   // (「蝕がたまってED5行きになった後、どう戻すか分からない」への回答——まず見えるように)
   const unlocked=/[?&]storyDebug=1/.test(location.search)||stLoadEndings().length>0;
+  // 波AN: ED分岐ゲージも「クリア(結末到達)後に解放」する。初見プレイヤーの画面上部を埋めない
+  const viz=stEl("stParamViz");if(viz)viz.innerHTML=(unlocked&&SM&&SM.state)?stEdGaugeHtml(snap,true):"";
   if(!unlocked){el.textContent="";return;}
   const p=(snap&&snap.state&&snap.state.params)||{};
   el.textContent=`現${p.realityEgo|0}/雅${p.fantasySynchro|0}/蝕${p.brainErosion|0}`;
@@ -1444,6 +1458,25 @@ function stMiniGame(info){
     [["成功として進む",()=>info.complete({success:true})],
      ["失敗として進む",()=>info.complete({success:false})]]);
 }
+/* 波AN: ED結果画面の分岐ヒント——「なぜこの結末か / 別 EDへ何を変えるか」を、
+   Codexの心ゲージ(現/雅/蝕/完勝)の条件内訳とともに示す。 */
+function stEndingResultHint(endingId){
+  const st=(SM&&SM.state)||{},p=st.params||{},f=st.routeFlags||{};
+  const r=p.realityEgo|0,y=p.fantasySynchro|0,e=p.brainErosion|0;
+  const perfect=!!(f.utakaiPerfect&&f.oniPerfect);
+  const conds=[["現 60以上",r>=60],["雅 60以上",y>=60],["蝕 20以下",e<=20],["歌合・祓い完勝",perfect]];
+  const miss=conds.filter(c=>!c[1]).map(c=>c[0]);
+  const why={
+    ED1_TRUE:"現実の自分と雅の学びを両立し、蝕も低く抑え、二つの試練を完勝した——最も難しい均衡に到達しました。",
+    ED2_NORMAL:"帰路は開きましたが、True Endには"+(miss.length?("あと「"+miss.join("」「")+"」が必要です。"):"わずかに届きませんでした。"),
+    ED3_GAMEOVER:"歌合か大鬼祓いに敗れ、言葉の火が消えました。下の導線から試練をやり直せば、道は戻ります。",
+    ED4_SYNC:"雅への同調が現実を大きく上回りました。現(げん)を選ぶ選択を増やし、最後に相手を役名で固定しないことが鍵です。",
+    ED5_SPOOKY:"蝕(むしばみ)が限界に達し、物語に呑まれました。禊で蝕を清め、雑な言葉や危険な近道を避けて進み直しましょう。"
+  }[endingId]||"";
+  const condHtml='<div class="st-ed-cond">'+conds.map(c=>'<span class="'+(c[1]?'ok':'bad')+'">'+(c[1]?'達成 ':'未達 ')+stEsc(c[0])+'</span>').join("")+'</div>';
+  return '<div class="st-edviz"><div class="st-edviz-title"><span>なぜこの結末か / 次の一手</span><span>現'+r+'  雅'+y+'  蝕'+e+'</span></div>'+
+    '<div class="st-ed-forecast">'+stEsc(why)+'</div>'+condHtml+'</div>';
+}
 /* ---- エンディング/章クリア ---- */
 function stEnding(endingId){
   stClearCollectibles();stVnStop();
@@ -1462,8 +1495,26 @@ function stEnding(endingId){
   const ed=STORY_ED_TEXT[endingId]||{t:endingId,d:""};
   // 結末カードは必ず読めるよう、侵食演出はここで解除(前段の演出で役目は果たしている)
   if(erosionFx)erosionFx.setLevel(0);
-  const showPanel=()=>stPanel("《 "+ed.t+" 》",ed.d,[
+  // 波AN: 結末カードに分岐ヒントを添え、ED3/4/5には「戻り道」を直接置く
+  const hint=stEndingResultHint(endingId);
+  const extra=[];
+  if(endingId==="ED3_GAMEOVER"){
+    extra.push(["🎴 歌合をやり直す（第4話）",()=>{SM.state.endingId=null;stStartChapter(4);}]);
+    extra.push(["⚡ 大鬼祓いをやり直す（第5話）",()=>{SM.state.endingId=null;stStartChapter(5);}]);
+  }else if(endingId==="ED4_SYNC"){
+    extra.push(["🌸 現(げん)を取り戻す（第5話をやり直す）",()=>{SM.state.endingId=null;stStartChapter(5);}]);
+  }else if(endingId==="ED5_SPOOKY"){
+    extra.push(["⛩ 禊(みそぎ)で蝕を清めてやり直す",()=>{
+      if(SM.state&&SM.state.params){SM.state.params.brainErosion=0;SM.save();}
+      if(erosionFx)erosionFx.setLevel(0);
+      toast("川の水で身を清めた。……胸の内の靄が、引いていく（蝕 0）",3000);
+      if(typeof saigenSe==="function")saigenSe("koto");
+      SM.state.endingId=null;stChapterMenu();
+    }]);
+  }
+  const showPanel=()=>stPanel("《 "+ed.t+" 》",hint+ed.d,[
     ["結末の回想へ（他の結末を見る）",()=>stOpenEndingGallery()],
+    ...extra,
     ["章をえらぶ",()=>{SM.state.endingId=null;stChapterMenu();}],
     ["タイトルへ戻る",()=>{stExitToTitle();}]
   ]);
@@ -1622,7 +1673,8 @@ function stChapterMenu(){
   const doneN=[1,2,3,4,5].filter(i=>done[i]).length;
   // 波AL: 一度でも結末に到達したら、章メニューにも現在の心の在り処を常時明示する
   const paramLine=edN>0?("<br>現在の心 — 現"+(pNow.realityEgo|0)+" / 雅"+(pNow.fantasySynchro|0)+" / 蝕"+(pNow.brainErosion|0)):"";
-  const gaugeLine=stEdGaugeHtml({state:(SM&&SM.state)||{}},false);
+  // 波AN: ED分岐ゲージは「クリア(結末到達)後に解放」。未クリア時は出さず、章メニューをすっきり保つ
+  const gaugeLine=edN>0?stEdGaugeHtml({state:(SM&&SM.state)||{}},false):"";
   stPanel("御簾の向こうへ — 寝殿造り異聞",
     gaugeLine+"<small style='color:#9a8a6a'>読了 "+doneN+"/5話 ｜ 結末 "+edN+"/5 ｜ デモ版"+paramLine+"</small>",btns);
 }
@@ -1882,6 +1934,9 @@ function storyUpdate(dt){
             S.collect.onCollect(it.id);
             const left=S.collect?S.collect.items.filter(x=>!x.got).length:0;
             toast(left>0?("「"+it.label+"」を戻した。あと "+left+" 枚"):"すべての名が、あるべき場所へ戻った",2200);
+            if(left===0){ // 波AN: 最後の札を戻した瞬間に陽炎を即解除(戻し終えたら待たせない)
+              document.body.classList.remove("st-haze");S.namePan=null;clearTimeout(window._stHazeT);
+            }
           }else{
             remain++;
             if(td<nearD){nearD=td;nearDx=(it.target?it.target.x:player.pos.x)-player.pos.x;nearDz=(it.target?it.target.z:player.pos.z)-player.pos.z;}

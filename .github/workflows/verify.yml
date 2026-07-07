@@ -20,6 +20,12 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Check story embed is in sync with sources
+        run: node scripts/build-story.js --check
+
+      - name: Verify story structure
+        run: node scripts/verify-story.js
+
       - name: Verify HTML bundle
         run: node scripts/verify-html.js
 

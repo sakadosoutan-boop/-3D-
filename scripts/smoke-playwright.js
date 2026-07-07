@@ -188,10 +188,8 @@ async function launchBrowser() {
       const storyMenuBody = document.getElementById('stPanelBody')?.textContent || '';
       let storyMenuButtons = [...document.querySelectorAll('#stPanelBtns .st-opt')];
       const storyMenuOk = storyMenuTitle.includes('御簾の向こうへ') && storyMenuBody.includes('デモ版') && storyMenuButtons.length >= 7;
-      const storyMenuGaugeOk = document.querySelectorAll('#stPanelBody .st-ed-orb').length === 3
-        && storyMenuBody.includes('現在の予兆')
-        && storyMenuBody.includes('現 60以上')
-        && storyMenuBody.includes('蝕 20以下');
+      // 波AN: ED分岐ゲージは「クリア(結末到達)後に解放」する仕様。フレッシュ状態では隠れているのが正しい
+      const storyMenuGaugeGatedOk = document.querySelectorAll('#stPanelBody .st-ed-orb').length === 0;
       const galleryButton = storyMenuButtons.find((button) => button.textContent.includes('結末の回想'));
       if (galleryButton) galleryButton.click();
       await new Promise((resolve) => setTimeout(resolve, 1200));
@@ -215,10 +213,23 @@ async function launchBrowser() {
       const storySpeaker = document.getElementById('stSpk')?.textContent || '';
       const storyChapterStartedOk = storyChapterTitle.includes('第1話') && storySaveOk;
       const storyDialogueOk = getComputedStyle(document.getElementById('stBox')).display !== 'none' && (storyText.length > 0 || storySpeaker.length > 0);
-      const storyHudGaugeOk = document.querySelectorAll('#stParamViz .st-ed-orb').length === 3;
+      // 波AN: フレッシュ状態(結末未到達)ではHUDのゲージも隠れているのが正しい
+      const storyHudGaugeGatedOk = document.querySelectorAll('#stParamViz .st-ed-orb').length === 0;
       if (typeof stExitToTitle === 'function') stExitToTitle();
       await new Promise((resolve) => setTimeout(resolve, 200));
       const storyExitOk = APP.mode === 'title' && !document.body.classList.contains('story-mode');
+      // 波AN: 結末に一度到達した後は、同じゲージが章メニューで解放されることを確認
+      localStorage.setItem('shinden3d-story-endings-v1', JSON.stringify(['ED2_NORMAL']));
+      if (typeof enterMode === 'function') enterMode('story');
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      const gaugeBody = document.getElementById('stPanelBody')?.textContent || '';
+      const storyMenuGaugeShownOk = document.querySelectorAll('#stPanelBody .st-ed-orb').length === 3
+        && gaugeBody.includes('現在の予兆')
+        && gaugeBody.includes('現 60以上')
+        && gaugeBody.includes('蝕 20以下');
+      localStorage.removeItem('shinden3d-story-endings-v1');
+      if (typeof stExitToTitle === 'function') stExitToTitle();
+      await new Promise((resolve) => setTimeout(resolve, 200));
       return {
         missing,
         walkOk,
@@ -250,11 +261,12 @@ async function launchBrowser() {
         storyModeOk,
         storyHudOk,
         storyMenuOk,
-        storyMenuGaugeOk,
+        storyMenuGaugeGatedOk,
+        storyMenuGaugeShownOk,
         storyGalleryLockOk,
         storyChapterStartedOk,
         storyDialogueOk,
-        storyHudGaugeOk,
+        storyHudGaugeGatedOk,
         storyExitOk,
         canvas: !!document.querySelector('canvas'),
         objects: typeof scene !== 'undefined' ? scene.children.length : null,
@@ -289,11 +301,12 @@ async function launchBrowser() {
     if (!status.storyButtonOk) errors.push('story mode title button was missing or mislabeled');
     if (!status.storyModeOk || !status.storyHudOk) errors.push('story mode did not start cleanly');
     if (!status.storyMenuOk) errors.push('story chapter menu did not render expected controls');
-    if (!status.storyMenuGaugeOk) errors.push('story ending forecast gauge did not render in the chapter menu');
+    if (!status.storyMenuGaugeGatedOk) errors.push('story ending gauge should be hidden until an ending is reached (chapter menu)');
+    if (!status.storyMenuGaugeShownOk) errors.push('story ending gauge did not render in the chapter menu after an ending was reached');
     if (!status.storyGalleryLockOk) errors.push('story ending gallery did not lock unreached endings');
     if (!status.storyChapterStartedOk) errors.push('story chapter 1 did not start or save progress');
     if (!status.storyDialogueOk) errors.push('story chapter 1 did not show dialogue text');
-    if (!status.storyHudGaugeOk) errors.push('story ending gauge did not render in the HUD');
+    if (!status.storyHudGaugeGatedOk) errors.push('story ending gauge should be hidden in the HUD until an ending is reached');
     if (!status.storyExitOk) errors.push('story mode did not return to title cleanly');
     if (errors.length) {
       console.error(JSON.stringify({ status, errors }, null, 2));
