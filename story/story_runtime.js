@@ -161,6 +161,8 @@ function stInject(){
     /* 波AL: 2話——名がほどけ、渡殿や遣水の輪郭が陽炎のように滲む */
     "body.st-haze #c{animation:stHazePulse 2.6s ease-in-out infinite}",
     "@keyframes stHazePulse{0%,100%{filter:blur(1.4px) saturate(.94)}50%{filter:blur(3px) saturate(.88)}}",
+    /* 波AO: 右近の登場だけは陽炎を晴らして鮮明に見せる(単一キャンバスゆえ全体を一時的に晴らす) */
+    "body.st-haze.st-haze-focus #c{animation:none!important;filter:none!important;transition:filter .6s ease}",
     /* 波AJ: ED5——3Dの質感が剥がれ、世界が白黒の線画(教科書の挿絵)に潰されていく */
     "body.st-ed5-lineart #c{filter:grayscale(1) contrast(1.75) brightness(1.12);transition:filter 6s ease}",
     /* 波Z/AI: 名を呼ぶ選択肢/台詞の崩れ(常世が名を拒むような不穏なグリッチ)。
@@ -457,21 +459,37 @@ const ST_ICON_FILES={
   hidetora_neutral:"icons/hidetora_neutral.webp",
   hidetora_worried:"icons/hidetora_worried.webp",
   hidetora_blush:"icons/hidetora_blush.webp",
-  hidetora_modern:"icons/hidetora_modern.webp"
+  hidetora_modern:"icons/hidetora_modern.webp",
+  // 波AO: 平安世界(異界)に馴染んでからは烏帽子を戴いた姿へ。表情差分にも烏帽子版を用意
+  hidetora_eboshi:"icons/hidetora_eboshi.webp",
+  hidetora_eboshi_worried:"icons/hidetora_eboshi_worried.webp",
+  hidetora_eboshi_blush:"icons/hidetora_eboshi_blush.webp",
+  // 波AO: ED4(常世の婿)——最後に小萩と世界へ残る結末だけ、御簾越しの影ではなく姿が浮かぶ絵に
+  kohagi_revealed:"icons/kohagi_revealed.webp"
 };
 function stHidetoraIcon(ev){
-  const e=ev&&ev.emotes&&ev.emotes.hidetora;
-  if(e&&ST_ICON_FILES["hidetora_"+e])return "hidetora_"+e;
   const S=APP.story;
   // 波AM: 現代(教室・病室)のシーンでは、平安装束ではなく制服姿(時任 蓮)のアイコンを使う
   if(S&&(S.classroom||S.hospital))return "hidetora_modern";
-  return "hidetora_neutral";
+  // 波AO: 平安世界では「最初の章(異界に落ちた直後)」を除き烏帽子を戴いた姿にする。
+  //       表情差分(worried/blush)にも烏帽子版があるので同じ表情のまま帽子だけ載せ替える。
+  const eboshi=!!(SM&&SM.state&&SM.state.chapterId>=2);
+  const e=ev&&ev.emotes&&ev.emotes.hidetora;
+  const emo=(e==="worried"||e==="blush")?e:"neutral";
+  if(eboshi){
+    const key=emo==="neutral"?"hidetora_eboshi":"hidetora_eboshi_"+emo;
+    return ST_ICON_FILES[key]?key:"hidetora_eboshi";
+  }
+  const bare=emo==="neutral"?"hidetora_neutral":"hidetora_"+emo;
+  return ST_ICON_FILES[bare]?bare:"hidetora_neutral";
 }
 /* 波AM: 現代名「蓮」も秀頼と同じ立ち絵解決(制服アイコン)へ寄せる。話者キーは hidetora に集約 */
 function stSetFace(spk,ev){
   const img=stEl("stFace"),box=stEl("stBox");if(!img)return;
   const key=ST_FACE_KEY[spk];
   let iconKey=key==="hidetora"?stHidetoraIcon(ev):key;
+  // 波AO: ED4(常世の婿)に入ったら、小萩は御簾越しの影ではなく姿の見えるアイコンへ差し替える
+  if(iconKey==="kohagi"&&APP.story&&APP.story.kohagiRevealed)iconKey="kohagi_revealed";
   const iconFile=iconKey?ST_ICON_FILES[iconKey]:null;
   const url=iconFile||(key?stFaceUrl(key):null); // 描き下ろしが無い話者(判者・大鬼)はCanvas影絵で代用
   if(url){img.src=url;img.style.display="block";box.classList.add("with-face");}
@@ -649,9 +667,13 @@ function stApplyPresentation(ev){
       if(k==="ukon"&&!a.group.visible&&typeof player!=="undefined"){
         const fx=-Math.sin(player.yaw),fz=-Math.cos(player.yaw);
         const gx=player.pos.x+fx*2.7,gz=player.pos.z+fz*2.7;
-        const gy=(typeof groundH==="function"?groundH(gx,gz):player.pos.y-1.2)+1.2;
+        // 波AO: makeHeianFigureは足元(座具)が原点。従来の +1.2 は右近を宙に浮かせていた(実機FB)。接地させる
+        const gy=(typeof groundH==="function"?groundH(gx,gz):player.pos.y-1.2);
         a.group.position.set(gx,gy,gz);a.group.userData.baseY=gy;
         a.group.rotation.y=Math.atan2(player.pos.x-gx,player.pos.z-gz); // プレイヤーへ向き直る
+        // 波AO: 陽炎の最中でも「右近の登場だけははっきり見せて」の要望。登場の間だけ陽炎を晴らす
+        //       (パズル開始=札スポーンで陽炎へ戻す。stSpawnCollectiblesでst-haze-focusを外す)
+        if(document.body.classList.contains("st-haze"))document.body.classList.add("st-haze-focus");
       }
       a.group.visible=true;
       if(a.setExpression&&["neutral","smile","stern","sad","surprise"].includes(e))a.setExpression(e);
@@ -659,6 +681,7 @@ function stApplyPresentation(ev){
     if(ev.shioriGhost!=null&&S.actors.kohagi&&S.actors.kohagi.setShioriGhost){S.actors.kohagi.group.visible=true;S.actors.kohagi.setShioriGhost(ev.shioriGhost);}
     if(ev.stage){
       const st=ev.stage;
+      if(st.kohagiReveal)S.kohagiRevealed=true; // 波AO: ED4(常世の婿)以降、小萩の立ち絵を「姿の見える」絵へ
       if(st.judgeFanText&&S.actors.judge){S.actors.judge.group.visible=true;S.actors.judge.setFanText(st.judgeFanText);}
       if(st.ministerShadow!=null&&S.actors.minister){S.actors.minister.group.visible=true;S.actors.minister.setShadowReach(st.ministerShadow);}
       if(st.ministerPossessed!=null&&S.actors.minister)S.actors.minister.setPossessed(!!st.ministerPossessed);
@@ -1050,6 +1073,8 @@ function stSpawnCollectibles(info){
     return {id:p.id,label:p.label||"",api,got:false,carrying:false,target:p.placeTarget||null,targetMarker};
   });
   S.collect={groupId:info.groupId,items,onCollect:info.onCollect,kind:info.kind,placing,held:null};
+  // 波AO: 右近登場の間だけ晴らしていた陽炎を、パズル開始で庭に戻す(名がほどけた世界を探索)
+  document.body.classList.remove("st-haze-focus");
   toast(placing?"札を拾い、青い光の正しい場所へ戻そう("+items.length+"枚)":"光る札を集めよう("+items.length+"枚)。近づけば手に入る",3600);
   stEl("stBox").style.display="none"; // 収集中は会話箱を畳み、歩かせる
 }
@@ -1082,7 +1107,7 @@ function stEffect(info){
     const g=new THREE.Group();
     // 波AM: 戻し先(chapter2.jsonのplaceTargetと同座標)に名が灯る演出。遣水は池の外へ。
     const pts=[
-      ["御簾",1,2.2],["廂",7,3.4],["簀子",0,5.7],["渡殿",13,-7.5],["遣水",-9,11]
+      ["御簾",1,2.2],["廂",7,3.4],["簀子",0,5.7],["渡殿",13,-7.5],["遣水",-18,20.5]
     ];
     pts.forEach(([label,x,z],i)=>{
       const api=SO.createTermCardObject(label);
@@ -1097,7 +1122,7 @@ function stEffect(info){
     });return this.t>2.4;}};
     scene.add(g);S.props.push({kind:"storyfx",api});
     // 波AM: パズル成功——名がすべて戻り、陽炎(名がほどけて滲む)を晴らす
-    document.body.classList.remove("st-haze");S.namePan=null;
+    document.body.classList.remove("st-haze");document.body.classList.remove("st-haze-focus");S.namePan=null;
     clearTimeout(window._stHazeT);
     if(typeof saigenSe==="function")saigenSe("koto");
   }else if(id==="inverted_memory_corridor"&&SO){
@@ -1153,7 +1178,29 @@ function stEffect(info){
     S.props.push({kind:"tokoyo",api});
   }else if(id==="oni_tears_misu"&&SO){
     stLightning();
-    if(!S.oni){const api=SO.createGreatOniStoryObject();api.group.position.set(30,0,-48);scene.add(api.group);S.oni=api;stOniGlbSkin(api);}
+    // 波AO: 小萩の台詞「巨大な人魂となった」に合わせ、まず巨大な人魂(青白い魂火)を見せる。
+    //       大鬼は戦闘の第2形態で現れる(実機FB: 人魂と言っているのに鬼が出る、を解消)
+    if(!S.oni){
+      const g=new THREE.Group();g.position.set(30,3.6,-48);
+      const coreMat=new THREE.MeshBasicMaterial({color:0xc4e4ff,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false});coreMat.__ownedByStory=true;
+      const core=new THREE.Mesh(new THREE.SphereGeometry(1.8,20,16),coreMat);core.scale.set(1,1.4,1);g.add(core);
+      const auraMat=new THREE.MeshBasicMaterial({color:0x6aa0ff,transparent:true,opacity:.26,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.BackSide});auraMat.__ownedByStory=true;
+      const aura=new THREE.Mesh(new THREE.SphereGeometry(2.8,18,14),auraMat);aura.scale.set(1,1.55,1);g.add(aura);
+      const tailMat=new THREE.MeshBasicMaterial({color:0x9ccaff,transparent:true,opacity:.5,blending:THREE.AdditiveBlending,depthWrite:false});tailMat.__ownedByStory=true;
+      const tail=new THREE.Mesh(new THREE.ConeGeometry(1.05,4.0,16,1,true),tailMat);tail.position.y=-2.7;tail.rotation.x=Math.PI;g.add(tail);
+      const orbs=[];
+      for(let i=0;i<7;i++){const m=new THREE.MeshBasicMaterial({color:0xe0f0ff,transparent:true,opacity:.7,blending:THREE.AdditiveBlending,depthWrite:false});m.__ownedByStory=true;
+        const o=new THREE.Mesh(new THREE.SphereGeometry(.30,10,8),m);g.add(o);orbs.push({o,m});}
+      g.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+      scene.add(g);
+      S.oni={group:g,update(t){
+        core.scale.set(1+Math.sin(t*2.2)*.06,1.4+Math.sin(t*1.7)*.08,1+Math.cos(t*2.0)*.06);
+        coreMat.opacity=.8+Math.sin(t*3.1)*.14;auraMat.opacity=.20+Math.abs(Math.sin(t*1.4))*.1;
+        g.position.y=3.6+Math.sin(t*.9)*.25;g.rotation.y=t*.3;
+        orbs.forEach((ob,i)=>{const a=t*1.1+i*(Math.PI*2/7);ob.o.position.set(Math.cos(a)*2.7,Math.sin(t*1.6+i)*1.25,Math.sin(a)*2.7);ob.m.opacity=.5+Math.abs(Math.sin(t*2+i))*.4;});
+      }};
+      if(typeof saigenSe==="function")saigenSe("wind");
+    }
   }else if(id==="yarimizu_dark_reflection"){
     // 波O/Z: 遣水が黒く濁り、水面に現代の教室(窓・机)が浮かぶ。「窓際の、二つの席」を具体的な形で見せる
     const g=new THREE.Group();
@@ -1351,12 +1398,13 @@ function stResetMoveKeys(){
 function stCleanupSets(){
   const S=APP.story,SO=window.StoryObjects;if(!S||!SO)return;
   if(S.actors)Object.values(S.actors).forEach(a=>{if(a&&a.group)a.group.visible=false;}); // 波AL: 章をまたいで役者が立ち残らないように(台詞で再登場する)
-  document.body.classList.remove("st-haze");S.namePan=null; // 波AL: 陽炎パンの後片付け
+  document.body.classList.remove("st-haze");document.body.classList.remove("st-haze-focus");S.namePan=null; // 波AL: 陽炎パンの後片付け
   if(S._ed3HbTimers){S._ed3HbTimers.forEach(clearTimeout);S._ed3HbTimers=null;} // ED3の心音/心電音タイマー
   if(S._ed5FlickerT){clearInterval(S._ed5FlickerT);S._ed5FlickerT=null;} // ED5の崩壊フリッカー
   if(typeof SFX!=="undefined"&&SFX.stopEd5Chaos)SFX.stopEd5Chaos(); // ED5のチャイム2倍速/逆再生BGMを必ず止める
   if(typeof camera!=="undefined")camera.rotation.z=0; // ED5の微ロールを必ず0へ戻す
   stSetCrownDeep(false); // ED4の翳りを必ず解除
+  S.kohagiRevealed=false; // 波AO: ED4の小萩立ち絵差し替えを次周へ持ち越さない
   document.body.classList.remove("st-ed1-glow");clearTimeout(window._stEd1GlowT); // ED1の朝光も畳む
   document.body.classList.remove("st-ed5-lineart"); // ED5の線画化も解除
   document.body.classList.remove("st-ed2-fade");document.body.classList.remove("st-ed3-dark"); // 波AN: ED2/ED3の余韻演出も畳む
@@ -1392,6 +1440,9 @@ function stMiniGame(info){
   stVnStop();
   if(typeof ST_BGM!=="undefined")ST_BGM.stop(); // 章BGMを止める(歌合はUK_BGM、退治はボスBGMが鳴るため)。復帰時にstartStoryで再開
   stResetMoveKeys(); // 波AL: 試練へ入る際も移動キー状態を拭う
+  // 波AO: 試練(特に大鬼戦)の間は物語役者を必ず隠す。右近は貴公子ベースの重いモデルのため、
+  //       戦闘中に立ち残ると描画負荷が増え「重くて動けない」の一因になる(実機FB)。復帰時に台詞で再登場する。
+  if(S&&S.actors)Object.values(S.actors).forEach(a=>{if(a&&a.group)a.group.visible=false;});
   stEl("stBox").style.display="none";
   {const hud=stEl("storyHud");if(hud)hud.style.display="none";} // ミニゲーム中は章メニュー📑/終了✕を隠して状態破壊を防止
   if(info.gameMode==="quiz_beginner"){
@@ -1425,8 +1476,10 @@ function stMiniGame(info){
       S.props=[];
     }
     const prevDiff=APP.taijiDifficulty;
-    if(oniFinal)APP.taijiDifficulty="hard"; // 決戦は歯応え重視(通常戦より攻撃頻度・弾数増)
-    else if(SM&&SM.state&&SM.state.routeFlags&&SM.state.routeFlags.tabooFaceObserved){ // 波AJ: 「顔立ちを覚えた」と言い張った者には水底の主が牙を剥く(禁忌の代償)
+    // 波AO: 決戦は歯応え重視だが、タッチ端末では負荷でフレームが落ち「重くて動けない=クリア不能」に
+    //       なりやすい(実機FB)。モバイルは通常難度にして、まず完走できることを優先する。
+    if(oniFinal)APP.taijiDifficulty=IS_TOUCH?"normal":"hard";
+    else if(!IS_TOUCH&&SM&&SM.state&&SM.state.routeFlags&&SM.state.routeFlags.tabooFaceObserved){ // 波AJ: 「顔立ちを覚えた」と言い張った者には水底の主が牙を剥く(禁忌の代償)。モバイルは据え置き
       APP.taijiDifficulty="hard";
       setTimeout(()=>toast("……「見た」と言い張った口を、水底の主が憶えている。水が、重い",3200),1200);
     }
@@ -1992,7 +2045,7 @@ function storyUpdate(dt){
             const left=S.collect?S.collect.items.filter(x=>!x.got).length:0;
             toast(left>0?("「"+it.label+"」を戻した。あと "+left+" 枚"):"すべての名が、あるべき場所へ戻った",2200);
             if(left===0){ // 波AN: 最後の札を戻した瞬間に陽炎を即解除(戻し終えたら待たせない)
-              document.body.classList.remove("st-haze");S.namePan=null;clearTimeout(window._stHazeT);
+              document.body.classList.remove("st-haze");document.body.classList.remove("st-haze-focus");S.namePan=null;clearTimeout(window._stHazeT);
             }
           }else{
             remain++;

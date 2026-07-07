@@ -454,6 +454,9 @@
       "type": "dialogue",
       "speaker": "語り",
       "text": "帰る道は、開いていた。朝の光が、渡殿の向こうから差している。一歩、踏み出せば帰れる。——あなたは、振り返った。",
+      "stage": {
+        "kohagiReveal": true
+      },
       "next": "seq_642_ed4_kohagi"
     },
     {
