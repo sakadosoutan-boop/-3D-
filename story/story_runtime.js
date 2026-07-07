@@ -66,6 +66,11 @@ function stInject(){
     " background:linear-gradient(180deg,rgba(28,18,10,.94),rgba(16,10,6,.95));border:1px solid var(--kin);border-radius:7px;",
     " padding:4px 12px;color:#e6d9bb;font-size:12px;font-family:var(--serif);letter-spacing:.08em;white-space:nowrap}",
     "#storyHud .st-chip small{color:#9a8a6a;font-family:var(--sans);font-size:10px;margin-left:8px}",
+    "#storyHud .st-param-viz{display:flex;gap:5px;align-items:center;justify-content:center;margin-top:3px}",
+    "#storyHud .st-param-viz .st-edviz{margin:0;padding:0;background:transparent;border:0;box-shadow:none}",
+    "#storyHud .st-param-viz .st-ed-orb{width:28px;height:28px;font-size:8px}",
+    "#storyHud .st-param-viz .st-ed-orb b{font-size:9px}",
+    "#storyHud .st-param-viz .st-ed-label{display:none}",
     "#storyHud #stQuit{position:fixed;top:calc(env(safe-area-inset-top) + 6px);right:9px;pointer-events:auto;background:var(--urushi);",
     " color:var(--gofun);border:1px solid var(--kin);width:30px;height:30px;border-radius:50%;font-size:14px;line-height:1;cursor:pointer}",
     "#storyHud .st-box{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 10px);transform:translateX(-50%);",
@@ -162,6 +167,24 @@ function stInject(){
     "#storyHud .st-card h3{margin:0 0 10px;color:var(--kin);font-family:var(--serif);font-size:18px;letter-spacing:.1em}",
     "#storyHud .st-card .st-body{font-size:12.5px;color:#e0d4b4;line-height:1.9;font-family:var(--serif);margin-bottom:14px}",
     "#storyHud .st-card .st-btns{display:flex;flex-direction:column;gap:8px}",
+    "#storyHud .st-edviz{margin:0 0 12px;padding:12px;border:1px solid rgba(201,162,63,.34);border-radius:8px;",
+    " background:rgba(13,9,5,.58);box-shadow:inset 0 0 18px rgba(0,0,0,.22);text-align:left}",
+    "#storyHud .st-edviz-title{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#e6d9bb;font-family:var(--serif);font-size:13px;letter-spacing:.08em;margin-bottom:9px}",
+    "#storyHud .st-edviz-title span:last-child{font-family:var(--sans);font-size:10px;color:#b9a888;letter-spacing:.04em;text-align:right}",
+    "#storyHud .st-ed-row{display:flex;gap:10px;align-items:flex-start;justify-content:center;flex-wrap:wrap}",
+    "#storyHud .st-ed-cell{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:72px}",
+    "#storyHud .st-ed-orb{--p:0%;--col:#d6b55d;position:relative;width:64px;height:64px;border-radius:50%;",
+    " background:conic-gradient(var(--col) var(--p),rgba(255,255,255,.09) 0);box-shadow:0 0 0 1px rgba(255,255,255,.10),0 5px 14px rgba(0,0,0,.35)}",
+    "#storyHud .st-ed-orb:after{content:'';position:absolute;inset:7px;border-radius:50%;background:linear-gradient(180deg,rgba(28,18,10,.96),rgba(13,9,5,.98));border:1px solid rgba(255,255,255,.08)}",
+    "#storyHud .st-ed-orb b{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;color:#efe6cd;font-family:var(--sans);font-size:16px;letter-spacing:0}",
+    "#storyHud .st-ed-label{font-size:10px;color:#b9a888;font-family:var(--sans);letter-spacing:.04em;text-align:center;line-height:1.35}",
+    "#storyHud .st-ed-forecast{margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(255,255,255,.05);color:#e0d4b4;font-size:11.5px;line-height:1.65}",
+    "#storyHud .st-ed-forecast b{color:var(--kin);font-weight:600}",
+    "#storyHud .st-ed-cond{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:8px}",
+    "#storyHud .st-ed-cond span{border:1px solid rgba(201,162,63,.22);border-radius:5px;padding:4px 6px;font-size:10.5px;color:#cbb98f;background:rgba(0,0,0,.14)}",
+    "#storyHud .st-ed-cond span.ok{color:#bde6c7;border-color:rgba(130,210,150,.42)}",
+    "#storyHud .st-ed-cond span.bad{color:#e8b0a4;border-color:rgba(220,110,90,.42)}",
+    "@media(max-width:560px){#storyHud .st-ed-cond{grid-template-columns:1fr}#storyHud .st-ed-orb{width:56px;height:56px}}",
     "#storyFade{position:fixed;inset:0;z-index:46;pointer-events:none;opacity:0;background:#000;transition:opacity .9s ease .12s}",
     "#storyFade.white{background:#f2ead8}",
     "#storyFade.show{opacity:1;transition:opacity 0s}",
@@ -177,7 +200,7 @@ function stInject(){
   let hud=stEl("storyHud");
   if(!hud){hud=document.createElement("div");hud.id="storyHud";document.body.appendChild(hud);}
   hud.innerHTML=
-    '<div class="st-chip"><span><span id="stChTitle">物語</span><small id="stDebug"></small><small id="stProg" style="color:#cbb98f;margin-left:8px"></small></span><span class="st-goal" id="stGoal"></span></div>'+
+    '<div class="st-chip"><span><span id="stChTitle">物語</span><small id="stDebug"></small><small id="stProg" style="color:#cbb98f;margin-left:8px"></small></span><span id="stParamViz" class="st-param-viz"></span><span class="st-goal" id="stGoal"></span></div>'+
     '<button id="stMenuBtn" title="中断して章メニューへ(進行は自動保存)" style="position:fixed;top:calc(env(safe-area-inset-top) + 6px);right:46px;pointer-events:auto;background:var(--urushi);color:var(--gofun);border:1px solid var(--kin);width:30px;height:30px;border-radius:50%;font-size:13px;line-height:1;cursor:pointer">📑</button>'+
     '<button id="stQuit" title="物語を閉じる">✕</button>'+
     '<div class="st-box" id="stBox"><img id="stFace" alt="">'+
@@ -909,6 +932,43 @@ function stEnsureSeals(){
   // 波AB/AI: 三問とも(呼び出しのたび)、正面の札を見る画へ必ず絶対座標で戻す
   if(typeof stCamAt==="function")stCamAt([bx,by+0.3,bz],[bx+fx*2.6,by+0.2,bz+fz*2.6],52);
 }
+function stEsc(s){return String(s==null?"":s).replace(/[<>&"]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));}
+function stPct(v,max){return Math.max(0,Math.min(100,Math.round((Number(v)||0)/max*100)));}
+function stGaugeOrb(label,value,max,color,caption){
+  const p=stPct(value,max),shown=Math.max(0,Math.round(Number(value)||0));
+  return '<div class="st-ed-cell"><div class="st-ed-orb" style="--p:'+p+'%;--col:'+color+'"><b>'+shown+'</b></div>'+
+    '<div class="st-ed-label">'+stEsc(label)+'<br>'+stEsc(caption)+'</div></div>';
+}
+function stEndingForecast(params,flags){
+  const p=params||{},f=flags||{},r=p.realityEgo|0,y=p.fantasySynchro|0,e=p.brainErosion|0;
+  const perfect=!!(f.utakaiPerfect&&f.oniPerfect);
+  if(e>=100)return {id:"ED5",name:"百年の夢",note:"蝕が限界に達し、物語に呑まれる危険域です。"};
+  if(f.chapter4Lost||f.chapter5Lost)return {id:"ED3",name:"歌なき夜",note:"歌合または大鬼祓いの敗北で、言葉の火が消えかけています。"};
+  if(r>=60&&y>=60&&e<=20&&perfect)return {id:"ED1",name:"御簾を上げる朝",note:"現実の自分と雅の学びが両立し、蝕も低い状態です。"};
+  const gap=f.desireToStayForever?10:25;
+  if(!f.calledYou&&y>=r+gap)return {id:"ED4",name:"常世の婿",note:"雅への同調が現実を大きく上回っています。最後に相手を役名で固定すると帰路が遠のきます。"};
+  return {id:"ED2",name:"現の朝",note:"帰路は開いていますが、True Endには現/雅の両立、低い蝕、完勝の記憶が必要です。"};
+}
+function stEdGaugeHtml(snap,compact){
+  const st=(snap&&snap.state)||(SM&&SM.state)||{};
+  const p=st.params||{},f=st.routeFlags||{};
+  const r=p.realityEgo|0,y=p.fantasySynchro|0,e=p.brainErosion|0;
+  const fc=stEndingForecast(p,f);
+  const perfect=!!(f.utakaiPerfect&&f.oniPerfect);
+  const conds=[["現 60以上",r>=60],["雅 60以上",y>=60],["蝕 20以下",e<=20],["歌合/祓い 完勝",perfect]];
+  const orbs=[
+    stGaugeOrb("現",r,60,"#78d6c6","現実の輪郭"),
+    stGaugeOrb("雅",y,60,"#d6b55d","物語への同調"),
+    stGaugeOrb("蝕",e,100,"#dc6d5f","心の侵食")
+  ].join("");
+  if(compact)return '<div class="st-edviz compact"><div class="st-ed-row">'+orbs+'</div></div>';
+  return '<div class="st-edviz">'+
+    '<div class="st-edviz-title"><span>心の傾きとED予兆</span><span>円は到達度。蝕だけは高いほど危険</span></div>'+
+    '<div class="st-ed-row">'+orbs+'</div>'+
+    '<div class="st-ed-forecast"><b>現在の予兆: '+stEsc(fc.id)+' '+stEsc(fc.name)+'</b><br>'+stEsc(fc.note)+'</div>'+
+    '<div class="st-ed-cond">'+conds.map(c=>'<span class="'+(c[1]?'ok':'bad')+'">'+(c[1]?'達成 ':'未達 ')+stEsc(c[0])+'</span>').join("")+'</div>'+
+  '</div>';
+}
 function stPanel(title,bodyHtml,btns){
   if(!/^ログ/.test(title))stVnStop(); // パネル(章メニュー/結末等)ではスキップ解除。ログは例外
   stEl("stPanelTitle").textContent=title;
@@ -920,6 +980,7 @@ function stPanel(title,bodyHtml,btns){
 }
 function stDebugRefresh(snap){
   const el=stEl("stDebug");if(!el)return;
+  const viz=stEl("stParamViz");if(viz)viz.innerHTML=(SM&&SM.state)?stEdGaugeHtml(snap,true):"";
   // 波AL: いずれかの結末に一度でも到達した後は、隠しパラメータを常時HUDに明示する
   // (「蝕がたまってED5行きになった後、どう戻すか分からない」への回答——まず見えるように)
   const unlocked=/[?&]storyDebug=1/.test(location.search)||stLoadEndings().length>0;
@@ -1402,7 +1463,7 @@ function stEnding(endingId){
   // 結末カードは必ず読めるよう、侵食演出はここで解除(前段の演出で役目は果たしている)
   if(erosionFx)erosionFx.setLevel(0);
   const showPanel=()=>stPanel("《 "+ed.t+" 》",ed.d,[
-    ["結末の回想へ（他の結末を見る）",()=>{SM.state.endingId=null;stStartChapter(6);}],
+    ["結末の回想へ（他の結末を見る）",()=>stOpenEndingGallery()],
     ["章をえらぶ",()=>{SM.state.endingId=null;stChapterMenu();}],
     ["タイトルへ戻る",()=>{stExitToTitle();}]
   ]);
@@ -1411,6 +1472,30 @@ function stEnding(endingId){
   // ここで再度エフェクトを発火させない(二重発火防止)。全結末共通で一呼吸(暗転/白転)を挟んでからカードを出す
   stFade(endingId==="ED5_SPOOKY"?"black":"white");
   setTimeout(showPanel,780);
+}
+function stOpenEndingGallery(){
+  if(SM&&SM.state)SM.state.endingId=null;
+  stEl("stPanel").style.display="none";
+  stCleanupSets();
+  if(typeof ST_BGM!=="undefined")ST_BGM.stop();
+  if(erosionFx)erosionFx.setLevel(0);
+  SM.loadChapter(6).then(()=>{
+    const first=SM.sequenceMap.get("seq_601_open_endings");
+    if(first&&first.type==="set_scene"){ // 病室の背景だけ整え、導入テキストは再読させない
+      stApplyPresentation(first);
+      SM.hooks.onScene({
+        season:first.season||SM.chapter.season,
+        timeOfDay:first.timeOfDay||SM.chapter.timeOfDay,
+        playerStart:first.playerStart||null,
+        event:first
+      },SM.snapshot());
+      if(first.cameraAngleId)SM.hooks.onCamera(first.cameraAngleId,first,SM.snapshot());
+    }
+    SM.currentSequenceId="seq_603_select_ending";
+    SM.save();
+    return SM.runCurrent();
+  }).then(()=>stDebugRefresh(SM&&SM.snapshot()))
+    .catch(e=>{console.error(e);toast("回想の読み込みに失敗しました",2400);});
 }
 function stChapterComplete(chapterId){
   stClearCollectibles();
@@ -1520,7 +1605,7 @@ function stChapterMenu(){
       SM.deserialize(save);stStartChapter(save.state.chapterId,save.currentSequenceId);}]);
   }
   const edN=stLoadEndings().length;
-  btns.push(["🌸 結末の回想（回想の間） 結末 "+edN+"/5",()=>stStartChapter(6)]);
+  btns.push(["🌸 結末の回想（回想の間） 結末 "+edN+"/5",()=>stOpenEndingGallery()]);
   btns.push(["📜 記録の間（手動セーブ/ロード）",()=>{stSlotArmed=0;stRecordRoom();}]);
   // 波AL: 蝕がたまってED5圏へ入った後の「戻し方」——禊。結末到達後(パラメータ可視化後)かつ蝕60以上で現れる
   const pNow=(SM&&SM.state&&SM.state.params)||{};
@@ -1537,8 +1622,9 @@ function stChapterMenu(){
   const doneN=[1,2,3,4,5].filter(i=>done[i]).length;
   // 波AL: 一度でも結末に到達したら、章メニューにも現在の心の在り処を常時明示する
   const paramLine=edN>0?("<br>現在の心 — 現"+(pNow.realityEgo|0)+" / 雅"+(pNow.fantasySynchro|0)+" / 蝕"+(pNow.brainErosion|0)):"";
+  const gaugeLine=stEdGaugeHtml({state:(SM&&SM.state)||{}},false);
   stPanel("御簾の向こうへ — 寝殿造り異聞",
-    "<small style='color:#9a8a6a'>読了 "+doneN+"/5話 ｜ 結末 "+edN+"/5 ｜ デモ版"+paramLine+"</small>",btns);
+    gaugeLine+"<small style='color:#9a8a6a'>読了 "+doneN+"/5話 ｜ 結末 "+edN+"/5 ｜ デモ版"+paramLine+"</small>",btns);
 }
 function stStartChapter(id,resumeSeq){
   stEl("stPanel").style.display="none";
@@ -1560,6 +1646,7 @@ function stStartChapter(id,resumeSeq){
   }
   SM.startChapter(id).then(()=>{
     if(resumeSeq&&SM.sequenceMap.has(resumeSeq)){SM.currentSequenceId=resumeSeq;SM.runCurrent();}
+    stDebugRefresh(SM&&SM.snapshot()); // 章開始直後からED分岐ゲージをHUDへ出す
     // 波Z: 第5話開始時、侵食が高いまま進むとED5に繋がることを明示し、唐突感をなくす
     if(id===5&&!resumeSeq){
       const ero=SM.state&&SM.state.params&&SM.state.params.brainErosion||0;
