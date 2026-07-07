@@ -1682,29 +1682,43 @@ function stStartChapter(id,resumeSeq){
   stEl("stPanel").style.display="none";
   stCleanupSets();
   SM.state.endingId=null;
-  // 波AI: 敗北フラグの残留バグ修正——一度負けてED3を見た後に再挑戦して勝っても、
-  // chapter4Lost/chapter5Lost が routeFlags に残り続け、determineEnding が永遠にED3を
-  // 返してしまっていた(勝ったのにやり直しED行き)。章の再開時に該当章の敗北フラグを拭う
-  if(SM.state.routeFlags){
+  // 波AN: 「続きから」の復帰(resumeSeq指定)か、最初からの(再)挑戦かを区別する。
+  // 復帰は保存地点をそのまま再開するので、進捗フラグを拭わず・章頭も再生しない。
+  const resuming=!!(resumeSeq&&resumeSeq!=="chapter_complete");
+  // 波AI: 敗北フラグの残留バグ修正——負けてED3を見た後に再挑戦して勝っても
+  // chapter4Lost/chapter5Lost が残り determineEnding が永遠にED3を返す問題の対策。
+  // これは「最初から」再挑戦のときだけ。復帰時に拭うと稽古スコア等の進捗が消える。
+  if(!resuming&&SM.state.routeFlags){
     if(id<=4)delete SM.state.routeFlags.chapter4Lost;
     if(id<=5)delete SM.state.routeFlags.chapter5Lost;
     if(id<=4)delete SM.state.routeFlags.utakaiPrepScore; // 波AL: 加算式になった稽古スコアを再走時に持ち越さない
   }
   if(typeof ST_BGM!=="undefined")ST_BGM.start(id); // 章別プロシージャルBGM(ch5常世/ch6現実は無音)。ST_BGM側で二重start/章替えを処理
-  if(id<=5)stChapterCard(id); // 波AG: 章題カットイン(第6話=回想の間とED直行では出さない)
+  if(id<=5&&!resuming)stChapterCard(id); // 波AG/AN: 章題カットイン。復帰時はいきなり保存地点へ入るので出さない
   if(typeof taijiLoadSimpleGlb==="function"){ // 波AL: ボスGLBを章の冒頭で温めておく(戦闘直前の読み込みヒッチ=一瞬固まる対策)
     if(id===3)taijiLoadSimpleGlb("assets/bosses/kappa_boss_2048.glb").catch(()=>{});
     if(id===5){taijiLoadSimpleGlb("assets/bosses/hitodama_boss_2048.glb").catch(()=>{});taijiLoadSimpleGlb("assets/bosses/oni_boss_2048.glb").catch(()=>{});}
   }
-  SM.startChapter(id).then(()=>{
-    if(resumeSeq&&SM.sequenceMap.has(resumeSeq)){SM.currentSequenceId=resumeSeq;SM.runCurrent();}
-    stDebugRefresh(SM&&SM.snapshot()); // 章開始直後からED分岐ゲージをHUDへ出す
+  const afterLoad=()=>{
+    stDebugRefresh(SM&&SM.snapshot()); // 章開始直後からED分岐ゲージをHUDへ出す(解放済みのみ)
     // 波Z: 第5話開始時、侵食が高いまま進むとED5に繋がることを明示し、唐突感をなくす
-    if(id===5&&!resumeSeq){
+    if(id===5&&!resuming){
       const ero=SM.state&&SM.state.params&&SM.state.params.brainErosion||0;
       if(ero>=60)setTimeout(()=>{toast(ero>=80?"⚠ このまま心が保てねば、常世の夢に沈んだまま戻れなくなる":"⚠ 積み重ねた過ちが、まだ胸の奥でくすぶっている",4400);if(typeof saigenSe==="function")saigenSe("gong");},2200);
     }
-  }).catch(e=>{console.error(e);toast("物語の読み込みに失敗しました",2600);});
+  };
+  const onErr=e=>{console.error(e);toast("物語の読み込みに失敗しました",2600);};
+  if(resuming){
+    // 波AN: 復帰は「章を読み込む(sequenceMap構築)→保存地点へ直接ジャンプ→そこから再開」。
+    // 章頭からの再生をしないので、イントロのeffect/setFlagの二重適用と一瞬のちらつきを防ぐ。
+    // 戦闘/歌合/収集の途中で閉じた場合も、保存されたノード(trigger_minigame/collect)から正しく再突入する。
+    SM.loadChapter(id).then(()=>{
+      if(SM.sequenceMap.has(resumeSeq))SM.currentSequenceId=resumeSeq;
+      return SM.runCurrent();
+    }).then(afterLoad).catch(onErr);
+  }else{
+    SM.startChapter(id).then(afterLoad).catch(onErr);
+  }
 }
 /* ---- モード出入り ---- */
 function startStory(){

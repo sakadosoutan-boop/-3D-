@@ -26,6 +26,9 @@ jobs:
       - name: Verify story structure
         run: node scripts/verify-story.js
 
+      - name: Verify ED reachability / route balance
+        run: node scripts/verify-story-routes.js
+
       - name: Verify HTML bundle
         run: node scripts/verify-html.js
 
