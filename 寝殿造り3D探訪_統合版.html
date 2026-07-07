@@ -10733,13 +10733,14 @@ function startTaiji(){
   APP._prevJoyDyn=joy.dynamic;joy.dynamic=true;joyRelease();if(typeof updateControlUI==="function")updateControlUI();
   // [軽量化] 退治中は影マップの毎フレーム更新を止める(夜で影はほぼ不可視)
   renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
-  // 波AN: ボス戦はモバイルで最も重い。タッチ端末では戦闘の間だけ描画解像度を一段下げて
-  // フレーム落ちを予防し、終了時に元の設定(オート/ユーザープリセット)へ確実に戻す。
-  // (適応的品質は数秒のウォームアップ後に反応するため、重い戦闘は開幕から間に合わない)
+  // 波AN/AO: ボス戦はモバイルで最も重い(実機FB)。タッチ端末では戦闘の間だけ描画解像度を
+  // 最下段まで落として発熱・フレーム落ちを予防し、終了時に元設定へ確実に戻す。
+  // ・適応的品質は数秒のウォームアップ後に反応するため、重い戦闘は開幕から間に合わない
+  // ・レベル最下段(pr約0.56/影512)にすると塗り面積が約半分になり、ブルームも自動停止(level>1)
+  // ・戦闘は動きが速く、解像度の柔らかさは目立ちにくい
   if(IS_TOUCH&&typeof QUALITY!=="undefined"){
     APP._prevGfxForced=QUALITY.forced; // null=オート / 数値=ユーザープリセット
-    const floor=Math.max(2,QUALITY.forced==null?0:QUALITY.forced);
-    QUALITY.setForced(floor);
+    QUALITY.setForced(3); // 最下段(可読性の床)。戦闘中のみ・終了で復元
   }
   taijiSetLightScene(true);
   if($("tjCoolFill"))$("tjCoolFill").style.width="0%";
@@ -16403,7 +16404,7 @@ function animate(now){
     if(rainFall&&rainFall.visible){
       scene.fog.density=0.022; // 雨のときは濃い霧
     } else {
-      scene.fog.density = (APP.mode==="taiji")?0.012:(APP.time==="day")?0.012:(APP.time==="dawn")?0.020:(APP.time==="dusk")?0.014:0.013; /* 退治:禍々しい霧 / 昼:霞 / 朝:朝靄 / 夜:遠景を青黒に沈める薄霧(灯火の暖色を引き立てる) */
+      scene.fog.density = (APP.mode==="taiji")?(IS_TOUCH?0.020:0.012):(APP.time==="day")?0.012:(APP.time==="dawn")?0.020:(APP.time==="dusk")?0.014:0.013; /* 退治:禍々しい霧(波AO: タッチ端末は一段濃く遠景の塗りを沈める) / 昼:霞 / 朝:朝靄 / 夜:遠景を青黒に沈める薄霧(灯火の暖色を引き立てる) */
     }
   }
   scene.background=cur.sky;
