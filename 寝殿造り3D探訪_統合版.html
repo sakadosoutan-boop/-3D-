@@ -19393,27 +19393,20 @@ const ST_ICON_FILES={
   hidetora_worried:"icons/hidetora_worried.webp",
   hidetora_blush:"icons/hidetora_blush.webp",
   hidetora_modern:"icons/hidetora_modern.webp",
-  // 波AO: 平安世界(異界)に馴染んでからは烏帽子を戴いた姿へ。表情差分にも烏帽子版を用意
+  // 波AO: 平安世界(異界)に馴染んで以降(第2話〜)は烏帽子を戴いた描き下ろし立ち絵へ
   hidetora_eboshi:"icons/hidetora_eboshi.webp",
-  hidetora_eboshi_worried:"icons/hidetora_eboshi_worried.webp",
-  hidetora_eboshi_blush:"icons/hidetora_eboshi_blush.webp",
-  // 波AO: ED4(常世の婿)——最後に小萩と世界へ残る結末だけ、御簾越しの影ではなく姿が浮かぶ絵に
+  // 波AO: ED4(常世の婿)——最後に小萩と世界へ残る結末だけ、御簾越しの影ではなく姿の見える描き下ろしへ
   kohagi_revealed:"icons/kohagi_revealed.webp"
 };
 function stHidetoraIcon(ev){
   const S=APP.story;
   // 波AM: 現代(教室・病室)のシーンでは、平安装束ではなく制服姿(時任 蓮)のアイコンを使う
   if(S&&(S.classroom||S.hospital))return "hidetora_modern";
-  // 波AO: 平安世界では「最初の章(異界に落ちた直後)」を除き烏帽子を戴いた姿にする。
-  //       表情差分(worried/blush)にも烏帽子版があるので同じ表情のまま帽子だけ載せ替える。
-  const eboshi=!!(SM&&SM.state&&SM.state.chapterId>=2);
+  // 波AO: 平安世界では「最初の章(異界に落ちた直後)」を除き烏帽子姿(描き下ろし1枚)で通す
+  if(SM&&SM.state&&SM.state.chapterId>=2)return "hidetora_eboshi";
+  // 第1話(異界に落ちた直後)は素頭。表情差分(worried/blush)はこの章でのみ効かせる
   const e=ev&&ev.emotes&&ev.emotes.hidetora;
-  const emo=(e==="worried"||e==="blush")?e:"neutral";
-  if(eboshi){
-    const key=emo==="neutral"?"hidetora_eboshi":"hidetora_eboshi_"+emo;
-    return ST_ICON_FILES[key]?key:"hidetora_eboshi";
-  }
-  const bare=emo==="neutral"?"hidetora_neutral":"hidetora_"+emo;
+  const bare=(e==="worried"||e==="blush")?"hidetora_"+e:"hidetora_neutral";
   return ST_ICON_FILES[bare]?bare:"hidetora_neutral";
 }
 /* 波AM: 現代名「蓮」も秀頼と同じ立ち絵解決(制服アイコン)へ寄せる。話者キーは hidetora に集約 */
