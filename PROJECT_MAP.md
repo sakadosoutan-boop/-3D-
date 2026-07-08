@@ -1,99 +1,83 @@
 # 寝殿造り3D探訪 — プロジェクトマップ & 編集規約
 
-> 司令塔(Opus)が Phase 0 で整備。並列作業（Ultracode / Sonnet）の衝突防止と、
-> 各フェーズの担当・対象領域を一意に定めるための運用ドキュメント。
+最終更新: 2026-07-08
 
-## 1. 全体方針
-- 実体は **単一ファイル** `寝殿造り3D探訪_統合版.html`（Three.js **r128** / CDN / 外部アセット無し・完全プロシージャル）。
-- **ファイルは分割しない**（オフライン配布性・二次配布性を優先）。1ファイル内を「領域」で分担する。
-- 既存の設計思想（プロシージャル生成・オフライン完結・モバイル対応）を壊さない。
-  外部CDNの追加は **Opus 承認制**。
+このプロジェクトは、単一HTML `寝殿造り3D探訪_統合版.html` を中心にしたオフライン対応の3D学習ゲームです。大きなファイルなので、編集時は行番号ではなく検索アンカーとシンボル名で位置を特定してください。
 
-## 2. 実行・デバッグ
-- ブラウザで直接開くだけ（`file://` でも動作）。
-- **開発用FPS計測オーバーレイ**：`~`(Backquote)キー、または URL に `?fps=1`。
-  - 表示項目：FPS（平滑化）/ フレーム時間ms / 直近1秒の min・max / **draw（描画コール数）** / **tri（三角形数）** / geometry / texture / program 数。
-  - 本番は既定OFF・描画コスト無し。改修の **before/after はこの数値で比較**し PR に記録する。
+## 基本方針
 
-## 3. ファイル構造マップ（検索アンカー基準）
-行番号は編集で変動するため、**バナーコメントの文字列で検索**して位置を特定する。
-★ = 今回の改修ホットスポット。
+- 正本は `origin/main`。
+- Three.js は r128。`outputEncoding` / `sRGBEncoding` / `texture.encoding` を維持する。
+- 単一HTML方針を維持する。外部CDNや実行時必須の外部アセット追加は慎重に判断する。
+- 本体HTMLの大改修前後は `npm test` を通す。
+- Claude/Codex 並行時は専用ブランチを使い、古い worktree から直接 main へ戻さない。
 
-| 検索アンカー | 役割 | 関連フェーズ | 主担当 |
-|---|---|---|---|
-| `<style>` 内 各UIセクション | 画面UI・スタイル | 全般 | Sonnet |
-| `[Phase0] 開発用パフォーマンス計測` | FPS計測オーバーレイ | 0 | Opus |
-| `データ辞書(高校生向け解説)` (`const ITEMS`) | 解説テキストデータ | 3 学習 | **Sonnet** |
-| `プロシージャル・テクスチャ工房` (`const TEX`) | Canvasテクスチャ生成 | 1 視覚 | Ultracode |
-| `共通マテリアル` (`const MAT`) ★ | マテリアル定義 | **1 視覚（主戦場）** | Ultracode→Sonnet微調整 |
-| `シーン基盤` (renderer/影/フォグ/ライト/太陽月) ★ | レンダラ・照明 | **1 視覚** | Ultracode |
-| `共通ヘルパー` | ジオメトリ補助関数 | — | Ultracode |
-| `床高さマップ(歩行用)` (`groundH`) | 歩行面の高さ | 2 没入 | Ultracode |
-| `地面・築地・門` | 地形・塀・門 | 4 最適化候補 | Ultracode |
-| `池泉庭園` | 池/中島/反り橋/植栽/遣水 | 1, 4 | Ultracode |
-| `汎用建物(対屋・渡殿・廊・釣殿)` | 建物生成 | 2 衝突, 4 | Ultracode |
-| `寝殿 — 詳細構造` | 主殿生成 | 2, 4 | Ultracode |
-| `人物(姫君・女房・貴公子)` | 人物メッシュ | — | Ultracode |
-| `夜の怪異(鬼・式神)` | 夜の演出オブジェクト | — | Ultracode |
-| `水鳥(鴛鴦)・鶴` | 水鳥アニメ | — | Ultracode |
-| `季節パーティクル` | 桜/紅葉/雪/蛍/蓮 | 1, 4 | Ultracode |
-| `四季システム` | 季節切替 | 1 | Ultracode |
-| `名称タグ(3Dフローティングテキスト)` | ラベル描画 | 3 | Sonnet |
-| `環境音プロシージャル・オーディオ合成` (`class AmbientAudio`) ★ | 環境音合成 | **2 footstep / 3 BGM** | Ultracode |
-| `アプリ状態・操作系` (player/keys/joy/drag) ★ | 入力・移動・カメラ | **2 移動・衝突（主戦場）** | Ultracode |
-| `効果音(WebAudio)` | SE合成 | 3 | Ultracode |
-| `レイキャストとピック` | クリック選択判定 | — | Ultracode |
-| `解説ポップアップ` | 解説UI制御 | 3 | Sonnet |
-| `時間システム(昼・夕・夜)` ★ | 時間切替 | **1 env連動フック** | Ultracode |
-| `ミュート＆環境音コントローラ` | 音のON/OFF | 2, 3 | Ultracode |
-| `モード管理` | モード遷移 | — | Opus / Ultracode |
-| `クイズモード` ★ | クイズ＋正解演出 | **3 演出** | Ultracode(演出) + Sonnet(設問) |
-| `一日体験クエスト` | クエスト進行 | 3 | Ultracode + Sonnet |
-| `メインループ` (`function animate`) ★ | 毎フレーム更新（ホットパス） | 全般 | Ultracode |
+## 主要ファイル
 
-## 4. フェーズ別バックログ（コード実測で確認した「真のギャップ」）
+| パス | 役割 |
+|---|---|
+| `寝殿造り3D探訪_統合版.html` | アプリ本体。3D、UI、モード、図鑑、物語、恋愛/陰陽、ミニゲームを含む |
+| `index.html` | GitHub Pages 用入口 |
+| `package.json` | 検証コマンド |
+| `scripts/build-story.js` | 章JSONからHTML内 `STORY_EMBED` を同期/確認 |
+| `scripts/verify-html.js` | DOM/JS/ITEMS/WAKA/音源/r128 API 静的検証 |
+| `scripts/verify-story.js` | 物語章データ検証 |
+| `scripts/verify-story-routes.js` | EDルート検証 |
+| `scripts/smoke-playwright.js` | Playwright 起動スモーク |
+| `story/chapters/*.json` | 物語モードの章データ |
+| `sounds/` | BGM/環境音/SE |
+| `assets/bosses/` | 退治ボス用GLB |
+| `IMPLEMENTATION_STATUS.md` | main/ブランチの実装済み棚卸し |
+| `HANDOFF_LATEST.md` | 次作業者向けの最新引き継ぎ |
 
-### Phase 1 ─ 視覚品質（最優先）
-- [ ] **環境マップ(IBL)導入** … `scene.environment`/`PMREMGenerator` が皆無。`scene.background` は単色のみ。
-      → 金泥(`kin`)・漆(`black`)・水面(`water`)の `metalness/roughness` が反射対象を持たず平坦/黒つぶれ。
-- [ ] `water`/`kin`/`black` の選択的 `MeshPhysicalMaterial` 化＋`envMapIntensity` 調整。
-- [ ] `時間システム` の昼/夕/夜切替に env 再生成をフック。
-- [ ] （任意）SSAO/接触影：r128 は EffectComposer/SSAOPass を別途読込が必要 → モバイル負荷とのトレードオフを要判断。
-- 対象: `共通マテリアル` `シーン基盤` `プロシージャル・テクスチャ工房` `時間システム`
+## HTML内の検索アンカー
 
-### Phase 2 ─ 没入感
-- [ ] **壁・柱の当たり判定が無い**（現状は外周±57とpondのみclamp＝建物すり抜け）。カプセル vs 壁AABB＋スライド移動を追加。
-- [ ] ヘッドボブ（歩行の上下動）。
-- [ ] **footstep（歩行音）** … 環境音は常時BGM的で移動非連動。移動速度・床材質(簀子/畳/砂)に連動させる。
-- ※ 物理エンジン(Rapier/Cannon)は単一ファイル/オフライン方針に反するため **不採用**。擬似物理で対応。
-- 対象: `アプリ状態・操作系` `床高さマップ` `汎用建物` `寝殿` `環境音`
+| 検索語/シンボル | 内容 | 注意 |
+|---|---|---|
+| `<style>` | 全UI、HUD、モード別表示 | モバイルCSSと z-index 競合に注意 |
+| `const ITEMS` | 図鑑/説明データ | 追加時は `register`, `makeLabel`, スモークも確認 |
+| `QUIZ_POOL` | クイズ対象 | ITEMS追加と同期 |
+| `const APP` | アプリ状態 | 新モード追加時の初期値をここへ |
+| `function enterMode` | モード切替 | HUD/音/可視性/移動制限の中心 |
+| `function pick` | クリック/タップの相互作用 | 新規インタラクトの入口 |
+| `function animate` | 毎フレーム更新 | 重い処理を入れない |
+| `makeHeianFigure` | 平安人物モデル | 座位/立位/衣装裾の共通基盤 |
+| `householdPeople` / `updateHouseholdWalk` | 屋敷人物と巡回 | 座っている既存人物を歩行化しない |
+| `GISSHA_YARD` | 車宿/牛車運び | 退治/物語/恋愛等では邪魔にならない表示制御 |
+| `onmyo_shikiban` | 太極六壬式盤 | パネルDOM/CSS/図鑑/札と連動 |
+| `StoryManager` | 物語実行 | `story/chapters` と `build:story` で同期 |
+| `stChapterMenu` / `stStartChapter` | 物語章メニュー/開始 | EDゲージは結末到達後に解放 |
+| `SFX` / `AmbientAudio` / `ST_BGM` | 音響 | autoplay制約とミュート追従に注意 |
+| `QUALITY` / `BLOOM` / `GFX` | 画質/ブルーム | モバイル負荷に注意 |
 
-### Phase 3 ─ 学習効果（演出）
-- [ ] 正解演出の格上げ（現状は2D印章スタンプのみ）：3D金粉パーティクル＋札の3D出現。
-- [ ] **平安BGM**（雅楽風・律/呂旋法のWebAudio合成。楽曲は未実装、SEと自然音のみ）。
-- [ ] 設問文・ヒント・`ITEMS`解説・ランク評語のブラッシュアップ（Sonnet）。
-- 対象: `クイズモード` `一日体験クエスト` `効果音` `環境音` `データ辞書` `名称タグ`
+## 検証コマンド
 
-### Phase 4 ─ パフォーマンス
-- [ ] `メインループ` 末尾の `scene.traverse` が**全meshに無差別 castShadow** → 影キャスタ選別。
-- [ ] 重複ジオメトリ（樹木・格子・前栽）の **InstancedMesh** 化。
-- [ ] 必要なら LOD。
-- 対象: `メインループ`(末尾traverse) `池泉庭園` `汎用建物` `季節パーティクル`
+```bash
+npm run build:story:check
+npm run verify:html
+npm run verify:story
+npm run verify:routes
+npm run smoke
+npm test
+```
 
-## 5. 既に実装済み（再実装しないこと）
-ブリーフが「未実装」と想定していたが**実装済み**：影(PCFSoftShadowMap/2048)・フォグ・ACESトーンマッピング・
-環境音(せせらぎ/風/虫/鳥のWebAudio合成)・効果音・カメライージング(lerp/slerp)・季節パーティクル・太陽/月。
+Playwright が無い環境では `npm install` を先に実行する。
 
-## 6. 編集規約（並列作業）
-1. **1領域=1担当**。同一アンカー領域を複数エージェントが同時に編集しない。
-2. 追加・変更コードは `/* [PhaseN] ... */` で明示マーキング（baselineとの差分追跡）。
-3. r128 の旧カラーマネジメントAPI（`outputEncoding` / `sRGBEncoding` / `texture.encoding`）に合わせる。
-   新API（`SRGBColorSpace` / `colorSpace`）は **使わない**（r128非対応）。
-4. 各フェーズは作業ブランチ `phaseN-xxx` を切り、`develop` へマージ。`main` は常に安定版。
-5. 改修の before/after は `~`キーの **FPS / draw / tri** を記録して残す。
+## 編集規約
 
-## 7. git 運用
-- `main` … 安定版。`tag: baseline-v0` = 改修前の原状。
-- `develop` … 統合ブランチ。
-- `phaseN-*` … 各フェーズ作業ブランチ。
-- コミット: `feat|fix|perf|chore|docs: 概要 — PhaseN` + `Co-Authored-By` トレーラ。
+1. 変更前に `git fetch origin`。
+2. 本体HTMLと `story/chapters/*.json` を同時に触ったら `npm run build:story:check` を必ず確認する。
+3. `ITEMS` に項目を増やしたら、図鑑、札、クイズ対象、スモークのいずれが必要か確認する。
+4. モード追加時は `enterMode`, `pick`, `animate`, HUD表示、Escapeキー、移動制限、音の停止を確認する。
+5. 既存の座位人物を誤って立位/歩行に変えない。歩ける人物は `walkReady` 付きの屋敷人物に限定する。
+6. 物語モードの古いブランチ差分を丸ごと戻さない。現行 main のED導線/ゲージ/回想/記録仕様を優先する。
+7. 大きな変更後は `npm test` を通し、失敗ログを修正してから commit/push する。
+
+## 現在の優先バックログ
+
+- 公開後の Pages 反映確認を自動/手動で確実にする。
+- 絵巻断片の完成ビュー/並べ替え演出を強化する。
+- 牛車運びを恋愛/貴族の一日導線へ自然につなげる。
+- 太極六壬式盤の占断結果を恋愛/外出/物語サブイベントへ反映する。
+- 屋敷人物の巡回を増やす場合は、座位人物・物語演出・垣間見警備と干渉しないようルートを分ける。
+- `HANDOFF_*` 系の古い資料は、必要に応じて `IMPLEMENTATION_STATUS.md` に統合してから整理する。
