@@ -64,7 +64,7 @@ npm test
 ## 次に触る時の短縮指示
 
 ```text
-HANDOFF_LATEST.md と IMPLEMENTATION_STATUS.md を読む。
+docs/handbook/HANDOFF_LATEST.md と IMPLEMENTATION_STATUS.md を読む。
 git fetch origin で最新 main を確認し、専用ブランチで作業。
 単一HTMLの共有領域(ITEMS/register/pick/enterMode/animate/CSS/音声/StoryManager)に注意。
 Three.js r128 旧APIを維持し、colorSpace APIを入れない。

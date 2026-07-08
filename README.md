@@ -71,9 +71,10 @@ story/                         物語モードの章JSON、設定資料、QA資�
 sounds/                        環境音・効果音・BGMとクレジット
 assets/bosses/                 退治ボス用GLBとマニフェスト
 icons/                         PWA/OGP等のアイコン素材
+docs/                          ハンドブック、計画書、メトリクス、古い引き継ぎの保管場所
 IMPLEMENTATION_STATUS.md       main/ブランチの実装済み状況
-HANDOFF_LATEST.md              次作業者向けの最新引き継ぎ
-PROJECT_MAP.md                 単一HTMLの編集地図と衝突回避ルール
+docs/handbook/HANDOFF_LATEST.md 次作業者向けの最新引き継ぎ
+docs/handbook/PROJECT_MAP.md   単一HTMLの編集地図と衝突回避ルール
 ```
 
 ## 保守ルール

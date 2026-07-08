@@ -6,7 +6,7 @@
 
 ## GitHubで最初に読むファイル
 
-1. `STORY_MODE_IMPLEMENTATION_PLAN.md`
+1. `../story/STORY_MODE_IMPLEMENTATION_PLAN.md`
    - 実装方針、StoryManager、既存モード接続、セーブ/ロード方針。
 
 2. `story/STORY_SCENARIO_BIBLE.md`
@@ -157,7 +157,7 @@
 
 まだ本体実装しない場合は、次のような新規ファイルに案をまとめてください。
 
-- `story/CLAUDE_STORY_REVIEW.md`
+- `docs/archive/story/CLAUDE_STORY_REVIEW.md`
   - シナリオ精査結果、修正提案。
 
 - `story/story_object_factories_draft.js`

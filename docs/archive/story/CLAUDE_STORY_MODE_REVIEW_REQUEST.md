@@ -6,12 +6,12 @@
 
 ## GitHubで最初に読むファイル
 
-1. `../STORY_MODE_IMPLEMENTATION_PLAN.md`
-2. `STORY_SCENARIO_BIBLE.md`
-3. `STORY_BEAT_SHEET.md`
-4. `STORY_IMPLEMENTATION_QA.md`
-5. `chapters/*.json`
-6. `story_manager.js`
+1. `../../story/STORY_MODE_IMPLEMENTATION_PLAN.md`
+2. `../../../story/STORY_SCENARIO_BIBLE.md`
+3. `../../../story/STORY_BEAT_SHEET.md`
+4. `../../../story/STORY_IMPLEMENTATION_QA.md`
+5. `../../../story/chapters/*.json`
+6. `../../../story/story_manager.js`
 
 ## 現状
 
@@ -35,7 +35,7 @@
 
 ### 推奨出力ファイル
 
-- `story/CLAUDE_STORY_REVIEW.md`
+- `CLAUDE_STORY_REVIEW.md`
   - シナリオ精査結果と改善提案。
 
 - `story/story_object_factories_draft.js`

@@ -10,7 +10,7 @@
 - 作業ブランチは `develop`。現在のHEADは `c881f5d`。
 - 現在のワークツリーには、HTMLの未コミット変更と、この引き継ぎ文書がある。
 - ユーザーの既存変更を消さないこと。特に `[handoff-fix]`、`[Learning]`、`[Audio fix]` の領域を維持する。
-- 編集規約と構造アンカーは `PROJECT_MAP.md`、計測基準は `BENCHMARKS.md` を参照。
+- 編集規約と構造アンカーは `../handbook/PROJECT_MAP.md`、計測基準は `../metrics/BENCHMARKS.md` を参照。
 - 参考資料は `素材/*.pdf`。画像スキャンPDFなので通常のテキスト抽出はできない。
 - 音源は `sounds/*.mp3`。出典管理は `sounds/CREDITS.md`。
 
@@ -254,7 +254,7 @@ tsuru.mp3
 - 妻戸: 軋み音。
 - 対屋の楽器: 琵琶・箏・笙・龍笛をタップすると個別の試奏音。
 
-注意: 現在の「BGM」は自然環境ループを指す。雅楽の楽曲BGMファイルは未配置で、`PROJECT_MAP.md` の雅楽風BGMは未実装のまま。
+注意: 現在の「BGM」は自然環境ループを指す。雅楽の楽曲BGMファイルは未配置で、`../handbook/PROJECT_MAP.md` の雅楽風BGMは未実装のまま。
 
 ## 6. 検証済み事項
 
@@ -282,7 +282,7 @@ Three.js r128は本体HTMLへ埋め込み済み。ブラウザ検証にネット
 
 1. `sounds/CREDITS.md` の正確な配布元URL、作者、ライセンスを確定する。
 2. 追加した楽器をタップした時の短い試奏SE、または専用の雅楽風BGMを追加するか判断する。
-3. 管弦調度追加後の `?fps=1` 数値を `BENCHMARKS.md` に記録する。
+3. 管弦調度追加後の `?fps=1` 数値を `../metrics/BENCHMARKS.md` に記録する。
 4. タブレット実機で図鑑、巻物アニメーション、灯台近距離判定を確認する。
 
 既存バックログ:
@@ -297,7 +297,7 @@ Three.js r128は本体HTMLへ埋め込み済み。ブラウザ検証にネット
 ## 8. Claudeが作業を再開する時の推奨手順
 
 1. `git status --short` と `git diff --check` を実行。
-2. `PROJECT_MAP.md` と本書を読む。
+2. `../handbook/PROJECT_MAP.md` と本書を読む。
 3. 現在の未コミットHTMLをベースにし、既存差分を巻き戻さない。
 4. JavaScript部分を `new Function()` で構文検査。
 5. HTMLを `file://` で直接開き、人物、四神、音声、図鑑、楽器クリック、垣間見、夜の灯台を確認する。

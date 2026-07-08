@@ -1,7 +1,7 @@
 # Claude(fable) ストーリーモード精査レビュー
 
 日付: 2026-07-02 ／ 対象: `codex/saigen-fix` のストーリーパッケージ一式
-依頼書: `CLAUDE_STORY_MODE_REVIEW_REQUEST.md` の4観点(物語品質/分岐設計/実装リスク/UI・UX)に従う。
+依頼書: `CLAUDE_STORY_MODE_REVIEW_REQUEST.md`（同じアーカイブ内）または `../CLAUDE_STORY_MODE_REVIEW_REQUEST.md`（旧ルート版）の4観点(物語品質/分岐設計/実装リスク/UI・UX)に従う。
 
 ## 総評
 

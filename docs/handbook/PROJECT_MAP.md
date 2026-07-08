@@ -28,7 +28,7 @@
 | `sounds/` | BGM/環境音/SE |
 | `assets/bosses/` | 退治ボス用GLB |
 | `IMPLEMENTATION_STATUS.md` | main/ブランチの実装済み棚卸し |
-| `HANDOFF_LATEST.md` | 次作業者向けの最新引き継ぎ |
+| `docs/handbook/HANDOFF_LATEST.md` | 次作業者向けの最新引き継ぎ |
 
 ## HTML内の検索アンカー
 
