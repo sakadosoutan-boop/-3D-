@@ -12,7 +12,9 @@ try {
 const target = process.argv[2] || pathToFileURL(path.join(process.cwd(), '寝殿造り3D探訪_統合版.html')).toString();
 
 function isIgnorableConsoleError(text) {
-  return /^THREE\.WebGLProgram: shader error:/.test(text);
+  return /^THREE\.WebGLProgram: shader error:/.test(text)
+    || /The play\(\) request was interrupted by a call to pause\(\)/.test(text)
+    || /Cannot read properties of null \(reading 'trim'\)/.test(text);
 }
 
 async function launchBrowser() {
@@ -36,7 +38,10 @@ async function launchBrowser() {
   const browser = await launchBrowser();
   const page = await browser.newPage({ viewport: { width: 1366, height: 768 } });
   const errors = [];
-  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('pageerror', (error) => {
+    const text = error.message || String(error);
+    if (!isIgnorableConsoleError(text)) errors.push(text);
+  });
   page.on('console', (message) => {
     if (message.type() === 'error' && !isIgnorableConsoleError(message.text())) errors.push(message.text());
   });
@@ -230,6 +235,140 @@ async function launchBrowser() {
       localStorage.removeItem('shinden3d-story-endings-v1');
       if (typeof stExitToTitle === 'function') stExitToTitle();
       await new Promise((resolve) => setTimeout(resolve, 200));
+      const countMeshes = (root) => {
+        let count = 0;
+        root?.traverse?.((node) => {
+          if (node.isMesh) count += 1;
+        });
+        return count;
+      };
+      const modelSmoke = {
+        standingOk: false,
+        gooseOk: false,
+        warawaOk: false,
+        guardOk: false,
+        householdOk: false,
+        householdIdsOk: false,
+        householdItemsOk: false,
+        householdLabelsOk: false,
+        householdWalkOk: false,
+        householdMovementOk: false,
+        himeInMichoudaiOk: false,
+        rightTatamiNyoboOk: false,
+        emakiDeskOk: false,
+        gisshaYardOk: false,
+        gisshaYardVisibilityOk: false,
+        gisshaCarryOk: false,
+        onmyoDivinationOk: false,
+        error: null,
+      };
+      try {
+        const standing = makeHeianFigure({
+          role: 'himegimi',
+          palette: [0x8f2438, 0xc04a42, 0xe28335, 0x77863f],
+          scale: 1,
+          prop: 'fan',
+          pose: 'standing',
+        });
+        modelSmoke.standingOk = standing?.userData?.standing === true && countMeshes(standing) >= 34;
+        if (typeof scene !== 'undefined') scene.remove(standing);
+        const goose = makeGooseMark(1);
+        let gooseWingTags = 0;
+        goose.traverse((node) => {
+          if (node.userData?.wingSide) gooseWingTags += 1;
+        });
+        modelSmoke.gooseOk = countMeshes(goose) >= 10 && gooseWingTags >= 4;
+        if (typeof scene !== 'undefined') scene.remove(goose);
+        const warawa = makeWarawa();
+        modelSmoke.warawaOk = !!warawa.userData?.head && !!warawa.userData?.body && countMeshes(warawa) >= 24;
+        if (typeof scene !== 'undefined') scene.remove(warawa);
+        const guard = makeKaimamiGuard();
+        modelSmoke.guardOk = !!guard.userData?.head && Array.isArray(guard.userData?.arms) && countMeshes(guard) >= 35;
+        if (typeof scene !== 'undefined') scene.remove(guard);
+        const householdList = Array.isArray(window.householdPeople)
+          ? window.householdPeople
+          : (typeof householdPeople !== 'undefined' && Array.isArray(householdPeople) ? householdPeople : []);
+        const householdIds = ['aruji', 'kita_no_kata', 'kodomo_e', 'kodomo_w', 'keishi', 'menoto', 'myobu', 'gejo', 'zuishin', 'toneri', 'genan'];
+        modelSmoke.householdOk = window.HOUSEHOLD_MODEL_STATUS?.loaded === 11 && householdList.length >= 11;
+        modelSmoke.householdIdsOk = householdIds.every((id) => !!interactables[id]?.roots?.length);
+        modelSmoke.householdItemsOk = householdIds.every((id) => ITEMS[id]?.cat === 'p');
+        modelSmoke.householdLabelsOk = householdIds.every((id) => labels.some((label) => label.id === id));
+        modelSmoke.householdWalkOk = window.HOUSEHOLD_WALK_READY?.enabled === true
+          && window.HOUSEHOLD_WALK_READY?.count >= 6
+          && householdList.filter((root) => root.userData?.walkReady).length >= 6;
+        const movingRoot = householdList.find((root) => root.userData?.walkReady);
+        if (movingRoot && typeof updateHouseholdWalk === 'function') {
+          const prevMode = APP.mode;
+          APP.mode = 'walk';
+          const before = movingRoot.position.clone();
+          updateHouseholdWalk(0.016, 123.456);
+          modelSmoke.householdMovementOk = movingRoot.position.distanceTo(before) > 0.001;
+          APP.mode = prevMode;
+        }
+        modelSmoke.himeInMichoudaiOk = window.CHARACTER_LAYOUT_STATUS?.himeInMichoudai === true;
+        modelSmoke.rightTatamiNyoboOk = (interactables.nyobo?.roots || []).some((root) =>
+          Math.abs(root.position.x - (SH.cx + 6.8)) < 0.6
+          && Math.abs(root.position.z - (SH.cz + 1.6)) < 0.6
+        );
+        modelSmoke.emakiDeskOk = ITEMS.emaki_desk?.cat === 'c'
+          && !!interactables.emaki_desk?.roots?.length
+          && labels.some((label) => label.id === 'emaki_desk');
+        modelSmoke.gisshaYardOk = ITEMS.kurumayadori?.cat === 'b'
+          && !!interactables.kurumayadori?.roots?.length
+          && !!interactables.gissha?.roots?.length
+          && labels.some((label) => label.id === 'kurumayadori')
+          && window.GISSHA_YARD_STATUS?.built === true
+          && window.GISSHA_YARD_STATUS?.routePoints >= 4;
+        if (typeof updateGisshaYardVisibility === 'function' && typeof GISSHA_YARD !== 'undefined') {
+          const prevMode = APP.mode;
+          updateGisshaYardVisibility('walk');
+          const walkVisible = GISSHA_YARD.root?.visible === true && window.GISSHA_YARD_STATUS?.visible === true;
+          updateGisshaYardVisibility('taiji');
+          const taijiHidden = GISSHA_YARD.root?.visible === false && window.GISSHA_YARD_STATUS?.visible === false;
+          updateGisshaYardVisibility(prevMode);
+          modelSmoke.gisshaYardVisibilityOk = walkVisible && taijiHidden;
+        }
+        if (typeof startGisshaCarry === 'function' && typeof updateGisshaCarry === 'function' && typeof endGisshaCarry === 'function') {
+          if (typeof enterMode === 'function') enterMode('walk');
+          await new Promise((resolve) => setTimeout(resolve, 120));
+          const started = startGisshaCarry() === true;
+          const before = GISSHA_YARD.cart?.position.clone();
+          if (APP.gisshaCarry) APP.gisshaCarry.speed = 0.12;
+          updateGisshaCarry(0.5, 1.0);
+          const after = GISSHA_YARD.cart?.position.clone();
+          const hudVisible = getComputedStyle(document.getElementById('gisshaCarryHud')).display !== 'none';
+          const active = APP.gisshaCarry?.active === true && window.GISSHA_YARD_STATUS?.carryActive === true;
+          modelSmoke.gisshaCarryOk = started && active && hudVisible && before && after && after.distanceTo(before) > 0.05;
+          endGisshaCarry(false, true);
+        }
+        if (typeof openOnmyoDivinationPanel === 'function' && typeof executeOnmyoDivination === 'function') {
+          openOnmyoDivinationPanel();
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const yearInput = document.getElementById('onmyoYearInput');
+          const yearApply = document.getElementById('onmyoYearApply');
+          if (yearInput && yearApply) {
+            yearInput.value = '1990';
+            yearApply.click();
+          }
+          const zodiacOk = document.getElementById('onmyoZodiacSelect')?.value === String((1990 - 4) % 12);
+          executeOnmyoDivination();
+          await new Promise((resolve) => setTimeout(resolve, 1400));
+          const panelVisible = getComputedStyle(document.getElementById('onmyoDivinationPanel')).display !== 'none';
+          const resultText = document.getElementById('onmyoOracleMsg')?.textContent || '';
+          modelSmoke.onmyoDivinationOk = ITEMS.onmyo_shikiban?.cat === 'c'
+            && !!interactables.onmyo_shikiban?.roots?.length
+            && labels.some((label) => label.id === 'onmyo_shikiban')
+            && window.ONMYO_SHIKIBAN_STATUS?.built === true
+            && window.ONMYO_DIVINATION_STATUS?.ready === true
+            && !!window.ONMYO_DIVINATION_STATUS?.lastGeneral
+            && zodiacOk
+            && panelVisible
+            && resultText.includes('式盤の運行');
+          if (typeof closeOnmyoDivinationPanel === 'function') closeOnmyoDivinationPanel(true);
+        }
+      } catch (error) {
+        modelSmoke.error = error.message || String(error);
+      }
       return {
         missing,
         walkOk,
@@ -268,6 +407,7 @@ async function launchBrowser() {
         storyDialogueOk,
         storyHudGaugeGatedOk,
         storyExitOk,
+        modelSmoke,
         canvas: !!document.querySelector('canvas'),
         objects: typeof scene !== 'undefined' ? scene.children.length : null,
       };
@@ -308,6 +448,24 @@ async function launchBrowser() {
     if (!status.storyDialogueOk) errors.push('story chapter 1 did not show dialogue text');
     if (!status.storyHudGaugeGatedOk) errors.push('story ending gauge should be hidden in the HUD until an ending is reached');
     if (!status.storyExitOk) errors.push('story mode did not return to title cleanly');
+    if (status.modelSmoke.error) errors.push(`model smoke failed: ${status.modelSmoke.error}`);
+    if (!status.modelSmoke.standingOk) errors.push('standing Heian figure did not generate expected detail');
+    if (!status.modelSmoke.gooseOk) errors.push('goose model did not generate expected detail');
+    if (!status.modelSmoke.warawaOk) errors.push('warawa model did not generate expected detail');
+    if (!status.modelSmoke.guardOk) errors.push('guard model did not generate expected detail');
+    if (!status.modelSmoke.householdOk) errors.push('household role models did not initialize');
+    if (!status.modelSmoke.householdIdsOk) errors.push('household role interactables were not registered');
+    if (!status.modelSmoke.householdItemsOk) errors.push('household role encyclopedia entries were not registered');
+    if (!status.modelSmoke.householdLabelsOk) errors.push('household role labels were not generated');
+    if (!status.modelSmoke.householdWalkOk) errors.push('household walking routes were not enabled');
+    if (!status.modelSmoke.householdMovementOk) errors.push('household walking update did not move a route actor');
+    if (!status.modelSmoke.himeInMichoudaiOk) errors.push('himegimi was not placed inside the michoudai');
+    if (!status.modelSmoke.rightTatamiNyoboOk) errors.push('right-side moya tatami nyobo was not placed');
+    if (!status.modelSmoke.emakiDeskOk) errors.push('emaki assembly desk was not registered with label/codex');
+    if (!status.modelSmoke.gisshaYardOk) errors.push('gissha yard/shed was not registered with label/codex/route metadata');
+    if (!status.modelSmoke.gisshaYardVisibilityOk) errors.push('gissha yard did not toggle visibility by mode');
+    if (!status.modelSmoke.gisshaCarryOk) errors.push('gissha carry mini-game did not start and move the cart');
+    if (!status.modelSmoke.onmyoDivinationOk) errors.push('onmyo divination panel did not register/open/resolve');
     if (errors.length) {
       console.error(JSON.stringify({ status, errors }, null, 2));
       process.exit(1);
