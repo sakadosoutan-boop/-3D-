@@ -58,3 +58,34 @@
 | pixel ratio | **1** |
 
 Canva素材・タイトルBGM・追加生き物/門/畳テクスチャ反映後の基準値。次の品質向上では、表示物を増やすたびにこの値との差分を取り、特に draw calls / textures / geometries の増加を確認する。
+
+## Phase 1 計測（2026-07-09 / codex/main-safe-reapply-20260708）
+
+条件: Codex同梱Playwright、1400x820、`npm run benchmark`、自由散策・春・昼・歩行視点。Phase 1から `scripts/collect-benchmark.js` は乱数を固定し、待機後に `renderer.info.reset()` して代表フレームを1回描画してから記録する。
+
+目標: 自由散策・春昼で draw calls **1,200以下**、geometries **2,000以下**。
+
+| 指標 | Phase 1着手時 | Phase 1第二段後 | 目標 |
+|---|---:|---:|---:|
+| draw calls | 2,390 | **1,794** | 1,200 |
+| triangles | 122,831 | **149,557** | - |
+| lines | 13 | **13** | - |
+| geometries | 3,444 | **1,493** | 2,000 |
+| textures | 148 | **148** | - |
+| programs | 27 | **27** | - |
+| quality level | 0 | **0** | - |
+| pixel ratio | 1 | **1** | - |
+
+実施内容:
+- ベンチコマンドを `npm run benchmark` として正式化。
+- ベンチ測定の乱数を固定し、代表フレーム単位で比較できるようにした。
+- 松・落葉樹の葉叢を `InstancedMesh` 化し、松葉・椿・薄・前栽などの装飾植栽を影の自動付与から外した。
+- 松葉、椿、薄のジオメトリを共有化し、geometry 断片化を削減した。
+- `box()` / `cyl()` の同寸法ジオメトリをキャッシュし、建築・小物の geometry 重複を削減した。
+- 高欄の縦棒/擬宝珠を `InstancedMesh` 化した。
+- 寝殿/対屋/渡殿/築地/竹/藤/庭の静的反復部材を、安全な範囲で自動 `InstancedMesh` バッチ化した。
+
+残課題:
+- geometries は目標達成。draw calls はまだ目標未達。
+- 次の主対象は、人物モデルの細部、几帳/調度、静的な庭小物、季節物のルート追従バッチ。
+- `draw calls` はまだ1,700台なので、個別メッシュ削減より `InstancedMesh` / ジオメトリ結合を優先する。

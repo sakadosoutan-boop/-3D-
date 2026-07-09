@@ -16,8 +16,9 @@
 
 ## plans
 
+- `plans/IMPLEMENTATION_ROADMAP.md`: Claude/Codexレビューを精査した今後の実装ロードマップ。
 - `plans/NON_RENAI_MODE_QUALITY_UP_PLAN.md`: 非恋愛モードの品質改善計画。
-- `plans/REN_AI_ONMYO_HANDOFF_PLAN.md`: 恋愛/陰陽系の拡張計画。
+- `plans/REN_AI_ONMYO_HANDOFF_PLAN.md`: 恋愛/陰陽系の実装済み/残タスク整理。
 
 ## metrics
 

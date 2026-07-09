@@ -55,21 +55,22 @@ npm run verify:html
 npm run verify:story
 npm run verify:routes
 npm run smoke
+npm run verify:public
 npm test
 ```
 
-`npm test` は、物語ビルド同期、HTML静的検証、ストーリー整合、EDルート、Playwrightスモークをまとめて確認します。
+`npm test` は、物語ビルド同期、HTML静的検証、ストーリー整合、EDルート、Playwrightスモークをまとめて確認します。公開後のGitHub Pages確認は `npm run verify:public` で行います。
 
 ## ファイル構成
 
 ```text
-寝殿造り3D探訪_統合版.html     アプリ本体。Three.js r128 と主要テクスチャを内蔵
+寝殿造り3D探訪_統合版.html     アプリ本体。Three.js r128、主要テクスチャ、手続き生成モデルを内蔵
 index.html                     GitHub Pages 用エントリ
 package.json                   検証コマンドと Playwright devDependency
 scripts/                       ビルド/検証/スモーク/公開URL確認スクリプト
 story/                         物語モードの章JSON、設定資料、QA資料
 sounds/                        環境音・効果音・BGMとクレジット
-assets/bosses/                 退治ボス用GLBとマニフェスト
+assets/bosses/                 退治ボス用GLBとマニフェスト（一部大型モデルはルートGLBから派生）
 icons/                         PWA/OGP等のアイコン素材
 docs/                          ハンドブック、計画書、メトリクス、古い引き継ぎの保管場所
 IMPLEMENTATION_STATUS.md       main/ブランチの実装済み状況

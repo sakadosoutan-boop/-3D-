@@ -2,7 +2,7 @@
 
 最終更新: 2026-07-08
 正本: GitHub `origin/main`
-現在の確認済み main: `eded4f1` (`feat: reapply Codex gissha and onmyo features on latest main`)
+現在の確認済み main: `69a5c68` (`docs: consolidate duplicate archive notes`)
 
 ## 最重要
 
@@ -17,6 +17,7 @@
 ```bash
 npm install
 npm test
+npm run verify:public
 ```
 
 `npm test` の内訳:
@@ -26,8 +27,9 @@ npm test
 - `npm run verify:story`
 - `npm run verify:routes`
 - `npm run smoke`
+- `npm run verify:public`（公開URL確認）
 
-2026-07-08 時点で、`eded4f1` は上記フル検証を通過済み。Playwright smoke では canvas、散策、図鑑、画質、垣間見、退治、物語、屋敷人物、絵巻机、車宿、牛車運び、太極六壬式盤を確認している。
+2026-07-08 時点で、`69a5c68` は上記フル検証と公開URL確認を通過済み。Playwright smoke では canvas、散策、図鑑、画質、垣間見、退治、物語、屋敷人物、絵巻机、車宿、牛車運び、太極六壬式盤を確認している。
 
 ## 現行 main の主な実装
 

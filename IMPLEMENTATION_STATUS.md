@@ -1,15 +1,15 @@
 # 実装済み棚卸し — main / branch status
 
 最終更新: 2026-07-08
-基準: `origin/main` = `eded4f1`
-検証: `npm test` 通過済み
+基準: `origin/main` = `69a5c68` (`docs: consolidate duplicate archive notes`)
+検証: `npm test` / `npm run verify:public` 通過済み
 
 ## main に実装済み
 
 ### 基盤
 
 - 単一HTMLアプリ本体、GitHub Pages 用 `index.html`、PWA/OGP/アイコン。
-- Three.js r128、手続き生成モデル/テクスチャ、主要画像の data URI 内蔵。
+- Three.js r128、手続き生成モデル/テクスチャ、主要画像の data URI 内蔵、一部GLBモデル併用。
 - 季節/時刻/名称札/画質/ブルーム/ジョイ設定の localStorage 永続化。
 - `npm test` 系の検証基盤:
   - `build:story:check`
@@ -17,6 +17,7 @@
   - `verify:story`
   - `verify:routes`
   - `smoke-playwright`
+  - `verify-public-url`（公開URL確認）
 
 ### 3Dワールド
 

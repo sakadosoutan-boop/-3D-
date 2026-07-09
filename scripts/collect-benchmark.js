@@ -32,6 +32,13 @@ async function launchBrowser() {
 (async () => {
   const browser = await launchBrowser();
   const page = await browser.newPage({ viewport: { width: 1400, height: 820 } });
+  await page.addInitScript(() => {
+    let seed = 0x5eed1234;
+    Math.random = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 0x100000000;
+    };
+  });
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   page.on('console', (message) => {
@@ -40,12 +47,27 @@ async function launchBrowser() {
 
   try {
     await page.goto(target, { waitUntil: 'load', timeout: 45_000 });
-    await page.waitForFunction(() => typeof renderer !== 'undefined' && typeof scene !== 'undefined', { timeout: 45_000 });
+    await page.waitForFunction(() => (
+      typeof renderer !== 'undefined' &&
+      typeof scene !== 'undefined' &&
+      typeof enterMode === 'function' &&
+      document.getElementById('loading') &&
+      typeof document.getElementById('btnWalk')?.onclick === 'function'
+    ), { timeout: 45_000 });
     const metrics = await page.evaluate(async () => {
       if (typeof enterMode === 'function') enterMode('walk');
       if (typeof applySeason === 'function') applySeason('spring');
       if (typeof setTime === 'function') setTime('day');
       await new Promise((resolve) => setTimeout(resolve, 3500));
+      window.__SHINDEN_BENCH_PAUSE = true;
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      renderer.info.reset();
+      if (typeof BLOOM !== 'undefined' && typeof BLOOM.render === 'function') {
+        if (typeof BLOOM.update === 'function') BLOOM.update();
+        BLOOM.render();
+      } else {
+        renderer.render(scene, camera);
+      }
       const info = renderer.info;
       return {
         render: {
