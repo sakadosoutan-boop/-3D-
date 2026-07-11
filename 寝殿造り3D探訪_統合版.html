@@ -8155,19 +8155,23 @@ const SFX = {
     });
     this.updateBed();
   },
-  /* カテゴリ内をローテーション再生(無ければ false=合成音へ) */
+  /* カテゴリ内をローテーション再生。戻り値はtrue=実録で処理済み(無音スキップ含む)/false=ファイル自体が無く合成音へフォールバックすべき。
+     [音バグ修正] 実録ファイルは存在するが同時発音数の上限で見送っただけの場合まで false を返すと、
+     呼び出し元が「ロード失敗」と誤認して合成音フォールバックに落ちてしまう(実録優先の原則が崩れる)。
+     ファイル欠損時のみ false、それ以外(容量超過)は true を返して"今回は無音"に留める。 */
   playCall(cat, gain = 0.6){
     const list = (this.pools[cat] || []).filter(f => this.media[f]);
-    if(!list.length) return false;
-    if(this._active.length >= 6) return false;  // 同時発音数を制限(クローン要素の残留と負荷=音とぎれを防ぐ)
+    if(!list.length) return false;  // 本当にファイルが無い(または全滅)場合のみ合成音へ
+    if(this._active.length >= 6) return true;  // 同時発音数の上限(クローン要素の残留と負荷=音とぎれを防ぐ)。実録は存在するので合成音には落とさず、今回は静かに見送る
     const n = this._rot[cat] = (this._rot[cat] == null ? Math.floor(Math.random()*list.length) : (this._rot[cat] + 1) % list.length);
     try{
       const src=this.media[list[n]].cloneNode(true);src.volume=Math.max(0,Math.min(1,gain));
       src.playbackRate=0.97+Math.random()*.06;src.muted=this._muted;
-      const rec={src,media:true};this._active.push(rec);src.play().catch(()=>{});
-      // 再生終了/失敗時は配列から外し、要素のバッファも解放してGCを促す(長時間プレイでの肥大化防止)
+      const rec={src,media:true};this._active.push(rec);
+      // 再生終了/失敗(play()がPromiseを拒否した場合を含む)時は配列から外し、要素のバッファも解放してGCを促す(長時間プレイでの肥大化防止)
       const done = () => { const i = this._active.indexOf(rec); if(i>=0) this._active.splice(i,1); try{src.onended=null;src.onerror=null;src.removeAttribute("src");src.load();}catch(e){} };
       src.onended = done; src.onerror = done;
+      src.play().catch(done); // [音バグ修正] play()の拒否時にdoneを呼ばないと_activeに残留し続け、同時発音数の上限に恒久的に達してしまう(=以後ずっと合成音フォールバック化)
       return true;
     }catch(e){ return false; }
   },
@@ -8262,9 +8266,17 @@ const SFX = {
   setBrazier(on){ this._spatialT = 0; },
   /* タイトル画面のメインテーマ(小音量ループ)。ゲーム開始時(enterMode)にstopThemeで停止。
      AudioContext初期化前でも鳴らせるよう、必要なら単体のAudio要素を生成する。
-     戻り値は play() のPromise(自動再生可否の判定に使う)。 */
+     戻り値は play() のPromise(自動再生可否の判定に使う)。
+     [音バグ修正] 呼び出し元(tryStartTheme/setMuted/setBackgroundPaused/各所のplayTheme呼び出し)が
+     それぞれAPP.modeを判定していたため、判定漏れの経路が1つでもあると再点火し得た。
+     "title以外では鳴らさない"という不変条件をここ一箇所に集約し、二度と再発しない構造にする。 */
   playTheme(vol = 0.25){
     if(!this.theme) return Promise.reject();
+    if(typeof APP !== "undefined" && APP.mode !== "title"){ // 唯一のゲート
+      // 想定外の経路で_themeMediaが残っていた場合の自己修復(念のための保険。stopThemeと同じ後始末)
+      if(this._themeMedia){ try{this._themeMedia.pause();this._themeMedia.currentTime=0;}catch(e){} this._themeMedia=null; }
+      return Promise.reject();
+    }
     if(!this._themeMedia){
       let a = this.media[this.theme];
       if(a){ a = a.cloneNode(true); }
@@ -8332,7 +8344,7 @@ const SFX = {
     if(this.master&&this.ctx)this.master.gain.setTargetAtTime(m?0:1,this.ctx.currentTime,.15);
     if(this._bedMedia)this._bedMedia.muted=m;if(this._fireMedia)this._fireMedia.muted=m;if(this._themeMedia)this._themeMedia.muted=m;if(this._bossMedia)this._bossMedia.muted=m;
     this._active.forEach(a=>a.src.muted=m);
-    if(!m&&!this._backgroundPaused){if(this._bedMedia)this._bedMedia.play().catch(()=>{});if(this._fireMedia)this._fireMedia.play().catch(()=>{});if(this._themeMedia)this._themeMedia.play().catch(()=>{});if(this._bossMedia)this._bossMedia.play().catch(()=>{});}
+    if(!m&&!this._backgroundPaused){if(this._bedMedia)this._bedMedia.play().catch(()=>{});if(this._fireMedia)this._fireMedia.play().catch(()=>{});if(this._themeMedia)this.playTheme().catch(()=>{});if(this._bossMedia)this._bossMedia.play().catch(()=>{});}
   },
   setBackgroundPaused(paused){
     this._backgroundPaused=paused;
@@ -8345,7 +8357,7 @@ const SFX = {
     }else if(!this._muted){
       if(this._bedMedia)this._bedMedia.play().catch(()=>{});
       if(this._fireMedia)this._fireMedia.play().catch(()=>{});
-      if(this._themeMedia)this._themeMedia.play().catch(()=>{});
+      if(this._themeMedia)this.playTheme().catch(()=>{}); // [音バグ修正] 直接play()せずplayThemeを経由し、title以外への復帰では再点火しないようにする
       if(this._bossMedia)this._bossMedia.play().catch(()=>{});
     }
   },
