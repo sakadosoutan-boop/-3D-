@@ -2725,6 +2725,79 @@ body.renai-mode #topbar{display:flex!important}
   #renaiGishaPanel .rg-grid{grid-template-columns:1fr}
 }
 
+/* ===== 占いの座(恋の母屋: 陰陽寮の占い) ===== */
+#renaiUranaiPanel{position:fixed;inset:0;z-index:60;display:none;
+  background:radial-gradient(ellipse at 50% 16%,rgba(60,38,18,.58),rgba(8,6,4,.94));
+  overflow-y:auto;-webkit-overflow-scrolling:touch;transition:background .7s ease;
+  padding:calc(env(safe-area-inset-top) + 22px) 16px calc(env(safe-area-inset-bottom) + 26px)}
+#renaiUranaiPanel.tone-good{background:radial-gradient(ellipse at 50% 16%,rgba(120,72,20,.55),rgba(20,10,6,.95))}
+#renaiUranaiPanel.tone-bad{background:radial-gradient(ellipse at 50% 16%,rgba(30,36,58,.6),rgba(6,7,12,.96))}
+#renaiUranaiPanel .ru-inner{max-width:460px;margin:0 auto;text-align:center}
+#renaiUranaiPanel .ru-title{font-family:var(--serif);font-size:18px;color:var(--gofun,#f7efdf);letter-spacing:.16em;margin-bottom:3px;
+  text-shadow:0 0 14px rgba(201,162,63,.4)}
+#renaiUranaiPanel .ru-sub{font-size:11.5px;color:rgba(201,162,63,.85);font-family:var(--sans);letter-spacing:.05em;line-height:1.6;
+  min-height:2.6em;margin-bottom:8px;transition:color .5s ease}
+/* 式盤の小円(同心円+五行) */
+#renaiUranaiPanel .ru-disc{width:158px;height:158px;margin:6px auto 12px;position:relative;border-radius:50%;
+  border:2px solid rgba(201,162,63,.6);
+  background:
+    conic-gradient(from -90deg,
+      rgba(122,140,82,.34) 0deg 72deg,rgba(179,64,42,.34) 72deg 144deg,rgba(201,162,63,.34) 144deg 216deg,
+      rgba(233,224,205,.26) 216deg 288deg,rgba(96,120,168,.34) 288deg 360deg),
+    radial-gradient(circle at 42% 36%,#2d1d12,#0c0805 80%);
+  box-shadow:0 10px 26px rgba(0,0,0,.7),inset 0 0 22px #000,0 0 0 6px rgba(201,162,63,.08);
+  transition:transform 1.7s cubic-bezier(.18,.92,.28,1),box-shadow .6s ease}
+#renaiUranaiPanel.tone-good .ru-disc{box-shadow:0 10px 26px rgba(0,0,0,.7),inset 0 0 22px #000,0 0 26px rgba(201,162,63,.5)}
+#renaiUranaiPanel.tone-bad .ru-disc{box-shadow:0 10px 26px rgba(0,0,0,.7),inset 0 0 22px #000,0 0 26px rgba(96,120,168,.4)}
+#renaiUranaiPanel .ru-mark{position:absolute;left:50%;top:50%;width:20px;height:20px;margin:-10px;
+  display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:11px;color:#c6a558;text-shadow:0 1px 2px #000}
+#renaiUranaiPanel .ru-eye{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px;border-radius:50%;
+  background:linear-gradient(90deg,#111 0 50%,#e9e0cd 50%);border:1px solid #c5a059;box-shadow:0 0 8px rgba(0,0,0,.8)}
+#renaiUranaiPanel .ru-eye::before,#renaiUranaiPanel .ru-eye::after{content:"";position:absolute;left:50%;width:17px;height:17px;margin-left:-8.5px;border-radius:50%}
+#renaiUranaiPanel .ru-eye::before{top:0;background:#111}#renaiUranaiPanel .ru-eye::after{bottom:0;background:#e9e0cd}
+/* 兆しの短冊(縦書き) */
+#renaiUranaiPanel .ru-tanzaku{display:none;margin:0 auto 12px;width:56px;padding:13px 8px 15px;border-radius:4px 4px 9px 9px;
+  flex-direction:column;align-items:center;gap:3px;font-family:var(--serif);font-size:23px;line-height:1;
+  color:#3a2a12;background:linear-gradient(180deg,#efe1c2,#e5d4ad);border:1px solid rgba(120,90,40,.5);
+  box-shadow:0 8px 20px rgba(0,0,0,.55);position:relative}
+#renaiUranaiPanel .ru-tanzaku>span{display:block}
+#renaiUranaiPanel .ru-tanzaku.show{display:flex;animation:ru-drop .6s cubic-bezier(.2,1.1,.4,1) both}
+#renaiUranaiPanel .ru-tanzaku::before{content:"";position:absolute;left:50%;top:-9px;width:2px;height:9px;margin-left:-1px;background:rgba(201,162,63,.7)}
+#renaiUranaiPanel.tone-good .ru-tanzaku{color:#7c1e12}
+#renaiUranaiPanel.tone-bad .ru-tanzaku{color:#26324e;background:linear-gradient(180deg,#dfe2ea,#c9cfdd)}
+#renaiUranaiPanel .ru-omen-tag{display:inline-block;font-size:11px;letter-spacing:.1em;padding:2px 10px;border-radius:10px;margin-bottom:10px;
+  border:1px solid rgba(201,162,63,.5);color:#e9d59a;background:rgba(20,14,8,.55)}
+#renaiUranaiPanel.tone-bad .ru-omen-tag{border-color:rgba(150,170,210,.5);color:#a9c0ef}
+#renaiUranaiPanel .ru-advice{display:none;font-size:14px;color:#f0e6cc;line-height:1.85;font-family:var(--serif);
+  max-width:380px;margin:0 auto 14px}
+#renaiUranaiPanel .ru-advice.show{display:block;animation:ru-fade .6s ease both}
+/* 効果バッジ(文/学びへの影響) */
+#renaiUranaiPanel .ru-effects{display:none;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+#renaiUranaiPanel .ru-effects.show{display:flex;animation:ru-fade .6s ease both}
+#renaiUranaiPanel .ru-badge{min-width:112px;padding:9px 12px;border-radius:10px;border:1px solid rgba(201,162,63,.4);
+  background:rgba(20,14,8,.6);display:flex;flex-direction:column;gap:3px}
+#renaiUranaiPanel .ru-badge .ru-b-name{font-size:11px;color:#b99b55;letter-spacing:.08em}
+#renaiUranaiPanel .ru-badge .ru-b-val{font-family:var(--serif);font-size:16px;letter-spacing:.04em}
+#renaiUranaiPanel .ru-badge.up{border-color:rgba(201,162,63,.75);background:linear-gradient(160deg,rgba(90,60,15,.5),rgba(40,24,8,.6))}
+#renaiUranaiPanel .ru-badge.up .ru-b-val{color:#ffe08a}
+#renaiUranaiPanel .ru-badge.down{border-color:rgba(96,120,168,.6);background:linear-gradient(160deg,rgba(30,38,60,.5),rgba(12,16,26,.6))}
+#renaiUranaiPanel .ru-badge.down .ru-b-val{color:#9fb6e6}
+#renaiUranaiPanel .ru-badge.flat .ru-b-val{color:#d8ccb0}
+#renaiUranaiPanel .ru-close{display:none;margin:0 auto;pointer-events:auto;width:100%;max-width:300px;min-height:44px;
+  background:linear-gradient(155deg,#5c4716,#3b2c0c);color:var(--gofun);border:1px solid rgba(215,180,85,.7);
+  padding:10px 18px;font-size:14px;letter-spacing:.08em;border-radius:6px;cursor:pointer;font-family:var(--serif)}
+#renaiUranaiPanel .ru-close.show{display:block}
+@keyframes ru-drop{0%{opacity:0;transform:translateY(-18px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes ru-fade{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion: reduce){
+  #renaiUranaiPanel .ru-disc{transition:transform .01s linear}
+  #renaiUranaiPanel .ru-tanzaku.show,#renaiUranaiPanel .ru-advice.show,#renaiUranaiPanel .ru-effects.show{animation:none}
+}
+@media (max-width:520px){
+  #renaiUranaiPanel .ru-title{font-size:16px}
+  #renaiUranaiPanel .ru-disc{width:142px;height:142px}
+}
+
 /* ===== 牛車運びミニゲーム ===== */
 #gisshaCarryHud{position:fixed;left:calc(env(safe-area-inset-left) + 14px);
   bottom:calc(env(safe-area-inset-bottom) + 16px);z-index:45;width:min(360px,calc(100vw - 28px));
@@ -2759,53 +2832,141 @@ body.renai-mode #topbar{display:flex!important}
 /* ===== 太極六壬式盤 占いパネル ===== */
 #onmyoDivinationPanel{position:fixed;inset:0;z-index:62;display:none;align-items:flex-start;justify-content:center;
   overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top) + 18px) 14px calc(env(safe-area-inset-bottom) + 24px);
-  background:radial-gradient(ellipse at 50% 12%,rgba(71,45,16,.60),rgba(5,4,4,.94));font-family:var(--serif);color:#ebd8bd}
-#onmyoDivinationPanel .od-card{width:min(720px,100%);background:linear-gradient(135deg,rgba(27,19,13,.96),rgba(5,4,3,.98));
-  border:1px solid rgba(201,162,63,.42);border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.72),inset 0 0 40px rgba(0,0,0,.55);
-  padding:18px 16px 20px;position:relative}
-#onmyoDivinationPanel .od-close{position:absolute;right:10px;top:10px;width:36px;height:36px;border-radius:50%;
-  border:1px solid rgba(201,162,63,.42);background:rgba(20,12,6,.85);color:#f7edd8;cursor:pointer}
-#onmyoDivinationPanel .od-title{text-align:center;color:#ffe9a0;font-size:18px;letter-spacing:.12em;margin:4px 40px 6px}
-#onmyoDivinationPanel .od-sub{text-align:center;color:#b99b55;font-size:11.5px;line-height:1.6;margin-bottom:14px}
-#onmyoDivinationPanel .od-inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 auto 14px;max-width:520px}
-#onmyoDivinationPanel label{font-size:11px;color:#b99b55;display:block;margin-bottom:5px}
+  background:radial-gradient(ellipse at 50% 10%,rgba(71,45,16,.62),rgba(5,4,4,.95));font-family:var(--serif);color:#ebd8bd}
+#onmyoDivinationPanel .od-card{width:min(720px,100%);background:linear-gradient(135deg,rgba(27,19,13,.97),rgba(5,4,3,.99));
+  border:1px solid rgba(201,162,63,.42);border-radius:12px;box-shadow:0 30px 80px rgba(0,0,0,.72),inset 0 0 40px rgba(0,0,0,.55);
+  padding:18px 16px 22px;position:relative;overflow:hidden}
+/* 上辺に金の帯(儀式の格式) */
+#onmyoDivinationPanel .od-card::before{content:"";position:absolute;left:0;top:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,rgba(201,162,63,.9),rgba(255,233,160,.95),rgba(201,162,63,.9),transparent)}
+#onmyoDivinationPanel .od-close{position:absolute;right:10px;top:10px;width:38px;height:38px;border-radius:50%;z-index:3;
+  border:1px solid rgba(201,162,63,.42);background:rgba(20,12,6,.85);color:#f7edd8;cursor:pointer;font-size:18px;line-height:1}
+#onmyoDivinationPanel .od-title{text-align:center;color:#ffe9a0;font-size:19px;letter-spacing:.14em;margin:4px 42px 4px;
+  text-shadow:0 0 14px rgba(201,162,63,.4)}
+#onmyoDivinationPanel .od-sub{text-align:center;color:#b99b55;font-size:11.5px;line-height:1.6;margin-bottom:12px}
+/* 儀式の三拍子リボン: 所作→兆し→占断 */
+#onmyoDivinationPanel .od-steps{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 auto 12px;
+  font-size:11px;letter-spacing:.14em;color:#7c6534}
+#onmyoDivinationPanel .od-step{padding:3px 11px;border-radius:11px;border:1px solid rgba(201,162,63,.22);
+  background:rgba(20,13,7,.5);transition:all .4s ease;white-space:nowrap}
+#onmyoDivinationPanel .od-step.on{color:#0d0906;background:linear-gradient(180deg,#f0d386,#c9a23f);
+  border-color:rgba(255,233,160,.8);box-shadow:0 0 12px rgba(201,162,63,.5);font-weight:bold}
+#onmyoDivinationPanel .od-step-sep{color:#5c4a24;font-size:10px}
+#onmyoDivinationPanel .od-inputs{display:grid;grid-template-columns:1fr;gap:10px;margin:12px auto 4px;max-width:520px}
+#onmyoDivinationPanel label{font-size:11px;color:#b99b55;display:block;margin-bottom:5px;letter-spacing:.04em}
 #onmyoDivinationPanel select,#onmyoDivinationPanel input{width:100%;box-sizing:border-box;background:#0d0906;color:#ffe9a0;
   border:1px solid rgba(201,162,63,.58);border-radius:5px;padding:9px 10px;font-family:var(--serif);font-size:14px}
 #onmyoDivinationPanel .od-year-row{display:grid;grid-template-columns:1fr auto;gap:6px}
-#onmyoDivinationPanel .od-year-row button,#onmyoDivinationPanel .od-run{border:1px solid rgba(201,162,63,.58);border-radius:5px;
-  background:linear-gradient(180deg,#7c1e1a,#3c0b09);color:#ffe9a0;font-family:var(--serif);cursor:pointer}
-#onmyoDivinationPanel .od-year-row button{padding:0 12px}
-#onmyoDivinationPanel .od-stage{perspective:1000px;height:310px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#onmyoDivinationPanel .od-year-row button{border:1px solid rgba(201,162,63,.58);border-radius:5px;padding:0 14px;min-height:44px;
+  background:linear-gradient(180deg,#7c1e1a,#3c0b09);color:#ffe9a0;font-family:var(--serif);cursor:pointer;font-size:13px}
+/* --- 舞台(式盤の3D同心円) --- */
+#onmyoDivinationPanel .od-stage{position:relative;perspective:1000px;height:300px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#onmyoDivinationPanel .od-halo{position:absolute;left:50%;top:50%;width:260px;height:260px;margin:-130px 0 0 -130px;border-radius:50%;
+  background:radial-gradient(circle,rgba(201,162,63,.16),transparent 66%);opacity:.5;transition:opacity .8s ease,background .8s ease;pointer-events:none}
+#onmyoDivinationPanel .od-stage.divining .od-halo{opacity:1}
+#onmyoDivinationPanel .od-stage.good .od-halo{background:radial-gradient(circle,rgba(240,200,110,.4),rgba(179,64,42,.2) 40%,transparent 68%)}
+#onmyoDivinationPanel .od-stage.bad .od-halo{background:radial-gradient(circle,rgba(96,120,168,.34),rgba(30,26,40,.24) 40%,transparent 68%)}
 #onmyoDivinationPanel .od-chiban{width:250px;height:250px;position:relative;transform-style:preserve-3d;
   transform:rotateX(50deg) rotateZ(-15deg);transition:transform .55s ease;
-  background:linear-gradient(45deg,#120d0a,#23170f,#120d0a);border:3px solid #1a120c;border-radius:5px;
+  background:
+    repeating-conic-gradient(from 0deg,rgba(201,162,63,.05) 0deg 1deg,transparent 1deg 30deg),
+    linear-gradient(45deg,#120d0a,#23170f,#120d0a);
+  border:3px solid #1a120c;border-radius:6px;
   box-shadow:0 12px 28px rgba(0,0,0,.85),inset 0 0 28px rgba(0,0,0,.62)}
 #onmyoDivinationPanel .od-chiban::before{content:"";position:absolute;inset:10px;border:1px solid rgba(201,162,63,.20)}
+#onmyoDivinationPanel .od-chiban::after{content:"";position:absolute;inset:30px;border:1px solid rgba(201,162,63,.12);border-radius:50%}
 #onmyoDivinationPanel .od-corner{position:absolute;width:46px;height:46px;display:flex;align-items:center;justify-content:center;
   flex-direction:column;font-size:10px;font-weight:bold;opacity:.78}
 #onmyoDivinationPanel .od-nw{left:8px;top:8px;color:#6678a0}.od-ne{right:8px;top:8px;color:#4b8b6e;transform:rotate(90deg)}
 #onmyoDivinationPanel .od-sw{left:8px;bottom:8px;color:#d1cfc8;transform:rotate(-90deg)}.od-se{right:8px;bottom:8px;color:#d46458;transform:rotate(180deg)}
 #onmyoDivinationPanel .od-tenban{position:absolute;left:50%;top:50%;width:184px;height:184px;margin-left:-92px;margin-top:-92px;
-  border-radius:50%;border:2px solid #c5a059;background:radial-gradient(circle at 40% 35%,#2d1d12,#0e0906 78%);
-  transform:translateZ(24px) rotateZ(0deg);transform-style:preserve-3d;transition:transform 1.6s cubic-bezier(.2,.9,.3,1);
+  border-radius:50%;border:2px solid #c5a059;
+  background:
+    conic-gradient(from -90deg,
+      rgba(122,140,82,.30) 0deg 72deg,     /* 木(青緑) */
+      rgba(179,64,42,.30) 72deg 144deg,    /* 火(朱) */
+      rgba(201,162,63,.30) 144deg 216deg,  /* 土(金土) */
+      rgba(233,224,205,.24) 216deg 288deg, /* 金(白) */
+      rgba(96,120,168,.30) 288deg 360deg), /* 水(藍) */
+    radial-gradient(circle at 40% 35%,#2d1d12,#0e0906 78%);
+  transform:translateZ(24px) rotateZ(0deg);transform-style:preserve-3d;transition:transform 1.7s cubic-bezier(.18,.92,.28,1);
   box-shadow:0 10px 22px rgba(0,0,0,.85),inset 0 0 26px #000}
 #onmyoDivinationPanel .od-node{position:absolute;left:50%;top:50%;display:flex;align-items:center;justify-content:center;text-shadow:0 1px 2px #000}
-#onmyoDivinationPanel .od-zodiac{width:24px;height:24px;margin:-12px;color:#8d7440;font-weight:bold;font-size:13px}
+#onmyoDivinationPanel .od-zodiac{width:24px;height:24px;margin:-12px;color:#c6a558;font-weight:bold;font-size:13px}
 #onmyoDivinationPanel .od-tenshou{width:42px;height:18px;margin:-9px -21px;color:#ffe9a0;font-size:10px;letter-spacing:.08em}
 #onmyoDivinationPanel .od-gogyo{width:20px;height:20px;margin:-10px;color:#d6c286;font-size:11px}
 #onmyoDivinationPanel .od-center{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px;border-radius:50%;
   background:linear-gradient(90deg,#111 0 50%,#eee 50%);border:1px solid #c5a059;box-shadow:0 0 10px rgba(0,0,0,.8)}
 #onmyoDivinationPanel .od-center::before,#onmyoDivinationPanel .od-center::after{content:"";position:absolute;left:50%;width:27px;height:27px;margin-left:-13.5px;border-radius:50%}
 #onmyoDivinationPanel .od-center::before{top:0;background:#111}.od-center::after{bottom:0;background:#eee}
-#onmyoDivinationPanel .od-run{width:100%;min-height:44px;font-size:14px;letter-spacing:.16em;margin:6px 0 12px}
-#onmyoDivinationPanel .od-result{display:none;border-left:4px solid #c5a059;background:rgba(10,7,5,.78);padding:14px 15px;
-  line-height:1.75;color:#e6dac0;font-size:13px}
-#onmyoDivinationPanel .od-result b{color:#ffe9a0;font-size:1.1em}
+/* 落款(判): 結果確定時に盤へ捺される朱印/墨印 */
+#onmyoDivinationPanel .od-seal{position:absolute;left:50%;top:50%;width:66px;height:66px;margin:-33px;z-index:4;
+  border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:bold;
+  font-family:var(--serif);color:#fff2e0;opacity:0;transform:scale(2.4) rotate(-14deg);pointer-events:none;
+  border:2px solid rgba(255,240,224,.85);box-shadow:0 0 18px rgba(0,0,0,.6)}
+#onmyoDivinationPanel .od-seal.good{background:radial-gradient(circle,#c8341f,#8a1f10);border-color:rgba(255,220,180,.9)}
+#onmyoDivinationPanel .od-seal.bad{background:radial-gradient(circle,#2a3350,#141a28);border-color:rgba(150,170,210,.7);color:#dbe4f5}
+#onmyoDivinationPanel .od-seal.mix{background:radial-gradient(circle,#b07a1e,#6e4a10);border-color:rgba(255,233,160,.85)}
+#onmyoDivinationPanel .od-seal.show{animation:od-stamp .5s cubic-bezier(.2,1.4,.4,1) forwards}
+/* --- 干支選択リング(タップしやすい) --- */
+#onmyoDivinationPanel .od-zpick{margin:2px auto 4px;max-width:520px}
+#onmyoDivinationPanel .od-zlabel{text-align:center;font-size:11.5px;color:#b99b55;letter-spacing:.08em;margin-bottom:8px}
+#onmyoDivinationPanel .od-zring{position:relative;width:min(300px,86vw);height:min(300px,86vw);margin:0 auto}
+#onmyoDivinationPanel .od-zring::after{content:"作盤の座";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-size:10px;color:#6b5730;letter-spacing:.1em;pointer-events:none}
+#onmyoDivinationPanel .od-zbtn{position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:16px;color:#d8c896;cursor:pointer;
+  border:1px solid rgba(201,162,63,.4);background:radial-gradient(circle at 40% 35%,rgba(46,32,18,.95),rgba(14,9,6,.98));
+  transition:transform .18s ease,box-shadow .25s ease,color .25s ease,border-color .25s ease;-webkit-user-select:none;user-select:none}
+#onmyoDivinationPanel .od-zbtn:hover{color:#ffe9a0;border-color:rgba(201,162,63,.7)}
+#onmyoDivinationPanel .od-zbtn.sel{color:#0d0906;background:radial-gradient(circle at 42% 36%,#ffe9a0,#c9a23f);
+  border-color:rgba(255,233,160,.95);box-shadow:0 0 16px rgba(201,162,63,.7);transform:scale(1.12);font-weight:bold}
+#onmyoDivinationPanel .od-run{width:100%;min-height:48px;font-size:15px;letter-spacing:.2em;margin:12px 0 12px;border-radius:6px;
+  border:1px solid rgba(201,162,63,.6);background:linear-gradient(180deg,#7c1e1a,#3c0b09);color:#ffe9a0;font-family:var(--serif);cursor:pointer}
+#onmyoDivinationPanel .od-run:disabled{opacity:.55;cursor:default;filter:saturate(.6)}
+#onmyoDivinationPanel .od-run:active:not(:disabled){filter:brightness(1.2)}
+/* --- 占断の結果(札+落款+段組み) --- */
+#onmyoDivinationPanel .od-result{display:none;background:rgba(10,7,5,.82);border:1px solid rgba(201,162,63,.32);
+  border-radius:10px;padding:0;overflow:hidden}
+#onmyoDivinationPanel .od-result.show{display:block;animation:od-fuda-in .6s ease both}
+/* 天将の札 */
+#onmyoDivinationPanel .od-fuda{display:flex;align-items:stretch;gap:0;border-bottom:1px solid rgba(201,162,63,.24)}
+#onmyoDivinationPanel .od-fuda-hanko{flex:0 0 84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:14px 6px;border-right:1px solid rgba(201,162,63,.2)}
+#onmyoDivinationPanel .od-fuda-stamp{width:52px;height:52px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  font-size:26px;font-weight:bold;color:#fff2e0;border:2px solid rgba(255,240,224,.8)}
+#onmyoDivinationPanel .od-fuda.good .od-fuda-stamp{background:radial-gradient(circle,#c8341f,#8a1f10)}
+#onmyoDivinationPanel .od-fuda.bad .od-fuda-stamp{background:radial-gradient(circle,#2a3350,#141a28);color:#dbe4f5;border-color:rgba(150,170,210,.7)}
+#onmyoDivinationPanel .od-fuda.mix .od-fuda-stamp{background:radial-gradient(circle,#b07a1e,#6e4a10)}
+#onmyoDivinationPanel .od-fuda-fortune{font-size:11px;letter-spacing:.1em;color:#c9a23f}
+#onmyoDivinationPanel .od-fuda.bad .od-fuda-fortune{color:#9fb0d6}
+#onmyoDivinationPanel .od-fuda-body{flex:1;padding:13px 15px;min-width:0}
+#onmyoDivinationPanel .od-fuda-star{font-size:11px;color:#8f7538;letter-spacing:.06em;margin-bottom:3px}
+#onmyoDivinationPanel .od-fuda-name{font-size:26px;color:#ffe9a0;letter-spacing:.16em;line-height:1.1;text-shadow:0 0 12px rgba(201,162,63,.35)}
+#onmyoDivinationPanel .od-fuda.bad .od-fuda-name{color:#cfdbf2;text-shadow:0 0 12px rgba(96,120,168,.4)}
+#onmyoDivinationPanel .od-fuda-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+#onmyoDivinationPanel .od-tag{font-size:11px;padding:3px 9px;border-radius:10px;border:1px solid rgba(201,162,63,.4);
+  background:rgba(20,14,8,.6);color:#e6dac0;letter-spacing:.04em}
+#onmyoDivinationPanel .od-tag.gogyo-木{border-color:rgba(122,140,82,.6);color:#b6cc86}
+#onmyoDivinationPanel .od-tag.gogyo-火{border-color:rgba(179,64,42,.6);color:#e79a7c}
+#onmyoDivinationPanel .od-tag.gogyo-土{border-color:rgba(201,162,63,.6);color:#e9d59a}
+#onmyoDivinationPanel .od-tag.gogyo-金{border-color:rgba(233,224,205,.55);color:#efe6cf}
+#onmyoDivinationPanel .od-tag.gogyo-水{border-color:rgba(96,120,168,.6);color:#a9c0ef}
+#onmyoDivinationPanel .od-oracle{padding:14px 15px;line-height:1.85;color:#e6dac0;font-size:13.5px}
+#onmyoDivinationPanel .od-oracle .od-lead{color:#b99b55;font-size:12px;margin-bottom:8px;line-height:1.7}
+#onmyoDivinationPanel .od-oracle b{color:#ffe9a0}
+@media (prefers-reduced-motion: reduce){
+  #onmyoDivinationPanel .od-tenban{transition:transform .01s linear}
+  #onmyoDivinationPanel .od-result.show{animation:none}
+  #onmyoDivinationPanel .od-seal.show{animation:none;opacity:1;transform:scale(1) rotate(-8deg)}
+}
+@keyframes od-stamp{0%{opacity:0;transform:scale(2.4) rotate(-14deg)}55%{opacity:1;transform:scale(.9) rotate(-6deg)}100%{opacity:.94;transform:scale(1) rotate(-8deg)}}
+@keyframes od-fuda-in{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
 @media (max-width:560px){
-  #onmyoDivinationPanel .od-inputs{grid-template-columns:1fr}
-  #onmyoDivinationPanel .od-stage{height:270px}
-  #onmyoDivinationPanel .od-chiban{width:220px;height:220px}
-  #onmyoDivinationPanel .od-tenban{width:162px;height:162px;margin-left:-81px;margin-top:-81px}
+  #onmyoDivinationPanel .od-stage{height:264px}
+  #onmyoDivinationPanel .od-chiban{width:214px;height:214px}
+  #onmyoDivinationPanel .od-tenban{width:158px;height:158px;margin-left:-79px;margin-top:-79px}
+  #onmyoDivinationPanel .od-fuda-name{font-size:23px}
 }
 
 /* ===== 非恋愛モード共通: ミッションブリーフ ===== */
@@ -3442,6 +3603,19 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
     <button class="rg-close" id="rgCloseBtn">閉じる ▶</button>
   </div>
 </div>
+<!-- 恋の母屋3Dハブ: 占いの座(陰陽寮の占い)。renaiUranaiOpen/renaiUranaiCloseで開閉。今日の兆しを儀式演出で開示するのみ(日は進めない・apply不要)。 -->
+<div id="renaiUranaiPanel" role="dialog" aria-modal="true" aria-label="占いの座">
+  <div class="ru-inner">
+    <div class="ru-title">占いの座</div>
+    <div class="ru-sub" id="ruSub">式盤に今日を問ふ…</div>
+    <div class="ru-disc" id="ruDisc"><div class="ru-eye"></div></div>
+    <div class="ru-tanzaku" id="ruTanzaku"></div>
+    <div class="ru-omen-tag" id="ruOmenTag" style="display:none"></div>
+    <div class="ru-advice" id="ruAdvice"></div>
+    <div class="ru-effects" id="ruEffects"></div>
+    <button class="ru-close" id="ruCloseBtn">日常へ戻る ▶</button>
+  </div>
+</div>
 <!-- 恋の母屋3Dハブ: 朝の30日ランダムイベント。renaiEvMaybeFire/renaiEvResolveで開閉する静的オーバーレイ(renaiKoh/renaiGishaと同流儀)。 -->
 <div id="renaiEventPanel">
   <div class="rev-inner">
@@ -3651,28 +3825,16 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 <div id="gisshaCarryHud"></div>
 <div id="onmyoDivinationPanel" role="dialog" aria-modal="true" aria-label="太極六壬式盤の占い">
   <div class="od-card">
-    <button class="od-close" id="onmyoDivinationClose" type="button">×</button>
+    <button class="od-close" id="onmyoDivinationClose" type="button" aria-label="閉じる">×</button>
     <div class="od-title">太極六壬式盤</div>
     <div class="od-sub">干支を地盤に定め、天将の降りる座から今日の巡りを占う。</div>
-    <div class="od-inputs">
-      <div>
-        <label for="onmyoZodiacSelect">己の干支</label>
-        <select id="onmyoZodiacSelect">
-          <option value="0">子 (ね)</option><option value="1">丑 (うし)</option><option value="2">寅 (とら)</option>
-          <option value="3">卯 (う)</option><option value="4">辰 (たつ)</option><option value="5">巳 (み)</option>
-          <option value="6">午 (うま)</option><option value="7">未 (ひつじ)</option><option value="8">申 (さる)</option>
-          <option value="9">酉 (とり)</option><option value="10">戌 (いぬ)</option><option value="11">亥 (い)</option>
-        </select>
-      </div>
-      <div>
-        <label for="onmyoYearInput">西暦から干支を求める</label>
-        <div class="od-year-row">
-          <input type="number" id="onmyoYearInput" placeholder="1990" inputmode="numeric">
-          <button id="onmyoYearApply" type="button">反映</button>
-        </div>
-      </div>
+    <div class="od-steps" id="onmyoSteps" aria-hidden="true">
+      <span class="od-step on" data-step="0">所作</span><span class="od-step-sep">▸</span>
+      <span class="od-step" data-step="1">兆し</span><span class="od-step-sep">▸</span>
+      <span class="od-step" data-step="2">占断</span>
     </div>
-    <div class="od-stage">
+    <div class="od-stage" id="onmyoStage">
+      <div class="od-halo" id="onmyoHalo"></div>
       <div class="od-chiban" id="onmyoChibanObj">
         <div class="od-corner od-nw">玄武</div><div class="od-corner od-ne">青龍</div>
         <div class="od-corner od-sw">白虎</div><div class="od-corner od-se">朱雀</div>
@@ -3681,10 +3843,33 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
           <div id="onmyoTenbanTexts"></div>
           <div class="od-center"></div>
         </div>
+        <div class="od-seal" id="onmyoSeal" aria-hidden="true"></div>
       </div>
     </div>
-    <button class="od-run" id="onmyoExecuteBtn" type="button">作盤</button>
-    <div class="od-result" id="onmyoOracleDisplay"><div id="onmyoOracleMsg"></div></div>
+    <div class="od-zpick">
+      <div class="od-zlabel">己の干支を地盤に据える</div>
+      <div class="od-zring" id="onmyoZodiacRing" role="listbox" aria-label="干支の選択"></div>
+    </div>
+    <div class="od-inputs">
+      <div>
+        <label for="onmyoYearInput">西暦から干支を求める</label>
+        <div class="od-year-row">
+          <input type="number" id="onmyoYearInput" placeholder="1990" inputmode="numeric">
+          <button id="onmyoYearApply" type="button">反映</button>
+        </div>
+      </div>
+    </div>
+    <select id="onmyoZodiacSelect" hidden aria-hidden="true">
+      <option value="0">子 (ね)</option><option value="1">丑 (うし)</option><option value="2">寅 (とら)</option>
+      <option value="3">卯 (う)</option><option value="4">辰 (たつ)</option><option value="5">巳 (み)</option>
+      <option value="6">午 (うま)</option><option value="7">未 (ひつじ)</option><option value="8">申 (さる)</option>
+      <option value="9">酉 (とり)</option><option value="10">戌 (いぬ)</option><option value="11">亥 (い)</option>
+    </select>
+    <button class="od-run" id="onmyoExecuteBtn" type="button">作 盤</button>
+    <div class="od-result" id="onmyoOracleDisplay">
+      <div class="od-fuda" id="onmyoFuda"></div>
+      <div class="od-oracle" id="onmyoOracleMsg"></div>
+    </div>
   </div>
 </div>
 <div id="fpsMeter"></div>
@@ -9409,7 +9594,53 @@ const ONMYO_DIV_ORACLE={
   太陰:"吉。隠れた恩恵と芸術の星。表に出るより、緻密な作業や創作に向く。",
   天后:"吉。愛情と平和の守護。人間関係は穏やかで、女性や家庭内の縁から助けを得る。"
 };
-let onmyoDivinationReady=false,onmyoDivinationRotation=0;
+/* 十二天将ごとの五行・吉凶・トーン(good=金朱の華やぎ / bad=藍墨の静けさ / mix=中間)。落款(判)にも使う */
+const ONMYO_DIV_GENERAL_INFO={
+  貴人:{gogyo:"土",fortune:"大吉",tone:"good",han:"吉"},
+  騰蛇:{gogyo:"火",fortune:"凶",  tone:"bad", han:"凶"},
+  朱雀:{gogyo:"火",fortune:"吉凶相半",tone:"mix",han:"半"},
+  六合:{gogyo:"木",fortune:"大吉",tone:"good",han:"吉"},
+  勾陳:{gogyo:"土",fortune:"凶",  tone:"bad", han:"凶"},
+  青龍:{gogyo:"木",fortune:"大吉",tone:"good",han:"吉"},
+  天空:{gogyo:"土",fortune:"凶",  tone:"bad", han:"凶"},
+  白虎:{gogyo:"金",fortune:"大凶",tone:"bad", han:"凶"},
+  太常:{gogyo:"土",fortune:"吉",  tone:"good",han:"吉"},
+  玄武:{gogyo:"水",fortune:"凶",  tone:"bad", han:"凶"},
+  太陰:{gogyo:"金",fortune:"吉",  tone:"good",han:"吉"},
+  天后:{gogyo:"水",fortune:"吉",  tone:"good",han:"吉"}
+};
+const ONMYO_DIV_ZODIAC_YOMI=["ね","うし","とら","う","たつ","み","うま","ひつじ","さる","とり","いぬ","い"];
+let onmyoDivinationReady=false,onmyoDivinationRotation=0,onmyoDivinationBusy=false;
+/* 儀式の三拍子リボンの進行表示(0:所作 1:兆し 2:占断) */
+function onmyoSetStep(step){
+  const wrap=$("onmyoSteps");if(!wrap)return;
+  wrap.querySelectorAll(".od-step").forEach(el=>{el.classList.toggle("on",parseInt(el.dataset.step,10)===step);});
+}
+/* 干支選択リング(タップしやすい円環)。選択は hidden の onmyoZodiacSelect に同期する */
+function onmyoBuildZodiacRing(){
+  const ring=$("onmyoZodiacRing");if(!ring||ring.children.length)return;
+  const N=ONMYO_DIV_JUUNISHI.length;
+  ONMYO_DIV_JUUNISHI.forEach((label,i)=>{
+    const ang=(360/N*i-90)*Math.PI/180,R=42; // 中心からの半径(%)
+    const b=document.createElement("button");
+    b.type="button";b.className="od-zbtn";b.dataset.idx=String(i);
+    b.style.left=(50+Math.cos(ang)*R)+"%";b.style.top=(50+Math.sin(ang)*R)+"%";
+    b.textContent=label;
+    b.setAttribute("role","option");
+    b.setAttribute("aria-label",label+"("+ONMYO_DIV_ZODIAC_YOMI[i]+")");
+    b.onclick=()=>onmyoSelectZodiac(i,true);
+    ring.appendChild(b);
+  });
+}
+function onmyoSelectZodiac(idx,fromTap){
+  const sel=$("onmyoZodiacSelect");if(sel)sel.value=String(idx);
+  const ring=$("onmyoZodiacRing");
+  if(ring)ring.querySelectorAll(".od-zbtn").forEach(b=>b.classList.toggle("sel",parseInt(b.dataset.idx,10)===idx));
+  if(fromTap)beep(660,.04,"triangle",.05);
+}
+function onmyoSyncZodiacUI(){
+  const sel=$("onmyoZodiacSelect");onmyoSelectZodiac(parseInt(sel&&sel.value,10)||0,false);
+}
 function onmyoDivinationCircle(containerId,items,radius,cls){
   const container=$(containerId);if(!container||container.children.length)return;
   items.forEach((item,i)=>{
@@ -9425,6 +9656,8 @@ function initOnmyoDivinationPanel(){
   onmyoDivinationCircle("onmyoChibanTexts",ONMYO_DIV_JUUNISHI,110,"od-zodiac");
   onmyoDivinationCircle("onmyoTenbanTexts",ONMYO_DIV_TENSHOU,74,"od-tenshou");
   onmyoDivinationCircle("onmyoTenbanTexts",ONMYO_DIV_GOGYO,43,"od-gogyo");
+  onmyoBuildZodiacRing();
+  onmyoSyncZodiacUI();
   const close=$("onmyoDivinationClose"),run=$("onmyoExecuteBtn"),year=$("onmyoYearInput"),apply=$("onmyoYearApply"),panel=$("onmyoDivinationPanel");
   if(close)close.onclick=()=>closeOnmyoDivinationPanel();
   if(panel)panel.addEventListener("click",e=>{if(e.target===panel)closeOnmyoDivinationPanel();});
@@ -9432,17 +9665,27 @@ function initOnmyoDivinationPanel(){
   const setFromYear=()=>{
     const y=parseInt(year&&year.value,10);if(!Number.isFinite(y)||y<1000){toast("西暦を入力しよう",1500);return;}
     let idx=(y-4)%12;if(idx<0)idx+=12;
-    const sel=$("onmyoZodiacSelect");if(sel)sel.value=String(idx);
+    onmyoSelectZodiac(idx,true);
     toast(`干支を${ONMYO_DIV_JUUNISHI[idx]}に合わせた`,1600);
   };
   if(apply)apply.onclick=setFromYear;
   if(year)year.addEventListener("keydown",e=>{if(e.key==="Enter")setFromYear();});
   onmyoDivinationReady=true;
 }
+/* 結果表示・盤・段の状態を初期の「所作」へ戻す */
+function onmyoResetDivinationView(){
+  const res=$("onmyoOracleDisplay"),seal=$("onmyoSeal"),stage=$("onmyoStage");
+  if(res){res.style.display="none";res.classList.remove("show");}
+  if(seal){seal.classList.remove("show","good","bad","mix");seal.style.opacity="";seal.textContent="";}
+  if(stage)stage.classList.remove("divining","good","bad");
+  onmyoSetStep(0);
+}
 function openOnmyoDivinationPanel(){
   initOnmyoDivinationPanel();
-  const panel=$("onmyoDivinationPanel"),res=$("onmyoOracleDisplay");
-  if(res)res.style.display="none";
+  const panel=$("onmyoDivinationPanel");
+  onmyoResetDivinationView();
+  const run=$("onmyoExecuteBtn");if(run){run.disabled=false;run.textContent="作 盤";}
+  onmyoDivinationBusy=false;
   if(panel)panel.style.display="flex";
   unlockCodex("onmyo_shikiban");
   window.ONMYO_DIVINATION_STATUS={opened:true,ready:onmyoDivinationReady,lastGeneral:null};
@@ -9452,22 +9695,61 @@ function closeOnmyoDivinationPanel(silent=false){
   const panel=$("onmyoDivinationPanel");if(panel)panel.style.display="none";
   if(!silent)beep(360,.04,"triangle",.04);
 }
+/* 吉/凶で差別化した効果音(beep合成のみ) */
+function onmyoOmenChime(tone){
+  if(tone==="bad"){ // 凶: 静かに沈む下行
+    beep(392,.14,"sine",.06);setTimeout(()=>beep(311,.16,"sine",.05),120);setTimeout(()=>beep(233,.26,"sine",.05),260);
+  }else if(tone==="mix"){ // 半: 中庸の余韻
+    beep(523,.1,"triangle",.06);setTimeout(()=>beep(494,.16,"sine",.05),140);
+  }else{ // 吉: 華やぐ上行
+    beep(523,.1,"sine",.07);setTimeout(()=>beep(659,.1,"sine",.065),90);setTimeout(()=>beep(880,.22,"triangle",.06),190);
+  }
+}
 function executeOnmyoDivination(){
-  const sel=$("onmyoZodiacSelect"),tenban=$("onmyoTenbanObj"),chiban=$("onmyoChibanObj"),res=$("onmyoOracleDisplay"),msg=$("onmyoOracleMsg");
+  if(onmyoDivinationBusy)return;
+  const sel=$("onmyoZodiacSelect"),tenban=$("onmyoTenbanObj"),chiban=$("onmyoChibanObj"),stage=$("onmyoStage"),
+        res=$("onmyoOracleDisplay"),msg=$("onmyoOracleMsg"),fuda=$("onmyoFuda"),seal=$("onmyoSeal"),run=$("onmyoExecuteBtn");
+  const reduce=(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION);
   const zodiacIndex=parseInt(sel&&sel.value,10)||0,generalIndex=Math.floor(Math.random()*ONMYO_DIV_TENSHOU.length),general=ONMYO_DIV_TENSHOU[generalIndex];
+  const info=ONMYO_DIV_GENERAL_INFO[general]||{gogyo:"土",fortune:"吉",tone:"good",han:"吉"};
+  onmyoDivinationBusy=true;
+  /* 拍1: 所作 — 盤に触れ、式盤を回す */
+  onmyoResetDivinationView();
+  onmyoSetStep(1);
+  if(run){run.disabled=true;run.textContent="作盤中…";}
+  if(stage)stage.classList.add("divining");
+  beep(300,.06,"square",.06);setTimeout(()=>beep(240,.1,"sine",.05),70); // 木鉦を打つような所作の音
   const requiredRotation=zodiacIndex*30-generalIndex*30;
-  onmyoDivinationRotation+=720-requiredRotation;
+  onmyoDivinationRotation+=(reduce?0:720)-requiredRotation;
   if(tenban)tenban.style.transform=`translateZ(24px) rotateZ(${onmyoDivinationRotation}deg)`;
-  if(chiban){chiban.style.transform="rotateX(52deg) rotateZ(-12deg)";setTimeout(()=>{chiban.style.transform="rotateX(50deg) rotateZ(-15deg)";},420);}
-  if(res)res.style.display="none";
+  if(chiban){chiban.style.transform="rotateX(52deg) rotateZ(-12deg)";setTimeout(()=>{chiban.style.transform="rotateX(50deg) rotateZ(-15deg)";},reduce?60:420);}
   if(window.ONMYO_DIVINATION_STATUS){window.ONMYO_DIVINATION_STATUS.lastGeneral=general;window.ONMYO_DIVINATION_STATUS.lastZodiac=ONMYO_DIV_JUUNISHI[zodiacIndex];}
+  const settle=reduce?120:1250;
+  /* 拍2: 兆しの顕現 — 天盤が止まり、盤へ落款が捺される */
   setTimeout(()=>{
-    if(msg)msg.innerHTML=`式盤の運行が止まった。汝の星回り「${ONMYO_DIV_JUUNISHI[zodiacIndex]}」の座に、天盤より <b>${general}</b> が舞い降りた。<br><br>${ONMYO_DIV_ORACLE[general]}`;
-    if(res)res.style.display="block";
+    if(stage){stage.classList.remove("divining");stage.classList.add(info.tone==="bad"?"bad":"good");}
+    if(seal){seal.textContent=info.han;seal.classList.add(info.tone,"show");}
+    onmyoOmenChime(info.tone);
+  },settle);
+  /* 拍3: 占断 — 札と占断文を開示 */
+  setTimeout(()=>{
+    if(fuda){
+      fuda.className="od-fuda "+info.tone;
+      fuda.innerHTML=
+        `<div class="od-fuda-hanko"><div class="od-fuda-stamp">${info.han}</div><div class="od-fuda-fortune">${info.fortune}</div></div>`+
+        `<div class="od-fuda-body"><div class="od-fuda-star">星回り「${ONMYO_DIV_JUUNISHI[zodiacIndex]}」の座に降る天将</div>`+
+        `<div class="od-fuda-name">${general}</div>`+
+        `<div class="od-fuda-tags"><span class="od-tag gogyo-${info.gogyo}">五行 ${info.gogyo}</span><span class="od-tag">${info.fortune}</span></div></div>`;
+    }
+    if(msg)msg.innerHTML=`<div class="od-lead">式盤の運行が止まった。天盤より <b>${general}</b> が舞い降りる。</div>${ONMYO_DIV_ORACLE[general]}`;
+    if(res){res.style.display="block";res.classList.add("show");}
+    onmyoSetStep(2);
+    if(run){run.disabled=false;run.textContent="占ひ直す";}
+    onmyoDivinationBusy=false;
     if(typeof gainParam==="function")gainParam("knowledge",1);
     recordProgress("onmyo",1);
-    toast(`${general}の占いが出た`,2200);
-  },1200);
+    toast(`${general}（${info.fortune}）の占いが出た`,2200);
+  },settle+(reduce?60:520));
 }
 const DAILY_KEY_PREFIX="shinden3d-daily-v1-";
 const DAILY_MISSION_POOL=[
@@ -9961,6 +10243,7 @@ $("codex").addEventListener("click",e=>{if(e.target===$("codex"))closeCodex();})
 addEventListener("keydown",e=>{
   if(e.key==="Escape"&&APP&&APP.gisshaCarry&&APP.gisshaCarry.active){endGisshaCarry(false,false);e.preventDefault();return;}
   if(e.key==="Escape"&&$("onmyoDivinationPanel")&&$("onmyoDivinationPanel").style.display!=="none"){closeOnmyoDivinationPanel();e.preventDefault();return;}
+  if(e.key==="Escape"&&$("renaiUranaiPanel")&&$("renaiUranaiPanel").style.display!=="none"){renaiUranaiClose();e.preventDefault();return;}
   if(e.key==="Escape"){closeCodex();closeInfo();}
 });
 
@@ -16321,9 +16604,7 @@ function renaiSimDoAction(actionId){
   if(actionId==="uranai"){
     R.season=renaiSimDaySeason(R.day);
     R.omen=R.omen||rollOnmyoOmen(R.day,R.season,R.omenSeed);
-    const tag=R.omen.good?"":"⚠";
-    toast("【今日の占い: "+R.omen.label+tag+"】"+R.omen.advice,3800);
-    beep(560,.07);
+    renaiUranaiOpen(R.omen); // トースト廃止: 専用パネルで儀式演出付きに開示(日は進めない・apply不要)
     return; // 日は進めない(様子見の軽い行動)
   }
   if(actionId==="koh"){toast("香炉 / 薫物・雅：季節に合う香を選ぶ",2200);renaiKohGameOpen();return;} // 波8: 香炉→香合わせミニゲーム
@@ -16337,6 +16618,80 @@ function renaiSimDoAction(actionId){
   beep(680,.07);
   renaiSimAdvanceDay();
 }
+
+/* ===== 占いの座(uranai): 今日の兆しを儀式演出で開示する専用パネル ==========================
+   命名規則: 全シンボルは renaiUranai 前置。トーストを廃し「所作→兆しの顕現→占断」の三拍子で開示する。
+   ONMYO_OMENS の label/advice/good と effect(letter/study 倍率)を可視化するのみ。
+   進行仕様は不変: 日は進めず(renaiSimAdvanceDayを呼ばない)、apply も行わない。 */
+let renaiUranaiReady=false,renaiUranaiRotation=0;
+function renaiUranaiBuildDisc(){
+  const disc=$("ruDisc");if(!disc||renaiUranaiReady)return;
+  const N=ONMYO_DIV_JUUNISHI.length;
+  ONMYO_DIV_JUUNISHI.forEach((label,i)=>{
+    const ang=(360/N*i-90)*Math.PI/180,Rp=62; // 中心からの半径(%)
+    const m=document.createElement("div");m.className="ru-mark";
+    m.style.left=(50+Math.cos(ang)*Rp)+"%";m.style.top=(50+Math.sin(ang)*Rp)+"%";
+    m.textContent=label;disc.appendChild(m);
+  });
+  renaiUranaiReady=true;
+}
+function renaiUranaiEffectBadge(name,mult){
+  if(typeof mult!=="number"||!isFinite(mult))mult=1;
+  const cls=mult>1.001?"up":(mult<0.999?"down":"flat");
+  const verdict=mult>1.001?"吉":(mult<0.999?"慎":"平");
+  const shown=(Math.round(mult*100)/100).toString();
+  return '<div class="ru-badge '+cls+'"><span class="ru-b-name">'+name+'に'+verdict+'</span><span class="ru-b-val">×'+shown+'</span></div>';
+}
+function renaiUranaiOpen(omen){
+  const panel=$("renaiUranaiPanel");if(!panel||!omen)return;
+  renaiUranaiBuildDisc();
+  if(APP.renai)APP.renai.miniGameOpen=true; // 3Dアイテムのpick暴発を防ぐ(既存ミニゲームと同流儀)
+  const reduce=(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION);
+  const tone=omen.good?"good":"bad";
+  const disc=$("ruDisc"),sub=$("ruSub"),tan=$("ruTanzaku"),tag=$("ruOmenTag"),adv=$("ruAdvice"),eff=$("ruEffects"),close=$("ruCloseBtn");
+  panel.classList.remove("tone-good","tone-bad");
+  if(tan){tan.className="ru-tanzaku";tan.textContent="";}
+  if(tag){tag.style.display="none";tag.className="ru-omen-tag";}
+  if(adv){adv.className="ru-advice";adv.textContent="";}
+  if(eff){eff.className="ru-effects";eff.innerHTML="";}
+  if(close)close.className="ru-close";
+  if(sub)sub.textContent="式盤に今日を問ふ…";
+  panel.style.display="block";
+  beep(520,.07,"triangle",.06);
+  /* 拍1: 所作 — 式盤を回す */
+  setTimeout(()=>{
+    renaiUranaiRotation+=(reduce?0:720)+Math.floor(Math.random()*180);
+    if(disc)disc.style.transform="rotate("+renaiUranaiRotation+"deg)";
+    beep(300,.06,"square",.06);setTimeout(()=>beep(240,.1,"sine",.05),70);
+  },reduce?20:260);
+  const settle=reduce?140:1500;
+  /* 拍2: 兆しの顕現 — 式盤が止まり、短冊がひらりと現れる */
+  setTimeout(()=>{
+    panel.classList.add("tone-"+tone);
+    if(tan){tan.innerHTML="";Array.from(String(omen.label)).forEach(c=>{const s=document.createElement("span");s.textContent=c;tan.appendChild(s);});tan.classList.add("show");}
+    if(tag){tag.textContent=omen.good?"吉兆":"凶兆";tag.style.display="inline-block";}
+    if(sub)sub.textContent=omen.good?"兆しは佳し。":"兆しは静かなり。";
+    if(typeof onmyoOmenChime==="function")onmyoOmenChime(omen.good?"good":"bad");
+  },settle);
+  /* 拍3: 占断 — 助言と、文・学びへの効果を開示 */
+  setTimeout(()=>{
+    if(adv){adv.textContent=omen.advice;adv.classList.add("show");}
+    if(eff){
+      const e=omen.effect||{};
+      eff.innerHTML=renaiUranaiEffectBadge("文",e.letter)+renaiUranaiEffectBadge("学び",e.study);
+      eff.classList.add("show");
+    }
+    if(close)close.classList.add("show");
+  },settle+(reduce?60:520));
+}
+function renaiUranaiClose(){
+  const panel=$("renaiUranaiPanel");if(panel)panel.style.display="none";
+  if(APP.renai)APP.renai.miniGameOpen=false;
+  beep(360,.04,"triangle",.04);
+  // uranaiは日を進めない仕様: renaiSimAdvanceDay は呼ばない
+}
+if($("ruCloseBtn"))$("ruCloseBtn").onclick=renaiUranaiClose;
+if($("renaiUranaiPanel"))$("renaiUranaiPanel").addEventListener("click",e=>{if(e.target===e.currentTarget)renaiUranaiClose();});
 
 /* ===== 波8: 香合わせ/牛車(外出) ミニゲーム ===== */
 /* 命名規則: 香合わせ=renaiKoh/RENAI_KOH、牛車=renaiGisha/RENAI_GISHA 前置。既存活動apply/採点は不変、報酬はここで直接加算・クランプ。 */
