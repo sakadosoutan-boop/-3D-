@@ -5487,9 +5487,6 @@ const GISSHA_YARD={root:null,shed:null,sheds:[],cart:null,parkedCarts:[],guide:n
   yard.name="gissha_yard";
   world.add(yard);
   GISSHA_YARD.root=yard;
-  const shed=new THREE.Group();
-  shed.name="kurumayadori";
-  shed.position.set(-55,0,17.0);   // 車宿を西築地の内側へ移設(実機FB)。背を西築地(x=-60.5)に向け、開口(牛車の出口)は邸内側=東(+x)へ
   const shedWood=M({color:0x5b3824,roughness:.86});
   const shedRoof=M({color:0x2b1710,roughness:.9});
   const wheelMat=M({color:0x4b2d1d,roughness:.84});
@@ -5568,7 +5565,7 @@ const GISSHA_YARD={root:null,shed:null,sheds:[],cart:null,parkedCarts:[],guide:n
   }
   const shed=new THREE.Group();
   shed.name="kurumayadori";
-  shed.position.set(48.8,0,16.8);
+  shed.position.set(-55,0,17.0);   // 実機FB: 車宿を西築地の内側へ移設。背を西築地(x=-60.5)、開口(牛車の出口)は邸内側=東(+x)
   const guideM=M({color:0xd4b569,roughness:.75,transparent:true,opacity:.42});
   [[0,-.90],[0,-.30],[0,.30],[0,.90]].forEach((p,i)=>{
     const m=box(.56,.025,.30,guideM,p[0],.05,p[1],false);
