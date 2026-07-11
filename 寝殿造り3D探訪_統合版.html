@@ -5283,7 +5283,7 @@ const GISSHA_YARD={root:null,shed:null,cart:null,guide:null,carryRoute:[]};
   GISSHA_YARD.root=yard;
   const shed=new THREE.Group();
   shed.name="kurumayadori";
-  shed.position.set(49.2,0,17.0);
+  shed.position.set(-55,0,17.0);   // 車宿を東築地→西築地の内側へ移設。背を西築地(x=-60.5)に向け、開口(牛車の出口)は邸内側=東(+x)へ
   const shedWood=M({color:0x5b3824,roughness:.86});
   const shedRoof=M({color:0x2b1710,roughness:.9});
   const guideM=M({color:0xd4b569,roughness:.75,transparent:true,opacity:.42});
@@ -5308,7 +5308,7 @@ const GISSHA_YARD={root:null,shed:null,cart:null,guide:null,carryRoute:[]};
     shed.add(m);
   });
   yard.add(shed);
-  register(shed,"kurumayadori",new THREE.Vector3(49.2,4.7,17.0));
+  register(shed,"kurumayadori",new THREE.Vector3(-55,4.7,17.0));
   GISSHA_YARD.shed=shed;
   const g=new THREE.Group();
   const cab=box(2.2,2.0,3.0,MAT.black,0,2.0,0);g.add(cab);
@@ -5344,14 +5344,16 @@ const GISSHA_YARD={root:null,shed:null,cart:null,guide:null,carryRoute:[]};
   const yoke=box(1.45,.12,.12,MAT.woodDark,0,1.53,-1.00);ox.add(yoke);
   [-1,1].forEach(s=>{const strap=new THREE.Mesh(new THREE.TorusGeometry(.42,.035,7,22,Math.PI),M({color:0x6c3f24,roughness:.8}));strap.position.set(s*.32,1.40,-1.08);strap.rotation.y=Math.PI/2;strap.rotation.z=Math.PI/2;ox.add(strap);});
   ox.position.set(0,0,-3.6);g.add(ox);
-  g.position.set(48,0,17);g.rotation.y=-Math.PI/2.3;
-  yard.add(g);register(g,"gissha",new THREE.Vector3(48,5.2,17));
+  g.position.set(-53.8,0,17);g.rotation.y=-Math.PI/2.3;   // 牛(牛車の前)は邸内側=東(+x)を向く。西築地を背にして駐める
+  yard.add(g);register(g,"gissha",new THREE.Vector3(-53.8,5.2,17));
   GISSHA_YARD.cart=g;
+  /* 運搬経路: 西の車宿(西築地際)を出て、東へ進みながら西中門(x=-35,z=20)の車寄で停止。
+     牛(車体の前)が門にめり込まないよう、終点は門の西面(x≈-37.1)より手前(西)で止める。 */
   GISSHA_YARD.carryRoute=[
-    new THREE.Vector3(48,0,17),
-    new THREE.Vector3(43,0,18),
-    new THREE.Vector3(38,0,19),
-    new THREE.Vector3(35,0,20)
+    new THREE.Vector3(-53.8,0,17),
+    new THREE.Vector3(-49.5,0,18.1),
+    new THREE.Vector3(-46.5,0,19.2),
+    new THREE.Vector3(-45.2,0,20.0)
   ];
   yard.userData.carryRoute=GISSHA_YARD.carryRoute;
   window.GISSHA_YARD_STATUS={built:true,visible:true,routePoints:GISSHA_YARD.carryRoute.length};
@@ -5424,7 +5426,7 @@ function startGisshaCarry(){
   APP.gisshaCarry={active:true,progress:0,lateral:0,speed:0,bumps:0,bumpCooldown:0,done:false,message:"ゆっくり動き出そう"};
   gisshaCarrySetCart(0,0);
   const guide=gisshaCarryBuildGuide();guide.visible=true;
-  player.pos.set(43.4,groundH(43.4,22.2)+1.62,22.2);player.yaw=-1.35;player.pitch=-.08;camera.position.copy(player.pos);window.dummyCam=null;
+  player.pos.set(-50,groundH(-50,10)+1.62,10);player.yaw=-2.55;player.pitch=-.12;camera.position.copy(player.pos);window.dummyCam=null; // 経路の北西の乾いた地から南東(西中門の車寄)へ視線を送る固定視点
   if(window.GISSHA_YARD_STATUS){window.GISSHA_YARD_STATUS.carryReady=true;window.GISSHA_YARD_STATUS.carryActive=true;}
   toast("牛車運び: W/↑で前進、A/Dで寄せ、S/↓で減速",3600);beep(520,.08,"triangle",.055);
   return true;
@@ -7638,7 +7640,9 @@ SEASONAL.tonbo=[];
 // 藤棚(西の対そば — 春・夏)
 SEASONAL.fuji=[];
 (function buildWisteria(){
-  const g=new THREE.Group();g.position.set(-46,0,18);world.add(g);
+  /* 藤棚: 従来(-46,18)は西へ移設した車宿→西中門車寄の運搬経路と重なるため、
+     西の対の南西(-49,4)へ寄せて経路と干渉しないようにした。西の対のそばである点は不変。 */
+  const g=new THREE.Group();g.position.set(-49,0,4);world.add(g);
   const wm=M({color:0x5a3820,roughness:.85});
   [[-2.0,0],[0,0],[2.0,0],[-2.0,3.4],[0,3.4],[2.0,3.4]].forEach(p=>g.add(cyl(.065,.065,2.75,wm,p[0],1.37,p[1],6)));
   [[0],[1.1],[2.25],[3.4]].forEach(zz=>{
@@ -7673,7 +7677,7 @@ SEASONAL.fuji=[];
       lf.position.set((j-2)*.09,0,0);lf.rotation.set(-1.2,rnd(-.2,.2),0);st.add(lf);
     }
   }
-  register(g,"fuji",new THREE.Vector3(-46,2.3,18));
+  register(g,"fuji",new THREE.Vector3(-49,2.3,4));
 })();
 
 // 撫子(前栽の花壇 — 夏・秋)
