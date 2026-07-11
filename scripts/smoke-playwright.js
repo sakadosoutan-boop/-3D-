@@ -352,9 +352,15 @@ async function launchBrowser() {
           }
           const zodiacOk = document.getElementById('onmyoZodiacSelect')?.value === String((1990 - 4) % 12);
           executeOnmyoDivination();
-          await new Promise((resolve) => setTimeout(resolve, 1400));
+          // 占断は「所作→兆し→占断」の儀式演出(天盤回転→落款→開示)を経て結果文が出るため、
+          // 固定待ちではなく出現をポーリングで待つ(最大5秒)。演出時間の調整でsmokeが壊れないように。
+          let resultText = '';
+          for (let i = 0; i < 25; i += 1) {
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            resultText = document.getElementById('onmyoOracleMsg')?.textContent || '';
+            if (resultText.includes('式盤の運行')) break;
+          }
           const panelVisible = getComputedStyle(document.getElementById('onmyoDivinationPanel')).display !== 'none';
-          const resultText = document.getElementById('onmyoOracleMsg')?.textContent || '';
           modelSmoke.onmyoDivinationOk = ITEMS.onmyo_shikiban?.cat === 'c'
             && !!interactables.onmyo_shikiban?.roots?.length
             && labels.some((label) => label.id === 'onmyo_shikiban')
