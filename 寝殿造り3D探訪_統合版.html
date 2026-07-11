@@ -1120,6 +1120,20 @@ h1.t-main .shu{color:var(--shu-bright)}
 .dq-start{margin-top:auto;align-self:flex-start;min-height:25px;padding:0 9px;border-radius:999px;border:1px solid rgba(201,162,63,.34);background:rgba(0,0,0,.24);color:#e9d7a8;font-family:var(--sans);font-size:10px;letter-spacing:.06em;cursor:pointer}
 .dq-start:hover{border-color:rgba(232,191,86,.72);background:rgba(80,45,18,.5)}.dq-item.done .dq-start{color:#aeca9f;border-color:rgba(128,190,110,.38)}
 .dq-foot{font-family:var(--sans);font-size:10px;color:#8a7d66;margin-top:4px;line-height:1.5}
+.first-route-panel{position:relative;margin:10px auto 0;padding:10px 11px;text-align:left;
+  background:linear-gradient(180deg,rgba(46,31,13,.88),rgba(16,11,7,.78));border:1px solid rgba(232,191,86,.42);
+  border-radius:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 8px 24px rgba(0,0,0,.16);font-family:var(--sans)}
+.fr-head{display:flex;align-items:center;gap:8px;color:#f0d68c;font-size:11px;letter-spacing:.14em;margin-bottom:8px}
+.fr-head b{margin-left:auto;color:#b5a074;font-size:10px;font-weight:600;letter-spacing:.08em}
+.fr-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.fr-step{min-height:52px;padding:7px 8px;border-radius:7px;border:1px solid rgba(201,162,63,.25);
+  background:rgba(255,246,220,.06);color:#a99a7a;font-size:10px;line-height:1.4}
+.fr-step b{display:block;color:#ead59a;font-size:11px;margin-bottom:2px}
+.fr-step.done{border-color:rgba(128,190,110,.55);background:rgba(76,126,72,.16);color:#cce1bc}
+.fr-step.active{border-color:rgba(232,191,86,.86);background:rgba(112,77,22,.28);color:#f4dfab}
+.fr-start{margin-top:8px;min-height:28px;width:100%;border-radius:999px;border:1px solid rgba(232,191,86,.58);
+  background:linear-gradient(180deg,rgba(119,79,20,.9),rgba(54,34,10,.9));color:#fff1c6;font-family:var(--sans);font-size:11px;letter-spacing:.09em;cursor:pointer}
+.fr-start:hover{border-color:rgba(255,224,143,.92);filter:brightness(1.08)}
 /* モード選択 */
 .t-modes{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
 .t-btn{background:linear-gradient(155deg,#4a1f14,#311309);color:var(--gofun);border:1px solid var(--kin);
@@ -2076,6 +2090,7 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
   #title .t-btn small{font-size:9px;line-height:1.35}.t-mode-kicker{font-size:9px;margin-top:0}
   .daily-quest-panel{padding:7px;margin-top:8px}.dq-head{margin-bottom:5px}.dq-list{gap:6px}.dq-item{flex-basis:min(202px,76vw);min-height:72px;padding:7px 8px}
   .dq-item .dq-title{font-size:10.5px}.dq-item .dq-desc{font-size:9.5px;line-height:1.35}.dq-start{min-height:23px}
+  .first-route-panel{padding:8px 9px}.fr-steps{grid-template-columns:1fr;gap:6px}.fr-step{min-height:0}
   .t-cat-btn{min-height:58px;flex:1 1 110px}
   .t-btn{min-width:120px;font-size:13px;padding:10px 12px}
   #codex{padding:10px}
@@ -3162,6 +3177,12 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
       <div class="dq-head"><span>本日の平安任務</span><b id="dqDate">--</b></div>
       <div class="dq-list" id="dqList"></div>
       <div class="dq-foot" id="dqFoot"></div>
+    </div>
+
+    <div id="firstRoutePanel" class="first-route-panel">
+      <div class="fr-head"><span>はじめの一巻</span><b id="frState">散策から物語へ</b></div>
+      <div class="fr-steps" id="frSteps"></div>
+      <button class="fr-start" id="btnFirstRoute" type="button">おすすめ導線を進める</button>
     </div>
 
     <!-- 更新履歴 -->
@@ -5133,7 +5154,7 @@ function broadleaf(s,leafMat){
   // 建物エリア回避: 東対(x:26-44,z:-18-6) / 西対(x:-44--26,z:-18-6) / 北対(x:-10-10,z:-45--33)
   // 釣殿(x:31-39/x:-39--31,z:30-39)
   const spots=[
-    [-46,48],[-50,30],[-42,10],[-54,-22],[-52,-46],  // 西側
+    [-46,48],[-50,30],[-42,10],[-54,-22],[-60,-54],  // 西側: 竹藪から十分に離す
     [50,48],[32,52],[-32,54],[12,56],[54,-30],[52,-52], // 東・南
     [-20,20],[22,32],[36,42]                             // 池周辺
   ];
@@ -5460,7 +5481,7 @@ chumonWing(1);chumonWing(-1);
 }
 
 /* 牛車(東門の内側・車宿あたり) */
-const GISSHA_YARD={root:null,shed:null,cart:null,guide:null,carryRoute:[]};
+const GISSHA_YARD={root:null,shed:null,sheds:[],cart:null,parkedCarts:[],guide:null,carryRoute:[]};
 {
   const yard=new THREE.Group();
   yard.name="gissha_yard";
@@ -5468,26 +5489,89 @@ const GISSHA_YARD={root:null,shed:null,cart:null,guide:null,carryRoute:[]};
   GISSHA_YARD.root=yard;
   const shed=new THREE.Group();
   shed.name="kurumayadori";
-  shed.position.set(-55,0,17.0);   // 車宿を東築地→西築地の内側へ移設。背を西築地(x=-60.5)に向け、開口(牛車の出口)は邸内側=東(+x)へ
+  shed.position.set(-55,0,17.0);   // 車宿を西築地の内側へ移設(実機FB)。背を西築地(x=-60.5)に向け、開口(牛車の出口)は邸内側=東(+x)へ
   const shedWood=M({color:0x5b3824,roughness:.86});
   const shedRoof=M({color:0x2b1710,roughness:.9});
+  const wheelMat=M({color:0x4b2d1d,roughness:.84});
+  function makeParkedGissha(scale=.84){
+    const pg=new THREE.Group();
+    pg.scale.setScalar(scale);
+    pg.add(box(2.05,1.78,2.72,MAT.black,0,1.80,0));
+    pg.add(hipRoof(2.75,3.35,.58,.60,2.66));
+    pg.add(box(1.84,1.42,.045,M({map:TEX.misu,side:THREE.DoubleSide}),0,1.80,1.38));
+    [-1,1].forEach(s=>{
+      const w=new THREE.Mesh(new THREE.TorusGeometry(.88,.115,8,18),wheelMat);
+      w.position.set(s*1.12,.90,0);w.rotation.y=Math.PI/2;w.castShadow=true;pg.add(w);
+      for(let i=0;i<8;i++){const sp=box(.048,1.55,.048,MAT.wood,s*1.12,.90,0);sp.rotation.x=i*Math.PI/8;pg.add(sp);}
+    });
+    pg.add(box(.10,.10,4.9,MAT.woodDark,-.55,1.04,-1.08));
+    pg.add(box(.10,.10,4.9,MAT.woodDark,.55,1.04,-1.08));
+    pg.add(box(1.40,.10,.10,MAT.woodDark,0,1.07,-3.25));
+    const ox=new THREE.Group(),hide=M({color:0x5b5149,roughness:.92}),muzzle=M({color:0x8a7868,roughness:.88}),hoof=M({color:0x1d1a17,roughness:.78});
+    const body=new THREE.Mesh(new THREE.SphereGeometry(1,14,10),hide);body.scale.set(.52,.48,.92);body.position.set(0,.90,-3.88);body.castShadow=true;ox.add(body);
+    const chest=new THREE.Mesh(new THREE.SphereGeometry(.42,12,8),hide);chest.scale.set(.95,.86,.70);chest.position.set(0,1.02,-4.48);ox.add(chest);
+    const neck=cyl(.22,.30,.56,hide,0,1.15,-4.73,10);neck.rotation.x=-.46;ox.add(neck);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.30,12,9),hide);head.scale.set(.80,.72,.98);head.position.set(0,1.34,-5.03);ox.add(head);
+    const nose=new THREE.Mesh(new THREE.SphereGeometry(.20,10,7),muzzle);nose.scale.set(1.02,.58,.70);nose.position.set(0,1.23,-5.27);ox.add(nose);
+    [-1,1].forEach(s=>{
+      const ear=new THREE.Mesh(new THREE.SphereGeometry(.11,8,6),hide);ear.scale.set(1.25,.46,.68);ear.position.set(s*.24,1.48,-5.02);ear.rotation.z=s*.28;ox.add(ear);
+      const eye=new THREE.Mesh(new THREE.SphereGeometry(.024,7,5),new THREE.MeshBasicMaterial({color:0x080706}));eye.position.set(s*.125,1.38,-5.30);ox.add(eye);
+      const horn=cyl(.018,.055,.34,MAT.stone,s*.21,1.66,-5.00,8);horn.rotation.z=s*.66;horn.rotation.x=-.16;ox.add(horn);
+    });
+    [[-.30,-4.28],[.30,-4.28],[-.30,-3.48],[.30,-3.48]].forEach((p,i)=>{
+      ox.add(cyl(.085,.105,.48,hide,p[0],.36,p[1],8));
+      ox.add(box(.16,.14,.24,hoof,p[0],.11,p[1]));
+    });
+    ox.add(box(1.04,.09,.09,MAT.woodDark,0,1.22,-4.55));
+    pg.add(ox);
+    pg.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+    return pg;
+  }
+  function makeDecorativeKurumayadori(x,z,rot){
+    const s=new THREE.Group();
+    s.name="kurumayadori_tsuiji_row";
+    s.position.set(x,0,z);s.rotation.y=rot||0;
+    const plaster=M({color:0xded6bf,roughness:.92}),blackRail=M({color:0x15110d,roughness:.78});
+    s.add(box(15.0,1.85,.22,plaster,0,1.05,3.10));
+    s.add(box(15.2,.13,.12,blackRail,0,.62,2.96));
+    s.add(box(15.2,.12,.10,blackRail,0,1.60,2.96));
+    s.add(box(.22,1.65,5.95,plaster,-7.45,1.00,.05));
+    s.add(box(.22,1.65,5.95,plaster,7.45,1.00,.05));
+    [-7.2,-3.6,0,3.6,7.2].forEach(px=>{
+      [[px,-2.95],[px,3.02]].forEach(p=>{
+        s.add(box(.26,2.85,.26,shedWood,p[0],1.43,p[1]));
+        s.add(cyl(.18,.22,.18,MAT.stone,p[0],.09,p[1],8));
+      });
+      const base=box(.42,.18,.38,shedWood,px,2.36,-2.95);s.add(base);
+    });
+    s.add(box(15.4,.22,.25,shedWood,0,2.76,-3.08));
+    s.add(box(15.4,.24,.30,shedWood,0,3.08,3.16));
+    const leanRoof=box(16.2,.18,7.9,shedRoof,0,2.92,.04);
+    leanRoof.rotation.x=-.12;
+    s.add(leanRoof);
+    [-6.4,-4.8,-3.2,-1.6,0,1.6,3.2,4.8,6.4].forEach(px=>{
+      const rafter=box(.10,.10,7.35,shedWood,px,2.86,.04);
+      rafter.rotation.x=-.12;
+      s.add(rafter);
+    });
+    [-3.75,3.75].forEach((px,i)=>{
+      const parked=makeParkedGissha(.82);
+      parked.position.set(px,0,-.02);
+      parked.rotation.y=(i===0)?.035:-.035;
+      s.add(parked);
+      GISSHA_YARD.parkedCarts.push(parked);
+    });
+    yard.add(s);
+    GISSHA_YARD.sheds.push(s);
+    GISSHA_YARD.sideShedBays=2;
+    return s;
+  }
+  const shed=new THREE.Group();
+  shed.name="kurumayadori";
+  shed.position.set(48.8,0,16.8);
   const guideM=M({color:0xd4b569,roughness:.75,transparent:true,opacity:.42});
-  shed.add(box(5.4,.10,7.0,MAT.floor,0,.05,0));
-  [[-2.35,-3.05],[2.35,-3.05],[-2.35,3.05],[2.35,3.05]].forEach(p=>{
-    shed.add(box(.24,2.85,.24,shedWood,p[0],1.42,p[1]));
-    shed.add(cyl(.18,.22,.18,MAT.stone,p[0],.09,p[1],8));
-  });
-  shed.add(box(5.8,.20,.22,shedWood,0,2.72,-3.16));
-  shed.add(box(5.8,.20,.22,shedWood,0,2.72,3.16));
-  shed.add(box(.22,.20,6.6,shedWood,-2.46,2.72,0));
-  shed.add(box(.22,.20,6.6,shedWood,2.46,2.72,0));
-  shed.add(hipRoof(6.4,8.1,1.05,.54,2.82));
-  shed.children[shed.children.length-1].traverse?.(o=>{if(o.isMesh)o.material=shedRoof;});
-  shed.add(box(5.0,.18,.16,shedWood,0,1.35,3.0));
-  shed.add(box(5.0,.18,.16,shedWood,0,1.00,3.0));
-  [-1.5,0,1.5].forEach(x=>shed.add(box(.13,.75,.13,shedWood,x,.74,3.0)));
-  [[0,-2.05],[0,-1.25],[0,-.45],[0,.35],[0,1.15]].forEach((p,i)=>{
-    const m=box(.46,.025,.24,guideM,p[0],.13,p[1],false);
+  [[0,-.90],[0,-.30],[0,.30],[0,.90]].forEach((p,i)=>{
+    const m=box(.56,.025,.30,guideM,p[0],.05,p[1],false);
     m.rotation.y=(i-2)*.08;
     m.userData.noAutoShadow=true;
     shed.add(m);
@@ -5495,6 +5579,10 @@ const GISSHA_YARD={root:null,shed:null,cart:null,guide:null,carryRoute:[]};
   yard.add(shed);
   register(shed,"kurumayadori",new THREE.Vector3(-55,4.7,17.0));
   GISSHA_YARD.shed=shed;
+  // 実機FB: 長屋型の車宿(装飾列)は南築地→西築地へ移設。rot=-π/2で漆喰の背面を西築地(x=-60.5)へ向け、
+  // 開口は邸内側=東。中心z=18.8にすることで運搬用牛車(-53.8,17)が柱間(ベイの間)に収まり、柱と干渉しない。
+  // 周辺: 藤棚は(-49,4)へ移設済み・最寄りの楓(-48.93,29.55)/松(-41.85,8.77)とも重ならない。
+  makeDecorativeKurumayadori(-57.5,18.8,-Math.PI/2);
   const g=new THREE.Group();
   const cab=box(2.2,2.0,3.0,MAT.black,0,2.0,0);g.add(cab);
   const rf=hipRoof(2.9,3.7,.7,.7,3.0);g.add(rf);
@@ -5541,7 +5629,7 @@ const GISSHA_YARD={root:null,shed:null,cart:null,guide:null,carryRoute:[]};
     new THREE.Vector3(-45.2,0,20.0)
   ];
   yard.userData.carryRoute=GISSHA_YARD.carryRoute;
-  window.GISSHA_YARD_STATUS={built:true,visible:true,routePoints:GISSHA_YARD.carryRoute.length};
+  window.GISSHA_YARD_STATUS={built:true,visible:true,oldShedVisible:false,sheds:GISSHA_YARD.sideShedBays||GISSHA_YARD.sheds.length,parkedCarts:GISSHA_YARD.parkedCarts.length,attachedToTsuiji:true,sideEnclosed:true,oxFront:true,referenceStyle:"tsuiji-long-row",routePoints:GISSHA_YARD.carryRoute.length};
 }
 function updateGisshaYardVisibility(mode){
   if(!GISSHA_YARD.root)return;
@@ -6176,14 +6264,20 @@ function makeHeianStandingFigure({role,palette,scale=1,prop}){
       hakama.rotation.z=side*.025;
       [-.050,.045].forEach(dx=>addDetail(heianMesh(g,HEIAN_GEO.collar,gold,[side*.13+dx,.51,.197],[.010,.39,.008],[0,0,side*.02])));
     });
-    heianMesh(g,HEIAN_GEO.body,outer,[0,.86,-.010],[.30,.52,.24]);
-    heianMesh(g,HEIAN_GEO.robe,outer,[0,.14,-.55],[.34,.055,.80]);
+    heianMesh(g,HEIAN_GEO.body,outer,[0,.82,-.010],[.31,.58,.25]);
+    addDetail(heianMesh(g,HEIAN_GEO.body,outer,[0,.58,-.018],[.34,.30,.25]));
+    heianMesh(g,HEIAN_GEO.robe,outer,[0,.14,-.58],[.35,.055,.86]);
+    heianMesh(g,HEIAN_GEO.robe,outer,[0,.105,-.86],[.30,.042,.96]);
     [[-.12,.57,.255,.095],[.12,.57,.255,.095],[0,.62,-.255,.20]].forEach(([x,y,z,w])=>{
       const panel=heianMesh(g,HEIAN_GEO.collar,outer,[x,y,z],[w,.56,.014],[0,0,x*-.42]);
       addDetail(panel);
     });
+    [[-.085,.52,.275,.070],[.085,.52,.275,.070],[0,.48,-.310,.150],[0,.36,-.500,.115]].forEach(([x,y,z,w])=>{
+      const panel=heianMesh(g,HEIAN_GEO.collar,outer,[x,y,z],[w,.46,.016],[0,0,x*-.36]);
+      addDetail(panel);
+    });
     [-1,1].forEach(s=>{
-      const sidePanel=heianMesh(g,HEIAN_GEO.collar,outer,[s*.255,.53,.02],[.050,.50,.012],[0,0,-s*.09]);
+      const sidePanel=heianMesh(g,HEIAN_GEO.collar,outer,[s*.255,.52,.02],[.058,.56,.012],[0,0,-s*.08]);
       addDetail(sidePanel);
     });
     addDetail(heianMesh(g,HEIAN_GEO.collar,gold,[0,.18,.235],[.23,.012,.010]));
@@ -6555,7 +6649,7 @@ function makeChildNobleObject(color=0xc27b45){
   householdAdd("keishi",makeKeishiObject(),-12.5,17.8,-Math.PI*.72,1.75);
   householdAdd("menoto",makeLowRankPerson({female:true,color:0x5b6a42,under:0xb89b63,tool:"tray",scale:1.0}),TAI.e.x-6.8,TAI.e.z-2.2,.8,1.72);
   householdAdd("myobu",makeLowRankPerson({female:true,color:0x68507a,under:0xc1a068,tool:"scroll",scale:.98}),S.cx+5.2,S.cz-5.4,Math.PI,1.72);
-  householdAdd("gejo",makeLowRankPerson({female:true,color:0x735a3b,under:0xb58a58,tool:"broom",scale:.94}),-9.5,23.5,-.2,1.55);
+  householdAdd("gejo",makeLowRankPerson({female:true,color:0x735a3b,under:0xb58a58,tool:"broom",scale:.94}),TAI.e.x+4.2,TAI.e.z+4.6,-1.05,1.55);
   householdAdd("zuishin",makeZuishinObject(),48.5,12.2,Math.PI*.54,2.25);
   householdAdd("toneri",makeToneriObject(),45.5,17.8,Math.PI*.36,1.70);
   householdAdd("genan",makeLowRankPerson({female:false,color:0x4b4335,under:0x7a6646,tool:"broom",scale:.98}),-51.5,6.2,-Math.PI*.60,1.65);
@@ -6567,19 +6661,19 @@ function makeChildNobleObject(color=0xc27b45){
     keishi:[[-12.5,17.8],[-7.5,18.8],[-3.5,17.4]],
     menoto:[[TAI.e.x-6.8,TAI.e.z-2.2],[TAI.e.x-5.0,TAI.e.z+1.2],[TAI.e.x-1.8,TAI.e.z+2.4]],
     myobu:[[S.cx+5.2,S.cz-5.4],[S.cx+3.0,S.cz-3.2],[S.cx+.5,S.cz-.4]],
-    gejo:[[-9.5,23.5],[-14.0,22.5],[-17.5,19.0]],
+    gejo:[[TAI.e.x+4.2,TAI.e.z+4.6],[TAI.e.x+1.2,TAI.e.z+5.5],[TAI.e.x-2.5,TAI.e.z+4.0]],
     zuishin:[[48.5,12.2],[51.0,8.0],[53.0,3.0]],
     toneri:[[45.5,17.8],[41.0,20.0],[37.0,18.0]],
     genan:[[-51.5,6.2],[-53.0,1.0],[-50.0,-4.0]]
   };
-  const walkingIds=new Set(["aruji","keishi","gejo","zuishin","toneri","genan"]);
+  const walkingIds=new Set(["keishi","menoto","myobu","gejo","zuishin","toneri","genan"]);
   householdPeople.forEach(root=>{
     const route=routes[root.userData.householdId];
     if(route&&walkingIds.has(root.userData.householdId)){
       root.userData.walkRoute=route.map(([x,z])=>({x,z}));
       root.userData.walkReady=true;
       root.userData.walkPhase=Math.random()*100;
-      root.userData.walkSpeed=root.userData.householdId==="aruji" ? .055 : .080+Math.random()*.040;
+      root.userData.walkSpeed=.080+Math.random()*.040;
     }else if(route){
       root.userData.walkRoute=route.map(([x,z])=>({x,z}));
     }
@@ -7792,34 +7886,122 @@ SEASONAL.tonbo=[];
 
 // 竹(北の対そば・左奥の竹藪)
 (function buildBamboo(){
-  function makeBambooClump(cx,cz,count){
+  const bambooStats={clusters:0,culms:0,thin:0,thick:0,takenoko:0};
+  function makeBambooClump(cx,cz,count,spread=1.4){
     const g=new THREE.Group();g.position.set(cx,0,cz);
     const bc=M({color:0x4a7a3a,roughness:.8}),bn=M({color:0x3a6028,roughness:.85});
     const lm=M({color:0x4a7535,roughness:.9,side:THREE.DoubleSide});
+    const stemGeo=new THREE.CylinderGeometry(1,1,1,7),nodeGeo=new THREE.CylinderGeometry(1,1,1,7),leafGeo=new THREE.PlaneGeometry(1,1);
+    const stems=[],nodes=[],leaves=[];
+    const q=new THREE.Quaternion(),m4=new THREE.Matrix4(),v=new THREE.Vector3();
     for(let i=0;i<count;i++){
-      const ox=rnd(-1.2,1.2),oz=rnd(-1.2,1.2),h=rnd(3.5,5.5),nn=Math.floor(h/.58);
+      const ox=rnd(-spread,spread),oz=rnd(-spread,spread),h=rnd(3.4,6.4),nn=Math.floor(h/.58);
+      const baseR=rnd(.052,.108)*(i%7===0?1.28:1);
+      if(baseR>.095)bambooStats.thick++;else bambooStats.thin++;
       for(let k=0;k<nn;k++){
-        const y=k*.58+.29,r=Math.max(.035,.08-.008*k);
-        g.add(cyl(r,r,.56,bc,ox,y,oz,7));
-        if(k%2===0)g.add(cyl(r+.012,r+.012,.04,bn,ox,y+.27,oz,7));
+        const y=k*.58+.29,r=Math.max(.032,baseR-.0065*k);
+        stems.push({p:[ox,y,oz],s:[r,.56,r],r:[0,0,0]});
+        if(k%2===0)nodes.push({p:[ox,y+.27,oz],s:[r+.012,.04,r+.012],r:[0,0,0]});
       }
       for(let k=Math.floor(nn*.55);k<nn;k++){
-        for(let j=0;j<3;j++){
+        for(let j=0;j<4;j++){
           const ang=rnd(0,Math.PI*2);
-          const lf=new THREE.Mesh(new THREE.PlaneGeometry(.05,rnd(.28,.52)),lm);
-          lf.position.set(ox+Math.cos(ang)*.06,k*.58+.28,oz+Math.sin(ang)*.06);
-          lf.rotation.y=ang;lf.rotation.z=-.35;g.add(lf);
+          leaves.push({p:[ox+Math.cos(ang)*.08,k*.58+.28,oz+Math.sin(ang)*.08],s:[.055,rnd(.30,.62),1],r:[0,ang,rnd(-.52,-.24)]});
         }
       }
     }
+    const addInstances=(geo,mat,items)=>{
+      const mesh=new THREE.InstancedMesh(geo,mat,items.length);
+      items.forEach((it,i)=>{
+        q.setFromEuler(new THREE.Euler(it.r[0],it.r[1],it.r[2]));
+        m4.compose(v.set(it.p[0],it.p[1],it.p[2]),q,new THREE.Vector3(it.s[0],it.s[1],it.s[2]));
+        mesh.setMatrixAt(i,m4);
+      });
+      mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);
+      return mesh;
+    };
+    addInstances(stemGeo,bc,stems);
+    addInstances(nodeGeo,bn,nodes);
+    addInstances(leafGeo,lm,leaves);
     world.add(g);
     register(g,"take",new THREE.Vector3(cx,3.5,cz));
+    bambooStats.clusters++;bambooStats.culms+=count;
   }
-  makeBambooClump(20,-40,4);
-  makeBambooClump(-20,-40,4);
-  makeBambooClump(-48,-38,9);
-  makeBambooClump(-54,-34,7);
-  makeBambooClump(-45,-31,6);
+  function makeTakenokoPatch(cx,cz,count,spread=2.2){
+    const g=new THREE.Group();g.position.set(cx,0,cz);
+    const shootMat=M({color:0x9f7020,roughness:.94});
+    const sheathMats=[
+      M({color:0xc69034,roughness:.92,side:THREE.DoubleSide}),
+      M({color:0xa96e20,roughness:.92,side:THREE.DoubleSide}),
+      M({color:0xd5a84a,roughness:.92,side:THREE.DoubleSide})
+    ];
+    const takenokoProfile=[
+      new THREE.Vector2(.88,-.50),new THREE.Vector2(.94,-.42),new THREE.Vector2(.90,-.24),
+      new THREE.Vector2(.74,-.02),new THREE.Vector2(.56,.18),new THREE.Vector2(.34,.36),
+      new THREE.Vector2(.14,.48),new THREE.Vector2(.035,.52)
+    ];
+    // 一本の皮は下端の弧から肩を経て尖端へ上がる。四方に少し重ねて、筍の皮を螺旋状に見せる。
+    const makeSheathGeo=()=>{
+      const seg=7,half=1.32,verts=[],faces=[];
+      for(let row=0;row<2;row++){
+        const radius=row? .72:1,yy=row? .46:0;
+        for(let j=0;j<=seg;j++){
+          const a=-half+(half*2*j/seg);verts.push(Math.sin(a)*radius,yy,Math.cos(a)*radius);
+        }
+      }
+      const tip=verts.length/3;verts.push(0,1.02,.14);
+      for(let j=0;j<seg;j++){
+        const b=j,n=j+1,s=seg+1+j,sn=s+1;
+        faces.push(b,n,sn,b,sn,s,s,sn,tip);
+      }
+      const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geo.setIndex(faces);geo.computeVertexNormals();return geo;
+    };
+    const shootGeo=new THREE.LatheGeometry(takenokoProfile,14),sheathGeo=makeSheathGeo();
+    shootGeo.computeVertexNormals();
+    const shoot=new THREE.InstancedMesh(shootGeo,shootMat,count);
+    const layerCount=5,panelsPerLayer=2,totalPanels=count*layerCount*panelsPerLayer;
+    const sheaths=sheathMats.map(mat=>new THREE.InstancedMesh(sheathGeo,mat,totalPanels));
+    const q=new THREE.Quaternion(),m4=new THREE.Matrix4(),v=new THREE.Vector3(),sc=new THREE.Vector3();
+    const sheathCounts=[0,0,0];
+    for(let i=0;i<count;i++){
+      const ox=rnd(-spread,spread),oz=rnd(-spread,spread),h=rnd(.56,.94),r=rnd(.20,.31),face=rnd(0,Math.PI*2);
+      const leanX=rnd(-.10,.10),leanZ=rnd(-.10,.10);
+      q.setFromEuler(new THREE.Euler(leanX,0,leanZ));
+      m4.compose(v.set(ox,h*.48,oz),q,sc.set(r,h*.96,r));
+      shoot.setMatrixAt(i,m4);
+      for(let layer=0;layer<layerCount;layer++){
+        const baseY=h*(.035+layer*.145),panelH=h*(.52-layer*.055),panelR=r*(1-layer*.145);
+        for(let part=0;part<panelsPerLayer;part++){
+          const ang=face+part*Math.PI+layer*.62;
+          const colorIndex=(layer+part)%sheaths.length,idx=sheathCounts[colorIndex]++;
+          q.setFromEuler(new THREE.Euler(leanX*.34,ang,leanZ*.34));
+          // 四枚の皮を同一面に置かず、わずかに外へ逃がして縁のちらつきを防ぐ。
+          const edgeOffset=r*(.012+part*.012);
+          m4.compose(v.set(ox+Math.sin(ang)*edgeOffset,baseY,oz+Math.cos(ang)*edgeOffset),q,sc.set(panelR,panelH,panelR));
+          sheaths[colorIndex].setMatrixAt(idx,m4);
+        }
+      }
+    }
+    shoot.instanceMatrix.needsUpdate=true;
+    sheaths.forEach((mesh,i)=>{mesh.count=sheathCounts[i];mesh.instanceMatrix.needsUpdate=true;});
+    [shoot,...sheaths].forEach(mesh=>{mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);});
+    world.add(g);
+    bambooStats.takenoko+=count;
+  }
+  makeBambooClump(-49,-42,18,2.6);
+  makeBambooClump(-56,-39,17,2.5);
+  makeBambooClump(-43,-39,16,2.4);
+  makeBambooClump(-59,-34,15,2.2);
+  makeBambooClump(-49,-34,18,2.6);
+  makeBambooClump(-41,-32,14,2.1);
+  makeBambooClump(-55,-29,14,2.0);
+  makeBambooClump(-47,-27,13,2.0);
+  makeBambooClump(-38,-36,11,1.8);
+  makeBambooClump(-53,-45,12,2.0);
+  makeTakenokoPatch(-50,-38,18,4.6);
+  makeTakenokoPatch(-57,-34,10,3.2);
+  makeTakenokoPatch(-43,-32,12,3.5);
+  window.BAMBOO_GROVE_STATUS={built:true,clusters:bambooStats.clusters,culms:bambooStats.culms,takenoko:bambooStats.takenoko,takenokoLayers:5,sheathsPerLayer:2,mixedRadius:bambooStats.thin>0&&bambooStats.thick>0,futureScene:"taketori"};
 })();
 
 // 藤棚(西の対そば — 春・夏)
@@ -8159,6 +8341,7 @@ Object.keys(interactables).forEach(id=>{
   if(interactables[id].labelPos&&ITEMS[id]&&ITEMS[id].cat!=="w")makeLabel(id);
 });
 /* 絵巻断片収集: 既存の図鑑解放に乗せた軽量コレクタブル */
+const EMAKI_ASSEMBLED_KEY="shinden3d-emaki-assembled-v1";
 const EMAKI_FRAGMENT_IDS=["emaki_frag1","emaki_frag2","emaki_frag3","emaki_frag4","emaki_frag5","emaki_frag6"];
 const emakiFragments=[];
 function makeEmakiTexture(i){
@@ -8187,7 +8370,7 @@ function makeEmakiTexture(i){
   glow.rotation.x=-Math.PI/2;glow.position.y=.012;glow.userData.noAutoShadow=true;g.add(glow);
   g.position.set(x,y,z);g.userData.emakiId=id;scene.add(g);register(g,id,new THREE.Vector3(x,y+.75,z));makeLabel(id);emakiFragments.push(g);
 });
-const emakiAssembly={root:null,pieces:[],label:null};
+const emakiAssembly={root:null,pieces:[],label:null,guide:null,beam:null};
 (function buildEmakiAssemblyDesk(){
   const x=TAI.w.x-3.6,z=TAI.w.z+3.8,y=groundH(x,z)+.02;
   const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=.18;
@@ -8204,17 +8387,50 @@ const emakiAssembly={root:null,pieces:[],label:null};
     mark.rotation.y=p.rotation.z;g.add(mark);
   }
   const guide=box(1.65,.03,.08,M({color:0xd8b65d,roughness:.65}),0,.47,.50,false);g.add(guide);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(.88,1.08,44),new THREE.MeshBasicMaterial({color:0xe9c86a,transparent:true,opacity:.34,side:THREE.DoubleSide,depthWrite:false}));
+  ring.rotation.x=-Math.PI/2;ring.position.y=.50;ring.userData.noAutoShadow=true;ring.visible=false;g.add(ring);emakiAssembly.guide=ring;
+  const beam=new THREE.Mesh(new THREE.ConeGeometry(.18,1.25,24,1,true),new THREE.MeshBasicMaterial({color:0xf2d88b,transparent:true,opacity:.18,side:THREE.DoubleSide,depthWrite:false}));
+  beam.position.set(0,1.12,0);beam.rotation.x=Math.PI;beam.userData.noAutoShadow=true;beam.visible=false;g.add(beam);emakiAssembly.beam=beam;
   world.add(g);register(g,"emaki_desk",new THREE.Vector3(x,y+1.2,z));makeLabel("emaki_desk");
   emakiAssembly.root=g;
 })();
+function emakiGotCount(){return (typeof codexUnlocked==="undefined")?0:EMAKI_FRAGMENT_IDS.filter(fid=>codexUnlocked.has(fid)).length;}
+function emakiAssemblyDone(){try{return localStorage.getItem(EMAKI_ASSEMBLED_KEY)==="1";}catch(e){return false;}}
 function updateEmakiVisibility(){
   if(typeof codexUnlocked==="undefined")return;
   emakiFragments.forEach(g=>{g.visible=!codexUnlocked.has(g.userData.emakiId);});
   if(emakiAssembly.root){
-    const got=EMAKI_FRAGMENT_IDS.filter(fid=>codexUnlocked.has(fid)).length;
-    emakiAssembly.pieces.forEach((p,i)=>{p.material.opacity=codexUnlocked.has(EMAKI_FRAGMENT_IDS[i])?1:.28;p.material.transparent=true;});
+    const got=emakiGotCount(),done=emakiAssemblyDone();
+    emakiAssembly.pieces.forEach((p,i)=>{p.material.opacity=codexUnlocked.has(EMAKI_FRAGMENT_IDS[i])?(done?1:.82):.28;p.material.transparent=true;});
     emakiAssembly.root.userData.collected=got;
+    emakiAssembly.root.userData.assembled=done;
+    if(emakiAssembly.guide)emakiAssembly.guide.visible=got>=EMAKI_FRAGMENT_IDS.length&&!done;
+    if(emakiAssembly.beam)emakiAssembly.beam.visible=got>=EMAKI_FRAGMENT_IDS.length&&!done;
   }
+  if(typeof updateFirstRoutePanel==="function")updateFirstRoutePanel();
+}
+function completeEmakiAssembly(showIfDone){
+  const got=emakiGotCount(),need=EMAKI_FRAGMENT_IDS.length;
+  if(got<need){toast(`絵巻断片 ${got}/${need}。庭や対を巡って欠けた絵巻を集めよう`,3600);return false;}
+  const wasDone=emakiAssemblyDone();
+  if(!wasDone){
+    try{localStorage.setItem(EMAKI_ASSEMBLED_KEY,"1");}catch(e){}
+    recordProgress("emaki",1);gainParam("knowledge",2);gainParam("miyabi",2);markDailyMission("codex");
+    juiceCelebrate();juiceComboPop("絵巻修復",true);
+  }else if(!showIfDone){return true;}
+  updateEmakiVisibility();
+  $("resTitle").textContent=wasDone?"継がれた絵巻":"絵巻修復";
+  $("resRank").textContent="はじめの一巻";
+  $("resDetail").innerHTML="散らばっていた六つの断片が、西の対の継ぎ台で一続きになった。牛車、御簾、池、几帳、門の断片がつながり、邸の生活を横へ読む準備が整った。";
+  setResultActions({
+    retryText:"物語第1話へ",
+    walkText:"散策へ戻る",
+    nextGoal:"<b>次のおすすめ:</b> 📖 「御簾の向こうへ」第1話で、今つないだ絵巻の場面を物語として追ってみよう",
+    onRetry:()=>{closeResultPanel();enterMode("story");},
+    onWalk:()=>{closeResultPanel();enterMode("walk");}
+  });
+  showResultPanel();
+  return true;
 }
 const onmyoShikibanWorld={root:null};
 (function buildOnmyoShikibanObject(){
@@ -9494,9 +9710,10 @@ function pick(sx,sy){
   if(APP.mode==="quiz"){quizAnswer(id);return;}
   if(INSTRUMENT_IDS.has(id))playInstrument(id);
   if(id==="emaki_desk"){
-    const got=EMAKI_FRAGMENT_IDS.filter(fid=>codexUnlocked.has(fid)).length;
+    const got=emakiGotCount();
+    if(completeEmakiAssembly(true))return;
     showInfo(id);
-    toast(got>=EMAKI_FRAGMENT_IDS.length?`絵巻断片 ${got}/${EMAKI_FRAGMENT_IDS.length}。すべて継ぎ合わされた`:`絵巻断片 ${got}/${EMAKI_FRAGMENT_IDS.length}。庭や対を巡って欠けた絵巻を集めよう`,3600);
+    toast(`絵巻断片 ${got}/${EMAKI_FRAGMENT_IDS.length}。庭や対を巡って欠けた絵巻を集めよう`,3600);
     return;
   }
   if(gim&&gim.type==="lamp"&&(APP.view!=="fp"||hit.distance>6)){
@@ -9792,6 +10009,7 @@ function renderDailyQuestPanel(){
   list.querySelectorAll(".dq-start").forEach((b,i)=>{b.onclick=()=>goDailyMission(missions[i]);});
   const n=missions.filter(m=>done[m.id]).length;
   $("dqFoot").textContent=n>=missions.length?"本日の任務はすべて達成。称号一覧から次の目標を選ぼう。":`達成 ${n}/${missions.length}。極小から一つずつ進めよう。`;
+  if(typeof updateFirstRoutePanel==="function")updateFirstRoutePanel();
 }
 function markDailyMission(type){
   const key=dailyKey(),missions=dailyMissions().filter(m=>m.type===type);
@@ -9813,6 +10031,49 @@ function goDailyMission(m){
   if(m.action==="utakai"){enterMode("utakai");return;}
   if(m.action==="taiji"){showTaijiSeasonPicker();return;}
 }
+function firstRouteState(){
+  const total=(typeof EMAKI_FRAGMENT_IDS!=="undefined")?EMAKI_FRAGMENT_IDS.length:0;
+  const got=(typeof emakiGotCount==="function")?emakiGotCount():0;
+  const assembled=(typeof emakiAssemblyDone==="function")?emakiAssemblyDone():false;
+  return {total,got,assembled,fragmentDone:total>0&&got>=total};
+}
+function updateFirstRoutePanel(){
+  const steps=$("frSteps"),stateEl=$("frState"),btn=$("btnFirstRoute");if(!steps||!stateEl||!btn)return;
+  const st=firstRouteState();
+  const storyStarted=!!(typeof localStorage!=="undefined"&&localStorage.getItem("shinden3d-story-save-v1"));
+  const data=[
+    {id:"tour",title:"1 散策",desc:"邸を歩き、光る断片と名前札を見つける",done:st.got>0,active:st.got<st.total},
+    {id:"emaki",title:`2 絵巻 ${st.got}/${st.total||6}`,desc:"六つの断片を西の対の継ぎ台へ集める",done:st.assembled,active:st.fragmentDone&&!st.assembled},
+    {id:"story",title:"3 物語",desc:"御簾の向こうへ第1話を始める",done:storyStarted,active:st.assembled&&!storyStarted}
+  ];
+  steps.innerHTML=data.map(s=>`<div class="fr-step ${s.done?"done":s.active?"active":""}"><b>${s.title}</b>${s.done?"完了":s.desc}</div>`).join("");
+  if(!st.fragmentDone){stateEl.textContent=`断片 ${st.got}/${st.total||6}`;btn.textContent="散策で断片を探す";}
+  else if(!st.assembled){stateEl.textContent="継ぎ台へ";btn.textContent="西の対で絵巻を継ぐ";}
+  else {stateEl.textContent=storyStarted?"物語進行中":"物語へ";btn.textContent="物語第1話へ進む";}
+}
+function startFirstRoute(){
+  initAudio();
+  const st=firstRouteState();
+  closeCodex();hideSubPanel("quizSubPanel");hideSubPanel("taikenSubPanel");hideSubPanel("miniGameSubPanel");hideSubPanel("renaiSubPanel");
+  if(!st.fragmentDone){
+    enterMode("walk");
+    toast(`光る絵巻断片を探そう。現在 ${st.got}/${st.total||6}`,3200);
+    return;
+  }
+  if(!st.assembled){
+    enterMode("walk");
+    const root=emakiAssembly&&emakiAssembly.root;
+    if(root&&typeof player!=="undefined"){
+      const p=root.getWorldPosition(new THREE.Vector3());
+      player.pos.set(p.x-2.2,groundH(p.x-2.2,p.z+1.2)+1.62,p.z+1.2);
+      player.yaw=.55;player.pitch=-.06;camera.position.copy(player.pos);window.dummyCam=null;
+    }
+    toast("西の対の継ぎ台を調べて、欠けた絵巻を一続きにしよう",3600);
+    return;
+  }
+  enterMode("story");
+}
+if($("btnFirstRoute"))$("btnFirstRoute").onclick=startFirstRoute;
 function setResultNextGoal(html){
   const el=$("resNextGoal");if(!el)return;
   if(html===""){el.innerHTML="";el.classList.remove("show");return;}
@@ -10008,8 +10269,8 @@ function unlockCodex(id){
   markDailyMission("discover");
   if(id.startsWith("emaki_frag")){
     if(typeof updateEmakiVisibility==="function")updateEmakiVisibility();
-    const got=EMAKI_FRAGMENT_IDS.filter(fid=>codexUnlocked.has(fid)).length;
-    toast(got>=EMAKI_FRAGMENT_IDS.length?`絵巻断片がそろった。図鑑で物語を読み返せる`:`絵巻断片を発見 ${got}/${EMAKI_FRAGMENT_IDS.length}`);
+    const got=emakiGotCount();
+    toast(got>=EMAKI_FRAGMENT_IDS.length?`絵巻断片がそろった。西の対の継ぎ台へ向かおう`:`絵巻断片を発見 ${got}/${EMAKI_FRAGMENT_IDS.length}`);
   }else toast(`図鑑に「${ITEMS[id].n}」を登録した`);
   if(id.startsWith("waka_")){
     const m=WAKA_MESHES.find(m=>m.userData.wakaId===id);

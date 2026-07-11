@@ -252,11 +252,17 @@ async function launchBrowser() {
         householdItemsOk: false,
         householdLabelsOk: false,
         householdWalkOk: false,
+        householdAruiStaticOk: false,
+        householdWorkingWalkOk: false,
         householdMovementOk: false,
         himeInMichoudaiOk: false,
         rightTatamiNyoboOk: false,
+        bambooGroveOk: false,
         emakiDeskOk: false,
+        firstRoutePanelOk: false,
+        emakiAssemblyFlowOk: false,
         gisshaYardOk: false,
+        gisshaLayoutOk: false,
         gisshaYardVisibilityOk: false,
         gisshaCarryOk: false,
         onmyoDivinationOk: false,
@@ -296,6 +302,11 @@ async function launchBrowser() {
         modelSmoke.householdWalkOk = window.HOUSEHOLD_WALK_READY?.enabled === true
           && window.HOUSEHOLD_WALK_READY?.count >= 6
           && householdList.filter((root) => root.userData?.walkReady).length >= 6;
+        const householdById = new Map(householdList.map((root) => [root.userData?.householdId, root]));
+        modelSmoke.householdAruiStaticOk = householdById.get('aruji')?.userData?.walkReady !== true;
+        modelSmoke.householdWorkingWalkOk = ['menoto', 'myobu', 'gejo'].every((id) =>
+          householdById.get(id)?.userData?.walkReady === true
+        );
         const movingRoot = householdList.find((root) => root.userData?.walkReady);
         if (movingRoot && typeof updateHouseholdWalk === 'function') {
           const prevMode = APP.mode;
@@ -310,15 +321,46 @@ async function launchBrowser() {
           Math.abs(root.position.x - (SH.cx + 6.8)) < 0.6
           && Math.abs(root.position.z - (SH.cz + 1.6)) < 0.6
         );
+        modelSmoke.bambooGroveOk = window.BAMBOO_GROVE_STATUS?.built === true
+          && window.BAMBOO_GROVE_STATUS?.clusters >= 10
+          && window.BAMBOO_GROVE_STATUS?.culms >= 140
+          && window.BAMBOO_GROVE_STATUS?.takenoko >= 40
+          && window.BAMBOO_GROVE_STATUS?.takenokoLayers >= 5
+          && window.BAMBOO_GROVE_STATUS?.sheathsPerLayer >= 2
+          && window.BAMBOO_GROVE_STATUS?.mixedRadius === true;
         modelSmoke.emakiDeskOk = ITEMS.emaki_desk?.cat === 'c'
           && !!interactables.emaki_desk?.roots?.length
           && labels.some((label) => label.id === 'emaki_desk');
+        modelSmoke.firstRoutePanelOk = !!document.getElementById('firstRoutePanel')
+          && !!document.getElementById('btnFirstRoute')
+          && (document.getElementById('frSteps')?.textContent || '').includes('絵巻');
+        if (typeof completeEmakiAssembly === 'function' && typeof updateEmakiVisibility === 'function') {
+          localStorage.removeItem('shinden3d-emaki-assembled-v1');
+          EMAKI_FRAGMENT_IDS.forEach((id) => codexUnlocked.add(id));
+          if (typeof saveCodex === 'function') saveCodex();
+          updateEmakiVisibility();
+          const guideVisible = emakiAssembly?.guide?.visible === true && emakiAssembly?.beam?.visible === true;
+          const completed = completeEmakiAssembly() === true;
+          const stored = localStorage.getItem('shinden3d-emaki-assembled-v1') === '1';
+          const resultVisible = getComputedStyle(document.getElementById('result')).display !== 'none';
+          const guideHidden = emakiAssembly?.guide?.visible === false && emakiAssembly?.beam?.visible === false;
+          const routeDoneText = (document.getElementById('frSteps')?.textContent || '').includes('完了');
+          modelSmoke.emakiAssemblyFlowOk = guideVisible && completed && stored && resultVisible && guideHidden && routeDoneText;
+          if (typeof closeResultPanel === 'function') closeResultPanel();
+        }
         modelSmoke.gisshaYardOk = ITEMS.kurumayadori?.cat === 'b'
           && !!interactables.kurumayadori?.roots?.length
           && !!interactables.gissha?.roots?.length
           && labels.some((label) => label.id === 'kurumayadori')
           && window.GISSHA_YARD_STATUS?.built === true
           && window.GISSHA_YARD_STATUS?.routePoints >= 4;
+        modelSmoke.gisshaLayoutOk = window.GISSHA_YARD_STATUS?.oldShedVisible === false
+          && window.GISSHA_YARD_STATUS?.sheds >= 2
+          && window.GISSHA_YARD_STATUS?.parkedCarts >= 2
+          && window.GISSHA_YARD_STATUS?.attachedToTsuiji === true
+          && window.GISSHA_YARD_STATUS?.sideEnclosed === true
+          && window.GISSHA_YARD_STATUS?.oxFront === true
+          && window.GISSHA_YARD_STATUS?.referenceStyle === 'tsuiji-long-row';
         if (typeof updateGisshaYardVisibility === 'function' && typeof GISSHA_YARD !== 'undefined') {
           const prevMode = APP.mode;
           updateGisshaYardVisibility('walk');
@@ -464,11 +506,17 @@ async function launchBrowser() {
     if (!status.modelSmoke.householdItemsOk) errors.push('household role encyclopedia entries were not registered');
     if (!status.modelSmoke.householdLabelsOk) errors.push('household role labels were not generated');
     if (!status.modelSmoke.householdWalkOk) errors.push('household walking routes were not enabled');
+    if (!status.modelSmoke.householdAruiStaticOk) errors.push('aruji should stay static and not join household walking routes');
+    if (!status.modelSmoke.householdWorkingWalkOk) errors.push('working household women were not enabled for walking routes');
     if (!status.modelSmoke.householdMovementOk) errors.push('household walking update did not move a route actor');
     if (!status.modelSmoke.himeInMichoudaiOk) errors.push('himegimi was not placed inside the michoudai');
     if (!status.modelSmoke.rightTatamiNyoboOk) errors.push('right-side moya tatami nyobo was not placed');
+    if (!status.modelSmoke.bambooGroveOk) errors.push('bamboo grove density/layered shoot metadata was not built');
     if (!status.modelSmoke.emakiDeskOk) errors.push('emaki assembly desk was not registered with label/codex');
+    if (!status.modelSmoke.firstRoutePanelOk) errors.push('first-route guide panel was not rendered');
+    if (!status.modelSmoke.emakiAssemblyFlowOk) errors.push('emaki assembly guide/completion flow failed');
     if (!status.modelSmoke.gisshaYardOk) errors.push('gissha yard/shed was not registered with label/codex/route metadata');
+    if (!status.modelSmoke.gisshaLayoutOk) errors.push('gissha layout did not remove the old shed or add two side sheds/carts');
     if (!status.modelSmoke.gisshaYardVisibilityOk) errors.push('gissha yard did not toggle visibility by mode');
     if (!status.modelSmoke.gisshaCarryOk) errors.push('gissha carry mini-game did not start and move the cart');
     if (!status.modelSmoke.onmyoDivinationOk) errors.push('onmyo divination panel did not register/open/resolve');
