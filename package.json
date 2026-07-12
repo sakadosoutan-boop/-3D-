@@ -14,6 +14,7 @@
     "verify:story": "node scripts/verify-story.js",
     "verify:routes": "node scripts/verify-story-routes.js",
     "verify:public": "node scripts/verify-public-url.js https://sakadosoutan-boop.github.io/-3D-/",
+    "verify:waka-notes": "node scripts/verify-waka-notes.js",
     "benchmark": "node scripts/collect-benchmark.js",
     "smoke": "node scripts/smoke-playwright.js",
     "test": "npm run build:app:check && npm run build:story:check && npm run verify:html && npm run verify:story && npm run verify:routes && npm run smoke"
