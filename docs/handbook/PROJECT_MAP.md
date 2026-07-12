@@ -20,8 +20,10 @@
 | `index.html` | GitHub Pages 用入口 |
 | `package.json` | 検証コマンド |
 | `src/app/app.css` | 本体HTMLから分離したUI CSSの正本。編集後 `npm run build:app:css` で本体へ注入 |
+| `src/app/items.js` | 本体HTMLから分離した図鑑データ(ITEMS)の正本。編集後 `npm run build:app:items` で本体へ注入 |
 | `scripts/build-story.js` | 章JSONからHTML内 `STORY_EMBED` を同期/確認 |
 | `scripts/build-app-css.js` | `src/app/app.css` をHTML内 `<style>`(APP_CSS_EMBED マーカー間)へ同期/確認 |
+| `scripts/build-app-items.js` | `src/app/items.js` をHTML内 ITEMSブロック(APP_ITEMS_EMBED マーカー間)へ同期/確認 |
 | `scripts/verify-html.js` | DOM/JS/ITEMS/WAKA/音源/r128 API 静的検証 |
 | `scripts/verify-story.js` | 物語章データ検証 |
 | `scripts/verify-story-routes.js` | EDルート検証 |
@@ -37,7 +39,7 @@
 | 検索語/シンボル | 内容 | 注意 |
 |---|---|---|
 | `<style>` | 全UI、HUD、モード別表示 | src/app/app.css を編集（本体は自動生成）。モバイルCSSと z-index 競合に注意 |
-| `const ITEMS` | 図鑑/説明データ | 追加時は `register`, `makeLabel`, スモークも確認 |
+| `const ITEMS` | 図鑑/説明データ | src/app/items.js を編集（本体は自動生成）。追加時は `register`, `makeLabel`, スモークも確認 |
 | `QUIZ_POOL` | クイズ対象 | ITEMS追加と同期 |
 | `const APP` | アプリ状態 | 新モード追加時の初期値をここへ |
 | `function enterMode` | モード切替 | HUD/音/可視性/移動制限の中心 |
