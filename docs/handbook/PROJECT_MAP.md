@@ -19,11 +19,15 @@
 | `寝殿造り3D探訪_統合版.html` | アプリ本体。3D、UI、モード、図鑑、物語、恋愛/陰陽、ミニゲームを含む |
 | `index.html` | GitHub Pages 用入口 |
 | `package.json` | 検証コマンド |
-| `src/app/app.css` | 本体HTMLから分離したUI CSSの正本。編集後 `npm run build:app:css` で本体へ注入 |
-| `src/app/items.js` | 本体HTMLから分離した図鑑データ(ITEMS)の正本。編集後 `npm run build:app:items` で本体へ注入 |
+| `src/app/app.css` | 本体HTMLから分離したUI CSSの正本。編集後 `npm run build:app` で本体へ注入 |
+| `src/app/items.js` | 本体HTMLから分離した図鑑データ(ITEMS)の正本。編集後 `npm run build:app` で本体へ注入 |
+| `src/app/waka.js` | 本体HTMLから分離した和歌データ(WAKA_DATA)の正本。編集後 `npm run build:app` で本体へ注入 |
+| `src/app/quiz-pool.js` | 本体HTMLから分離したクイズ対象(QUIZ_POOL)の正本。編集後 `npm run build:app` で本体へ注入 |
 | `scripts/build-story.js` | 章JSONからHTML内 `STORY_EMBED` を同期/確認 |
-| `scripts/build-app-css.js` | `src/app/app.css` をHTML内 `<style>`(APP_CSS_EMBED マーカー間)へ同期/確認 |
-| `scripts/build-app-items.js` | `src/app/items.js` をHTML内 ITEMSブロック(APP_ITEMS_EMBED マーカー間)へ同期/確認 |
+| `scripts/build-app.js` | manifest(scripts/app-manifest.json)駆動で src/app/ の全ブロックをHTMLへ同期/確認/初回抽出 |
+| `scripts/app-manifest.json` | 分離ブロックの対応表（name / src / マーカー）。ブロック追加はここに定義 |
+| `scripts/lib/embed-sync.js` | マーカー注入・バイト厳密比較・境界特定の共通実装 |
+| `scripts/build-app-css.js` / `build-app-items.js` | 後方互換ラッパ（実処理は build-app.js に集約） |
 | `scripts/verify-html.js` | DOM/JS/ITEMS/WAKA/音源/r128 API 静的検証 |
 | `scripts/verify-story.js` | 物語章データ検証 |
 | `scripts/verify-story-routes.js` | EDルート検証 |
@@ -40,7 +44,8 @@
 |---|---|---|
 | `<style>` | 全UI、HUD、モード別表示 | src/app/app.css を編集（本体は自動生成）。モバイルCSSと z-index 競合に注意 |
 | `const ITEMS` | 図鑑/説明データ | src/app/items.js を編集（本体は自動生成）。追加時は `register`, `makeLabel`, スモークも確認 |
-| `QUIZ_POOL` | クイズ対象 | ITEMS追加と同期 |
+| `QUIZ_POOL` | クイズ対象 | src/app/quiz-pool.js を編集（本体は自動生成）。ITEMS追加と同期 |
+| `WAKA_DATA` | 百人一首の和歌データ | src/app/waka.js を編集（本体は自動生成）。短冊収集・図鑑と連動 |
 | `const APP` | アプリ状態 | 新モード追加時の初期値をここへ |
 | `function enterMode` | モード切替 | HUD/音/可視性/移動制限の中心 |
 | `function pick` | クリック/タップの相互作用 | 新規インタラクトの入口 |

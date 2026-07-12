@@ -1,0 +1,32 @@
+[
+  {
+    "name": "css",
+    "src": "src/app/app.css",
+    "kind": "markers-exist",
+    "begin": "/* APP_CSS_EMBED_BEGIN (src/app/app.css から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_CSS_EMBED_END */"
+  },
+  {
+    "name": "items",
+    "src": "src/app/items.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_ITEMS_EMBED_BEGIN (src/app/items.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_ITEMS_EMBED_END */"
+  },
+  {
+    "name": "waka",
+    "src": "src/app/waka.js",
+    "kind": "declaration",
+    "decl": "const WAKA_DATA=",
+    "begin": "/* APP_WAKA_EMBED_BEGIN (src/app/waka.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_WAKA_EMBED_END */"
+  },
+  {
+    "name": "quiz",
+    "src": "src/app/quiz-pool.js",
+    "kind": "declaration",
+    "decl": "const QUIZ_POOL=",
+    "begin": "/* APP_QUIZ_EMBED_BEGIN (src/app/quiz-pool.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_QUIZ_EMBED_END */"
+  }
+]

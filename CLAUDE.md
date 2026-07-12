@@ -9,14 +9,14 @@
   位置特定は docs/handbook/PROJECT_MAP.md の検索アンカー表を使い、部分Readのみ。
   本体HTML内の調査は html-scout サブエージェント（.claude/agents/html-scout.md）に委譲する。
 - 変更後は `npm test` を通す。story/ を触ったら `npm run build:story:check` 必須（.claude/rules/story.md 参照）。
-- CSSは `src/app/app.css`、図鑑データ(ITEMS)は `src/app/items.js` を編集し、`npm run build:app:css` / `npm run build:app:items` で本体へ反映。本体HTML内の該当ブロックは直接編集しない。
+- CSS・図鑑(ITEMS)・和歌(WAKA_DATA)・クイズ対象(QUIZ_POOL)は `src/app/` 配下のソースを編集し、`npm run build:app` で本体へ反映（同期確認は `npm run build:app:check`）。本体HTML内の該当ブロックは直接編集しない。ブロック対応表は scripts/app-manifest.json。
 - Claude/Codex 並行時は専用ブランチ（claude/○○ / codex/○○）で作業し、main へ直接編集しない。マージ済みブランチは統合後に削除する。
 
 ## 検証コマンド
 
 | コマンド | 内容 |
 |---|---|
-| `npm test` | 一式実行（build:app:css:check → build:app:items:check → build:story:check → verify:html → verify:story → verify:routes → smoke） |
+| `npm test` | 一式実行（build:app:check → build:story:check → verify:html → verify:story → verify:routes → smoke） |
 | `npm run verify:html` | DOM/JS/ITEMS/WAKA/音源/Three.js r128 API の静的検証 |
 | `npm run smoke` | Playwright起動スモーク（起動・全モード開始・音ON/OFF・季節時刻切替） |
 | `npm run verify:public` | 公開URLの内容検証（デプロイ後に実行） |
@@ -49,3 +49,6 @@
 - docs/handbook/HANDOFF_LATEST.md — 最新の引き継ぎ・衝突しやすい領域
 - IMPLEMENTATION_STATUS.md — main/ブランチの実装棚卸し
 - docs/handbook/REPO_CLEANUP_RUNBOOK.md — ブランチ掃除・履歴スリム化の手順書（要ローカル実行）
+- docs/plans/MODULARIZATION_PLAN.md — 本体HTMLのソース分割設計（抽出順序・リスク階層・共通ビルド基盤）
+- docs/plans/QA_STRATEGY.md — 回帰を捕まえる検証網の設計（シナリオスモーク・性能予算）
+- story/STYLE_RUBRIC.md — 物語の文体規範・時代考証チェックリスト・章品質ルーブリック（章の執筆前に必読）
