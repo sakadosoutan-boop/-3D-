@@ -49,3 +49,6 @@
 - docs/handbook/HANDOFF_LATEST.md — 最新の引き継ぎ・衝突しやすい領域
 - IMPLEMENTATION_STATUS.md — main/ブランチの実装棚卸し
 - docs/handbook/REPO_CLEANUP_RUNBOOK.md — ブランチ掃除・履歴スリム化の手順書（要ローカル実行）
+- docs/plans/MODULARIZATION_PLAN.md — 本体HTMLのソース分割設計（抽出順序・リスク階層・共通ビルド基盤）
+- docs/plans/QA_STRATEGY.md — 回帰を捕まえる検証網の設計（シナリオスモーク・性能予算）
+- story/STYLE_RUBRIC.md — 物語の文体規範・時代考証チェックリスト・章品質ルーブリック（章の執筆前に必読）
