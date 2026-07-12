@@ -1,0 +1,256 @@
+{
+  "_draft": true,
+  "_note": "第2モード『巡り歌合』パイロット脚本。設計: docs/plans/SECOND_STORY_MODE_MEGURI.md。story/chapters/ ではなく drafts のため build-story 対象外（未実装 gameMode: utakai_meguri / kaimami_zure を含む）。実装後に chapters へ昇格する。",
+  "chapterId": 101,
+  "chapterTitle": "巡り歌合・序 ― 宵、判者に据えらる",
+  "season": "autumn",
+  "timeOfDay": "night",
+  "startSequence": [
+    {
+      "id": "m_000",
+      "type": "dialogue",
+      "speaker": "小萩（声のみ）",
+      "text": "――また、この頁をひらいてしまいました。あなたが眠っているあいだ、わたくしは何度でも読みます。読むたびに、少しずつ違う夜になるのを承知の上で。",
+      "se": "koto",
+      "next": "m_000b"
+    },
+    {
+      "id": "m_000b",
+      "type": "dialogue",
+      "speaker": "小萩（声のみ）",
+      "text": "はじめに申しておきます。今宵は、歌合（うたあわせ）の夜。左と右に分かれて歌を競い、勝ち負けを定める、雅（みやび）の戦にございます。",
+      "next": "m_000c"
+    },
+    {
+      "id": "m_000c",
+      "type": "dialogue",
+      "speaker": "小萩（声のみ）",
+      "text": "そして、あなたはその勝ち負けを裁く役――判者（はんじゃ）に据えられます。歌の一首も読めぬまま。……ええ、無茶にございます。無茶を承知で、そう決まっているのです。",
+      "next": "m_000d"
+    },
+    {
+      "id": "m_000d",
+      "type": "dialogue",
+      "speaker": "小萩（声のみ）",
+      "text": "ひとつだけ。夜明けの鶏（とり）が鳴いても、終わったと思わぬこと。……さあ、灯を入れましょう。今宵、幾度目かの宵の口を。",
+      "se": "bell",
+      "next": "m_001"
+    },
+    {
+      "id": "m_001",
+      "type": "set_scene",
+      "season": "autumn",
+      "timeOfDay": "night",
+      "playerStart": { "x": 0.2, "z": 6.0, "yaw": 3.14 },
+      "cameraAngleId": "cam_meguri_hall",
+      "fade": "black",
+      "stage": { "location": "mansion", "loopIndex": 1 },
+      "next": "m_002"
+    },
+    {
+      "id": "m_002",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "母屋（もや）に、灯台の火が列（つら）なっていた。左に紅、右に青の几帳。その前に歌人たちが居並び、扇の陰で低く言葉を練っている。板敷の冷えが、袴（はかま）ごしに膝へ這い上がってきた。――夢にしては、指先がかじかむ。",
+      "next": "m_003"
+    },
+    {
+      "id": "m_003",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「時任（ときとう）の君。今宵の判者は、そなたぞ。左右の歌、いずれが勝(まさ)るか――扇にて、指し示されよ」",
+      "emotes": { "hanja": "stern" },
+      "cameraAngleId": "cam_meguri_fan",
+      "stage": { "judgeFanText": "判" },
+      "next": "m_004"
+    },
+    {
+      "id": "m_004",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（判者。……勝ち負けを、俺が決める。和歌なんて、テストで記号を選んだきりなのに。逃げ場を探して首を巡らせても、簀子（すのこ）の外は、墨を流したみたいな闇だ）",
+      "next": "m_005"
+    },
+    {
+      "id": "m_005",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「若君。判者は、上手（じょうず）を選ぶのではございませぬ。どちらの歌が、〈題（だい）の心〉に深く触れたか――それだけを聴くのです。今宵の題は、『待つ』」",
+      "emotes": { "kohagi": "listen" },
+      "next": "m_006"
+    },
+    {
+      "id": "m_006",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "左方の歌人が、扇をひらいて詠み上げた。声は、乾いた紙をすべる筆のようだった。",
+      "next": "m_007_left"
+    },
+    {
+      "id": "m_007_left",
+      "type": "dialogue",
+      "speaker": "左方の歌人",
+      "text": "「今来（こ)むと 言ひしばかりに 長月（ながつき）の 有明（ありあけ）の月を 待ち出でつるかな」",
+      "se": "wind",
+      "next": "m_008_left_gloss"
+    },
+    {
+      "id": "m_008_left_gloss",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「――『すぐ行く』とだけ言った人を、待つうちに、長月の夜が明けて有明の月まで見てしまった。待つ側の、なだらかな諦めにございます」",
+      "next": "m_009_right"
+    },
+    {
+      "id": "m_009_right",
+      "type": "dialogue",
+      "speaker": "右方の歌人",
+      "text": "「玉の緒（たまのを）よ 絶えなば絶えね ながらへば 忍ぶることの 弱りもぞする」",
+      "se": "wind",
+      "next": "m_010_right_gloss"
+    },
+    {
+      "id": "m_010_right_gloss",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「――命よ、絶えるなら絶えてしまえ。生きながらえれば、秘めた想いが、こらえきれずに露(あらわ)れてしまう。……待つのではなく、想いを〈断って〉待とうとする歌にございます」",
+      "next": "m_011_judge_choice"
+    },
+    {
+      "id": "m_011_judge_choice",
+      "type": "choice",
+      "text": "扇を、どちらへ。題は『待つ』。",
+      "options": [
+        {
+          "text": "左（今来むと）――穏やかに待ち明かす心を勝ちとする",
+          "next": "m_012_fair",
+          "effects": { "fantasySynchro": 6, "judgedFairly": 1 }
+        },
+        {
+          "text": "右（玉の緒よ）――命を懸けて堪える激しさを勝ちとする",
+          "next": "m_012_fair",
+          "effects": { "fantasySynchro": 6, "judgedFairly": 1 }
+        },
+        {
+          "text": "「どっちが上手いかなんて分からない」と勘で指す",
+          "next": "m_012_unfair",
+          "effects": { "realityEgo": 4, "brainErosion": 8 }
+        }
+      ]
+    },
+    {
+      "id": "m_012_fair",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「――理（ことわり）を添えて指したな。よい判詞（はんじ）ぞ。歌を〈聴いて〉裁く者は、久しい」",
+      "emotes": { "hanja": "nod" },
+      "effects": { "fantasySynchro": 3 },
+      "next": "m_013_last"
+    },
+    {
+      "id": "m_012_unfair",
+      "type": "dialogue",
+      "speaker": "判者",
+      "text": "「勘で指した扇は、勘で覆(くつがえ)る。……頭の芯が、鳴っておろう。判者が歌を聴かねば、この夜は、明けぬぞ」",
+      "effects": { "brainErosion": 4 },
+      "next": "m_013_last"
+    },
+    {
+      "id": "m_013_last",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "幾番かが過ぎ、最後の番となった。右方の末席――ひとりだけ、几帳の影に沈んで顔を伏せた女房が、静かに膝を進めた。薄紫の袖口が、灯にほのかに透ける。",
+      "cameraAngleId": "cam_meguri_last",
+      "next": "m_014_yomibito"
+    },
+    {
+      "id": "m_014_yomibito",
+      "type": "dialogue",
+      "speaker": "詠み人",
+      "text": "「……この一首は、返(かえ)しを、いただけぬ歌にございます。だから、幾度でも――詠みます。花の色は うつりにけりな いたづらに……」",
+      "se": "koto",
+      "emotes": { "yomibito": "sad" },
+      "next": "m_015_break"
+    },
+    {
+      "id": "m_015_break",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "詠み終わらぬうちに、遠くで鶏（とり）が鳴いた。一度、二度。灯の列が、端から吹き消されるように暗み、女房の声だけが、水（みず）の底へ引きずり込まれるように遠ざかる。――判じて、いない。まだ、最後の番を。",
+      "se": "gong",
+      "fade": "white",
+      "next": "m_016_loop"
+    },
+    {
+      "id": "m_016_loop",
+      "type": "set_scene",
+      "season": "autumn",
+      "timeOfDay": "night",
+      "playerStart": { "x": 0.2, "z": 6.0, "yaw": 3.14 },
+      "cameraAngleId": "cam_meguri_hall",
+      "fade": "black",
+      "stage": { "location": "mansion", "loopIndex": 2, "seasonMismatch": "sakura_in_autumn" },
+      "next": "m_017_zure_intro"
+    },
+    {
+      "id": "m_017_zure_intro",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（また、宵の口だ。同じ灯、同じ几帳。……いや。違う。庭だ。秋の庭に、桜が咲いている。散りもせず、この九月（ながつき）の夜に。教科書なら、赤ペンで直される種類の〈間違い〉だ）",
+      "next": "m_018_kohagi"
+    },
+    {
+      "id": "m_018_kohagi",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「お気づきになりましたか。……あの方の歌が、季(とき)を巻き戻しております。『花の色は うつりにけりな』――散るはずの花が、散れぬまま留まっているのです。歌に詠まれた景が、庭に滲(にじ)み出したしるし」",
+      "emotes": { "kohagi": "stern" },
+      "setFlag": { "meguriCount": 2 },
+      "next": "m_019_kaimami"
+    },
+    {
+      "id": "m_019_kaimami",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「若君。今宵は判ずるより先に、〈ズレ〉を拾いなされ。歌の景と、庭の景の、食い違うところを。それが、あの方の返してほしい言葉への、道しるべにございます」",
+      "next": "m_020_kaimami_game"
+    },
+    {
+      "id": "m_020_kaimami_game",
+      "type": "trigger_minigame",
+      "gameMode": "kaimami_zure",
+      "payload": {
+        "target": "sakura_unfallen",
+        "hintWakaId": "waka_sp3",
+        "observeCount": 1,
+        "teach": "「ふる」＝経る・降る、「ながめ」＝眺め・長雨 の掛詞。時が〈経る〉のに花は散らず、〈長雨〉ならぬ夜露に濡れて留まる。"
+      },
+      "successEffects": { "fantasySynchro": 5, "zureFound": 1, "brainErosion": -3 },
+      "failEffects": { "brainErosion": 6 },
+      "successNext": "m_021_after",
+      "failNext": "m_019_kaimami"
+    },
+    {
+      "id": "m_021_after",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "（「花の色は うつりにけりな いたづらに わが身世(よ)にふる ながめせしまに」。……ふる、が二つ。経つ時間と、降る雨。ながめ、も二つ。物思いと、長雨。一つの言葉が、二つの景を同時に指してる。だから――散らない花と、明けない夜が、同じ一語で結ばれてる）",
+      "next": "m_022_hook"
+    },
+    {
+      "id": "m_022_hook",
+      "type": "dialogue",
+      "speaker": "詠み人（几帳の陰）",
+      "text": "「……お気づきに、なりましたか。ならば、あと幾巡り。わたくしがこの歌に何を〈掛けた〉のか、最後まで読み解いて――そのうえで、返しておくれなさいませ。裁くのではなく」",
+      "emotes": { "yomibito": "listen" },
+      "next": "m_023_pilot_end"
+    },
+    {
+      "id": "m_023_pilot_end",
+      "type": "dialogue",
+      "speaker": "語り",
+      "text": "――パイロット脚本はここまで。この先、巡回のたびに景物のズレ（月が二つ／灯籠の逆流／梶の葉の先書き）を拾い、掛詞・縁語・本歌を読み解いて『詠み人』の未練へ至る。最終巡回で、彼女の一首への〈返し歌〉を選び、ループを解く（設計: docs/plans/SECOND_STORY_MODE_MEGURI.md §4-§5）。",
+      "next": "chapter_complete"
+    }
+  ]
+}
