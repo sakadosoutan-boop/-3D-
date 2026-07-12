@@ -20,6 +20,9 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Check app css embed is in sync with sources
+        run: node scripts/build-app-css.js --check
+
       - name: Check story embed is in sync with sources
         run: node scripts/build-story.js --check
 
