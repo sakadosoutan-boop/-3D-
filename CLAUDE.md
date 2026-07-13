@@ -9,7 +9,7 @@
   位置特定は docs/handbook/PROJECT_MAP.md の検索アンカー表を使い、部分Readのみ。
   本体HTML内の調査は html-scout サブエージェント（.claude/agents/html-scout.md）に委譲する。
 - 変更後は `npm test` を通す。story/ を触ったら `npm run build:story:check` 必須（.claude/rules/story.md 参照）。
-- CSS・図鑑(ITEMS)・和歌(WAKA_DATA)・クイズ対象(QUIZ_POOL)は `src/app/` 配下のソースを編集し、`npm run build:app` で本体へ反映（同期確認は `npm run build:app:check`）。本体HTML内の該当ブロックは直接編集しない。ブロック対応表は scripts/app-manifest.json。
+- CSS・図鑑(ITEMS)・和歌(WAKA_DATA)・クイズ対象(QUIZ_POOL)・鎌倉マップ(map-kamakura)は `src/app/` 配下のソースを編集し、`npm run build:app` で本体へ反映（同期確認は `npm run build:app:check`）。本体HTML内の該当ブロックは直接編集しない。ブロック対応表は scripts/app-manifest.json。
 - Claude/Codex 並行時は専用ブランチ（claude/○○ / codex/○○）で作業し、main へ直接編集しない。マージ済みブランチは統合後に削除する。
 
 ## 検証コマンド
@@ -25,6 +25,7 @@
 
 - URL: https://sakadosoutan-boop.github.io/-3D-/（pages.yml が main push でリポジトリ全体を公開）
 - 公開確認の手順は .claude/skills/deploy-check/ を参照（Pages完了待ち→キャッシュバスト付き確認）。
+- 鎌倉武家屋敷マップ: URL末尾に `?map=kamakura` で起動（散策専用・図鑑/クイズ未対応=P1）。考証と設計は docs/plans/KAMAKURA_BUKE_YASHIKI_PLAN.md。
 
 ## モデル/トークン運用（標準指示）
 
