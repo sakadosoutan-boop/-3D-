@@ -699,6 +699,18 @@ function stApplyPresentation(ev){
       if(st.purpleCord)stPlaceEd1Tanzaku();
     }
   }
+  // 巡り歌合(第2モード)add-on: stage のループ制御フィールドを routeFlags へ橋渡しする。
+  // 役者(S.actors)の有無に依存せず作用させ、既存章の stage には無いフィールドのみ扱うため既存挙動へ影響しない。
+  if(ev.stage&&SM&&SM.state){
+    const stg=ev.stage,rf=SM.state.routeFlags||(SM.state.routeFlags={});
+    // loopIndex(巡回数): meguriCount へ最大値更新で反映。演出は不要=将来の巡回演出用フック(現状は状態反映のみ)
+    if(stg.loopIndex!=null){
+      const li=Number(stg.loopIndex)||0;
+      if(li>(Number(rf.meguriCount)||0)){rf.meguriCount=li;if(SM.save)SM.save();}
+    }
+    // seasonMismatch(景物ズレのキー): lastZureKey へ保存。P3は演出プレースホルダ=保存のみ(桜等の非季節オブジェクト表示は未実装)
+    if(stg.seasonMismatch!=null){rf.lastZureKey=stg.seasonMismatch;if(SM.save)SM.save();}
+  }
   if(ev.cameraAngleId)stCamera(ev.cameraAngleId);
   // 波AA: dialogue/choice/set_sceneノードからも直接エフェクトを起こせるようにする(専用effectノードを挟まず済む)。
   // カメラ切替の後に発火させ、カメラを使う演出(例:黒板への吸い込み)が新しい位置から正しく始まるようにする。
@@ -1461,6 +1473,25 @@ function stMiniGame(info){
     toast("垣間見の試練——巡回を避け、三つの観察地点から姫君を捉えよ",3600);
     return;
   }
+  if(info.gameMode==="kaimami_zure"){
+    // 巡り歌合(第2モード): kaimami_story の派生。観察対象を「人(姫君)」から「景物のズレ」へ置き換える。
+    // P3では target 別の3D演出はプレースホルダ——既存の垣間見(観察地点マーカー)UI・入力系をそのまま流用し、
+    // 対象座標は payload.pos があればそれを、無ければ既定の観察地点を用いる(将来 target/pos 別演出を差し込むフック)。
+    const pl=info.payload||{};
+    APP.storyKaimami=(ok,caught)=>{
+      enterMode("story");
+      // 観察成功時、payload.teach(掛詞/縁語等の学び)を既存の字幕(toast)系で提示してから成功遷移(successNext)へ返す
+      info.complete({success:ok,effects:caught>0?{brainErosion:Math.min(12,caught*3)}:{brainErosion:-2}});
+      if(caught>0)toast("気配に気取られた回数 "+caught+"回——反復が心を削った",2400);
+      if(ok&&pl.teach)setTimeout(()=>toast(pl.teach,5200),450); // 遅延させ、直前の警告toastより優先して残す
+    };
+    if(typeof camera!=="undefined"){camera.fov=62;camera.updateProjectionMatrix();}
+    // 将来: pl.target/pl.pos を観察地点マーカーへ渡す。P3は既定の観察地点をプレースホルダとして流用する
+    enterMode("kaimami");
+    const zn=pl.target?("〈"+pl.target+"〉"):"景物";
+    toast("巡りの垣間見——庭の"+zn+"の〈ズレ〉を、観察地点から捉えよ",3600);
+    return;
+  }
   if(info.gameMode==="taiji_kappa_story"||info.gameMode==="taiji_oni_story_final"){
     const oniFinal=info.gameMode==="taiji_oni_story_final";
     if(S.oni){window.StoryObjects.disposeGroup(S.oni.group);S.oni=null;} // 見せ大鬼は実戦と交代
@@ -1515,6 +1546,32 @@ function stMiniGame(info){
     enterMode("utakai");
     // 波AN: 歌合の目的を初見向けに簡潔に(手札から題・場に合う一首を選ぶ／三番中二番で勝ち)
     setTimeout(()=>toast("歌合——手札から、題と場にかなう一首を選ぶ。三番のうち二番取れば勝ち",4200),750);
+    return;
+  }
+  if(info.gameMode==="utakai_meguri"){
+    // 巡り歌合(第2モード): utakai_story の派生。勝負ループ本体・全札開放(storyUtakaiFullDeck)は歌合と同一。
+    // 差分: 終了時に meguriWins を routeFlags へ記録し、kaeshiPhase では勝負後に「返し歌の態度」3択(既存パネルUI流用)を
+    //       挟んで選択キーを routeFlags.kaeshiChosen へ保存してから成功遷移する。
+    const pl=info.payload||{};
+    APP.storyUtakaiFullDeck=true; // 歌合と同じく手札を全歌から引く(運ゲー感の緩和)
+    APP.storyUtakai=(ok,wins)=>{
+      APP.storyUtakaiFullDeck=false;
+      enterMode("story");
+      const w=wins|0;
+      if(ok&&w>=3)toast("✨ 三番全勝——巡りの宴、判者の名に恥じぬ勝ち",2800);
+      // 返し歌フェーズ: 態度3択を出し、kaeshiChosen を保存してから成功遷移(既存 stPanel の選択UIを流用)
+      if(ok&&pl.kaeshiPhase&&Array.isArray(pl.kaeshiOptions)&&pl.kaeshiOptions.length){
+        const body='<div class="st-slot-note">'+stEsc(pl.kaeshiPrompt||"詠み人の一首に、どう返す。")+'</div>';
+        const btns=pl.kaeshiOptions.map(o=>[String(o.label==null?o.key:o.label),
+          ()=>info.complete({success:true,flags:{meguriWins:w,kaeshiChosen:o.key}})]);
+        stPanel("返し歌",body,btns);
+        return;
+      }
+      info.complete({success:ok,flags:{meguriWins:w}});
+    };
+    if(typeof camera!=="undefined"){camera.fov=62;camera.updateProjectionMatrix();}
+    enterMode("utakai");
+    setTimeout(()=>toast("巡り歌合——手札から題と場にかなう一首を。三番のうち二番取れば勝ち",4200),750);
     return;
   }
   // 未知のモードだけ従来のパネル(保険)
