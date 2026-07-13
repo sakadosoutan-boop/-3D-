@@ -3388,6 +3388,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
     <div class="onboard-actions">
       <button class="t-btn gold" id="onboardStartWalk">🚶 まずは散策から始める（おすすめ）</button>
       <button class="onboard-skip" id="onboardSkip">自分で選ぶ</button>
+      <a class="onboard-skip" id="onboardKamakuraLink" href="?map=kamakura" style="text-decoration:underline;text-underline-offset:3px;">🏯 新登場: 鎌倉の武家屋敷を歩く</a>
     </div>
   </div>
 </div>
@@ -22731,8 +22732,39 @@ if(APP.map==="kamakura"){
     st.textContent="html.map-kamakura #minimapWrap,html.map-kamakura #btnQuizMode,"
       +"html.map-kamakura #btnTaikenMode,html.map-kamakura #btnMiniGameMode,"
       +"html.map-kamakura #btnRenaiMode,html.map-kamakura #btnStory,"
-      +"html.map-kamakura #btnCodex,html.map-kamakura #btnCareer{display:none!important;}";
+      +"html.map-kamakura #btnCodex,html.map-kamakura #btnCareer,"
+      +"html.map-kamakura #tbCodex,html.map-kamakura #tbMap,"
+      +"html.map-kamakura #onboardKamakuraLink{display:none!important;}";
     (document.head||document.documentElement).appendChild(st);
+
+    /* タイトル画面を鎌倉仕様へ差替え。
+       「自分で選ぶ」(onboardSkip)は、不可視の平安オブジェクトを対象とする
+       クイズ/立身伝等へ入れてしまい詰むため、このマップでは封鎖する。 */
+    const t=document.getElementById("onboardTitle");
+    if(t)t.textContent="ようこそ、鎌倉の武家屋敷へ";
+    const lead=document.querySelector("#onboardPanel .onboard-lead");
+    if(lead)lead.innerHTML="あなたは東国の御家人の館を訪れた、都育ちの見習い。堀を渡り、矢倉門をくぐり、武士の暮らしを歩いて確かめよう。<br>「寝殿造りと、どこが違うか」を探すことが、そのまま学びになる。";
+    const route=document.querySelector("#onboardPanel .onboard-route");
+    if(route)route.textContent="🚶散策で館を歩く → 🐎厩・的場・持仏堂を見つける → 🏯寝殿造りの邸と見比べる";
+    const skip=document.getElementById("onboardSkip");
+    if(skip)skip.style.display="none";
+    const acts=document.querySelector("#onboardPanel .onboard-actions");
+    if(acts){
+      const a=document.createElement("a");
+      a.href=location.pathname;
+      a.textContent="↩ 平安の邸(寝殿造り)にもどる";
+      a.style.cssText="display:block;margin-top:10px;font-size:12.5px;color:#8a6a45;text-align:center;text-decoration:underline;text-underline-offset:3px;";
+      acts.appendChild(a);
+    }
+    /* 開始ボタンの案内トーストを鎌倉仕様へ差替え(元は図鑑/立身伝という平安専用システムの案内) */
+    const sw=document.getElementById("onboardStartWalk");
+    if(sw)sw.onclick=()=>{
+      onboardClose();
+      enterMode("walk");
+      setTimeout(()=>toast("左下のスティックで歩き、画面ドラッグで見回そう",3200),0);
+      setTimeout(()=>toast("堀・土塁・矢倉門——寝殿造りとの「違い」を探してみよう",3400),3800);
+      setTimeout(()=>toast("厩(うまや)の馬、的場の垜(あずち)、持仏堂も見どころだ",3400),7800);
+    };
   })();
 
   /* ---- 3. プレイヤー開始位置: 矢倉門の外(南)。門へ正対して入る動線 ----
@@ -23088,6 +23120,24 @@ if(APP.map==="kamakura"){
     let h=0;
     for(const z of KAMA_ZONES){ if(Math.abs(px-z[0])<=z[2]/2 && Math.abs(pz-z[1])<=z[3]/2 && z[4]>h) h=z[4]; }
     return h;
+  };
+
+  /* ---- 17. モード進入の入口ゲート(散策専用マップの根本保証) ----
+     クイズ/立身伝/物語などは不可視の平安オブジェクトを対象とするため、
+     どのUI経路(ボタン・メニュー・将来の導線)から呼ばれても enterMode で一括遮断する。
+     モード紹介カード(modeBriefData)の散策文も鎌倉仕様に差し替える。 */
+  const _enterMode=enterMode;
+  enterMode=function(m){
+    if(m!=="walk"&&m!=="title"){ toast("この館は散策専用です(クイズ等は平安の邸で)",2600); return; }
+    return _enterMode(m);
+  };
+  const _modeBriefData=modeBriefData;
+  modeBriefData=function(m){
+    if(m==="walk")return {kicker:"KAMAKURA",title:"武家の館を歩く",
+      lead:"鎌倉時代・東国御家人の館。寝殿造りの邸と「どこが違うか」を探しながら歩く散策モードです。",
+      goals:["堀・土塁・矢倉門——「守りの構え」を見つける","主殿・厩・的場・持仏堂を見つける","寝殿造りとの違いを3つ、自分の言葉で言ってみる"],
+      controls:["WASD / ジョイスティック:移動","画面ドラッグ:見回す","👁:俯瞰"]};
+    return _modeBriefData(m);
   };
 }
 /* APP_KAMAKURA_EMBED_END */
