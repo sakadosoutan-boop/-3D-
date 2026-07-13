@@ -18633,7 +18633,14 @@ window.STORY_EMBED={"manifest":{"version":1,"basePath":"story/chapters/","chapte
     NORMAL: "ED2_NORMAL",
     BAD_GAMEOVER: "ED3_GAMEOVER",
     BAD_SYNC: "ED4_SYNC",
-    SPOOKY: "ED5_SPOOKY"
+    SPOOKY: "ED5_SPOOKY",
+    /* 巡り歌合(第2モード)add-on: 第2モード専用の4結末ID。第1モードのED1〜5とは別系統。
+       章(story/chapters/)未実装のため、determineEnding が返すIDのみ定義する。
+       STORY_ENDING_ENTRY へのエピローグ・マッピングは章実装時に登録する(現状は triggerEnding へ素通し)。 */
+    MEGURI_TRUE: "MEGURI_ED1_TRUE",
+    MEGURI_DRAW: "MEGURI_ED2_DRAW",
+    MEGURI_CURSE: "MEGURI_ED3_CURSE",
+    MEGURI_SPOOKY: "MEGURI_ED4_SPOOKY"
   });
 
   /* 波AB: 第5話の判定から、結末カードへ直行せず、第6話の該当エピローグへ直接つなげる入口。
@@ -19043,6 +19050,27 @@ window.STORY_EMBED={"manifest":{"version":1,"basePath":"story/chapters/","chapte
     determineEnding(requirements = {}){
       const p = this.state.params;
       const f = this.state.routeFlags;
+      /* === 巡り歌合(第2モード)add-on: 早期分岐 ===
+         meguri系フラグ(meguriCount>=1)が立っている巡回時のみ、第2モード専用の4結末を先に判定する。
+         meguriCount 未設定(=既存ch1〜6の全ルート)のときはこのブロックを完全に素通しし、
+         従来ロジック(ED1〜5)へ一切影響を与えない=既存6章の結末判定は不変。
+         数値フラグ(zureFound/yomiSolved/meguriCount)は effects の加算機構で貯まり、
+         kaeshiChosen は utakai_meguri の返し歌選択(story_runtime.js)で保存される想定。 */
+      if((Number(f.meguriCount) || 0) >= 1){
+        const zureFound = Number(f.zureFound) || 0;
+        const yomiSolved = Number(f.yomiSolved) || 0;
+        const megCount = Number(f.meguriCount) || 0;
+        // 蝕(brainErosion)限界 または 巡回過多 → 蝕ED(百夜一夜・第1モードED5と対のSpooky)
+        if(p.brainErosion >= 100 || megCount >= 8)return STORY_ENDINGS.MEGURI_SPOOKY;
+        // 歌でなく勝敗で押し切った(裁く) → 呪ED(詠み残し・Bad)
+        if(f.kaeshiChosen === "sabaku")return STORY_ENDINGS.MEGURI_CURSE;
+        // ズレ4・読み3・返し歌「返す」・雅50以上 → 真ED(明けの歌)
+        if(zureFound >= 4 && yomiSolved >= 3 && f.kaeshiChosen === "kaesu" && p.fantasySynchro >= 50){
+          return STORY_ENDINGS.MEGURI_TRUE;
+        }
+        // それ以外 → 和ED(引き分けの宵)
+        return STORY_ENDINGS.MEGURI_DRAW;
+      }
       if(p.brainErosion >= 100)return STORY_ENDINGS.SPOOKY;
       if(f.chapter4Lost || f.chapter5Lost)return STORY_ENDINGS.BAD_GAMEOVER;
 
