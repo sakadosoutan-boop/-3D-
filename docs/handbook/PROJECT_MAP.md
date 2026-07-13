@@ -23,6 +23,7 @@
 | `src/app/items.js` | 本体HTMLから分離した図鑑データ(ITEMS)の正本。編集後 `npm run build:app` で本体へ注入 |
 | `src/app/waka.js` | 本体HTMLから分離した和歌データ(WAKA_DATA)の正本。編集後 `npm run build:app` で本体へ注入 |
 | `src/app/quiz-pool.js` | 本体HTMLから分離したクイズ対象(QUIZ_POOL)の正本。編集後 `npm run build:app` で本体へ注入 |
+| `src/app/map-kamakura.js` | 鎌倉武家屋敷マップ(`?map=kamakura`)の正本。設計は docs/plans/KAMAKURA_BUKE_YASHIKI_PLAN.md。編集後 `npm run build:app` |
 | `scripts/build-story.js` | 章JSONからHTML内 `STORY_EMBED` を同期/確認 |
 | `scripts/build-app.js` | manifest(scripts/app-manifest.json)駆動で src/app/ の全ブロックをHTMLへ同期/確認/初回抽出 |
 | `scripts/app-manifest.json` | 分離ブロックの対応表（name / src / マーカー）。ブロック追加はここに定義 |

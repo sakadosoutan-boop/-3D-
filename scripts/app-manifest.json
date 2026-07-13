@@ -28,5 +28,12 @@
     "decl": "const QUIZ_POOL=",
     "begin": "/* APP_QUIZ_EMBED_BEGIN (src/app/quiz-pool.js から自動生成。ここを直接編集しない) */",
     "end": "/* APP_QUIZ_EMBED_END */"
+  },
+  {
+    "name": "kamakura",
+    "src": "src/app/map-kamakura.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_KAMAKURA_EMBED_BEGIN (src/app/map-kamakura.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_KAMAKURA_EMBED_END */"
   }
 ]
