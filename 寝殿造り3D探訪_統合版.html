@@ -22735,7 +22735,51 @@ if(APP.map==="kamakura"){
       +"html.map-kamakura #btnCodex,html.map-kamakura #btnCareer,"
       +"html.map-kamakura #tbCodex,html.map-kamakura #tbMap,"
       +"html.map-kamakura #onboardKamakuraLink{display:none!important;}";
+    /* ---- 配色(計画§1): 平安=金×朱×暖色の雅 → 鎌倉=藍×鉄紺×柿渋の質実。
+       まず :root変数(金/朱/漆黒/胡粉)を html.map-kamakura スコープで上書きし、
+       ページ全体に散る金色・朱色を一掃(--kin64件/--shu16件/--gofun40件を一括で
+       鎌倉トークンへ)。そのうえで、色をハードコードした主要素(タイトル背景・
+       onboardカード・主ボタン・トップバー地・toast地)を個別に鉄紺/藍へ差し替える。
+       すべて html.map-kamakura スコープ＝平安側は1宣言も変わらない。 ---- */
+    st.textContent+=
+      "html.map-kamakura{--urushi:#0f141b;--kin:#5f86ac;--shu:#a8552e;--shu-bright:#c06a3a;--gofun:#dfe3d6;--moegi:#6f8f7a;}"
+      /* タイトル画面の背景(鉄紺)。暖色の紙テクスチャ(::before opacity.92)を
+         沈め・脱色して鉄紺グラデを前に出し、副題の暖色タンも寒色へ(金/朱の残り一掃) */
+      +"html.map-kamakura #title{background:radial-gradient(ellipse at 50% 28%,#223141 0%,#161d26 58%,#0b0f15 100%)!important;}"
+      +"html.map-kamakura #title::before{opacity:.2!important;filter:grayscale(.72) brightness(.68)!important;}"
+      +"html.map-kamakura .t-sub{color:#9aa89e!important;}"
+      +"html.map-kamakura #titleAudioHint{background:rgba(18,25,34,.55)!important;border-color:rgba(63,109,158,.45)!important;color:#c9cdbd!important;}"
+      /* トップバー地(鉄紺)＋ロゴ(銀鼠) */
+      +"html.map-kamakura #topbar{background:linear-gradient(180deg,rgba(18,25,34,.94),rgba(13,18,26,.82))!important;border-bottom-color:rgba(63,109,158,.5)!important;}"
+      +"html.map-kamakura #topbar .brand{color:#c9cdbd!important;}"
+      /* トップバーの常設ボタン(季節/時刻/画質/音量)とモードタグ: 暖色地/朱/金縁を鉄紺・藍へ。
+         .tb-btn.on の地は --shu 上書きで既に柿渋になるため金縁だけ直す */
+      +"html.map-kamakura .tb-btn{background:rgba(26,34,44,.85)!important;border-color:rgba(63,109,158,.5)!important;}"
+      +"html.map-kamakura .tb-btn:hover,html.map-kamakura .tb-btn:focus-visible{border-color:rgba(111,143,122,.85)!important;}"
+      +"html.map-kamakura .tb-btn.on{border-color:rgba(200,150,110,.9)!important;}"
+      +"html.map-kamakura #modeTag{background:rgba(63,109,158,.85)!important;}"
+      +"html.map-kamakura #tbTitle{background:linear-gradient(180deg,rgba(26,34,44,.96),rgba(18,25,34,.96))!important;}"
+      /* onboardカード地(鉄紺)＋内部の文字を銀鼠へ反転(暗地対応) */
+      +"html.map-kamakura .onboard-card{background:linear-gradient(100deg,#12181f,#1b232e 12%,#212c39 50%,#1b232e 88%,#12181f)!important;border-left-color:#3f6d9e!important;border-right-color:#3f6d9e!important;color:#c9cdbd!important;box-shadow:0 18px 72px rgba(0,0,0,.72),0 0 0 1px rgba(120,150,180,.28) inset!important;}"
+      +"html.map-kamakura .onboard-card::before,html.map-kamakura .onboard-card::after{background:linear-gradient(180deg,#2f4a66,#182839)!important;}"
+      +"html.map-kamakura .onboard-title{color:#d5d9cb!important;text-shadow:0 1px 0 rgba(0,0,0,.5)!important;}"
+      +"html.map-kamakura .onboard-lead{color:#bcc1b2!important;}"
+      +"html.map-kamakura .onboard-route{color:#aeb4a4!important;background:rgba(63,109,158,.12)!important;border-color:rgba(63,109,158,.42)!important;}"
+      +"html.map-kamakura .onboard-skip{color:#aeb4a4!important;border-color:rgba(111,143,122,.42)!important;}"
+      +"html.map-kamakura .onboard-skip:hover{color:#e6e9dd!important;border-color:#a8552e!important;}"
+      /* 主ボタン(gold系→藍系グラデ。文字色/縁は変数上書きで追随) */
+      +"html.map-kamakura .t-btn{background:linear-gradient(155deg,#3f6d9e,#22405f)!important;border-color:#6f93b8!important;}"
+      +"html.map-kamakura .t-btn.gold{background:linear-gradient(155deg,#3f6d9e,#22405f)!important;border-color:#8fb0d2!important;}"
+      +"html.map-kamakura .t-btn:hover,html.map-kamakura .t-btn:active{box-shadow:0 6px 18px rgba(63,109,158,.5)!important;}"
+      /* toast地(鉄紺・藍縁) */
+      +"html.map-kamakura #toast{background:linear-gradient(180deg,rgba(22,29,38,.96),rgba(11,15,21,.95))!important;border-color:rgba(63,109,158,.7)!important;}";
     (document.head||document.documentElement).appendChild(st);
+
+    /* トップバーのロゴと文書タイトルを鎌倉仕様へ(平安の静的DOMを本マップ時のみ差替え。
+       document.title はJS設定箇所が他に無く、静的<title>を上書きするだけで競合しない) */
+    const brand=document.querySelector("#topbar .brand");
+    if(brand)brand.textContent="武家屋敷探訪";
+    document.title="鎌倉武家屋敷3D探訪 〜東国御家人の館を歩く〜";
 
     /* タイトル画面を鎌倉仕様へ差替え。
        「自分で選ぶ」(onboardSkip)は、不可視の平安オブジェクトを対象とする
@@ -22753,7 +22797,7 @@ if(APP.map==="kamakura"){
       const a=document.createElement("a");
       a.href=location.pathname;
       a.textContent="↩ 平安の邸(寝殿造り)にもどる";
-      a.style.cssText="display:block;margin-top:10px;font-size:12.5px;color:#8a6a45;text-align:center;text-decoration:underline;text-underline-offset:3px;";
+      a.style.cssText="display:block;margin-top:10px;font-size:12.5px;color:#8fb0d2;text-align:center;text-decoration:underline;text-underline-offset:3px;";
       acts.appendChild(a);
     }
     /* 開始ボタンの案内トーストを鎌倉仕様へ差替え(元は図鑑/立身伝という平安専用システムの案内) */
