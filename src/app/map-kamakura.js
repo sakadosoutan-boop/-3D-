@@ -23,6 +23,10 @@ if(APP.map==="kamakura"){
 
   const worldK=new THREE.Group(); scene.add(worldK);
 
+  /* 図鑑登録用オブジェクト参照(セクション19で register+makeLabel に使う)。
+     各造形の生成時にここへ代表グループ/メッシュを控える。平安側は本ブロック非実行=無影響。 */
+  const K={};
+
   /* 屋敷人物(household 11名)は非同期生成され、本ブロック実行時点(パース時)にはまだ scene 直下に
      存在せず、上の一括非表示を免れて鎌倉の庭に露出する(計画§4「平安の人物は出さない」に反する)。
      読み込み完了を見込んで数回、worldK と光源・天体を除く scene 直下を再非表示にして静的な平安人物を消す。
@@ -44,8 +48,8 @@ if(APP.map==="kamakura"){
     st.textContent="html.map-kamakura #minimapWrap,html.map-kamakura #btnQuizMode,"
       +"html.map-kamakura #btnTaikenMode,html.map-kamakura #btnMiniGameMode,"
       +"html.map-kamakura #btnRenaiMode,html.map-kamakura #btnStory,"
-      +"html.map-kamakura #btnCodex,html.map-kamakura #btnCareer,"
-      +"html.map-kamakura #tbCodex,html.map-kamakura #tbMap,"
+      +"html.map-kamakura #btnCareer,"
+      +"html.map-kamakura #tbMap,"
       +"html.map-kamakura #onboardKamakuraLink{display:none!important;}";
     /* ---- 配色(計画§1): 平安=金×朱×暖色の雅 → 鎌倉=藍×鉄紺×柿渋の質実。
        まず :root変数(金/朱/漆黒/胡粉)を html.map-kamakura スコープで上書きし、
@@ -260,8 +264,10 @@ if(APP.map==="kamakura"){
     if(o.kasa){                                                                                                             // 円錐の笠(農夫)
       const kasa=new THREE.Mesh(new THREE.ConeGeometry(.32,.28,16),M({color:o.kasaColor||0xc7a867,roughness:.95}));kasa.position.set(0,1.60,0);kasa.castShadow=true;kasa.receiveShadow=true;g.add(kasa);
     } else if(!o.monk){                                                                                                     // 侍烏帽子(僧は剃髪＝被り物なし)
-      const cap=new THREE.Mesh(new THREE.CylinderGeometry(.09,.115,.2,10),black);cap.position.set(0,1.58,-.01);cap.rotation.x=-.12;g.add(cap);
-      const capTop=box(.16,.1,.17,black,0,1.68,-.03);capTop.rotation.x=-.2;g.add(capTop);
+      const eb=new THREE.Group();                                                                                          // 図鑑「侍烏帽子」を頭部だけで別クリック対象にするため小グループ化
+      const cap=new THREE.Mesh(new THREE.CylinderGeometry(.09,.115,.2,10),black);cap.position.set(0,1.58,-.01);cap.rotation.x=-.12;eb.add(cap);
+      const capTop=box(.16,.1,.17,black,0,1.68,-.03);capTop.rotation.x=-.2;eb.add(capTop);
+      g.add(eb); g.userData.eboshi=eb;
     }
     [-1,1].forEach(s=>g.add(box(.03,.008,.008,new THREE.MeshBasicMaterial({color:0x201510}),s*.045,1.44,.14,false)));                          // 目
     if(o.monk){                                                                                                             // 数珠(小球の連なり)
@@ -286,22 +292,25 @@ if(APP.map==="kamakura"){
   /* ---- 6. 地形: 草地・堀・空堀・土橋 ---- */
   worldK.add(plane(MK.grass,140,140,0,-0.02,0));                               // 全体の草地
   const MOAT0=37,MOAT1=42;
-  worldK.add(plane(MAT.water,2*MOAT1,MOAT1-MOAT0,0,.05,(MOAT0+MOAT1)/2));      // 南の水堀
+  K.hori=plane(MAT.water,2*MOAT1,MOAT1-MOAT0,0,.05,(MOAT0+MOAT1)/2);worldK.add(K.hori);      // 南の水堀
   worldK.add(plane(MAT.water,MOAT1-MOAT0,MOAT0+MOAT1,(MOAT0+MOAT1)/2,.05,2.5));// 東の水堀
   worldK.add(plane(MAT.water,MOAT1-MOAT0,MOAT0+MOAT1,-(MOAT0+MOAT1)/2,.05,2.5));//西の水堀
-  worldK.add(plane(MK.dorui,2*MOAT1,MOAT1-MOAT0,0,-.35,-(MOAT0+MOAT1)/2));     // 北の空堀(乾いた溝)
+  K.karabori=plane(MK.dorui,2*MOAT1,MOAT1-MOAT0,0,-.35,-(MOAT0+MOAT1)/2);worldK.add(K.karabori);     // 北の空堀(乾いた溝)
   worldK.add(plane(MK.grass,2*MOAT1,1.4,0,-.04,-MOAT0-.2));                    // 空堀の縁草
-  worldK.add(box(6,.3,8.5,MK.dorui,0,.16,39.3));                              // 南の土橋(堀を渡る)
+  K.dobashi=box(6,.3,8.5,MK.dorui,0,.16,39.3);worldK.add(K.dobashi);                              // 南の土橋(堀を渡る)
   worldK.add(box(5.4,.08,8.5,MAT.woodDark,0,.32,39.3));                       // 土橋の板張り天端
 
   /* ---- 7. 土塁+板塀(郭の四周。南=矢倉門・北=裏木戸の開口を空ける) ---- */
   const R=35;
-  rampart(-19.5,R,31,true); rampart(19.5,R,31,true);      // 南辺(矢倉門の左右)
-  rampart(-18.5,-R,33,true); rampart(18.5,-R,33,true);    // 北辺(裏木戸の左右)
-  rampart(R,0,2*R,false); rampart(-R,0,2*R,false);        // 東辺・西辺
+  /* 図鑑「土塁」「板塀」は各区間の子メッシュ([0]=土塁 / [1]=板塀)を登録するため配列に控える */
+  K.ramparts=[
+    rampart(-19.5,R,31,true), rampart(19.5,R,31,true),    // 南辺(矢倉門の左右)
+    rampart(-18.5,-R,33,true), rampart(18.5,-R,33,true),  // 北辺(裏木戸の左右)
+    rampart(R,0,2*R,false), rampart(-R,0,2*R,false)       // 東辺・西辺
+  ];
 
   /* ---- 8. 矢倉門(南辺中央)・裏木戸(北辺)・物見矢倉(南東隅) ---- */
-  (function yaguraGate(){
+  K.yaguramon=(function yaguraGate(){
     const g=new THREE.Group(); g.position.set(0,0,R);
     [[-3,-.9],[3,-.9],[-3,.9],[3,.9]].forEach(p=>g.add(box(.5,4.2,.5,MAT.woodDark,p[0],2.1,p[1]))); // 四本柱
     g.add(box(7.4,.45,.45,MAT.woodDark,0,4.1,-.9)); g.add(box(7.4,.45,.45,MAT.woodDark,0,4.1,.9));   // 梁
@@ -309,17 +318,17 @@ if(APP.map==="kamakura"){
     for(let i=-2;i<=2;i++)g.add(box(.28,.5,.08,MK.slit,i*1.4,5.4,1.33,false));                        // 矢狭間(南面)
     g.add(boardRoof(9,4,1.4,.5,6.4));                                                                 // 板屋根
     [-1,1].forEach(s=>{const dr=box(1.5,3.4,.12,MK.itabei,s*1.7,1.7,-.05);dr.rotation.y=s*.32;g.add(dr);});// 門扉(半開)
-    worldK.add(g);
+    worldK.add(g); return g;
   })();
-  (function backGate(){
+  K.urakido=(function backGate(){
     const g=new THREE.Group(); g.position.set(0,0,-R);
     [-1.2,1.2].forEach(x=>g.add(box(.3,2.8,.3,MAT.woodDark,x,1.4,0)));
     g.add(box(2.7,.25,.4,MAT.woodDark,0,2.7,0));
     g.add(box(2.0,2.3,.1,MK.itabei,.2,1.25,0));            // 片開き板戸
     g.add(box(3.4,.2,1.2,MK.itabuki,0,2.98,0));            // 小屋根
-    worldK.add(g);
+    worldK.add(g); return g;
   })();
-  (function watchtower(){
+  K.monomiyagura=(function watchtower(){
     const g=new THREE.Group(); g.position.set(31,0,31);
     const P=[[-1.5,-1.5],[1.5,-1.5],[-1.5,1.5],[1.5,1.5]];
     P.forEach(p=>g.add(box(.35,4.5,.35,MAT.woodDark,p[0],2.25,p[1])));         // 4本柱
@@ -331,7 +340,7 @@ if(APP.map==="kamakura"){
     const lad=new THREE.Group(); lad.position.set(0,0,2.3); lad.rotation.x=.16;
     [-.5,.5].forEach(x=>lad.add(box(.1,4.7,.1,MAT.wood,x,2.35,0)));
     for(let i=0;i<7;i++)lad.add(box(1.1,.08,.08,MAT.wood,0,.6+i*.6,0));        // 梯子
-    g.add(lad); worldK.add(g);
+    g.add(lad); worldK.add(g); return g;
   })();
 
   /* ---- 9. 主殿(郭中央やや北・南面開放で内部を見せる) ---- */
@@ -339,16 +348,19 @@ if(APP.map==="kamakura"){
     const cx=0,cz=-5,w=17,d=11,fh=1.0,ph=2.8;
     const b=building({w:w,d:d,fh:fh,ph:ph,roofH:4.6,ridge:.5,wall:false,doors:[]});
     b.position.set(cx,0,cz); b.traverse(m=>{ if(m.isMesh&&m.material===MAT.roof)m.material=MK.itabuki; });
-    worldK.add(b);
+    worldK.add(b); K.shuden=b;                                                 // 図鑑「主殿」
     const wy=fh+ (ph-.2)/2;
-    worldK.add(box(w-.5,ph-.2,.14,MK.mairado,cx,wy,cz-d/2+.1));                // 北面: 舞良戸(蔀の差替え)
-    worldK.add(box(.14,ph-.2,d*.62,MK.mairado,cx-w/2+.1,wy,cz-1.7));          // 西面: 舞良戸
-    worldK.add(box(.14,ph-.2,d*.62,MK.shoji,cx+w/2-.1,wy,cz-1.7));           // 東面: 明障子
-    worldK.add(box(6.2,ph-.2,.1,MK.shoji,cx+4.6,wy,cz+d/2-.1));              // 南面東寄り: 明障子(残り開放)
+    const maira=new THREE.Group(); worldK.add(maira); K.mairado=maira;         // 図鑑「舞良戸」
+    maira.add(box(w-.5,ph-.2,.14,MK.mairado,cx,wy,cz-d/2+.1));                 // 北面: 舞良戸(蔀の差替え)
+    maira.add(box(.14,ph-.2,d*.62,MK.mairado,cx-w/2+.1,wy,cz-1.7));           // 西面: 舞良戸
+    const shoji=new THREE.Group(); worldK.add(shoji); K.akarishoji=shoji;      // 図鑑「明障子」
+    shoji.add(box(.14,ph-.2,d*.62,MK.shoji,cx+w/2-.1,wy,cz-1.7));            // 東面: 明障子
+    shoji.add(box(6.2,ph-.2,.1,MK.shoji,cx+4.6,wy,cz+d/2-.1));               // 南面東寄り: 明障子(残り開放)
     /* 置き畳 2〜3枚 */
-    [[cx-3,cz-1],[cx-3,cz-3.4],[cx+2.4,cz-2]].forEach(p=>worldK.add(box(1.8,.14,2.6,MAT.tatami,p[0],1.02,p[1])));
+    const oki=new THREE.Group(); worldK.add(oki); K.okidatami=oki;             // 図鑑「置き畳」
+    [[cx-3,cz-1],[cx-3,cz-3.4],[cx+2.4,cz-2]].forEach(p=>oki.add(box(1.8,.14,2.6,MAT.tatami,p[0],1.02,p[1])));
     /* 囲炉裏(炉+灰+炎+火光) */
-    const ir=new THREE.Group(); ir.position.set(cx+2.0,0,cz-4.4);
+    const ir=new THREE.Group(); ir.position.set(cx+2.0,0,cz-4.4); K.irori=ir;  // 図鑑「囲炉裏」
     ir.add(box(1.4,.2,1.4,MAT.woodDark,0,.98,0)); ir.add(box(1.06,.1,1.06,MAT.ash,0,1.02,0));
     const f1=new THREE.Mesh(new THREE.ConeGeometry(.28,.62,8),MAT.flame);f1.position.y=1.32;ir.add(f1);
     const f2=new THREE.Mesh(new THREE.ConeGeometry(.15,.4,7),new THREE.MeshBasicMaterial({color:0xffe27a}));f2.position.y=1.42;ir.add(f2);
@@ -360,7 +372,7 @@ if(APP.map==="kamakura"){
   })();
 
   /* ---- 10. 侍所・持仏堂・板倉・厩・竈屋・井戸・湯屋・厠 ---- */
-  const samurai=bukeHall(9,6,.8,2.4,3.2,["S"]); samurai.position.set(-15,0,22); worldK.add(samurai); // 侍所(門内北西)
+  const samurai=bukeHall(9,6,.8,2.4,3.2,["S"]); samurai.position.set(-15,0,22); worldK.add(samurai); K.samuraidokoro=samurai; // 侍所(門内北西)
 
   (function jibutsudo(){                                                         // 持仏堂(北西・方一間+宝形板屋根+金小仏)
     const g=new THREE.Group(); g.position.set(-20,0,-18); const s=4.0;
@@ -373,9 +385,10 @@ if(APP.map==="kamakura"){
     bd.add(cyl(.36,.46,.16,MAT.kin,0,.08,0,12)); bd.add(new THREE.Mesh(new THREE.SphereGeometry(.4,12,10),MAT.kin));
     const bh=new THREE.Mesh(new THREE.SphereGeometry(.18,10,8),MAT.kin);bh.position.y=.55;bd.add(bh);
     g.add(bd); g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g);
+    K.jibutsudo=g; K.amidabutsu=bd;                                              // 図鑑「持仏堂」「阿弥陀仏」
   })();
 
-  (function itakura(){                                                           // 板倉(北東・高床+校倉風井桁壁+妻入屋根)
+  K.itakura=(function itakura(){                                                 // 板倉(北東・高床+校倉風井桁壁+妻入屋根)
     const g=new THREE.Group(); g.position.set(18,0,-20); const w=6,d=4.5,fh=1.6;
     [[-1,-1],[1,-1],[-1,1],[1,1],[0,0]].forEach(p=>g.add(cyl(.2,.24,fh,MAT.woodDark,p[0]*w*.35,fh/2,p[1]*d*.35,8))); // 床束
     g.add(box(w,.3,d,MAT.floor,0,fh,0));                                          // 高床
@@ -387,10 +400,10 @@ if(APP.map==="kamakura"){
       const e=cyl(.14,.14,d,MK.log,w/2,y,0,7);e.rotation.x=Math.PI/2;g.add(e);
     }
     g.add(boardRoof(w+1.6,d+1.6,1.9,.6,fh+.3+wallH+.1));                          // 妻入り板屋根
-    g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g);
+    g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g); return g;
   })();
 
-  (function umaya(){                                                             // 厩(主殿の東・三間吹き放ち+繋ぎ横木+馬2頭)
+  K.umaya=(function umaya(){                                                     // 厩(主殿の東・三間吹き放ち+繋ぎ横木+馬2頭)
     const g=new THREE.Group(); g.position.set(18,0,0); const w=9,d=4,ph=2.6;
     for(let i=0;i<4;i++){ const x=-w/2+i*(w/3); g.add(box(.3,ph,.3,MAT.woodDark,x,ph/2,-d/2+.3)); g.add(box(.3,ph,.3,MAT.woodDark,x,ph/2,d/2-.3)); }
     g.add(box(w,.25,.25,MAT.woodDark,0,ph,-d/2+.3)); g.add(box(w,.25,.25,MAT.woodDark,0,ph,d/2-.3)); // 桁
@@ -400,8 +413,9 @@ if(APP.map==="kamakura"){
     g.add(box(w,.06,d,MK.dorui,0,.03,0));                                         // 土間
     g.add(boardRoof(w+1.5,d+2,1.5,.7,ph+.2));                                     // 板屋根
     g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g);
-    const h1=makeUma(MK.umaKage);h1.position.set(16,0,.2);worldK.add(h1);
+    const h1=makeUma(MK.umaKage);h1.position.set(16,0,.2);worldK.add(h1); K.uma=h1;   // 図鑑「馬」(鹿毛)
     const h2=makeUma(MK.umaKuro);h2.position.set(20,0,.2);worldK.add(h2);
+    return g;
   })();
 
   (function kamaya(){                                                            // 竈屋(主殿の北・土間+竈+煙)
@@ -410,14 +424,14 @@ if(APP.map==="kamakura"){
     g.add(box(w,.06,d,MK.dorui,0,.03,0));                                         // 土間
     g.add(box(w,ph,.12,MK.itabei,0,ph/2,-d/2+.15)); g.add(box(.12,ph,d,MK.itabei,-w/2+.15,ph/2,0));
     g.add(boardRoof(w+1.5,d+1.5,1.4,.6,ph+.15));
-    const kama=box(1.6,.9,1.0,MK.tsuchi,-1,.45,-.6); g.add(kama);                 // 竈本体(土)
+    const kama=box(1.6,.9,1.0,MK.tsuchi,-1,.45,-.6); g.add(kama); K.kamado=kama;   // 竈本体(土)図鑑「竈」
     g.add(cyl(.35,.4,.12,MK.tsuchi,-.8,.95,-.6,12));                              // 釜口
     const fk=new THREE.Mesh(new THREE.ConeGeometry(.16,.34,7),MAT.flame);fk.position.set(-1.4,.3,-.05);fk.rotation.x=.4;g.add(fk); // 焚口の火
     g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g);
     for(let i=0;i<5;i++){const s=new THREE.Mesh(new THREE.SphereGeometry(.3+i*.12,8,6),MK.smoke);s.position.set(-1+Math.sin(i)*.4,ph+.7+i*.75,-16-.6);worldK.add(s);} // 煙
   })();
 
-  (function ido(){                                                               // 井戸(竈屋脇・井桁+屋根+桶)
+  K.tsurubeido=(function ido(){                                                  // 井戸(竈屋脇・井桁+屋根+桶)
     const g=new THREE.Group(); g.position.set(6,0,-16); const s=1.2;
     for(let i=0;i<3;i++){ const y=.3+i*.25;
       const a=cyl(.09,.09,s+.4,MK.log,0,y,-s/2,7);a.rotation.z=Math.PI/2;g.add(a);
@@ -429,7 +443,7 @@ if(APP.map==="kamakura"){
     g.add(box(.14,.14,s+.6,MAT.woodDark,0,2.5,0));                                // 桁
     g.add(boardRoof(s+1.2,s+1.0,.8,.6,2.6));
     g.add(cyl(.18,.16,.28,MAT.wood,0,1.55,0,10));                                 // 桶
-    g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g);
+    g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g); return g;
   })();
 
   (function koya(cx,cz,w,d){ // 湯屋・厠(北辺際の小屋・外観のみ)
@@ -441,19 +455,21 @@ if(APP.map==="kamakura"){
   })();
 
   /* ---- 11. 武芸の場: 的場(郭内南東)・馬場(郭外南・笠懸+馬1頭) ---- */
-  (function matoba(){
+  K.matoba=(function matoba(){
     const g=new THREE.Group(); g.position.set(20,0,18);
-    g.add(box(4,1.6,1.6,MK.dorui,0,.8,-1.2));                                     // 垜(あずち・土盛り)
+    const azu=box(4,1.6,1.6,MK.dorui,0,.8,-1.2); g.add(azu); K.azuchi=azu;        // 垜(あずち・土盛り)図鑑「垜」
     [-.9,.9].forEach(x=>g.add(box(.15,1.6,.15,MAT.woodDark,x,.8,0)));             // 的の支柱
     const mato=new THREE.Mesh(new THREE.CylinderGeometry(.7,.7,.08,20),MK.mato);mato.rotation.x=Math.PI/2;mato.position.set(0,1.4,0);g.add(mato); // 丸的
     g.add(box(1.2,.05,1.8,MAT.tatami,0,.03,6));                                   // 射座
-    g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g);
+    g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g); return g;
   })();
   (function baba(){
     const cz=50;
-    for(let x=-30;x<=30;x+=5){ worldK.add(box(.15,1.2,.15,MAT.wood,x,.6,cz-3.5)); worldK.add(box(.15,1.2,.15,MAT.wood,x,.6,cz+3.5)); } // 柵
-    worldK.add(box(62,.1,.1,MAT.wood,0,1.0,cz-3.5)); worldK.add(box(62,.1,.1,MAT.wood,0,1.0,cz+3.5));                                   // 横木
-    [-18,-2,14].forEach(x=>{ worldK.add(box(.12,2.6,.12,MAT.woodDark,x,1.3,cz-4.2)); worldK.add(box(.7,.7,.1,MK.mato,x,1.8,cz-4.2)); });// 笠懸の的
+    const babaG=new THREE.Group(); worldK.add(babaG); K.baba=babaG;               // 図鑑「馬場」(柵+横木)
+    for(let x=-30;x<=30;x+=5){ babaG.add(box(.15,1.2,.15,MAT.wood,x,.6,cz-3.5)); babaG.add(box(.15,1.2,.15,MAT.wood,x,.6,cz+3.5)); } // 柵
+    babaG.add(box(62,.1,.1,MAT.wood,0,1.0,cz-3.5)); babaG.add(box(62,.1,.1,MAT.wood,0,1.0,cz+3.5));                                   // 横木
+    const matoG=new THREE.Group(); worldK.add(matoG); K.kasagake_mato=matoG;      // 図鑑「笠懸の的」
+    [-18,-2,14].forEach(x=>{ matoG.add(box(.12,2.6,.12,MAT.woodDark,x,1.3,cz-4.2)); matoG.add(box(.7,.7,.1,MK.mato,x,1.8,cz-4.2)); });// 笠懸の的
     const h=makeUma(MK.umaKage);h.position.set(-6,0,cz);h.rotation.y=Math.PI/2;worldK.add(h);                                          // 馬1頭
   })();
 
@@ -486,6 +502,7 @@ if(APP.map==="kamakura"){
   /* ---- 14. 人物(武士): あるじ1名(主殿前) + 郎党2名(侍所前・的場) ---- */
   const aruji=makeBushiFigure({color:0x27506b,hakama:0x6b3a24,tachi:true,scale:1.06}); // 藍の直垂・柿渋の袴
   aruji.position.set(2.5,0,4); aruji.rotation.y=0; worldK.add(aruji);                   // 主殿前・門(南)へ正対
+  K.hitatare=aruji; K.samuraieboshi=aruji.userData.eboshi;                              // 図鑑「直垂」(全身)「侍烏帽子」(頭部)
   const rodo1=makeBushiFigure({color:0x4a4a3a,hakama:0x5a3a28,yumi:true});               // 侍所前
   rodo1.position.set(-15,0,26); rodo1.rotation.y=0; worldK.add(rodo1);
   const rodo2=makeBushiFigure({color:0x2f4f6b,hakama:0x4a3b2a,yumi:true});               // 的場
@@ -518,7 +535,7 @@ if(APP.map==="kamakura"){
      モード紹介カード(modeBriefData)の散策文も鎌倉仕様に差し替える。 */
   const _enterMode=enterMode;
   enterMode=function(m){
-    if(m!=="walk"&&m!=="title"){ toast("この館は散策専用です(クイズ等は平安の邸で)",2600); return; }
+    if(m!=="walk"&&m!=="title"&&m!=="quiz"){ toast("この館は散策と名称当てクイズのみ楽しめます",2600); return; }
     return _enterMode(m);
   };
   const _modeBriefData=modeBriefData;
@@ -559,9 +576,9 @@ if(APP.map==="kamakura"){
     function flame(r,hh,mat,x,y,z){const m=new THREE.Mesh(new THREE.ConeGeometry(r,hh,7),mat);m.position.set(x,y,z);return m;} // 炎(emissive・影なし)
     function enza(x,z){worldK.add(cyl(.42,.42,.05,strawTex,x,1.04,z,16));worldK.add(cyl(.44,.4,.03,straw,x,1.07,z,16));}      // 円座
     function toudai(x,z){const g=new THREE.Group();g.position.set(x,1.0,z);g.add(cyl(.05,.07,.9,MAT.woodDark,0,.45,0,8));g.add(cyl(.17,.12,.05,dishMat,0,.92,0,12));g.add(flame(.07,.16,MAT.flame,0,1.02,0));g.add(flame(.035,.09,yFlame,0,1.06,0));worldK.add(g);} // 燈台(灯明皿)
-    function tawara(x,y,z){const t=cyl(.32,.32,1.0,rice,x,y,z,12);t.rotation.z=Math.PI/2;worldK.add(t);
-      [-.33,0,.33].forEach(o=>{const r=cyl(.325,.325,.03,rope,x+o,y,z,12);r.rotation.z=Math.PI/2;worldK.add(r);});}          // 米俵+縄目
-    function oke(x,z,fy){worldK.add(cyl(.18,.15,.26,MAT.wood,x,fy+.13,z,10));worldK.add(cyl(.16,.16,.06,strawTex,x,fy+.27,z,10));} // 桶(飼葉入り)
+    function tawara(x,y,z){const tg=new THREE.Group();worldK.add(tg);const t=cyl(.32,.32,1.0,rice,x,y,z,12);t.rotation.z=Math.PI/2;tg.add(t);
+      [-.33,0,.33].forEach(o=>{const r=cyl(.325,.325,.03,rope,x+o,y,z,12);r.rotation.z=Math.PI/2;tg.add(r);});return tg;}    // 米俵+縄目
+    function oke(x,z,fy){const og=new THREE.Group();worldK.add(og);og.add(cyl(.18,.15,.26,MAT.wood,x,fy+.13,z,10));og.add(cyl(.16,.16,.06,strawTex,x,fy+.27,z,10));return og;} // 桶(飼葉入り)
     function bundle(x,z){const b=cyl(.16,.16,.72,strawTex,x,.16,z,9);b.rotation.z=Math.PI/2;worldK.add(b);worldK.add(cyl(.17,.17,.03,rope,x,.16,z,9));} // 藁束
 
     /* 主殿(0,-5, 床y=1.0): 莚・円座3・文机+巻紙・燈台2・火桶・弓掛け・太刀掛け・二枚折屏風・棚+高坏 */
@@ -602,11 +619,12 @@ if(APP.map==="kamakura"){
       worldK.add(box(1.4,.08,.1,MAT.woodDark,-15,1.5,z)); [-.4,.4].forEach(o=>worldK.add(cyl(.02,.02,.9,MAT.wood,-15+o,1.1,z+.1,6))); })();
 
     /* 厩(18,0, 土間): 飼葉桶2・藁束3・鞍鐙掛け台・手綱・馬糞よけの筵 */
-    oke(15,1.3,0); oke(19,1.3,0);                                                    // 飼葉桶×2
+    K.kaibaoke=oke(15,1.3,0); oke(19,1.3,0);                                         // 飼葉桶×2 図鑑「飼葉桶」
     bundle(14,-1.2); bundle(22,-1.0); bundle(21.2,1.4);                              // 藁束×3
-    (function(){ const x=14.0,z=0,y=0;                                               // 鞍と鐙の掛け台
-      [-.5,.5].forEach(o=>worldK.add(box(.08,1.0,.08,MAT.woodDark,x,y+.5,z+o))); worldK.add(box(.12,.1,1.2,MAT.woodDark,x,y+1.0,z));
-      worldK.add(box(.5,.28,.7,MAT.woodDark,x,y+1.2,z)); [-.28,.28].forEach(o=>worldK.add(cyl(.02,.02,.3,iron,x+o,y+.95,z,6))); })();
+    (function(){ const x=14.0,z=0,y=0;                                               // 鞍と鐙の掛け台 図鑑「鞍」
+      const kg=new THREE.Group(); worldK.add(kg); K.kura_saddle=kg;
+      [-.5,.5].forEach(o=>kg.add(box(.08,1.0,.08,MAT.woodDark,x,y+.5,z+o))); kg.add(box(.12,.1,1.2,MAT.woodDark,x,y+1.0,z));
+      kg.add(box(.5,.28,.7,MAT.woodDark,x,y+1.2,z)); [-.28,.28].forEach(o=>kg.add(cyl(.02,.02,.3,iron,x+o,y+.95,z,6))); })();
     [-.4,0,.4].forEach(o=>worldK.add(cyl(.012,.012,.5,rope,18+o,1.0,1.4,4)));        // 手綱(繋ぎ横木から)
     worldK.add(plane(strawTex,7,2.4,18,.04,-.3));                                    // 馬糞よけの筵(厩内)
 
@@ -622,7 +640,7 @@ if(APP.map==="kamakura"){
     worldK.add(plane(strawTex,3,2.4,-1.5,.04,-15.6));                                // 土間の筵
 
     /* 板倉(18,-20, 高床): 米俵4・木櫃2・梯子(前で積み降ろし) */
-    tawara(15.6,.32,-17.6); tawara(15.6,.32,-16.6); tawara(16.4,.32,-17.1); tawara(15.6,.98,-17.1); // 米俵×4
+    K.tawara=tawara(15.6,.32,-17.6); tawara(15.6,.32,-16.6); tawara(16.4,.32,-17.1); tawara(15.6,.98,-17.1); // 米俵×4 図鑑「俵」
     [[17.4,-16.2],[17.4,-15.1]].forEach(p=>{worldK.add(box(.9,.6,.6,MAT.woodDark,p[0],.3,p[1])); worldK.add(box(.94,.08,.64,MAT.wood,p[0],.63,p[1]));}); // 木櫃×2
     (function(){ const g=new THREE.Group();g.position.set(18,0,-17.6);g.rotation.x=.18;              // 梯子
       [-.35,.35].forEach(x=>g.add(box(.08,2.2,.08,MAT.wood,x,1.1,0))); for(let i=0;i<6;i++)g.add(box(.8,.06,.06,MAT.wood,0,.3+i*.35,0)); worldK.add(g); })();
@@ -678,5 +696,64 @@ if(APP.map==="kamakura"){
     const sou=makeBushiFigure({monk:true,scale:1.0}); sou.position.set(-20,0,-15.2); sou.rotation.y=0; worldK.add(sou);   // 僧(持仏堂前・灰黒の衣+数珠)
     const nofu=makeBushiFigure({color:0x6b6a58,hakama:0x5a5240,kasa:true,kuwa:true,scale:1.0}); nofu.position.set(-45,0,3); nofu.rotation.y=Math.PI/2; worldK.add(nofu); // 農夫(田・円錐笠+鍬)
     const warabe=makeBushiFigure({color:0x9a4a38,hakama:0x4a5a6a,scale:.6}); warabe.position.set(-3,0,9); warabe.rotation.y=Math.PI; worldK.add(warabe);                // 童(庭・scale0.6の直垂)
+  })();
+
+  /* ---- 19. 図鑑登録・名称札・クイズ鎌倉編(計画§4/§5, Wave2) ----
+     register() でクリック対象化(rayTargets)＋interactables登録、makeLabel() で名称札を生成。
+     本ブロックは本体の自動ラベル付与ループ(約8346行)より後に実行されるため makeLabel を手動で呼ぶ。
+     前提: ITEMS に武家30項目(cat:"k")が登録済み(items.js, コミット①)。平安側は本ブロック非実行=無影響。
+     親子で別項目にするもの(垜⊂的場 / 阿弥陀仏⊂持仏堂 / 侍烏帽子⊂直垂)は、
+     子を先に register して iid を確定させてから親を register する(register は未マーク面のみ付与)。 */
+  (function codexKama(){
+    const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+    const done={};
+    function reg(root,id,lp){ if(!root||!ITEMS[id])return; register(root,id,lp); if(!done[id]){done[id]=true; makeLabel(id);} }
+
+    /* 地形・外構 */
+    reg(K.hori,"hori",V(8,1.1,39.5));
+    reg(K.karabori,"karabori",V(0,.9,-39));
+    reg(K.dobashi,"dobashi",V(0,.75,39.3));
+    /* 土塁・板塀: 各区間の子メッシュ([0]=土塁 / [1]=板塀)を全区間登録し、札は代表位置に1枚 */
+    (K.ramparts||[]).forEach(g=>{ if(g.children[0])register(g.children[0],"dorui"); if(g.children[1])register(g.children[1],"itabei"); });
+    if(ITEMS.dorui&&interactables.dorui){interactables.dorui.labelPos=V(35,1.9,6); if(!done.dorui){done.dorui=true;makeLabel("dorui");}}
+    if(ITEMS.itabei&&interactables.itabei){interactables.itabei.labelPos=V(-35,2.7,6); if(!done.itabei){done.itabei=true;makeLabel("itabei");}}
+    reg(K.yaguramon,"yaguramon",V(0,4.6,34));
+    reg(K.urakido,"urakido",V(0,2.4,-35));
+    reg(K.monomiyagura,"monomiyagura",V(31,5.2,31));
+
+    /* 主殿まわり */
+    reg(K.shuden,"shuden_k",V(-7,3.4,-5));
+    reg(K.mairado,"mairado",V(-8.4,2.7,-6.7));
+    reg(K.akarishoji,"akarishoji",V(8.4,2.7,-6.7));
+    reg(K.okidatami,"okidatami",V(-3,1.5,-6));
+    reg(K.irori,"irori",V(2,1.9,-9.4));
+
+    /* 侍所・厩・馬具・持仏堂・板倉・竈・井戸 */
+    reg(K.samuraidokoro,"samuraidokoro",V(-15,3.4,22));
+    reg(K.umaya,"umaya",V(18,3.4,0));
+    reg(K.uma,"uma",V(16,2.4,.2));
+    reg(K.kaibaoke,"kaibaoke",V(15,1.9,0));
+    reg(K.kura_saddle,"kura_saddle",V(14,2.1,0));
+    reg(K.amidabutsu,"amidabutsu",V(-20,1.8,-18.5)); reg(K.jibutsudo,"jibutsudo",V(-20,3.6,-18)); // 子(阿弥陀仏)を先に
+    reg(K.itakura,"itakura",V(18,3.8,-20));
+    reg(K.tawara,"tawara",V(15.6,1.1,-17.6));
+    reg(K.kamado,"kamado",V(-1,1.6,-16.6));
+    reg(K.tsurubeido,"tsurubeido",V(6,3.0,-16));
+
+    /* 武芸の場 */
+    reg(K.azuchi,"azuchi",V(20,1.9,16.8)); reg(K.matoba,"matoba",V(20,2.4,19));       // 子(垜)を先に
+    reg(K.kasagake_mato,"kasagake_mato",V(-2,2.9,45.8));
+    reg(K.baba,"baba",V(0,1.7,46.5));
+
+    /* 人物(あるじ): 頭部(侍烏帽子)を先に、全身(直垂)を後に */
+    reg(K.samuraieboshi,"samuraieboshi",V(2.5,2.05,4)); reg(K.hitatare,"hitatare",V(2.5,1.35,4));
+
+    /* クイズ鎌倉編の出題プール(計画§5の14項目)。本体の startQuiz が APP.map==="kamakura" 時に参照する。 */
+    window._kamaQuizPool=["hori","dorui","itabei","yaguramon","monomiyagura","shuden_k","mairado","okidatami","irori","umaya","matoba","azuchi","jibutsudo","itakura"];
+
+    /* クイズ出題札のカテゴリ表記(本体のハードコード表に "k" が無く空になるため、鎌倉時のみ補う) */
+    if(typeof showQuizQ==="function"){ const _sqq=showQuizQ; showQuizQ=function(){ const r=_sqq.apply(this,arguments);
+      try{ const q=APP.quiz,it=q&&ITEMS[q.qs[q.i]]; if(it&&it.cat==="k"){ const el=document.getElementById("quizHint"); if(el)el.textContent="〔武家〕"; } }catch(e){}
+      return r; }; }
   })();
 }
