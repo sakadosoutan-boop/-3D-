@@ -22950,12 +22950,14 @@ if(APP.map==="kamakura"){
     g.add(box(.62,.86,1.7,coat,0,1.15,0));                                        // 胴
     const chest=new THREE.Mesh(new THREE.SphereGeometry(.44,10,8),coat);chest.position.set(0,1.15,.8);chest.scale.set(1,1,.7);g.add(chest);
     const rump=new THREE.Mesh(new THREE.SphereGeometry(.46,10,8),coat);rump.position.set(0,1.2,-.82);rump.scale.set(1,1,.7);g.add(rump);
-    const neck=box(.42,.9,.5,coat,0,1.6,1.0);neck.rotation.x=-.7;g.add(neck);      // 首
-    const head=box(.34,.34,.7,coat,0,2.0,1.42);head.rotation.x=.35;g.add(head);    // 頭
-    g.add(box(.28,.28,.3,coat,0,1.86,1.68));                                       // 鼻面
-    [-1,1].forEach(s=>{const e=box(.08,.2,.1,coat,s*.12,2.18,1.28);e.rotation.x=-.2;g.add(e);});           // 耳
-    [-1,1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.05,8,6),new THREE.MeshBasicMaterial({color:0x0a0806}));e.position.set(s*.16,2.02,1.5);g.add(e);}); // 目
-    for(let i=0;i<6;i++){const m=box(.1,.22,.14,mane,0,1.9-i*.02,1.15-i*.11);m.rotation.x=-.7;g.add(m);}    // 鬣
+    const headG=new THREE.Group(); g.userData.head=headG;                          // 頭部グループ(馬の世話の頷きアニメ用・Wave3-②)
+    const neck=box(.42,.9,.5,coat,0,1.6,1.0);neck.rotation.x=-.7;headG.add(neck);   // 首
+    const head=box(.34,.34,.7,coat,0,2.0,1.42);head.rotation.x=.35;headG.add(head); // 頭
+    headG.add(box(.28,.28,.3,coat,0,1.86,1.68));                                    // 鼻面
+    [-1,1].forEach(s=>{const e=box(.08,.2,.1,coat,s*.12,2.18,1.28);e.rotation.x=-.2;headG.add(e);});        // 耳
+    [-1,1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.05,8,6),new THREE.MeshBasicMaterial({color:0x0a0806}));e.position.set(s*.16,2.02,1.5);headG.add(e);}); // 目
+    for(let i=0;i<6;i++){const m=box(.1,.22,.14,mane,0,1.9-i*.02,1.15-i*.11);m.rotation.x=-.7;headG.add(m);} // 鬣
+    g.add(headG);
     [[.24,.62],[-.24,.62],[.24,-.6],[-.24,-.6]].forEach(p=>{                        // 4脚+蹄
       g.add(cyl(.1,.09,1.06,coat,p[0],.55,p[1],7)); g.add(cyl(.12,.12,.14,hoof,p[0],.07,p[1],7)); });
     const tail=cyl(.06,.14,.72,mane,0,1.15,-.95,6);tail.rotation.x=-.5;g.add(tail); // 尾
@@ -23189,7 +23191,7 @@ if(APP.map==="kamakura"){
     const g=new THREE.Group(); g.position.set(20,0,18);
     const azu=box(4,1.6,1.6,MK.dorui,0,.8,-1.2); g.add(azu); K.azuchi=azu;        // 垜(あずち・土盛り)図鑑「垜」
     [-.9,.9].forEach(x=>g.add(box(.15,1.6,.15,MAT.woodDark,x,.8,0)));             // 的の支柱
-    const mato=new THREE.Mesh(new THREE.CylinderGeometry(.7,.7,.08,20),MK.mato);mato.rotation.x=Math.PI/2;mato.position.set(0,1.4,0);g.add(mato); // 丸的
+    const mato=new THREE.Mesh(new THREE.CylinderGeometry(.7,.7,.08,20),MK.mato);mato.rotation.x=Math.PI/2;mato.position.set(0,1.4,0);g.add(mato); K.mato_main=mato; // 丸的(弓稽古の的1)
     g.add(box(1.2,.05,1.8,MAT.tatami,0,.03,6));                                   // 射座
     g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g); return g;
   })();
@@ -23401,7 +23403,7 @@ if(APP.map==="kamakura"){
       worldK.add(cyl(.14,.18,.32,bronze,x,4.7,z,10)); worldK.add(cyl(.06,.02,.1,bronze,x,4.9,z,8)); })();
     (function(){ const x=22,z=20;                                                    // 的場の矢立て+予備の的
       worldK.add(cyl(.14,.16,.7,MAT.woodDark,x,.35,z,8)); for(let i=0;i<6;i++)worldK.add(cyl(.012,.012,.8,bowWood,x+(i-3)*.03,.9,z,4));
-      const m=new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,.06,18),MK.mato);m.rotation.z=.3;m.position.set(23.5,.7,17);m.castShadow=true;m.receiveShadow=true;worldK.add(m); })();
+      const m=new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,.06,18),MK.mato);m.rotation.z=.3;m.position.set(23.5,.7,17);m.castShadow=true;m.receiveShadow=true;worldK.add(m); K.mato_spare=m; })(); // 掛け替え的(弓稽古の的3)
     worldK.add(box(62,.1,.1,MAT.wood,0,.5,46.5)); worldK.add(box(62,.1,.1,MAT.wood,0,.5,53.5)); // 馬場柵の補強横木(中段)
     (function(){ const x=6,z=-16;                                                    // 井戸の滑車と縄(桶吊り)
       worldK.add(cyl(.14,.14,.06,MAT.woodDark,x,2.35,z,10)); worldK.add(cyl(.008,.008,1.0,rope,x+.12,1.9,z,4)); worldK.add(cyl(.13,.11,.2,MAT.wood,x+.12,1.35,z,10)); })();
@@ -23419,7 +23421,7 @@ if(APP.map==="kamakura"){
     /* 人物7名(計画§3)。makeBushiFigure/makeHeianFigure ＝内部で castShadow 設定済み */
     const mon=(x,rot)=>{const f=makeBushiFigure({color:0x3a4a5a,hakama:0x4a3b2a,yumi:true,scale:1.0});f.position.set(x,0,33);f.rotation.y=rot;worldK.add(f);};
     mon(-2.8,Math.PI); mon(2.8,Math.PI);                                            // 門番×2(矢倉門内側・門へ正対)
-    const archer=makeBushiFigure({color:0x2f4f6b,hakama:0x4a3b2a,pose:"draw",scale:1.03}); archer.position.set(20,0,25.2); archer.rotation.y=0; worldK.add(archer); // 稽古の郎党(射座・弓構え)
+    const archer=makeBushiFigure({color:0x2f4f6b,hakama:0x4a3b2a,pose:"draw",scale:1.03}); archer.position.set(20,0,25.2); archer.rotation.y=0; worldK.add(archer); K.archer=archer; // 稽古の郎党(射座・弓構え・クイズ/稽古の案内役)
     const umaban=makeBushiFigure({color:0xa08a5a,hakama:0x8a7048,oke:true,scale:.99}); umaban.position.set(14,0,2.6); umaban.rotation.y=0; worldK.add(umaban);        // 厩番(飼葉桶を持つ)
     const gejo=makeHeianFigure({role:"nyoubou",palette:[0x6a5c48,0x8a7a5c,0x9a8a68,0x5a5040],scale:.95,pose:"standing"}); gejo.position.set(-1,0,-14.2); gejo.rotation.y=Math.PI;
     gejo.add(box(.32,.5,.06,M({color:0xb8ae92,roughness:.9}),0,.55,.2)); worldK.add(gejo);   // 下女(小袖+前掛け・竈前)
@@ -23485,6 +23487,230 @@ if(APP.map==="kamakura"){
     if(typeof showQuizQ==="function"){ const _sqq=showQuizQ; showQuizQ=function(){ const r=_sqq.apply(this,arguments);
       try{ const q=APP.quiz,it=q&&ITEMS[q.qs[q.i]]; if(it&&it.cat==="k"){ const el=document.getElementById("quizHint"); if(el)el.textContent="〔武家〕"; } }catch(e){}
       return r; }; }
+  })();
+
+  /* ---- 20. 遊び: 的場の弓稽古ミニゲーム(計画§6, Wave3-①) ----
+     既存 taiji の破魔の矢機構(spawnArrow/updateTaijiFx/seArrowShot/seArrowHit)を
+     walk内オーバーレイとして流用する。専用モードは新設せず(enterModeゲートと衝突するため)、
+     APP.kamaKyudo の自前状態＋animate相乗り(kamaFrame)で駆動。平安側は本ブロック非実行=無影響。
+     - 射座(専用の畳マット K.kyudoSeat・register外)クリック→確認→開始
+     - 的3枚(丸的/掛け替え的/笠懸の的)へ10射。中心=2点/的中=1点。10射で結果・自己ベスト。
+     - 稽古中は移動を射座に固定、Escで中断(自前keydown・active時のみ作用)。 */
+  (function kamaPlay(){
+    /* 共有モーダル(確認/結果/世話panel等。DOMはcreateElementのみ＝verify-htmlのid静的検査に無影響) */
+    let _modalEl=null;
+    function closeModal(){ if(_modalEl){ if(_modalEl.parentNode)_modalEl.parentNode.removeChild(_modalEl); _modalEl=null; } }
+    function modal(opt){
+      closeModal();
+      const ov=document.createElement("div");
+      ov.style.cssText="position:fixed;inset:0;z-index:520;display:flex;align-items:center;justify-content:center;background:rgba(6,9,13,.62);padding:20px;";
+      const card=document.createElement("div");
+      card.style.cssText="max-width:340px;width:100%;background:linear-gradient(180deg,#1b232e,#12181f);border:1px solid rgba(63,109,158,.55);border-radius:12px;box-shadow:0 18px 60px rgba(0,0,0,.72);padding:20px 20px 16px;color:#c9cdbd;font-family:var(--serif,serif);";
+      const h=document.createElement("div"); h.textContent=opt.title||""; h.style.cssText="font-size:18px;color:#d5d9cb;margin-bottom:8px;letter-spacing:.06em;";
+      const b=document.createElement("div"); b.innerHTML=opt.body||""; b.style.cssText="font-size:13.5px;line-height:1.75;color:#bcc1b2;margin-bottom:16px;";
+      card.appendChild(h); card.appendChild(b);
+      const row=document.createElement("div"); row.style.cssText="display:flex;flex-direction:column;gap:8px;";
+      (opt.actions||[]).forEach(a=>{
+        const btn=document.createElement("button"); btn.type="button"; btn.textContent=a.label;
+        btn.style.cssText="min-height:44px;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;border:1px solid "+(a.primary?"#8fb0d2":"rgba(111,143,122,.5)")+";background:"+(a.primary?"linear-gradient(155deg,#3f6d9e,#22405f)":"rgba(26,34,44,.9)")+";color:"+(a.primary?"#eef3f8":"#c9cdbd")+";";
+        btn.onclick=function(e){ e.stopPropagation(); if(typeof beep==="function")beep(a.primary?680:520,.06); if(a.on)a.on(); };
+        row.appendChild(btn);
+      });
+      card.appendChild(row);
+      ov.appendChild(card);
+      ov.addEventListener("click",function(e){ if(e.target===ov&&opt.dismissable!==false)closeModal(); });
+      document.body.appendChild(ov); _modalEl=ov; return ov;
+    }
+    /* 他セクション(Wave3-②)から使えるよう控える */
+    K.modal=modal; K.closeModal=closeModal; K.isModalOpen=function(){ return !!_modalEl; };
+
+    /* 射座マット(藍の縁取り＝「ここで射る」の合図。register外＝図鑑と非衝突) */
+    K.kyudoSeat=(function(){
+      const mat=M({map:canv(64,64,(x,w,h)=>{ x.fillStyle="#233241";x.fillRect(0,0,w,h);
+        for(let i=8;i<w;i+=8){x.strokeStyle="rgba(96,126,158,.45)";x.lineWidth=1;x.beginPath();x.moveTo(i,0);x.lineTo(i,h);x.stroke();x.beginPath();x.moveTo(0,i);x.lineTo(w,i);x.stroke();}
+        x.strokeStyle="rgba(168,196,224,.85)";x.lineWidth=5;x.strokeRect(3,3,w-6,h-6); }),roughness:.9});
+      const m=new THREE.Mesh(new THREE.PlaneGeometry(1.4,2.0),mat); m.rotation.x=-Math.PI/2; m.position.set(20,.09,24.5); m.receiveShadow=true; m.userData.kamaSeat=true;
+      worldK.add(m); return m;
+    })();
+
+    /* 稽古状態と的リスト(丸的/掛け替え的/笠懸の的×3) */
+    const kyudo={active:false,fired:0,landed:0,score:0,cd:0,stance:{x:20,z:24.5},stuck:[],targets:[]};
+    APP.kamaKyudo=kyudo;
+    if(K.mato_main)kyudo.targets.push({m:K.mato_main,r:.7});
+    if(K.mato_spare)kyudo.targets.push({m:K.mato_spare,r:.6});
+    if(K.kasagake_mato)K.kasagake_mato.children.forEach(c=>{ const p=c.geometry&&c.geometry.parameters; if(p&&Math.abs((p.width||0)-.7)<.02&&Math.abs((p.height||0)-.7)<.02)kyudo.targets.push({m:c,r:.36}); });
+
+    function clearStuck(){ if(kyudo.stuck.length){ kyudo.stuck.forEach(g=>taijiDisposeFx(g)); kyudo.stuck=[]; } }
+    function addStuck(from,to){
+      const dir=to.clone().sub(from); if(dir.lengthSq()<1e-6)return; dir.normalize();
+      const g=new THREE.Group();
+      const shaft=new THREE.Mesh(new THREE.CylinderGeometry(.016,.016,.5,5),new THREE.MeshBasicMaterial({color:0xe8d9b0})); shaft.rotation.x=Math.PI/2; g.add(shaft);
+      const tip=new THREE.Mesh(new THREE.ConeGeometry(.04,.12,6),new THREE.MeshBasicMaterial({color:0x2c2318})); tip.rotation.x=Math.PI/2; tip.position.z=.28; g.add(tip);
+      const fl=new THREE.Mesh(new THREE.PlaneGeometry(.11,.11),new THREE.MeshBasicMaterial({color:0xb85a3a,side:THREE.DoubleSide})); fl.position.z=-.22; g.add(fl);
+      g.position.copy(to).addScaledVector(dir,-.14);
+      g.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),dir);
+      worldK.add(g); kyudo.stuck.push(g);
+    }
+
+    function start(){
+      kyudo.active=true; kyudo.fired=0; kyudo.landed=0; kyudo.score=0; kyudo.cd=0;
+      clearStuck();
+      player.pos.x=kyudo.stance.x; player.pos.z=kyudo.stance.z; player.yaw=0; player.pitch=-0.02;
+      toast("弓の稽古。画面タップで射る。振り向けば馬場の的も。Escで中断",4200);
+    }
+    function stop(){ kyudo.active=false; closeModal(); toast("弓の稽古を切り上げた",1600); }
+    function confirmStart(){
+      modal({title:"的場・射座",body:"射座に立った。<br>弓の稽古を始めますか？",actions:[
+        {label:"始める",primary:true,on:()=>{ closeModal(); start(); }},
+        {label:"やめる",on:()=>closeModal()}
+      ]});
+    }
+    function result(){
+      kyudo.active=false;
+      let best=parseInt(localStorage.getItem("kamakura-kyudo-best")||"0",10); if(!(best>=0))best=0;
+      const isNew=kyudo.score>best; if(isNew){ best=kyudo.score; try{ localStorage.setItem("kamakura-kyudo-best",String(best)); }catch(_e){} }
+      const rating=kyudo.score>=16?"見事":kyudo.score>=9?"なかなか":"まだまだ";
+      const phrase=kyudo.score>=16?"百発百中とは言わぬが、見事な腕前。":kyudo.score>=9?"なかなかの手練れ。稽古を続けよ。":"弓は毎日の稽古がものを言う。また挑もう。";
+      modal({title:"弓稽古 結果",
+        body:"得点 <b style='color:#e6d9b0'>"+kyudo.score+"</b> / 20　（10射）<br>評: <b style='color:#8fb0d2'>"+rating+"</b><br>"+phrase+"<br><br>自己ベスト "+best+" 点"+(isNew?"　<b style='color:#c06a3a'>（自己ベスト更新!）</b>":""),
+        actions:[
+          {label:"もう一度",primary:true,on:()=>{ closeModal(); start(); }},
+          {label:"やめる",on:()=>{ closeModal(); stop(); }}
+        ]});
+    }
+    function land(pts,from,to,stuck){
+      if(stuck){ seArrowHit(); addStuck(from,to); }
+      kyudo.score+=pts; kyudo.landed++;
+      toast((pts===2?"中心! +2":pts===1?"的中 +1":"外れ…")+"　(計 "+kyudo.score+"点 / "+kyudo.landed+"射)",1500);
+      if(kyudo.landed>=10)setTimeout(result,650);
+    }
+    function shoot(sx,sy){
+      if(!kyudo.active)return; const now=performance.now();
+      if(kyudo.fired>=10)return; if(now<(kyudo.cd||0))return; kyudo.cd=now+260;
+      raycaster.setFromCamera({x:sx/innerWidth*2-1,y:-(sy/innerHeight)*2+1},camera);
+      const meshes=kyudo.targets.map(t=>t.m);
+      const hits=raycaster.intersectObjects(meshes,false);
+      let to,pts=0,stuck=false;
+      if(hits.length){ const hit=hits[0]; to=hit.point.clone();
+        const tt=kyudo.targets.find(t=>t.m===hit.object);
+        const c=hit.object.getWorldPosition(new THREE.Vector3()); const d=to.distanceTo(c);
+        pts=(tt&&d<tt.r*0.34)?2:1; stuck=true; }
+      else { to=raycaster.ray.at(30,new THREE.Vector3()); }
+      const from=camera.position.clone().add(raycaster.ray.direction.clone().multiplyScalar(.6));
+      kyudo.fired++; seArrowShot();
+      spawnArrow(from,to,()=>{ if(kyudo.active||kyudo.landed<10)land(pts,from,to,stuck); });
+    }
+    K.kyudoStart=start; // Wave3-②(郎党「弓稽古の話を聞く」)から呼ぶ
+
+    /* pick相乗り(function宣言＝本ガード内で再代入可。射座と稽古中の射撃のみ横取りし他は元pickへ委譲) */
+    const kamaExtra=[]; if(K.kyudoSeat)kamaExtra.push(K.kyudoSeat);
+    K.kamaExtra=kamaExtra; // Wave3-②で郎党メッシュ等を追加
+    const _pick=pick;
+    pick=function(sx,sy){
+      if(kyudo.active){ shoot(sx,sy); return; }
+      raycaster.setFromCamera({x:sx/innerWidth*2-1,y:-(sy/innerHeight)*2+1},camera);
+      /* 射座は地面のマット＝真下を見た時だけ当たる専用レイキャストで先取り(図鑑の的/畳に隠れない) */
+      if(K.kyudoSeat){ const sh=raycaster.intersectObject(K.kyudoSeat,false);
+        if(sh.length&&sh[0].distance<=14){ confirmStart(); return; } }
+      /* その他の相互作用: rayTargets＋kamaExtra(郎党等)を1回で判定し、専用分岐か元pickへ委譲 */
+      const hits=raycaster.intersectObjects(rayTargets.concat(kamaExtra),true);
+      let hit=null; for(const hh of hits){ if(isObjVisible(hh.object)){ hit=hh; break; } }
+      /* KAMA_PICK_HOOK: Wave3-②(馬の世話・郎党クイズ)分岐 */
+      if(hit&&typeof K.pickHook==="function"&&K.pickHook(hit))return;
+      return _pick(sx,sy);
+    };
+
+    /* animate相乗り(function宣言を再代入。稽古中の移動固定＋矢の飛翔更新＋射座近接ヒント) */
+    const _animate=animate;
+    animate=function(now){ _animate(now); try{ kamaFrame(now); }catch(_e){} };
+    function kamaFrame(now){
+      if(kyudo.active){ player.pos.x=kyudo.stance.x; player.pos.z=kyudo.stance.z; }
+      if(taijiArrows.length)updateTaijiFx(performance.now());
+      if(!kyudo.active&&APP.mode==="walk"&&!K._seatHinted&&K.kyudoSeat){
+        const dx=player.pos.x-20,dz=player.pos.z-24.5;
+        if(dx*dx+dz*dz<9){ K._seatHinted=true; toast("射座だ。タップすると弓の稽古を始められる",3000); }
+      }
+      if(typeof K.frameHook==="function")K.frameHook(now); // Wave3-②(馬の頭アニメ)
+    }
+
+    /* 自前Escハンドラ(capture=coreのEscより先に処理。稽古中/本マップのモーダル表示中のみ作用) */
+    addEventListener("keydown",function(e){
+      if(e.key!=="Escape")return;
+      if(kyudo.active){ stop(); e.preventDefault(); e.stopImmediatePropagation(); return; }
+      if(_modalEl){ closeModal(); e.preventDefault(); e.stopImmediatePropagation(); return; }
+    },true);
+  })();
+
+  /* ---- 21. 厩の馬の世話・クイズ導線・図鑑見出し等の磨き込み(計画§6, Wave3-②) ----
+     ①の kamaPlay が公開した K.modal / K.kyudoStart / K.pickHook / K.frameHook / K.kamaExtra を用いる。
+     pick/animate は①で一度だけラップ済み。ここではフックへ差し込むのみ(二重ラップ回避)。平安側は非実行=無影響。 */
+  (function kamaCarePolish(){
+
+    /* (C-2) 図鑑パネル見出しを鎌倉仕様へ(静的DOM。setCodexTabは見出しを書き換えないため一度で足りる) */
+    (function(){
+      const ct=document.getElementById("codexTitle"); if(ct)ct.textContent="武家ものしり図鑑";
+      const bc=document.getElementById("btnCodex");
+      if(bc){ for(const node of bc.childNodes){ if(node.nodeType===3&&node.textContent.indexOf("平安ものしり図鑑")>=0){ node.textContent=node.textContent.replace("平安ものしり図鑑","武家ものしり図鑑"); } } }
+    })();
+
+    /* (C-3) showInfoラップ: cat"k"(武家)はカテゴリチップが空になるため、呼出後に「武家」を注入 */
+    const _showInfo=showInfo;
+    showInfo=function(id){ const r=_showInfo(id);
+      try{ const it=ITEMS[id]; if(it&&it.cat==="k"){ const el=document.getElementById("infoCat"); if(el){ el.textContent="武家"; el.className="info-cat b"; } } }catch(_e){}
+      return r; };
+
+    /* (B) 馬の世話。頷きアニメは K.frameHook(①のanimate相乗り)で駆動。3回で「慣れた」フラグ保存 */
+    let umaCare=0; let nareta=(localStorage.getItem("kamakura-uma-nareta")==="1");
+    function doCare(kind){
+      const head=K.uma&&K.uma.userData?K.uma.userData.head:null;
+      if(head)K.umaNod={head:head,t0:performance.now(),dur:600,dy:kind==="feed"?0.46:0.22,dz:kind==="feed"?0.28:0.10};
+      toast(kind==="feed"?"馬は飼葉に鼻を寄せた":"馬は目を細めた",1800);
+      if(typeof beep==="function")beep(430,.07,"sine",.05);
+      umaCare++;
+      if(umaCare>=3&&!nareta){ nareta=true; try{ localStorage.setItem("kamakura-uma-nareta","1"); }catch(_e){}
+        setTimeout(()=>toast("馬があなたに慣れてきた（いつか馬に乗れる日が来るかもしれない）",4200),900); }
+    }
+    K.frameHook=function(now){
+      const n=K.umaNod; if(!n||!n.head)return;
+      const u=(now-n.t0)/n.dur;
+      if(u>=1){ n.head.position.set(0,0,0); K.umaNod=null; return; }
+      const s=Math.sin(u*Math.PI);
+      n.head.position.y=-n.dy*s; n.head.position.z=n.dz*s;
+    };
+    function openCarePanel(){
+      K.modal({title:"厩の馬",body:"鹿毛の馬が、あなたをじっと見ている。",actions:[
+        {label:"なでる",primary:true,on:()=>{ K.closeModal(); doCare("pet"); }},
+        {label:"飼葉をやる",on:()=>{ K.closeModal(); doCare("feed"); }},
+        {label:"図鑑を見る",on:()=>{ K.closeModal(); showInfo("uma"); }}
+      ]});
+    }
+
+    /* (C-1) 稽古の郎党クイズ導線。「名を当ててみよ」→Wave2ゲート許可済みのクイズ開始(goAchievementTarget("quiz")相当) */
+    function startKamaQuiz(){
+      if(typeof initAudio==="function")initAudio();
+      APP.quizTA=false; APP.quizDiff="easy";
+      enterMode("quiz");
+      const pk=document.getElementById("quizDiffPicker"); if(pk)pk.style.display="none";
+      if(typeof startQuiz==="function")startQuiz();
+    }
+    function openArcherPanel(){
+      K.modal({title:"稽古の郎党",body:"弓を構えた郎党が、あなたに気づいた。",actions:[
+        {label:"名を当ててみよ（名称当てクイズ）",primary:true,on:()=>{ K.closeModal(); startKamaQuiz(); }},
+        {label:"弓稽古の話を聞く",on:()=>{ K.closeModal(); if(typeof beep==="function")beep(600,.06);
+          toast("「弓馬の道こそ武士の本分。あの射座に立てば、稽古を始められる」",4200);
+          setTimeout(()=>{ if(K.kyudoStart)K.kyudoStart(); },800); }}
+      ]});
+    }
+
+    /* 稽古の郎党メッシュを pick 判定対象(kamaExtra)へ追加し、グループにマーク */
+    if(K.archer&&K.kamaExtra){ K.archer.userData.kamaArcher=true; K.archer.traverse(o=>{ if(o.isMesh)K.kamaExtra.push(o); }); }
+
+    /* ①の pick 相乗りへ分岐を差し込む(郎党→クイズ選択 / 馬→世話panel)。他は元pickへ委譲 */
+    K.pickHook=function(hit){
+      let o=hit.object; while(o&&o!==scene){ if(o.userData&&o.userData.kamaArcher){ openArcherPanel(); return true; } o=o.parent; }
+      if(hit.object.userData&&hit.object.userData.iid==="uma"){ openCarePanel(); return true; }
+      return false;
+    };
   })();
 }
 /* APP_KAMAKURA_EMBED_END */
