@@ -1477,7 +1477,7 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 /* 位階出世ゲーム(すいかゲーム風マージ) */
 #ikaiHud{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;
   padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
-  background:radial-gradient(circle at 50% 30%,rgba(80,60,20,.28),rgba(10,7,4,.94) 62%,rgba(3,2,1,.98));font-family:var(--sans)}
+  background:radial-gradient(circle at 50% 30%,#3a2c14 0%,#0a0704 62%,#030201 100%);font-family:var(--sans)}
 #ikaiHud.show{display:flex}
 .ikai-top{width:min(420px,94vw);display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
 #ikaiQuit{width:34px;height:34px;border-radius:50%;border:1px solid rgba(201,162,63,.5);background:rgba(20,14,8,.7);color:#e9dcc2;font-size:14px;cursor:pointer}
@@ -1492,7 +1492,9 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
   padding:5px 7px;border-radius:9px;border:1px solid rgba(201,162,63,.42);background:rgba(20,14,8,.86);box-shadow:0 6px 16px rgba(0,0,0,.4)}
 .ikai-next-wrap span{font-size:8.5px;letter-spacing:.1em;color:#d8c6a0}
 .ikai-next-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:8px;font-weight:700;text-align:center;line-height:1.1;color:#2a1c12;border:1px solid rgba(0,0,0,.35);box-shadow:inset 0 1px 3px rgba(255,255,255,.3)}
+  font-size:8px;font-weight:700;text-align:center;line-height:1.1;color:#fff6df;
+  text-shadow:-1px -1px 0 rgba(0,0,0,.85),1px -1px 0 rgba(0,0,0,.85),-1px 1px 0 rgba(0,0,0,.85),1px 1px 0 rgba(0,0,0,.85);
+  border:1px solid rgba(0,0,0,.35);box-shadow:inset 0 1px 3px rgba(255,255,255,.3)}
 #ikaiGameOver,#ikaiHelp{position:absolute;inset:0;z-index:2;display:none;align-items:center;justify-content:center;background:rgba(4,2,1,.7)}
 #ikaiGameOver.show,#ikaiHelp.show{display:flex}
 .ikai-card{width:min(300px,88%);text-align:center;padding:18px 16px;border:1px solid rgba(201,162,63,.6);border-radius:10px;
@@ -8777,8 +8779,8 @@ const SFX = {
       if(this._bedMedia){try{this._bedMedia.pause();}catch(e){}}
       return;
     }
-    // タイトル画面中は環境音を停止(ゲームプレイ開始後に再開)
-    if(typeof APP !== "undefined" && APP.mode === "title"){
+    // タイトル画面中、および位階出世ゲーム(3D世界を隠すCanvas2D専用モード)中は環境音を停止
+    if(typeof APP !== "undefined" && (APP.mode === "title" || APP.mode === "ikaiSuika")){
       if(this._bedMedia){try{this._bedMedia.pause();this._bedMedia.currentTime=0;}catch(e){}}
       this._bedMedia=null;this._curBed=null;this._curScene=null;return;
     }
@@ -9040,8 +9042,8 @@ class AmbientAudio {
   syncSynthLevels() {
     if (!this.ctx || !this.playing) return;
     const t = this.ctx.currentTime;
-    // タイトル画面では環境音(合成のせせらぎ/風)を一切鳴らさない(テーマのみ)
-    const title = (typeof APP !== "undefined" && APP.mode === "title");
+    // タイトル画面・位階出世ゲーム中は環境音(合成のせせらぎ/風)を一切鳴らさない(テーマのみ)
+    const title = (typeof APP !== "undefined" && (APP.mode === "title" || APP.mode === "ikaiSuika"));
     const quietSaigen = (typeof APP !== "undefined" && APP.mode === "saigen" && APP.saigen && APP.saigen.scene && APP.saigen.scene.cricket);
     const paused = (typeof SFX !== "undefined" && !!SFX._backgroundPaused);
     const haveWater = !!(typeof SFX !== "undefined" && SFX.media && SFX.media[SFX.beds.water]);
@@ -9150,6 +9152,7 @@ class AmbientAudio {
       SFX.updateBed();   // 念のため(setTime/applySeasonでも即時切替済)
       if (typeof APP !== "undefined" && APP.mode === "title") return;  // タイトル中は鳴き声を出さない(テーマのみ)
       if (typeof APP !== "undefined" && APP.mode === "taiji") return;  // 波AN: ボス戦(河童・大鬼等)中は鳥・虫の環境音を止める(戦闘BGMに集中/河童戦の虫鳴り対策)
+      if (typeof APP !== "undefined" && APP.mode === "ikaiSuika") return;  // 位階出世ゲーム(3D世界を隠すCanvas2D専用モード)中は鳥・虫の環境音を止める
       if (typeof APP !== "undefined" && APP.storyIndoor) return;  // 波AA: 物語モードの屋内(教室・病室)では外の鳥・虫を鳴かせない
       if (typeof SFX !== "undefined" && SFX._backgroundPaused) return;  // 再現専用音などで背景音を止めている間は通常の鳥虫を鳴らさない
       // 音風景表に基づき、最小間隔つきで鳴き声を再生(重なり防止)
@@ -12285,26 +12288,29 @@ function kaimamiEyeUpdate(watcher,k){
    Three.jsシーンとは独立したCanvas2Dの簡易物理(自作・外部ライブラリ不使用)。
 ============================================================ */
 const RANK_LADDER=[
-  {name:"童",kana:"わらわ",r:15,col:"#dfe7ea",robe:"#c7d3d8"},
-  {name:"六位",kana:"ろくい",r:19,col:"#5a7a52",robe:"#41603a"},
-  {name:"五位",kana:"ごい",r:24,col:"#c0392b",robe:"#96281d"},
-  {name:"四位",kana:"しい",r:30,col:"#7a2020",robe:"#5c1414"},
-  {name:"三位",kana:"さんみ",r:37,col:"#5a3d8a",robe:"#432c6c"},
-  {name:"参議",kana:"さんぎ",r:45,col:"#4a2f78",robe:"#38235c"},
-  {name:"中納言",kana:"ちゅうなごん",r:54,col:"#8a2f5a",robe:"#6c2246"},
-  {name:"大納言",kana:"だいなごん",r:64,col:"#a8285a",robe:"#821f46"},
-  {name:"大臣",kana:"だいじん",r:75,col:"#b8860b",robe:"#8a640a"},
-  {name:"太政大臣",kana:"だいじょうだいじん",r:88,col:"#d4af37",robe:"#a8842a"}
+  {name:"童",kana:"わらわ",r:15,col:"#dfe7ea",robe:"#c7d3d8",accent:"#8fa8b0"},
+  {name:"六位",kana:"ろくい",r:19,col:"#5a7a52",robe:"#41603a",accent:"#cfe0a8"},
+  {name:"五位",kana:"ごい",r:24,col:"#c0392b",robe:"#96281d",accent:"#f0c8a0"},
+  {name:"四位",kana:"しい",r:30,col:"#7a2020",robe:"#5c1414",accent:"#e0a888"},
+  {name:"三位",kana:"さんみ",r:37,col:"#5a3d8a",robe:"#432c6c",accent:"#d8c0f0"},
+  {name:"参議",kana:"さんぎ",r:45,col:"#4a2f78",robe:"#38235c",accent:"#e8d0ff"},
+  {name:"中納言",kana:"ちゅうなごん",r:54,col:"#8a2f5a",robe:"#6c2246",accent:"#ffc8dc"},
+  {name:"大納言",kana:"だいなごん",r:64,col:"#a8285a",robe:"#821f46",accent:"#ffd8e6"},
+  {name:"大臣",kana:"だいじん",r:75,col:"#b8860b",robe:"#8a640a",accent:"#fff0c0"},
+  {name:"太政大臣",kana:"だいじょうだいじん",r:88,col:"#d4af37",robe:"#a8842a",accent:"#fff8e0"}
 ];
-const IKAI_CFG={gravity:1600,wallRest:.26,floorRest:.2,collRest:.10,damping:.998,dangerY:76,overGraceMs:1500,dropCdMs:420,W:340,H:460};
+/* 本家スイカゲームの「重く・シビアに積み上がる」手応えに寄せた調整。
+   反発を抑えて実際に不安定に積み上がるようにし、危険ラインと猶予も本家並みに厳しくしてある */
+const IKAI_CFG={gravity:2000,wallRest:.16,floorRest:.1,collRest:.05,damping:.994,dangerY:52,overGraceMs:950,dropCdMs:460,W:340,H:460};
 let IKAI=null,ikaiLoopActive=false,_ikaiLastTs=0;
 function ikaiLoadBest(){try{return parseInt(localStorage.getItem("shinden3d-ikai-best")||"0",10)||0;}catch(e){return 0;}}
 function ikaiSaveBest(v){try{localStorage.setItem("shinden3d-ikai-best",String(v));}catch(e){}}
 function ikaiSeenHelp(){try{return localStorage.getItem("shinden3d-ikai-help")==="1";}catch(e){return false;}}
 function ikaiMarkHelpSeen(){try{localStorage.setItem("shinden3d-ikai-help","1");}catch(e){}}
+/* スポーンは下位の位ほど多く出す(本家の「小さい果物が大半、たまに大きめ」という配分を再現) */
 function ikaiRandomSpawnRank(){
   const r=Math.random();
-  if(r<.42)return 0;if(r<.72)return 1;if(r<.90)return 2;return 3;
+  if(r<.40)return 0;if(r<.68)return 1;if(r<.86)return 2;if(r<.96)return 3;return 4;
 }
 function ikaiMergeScore(rank){return (rank+1)*(rank+1)*6;}
 function startIkaiSuika(){
@@ -12318,13 +12324,19 @@ function startIkaiSuika(){
   ikaiUpdateNextIcon();
   $("ikaiGameOver").classList.remove("show");
   $("ikaiHelp").classList.toggle("show",!ikaiSeenHelp());
+  // 3Dシーンはこの間まったく見えないため、影マップ更新を止めて軽量化する(退治モードと同じ手法)
+  renderer.shadowMap.autoUpdate=false;
   if(!ikaiLoopActive){ikaiLoopActive=true;_ikaiLastTs=0;requestAnimationFrame(ikaiLoop);}
 }
-function stopIkaiSuika(){ IKAI=null; }
+function stopIkaiSuika(){
+  IKAI=null;
+  renderer.shadowMap.autoUpdate=true;renderer.shadowMap.needsUpdate=true;
+}
 function ikaiUpdateNextIcon(){
   const el=$("ikaiNextIcon");if(!el||!IKAI)return;
   const cfg=RANK_LADDER[IKAI.next];
-  el.textContent=cfg.name;el.style.background=cfg.col;
+  el.textContent=cfg.name;
+  el.style.background=`radial-gradient(circle at 35% 30%,${cfg.col},${cfg.robe})`;
 }
 function ikaiPointerX(e,cv){
   const rect=cv.getBoundingClientRect();
@@ -12383,6 +12395,9 @@ function ikaiStep(dt){
           a.x-=nx*overlap*wa;a.y-=ny*overlap*wa;b.x+=nx*overlap*wb;b.y+=ny*overlap*wb;
           const rvx=b.vx-a.vx,rvy=b.vy-a.vy,rel=rvx*nx+rvy*ny;
           if(rel<0){const imp=-(1+IKAI_CFG.collRest)*rel*.5;a.vx-=imp*nx;a.vy-=imp*ny;b.vx+=imp*nx;b.vy+=imp*ny;}
+          // 接触面の摩擦(タンジェント方向の速度を減衰させ、積み上げが崩れやすい丸い駒でも塔状に安定させる)
+          const tx=-ny,ty=nx,rvt=(b.vx-a.vx)*tx+(b.vy-a.vy)*ty,fricImp=rvt*.14;
+          a.vx+=fricImp*tx*wa;a.vy+=fricImp*ty*wa;b.vx-=fricImp*tx*wb;b.vy-=fricImp*ty*wb;
         }
       }
     }
@@ -12421,28 +12436,59 @@ function ikaiUpdateParticles(dt){
 function ikaiDrawPiece(ctx,p){
   const cfg=RANK_LADDER[p.rank],r=cfg.r;
   ctx.save();ctx.translate(p.x,p.y);
-  ctx.beginPath();ctx.ellipse(0,r*.8,r*.72,r*.2,0,0,Math.PI*2);ctx.fillStyle="rgba(0,0,0,.2)";ctx.fill();
+  ctx.beginPath();ctx.ellipse(0,r*.8,r*.72,r*.2,0,0,Math.PI*2);ctx.fillStyle="rgba(0,0,0,.24)";ctx.fill();
+  // 装束(本体)
   ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);
   const grad=ctx.createRadialGradient(-r*.3,-r*.3,r*.1,0,0,r);
   grad.addColorStop(0,cfg.col);grad.addColorStop(1,cfg.robe);
   ctx.fillStyle=grad;ctx.fill();
   ctx.lineWidth=Math.max(1,r*.05);ctx.strokeStyle="rgba(0,0,0,.4)";ctx.stroke();
+  // 襟元に下襲(したがさね)の色目を一段のぞかせる(重ね着の表現)
+  ctx.beginPath();ctx.ellipse(0,r*.16,r*.42,r*.16,0,0,Math.PI*2);ctx.fillStyle=cfg.accent;ctx.fill();
+  // 顔
   ctx.beginPath();ctx.arc(0,-r*.16,r*.5,0,Math.PI*2);ctx.fillStyle="#ffe3c4";ctx.fill();
+  // 頬紅
+  ctx.fillStyle="rgba(230,120,110,.4)";
+  ctx.beginPath();ctx.arc(-r*.28,-r*.02,r*.09,0,Math.PI*2);ctx.arc(r*.28,-r*.02,r*.09,0,Math.PI*2);ctx.fill();
+  // 眉
+  ctx.strokeStyle="#2a1c12";ctx.lineWidth=Math.max(1,r*.035);ctx.lineCap="round";
+  ctx.beginPath();ctx.moveTo(-r*.24,-r*.3);ctx.lineTo(-r*.08,-r*.28);ctx.moveTo(r*.08,-r*.28);ctx.lineTo(r*.24,-r*.3);ctx.stroke();
+  // 目
   ctx.fillStyle="#2a1c12";
   ctx.beginPath();ctx.arc(-r*.16,-r*.18,Math.max(1,r*.05),0,Math.PI*2);ctx.arc(r*.16,-r*.18,Math.max(1,r*.05),0,Math.PI*2);ctx.fill();
-  if(p.rank<=1){ctx.beginPath();ctx.arc(0,-r*.4,r*.42,Math.PI*1.05,Math.PI*1.95);ctx.fillStyle="#2a2018";ctx.fill();}
-  else if(p.rank<=4){
+  // 口
+  ctx.strokeStyle="rgba(120,50,40,.6)";ctx.lineWidth=Math.max(1,r*.03);
+  ctx.beginPath();ctx.arc(0,r*.02,r*.1,0.15*Math.PI,0.85*Math.PI);ctx.stroke();
+  // 髪型/冠(位階が上がるほど豪華に)
+  if(p.rank<=1){ // 童: 双輪(みずら)風の髪
+    ctx.fillStyle="#2a2018";
+    ctx.beginPath();ctx.arc(0,-r*.4,r*.42,Math.PI*1.05,Math.PI*1.95);ctx.fill();
+    ctx.beginPath();ctx.arc(-r*.5,-r*.1,r*.16,0,Math.PI*2);ctx.arc(r*.5,-r*.1,r*.16,0,Math.PI*2);ctx.fill();
+  }else if(p.rank<=4){ // 六位〜三位: 烏帽子
+    ctx.fillStyle="#181410";
     ctx.beginPath();ctx.moveTo(-r*.22,-r*.36);ctx.quadraticCurveTo(-r*.05,-r*.95,r*.08,-r*.9);ctx.quadraticCurveTo(r*.28,-r*.7,r*.22,-r*.32);
-    ctx.closePath();ctx.fillStyle="#181410";ctx.fill();
-  }else{
-    ctx.beginPath();ctx.rect(-r*.3,-r*.85,r*.6,r*.48);ctx.fillStyle="#181410";ctx.fill();
+    ctx.closePath();ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.12)";ctx.lineWidth=Math.max(1,r*.02);ctx.stroke();
+  }else{ // 参議以上: 冠(かんむり)+纓(えい)
+    ctx.fillStyle="#181410";
+    ctx.beginPath();ctx.rect(-r*.3,-r*.85,r*.6,r*.48);ctx.fill();
     ctx.beginPath();ctx.moveTo(r*.28,-r*.6);ctx.quadraticCurveTo(r*.75,-r*.48,r*.7,-r*.05);ctx.quadraticCurveTo(r*.6,-r*.15,r*.32,-r*.38);
-    ctx.closePath();ctx.fillStyle="#181410";ctx.fill();
-    if(p.rank>=8){ctx.beginPath();ctx.arc(0,-r*.85,r*.09,0,Math.PI*2);ctx.fillStyle="#e8c84a";ctx.fill();}
+    ctx.closePath();ctx.fill();
+    if(p.rank>=8){ // 大臣以上: 金の飾りと笏(しゃく)
+      ctx.strokeStyle="#e8c84a";ctx.lineWidth=Math.max(1,r*.035);
+      ctx.beginPath();ctx.rect(-r*.3+r*.02,-r*.85+r*.44,r*.56,r*.05);ctx.stroke();
+      ctx.beginPath();ctx.arc(0,-r*.85,r*.09,0,Math.PI*2);ctx.fillStyle="#e8c84a";ctx.fill();
+      ctx.fillStyle="#f0e0b0";ctx.beginPath();ctx.rect(-r*.05,r*.14,r*.1,r*.42);ctx.fill();
+      ctx.strokeStyle="rgba(0,0,0,.4)";ctx.lineWidth=Math.max(1,r*.02);ctx.stroke();
+    }
   }
-  if(r>=30){
-    ctx.fillStyle="rgba(0,0,0,.6)";ctx.font=`700 ${Math.round(r*.32)}px var(--sans,sans-serif)`;
-    ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(cfg.name,0,r*.45);
+  // 位階名(縁取りしてどの背景色でも読めるようにする)
+  if(r>=26){
+    ctx.font=`700 ${Math.round(r*.3)}px var(--sans,sans-serif)`;
+    ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.lineWidth=Math.max(2,r*.09);ctx.strokeStyle="rgba(20,12,8,.85)";ctx.lineJoin="round";
+    ctx.strokeText(cfg.name,0,r*.46);
+    ctx.fillStyle="#fff6df";ctx.fillText(cfg.name,0,r*.46);
   }
   ctx.restore();
 }
@@ -19091,9 +19137,13 @@ function animate(now){
     if(APP.mode==="saigen")saigenUpdate(dt);
     if(APP.mode==="story"&&typeof storyUpdate==="function")storyUpdate(dt); // 波M
   }
-  drawMinimap();    /* ミニマップ(独立2Dキャンバス) */
-  BLOOM.update();   /* 夜/夕かつ高品質時のみブルームを有効化 */
-  BLOOM.render();   /* 条件に応じ composer(ブルーム) か 通常描画 を選択 */
+  // 位階出世ゲームはCanvas2Dの独立オーバーレイで3D世界を完全に覆うため、
+  // 見えない3Dシーンの描画(ミニマップ・ブルーム合成・renderer本体)を丸ごと休止して軽量化する
+  if(APP.mode!=="ikaiSuika"){
+    drawMinimap();    /* ミニマップ(独立2Dキャンバス) */
+    BLOOM.update();   /* 夜/夕かつ高品質時のみブルームを有効化 */
+    BLOOM.render();   /* 条件に応じ composer(ブルーム) か 通常描画 を選択 */
+  }
 }
 let pondToastT=0;
 function toastPond(){if(performance.now()-pondToastT>2500){pondToastT=performance.now();
