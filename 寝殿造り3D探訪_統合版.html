@@ -1289,11 +1289,18 @@ body.taiji-weapon-bow .er-fire{background:radial-gradient(circle at 36% 30%,#ff6
 /* 波AO: スマホで御神酒がタップしても効かないFB。小さな札を指で押しやすくし、取りこぼした指が
    背後のキャンバス(視点ドラッグ)に落ちないよう当たり判定を外側へ拡張する(河童戦の回復不能を解消) */
 @media (pointer:coarse){
-  .er-slot.sake{width:64px;height:64px;z-index:6}
-  .er-slot.sake .er-ic{font-size:27px}
-  .er-slot.sake .er-nm{font-size:8.5px}
-  .er-slot.sake::after{content:"";position:absolute;inset:-14px;border-radius:14px}
+  .er-slot.sake,.er-slot.kotodama{width:64px;height:64px;z-index:6}
+  .er-slot.sake .er-ic,.er-slot.kotodama .er-ic{font-size:27px}
+  .er-slot.sake .er-nm,.er-slot.kotodama .er-nm{font-size:8.5px}
+  .er-slot.sake::after,.er-slot.kotodama::after{content:"";position:absolute;inset:-14px;border-radius:14px}
 }
+/* 言霊祓い: 体勢崩し(チャンス)専用の追加攻撃ボタン。通常は控えめ、好機のみ金色に発光 */
+.er-slot.kotodama{border-color:rgba(190,140,255,.5);background:linear-gradient(180deg,rgba(40,26,58,.9),rgba(18,12,28,.92))}
+.er-slot.kotodama .er-ic{font-family:var(--serif,serif);font-size:19px;color:#e6d4ff}
+.er-slot.kotodama .er-badge{display:block;right:-4px;top:-6px;min-width:22px;text-align:center;background:linear-gradient(180deg,rgba(72,40,110,.98),rgba(30,16,48,.96));color:#f0e2ff}
+.er-slot.kotodama.empty{filter:grayscale(.85) brightness(.58);opacity:.58}
+.er-slot.kotodama.ready{border-color:#ffe27a;box-shadow:0 0 0 2px rgba(255,226,122,.5),0 0 16px rgba(255,214,106,.6);animation:kdReadyPulse 1.1s ease-in-out infinite}
+@keyframes kdReadyPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 /* 右下: ガード/パリィ + 攻撃 */
 #erActions{position:absolute;right:calc(env(safe-area-inset-right) + 12px);bottom:calc(env(safe-area-inset-bottom) + 12px);display:flex;align-items:flex-end;gap:12px;pointer-events:none}
 .er-act{pointer-events:auto;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;color:#fff;
@@ -1433,6 +1440,67 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 .tjfx-band-text{font-family:var(--serif);font-size:clamp(26px,8vw,52px);font-weight:900;letter-spacing:.3em;padding-left:.3em;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis}
 #tjfxFelled .tjfx-band-text{color:#e8c86a;text-shadow:0 0 4px #000,0 0 18px rgba(232,200,106,.85),0 0 36px rgba(232,200,106,.45)}
 #tjfxDied .tjfx-band-text{color:#b3202a;text-shadow:0 0 24px rgba(179,32,42,.6),0 2px 10px #000}
+/* 言霊祓い: かな連鎖詠唱オーバーレイ */
+#kotodamaOverlay{position:fixed;inset:0;z-index:112;display:none;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
+  background:radial-gradient(circle at 50% 40%,rgba(70,30,110,.34),rgba(8,3,14,.88) 62%,rgba(2,1,5,.95));backdrop-filter:blur(3px)}
+#kotodamaOverlay.show{display:flex}
+.kd-panel{width:min(400px,94vw);text-align:center;padding:16px 16px 18px;border:1px solid rgba(200,160,255,.5);border-radius:12px;
+  background:linear-gradient(180deg,rgba(36,22,52,.94),rgba(16,10,24,.96));box-shadow:0 20px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);font-family:var(--sans)}
+.kd-title{font-family:var(--serif,serif);font-size:19px;font-weight:900;letter-spacing:.14em;color:#f0e2ff;text-shadow:0 2px 8px #000,0 0 16px rgba(180,120,255,.4)}
+.kd-title small{display:block;margin-top:4px;font-family:var(--sans);font-size:10.5px;font-weight:400;letter-spacing:.05em;color:#c9b6e0}
+.kd-targets{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:11px 0}
+.kd-target{padding:4px 10px;border-radius:999px;border:1px solid rgba(200,170,255,.4);background:rgba(60,36,84,.55);color:#d8c6f0;font-size:12px;letter-spacing:.06em}
+.kd-target.done{border-color:#ffe27a;background:linear-gradient(180deg,rgba(116,88,20,.7),rgba(70,52,10,.75));color:#fff2c8;text-decoration:line-through;text-decoration-color:rgba(255,226,122,.6)}
+.kd-timer{position:relative;height:6px;margin:0 2px 12px;border-radius:3px;background:rgba(0,0,0,.5);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.6)}
+.kd-timer-fill{height:100%;width:100%;background:linear-gradient(90deg,#c99bff,#7a4bd6);transition:width .08s linear}
+.kd-gridwrap{position:relative;width:min(320px,80vw);margin:0 auto}
+.kd-lines{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.kd-lines line{stroke:rgba(255,226,150,.85);stroke-width:3;stroke-linecap:round}
+.kd-grid{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;touch-action:none}
+.kd-tile{position:relative;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;border-radius:8px;
+  border:1px solid rgba(200,170,255,.34);background:linear-gradient(180deg,rgba(52,34,72,.85),rgba(28,18,40,.9));
+  color:#ecdcff;font-family:var(--serif,serif);font-size:clamp(15px,4.6vw,20px);font-weight:700;-webkit-user-select:none;user-select:none;
+  box-shadow:0 3px 8px rgba(0,0,0,.4);transition:transform .1s,background .15s,border-color .15s}
+.kd-tile.active{border-color:#ffe27a;background:linear-gradient(180deg,rgba(120,88,30,.9),rgba(70,48,14,.92));transform:scale(1.08);box-shadow:0 0 10px rgba(255,214,106,.5)}
+.kd-tile.used{border-color:#ffe27a;background:linear-gradient(180deg,rgba(90,68,18,.55),rgba(50,36,10,.6));color:#fff2c8;opacity:.72}
+.kd-tile.fail{animation:kdShake .3s ease}
+@keyframes kdShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.kd-chain{min-height:16px;margin-top:10px;font-size:12px;letter-spacing:.06em;color:#ffe7ba;text-shadow:0 1px 4px #000}
+.kd-cancel{margin-top:12px;min-height:38px;padding:8px 16px;border-radius:999px;border:1px solid rgba(200,170,255,.4);
+  background:rgba(255,255,255,.06);color:#d8c6f0;font-size:11.5px;letter-spacing:.04em;cursor:pointer;font-family:var(--sans)}
+#kdResult{position:fixed;z-index:113;left:50%;top:40%;transform:translate(-50%,-50%) scale(.9);pointer-events:none;opacity:0;text-align:center;
+  font-family:var(--serif,serif);font-weight:900;font-size:clamp(24px,6.4vw,44px);letter-spacing:.1em;color:#fff2d8;
+  text-shadow:0 0 16px rgba(200,150,255,.9),0 3px 10px #000;white-space:nowrap}
+#kdResult.show{animation:kdResultShow .95s cubic-bezier(.2,.9,.25,1)}
+@keyframes kdResultShow{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-62%) scale(1.02)}}
+/* 位階出世ゲーム(すいかゲーム風マージ) */
+#ikaiHud{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+  background:radial-gradient(circle at 50% 30%,rgba(80,60,20,.28),rgba(10,7,4,.94) 62%,rgba(3,2,1,.98));font-family:var(--sans)}
+#ikaiHud.show{display:flex}
+.ikai-top{width:min(420px,94vw);display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+#ikaiQuit{width:34px;height:34px;border-radius:50%;border:1px solid rgba(201,162,63,.5);background:rgba(20,14,8,.7);color:#e9dcc2;font-size:14px;cursor:pointer}
+.ikai-title{font-family:var(--serif,serif);font-size:15px;font-weight:900;letter-spacing:.14em;color:#f0dfa8;text-shadow:0 2px 8px #000}
+.ikai-stats{display:flex;gap:8px}
+.ikai-stat{padding:4px 10px;border-radius:8px;border:1px solid rgba(201,162,63,.4);background:rgba(24,16,9,.7);font-size:11px;color:#d8c6a0;text-align:center}
+.ikai-stat span{display:block;font-size:8.5px;letter-spacing:.1em;opacity:.75}
+.ikai-stat b{font-size:14px;color:#ffd9a0}
+.ikai-board{position:relative;width:min(360px,88vw);aspect-ratio:340/460;margin-top:2px}
+#ikaiCanvas{width:100%;height:100%;border-radius:10px;border:1px solid rgba(201,162,63,.5);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;display:block}
+.ikai-next-wrap{position:absolute;right:-6px;top:-6px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:5px 7px;border-radius:9px;border:1px solid rgba(201,162,63,.42);background:rgba(20,14,8,.86);box-shadow:0 6px 16px rgba(0,0,0,.4)}
+.ikai-next-wrap span{font-size:8.5px;letter-spacing:.1em;color:#d8c6a0}
+.ikai-next-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:8px;font-weight:700;text-align:center;line-height:1.1;color:#2a1c12;border:1px solid rgba(0,0,0,.35);box-shadow:inset 0 1px 3px rgba(255,255,255,.3)}
+#ikaiGameOver,#ikaiHelp{position:absolute;inset:0;z-index:2;display:none;align-items:center;justify-content:center;background:rgba(4,2,1,.7)}
+#ikaiGameOver.show,#ikaiHelp.show{display:flex}
+.ikai-card{width:min(300px,88%);text-align:center;padding:18px 16px;border:1px solid rgba(201,162,63,.6);border-radius:10px;
+  background:linear-gradient(180deg,rgba(30,20,12,.97),rgba(15,10,6,.98));box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.ikai-card-title{font-family:var(--serif,serif);font-size:18px;font-weight:900;color:#f0dfa8;letter-spacing:.1em;margin-bottom:10px;text-shadow:0 2px 8px #000}
+.ikai-card-detail{font-size:12.5px;line-height:1.9;color:#e9dcc2;margin-bottom:14px}
+.ikai-card-text{font-size:12px;line-height:1.85;color:#d8c6a0;margin-bottom:14px;text-align:left}
+.ikai-card .t-btn{width:100%;margin-top:6px;min-height:42px}
 /* 季節選択(退治) */
 #taijiSeason{display:none;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 #taijiSeason .ss-btn{padding:8px 12px;border:1px solid rgba(170,100,60,.7);background:rgba(40,20,30,.6);color:#e8d8c0;border-radius:5px;cursor:pointer;font-size:12px;font-family:var(--sans)}
@@ -3156,6 +3224,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
       <div class="t-modes">
         <button class="t-btn combat" id="btnTaiji" style="border-color:rgba(150,80,200,.7)"><span class="mode-meta">戦闘 / ボス</span><span class="mode-name">⚡ 物の怪退治</span><small>夜の邸に潜む怪異を弓矢で退散</small></button>
         <button class="t-btn gold" id="btnKaimami"><span class="mode-meta">潜入 / 物語</span><span class="mode-name">🌙 垣間見ミッション</span><small>女房と侍従の目を避けて忍ぶ</small></button>
+        <button class="t-btn" id="btnIkaiSuika" style="border-color:rgba(212,175,55,.75)"><span class="mode-meta">合体 / 出世</span><span class="mode-name">🏯 位階出世ゲーム</span><small>同じ位の貴族を重ねて出世させよう</small></button>
       </div>
       <button class="t-back-btn" id="miniGameBack">← 戻る</button>
     </div>
@@ -3450,6 +3519,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
       <span class="weapon-tip" id="weaponTip">遠距離・安全</span>
     </div>
     <button class="er-slot sake" id="twSake"><span class="er-ic">🍶</span><span class="er-nm">お神酒</span><span class="er-badge" id="tjSakeCount">3</span></button>
+    <button class="er-slot kotodama" id="twKotodama"><span class="er-ic">詞</span><span class="er-nm">言霊祓い</span><span class="er-badge" id="tjKotodamaCount">3</span></button>
   </div>
   <!-- 右下: 回避 + ガード/パリィ + 攻撃(ボタン操作) -->
   <div id="erActions">
@@ -3464,6 +3534,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
     <div class="control-row"><span class="key-badge">Space</span> 回避</div>
     <div class="control-row"><span class="key-badge">F</span> 受け/弾き</div>
     <div class="control-row"><span class="key-badge">R/4</span> お神酒</div>
+    <div class="control-row"><span class="key-badge">T/5</span> 言霊祓い(体勢崩し中)</div>
     <div class="control-row"><span class="key-badge">Esc/P</span> 終了</div>
   </div>
   <div id="taijiRangeBadge">間合い --</div>
@@ -3473,6 +3544,21 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
   <button id="twDodge" class="er-hidden"></button>
   <div id="tjCool" class="er-hidden"><div id="tjCoolFill"></div></div>
 </div>
+<!-- 言霊祓い: 体勢崩し中に使える連鎖詠唱ミニゲーム -->
+<div id="kotodamaOverlay">
+  <div class="kd-panel">
+    <div class="kd-title">言霊祓い<small>隣り合う文字をなぞって唱えよ</small></div>
+    <div class="kd-targets" id="kdTargets"></div>
+    <div class="kd-timer"><div class="kd-timer-fill" id="kdTimerFill"></div></div>
+    <div class="kd-gridwrap">
+      <svg id="kdLines" class="kd-lines"></svg>
+      <div class="kd-grid" id="kdGrid"></div>
+    </div>
+    <div class="kd-chain" id="kdChainLabel"></div>
+    <button class="kd-cancel" id="kdCancel">封を解く（詠唱を終える）</button>
+  </div>
+</div>
+<div id="kdResult"></div>
 <div id="dodgeFlash"></div>
 <div id="parryFlash"></div>
 <div id="parryText">⚔ 弾き！</div>
@@ -3492,6 +3578,37 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 <div id="tjfxFelled"><div class="tjfx-band"><div class="tjfx-band-text"></div></div></div>
 <div id="tjfxDied"><div class="tjfx-band"><div class="tjfx-band-text"></div></div></div>
 <div id="dialogueBubble"><div id="dialogueName"></div><div id="dialogueText"></div></div>
+
+<!-- 位階出世ゲーム(すいかゲーム風マージ) -->
+<div id="ikaiHud">
+  <div class="ikai-top">
+    <button id="ikaiQuit" title="やめて散策へ戻る">✕</button>
+    <div class="ikai-title">位階出世ゲーム</div>
+    <div class="ikai-stats">
+      <div class="ikai-stat"><span>得点</span><b id="ikaiScore">0</b></div>
+      <div class="ikai-stat"><span>最高</span><b id="ikaiBest">0</b></div>
+    </div>
+  </div>
+  <div class="ikai-board">
+    <canvas id="ikaiCanvas"></canvas>
+    <div class="ikai-next-wrap"><span>次の位</span><div id="ikaiNextIcon" class="ikai-next-icon"></div></div>
+  </div>
+  <div id="ikaiGameOver">
+    <div class="ikai-card">
+      <div class="ikai-card-title">出世叶わず…</div>
+      <div class="ikai-card-detail" id="ikaiGoDetail"></div>
+      <button class="t-btn gold" id="ikaiRetry">もう一度出仕する</button>
+      <button class="t-btn" id="ikaiToTitle">表紙へ戻る</button>
+    </div>
+  </div>
+  <div id="ikaiHelp">
+    <div class="ikai-card">
+      <div class="ikai-card-title">位階出世ゲーム</div>
+      <div class="ikai-card-text">盤上をドラッグして狙いを定め、離すと童殿上の貴族が降ってくる。同じ位どうしがぶつかると合体して、ひとつ上の位に出世する。積み上がって上の朱線を越えたまま少し経つと出仕終了。目指せ太政大臣！</div>
+      <button class="t-btn gold" id="ikaiHelpStart">出仕を始める</button>
+    </div>
+  </div>
+</div>
 
 <div id="utakaiHud">
   <!-- 上部:メニュー位置に題・ゲージ・手番を独立して並べる -->
@@ -7096,13 +7213,29 @@ const TAIJI_EXTRA_SPOTS=[
   {x:0,y:1.8,z:28,label:"南庭中央",type:"strong"}
 ];
 const TAIJI_DIFF={
-  normal:{label:"通常",hpMul:1,extra:0,bossMul:1.12,dmgMul:1.04,burst:0,stamMul:1,postureMul:1,bossRate:.96,sakeHeal:38},
-  hard:{label:"ハード",hpMul:1.35,extra:3,bossMul:1.68,dmgMul:1.18,burst:1,stamMul:.92,postureMul:1.18,bossRate:.82,sakeHeal:34},
-  hyakki:{label:"百鬼夜行",hpMul:1.75,extra:7,bossMul:2.25,dmgMul:1.38,burst:2,stamMul:.82,postureMul:1.45,bossRate:.68,sakeHeal:30}
+  normal:{label:"通常",hpMul:1,extra:0,bossMul:1.12,dmgMul:1.04,burst:0,stamMul:1,postureMul:1,bossRate:.96,sakeHeal:38,kotodama:3},
+  hard:{label:"ハード",hpMul:1.35,extra:3,bossMul:1.68,dmgMul:1.18,burst:1,stamMul:.92,postureMul:1.18,bossRate:.82,sakeHeal:34,kotodama:2},
+  hyakki:{label:"百鬼夜行",hpMul:1.75,extra:7,bossMul:2.25,dmgMul:1.38,burst:2,stamMul:.82,postureMul:1.45,bossRate:.68,sakeHeal:30,kotodama:2}
 };
 const TAIJI_WEAPONS=["bow","seal","sword"];
 const TAIJI_WEAPON_LABEL={bow:"破魔の矢",seal:"破魔の札",sword:"太刀"};
 const TAIJI_WEAPON_TIP={bow:"遠距離・安全",seal:"周囲一掃・重い",sword:"近接・体幹崩し"};
+/* 言霊祓い: 体勢崩し(チャンス)専用の追加攻撃手段。かな連鎖で唱える枕詞/祝詞の語彙集 */
+const KOTODAMA_WORDS=[
+  {word:"ひさかたの",tier:1,mean:"光・天・空にかかる枕詞",note:"「光」「天」等にかかる代表的な枕詞。"},
+  {word:"ちはやぶる",tier:1,mean:"神にかかる枕詞",note:"「神」にかかる勇壮な枕詞。百人一首でも有名。"},
+  {word:"あしひきの",tier:1,mean:"山にかかる枕詞",note:"「山」「峰」にかかる枕詞。"},
+  {word:"あさぼらけ",tier:2,mean:"夜明け前のほのかに明るい頃",note:"和歌に頻出する時間帯の言葉。"},
+  {word:"ぬばたまの",tier:2,mean:"夜・黒髪にかかる枕詞",note:"ヌバタマ(ヒオウギの実)の黒さから「夜」にかかる。"},
+  {word:"からころも",tier:2,mean:"着る・袖にかかる枕詞",note:"「唐衣」から「着る」の縁でかかる。"},
+  {word:"うつせみの",tier:2,mean:"世のはかなさを表す枕詞",note:"「世」「命」にかかり、はかなさを表す。"},
+  {word:"わたつみの",tier:2,mean:"海にかかる枕詞",note:"海神(わたつみ)から「海」にかかる。"},
+  {word:"たまくしげ",tier:2,mean:"美しい櫛箱、転じて「開く」にかかる枕詞",note:"「二上山」「明く」等にかかる。"},
+  {word:"はらいたまえ",tier:3,mean:"祓い給え―穢れを祓う祝詞の言葉",note:"神道の祓詞に由来する言葉。"},
+  {word:"きよめたまえ",tier:3,mean:"清め給え―心身を清める祝詞の言葉",note:"「祓へ給ひ清め給へ」の一節。"},
+  {word:"かむながらの",tier:3,mean:"神の御心のままにという古語",note:"祝詞に用いられる古語。"}
+];
+const KOTODAMA_TUNING={sessionMs:4200,tierDmg:{1:10,2:16,3:24},chainMul:[1,1.3,1.6],fullClearMul:1.2,gridCols:5,gridRows:5};
 function taijiBuildSpots(diff){
   const cfg=TAIJI_DIFF[diff]||TAIJI_DIFF.normal;
   return TAIJI_SPOTS.concat(TAIJI_EXTRA_SPOTS.slice(0,cfg.extra));
@@ -11117,7 +11250,7 @@ function enterMode(m){
   if(m!=="renaiShort"&&m!=="renaiSim"&&typeof renaiHideTargetPicker==="function")renaiHideTargetPicker(); // 恋愛モード以外へ遷移時はピッカーを閉じる
   $("title").classList.add("hide");
   $("topbar").style.display="flex";
-  const worldBar=$("worldStatusBar");if(worldBar)worldBar.style.display=(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"||m==="story")?"none":"flex";
+  const worldBar=$("worldStatusBar");if(worldBar)worldBar.style.display=(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"||m==="story"||m==="ikaiSuika")?"none":"flex";
   requestAnimationFrame(syncTopbarH); // topbar高さをCSS変数に同期
   $("quizHud").style.display=m==="quiz"?"block":"none";
   $("questHud").style.display=(m==="quest"||m==="kaimami")?"block":"none";
@@ -11127,6 +11260,8 @@ function enterMode(m){
   $("saigenHud").style.display=m==="saigen"?"block":"none";
   $("renaiHud").style.display=(m==="renaiShort"||m==="renaiSim")?"block":"none";
   {const shud=$("storyHud");if(shud)shud.style.display=(m==="story")?"block":"none";} // 波M(初回起動前はまだ無い)
+  {const ihud=$("ikaiHud");if(ihud)ihud.classList.toggle("show",m==="ikaiSuika");}
+  if(m!=="ikaiSuika"&&typeof stopIkaiSuika==="function")stopIkaiSuika();
   if(window.UTAKAI_STAGE)window.UTAKAI_STAGE.visible=(m==="utakai");
   if(window.SAIGEN_STAGE)window.SAIGEN_STAGE.visible=(m==="saigen");
   if(typeof updateGisshaYardVisibility==="function")updateGisshaYardVisibility(m);
@@ -11177,13 +11312,13 @@ function enterMode(m){
   $("dangerVignette").style.opacity=0;
   closeInfo();closeCodex();
   $("modeTag").textContent=m==="quest"?(APP.questRole==="female"?"女性貴族の一日":"男性貴族の一日"):
-    {walk:"自由散策",quiz:APP.quizTA?"タイムアタック":"名称当てクイズ",kaimami:"垣間見",taiji:"物の怪退治",utakai:"歌合モード",saigen:"再現モード",renaiShort:"恋文ショート体験",renaiSim:"恋愛シミュレーション",story:"物語(試験中)"}[m]||m;
+    {walk:"自由散策",quiz:APP.quizTA?"タイムアタック":"名称当てクイズ",kaimami:"垣間見",taiji:"物の怪退治",utakai:"歌合モード",saigen:"再現モード",renaiShort:"恋文ショート体験",renaiSim:"恋愛シミュレーション",story:"物語(試験中)",ikaiSuika:"位階出世ゲーム"}[m]||m;
   if(typeof renaiUiUpdateTools==="function")renaiUiUpdateTools();
   // モード別ボタン表示制御(全モード統一)
   {const cond=["tbHome","tbTime","tbSeason","tbCodex","tbMap"];
    cond.forEach(id=>{const e=$(id);if(e)e.style.display="";});}
   // 戦闘・歌合・再現・恋愛は専用HUDを使うため、世界状態バーは閉じる
-  if(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"){const wb=$("worldStatusBar");if(wb)wb.style.display="none";}
+  if(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"||m==="ikaiSuika"){const wb=$("worldStatusBar");if(wb)wb.style.display="none";}
   updateControlUI();
   if(m==="quiz"){const pk=$("quizDiffPicker");pk.style.display="flex";}
   if(m==="quest")startQuest();
@@ -11192,6 +11327,7 @@ function enterMode(m){
   if(m==="utakai")startUtakai();
   if(m==="saigen")startSaigen();
   if(m==="story"&&typeof startStory==="function")startStory(); // 波M: 隠しゲート(?story=1)からのみ到達
+  if(m==="ikaiSuika")startIkaiSuika();
   if(m==="renaiShort")renaiShowTargetPicker("short");
   if(m==="renaiSim")renaiShowTargetPicker("sim");
   if((m==="renaiShort"||m==="renaiSim")&&typeof RENAI_BGM!=="undefined")RENAI_BGM.start(APP.season); // 優美な和風BGMを流す
@@ -11208,7 +11344,7 @@ function updateControlUI(){
   const fp=APP.view==="fp"&&APP.mode!=="title";
   const renaiShortApproach=APP.mode==="renaiShort"&&APP.renai&&APP.renai.phase==="approach"; // 恋文ショート冒頭の3D導入(女房に歩み寄る場面)だけは移動UIを出す
   const renaiSimHub=APP.mode==="renaiSim"&&APP.renai&&APP.renai.phase==="hub"; // 恋の母屋3Dハブ(育成SIM本編)も移動UIを出す
-  const uta=APP.mode==="utakai"||APP.mode==="saigen"||(APP.mode==="renaiShort"&&!renaiShortApproach)||(APP.mode==="renaiSim"&&!renaiSimHub); // 歌合・再現・恋愛(HUD本編)は移動UI・調べる・照準は不要
+  const uta=APP.mode==="utakai"||APP.mode==="saigen"||APP.mode==="ikaiSuika"||(APP.mode==="renaiShort"&&!renaiShortApproach)||(APP.mode==="renaiSim"&&!renaiSimHub); // 歌合・再現・位階出世ゲーム・恋愛(HUD本編)は移動UI・調べる・照準は不要
   $("joy").style.display=(fp&&IS_TOUCH&&!joy.dynamic&&!uta)?"block":"none"; // どこでも方式は触れた時だけ出す
   $("interactBtn").style.display=(fp&&IS_TOUCH&&!uta)?"block":"none";
   $("crosshair").style.display=(fp&&!uta)?"block":"none";
@@ -11382,6 +11518,7 @@ const TAIJI_CONTROLS_PC={
   dodge:new Set([" ","space","spacebar","shift"]),
   guard:new Set(["f"]),
   sake:new Set(["4","r"]),
+  kotodama:new Set(["5","t"]),
   prevWeapon:new Set(["q"]),
   nextWeapon:new Set(["e"]),
   pause:new Set(["escape","esc","p"])
@@ -11389,6 +11526,11 @@ const TAIJI_CONTROLS_PC={
 function taijiPcKey(e){
   const key=(e.key||"").toLowerCase();
   const code=(e.code||"").toLowerCase();
+  if(APP.taiji&&APP.taiji.kotodama&&APP.taiji.kotodama.active){
+    if(TAIJI_CONTROLS_PC.pause.has(key))kotodamaCloseSession(false);
+    return true; // 詠唱中は通常の戦闘キーを無効化
+  }
+  if(TAIJI_CONTROLS_PC.kotodama.has(key)){taijiOpenKotodama();return true;}
   if(key==="1"){taijiSetWeapon("bow");return true;}
   if(key==="2"){taijiSetWeapon("seal");return true;}
   if(key==="3"){taijiSetWeapon("sword");return true;}
@@ -12138,6 +12280,211 @@ function kaimamiEyeUpdate(watcher,k){
     eye.querySelector(".watch-label").textContent=`視線 ${holdPct}%`;}
 }
 /* ============================================================
+   位階出世ゲーム(ikaiSuika) — すいかゲーム風の物理マージ
+   同じ位階の貴族アイコンを落として合体させ、童→太政大臣まで出世を目指す。
+   Three.jsシーンとは独立したCanvas2Dの簡易物理(自作・外部ライブラリ不使用)。
+============================================================ */
+const RANK_LADDER=[
+  {name:"童",kana:"わらわ",r:15,col:"#dfe7ea",robe:"#c7d3d8"},
+  {name:"六位",kana:"ろくい",r:19,col:"#5a7a52",robe:"#41603a"},
+  {name:"五位",kana:"ごい",r:24,col:"#c0392b",robe:"#96281d"},
+  {name:"四位",kana:"しい",r:30,col:"#7a2020",robe:"#5c1414"},
+  {name:"三位",kana:"さんみ",r:37,col:"#5a3d8a",robe:"#432c6c"},
+  {name:"参議",kana:"さんぎ",r:45,col:"#4a2f78",robe:"#38235c"},
+  {name:"中納言",kana:"ちゅうなごん",r:54,col:"#8a2f5a",robe:"#6c2246"},
+  {name:"大納言",kana:"だいなごん",r:64,col:"#a8285a",robe:"#821f46"},
+  {name:"大臣",kana:"だいじん",r:75,col:"#b8860b",robe:"#8a640a"},
+  {name:"太政大臣",kana:"だいじょうだいじん",r:88,col:"#d4af37",robe:"#a8842a"}
+];
+const IKAI_CFG={gravity:1600,wallRest:.26,floorRest:.2,collRest:.10,damping:.998,dangerY:76,overGraceMs:1500,dropCdMs:420,W:340,H:460};
+let IKAI=null,ikaiLoopActive=false,_ikaiLastTs=0;
+function ikaiLoadBest(){try{return parseInt(localStorage.getItem("shinden3d-ikai-best")||"0",10)||0;}catch(e){return 0;}}
+function ikaiSaveBest(v){try{localStorage.setItem("shinden3d-ikai-best",String(v));}catch(e){}}
+function ikaiSeenHelp(){try{return localStorage.getItem("shinden3d-ikai-help")==="1";}catch(e){return false;}}
+function ikaiMarkHelpSeen(){try{localStorage.setItem("shinden3d-ikai-help","1");}catch(e){}}
+function ikaiRandomSpawnRank(){
+  const r=Math.random();
+  if(r<.42)return 0;if(r<.72)return 1;if(r<.90)return 2;return 3;
+}
+function ikaiMergeScore(rank){return (rank+1)*(rank+1)*6;}
+function startIkaiSuika(){
+  const cv=$("ikaiCanvas");if(!cv)return;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=IKAI_CFG.W*dpr;cv.height=IKAI_CFG.H*dpr;
+  const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);cv._ctx=ctx;
+  IKAI={W:IKAI_CFG.W,H:IKAI_CFG.H,pieces:[],particles:[],score:0,best:ikaiLoadBest(),
+    current:ikaiRandomSpawnRank(),next:ikaiRandomSpawnRank(),hoverX:IKAI_CFG.W/2,dropCd:0,overTimer:0,over:false,nextId:1};
+  $("ikaiScore").textContent="0";$("ikaiBest").textContent=String(IKAI.best);
+  ikaiUpdateNextIcon();
+  $("ikaiGameOver").classList.remove("show");
+  $("ikaiHelp").classList.toggle("show",!ikaiSeenHelp());
+  if(!ikaiLoopActive){ikaiLoopActive=true;_ikaiLastTs=0;requestAnimationFrame(ikaiLoop);}
+}
+function stopIkaiSuika(){ IKAI=null; }
+function ikaiUpdateNextIcon(){
+  const el=$("ikaiNextIcon");if(!el||!IKAI)return;
+  const cfg=RANK_LADDER[IKAI.next];
+  el.textContent=cfg.name;el.style.background=cfg.col;
+}
+function ikaiPointerX(e,cv){
+  const rect=cv.getBoundingClientRect();
+  const clientX=(e.touches&&e.touches[0])?e.touches[0].clientX:e.clientX;
+  return Math.max(0,Math.min(IKAI_CFG.W,(clientX-rect.left)/rect.width*IKAI_CFG.W));
+}
+function ikaiDrop(){
+  const S=IKAI;if(!S||S.over)return;
+  const now=performance.now();if(now<(S.dropCd||0))return;
+  S.dropCd=now+IKAI_CFG.dropCdMs;
+  const r=RANK_LADDER[S.current].r;
+  S.pieces.push({id:S.nextId++,rank:S.current,x:Math.max(r,Math.min(S.W-r,S.hoverX)),y:34,vx:0,vy:80,spawnAt:now});
+  S.current=S.next;S.next=ikaiRandomSpawnRank();
+  ikaiUpdateNextIcon();
+  beep(440,.05,"triangle",.05);
+}
+(function bindIkaiInput(){
+  const cv=$("ikaiCanvas");if(!cv)return;
+  let dragging=false;
+  cv.addEventListener("pointerdown",e=>{if(APP.mode!=="ikaiSuika"||!IKAI||IKAI.over)return;e.preventDefault();dragging=true;IKAI.hoverX=ikaiPointerX(e,cv);});
+  cv.addEventListener("pointermove",e=>{if(!dragging||APP.mode!=="ikaiSuika"||!IKAI)return;IKAI.hoverX=ikaiPointerX(e,cv);});
+  addEventListener("pointerup",()=>{if(dragging){dragging=false;if(APP.mode==="ikaiSuika")ikaiDrop();}});
+})();
+function ikaiSpawnParticles(x,y,col){
+  const S=IKAI;if(!S)return;
+  for(let i=0;i<10;i++){
+    const a=Math.random()*Math.PI*2,sp=60+Math.random()*120;
+    S.particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-40,life:.6,col});
+  }
+}
+function ikaiStep(dt){
+  const S=IKAI;if(!S||S.over)return;
+  const steps=3,sdt=dt/steps;
+  for(let s=0;s<steps;s++){
+    for(const p of S.pieces){
+      p.vy+=IKAI_CFG.gravity*sdt;
+      p.x+=p.vx*sdt;p.y+=p.vy*sdt;
+      p.vx*=IKAI_CFG.damping;p.vy*=IKAI_CFG.damping;
+      const r=RANK_LADDER[p.rank].r;
+      if(p.x<r){p.x=r;p.vx=Math.abs(p.vx)*IKAI_CFG.wallRest;}
+      if(p.x>S.W-r){p.x=S.W-r;p.vx=-Math.abs(p.vx)*IKAI_CFG.wallRest;}
+      if(p.y>S.H-r){p.y=S.H-r;p.vy=-Math.abs(p.vy)*IKAI_CFG.floorRest;}
+    }
+    const merges=[];
+    for(let i=0;i<S.pieces.length;i++){
+      for(let j=i+1;j<S.pieces.length;j++){
+        const a=S.pieces[i],b=S.pieces[j];
+        if(a._dead||b._dead)continue;
+        const ra=RANK_LADDER[a.rank].r,rb=RANK_LADDER[b.rank].r;
+        const dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy)||.001,minD=ra+rb;
+        if(dist<minD){
+          if(a.rank===b.rank&&!a._merging&&!b._merging){
+            a._merging=true;b._merging=true;merges.push({a,b,rank:a.rank});continue;
+          }
+          const overlap=minD-dist,nx=dx/dist,ny=dy/dist,wa=rb/(ra+rb),wb=ra/(ra+rb);
+          a.x-=nx*overlap*wa;a.y-=ny*overlap*wa;b.x+=nx*overlap*wb;b.y+=ny*overlap*wb;
+          const rvx=b.vx-a.vx,rvy=b.vy-a.vy,rel=rvx*nx+rvy*ny;
+          if(rel<0){const imp=-(1+IKAI_CFG.collRest)*rel*.5;a.vx-=imp*nx;a.vy-=imp*ny;b.vx+=imp*nx;b.vy+=imp*ny;}
+        }
+      }
+    }
+    if(merges.length){
+      merges.forEach(m=>{
+        const {a,b,rank}=m;if(a._dead||b._dead)return;
+        a._dead=true;b._dead=true;
+        const nx=(a.x+b.x)/2,ny=(a.y+b.y)/2,newRank=rank+1;
+        if(newRank<RANK_LADDER.length){
+          S.pieces.push({id:S.nextId++,rank:newRank,x:nx,y:ny,vx:(a.vx+b.vx)*.15,vy:(a.vy+b.vy)*.15-40,spawnAt:performance.now()});
+          ikaiSpawnParticles(nx,ny,RANK_LADDER[newRank].col);
+        }else{
+          ikaiSpawnParticles(nx,ny,"#ffe27a");ikaiSpawnParticles(nx,ny,"#fff8e0");
+          toast("皆伝出世！太政大臣に上り詰めた",2400);
+        }
+        S.score+=ikaiMergeScore(rank);
+        beep(300+rank*60,.08,"triangle",.07);
+        $("ikaiScore").textContent=String(S.score);
+      });
+      S.pieces=S.pieces.filter(p=>!p._dead);
+    }
+  }
+  const now=performance.now();let danger=false;
+  for(const p of S.pieces){
+    const r=RANK_LADDER[p.rank].r;
+    if(p.y-r<IKAI_CFG.dangerY&&Math.hypot(p.vx,p.vy)<40&&(now-(p.spawnAt||0))>600){danger=true;break;}
+  }
+  if(danger){S.overTimer=(S.overTimer||0)+dt*1000;if(S.overTimer>IKAI_CFG.overGraceMs)ikaiGameOver();}
+  else S.overTimer=0;
+}
+function ikaiUpdateParticles(dt){
+  const S=IKAI;if(!S)return;
+  S.particles.forEach(pt=>{pt.x+=pt.vx*dt;pt.y+=pt.vy*dt;pt.vy+=500*dt;pt.life-=dt;});
+  S.particles=S.particles.filter(pt=>pt.life>0);
+}
+function ikaiDrawPiece(ctx,p){
+  const cfg=RANK_LADDER[p.rank],r=cfg.r;
+  ctx.save();ctx.translate(p.x,p.y);
+  ctx.beginPath();ctx.ellipse(0,r*.8,r*.72,r*.2,0,0,Math.PI*2);ctx.fillStyle="rgba(0,0,0,.2)";ctx.fill();
+  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);
+  const grad=ctx.createRadialGradient(-r*.3,-r*.3,r*.1,0,0,r);
+  grad.addColorStop(0,cfg.col);grad.addColorStop(1,cfg.robe);
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.lineWidth=Math.max(1,r*.05);ctx.strokeStyle="rgba(0,0,0,.4)";ctx.stroke();
+  ctx.beginPath();ctx.arc(0,-r*.16,r*.5,0,Math.PI*2);ctx.fillStyle="#ffe3c4";ctx.fill();
+  ctx.fillStyle="#2a1c12";
+  ctx.beginPath();ctx.arc(-r*.16,-r*.18,Math.max(1,r*.05),0,Math.PI*2);ctx.arc(r*.16,-r*.18,Math.max(1,r*.05),0,Math.PI*2);ctx.fill();
+  if(p.rank<=1){ctx.beginPath();ctx.arc(0,-r*.4,r*.42,Math.PI*1.05,Math.PI*1.95);ctx.fillStyle="#2a2018";ctx.fill();}
+  else if(p.rank<=4){
+    ctx.beginPath();ctx.moveTo(-r*.22,-r*.36);ctx.quadraticCurveTo(-r*.05,-r*.95,r*.08,-r*.9);ctx.quadraticCurveTo(r*.28,-r*.7,r*.22,-r*.32);
+    ctx.closePath();ctx.fillStyle="#181410";ctx.fill();
+  }else{
+    ctx.beginPath();ctx.rect(-r*.3,-r*.85,r*.6,r*.48);ctx.fillStyle="#181410";ctx.fill();
+    ctx.beginPath();ctx.moveTo(r*.28,-r*.6);ctx.quadraticCurveTo(r*.75,-r*.48,r*.7,-r*.05);ctx.quadraticCurveTo(r*.6,-r*.15,r*.32,-r*.38);
+    ctx.closePath();ctx.fillStyle="#181410";ctx.fill();
+    if(p.rank>=8){ctx.beginPath();ctx.arc(0,-r*.85,r*.09,0,Math.PI*2);ctx.fillStyle="#e8c84a";ctx.fill();}
+  }
+  if(r>=30){
+    ctx.fillStyle="rgba(0,0,0,.6)";ctx.font=`700 ${Math.round(r*.32)}px var(--sans,sans-serif)`;
+    ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(cfg.name,0,r*.45);
+  }
+  ctx.restore();
+}
+function ikaiRender(){
+  const S=IKAI;const cv=$("ikaiCanvas");if(!S||!cv||!cv._ctx)return;
+  const ctx=cv._ctx;ctx.clearRect(0,0,S.W,S.H);
+  const bg=ctx.createLinearGradient(0,0,0,S.H);bg.addColorStop(0,"#241a12");bg.addColorStop(1,"#140e09");
+  ctx.fillStyle=bg;ctx.fillRect(0,0,S.W,S.H);
+  ctx.strokeStyle="rgba(255,120,120,.55)";ctx.setLineDash([6,5]);ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(0,IKAI_CFG.dangerY);ctx.lineTo(S.W,IKAI_CFG.dangerY);ctx.stroke();ctx.setLineDash([]);
+  if(!S.over){
+    const r=RANK_LADDER[S.current].r;
+    ctx.globalAlpha=.85;ikaiDrawPiece(ctx,{rank:S.current,x:S.hoverX,y:34});ctx.globalAlpha=1;
+    ctx.strokeStyle="rgba(255,255,255,.22)";ctx.beginPath();ctx.moveTo(S.hoverX,34+r);ctx.lineTo(S.hoverX,S.H);ctx.stroke();
+  }
+  S.pieces.forEach(p=>ikaiDrawPiece(ctx,p));
+  S.particles.forEach(pt=>{ctx.globalAlpha=Math.max(0,pt.life/.6);ctx.fillStyle=pt.col;ctx.beginPath();ctx.arc(pt.x,pt.y,3.5,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;});
+}
+function ikaiLoop(ts){
+  if(APP.mode!=="ikaiSuika"){ikaiLoopActive=false;return;}
+  requestAnimationFrame(ikaiLoop);
+  const dt=Math.min(.033,(ts-(_ikaiLastTs||ts))/1000);_ikaiLastTs=ts;
+  if(IKAI&&!IKAI.over)ikaiStep(dt);
+  if(IKAI){ikaiUpdateParticles(dt);ikaiRender();}
+}
+function ikaiGameOver(){
+  const S=IKAI;if(!S||S.over)return;S.over=true;
+  if(S.score>S.best){S.best=S.score;ikaiSaveBest(S.best);}
+  $("ikaiBest").textContent=String(S.best);
+  const topRank=S.pieces.reduce((m,p)=>Math.max(m,p.rank),0);
+  const el=$("ikaiGoDetail");
+  if(el)el.innerHTML=`最終得点: <b>${S.score}</b><br>最高到達位: <b>${RANK_LADDER[topRank].name}</b><br>自己最高: <b>${S.best}</b>`;
+  $("ikaiGameOver").classList.add("show");
+  seNG();
+  recordProgress("ikaiSuika",1);gainParam("miyabi",2);
+}
+$("btnIkaiSuika").onclick=()=>{beep(600,.08);initAudio();hideSubPanel("miniGameSubPanel");enterMode("ikaiSuika");};
+$("ikaiQuit").onclick=()=>{beep(400,.06);enterMode("walk");};
+$("ikaiRetry").onclick=()=>{beep(600,.07);startIkaiSuika();};
+$("ikaiToTitle").onclick=()=>{beep(400,.06);location.reload();};
+$("ikaiHelpStart").onclick=()=>{$("ikaiHelp").classList.remove("show");ikaiMarkHelpSeen();beep(520,.06);};
+/* ============================================================
    物の怪退治モード
 ============================================================ */
 const YOKAI_IDS=new Set(["hitodama","kappa","chochin","kitsunebi","yukionna"]);
@@ -12205,6 +12552,7 @@ function startTaiji(){
     season:(bossRush?rushQueue[0]:(APP.taijiSeason||APP.season||"spring")),bossSpawned:false,boss:null,total:bossRush?rushQueue.length:spots.length,diffKey,diff,dodgeCd:0,dodgeUntil:0,
     seimeiHealUsed:false,fudaBurst:false,fudaChain:1,arrowCd:0,
     swordCd:0,swordCombo:0,swordAt:0,sake:3,sakeCd:0,sakeUsed:0,
+    kotodamaCharges:(diff.kotodama||3),kotodama:null,
     stamina:staminaMax,staminaMax,staminaDelay:0,exhausted:false,posture:0,postureMax:Math.round(100*(diff.postureMul||1)),
     guarding:false,guardMeter:100,rollUntil:0,rollDir:null,
     lockOn:false,lockTarget:null,lockPitch:0,
@@ -12478,6 +12826,7 @@ function updateTaijiControlsUi(){
   if($("tjGuardFill"))$("tjGuardFill").style.width=(k.guardMeter==null?100:k.guardMeter)+"%";
   updateTaijiStaminaUi();
   updateTaijiSakeUi();
+  updateKotodamaButtonUi();
   const gb=$("tjGuardBtn");if(gb){gb.classList.toggle("on",!!k.guarding);gb.classList.toggle("parry",!!k.guarding&&now<(k.parryUntil||0));}
   document.body.classList.toggle("guarding-now",!!k.guarding);
   document.body.classList.toggle("taiji-lock",!!k.lockOn);
@@ -12577,6 +12926,7 @@ function taijiTrySeimeiHeal(sx,sy){
 }
 function taijiQuit(){
   const k=APP.taiji;if(!k)return;k.done=true;
+  kotodamaForceClose();
   hideModeBrief(true);
   k.spirits.forEach(sp=>{if(sp.alive){const i=rayTargets.indexOf(sp.g.userData.inner);if(i>=0)rayTargets.splice(i,1);}scene.remove(sp.g);});
   taijiBossList(k).forEach(b=>{if(b.g)scene.remove(b.g);});
@@ -12604,6 +12954,7 @@ function _clearTaijiFx(){
 }
 function endTaiji(failed){
   const k=APP.taiji;if(!k)return;
+  kotodamaForceClose();
   hideModeBrief(true);
   renderer.shadowMap.autoUpdate=true;renderer.shadowMap.needsUpdate=true;
   // 波AN: ボス戦で一時的に下げた描画品質を、戦闘前の設定(オート/ユーザープリセット)へ復元
@@ -12939,6 +13290,200 @@ function taijiUseSake(){
   if(!(typeof SFX!=="undefined"&&SFX.playSe("heal",.52)))beep(620,.18,"sine",.07);
   if(k.bossSpawned)taijiTriggerHealPunish(k);
 }
+/* ============================================================
+   言霊祓い — 体勢崩し(チャンス)専用の連鎖詠唱アタック(波AI)
+   隣接するかな札をなぞって枕詞/祝詞を紡ぐと、繋いだ数だけ倍率が伸びる大ダメージになる。
+   使用回数(kotodamaCharges)制限あり。開始と同時に体勢崩しを詠唱時間ぶん延長し、
+   通常の連続攻撃と「同じ好機をどう使うか」の選択にする。
+============================================================ */
+function kotodamaTargetBoss(k){
+  if(!k||(k.kotodamaCharges||0)<=0)return null;
+  const now=performance.now();
+  const list=typeof taijiBossList==="function"?taijiBossList(k):[];
+  return list.find(b=>b&&!b.dead&&(now<(b.staggerUntil||0)||now<(b._tjf3Stagger||0)))||null;
+}
+function updateKotodamaButtonUi(){
+  const k=APP.taiji,btn=$("twKotodama"),badge=$("tjKotodamaCount");if(!btn||!k)return;
+  const n=Math.max(0,k.kotodamaCharges||0);
+  if(badge)badge.textContent=String(n);
+  btn.classList.toggle("empty",n<=0);
+  btn.classList.toggle("ready",!(k.kotodama&&k.kotodama.active)&&!!kotodamaTargetBoss(k));
+  if(k.kotodama&&k.kotodama.active)kotodamaTick(performance.now());
+}
+function kotodamaAdjacent(a,b,cols){
+  const ar=Math.floor(a/cols),ac=a%cols,br=Math.floor(b/cols),bc=b%cols;
+  return a!==b&&Math.abs(ar-br)<=1&&Math.abs(ac-bc)<=1;
+}
+const KOTODAMA_FILLER="あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろ";
+function kotodamaBuildBoard(diffKey){
+  const cols=KOTODAMA_TUNING.gridCols,rows=KOTODAMA_TUNING.gridRows,total=cols*rows;
+  const wordCount=diffKey==="normal"?2:3;
+  const byTier=t=>KOTODAMA_WORDS.filter(w=>w.tier===t);
+  const t1=byTier(1),t2=byTier(2),t3=byTier(3);
+  const candidates=[];
+  if(t1.length)candidates.push(t1[Math.floor(Math.random()*t1.length)]);
+  if(wordCount>=2&&t2.length)candidates.push(t2[Math.floor(Math.random()*t2.length)]);
+  if(wordCount>=3&&t3.length)candidates.push(t3[Math.floor(Math.random()*t3.length)]);
+  const cells=new Array(total).fill(null),used=new Array(total).fill(false);
+  function tryPlace(word){
+    const chars=Array.from(word.word);
+    for(let attempt=0;attempt<80;attempt++){
+      const startCands=[];for(let i=0;i<total;i++)if(!used[i])startCands.push(i);
+      if(!startCands.length)return null;
+      const path=[startCands[Math.floor(Math.random()*startCands.length)]];
+      const visited=new Set(path);let ok=true;
+      for(let i=1;i<chars.length;i++){
+        const last=path[i-1],cands=[];
+        for(let d=0;d<total;d++){if(!visited.has(d)&&!used[d]&&kotodamaAdjacent(last,d,cols))cands.push(d);}
+        if(!cands.length){ok=false;break;}
+        const next=cands[Math.floor(Math.random()*cands.length)];
+        path.push(next);visited.add(next);
+      }
+      if(ok&&path.length===chars.length)return path;
+    }
+    return null;
+  }
+  const words=[];
+  candidates.forEach(w=>{
+    const path=tryPlace(w);
+    if(path){const chars=Array.from(w.word);path.forEach((idx,i)=>{cells[idx]=chars[i];used[idx]=true;});words.push(w);}
+  });
+  for(let i=0;i<total;i++){if(!cells[i])cells[i]=KOTODAMA_FILLER[Math.floor(Math.random()*KOTODAMA_FILLER.length)];}
+  return {cols,rows,cells,words};
+}
+function taijiOpenKotodama(){
+  const k=APP.taiji;if(!k||k.done)return;
+  if(taijiTutorialBlocked(k))return;
+  if(k.kotodama&&k.kotodama.active)return;
+  if((k.kotodamaCharges||0)<=0){taijiMsg("言霊の力を使い果たした",850);beep(140,.08,"square",.05);return;}
+  const boss=kotodamaTargetBoss(k);
+  if(!boss){taijiMsg("体勢を崩した好機にのみ使える",900);beep(160,.08,"square",.05);return;}
+  k.kotodamaCharges--;
+  const now=performance.now(),dur=KOTODAMA_TUNING.sessionMs;
+  boss.staggerUntil=Math.max(boss.staggerUntil||0,now+dur); // 詠唱時間ぶん体勢崩しを縫い止める
+  if(boss._tjf3Stagger)boss._tjf3Stagger=Math.max(boss._tjf3Stagger,now+dur);
+  const board=kotodamaBuildBoard(k.diffKey);
+  k.kotodama={active:true,boss,board,trace:[],consumed:new Set(),doneWords:new Set(),chainCount:0,totalDmg:0,startAt:now,endAt:now+dur};
+  kotodamaRenderBoard();
+  $("kotodamaOverlay").classList.add("show");
+  taijiMsg("言霊祓い―かなを繋いで唱えよ！",1200);
+  beep(520,.06,"triangle",.06);
+  updateKotodamaButtonUi();
+}
+function kotodamaRenderBoard(){
+  const k=APP.taiji;if(!k||!k.kotodama)return;
+  const {board}=k.kotodama;
+  const targetsEl=$("kdTargets");
+  if(targetsEl)targetsEl.innerHTML=board.words.map((w,i)=>`<span class="kd-target" data-i="${i}">${w.word}</span>`).join("");
+  const gridEl=$("kdGrid");
+  if(gridEl){
+    gridEl.innerHTML=board.cells.map((ch,i)=>`<div class="kd-tile" data-idx="${i}">${ch}</div>`).join("");
+    gridEl.querySelectorAll(".kd-tile").forEach(el=>{
+      const idx=+el.dataset.idx;
+      el.addEventListener("pointerdown",e=>{e.preventDefault();kotodamaPointerDown(idx);});
+      el.addEventListener("pointerenter",()=>kotodamaPointerEnter(idx));
+    });
+  }
+  const linesEl=$("kdLines");if(linesEl)linesEl.innerHTML="";
+  const chainEl=$("kdChainLabel");if(chainEl)chainEl.textContent="";
+  const fill=$("kdTimerFill");if(fill)fill.style.width="100%";
+}
+function kotodamaPointerDown(idx){
+  const k=APP.taiji;if(!k||!k.kotodama||!k.kotodama.active)return;
+  const kd=k.kotodama;if(kd.consumed.has(idx))return;
+  kd.trace=[idx];kotodamaRefreshTiles();
+}
+function kotodamaPointerEnter(idx){
+  const k=APP.taiji;if(!k||!k.kotodama||!k.kotodama.active)return;
+  const kd=k.kotodama;if(!kd.trace.length)return;
+  const last=kd.trace[kd.trace.length-1];
+  if(idx===last)return;
+  if(kd.trace.length>=2&&kd.trace[kd.trace.length-2]===idx){kd.trace.pop();kotodamaRefreshTiles();return;} // 1つ戻ると取り消し
+  if(kd.trace.includes(idx)||kd.consumed.has(idx))return;
+  if(!kotodamaAdjacent(last,idx,kd.board.cols))return;
+  kd.trace.push(idx);kotodamaRefreshTiles();
+}
+function kotodamaRefreshTiles(){
+  const k=APP.taiji;if(!k||!k.kotodama)return;
+  const kd=k.kotodama;
+  document.querySelectorAll("#kdGrid .kd-tile").forEach(el=>{
+    const idx=+el.dataset.idx;
+    el.classList.toggle("active",kd.trace.includes(idx));
+    el.classList.toggle("used",kd.consumed.has(idx));
+  });
+  kotodamaDrawLines();
+}
+function kotodamaDrawLines(){
+  const k=APP.taiji;if(!k||!k.kotodama)return;
+  const kd=k.kotodama,svg=$("kdLines"),grid=$("kdGrid");if(!svg||!grid)return;
+  const gr=grid.getBoundingClientRect();
+  svg.setAttribute("width",gr.width);svg.setAttribute("height",gr.height);
+  let html="";
+  for(let i=1;i<kd.trace.length;i++){
+    const a=grid.querySelector(`.kd-tile[data-idx="${kd.trace[i-1]}"]`),b=grid.querySelector(`.kd-tile[data-idx="${kd.trace[i]}"]`);
+    if(!a||!b)continue;
+    const ar=a.getBoundingClientRect(),br=b.getBoundingClientRect();
+    html+=`<line x1="${ar.left+ar.width/2-gr.left}" y1="${ar.top+ar.height/2-gr.top}" x2="${br.left+br.width/2-gr.left}" y2="${br.top+br.height/2-gr.top}"/>`;
+  }
+  svg.innerHTML=html;
+}
+function kotodamaPointerUp(){
+  const k=APP.taiji;if(!k||!k.kotodama||!k.kotodama.active)return;
+  const kd=k.kotodama;
+  if(kd.trace.length>=2){
+    const chars=kd.trace.map(i=>kd.board.cells[i]).join("");
+    const hitIdx=kd.board.words.findIndex((w,i)=>!kd.doneWords.has(i)&&w.word===chars);
+    if(hitIdx>=0){
+      const hit=kd.board.words[hitIdx];
+      kd.doneWords.add(hitIdx);
+      kd.trace.forEach(idx=>kd.consumed.add(idx));
+      const mulArr=KOTODAMA_TUNING.chainMul,mul=mulArr[Math.min(kd.chainCount,mulArr.length-1)];
+      const dmg=Math.round((KOTODAMA_TUNING.tierDmg[hit.tier]||10)*mul);
+      kd.chainCount++;kd.totalDmg+=dmg;
+      const chip=document.querySelector(`.kd-target[data-i="${hitIdx}"]`);if(chip)chip.classList.add("done");
+      const chainEl=$("kdChainLabel");if(chainEl)chainEl.textContent=hit.word+"「"+hit.mean+"」 連鎖"+kd.chainCount+"！ +"+dmg;
+      beep(520+kd.chainCount*90,.09,"triangle",.08);
+      if(kd.doneWords.size>=kd.board.words.length){kd.trace=[];kotodamaCloseSession(true);return;}
+    }else{
+      document.querySelectorAll("#kdGrid .kd-tile.active").forEach(el=>el.classList.add("fail"));
+      setTimeout(()=>document.querySelectorAll("#kdGrid .kd-tile.fail").forEach(el=>el.classList.remove("fail")),300);
+      beep(180,.07,"square",.06);
+    }
+  }
+  kd.trace=[];kotodamaRefreshTiles();
+}
+function kotodamaTick(now){
+  const k=APP.taiji;if(!k||!k.kotodama||!k.kotodama.active)return;
+  const kd=k.kotodama,remain=Math.max(0,kd.endAt-now);
+  const fill=$("kdTimerFill");if(fill)fill.style.width=(remain/KOTODAMA_TUNING.sessionMs*100)+"%";
+  if(remain<=0||kd.boss.dead)kotodamaCloseSession(false);
+}
+function kotodamaCloseSession(fullClear){
+  const k=APP.taiji;if(!k||!k.kotodama)return;
+  const kd=k.kotodama;kd.active=false;
+  let dmg=kd.totalDmg;
+  if(fullClear&&dmg>0)dmg=Math.round(dmg*KOTODAMA_TUNING.fullClearMul);
+  $("kotodamaOverlay").classList.remove("show");
+  if(dmg>0&&kd.boss&&!kd.boss.dead){
+    damageBoss(kd.boss,dmg,"kotodama");
+    const el=$("kdResult");
+    if(el){el.textContent=(fullClear?"皆伝・言霊 -":"言霊 -")+dmg;el.classList.remove("show");void el.offsetWidth;el.classList.add("show");}
+    beep(760,.16,"sawtooth",.1);setTimeout(()=>beep(1020,.14,"triangle",.08),90);
+    if(typeof juiceShake==="function"&&dmg>=20)juiceShake();
+  }else{
+    taijiMsg("言霊は届かなかった…",900);
+  }
+  k.kotodama=null;
+  updateKotodamaButtonUi();
+}
+function kotodamaForceClose(){
+  const k=APP.taiji;if(!k||!k.kotodama)return;
+  const el=$("kotodamaOverlay");if(el)el.classList.remove("show");
+  k.kotodama=null;
+}
+addEventListener("pointerup",kotodamaPointerUp);
+bindTaijiTap($("twKotodama"),()=>taijiOpenKotodama());
+if($("kdCancel"))$("kdCancel").addEventListener("click",()=>kotodamaCloseSession(false));
 function taijiShoot(sx,sy){
   const k=APP.taiji;if(!k||k.done)return;
   if(taijiTutorialBlocked(k))return;
