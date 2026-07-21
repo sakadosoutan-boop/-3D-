@@ -1486,7 +1486,7 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 .ikai-stat{padding:4px 10px;border-radius:8px;border:1px solid rgba(201,162,63,.4);background:rgba(24,16,9,.7);font-size:11px;color:#d8c6a0;text-align:center}
 .ikai-stat span{display:block;font-size:8.5px;letter-spacing:.1em;opacity:.75}
 .ikai-stat b{font-size:14px;color:#ffd9a0}
-.ikai-board{position:relative;width:min(360px,88vw);aspect-ratio:340/460;margin-top:2px}
+.ikai-board{position:relative;width:min(300px,80vw);aspect-ratio:280/400;margin-top:2px}
 #ikaiCanvas{width:100%;height:100%;border-radius:10px;border:1px solid rgba(201,162,63,.5);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;display:block}
 .ikai-next-wrap{position:absolute;right:-6px;top:-6px;display:flex;flex-direction:column;align-items:center;gap:3px;
   padding:5px 7px;border-radius:9px;border:1px solid rgba(201,162,63,.42);background:rgba(20,14,8,.86);box-shadow:0 6px 16px rgba(0,0,0,.4)}
@@ -12301,7 +12301,7 @@ const RANK_LADDER=[
 ];
 /* 本家スイカゲームの「重く・シビアに積み上がる」手応えに寄せた調整。
    反発を抑えて実際に不安定に積み上がるようにし、危険ラインと猶予も本家並みに厳しくしてある */
-const IKAI_CFG={gravity:2000,wallRest:.16,floorRest:.1,collRest:.05,damping:.994,dangerY:52,overGraceMs:950,dropCdMs:460,W:340,H:460};
+const IKAI_CFG={gravity:2000,wallRest:.16,floorRest:.1,collRest:.05,damping:.994,dangerY:46,overGraceMs:950,dropCdMs:460,W:280,H:400};
 let IKAI=null,ikaiLoopActive=false,_ikaiLastTs=0;
 function ikaiLoadBest(){try{return parseInt(localStorage.getItem("shinden3d-ikai-best")||"0",10)||0;}catch(e){return 0;}}
 function ikaiSaveBest(v){try{localStorage.setItem("shinden3d-ikai-best",String(v));}catch(e){}}
@@ -12369,7 +12369,9 @@ function ikaiSpawnParticles(x,y,col){
 }
 function ikaiStep(dt){
   const S=IKAI;if(!S||S.over)return;
-  const steps=3,sdt=dt/steps;
+  // 積み上がった塔状の駒列は、衝突解決の反復回数が少ないと重力に負けて際限なく沈み込む
+  // (Gauss-Seidel的な逐次補正が1フレームで塔の下まで伝播しきらないため)。反復数を増やして安定させる
+  const steps=8,sdt=dt/steps;
   for(let s=0;s<steps;s++){
     for(const p of S.pieces){
       p.vy+=IKAI_CFG.gravity*sdt;
@@ -12395,9 +12397,11 @@ function ikaiStep(dt){
           a.x-=nx*overlap*wa;a.y-=ny*overlap*wa;b.x+=nx*overlap*wb;b.y+=ny*overlap*wb;
           const rvx=b.vx-a.vx,rvy=b.vy-a.vy,rel=rvx*nx+rvy*ny;
           if(rel<0){const imp=-(1+IKAI_CFG.collRest)*rel*.5;a.vx-=imp*nx;a.vy-=imp*ny;b.vx+=imp*nx;b.vy+=imp*ny;}
-          // 接触面の摩擦(タンジェント方向の速度を減衰させ、積み上げが崩れやすい丸い駒でも塔状に安定させる)
-          const tx=-ny,ty=nx,rvt=(b.vx-a.vx)*tx+(b.vy-a.vy)*ty,fricImp=rvt*.14;
-          a.vx+=fricImp*tx*wa;a.vy+=fricImp*ty*wa;b.vx-=fricImp*tx*wb;b.vy-=fricImp*ty*wb;
+          // 接触面の摩擦(タンジェント方向の相対速度を対称に減衰させる。wa/wbで非対称に配分すると
+          // 質量比に応じた見かけの運動量が生まれ続け、積み上がった駒が際限なく沈み込むバグになるため、
+          // 正規の力積と同様に必ず ±同量 で加減する)
+          const tx=-ny,ty=nx,rvt=(b.vx-a.vx)*tx+(b.vy-a.vy)*ty,fricImp=rvt*.07;
+          a.vx+=fricImp*tx;a.vy+=fricImp*ty;b.vx-=fricImp*tx;b.vy-=fricImp*ty;
         }
       }
     }
@@ -12420,10 +12424,12 @@ function ikaiStep(dt){
       S.pieces=S.pieces.filter(p=>!p._dead);
     }
   }
+  // 危険ライン超え判定: 速度で足切りすると微振動で永久にリセットされ続けるため、
+  // 位置(投下直後の猶予のみ)だけで判定する
   const now=performance.now();let danger=false;
   for(const p of S.pieces){
     const r=RANK_LADDER[p.rank].r;
-    if(p.y-r<IKAI_CFG.dangerY&&Math.hypot(p.vx,p.vy)<40&&(now-(p.spawnAt||0))>600){danger=true;break;}
+    if(p.y-r<IKAI_CFG.dangerY&&(now-(p.spawnAt||0))>600){danger=true;break;}
   }
   if(danger){S.overTimer=(S.overTimer||0)+dt*1000;if(S.overTimer>IKAI_CFG.overGraceMs)ikaiGameOver();}
   else S.overTimer=0;
@@ -12482,13 +12488,15 @@ function ikaiDrawPiece(ctx,p){
       ctx.strokeStyle="rgba(0,0,0,.4)";ctx.lineWidth=Math.max(1,r*.02);ctx.stroke();
     }
   }
-  // 位階名(縁取りしてどの背景色でも読めるようにする)
-  if(r>=26){
-    ctx.font=`700 ${Math.round(r*.3)}px var(--sans,sans-serif)`;
+  // 位階名(縁取りしてどの背景色でも読めるようにする)。
+  // 童・六位・五位のような小さい駒は、円の中に収めると物理的に読めないため円の外(下)へキャプションとして出す
+  {
+    const small=r<28,fontPx=small?13:Math.round(r*.32),labelY=small?(r+11):(r*.46);
+    ctx.font=`700 ${fontPx}px var(--sans,sans-serif)`;
     ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.lineWidth=Math.max(2,r*.09);ctx.strokeStyle="rgba(20,12,8,.85)";ctx.lineJoin="round";
-    ctx.strokeText(cfg.name,0,r*.46);
-    ctx.fillStyle="#fff6df";ctx.fillText(cfg.name,0,r*.46);
+    ctx.lineWidth=small?2.6:Math.max(2,r*.09);ctx.strokeStyle="rgba(20,12,8,.9)";ctx.lineJoin="round";
+    ctx.strokeText(cfg.name,0,labelY);
+    ctx.fillStyle="#fff6df";ctx.fillText(cfg.name,0,labelY);
   }
   ctx.restore();
 }
