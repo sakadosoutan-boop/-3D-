@@ -3268,6 +3268,50 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 @media (max-width:480px){
   .history-scroll{padding:18px 16px}
 }
+
+/* ====== 波4: 平安の暦(年中行事カレンダー) ====== */
+#koyomiPanel{position:fixed;z-index:82;inset:0;display:none;align-items:center;justify-content:center;
+  padding:18px;background:rgba(10,6,4,.82);backdrop-filter:blur(5px)}
+#koyomiPanel.open{display:flex}
+.koyomi-scroll{position:relative;width:min(560px,96vw);max-height:82vh;padding:24px 26px;
+  color:var(--sumi);background:linear-gradient(90deg,#e8d8b8,#f5eddd 8%,#f5eddd 92%,#e8d8b8);
+  border:1px solid #b89b56;border-radius:8px;box-shadow:0 24px 90px rgba(0,0,0,.72),0 0 0 1px rgba(255,248,230,.24) inset;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:#b89b56 rgba(130,92,42,.12)}
+.koyomi-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(184,155,86,.72)}
+.koyomi-head h2{color:var(--shu);font-size:19px;letter-spacing:.14em;text-shadow:0 1px 0 rgba(255,255,255,.62)}
+#koyomiClose{margin-left:auto}
+.koyomi-today{margin-bottom:14px;padding:14px 16px;border:1px solid rgba(184,155,86,.6);border-radius:8px;
+  background:linear-gradient(180deg,rgba(179,64,42,.08),rgba(255,255,255,.42));font-family:var(--sans)}
+.koyomi-date-label{font-size:11px;letter-spacing:.14em;color:#8a7550}
+.koyomi-date-big{font-size:24px;font-weight:800;color:#3a2c18;letter-spacing:.04em;margin-top:2px}
+.koyomi-date-wd{font-size:14px;font-weight:400;color:#8a7550;margin-left:6px}
+.koyomi-near-label{margin-top:10px;font-size:12px;font-weight:700;color:var(--shu);letter-spacing:.06em}
+.koyomi-near-title{font-size:17px;font-weight:800;color:#3a2c18;margin-top:3px}
+.koyomi-near-kana{font-size:11px;font-weight:400;color:#8a7550;margin-left:8px;letter-spacing:.08em}
+.koyomi-near-date{font-size:11.5px;color:#8a7550;margin-top:1px}
+.koyomi-near-text{font-size:13px;line-height:1.7;color:#4a3c26;margin-top:6px}
+.koyomi-note{font-size:11px;line-height:1.7;color:#7a6c58;background:rgba(130,92,42,.08);border-left:3px solid rgba(184,155,86,.7);
+  padding:8px 11px;border-radius:0 6px 6px 0;margin-bottom:14px;font-family:var(--sans)}
+.koyomi-section-title{font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--shu);margin-bottom:8px;font-family:var(--sans)}
+.koyomi-list{display:flex;flex-direction:column;gap:7px}
+.koyomi-item{display:flex;gap:11px;padding:9px 11px;border:1px solid rgba(184,155,86,.5);border-radius:8px;
+  background:rgba(255,255,255,.42);font-family:var(--sans)}
+.koyomi-item.next{border-color:var(--shu);background:rgba(179,64,42,.1);box-shadow:0 0 0 1px rgba(179,64,42,.25)}
+.koyomi-item .ko-date{font-size:12px;font-weight:700;color:var(--shu);width:66px;flex:none;padding-top:1px}
+.koyomi-item .ko-body{display:flex;flex-direction:column;min-width:0;flex:1}
+.koyomi-item .ko-title{font-size:14px;font-weight:700;color:#3a2c18;word-break:break-word}
+.koyomi-item .ko-kana{font-size:10.5px;font-weight:400;color:#8a7550;margin-left:7px;letter-spacing:.06em}
+.koyomi-item .ko-text{font-size:12px;line-height:1.65;color:#4a3c26;margin-top:2px}
+@media (max-width:480px){
+  .koyomi-scroll{padding:18px 16px}
+  .koyomi-item .ko-date{width:52px}
+}
+/* 波4: 雷雨の稲光フラッシュ(散策時のみ・reduced-motionで減光) */
+#lightningFlash{position:fixed;inset:0;z-index:38;pointer-events:none;opacity:0;background:#eaf0ff;mix-blend-mode:screen}
+#lightningFlash.on{animation:lightningFlash .62s ease-out}
+#lightningFlash.on.reduced{animation:lightningFlashReduced .5s ease-out}
+@keyframes lightningFlash{0%{opacity:0}6%{opacity:.92}12%{opacity:.2}20%{opacity:.85}46%{opacity:.12}100%{opacity:0}}
+@keyframes lightningFlashReduced{0%{opacity:0}22%{opacity:.26}100%{opacity:0}}
 /* APP_CSS_EMBED_END */
 </style>
 </head>
@@ -3276,6 +3320,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 <div id="vignette"></div>
 <div id="dangerVignette"></div>
 <div id="cloudOverlay"></div>
+<div id="lightningFlash"></div>
 
 <div id="title">
   <div id="titleAudioHint">🎵 画面をタップすると音楽が流れます</div>
@@ -3361,6 +3406,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
     <button class="t-btn t-codex-btn" id="btnCodex">📚 平安ものしり図鑑<small id="titleCodexProgress">図鑑 0 / 0</small></button>
     <button class="t-btn t-codex-btn" id="btnCareer">🏯 平安立身伝<small id="titleCareerProgress">官位 童殿上</small></button>
     <button class="t-btn t-codex-btn" id="btnHistory">📜 あゆみ<small id="titleHistoryProgress">まだ記録がありません</small></button>
+    <button class="t-btn t-codex-btn" id="btnKoyomi">📅 平安の暦<small id="titleKoyomiProgress">今日の行事を見る</small></button>
     <button class="t-onboard-help" id="btnOnboardHelp">❓ はじめての方へ</button>
 
     <div id="dailyQuestPanel" class="daily-quest-panel">
@@ -3589,6 +3635,20 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
       <button class="tb-btn" id="historyClose">✕ 閉じる</button>
     </div>
     <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+
+<!-- 波4: 平安の暦(年中行事カレンダー)パネル -->
+<div id="koyomiPanel" role="dialog" aria-modal="true" aria-labelledby="koyomiTitle">
+  <div class="koyomi-scroll">
+    <div class="koyomi-head">
+      <div><h2 id="koyomiTitle">📅 平安の暦</h2></div>
+      <button class="tb-btn" id="koyomiClose">✕ 閉じる</button>
+    </div>
+    <div class="koyomi-today" id="koyomiToday"></div>
+    <div class="koyomi-note" id="koyomiNote">※ 平安時代の年中行事は、月の満ち欠けを基準にした旧暦(太陰太陽暦)の日付で営まれていました。ここでは月日が近い行事として、同じ月日を新暦(現在のカレンダー)にあてはめて紹介します。実際の季節感とは1か月前後ずれることがあります。</div>
+    <div class="koyomi-section-title">年間の主な年中行事</div>
+    <div class="koyomi-list" id="koyomiList"></div>
   </div>
 </div>
 
@@ -7712,11 +7772,12 @@ function makeRain(){
   g.visible=false;scene.add(g);return g;
 }
 const rainFall=makeRain();
-function updateRain(g,dt,t){
+function updateRain(g,dt,t,windPush){
+  const wp=windPush||0; // 波4: 強風時の横流れ追加分(既定0=既存の降り方のまま)
   g.children.forEach(m=>{
     const u=m.userData;
     m.position.y-=u.vy*60*dt;
-    m.position.x+=Math.sin(t*u.sx+u.sway)*0.015;
+    m.position.x+=Math.sin(t*u.sx+u.sway)*0.015+wp*dt;
     if(m.position.y<0){m.position.y=38;m.position.x=rnd(-55,55);m.position.z=rnd(-55,55);}
   });
 }
@@ -7759,18 +7820,91 @@ function sakuraGust(t){
   const slow=Math.sin(t*0.045)+Math.sin(t*0.017+1.3);
   return Math.min(1,0.26+Math.max(0,(slow-0.8)/0.8)); // 底上げ→常に花びらが舞い、突風でさらに増える
 }
-function updateFalling(g,dt,t,gust){
+function updateFalling(g,dt,t,gust,windPush){
   const hasG=(gust!==undefined);
   const spd=hasG?(0.5+gust*1.7):1, swayMul=hasG?(0.6+gust*2.6):1;
   if(hasG&&g.userData.mat)g.userData.mat.opacity=0.22+gust*0.68; // 平常は淡く、突風で濃く=間欠的な桜吹雪
+  const wp=windPush||0; // 波4: 強風イベント中の横流れ追加分(既定0=既存の動きのまま)
   g.children.forEach(m=>{
     const u=m.userData;
     m.position.y-=u.vy*60*dt*spd;
-    m.position.x+=Math.sin(t*u.sx+u.sway)*0.02*swayMul;
+    m.position.x+=Math.sin(t*u.sx+u.sway)*0.02*swayMul+wp*dt;
     m.rotation.x+=dt*1.5;m.rotation.z+=dt*1.2;
     if(m.position.y<0.1){m.position.y=rnd(28,40);
       m.position.x=rnd(-60,60);m.position.z=rnd(-60,60);}
   });
+}
+
+/* ============================================================
+   波4: 天候演出(雷雨・突風) — animate()は毎フレーム走るホットパスのため、
+   ここでは軽量なフラグ/タイマーの更新のみを行い、新規オブジェクト生成は一切しない。
+   散策(walk)モードかつ撮影モードでないときに限定し、退治・垣間見・物語・歌合・
+   恋愛・位階すいか等では稲光/突風とも発生させない(不自然な演出を避けるため)。
+============================================================ */
+const WEATHER_FX={thunderTimer:rnd(18,40),gustOn:false,gustTimer:rnd(16,34),gustDur:0,gustDir:1,gustPush:0,gustWindBoost:0};
+function weatherFxAllowed(){return APP.mode==="walk"&&!document.body.classList.contains("photo-mode");}
+/* 稲光(画面フラッシュ)。CSSの@keyframesで数百msかけて減衰させる(ukFlashと同じ手法)。
+   prefers-reduced-motion時は.reducedクラスで弱いキーフレームに差し替える(演出を完全には消さない)。 */
+function triggerLightningFlash(){
+  const el=$("lightningFlash");if(!el)return;
+  el.classList.remove("on","reduced");void el.offsetWidth;
+  if(REDUCED_MOTION)el.classList.add("reduced");
+  el.classList.add("on");
+  setTimeout(thunderRumble,420+Math.random()*520); // 稲光の少し後に雷鳴を鳴らして距離感を出す
+}
+/* 雷鳴: 新規mp3は追加せず、低周波のsawtooth+sineを短く重ねて合成した轟音(beep()と同じAudioContextを共有)。 */
+function thunderRumble(){
+  if(!APP_SE)return;
+  try{
+    AC=AC||(ambientAudio&&ambientAudio.ctx)||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended")AC.resume();
+    const t0=AC.currentTime,dur=1.1+Math.random()*0.7;
+    const o1=AC.createOscillator(),o2=AC.createOscillator(),g=AC.createGain(),filt=AC.createBiquadFilter();
+    o1.type="sawtooth";o1.frequency.setValueAtTime(68,t0);o1.frequency.exponentialRampToValueAtTime(30,t0+dur);
+    o2.type="sine";o2.frequency.setValueAtTime(44,t0);o2.frequency.exponentialRampToValueAtTime(22,t0+dur);
+    filt.type="lowpass";filt.frequency.value=240;filt.Q.value=0.6;
+    g.gain.setValueAtTime(0.0001,t0);
+    g.gain.exponentialRampToValueAtTime(0.32,t0+0.10);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    o1.connect(filt);o2.connect(filt);filt.connect(g);g.connect(AC.destination);
+    o1.start(t0);o2.start(t0);o1.stop(t0+dur+0.05);o2.stop(t0+dur+0.05);
+  }catch(e){}
+}
+/* 毎フレーム呼び出し。rainOnはrainFall.userData.rainOn(雨が実際に降っているか)を渡す。 */
+function updateWeatherFx(dt,t,rainOn){
+  const allowed=weatherFxAllowed();
+  // 雷雨: 夏秋の雨天時のみ、数十秒に1回程度の低確率で稲光+雷鳴を発生させる
+  if(allowed&&rainOn&&(APP.season==="summer"||APP.season==="autumn")){
+    WEATHER_FX.thunderTimer-=dt;
+    if(WEATHER_FX.thunderTimer<=0){
+      WEATHER_FX.thunderTimer=rnd(22,52);
+      if(Math.random()<0.45)triggerLightningFlash();
+    }
+  }else if(WEATHER_FX.thunderTimer<15){
+    WEATHER_FX.thunderTimer=15; // 条件から外れた直後に再突入して連発しないよう間を空ける
+  }
+  // 強風: 数十秒に1回、数秒だけ「突風」区間を作りパーティクルの横流れ+風音を強める
+  if(!allowed){
+    WEATHER_FX.gustOn=false;
+  }else if(WEATHER_FX.gustOn){
+    WEATHER_FX.gustDur-=dt;
+    if(WEATHER_FX.gustDur<=0){WEATHER_FX.gustOn=false;WEATHER_FX.gustTimer=rnd(22,48);}
+  }else{
+    WEATHER_FX.gustTimer-=dt;
+    if(WEATHER_FX.gustTimer<=0){
+      WEATHER_FX.gustOn=Math.random()<0.5;
+      if(WEATHER_FX.gustOn){WEATHER_FX.gustDur=rnd(3.5,7);WEATHER_FX.gustDir=Math.random()<0.5?-1:1;}
+      else WEATHER_FX.gustTimer=rnd(14,26);
+    }
+  }
+  const pushTarget=WEATHER_FX.gustOn?WEATHER_FX.gustDir*5.5:0;
+  WEATHER_FX.gustPush+=(pushTarget-WEATHER_FX.gustPush)*Math.min(1,dt*1.8);
+  const boostTarget=WEATHER_FX.gustOn?1:0;
+  WEATHER_FX.gustWindBoost+=(boostTarget-WEATHER_FX.gustWindBoost)*Math.min(1,dt*1.4);
+  // 風音: 既存の風ベッド(SFXのnightWind実録ループ)の音量を一時的に上げる(新規mp3は追加しない)
+  if(typeof SFX!=="undefined"&&SFX._bedMedia&&SFX._curBed==="nightWind"){
+    try{SFX._bedMedia.volume=Math.min(1,SFX._bedBase*(1+WEATHER_FX.gustWindBoost*0.8));}catch(e){}
+  }
 }
 
 /* 季節ごとの飛行生物・風物 */
@@ -11052,6 +11186,77 @@ function historyClosePanel(){$("historyPanel").classList.remove("open");}
 $("btnHistory").onclick=historyOpenPanel;
 $("historyClose").onclick=historyClosePanel;
 $("historyPanel").addEventListener("click",e=>{if(e.target===$("historyPanel"))historyClosePanel();});
+/* ============================================================
+   波4: 平安「今日は何の日」年中行事カレンダー — 実際の日付(new Date())に連動して
+   直近の年中行事(ねんちゅうぎょうじ)を案内するパネル。localStorageは使わず、
+   純粋なデータ描画のみ(状態を保持しない)。既存の進捗/実績ロジックには一切触れない。
+   注記: 平安の行事は旧暦(太陰太陽暦)。ここでは同じ月日を新暦にあてはめて案内する簡易表示。
+   干支の日(子日・酉日・亥日・卯日・辰日)にあたる行事は月日を目安として1つ割り当てている。
+============================================================ */
+const KOYOMI_EVENTS=[
+  {m:1,d:1,title:"元日節会",kana:"がんじつのせちえ",text:"天皇が大極殿・清涼殿で年始の政をはじめ、群臣から祝賀を受ける。一年で最も重んじられた宮中儀式。"},
+  {m:1,d:7,title:"白馬節会",kana:"あおうまのせちえ",text:"左右馬寮が引く白馬(あおうま)を清涼殿の庭で天覧し、一年の邪気を払う。七草粥を食す日でもある。"},
+  {m:1,d:10,title:"子日の遊び",kana:"ねのひのあそび",text:"正月最初の子(ね)の日、野に出て若菜を摘み、小松を根ごと引いて長寿を祈る春の行楽(旧暦の干支の日にあたるため月日は目安)。"},
+  {m:1,d:15,title:"望粥",kana:"もちがゆ",text:"小豆を入れた粥を食べて一年の無病息災を祈る。十五日粥ともいう。"},
+  {m:2,d:4,title:"祈年祭",kana:"としごいのまつり",text:"神祇官が諸国の神々を祀り、その年の五穀豊穣をあらかじめ祈る国家的な祭儀。"},
+  {m:3,d:3,title:"上巳・曲水の宴",kana:"じょうし・きょくすいのえん",text:"水辺で身の穢れを祓い、流れる盃が前を過ぎるまでに和歌を詠む雅な遊び。のちの雛祭りの源流とされる。"},
+  {m:4,d:8,title:"灌仏会",kana:"かんぶつえ",text:"釈迦の誕生を祝う仏事。誕生仏の像に甘茶を注いでまつる。花祭りともいう。"},
+  {m:4,d:17,title:"賀茂祭(葵祭)",kana:"かもまつり(あおいまつり)",text:"賀茂神社の例祭で、都をあげての一大行事。見物の牛車の場所取り「車争ひ」は『源氏物語』にも描かれる(旧暦四月の酉の日にあたるため月日は目安)。"},
+  {m:5,d:5,title:"端午節会",kana:"たんごのせちえ",text:"菖蒲や蓬で邪気を払い、天皇の御前で騎射(きしゃ)や競馬(くらべうま)を行って武を競う。"},
+  {m:6,d:30,title:"夏越の祓",kana:"なごしのはらえ",text:"一年前半の罪穢れを祓う大祓(おおはらえ)。茅の輪(ちのわ)をくぐって残り半年の無病息災を祈る。"},
+  {m:7,d:7,title:"七夕・乞巧奠",kana:"たなばた・きっこうでん",text:"織女と牽牛の二星に手芸や和歌の上達を願う。梶の葉に歌をしたためる風習もあった。"},
+  {m:7,d:15,title:"盂蘭盆会",kana:"うらぼんえ",text:"祖先の霊を供養する仏事。灯籠や供物を捧げる。"},
+  {m:8,d:15,title:"中秋観月の宴",kana:"ちゅうしゅうかんげつのえん",text:"一年で最も美しいとされる名月を眺めながら、詩歌管弦を楽しむ観月の宴が催された。"},
+  {m:9,d:9,title:"重陽節会",kana:"ちょうようのせちえ",text:"菊の花を浮かべた菊花酒を飲み、前夜に菊にかぶせた綿(着せ綿)で肌を拭って長寿を祈る。"},
+  {m:10,d:10,title:"亥の子",kana:"いのこ",text:"亥の子餅を食べて無病息災と子孫繁栄を祈る。この頃から火桶を使い始める目安ともされた(旧暦十月亥の日にあたるため月日は目安)。"},
+  {m:11,d:23,title:"新嘗祭",kana:"にいなめさい",text:"その年に収穫した新穀を天神地祇に供え、天皇自らも食す収穫感謝の祭儀(旧暦十一月中の卯の日にあたるため月日は目安)。"},
+  {m:11,d:24,title:"豊明節会",kana:"とよあかりのせちえ",text:"新嘗祭の翌日に催される宴。五節(ごせち)の舞姫たちの舞が華やかに披露される。"},
+  {m:12,d:30,title:"追儺",kana:"ついな",text:"大晦日の夜に鬼を払う年越しの儀式。のちの節分の豆まきの源流とされる。"}
+];
+function koyomiDayOfYear(m,d,year){return Math.floor((Date.UTC(year,m-1,d)-Date.UTC(year,0,1))/86400000);}
+/* 今日(または直近)の行事を1件返す。年またぎ(12月末→1月頭)は翌年として扱い、うるう年の最大1日の
+   誤差は演出用途のため許容する。diffDays=0は「本日」。 */
+function koyomiFindNear(now){
+  now=now||new Date();
+  const y=now.getFullYear(),todayDoy=koyomiDayOfYear(now.getMonth()+1,now.getDate(),y);
+  let best=null,bestDiff=Infinity;
+  KOYOMI_EVENTS.forEach(ev=>{
+    let diff=koyomiDayOfYear(ev.m,ev.d,y)-todayDoy;
+    if(diff<0)diff+=365;
+    if(diff<bestDiff){bestDiff=diff;best=ev;}
+  });
+  return {event:best,diffDays:bestDiff,isToday:bestDiff===0};
+}
+function koyomiUpdateBadge(){
+  const el=$("titleKoyomiProgress");if(!el)return;
+  const near=koyomiFindNear();
+  el.textContent=near.event?((near.isToday?"本日 ":"次は ")+near.event.title):"今日の行事を見る";
+}
+function koyomiRenderPanel(){
+  const now=new Date(),near=koyomiFindNear(now);
+  const wd=["日","月","火","水","木","金","土"][now.getDay()];
+  const todayEl=$("koyomiToday");
+  if(todayEl){
+    const nearHtml=near.event?
+      `<div class="koyomi-near-label">${near.isToday?"★ 本日の行事":`次の行事まで あと${near.diffDays}日`}</div>
+       <div class="koyomi-near-title">${near.event.title}<span class="koyomi-near-kana">${near.event.kana}</span></div>
+       <div class="koyomi-near-date">${near.event.m}月${near.event.d}日ごろ</div>
+       <div class="koyomi-near-text">${near.event.text}</div>`:"";
+    todayEl.innerHTML=`<div class="koyomi-date-label">今日の日付</div><div class="koyomi-date-big">${now.getMonth()+1}月${now.getDate()}日<span class="koyomi-date-wd">(${wd})</span></div>${nearHtml}`;
+  }
+  const listEl=$("koyomiList");
+  if(listEl){
+    listEl.innerHTML=KOYOMI_EVENTS.map(ev=>{
+      const isNext=near.event===ev;
+      return `<div class="koyomi-item${isNext?" next":""}"><div class="ko-date">${ev.m}月${ev.d}日</div><div class="ko-body"><div class="ko-title">${ev.title}<span class="ko-kana">${ev.kana}</span></div><div class="ko-text">${ev.text}</div></div></div>`;
+    }).join("");
+  }
+}
+function koyomiOpenPanel(){koyomiRenderPanel();$("koyomiPanel").classList.add("open");}
+function koyomiClosePanel(){$("koyomiPanel").classList.remove("open");}
+$("btnKoyomi").onclick=koyomiOpenPanel;
+$("koyomiClose").onclick=koyomiClosePanel;
+$("koyomiPanel").addEventListener("click",e=>{if(e.target===$("koyomiPanel"))koyomiClosePanel();});
 $("btnOnboardHelp").onclick=()=>{onboardOpen();};
 $("onboardSkip").onclick=onboardClose;
 $("onboardStartWalk").onclick=()=>{
@@ -11065,6 +11270,7 @@ addEventListener("keydown",e=>{if(e.key==="Escape"){
   if($("careerSenji").classList.contains("show"))careerCloseSenji();
   else if($("careerPanel").classList.contains("open"))careerClosePanel();
   else if($("historyPanel").classList.contains("open"))historyClosePanel();
+  else if($("koyomiPanel").classList.contains("open"))koyomiClosePanel();
 }});
 
 /* 収集データの引き継ぎ(バックアップ/復元) — localStorageは原則永続だが、URL/オリジンの違いや
@@ -19240,9 +19446,9 @@ function animate(now){
   });
 
   /* --- 季節パーティクル --- */
-  if(!taijiLightMode&&petals.visible)updateFalling(petals,dt,t,sakuraGust(t));  // 桜は間欠的な突風
-  if(!taijiLightMode&&leavesFall.visible)updateFalling(leavesFall,dt,t);
-  if(!taijiLightMode&&snowFall.visible)updateFalling(snowFall,dt,t);
+  if(!taijiLightMode&&petals.visible)updateFalling(petals,dt,t,sakuraGust(t),WEATHER_FX.gustPush);  // 桜は間欠的な突風+波4の突風
+  if(!taijiLightMode&&leavesFall.visible)updateFalling(leavesFall,dt,t,undefined,WEATHER_FX.gustPush);
+  if(!taijiLightMode&&snowFall.visible)updateFalling(snowFall,dt,t,undefined,WEATHER_FX.gustPush);
   // 雨: ランダム間欠(秋は高頻度/長め、夏は低頻度/短め、春冬なし)
   {const rs=rainFall.userData;
    if(rs.rainSeason){
@@ -19258,13 +19464,15 @@ function animate(now){
        }
      }
      rainFall.visible=rs.rainOn;
-     if(rs.rainOn&&!taijiLightMode){rainMat.opacity=APP.season==="autumn"?0.32:0.20;updateRain(rainFall,dt,t);}
+     if(rs.rainOn&&!taijiLightMode){rainMat.opacity=APP.season==="autumn"?0.32:0.20;updateRain(rainFall,dt,t,WEATHER_FX.gustPush);}
      if(taijiLightMode)rainFall.visible=false;
    }
    // 雲/空オーバーレイ
    const co=document.getElementById("cloudOverlay");
    if(co){const tOp=rainFall.visible?0.62:0,curOp=parseFloat(co.style.opacity)||0;
      co.style.opacity=Math.max(0,Math.min(1,curOp+(tOp-curOp)*Math.min(1,dt*0.45))).toFixed(3);}
+   // 波4: 雷雨(稲光+雷鳴)・突風の軽量な状態更新(散策モードのみ)
+   updateWeatherFx(dt,t,rs.rainOn);
   }
   // 池面の月映り(雨のときは非表示)
   {const reOn=(APP.time==="night")&&!(rainFall&&rainFall.visible);

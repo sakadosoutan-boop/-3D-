@@ -2215,3 +2215,47 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 @media (max-width:480px){
   .history-scroll{padding:18px 16px}
 }
+
+/* ====== 波4: 平安の暦(年中行事カレンダー) ====== */
+#koyomiPanel{position:fixed;z-index:82;inset:0;display:none;align-items:center;justify-content:center;
+  padding:18px;background:rgba(10,6,4,.82);backdrop-filter:blur(5px)}
+#koyomiPanel.open{display:flex}
+.koyomi-scroll{position:relative;width:min(560px,96vw);max-height:82vh;padding:24px 26px;
+  color:var(--sumi);background:linear-gradient(90deg,#e8d8b8,#f5eddd 8%,#f5eddd 92%,#e8d8b8);
+  border:1px solid #b89b56;border-radius:8px;box-shadow:0 24px 90px rgba(0,0,0,.72),0 0 0 1px rgba(255,248,230,.24) inset;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:#b89b56 rgba(130,92,42,.12)}
+.koyomi-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(184,155,86,.72)}
+.koyomi-head h2{color:var(--shu);font-size:19px;letter-spacing:.14em;text-shadow:0 1px 0 rgba(255,255,255,.62)}
+#koyomiClose{margin-left:auto}
+.koyomi-today{margin-bottom:14px;padding:14px 16px;border:1px solid rgba(184,155,86,.6);border-radius:8px;
+  background:linear-gradient(180deg,rgba(179,64,42,.08),rgba(255,255,255,.42));font-family:var(--sans)}
+.koyomi-date-label{font-size:11px;letter-spacing:.14em;color:#8a7550}
+.koyomi-date-big{font-size:24px;font-weight:800;color:#3a2c18;letter-spacing:.04em;margin-top:2px}
+.koyomi-date-wd{font-size:14px;font-weight:400;color:#8a7550;margin-left:6px}
+.koyomi-near-label{margin-top:10px;font-size:12px;font-weight:700;color:var(--shu);letter-spacing:.06em}
+.koyomi-near-title{font-size:17px;font-weight:800;color:#3a2c18;margin-top:3px}
+.koyomi-near-kana{font-size:11px;font-weight:400;color:#8a7550;margin-left:8px;letter-spacing:.08em}
+.koyomi-near-date{font-size:11.5px;color:#8a7550;margin-top:1px}
+.koyomi-near-text{font-size:13px;line-height:1.7;color:#4a3c26;margin-top:6px}
+.koyomi-note{font-size:11px;line-height:1.7;color:#7a6c58;background:rgba(130,92,42,.08);border-left:3px solid rgba(184,155,86,.7);
+  padding:8px 11px;border-radius:0 6px 6px 0;margin-bottom:14px;font-family:var(--sans)}
+.koyomi-section-title{font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--shu);margin-bottom:8px;font-family:var(--sans)}
+.koyomi-list{display:flex;flex-direction:column;gap:7px}
+.koyomi-item{display:flex;gap:11px;padding:9px 11px;border:1px solid rgba(184,155,86,.5);border-radius:8px;
+  background:rgba(255,255,255,.42);font-family:var(--sans)}
+.koyomi-item.next{border-color:var(--shu);background:rgba(179,64,42,.1);box-shadow:0 0 0 1px rgba(179,64,42,.25)}
+.koyomi-item .ko-date{font-size:12px;font-weight:700;color:var(--shu);width:66px;flex:none;padding-top:1px}
+.koyomi-item .ko-body{display:flex;flex-direction:column;min-width:0;flex:1}
+.koyomi-item .ko-title{font-size:14px;font-weight:700;color:#3a2c18;word-break:break-word}
+.koyomi-item .ko-kana{font-size:10.5px;font-weight:400;color:#8a7550;margin-left:7px;letter-spacing:.06em}
+.koyomi-item .ko-text{font-size:12px;line-height:1.65;color:#4a3c26;margin-top:2px}
+@media (max-width:480px){
+  .koyomi-scroll{padding:18px 16px}
+  .koyomi-item .ko-date{width:52px}
+}
+/* 波4: 雷雨の稲光フラッシュ(散策時のみ・reduced-motionで減光) */
+#lightningFlash{position:fixed;inset:0;z-index:38;pointer-events:none;opacity:0;background:#eaf0ff;mix-blend-mode:screen}
+#lightningFlash.on{animation:lightningFlash .62s ease-out}
+#lightningFlash.on.reduced{animation:lightningFlashReduced .5s ease-out}
+@keyframes lightningFlash{0%{opacity:0}6%{opacity:.92}12%{opacity:.2}20%{opacity:.85}46%{opacity:.12}100%{opacity:0}}
+@keyframes lightningFlashReduced{0%{opacity:0}22%{opacity:.26}100%{opacity:0}}
