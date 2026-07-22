@@ -3312,6 +3312,69 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 #lightningFlash.on.reduced{animation:lightningFlashReduced .5s ease-out}
 @keyframes lightningFlash{0%{opacity:0}6%{opacity:.92}12%{opacity:.2}20%{opacity:.85}46%{opacity:.12}100%{opacity:0}}
 @keyframes lightningFlashReduced{0%{opacity:0}22%{opacity:.26}100%{opacity:0}}
+
+/* ====== 波5: 用語ネットワーク(関連項目チップ) ====== */
+.codex-related{margin-top:14px;padding-top:12px;border-top:1px dashed rgba(184,155,86,.6)}
+.codex-related-label{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--shu);margin-bottom:7px;font-family:var(--sans)}
+.codex-related-chips{display:flex;flex-wrap:wrap;gap:7px}
+.codex-chip{padding:0 13px;min-height:32px;border:1px solid #b89b56;border-radius:999px;background:rgba(255,255,255,.5);
+  color:var(--sumi);font-family:var(--sans);font-size:12px;cursor:pointer;transition:background .12s,box-shadow .12s,transform .1s}
+.codex-chip:hover,.codex-chip:focus-visible{background:rgba(255,248,232,.85);outline:none;box-shadow:0 0 0 2px rgba(184,155,86,.22);transform:translateY(-1px)}
+.codex-chip:active{transform:translateY(0)}
+.codex-chip.locked{opacity:.5;background:rgba(70,55,38,.08);color:#8f826c;cursor:default}
+.codex-chip.locked:hover{box-shadow:none;transform:none}
+#info .info-related{margin-top:12px;padding-top:10px;border-top:1px dashed rgba(184,155,86,.55)}
+#info .info-related .codex-related-label{font-size:10.5px}
+#info .codex-chip{padding:0 11px;min-height:28px;font-size:11.5px}
+
+/* ====== 波5: 発見ログ(未発見誘導) ====== */
+#discoverProgress{font-family:var(--sans);font-size:12px;color:#67583f;margin-bottom:10px}
+.discover-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.discover-card{padding:11px 13px;border:1px dashed #b89b56;border-radius:6px;background:rgba(70,55,38,.05);font-family:var(--sans)}
+.discover-cat{font-size:10.5px;letter-spacing:.08em;color:var(--shu);font-weight:700}
+.discover-q{font-family:var(--serif);font-size:17px;color:#8f826c;letter-spacing:.1em;margin-top:2px}
+.discover-hint{font-size:11.5px;line-height:1.6;color:#5a4c38;margin-top:6px}
+.discover-empty{grid-column:1/-1;text-align:center;color:#7a6a4a;padding:24px;font-family:var(--sans);font-size:13px}
+
+/* ====== 波5: 教員向け小テスト(4択・CSV書き出し) ====== */
+#quizTeacherPanel{position:fixed;z-index:83;inset:0;display:none;align-items:center;justify-content:center;
+  padding:18px;background:rgba(10,6,4,.82);backdrop-filter:blur(5px)}
+#quizTeacherPanel.open{display:flex}
+.qt-scroll{position:relative;width:min(640px,96vw);max-height:88vh;padding:24px 26px;
+  color:var(--sumi);background:linear-gradient(90deg,#e8d8b8,#f5eddd 8%,#f5eddd 92%,#e8d8b8);
+  border:1px solid #b89b56;border-radius:8px;box-shadow:0 24px 90px rgba(0,0,0,.72),0 0 0 1px rgba(255,248,230,.24) inset;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:#b89b56 rgba(130,92,42,.12)}
+.qt-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(184,155,86,.72)}
+.qt-head h2{color:var(--shu);font-size:19px;letter-spacing:.14em;text-shadow:0 1px 0 rgba(255,255,255,.62)}
+#qtClose{margin-left:auto}
+.qt-intro p{font-size:13px;line-height:1.75;color:#4a3c26;margin-bottom:12px;font-family:var(--sans)}
+.qt-intro label{display:block;font-family:var(--sans);font-size:13px;color:#4a3c26;margin-bottom:14px}
+.qt-intro select{margin-left:8px;min-height:38px;padding:0 10px;border:1px solid #b89b56;border-radius:6px;background:rgba(255,255,255,.7);color:var(--sumi);font-family:var(--sans);font-size:13px}
+.qt-progress{font-family:var(--sans);font-size:12px;color:#67583f;margin-bottom:10px}
+.qt-question{font-family:var(--serif);font-size:16px;line-height:1.75;color:#2e2214;padding:14px 16px;
+  border:1px solid rgba(184,155,86,.6);border-radius:8px;background:rgba(255,255,255,.42);margin-bottom:14px;min-height:64px}
+.qt-choices{display:flex;flex-direction:column;gap:9px}
+.qt-choice-btn{width:100%;min-height:48px;padding:10px 16px;text-align:left;border:1px solid #b89b56;border-radius:8px;
+  background:rgba(255,255,255,.5);color:var(--sumi);font-family:var(--sans);font-size:13.5px;line-height:1.5;cursor:pointer;
+  transition:background .12s,box-shadow .12s,transform .1s}
+.qt-choice-btn:hover,.qt-choice-btn:focus-visible{background:rgba(255,248,232,.85);outline:none;box-shadow:0 0 0 2px rgba(184,155,86,.22)}
+.qt-choice-btn:active{transform:translateY(1px)}
+.qt-choice-btn.correct{background:rgba(90,140,80,.28);border-color:#5a8c50;font-weight:700}
+.qt-choice-btn.wrong{background:rgba(179,64,42,.22);border-color:var(--shu)}
+.qt-choice-btn:disabled{cursor:default}
+.qt-score{font-family:var(--serif);font-size:20px;color:var(--shu);margin-bottom:14px;text-align:center}
+.qt-table-wrap{overflow-x:auto;margin-bottom:14px;border:1px solid rgba(184,155,86,.5);border-radius:6px}
+.qt-table{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:12px;min-width:480px}
+.qt-table th,.qt-table td{padding:7px 9px;border-bottom:1px solid rgba(184,155,86,.35);text-align:left;vertical-align:top}
+.qt-table th{background:rgba(184,155,86,.18);font-size:11px;letter-spacing:.06em;color:#5a4c38}
+.qt-table tr.qt-row-wrong td{background:rgba(179,64,42,.08)}
+.qt-export-btns{display:flex;gap:8px;flex-wrap:wrap}
+.qt-export-btns .tb-btn{min-height:42px;flex:1 1 140px}
+@media (max-width:480px){
+  .qt-scroll{padding:18px 16px}
+  .qt-choice-btn{font-size:13px}
+  .qt-export-btns .tb-btn{flex:1 1 100%}
+}
 /* APP_CSS_EMBED_END */
 </style>
 </head>
@@ -3407,6 +3470,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
     <button class="t-btn t-codex-btn" id="btnCareer">🏯 平安立身伝<small id="titleCareerProgress">官位 童殿上</small></button>
     <button class="t-btn t-codex-btn" id="btnHistory">📜 あゆみ<small id="titleHistoryProgress">まだ記録がありません</small></button>
     <button class="t-btn t-codex-btn" id="btnKoyomi">📅 平安の暦<small id="titleKoyomiProgress">今日の行事を見る</small></button>
+    <button class="t-btn t-codex-btn" id="btnQuizTeacher">🧑‍🏫 教員向け小テスト<small>4択・CSV書き出し</small></button>
     <button class="t-onboard-help" id="btnOnboardHelp">❓ はじめての方へ</button>
 
     <div id="dailyQuestPanel" class="daily-quest-panel">
@@ -3543,6 +3607,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
       <button class="codex-tab" id="codexTabWaka">🎋 和歌集</button>
       <button class="codex-tab" id="codexTabGloss">📖 用語カード</button>
       <button class="codex-tab" id="codexTabAch">🏅 実績・称号</button>
+      <button class="codex-tab" id="codexTabDiscover">🔎 発見ログ</button>
     </div>
     <div id="codexMainPage">
       <input type="search" id="codexSearch" class="codex-search" placeholder="🔍 名前・よみ・説明で検索">
@@ -3572,6 +3637,10 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
         </div>
       </div>
       <div class="ach-grid" id="achGrid"></div>
+    </div>
+    <div id="discoverPage" style="display:none">
+      <div id="discoverProgress"></div>
+      <div class="discover-grid" id="discoverList"></div>
     </div>
     <details id="codexBackup" class="codex-backup">
       <summary>💾 収集データの引き継ぎ（バックアップ／復元）</summary>
@@ -3652,6 +3721,42 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
   </div>
 </div>
 
+<!-- 波5: 教員向け小テスト(4択・CSV書き出し)パネル -->
+<div id="quizTeacherPanel" role="dialog" aria-modal="true" aria-labelledby="qtTitle">
+  <div class="qt-scroll">
+    <div class="qt-head">
+      <div><h2 id="qtTitle">🧑‍🏫 教員向け小テスト</h2></div>
+      <button class="tb-btn" id="qtClose">✕ 閉じる</button>
+    </div>
+    <div id="qtIntro">
+      <p>図鑑の用語・建築や古文の重要語からランダムに出題する4択の小テストです。教員の自習教材づくりや生徒の実力確認にお使いください。採点後、結果をCSVで書き出せます。</p>
+      <label>出題数:
+        <select id="qtCount">
+          <option value="5">5問</option>
+          <option value="10" selected>10問</option>
+          <option value="15">15問</option>
+          <option value="20">20問</option>
+        </select>
+      </label>
+      <button class="t-btn gold" id="qtStart">▶ テストを始める</button>
+    </div>
+    <div id="qtPlay" style="display:none">
+      <div class="qt-progress" id="qtProgress"></div>
+      <div class="qt-question" id="qtQuestion"></div>
+      <div class="qt-choices" id="qtChoices"></div>
+    </div>
+    <div id="qtResult" style="display:none">
+      <div class="qt-score" id="qtScore"></div>
+      <div class="qt-table-wrap"><table class="qt-table" id="qtTable"></table></div>
+      <div class="qt-export-btns">
+        <button class="tb-btn" id="qtCopyCsv">📋 CSVをコピー</button>
+        <button class="tb-btn" id="qtDownloadCsv">⬇️ CSVをダウンロード</button>
+        <button class="tb-btn" id="qtRetry">🔁 もう一度</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="info">
   <button id="infoClose">✕</button>
   <div class="info-body">
@@ -3661,6 +3766,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
     <div class="info-desc" id="infoDesc"></div>
     <button class="info-more" id="infoMore">📜 もっと詳しく（古文の窓）▼</button>
     <div class="info-trivia" id="infoTrivia"></div>
+    <div class="info-related" id="infoRelated"></div>
   </div>
 </div>
 
@@ -10890,11 +10996,13 @@ function setCodexTab(tab){
   $("codexTabWaka").classList.toggle("active",tab==="waka");
   $("codexTabGloss").classList.toggle("active",tab==="gloss");
   $("codexTabAch").classList.toggle("active",tab==="ach");
+  $("codexTabDiscover").classList.toggle("active",tab==="discover");
   $("codexMainPage").style.display=tab==="main"?"block":"none";
   $("wakaPage").style.display=tab==="waka"?"block":"none";
   $("glossPage").style.display=tab==="gloss"?"block":"none";
   $("achPage").style.display=tab==="ach"?"block":"none";
-  if(tab==="main")renderCodex();else if(tab==="waka")renderWakaPage();else if(tab==="gloss")renderGlossPage();else renderAchievementsPage();
+  $("discoverPage").style.display=tab==="discover"?"block":"none";
+  if(tab==="main")renderCodex();else if(tab==="waka")renderWakaPage();else if(tab==="gloss")renderGlossPage();else if(tab==="discover")renderDiscoverPage();else renderAchievementsPage();
 }
 function renderWakaPage(){
   const snName={spring:"🌸 春",summer:"🌿 夏",autumn:"🍂 秋",winter:"❄ 冬"};
@@ -10956,16 +11064,207 @@ function renderCodex(){
       b.className="codex-entry"+(open?"":" locked");b.disabled=!open;
       const dv=catDiff[it.cat]||1,stars="★".repeat(dv)+"☆".repeat(3-dv);
       b.innerHTML=open?`<b>${it.n}</b><small>${it.k}<br>${catName[it.cat]}　難${stars}</small>`:`<b>未解放</b><small>${catName[it.cat]}　難${stars}<br>ヒント: ${catHint[it.cat]||"邸内で解説を読む"}</small>`;
-      if(open)b.onclick=()=>{
-        const d=$("codexDetail");d.className="show";
-        const illust=(typeof CODEX_CAT_IMG!=="undefined"&&CODEX_CAT_IMG[it.cat])?`<img class="codex-illust" src="${CODEX_CAT_IMG[it.cat]}" alt="${catName[it.cat]||""}の挿絵">`:"";
-        const juken=(typeof JUKEN_KAISETSU!=="undefined"&&JUKEN_KAISETSU[id])?`<p><b>受験の窓:</b> ${JUKEN_KAISETSU[id]}</p>`:""; // 波D: 高校生向け一言解説
-        d.innerHTML=`${illust}<h3>${it.n}</h3><div>${it.k}</div><p>${it.d}</p><p><b>古文の窓:</b> ${it.t}</p>${juken}`;
-        d.scrollIntoView({block:"nearest",behavior:"smooth"});
-      };
+      if(open)b.onclick=()=>codexShowDetail(id);
       grid.appendChild(b);
     });
   updateCodexProgress();
+}
+/* ====== 波5-K1: 用語ネットワーク(関連項目チップ) ======
+   ITEMSのデータ自体は変えず、隣接関係だけを別マップで持つ。存在しないidが混ざらないよう
+   src/app/items.jsのキー一覧と突き合わせて手キュレーションした代表的なつながり。 */
+const CODEX_CAT_NAME={b:"建築",g:"建具",c:"調度品",p:"人物",x:"怪異",a:"生き物",s:"霊獣",k:"武家"};
+const CODEX_RELATED={
+  shinden:["moya","hisashi","niwa","kouran","aruji"],
+  moya:["shinden","hisashi","nurigome","michoudai"],
+  hisashi:["moya","sunoko","misu","kichou"],
+  sunoko:["hisashi","kouran","kizahashi","neko"],
+  kouran:["sunoko","kizahashi","niwa"],
+  kizahashi:["sunoko","kouran","niwa"],
+  misu:["kichou","hisashi","hajitomi","himegimi"],
+  kichou:["misu","byoubu","kabeshiro","himegimi"],
+  hajitomi:["misu","tsumado","hisashi"],
+  tsumado:["hajitomi","watadono"],
+  watadono:["sukiwatadono","chumonro","tsumado"],
+  sukiwatadono:["watadono","niwa"],
+  chumonro:["chumon","tsuridono","watadono"],
+  chumon:["chumonro","shikyakumon","gissha"],
+  tsuridono:["chumonro","niwa"],
+  tsuiji:["shikyakumon","chumon","genan"],
+  shikyakumon:["tsuiji","chumon","kurumayadori"],
+  kurumayadori:["gissha","shikyakumon","toneri"],
+  gissha:["kurumayadori","chumon","zuishin"],
+  niwa:["shinden","kouran","tsuridono","matsu","take"],
+  michoudai:["moya","nurigome","tatami","kichou"],
+  nurigome:["moya","michoudai"],
+  tatami:["shitone","michoudai"],
+  shitone:["tatami","kyousoku"],
+  byoubu:["kichou","kabeshiro"],
+  kabeshiro:["kichou","byoubu"],
+  toudai:["hioke","takimono"],
+  biwa:["koto","sho","ryuteki"],
+  koto:["biwa","sho"],
+  sho:["ryuteki","biwa","koto"],
+  ryuteki:["sho","biwa"],
+  hioke:["subitsu","toudai"],
+  subitsu:["hioke","kamado"],
+  iko:["kyoudai","juni"],
+  kyoudai:["iko","himegimi"],
+  fusego:["takimono","juni"],
+  takimono:["toudai","fusego"],
+  fubako:["himegimi","kichou"],
+  himegimi:["nyobo","kichou","misu","michoudai"],
+  nyobo:["himegimi","kikoshi","myobu"],
+  kikoshi:["himegimi","misu","gissha"],
+  aruji:["kita_no_kata","keishi","moya"],
+  kita_no_kata:["aruji","tai_n","nyobo"],
+  tai_n:["kita_no_kata","watadono","shinden"],
+  tai_e:["kodomo_e","watadono","shinden"],
+  tai_w:["kodomo_w","watadono","shinden"],
+  kodomo_e:["tai_e","menoto"],
+  kodomo_w:["tai_w","menoto"],
+  menoto:["kodomo_e","kodomo_w","himegimi"],
+  keishi:["aruji","myobu"],
+  myobu:["nyobo","keishi"],
+  gejo:["kamado","subitsu"],
+  zuishin:["gissha","toneri"],
+  toneri:["gissha","zuishin","kurumayadori"],
+  genan:["tsuiji","chumon"],
+  warawa:["suzume","niwa"],
+  monban:["chumon","shikyakumon"],
+  oni:["hitodama","shikigami"],
+  shikigami:["seimei","oni","onmyo_shikiban"],
+  seimei:["shikigami","onmyo_shikiban"],
+  onmyo_shikiban:["seimei","shikigami"],
+  hitodama:["oni","kappa"],
+  kappa:["niwa","hitodama"],
+  chochin:["hitodama","oni"],
+  kitsunebi:["hitodama","oni"],
+  yukionna:["tai_n","hitodama"],
+  oshidori:["niwa","koi"],
+  tsuru:["niwa","matsu","kame"],
+  neko:["sunoko","hisashi"],
+  hotaru:["niwa","tonbo"],
+  uguisu:["matsu","fuji"],
+  suzume:["niwa","warawa"],
+  karasu:["niwa","matsu"],
+  tsubame:["hisashi","niwa"],
+  kamome:["niwa","koi"],
+  kari:["niwa","tsuru"],
+  chidori:["niwa","koi"],
+  chou:["fuji","nadesiko"],
+  tonbo:["niwa","hotaru"],
+  koi:["niwa","oshidori"],
+  matsu:["take","niwa","tsuru"],
+  take:["matsu","niwa"],
+  fuji:["nadesiko","kakitsubata"],
+  nadesiko:["fuji","himegimi"],
+  kakitsubata:["fuji","niwa"],
+  kame:["tsuru","niwa"],
+  seiryu:["suzaku","byakko","genbu"],
+  suzaku:["seiryu","byakko","genbu"],
+  byakko:["seiryu","suzaku","genbu"],
+  genbu:["seiryu","suzaku","byakko"]
+};
+/* 図鑑詳細のHTML(グリッドからの開封・関連チップからのジャンプ双方から呼べる共通実装) */
+function codexDetailHTML(id){
+  const it=ITEMS[id];if(!it)return"";
+  const illust=(typeof CODEX_CAT_IMG!=="undefined"&&CODEX_CAT_IMG[it.cat])?`<img class="codex-illust" src="${CODEX_CAT_IMG[it.cat]}" alt="${CODEX_CAT_NAME[it.cat]||""}の挿絵">`:"";
+  const juken=(typeof JUKEN_KAISETSU!=="undefined"&&JUKEN_KAISETSU[id])?`<p><b>受験の窓:</b> ${JUKEN_KAISETSU[id]}</p>`:""; // 波D: 高校生向け一言解説
+  return `${illust}<h3>${it.n}</h3><div>${it.k}</div><p>${it.d}</p><p><b>古文の窓:</b> ${it.t}</p>${juken}${codexRelatedChipsHTML(id)}`;
+}
+/* 関連項目チップのHTML。未発見の関連先は「？？？(分類)」で淡く表示し、タップは無効にする */
+function codexRelatedChipsHTML(id){
+  const rel=(CODEX_RELATED[id]||[]).filter(rid=>ITEMS[rid]);
+  if(!rel.length)return"";
+  const chips=rel.map(rid=>{
+    const rit=ITEMS[rid],open=codexUnlocked.has(rid);
+    const label=open?rit.n:`？？？（${CODEX_CAT_NAME[rit.cat]||""}）`;
+    return `<button type="button" class="codex-chip${open?"":" locked"}" data-rel="${rid}"${open?"":" disabled"}>${label}</button>`;
+  }).join("");
+  return `<div class="codex-related"><div class="codex-related-label">🔗 関連項目</div><div class="codex-related-chips">${chips}</div></div>`;
+}
+function codexShowDetail(id){
+  if(!ITEMS[id]||!codexUnlocked.has(id))return;
+  const d=$("codexDetail");d.className="show";
+  d.innerHTML=codexDetailHTML(id);
+  d.scrollIntoView({block:"nearest",behavior:"smooth"});
+}
+/* 関連チップのクリックは委譲で拾う(グリッド再描画・タブ切替をまたいでも1回だけ登録) */
+{const cd=$("codexDetail");if(cd)cd.addEventListener("click",e=>{
+  const btn=e.target.closest(".codex-chip");if(!btn||btn.disabled)return;
+  const rid=btn.dataset.rel;if(rid)codexShowDetail(rid);
+});}
+{const ir=$("infoRelated");if(ir)ir.addEventListener("click",e=>{
+  const btn=e.target.closest(".codex-chip");if(!btn||btn.disabled)return;
+  const rid=btn.dataset.rel;if(rid)showInfo(rid);
+});}
+/* ====== 波5-C5: 発見ログ(未発見誘導) ======
+   codexUnlockedとITEMSの差集合＝未発見。分類ごとの一般的なヒントに加え、
+   季節・場所が特に分かりやすい一部の項目だけ個別ヒントで上書きする。既存の
+   図鑑解放ロジック(codexUnlocked/CODEX_KEY/unlockCodex)は一切変更しない。 */
+const CODEX_CAT_HINT={
+  b:"邸内を歩いて、建物の柱・屋根・床まわりを見上げてみよう。",
+  g:"戸・格子・御簾など、動かせる建具に触れてみよう。",
+  c:"寝殿や対屋の室内に置かれた調度品に近づいてタップしよう。",
+  p:"邸内を歩き回って、人物に近づいて調べよう。",
+  x:"夜(時間帯を夜に切り替えて)、庭の暗がりを探索しよう。",
+  a:"庭や池のまわり。季節や時間帯で現れる生き物を探そう。",
+  s:"東西南北いずれかの門の近くに、うっすら霊獣が現れる。",
+  k:"タイトルの「鎌倉の武家屋敷」リンク(?map=kamakura)で探そう。"
+};
+const CODEX_ID_HINT={
+  uguisu:"春、梅の木の近くで鳴き声が聞こえるかもしれない。",
+  tsubame:"春から初夏、廂や門のまわりを低く飛ぶ。",
+  fuji:"晩春から初夏、藤棚のあたりを見てみよう。",
+  kakitsubata:"初夏、池や遣水のほとりに咲く。",
+  hotaru:"夏の夜、池や遣水のほとりを探そう。",
+  tonbo:"夏、池や遣水のほとりを群れ飛ぶ。",
+  chou:"春から夏、庭の花のまわりを舞う。",
+  kamome:"夏の明るい空、池の上を旋回する。",
+  kari:"秋の夕空を見上げてみよう。",
+  chidori:"冬、池の汀を小走りに動く小鳥。",
+  tsuru:"冬、水辺に訪れる大きな鳥を探そう。",
+  yukionna:"冬の夜だけ、北の対のあたりに現れる。",
+  kappa:"夜、池のほとりに現れることがある。",
+  hitodama:"夜の邸内、暗がりに青白い光が漂うことがある。",
+  kitsunebi:"夜の野原や暗がりに、青白い炎が見えることがある。",
+  oni:"灯りの乏しい夜の邸内に潜んでいる。",
+  shikigami:"陰陽師の気配のあるところ、夜に探そう。",
+  seimei:"太極六壬式盤(占いの道具)を使ってみよう。",
+  onmyo_shikiban:"式盤(陰陽師の占いの道具)を邸内で探して使ってみよう。",
+  seiryu:"東の門に近づくと、うっすら姿を現す。",
+  suzaku:"南の池の上に、うっすら舞い現れる。",
+  byakko:"西の門に近づくと、うっすら姿を現す。",
+  genbu:"北の門に近づくと、うっすら姿を現す。",
+  emaki_frag1:"邸内に散らばった絵巻の断片を探そう。",
+  emaki_frag2:"邸内に散らばった絵巻の断片を探そう。",
+  emaki_frag3:"邸内に散らばった絵巻の断片を探そう。",
+  emaki_frag4:"邸内に散らばった絵巻の断片を探そう。",
+  emaki_frag5:"邸内に散らばった絵巻の断片を探そう。",
+  emaki_frag6:"邸内に散らばった絵巻の断片を探そう。",
+  emaki_desk:"絵巻の断片を集めると、西の対の継ぎ台で読み解ける。"
+};
+function codexDiscoverHint(id){
+  const it=ITEMS[id];if(!it)return"";
+  return CODEX_ID_HINT[id]||CODEX_CAT_HINT[it.cat]||"邸内をよく探索してみよう。";
+}
+function renderDiscoverPage(){
+  const wrap=$("discoverList"),prog=$("discoverProgress");if(!wrap||!prog)return;
+  const ids=Object.keys(ITEMS).filter(id=>ITEMS[id].cat!=="w");
+  const gotIds=ids.filter(id=>codexUnlocked.has(id));
+  const missIds=ids.filter(id=>!codexUnlocked.has(id));
+  prog.textContent=`発見済 ${gotIds.length} / 未発見 ${missIds.length}（図鑑全体 ${gotIds.length}/${ids.length}）`;
+  wrap.textContent="";
+  if(!missIds.length){
+    const done=document.createElement("div");done.className="discover-empty";
+    done.textContent="すべて発見済み！ お見事です。";wrap.appendChild(done);return;
+  }
+  missIds.forEach(id=>{
+    const it=ITEMS[id],card=document.createElement("div");card.className="discover-card";
+    card.innerHTML=`<div class="discover-cat">${CODEX_CAT_NAME[it.cat]||it.cat}</div>`+
+      `<div class="discover-q">？？？</div><div class="discover-hint">💡 ${codexDiscoverHint(id)}</div>`;
+    wrap.appendChild(card);
+  });
 }
 function openCodex(tab){
   APP.codexOpen=true;closeInfo();
@@ -10990,6 +11289,7 @@ function showInfo(id){
   $("infoTrivia").innerHTML="<b>📜 古文の窓</b><br>"+it.t;
   const ib=$("info").querySelector(".info-body");if(ib)ib.classList.remove("expanded"); // 毎回まず説明だけ表示
   unlockCodex(id);
+  if($("infoRelated"))$("infoRelated").innerHTML=codexRelatedChipsHTML(id);
   const panel=$("info");panel.classList.remove("open","revisit");void panel.offsetWidth;
   if(isRevisit)panel.classList.add("revisit");
   requestAnimationFrame(()=>panel.classList.add("open"));
@@ -11007,6 +11307,7 @@ $("codexTabMain").onclick=()=>setCodexTab("main");
 $("codexTabWaka").onclick=()=>setCodexTab("waka");
 $("codexTabGloss").onclick=()=>setCodexTab("gloss");
 $("codexTabAch").onclick=()=>setCodexTab("ach");
+$("codexTabDiscover").onclick=()=>setCodexTab("discover");
 $("codex").addEventListener("click",e=>{if(e.target===$("codex"))closeCodex();});
 addEventListener("keydown",e=>{
   if(e.key==="Escape"&&APP&&APP.gisshaCarry&&APP.gisshaCarry.active){endGisshaCarry(false,false);e.preventDefault();return;}
@@ -11257,6 +11558,145 @@ function koyomiClosePanel(){$("koyomiPanel").classList.remove("open");}
 $("btnKoyomi").onclick=koyomiOpenPanel;
 $("koyomiClose").onclick=koyomiClosePanel;
 $("koyomiPanel").addEventListener("click",e=>{if(e.target===$("koyomiPanel"))koyomiClosePanel();});
+
+/* ====== 波5-K2: 教員向け小テスト(4択・CSV書き出し) ======
+   出題はGLOSSARY(古文重要語)とITEMS(用語・建築、和歌を除く)からランダムにN問。
+   GLOSSARY由来は「用語→意味」、ITEMS由来は「説明→用語」の4択。誤答選択肢は
+   同じ出題元(同カテゴリ)から重複なく生成する。既存の図鑑・クイズ機能とは独立。 */
+let QT_STATE=null;
+function qtShuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function qtBuildPool(){
+  const glossPool=GLOSSARY.map((g,i)=>({kind:"gloss",key:"g"+i,q:g.t+"（"+g.y+"）",a:g.m}));
+  const itemPool=Object.keys(ITEMS).filter(id=>ITEMS[id].cat!=="w").map(id=>({kind:"item",key:id,q:ITEMS[id].d,a:ITEMS[id].n}));
+  return {glossPool,itemPool};
+}
+function qtPickDistractors(pool,correctAnswer,n){
+  const cands=qtShuffle(pool.map(p=>p.a).filter(a=>a!==correctAnswer));
+  const out=[];
+  for(const c of cands){if(out.length>=n)break;if(!out.includes(c))out.push(c);}
+  return out;
+}
+function qtGenerate(n){
+  const {glossPool,itemPool}=qtBuildPool();
+  const tagged=[...glossPool.map(e=>({...e,src:glossPool})),...itemPool.map(e=>({...e,src:itemPool}))];
+  const all=qtShuffle(tagged);
+  const chosen=[];const usedKeys=new Set();
+  for(const e of all){
+    if(chosen.length>=n)break;
+    if(usedKeys.has(e.key))continue;
+    if(e.src.length<4)continue; // 4択に必要な選択肢が確保できない出題元は除外
+    usedKeys.add(e.key);chosen.push(e);
+  }
+  return chosen.map(e=>{
+    const distractors=qtPickDistractors(e.src,e.a,3);
+    const choices=qtShuffle([e.a,...distractors]);
+    const label=e.kind==="gloss"?"次の【用語】の意味として正しいものを選べ":"次の【説明】に当てはまる用語を選べ";
+    return {label,question:e.q,choices,answer:e.a};
+  });
+}
+function qtOpenPanel(){
+  $("qtIntro").style.display="block";$("qtPlay").style.display="none";$("qtResult").style.display="none";
+  $("quizTeacherPanel").classList.add("open");
+}
+function qtClosePanel(){$("quizTeacherPanel").classList.remove("open");}
+function qtStartQuiz(){
+  const n=parseInt($("qtCount").value,10)||10;
+  const questions=qtGenerate(n);
+  if(questions.length<3){toast("出題に必要なデータが不足しています",2200);return;}
+  QT_STATE={questions,idx:0,answers:[],startTime:Date.now()};
+  $("qtIntro").style.display="none";$("qtResult").style.display="none";$("qtPlay").style.display="block";
+  qtRenderQuestion();
+}
+function qtRenderQuestion(){
+  const st=QT_STATE;if(!st)return;
+  const q=st.questions[st.idx];
+  $("qtProgress").textContent=`問 ${st.idx+1} / ${st.questions.length}`;
+  $("qtQuestion").innerHTML=`<div style="font-size:11.5px;color:#8a7550;margin-bottom:6px;font-family:var(--sans);letter-spacing:.03em">${q.label}</div>${q.question}`;
+  const wrap=$("qtChoices");wrap.textContent="";
+  q.choices.forEach(choice=>{
+    const b=document.createElement("button");b.type="button";b.className="qt-choice-btn";b.textContent=choice;
+    b.onclick=()=>qtAnswer(choice);
+    wrap.appendChild(b);
+  });
+}
+function qtAnswer(choice){
+  const st=QT_STATE;if(!st)return;
+  const q=st.questions[st.idx],correct=choice===q.answer;
+  st.answers.push({choice,correct});
+  [...$("qtChoices").children].forEach(btn=>{
+    btn.disabled=true;
+    if(btn.textContent===q.answer)btn.classList.add("correct");
+    else if(btn.textContent===choice)btn.classList.add("wrong");
+  });
+  beep(correct?660:220,correct?.08:.12,correct?"sine":"sawtooth",.05);
+  setTimeout(()=>{
+    st.idx++;
+    if(st.idx>=st.questions.length)qtFinish();else qtRenderQuestion();
+  },550);
+}
+function qtFinish(){
+  const st=QT_STATE;if(!st)return;
+  st.endTime=Date.now();
+  $("qtPlay").style.display="none";$("qtResult").style.display="block";
+  const correctCount=st.answers.filter(a=>a.correct).length,total=st.questions.length;
+  const sec=Math.round((st.endTime-st.startTime)/1000),mm=Math.floor(sec/60),ss=sec%60;
+  $("qtScore").textContent=`正答 ${correctCount} / ${total}　所要時間 ${mm}分${String(ss).padStart(2,"0")}秒`;
+  const table=$("qtTable");
+  let html="<tr><th>設問</th><th>正答</th><th>あなたの回答</th><th>正誤</th></tr>";
+  st.questions.forEach((q,i)=>{
+    const a=st.answers[i];
+    html+=`<tr class="${a&&a.correct?"":"qt-row-wrong"}"><td>${q.question}</td><td>${q.answer}</td><td>${a?a.choice:"(未回答)"}</td><td>${a&&a.correct?"正解":"不正解"}</td></tr>`;
+  });
+  table.innerHTML=html;
+}
+function qtCsvEscape(s){
+  s=String(s==null?"":s);
+  if(/[",\n\r]/.test(s))return '"'+s.replace(/"/g,'""')+'"';
+  return s;
+}
+function qtCsvString(){
+  if(!QT_STATE)return"";
+  const rows=[["設問","正答","あなたの回答","正誤"]];
+  QT_STATE.questions.forEach((q,i)=>{
+    const a=QT_STATE.answers[i];
+    rows.push([q.question,q.answer,a?a.choice:"(未回答)",a&&a.correct?"正解":"不正解"]);
+  });
+  return rows.map(r=>r.map(qtCsvEscape).join(",")).join("\r\n");
+}
+async function qtCopyCsv(){
+  const csv=qtCsvString();if(!csv)return;
+  try{
+    await navigator.clipboard.writeText(csv);
+    toast("CSVをコピーしました",1800);
+  }catch(e){
+    const ta=document.createElement("textarea");ta.value=csv;ta.style.position="fixed";ta.style.opacity="0";
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand("copy");toast("CSVをコピーしました",1800);}catch(e2){toast("コピーに失敗しました",1800);}
+    document.body.removeChild(ta);
+  }
+}
+function qtDownloadCsv(){
+  const csv=qtCsvString();if(!csv)return;
+  const blob=new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const d=new Date(),pad=n=>String(n).padStart(2,"0");
+  a.href=url;a.download=`heian_quiz_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+$("btnQuizTeacher").onclick=qtOpenPanel;
+$("qtClose").onclick=qtClosePanel;
+$("quizTeacherPanel").addEventListener("click",e=>{if(e.target===$("quizTeacherPanel"))qtClosePanel();});
+$("qtStart").onclick=qtStartQuiz;
+$("qtRetry").onclick=()=>{$("qtResult").style.display="none";$("qtIntro").style.display="block";};
+$("qtCopyCsv").onclick=qtCopyCsv;
+$("qtDownloadCsv").onclick=qtDownloadCsv;
+
 $("btnOnboardHelp").onclick=()=>{onboardOpen();};
 $("onboardSkip").onclick=onboardClose;
 $("onboardStartWalk").onclick=()=>{
