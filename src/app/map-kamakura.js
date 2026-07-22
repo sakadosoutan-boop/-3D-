@@ -49,6 +49,7 @@ if(APP.map==="kamakura"){
       +"html.map-kamakura #btnTaikenMode,html.map-kamakura #btnMiniGameMode,"
       +"html.map-kamakura #btnRenaiMode,html.map-kamakura #btnStory,"
       +"html.map-kamakura #btnCareer,"
+      +"html.map-kamakura #btnHistory,"
       +"html.map-kamakura #tbMap,"
       +"html.map-kamakura #onboardKamakuraLink{display:none!important;}";
     /* ---- 配色(計画§1): 平安=金×朱×暖色の雅 → 鎌倉=藍×鉄紺×柿渋の質実。

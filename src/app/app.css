@@ -2193,3 +2193,25 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 .tjf3-anim{animation:tjf3Flash .6s ease-out forwards}
 @media (prefers-reduced-motion:reduce){.tjf3-anim{animation:none;opacity:1}}
 .tjf3-hint{box-shadow:0 0 0 3px rgba(255,233,160,.9),0 0 16px rgba(255,210,90,.8)!important}
+
+/* ====== 波3: あゆみ(プレイ履歴タイムライン) ====== */
+#historyPanel{position:fixed;z-index:82;inset:0;display:none;align-items:center;justify-content:center;
+  padding:18px;background:rgba(10,6,4,.82);backdrop-filter:blur(5px)}
+#historyPanel.open{display:flex}
+.history-scroll{position:relative;width:min(560px,96vw);max-height:82vh;padding:24px 26px;
+  color:var(--sumi);background:linear-gradient(90deg,#e8d8b8,#f5eddd 8%,#f5eddd 92%,#e8d8b8);
+  border:1px solid #b89b56;border-radius:8px;box-shadow:0 24px 90px rgba(0,0,0,.72),0 0 0 1px rgba(255,248,230,.24) inset;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:#b89b56 rgba(130,92,42,.12)}
+.history-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(184,155,86,.72)}
+.history-head h2{color:var(--shu);font-size:19px;letter-spacing:.14em;text-shadow:0 1px 0 rgba(255,255,255,.62)}
+#historyClose{margin-left:auto}
+.history-list{display:flex;flex-direction:column;gap:8px}
+.history-item{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid rgba(184,155,86,.5);border-radius:8px;background:rgba(255,255,255,.42);font-family:var(--sans)}
+.history-item .hi-icon{font-size:19px;width:26px;text-align:center;flex:none}
+.history-item .hi-body{display:flex;flex-direction:column;min-width:0;flex:1}
+.history-item .hi-label{font-size:13px;color:#4a3c26;line-height:1.5;word-break:break-word}
+.history-item .hi-time{font-size:10.5px;color:#8a7550;margin-top:1px}
+.history-empty{padding:26px 10px;text-align:center;font-family:var(--sans);font-size:13px;color:#7a6c58}
+@media (max-width:480px){
+  .history-scroll{padding:18px 16px}
+}

@@ -3246,6 +3246,28 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 .tjf3-anim{animation:tjf3Flash .6s ease-out forwards}
 @media (prefers-reduced-motion:reduce){.tjf3-anim{animation:none;opacity:1}}
 .tjf3-hint{box-shadow:0 0 0 3px rgba(255,233,160,.9),0 0 16px rgba(255,210,90,.8)!important}
+
+/* ====== 波3: あゆみ(プレイ履歴タイムライン) ====== */
+#historyPanel{position:fixed;z-index:82;inset:0;display:none;align-items:center;justify-content:center;
+  padding:18px;background:rgba(10,6,4,.82);backdrop-filter:blur(5px)}
+#historyPanel.open{display:flex}
+.history-scroll{position:relative;width:min(560px,96vw);max-height:82vh;padding:24px 26px;
+  color:var(--sumi);background:linear-gradient(90deg,#e8d8b8,#f5eddd 8%,#f5eddd 92%,#e8d8b8);
+  border:1px solid #b89b56;border-radius:8px;box-shadow:0 24px 90px rgba(0,0,0,.72),0 0 0 1px rgba(255,248,230,.24) inset;overflow-y:auto;
+  scrollbar-width:thin;scrollbar-color:#b89b56 rgba(130,92,42,.12)}
+.history-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(184,155,86,.72)}
+.history-head h2{color:var(--shu);font-size:19px;letter-spacing:.14em;text-shadow:0 1px 0 rgba(255,255,255,.62)}
+#historyClose{margin-left:auto}
+.history-list{display:flex;flex-direction:column;gap:8px}
+.history-item{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid rgba(184,155,86,.5);border-radius:8px;background:rgba(255,255,255,.42);font-family:var(--sans)}
+.history-item .hi-icon{font-size:19px;width:26px;text-align:center;flex:none}
+.history-item .hi-body{display:flex;flex-direction:column;min-width:0;flex:1}
+.history-item .hi-label{font-size:13px;color:#4a3c26;line-height:1.5;word-break:break-word}
+.history-item .hi-time{font-size:10.5px;color:#8a7550;margin-top:1px}
+.history-empty{padding:26px 10px;text-align:center;font-family:var(--sans);font-size:13px;color:#7a6c58}
+@media (max-width:480px){
+  .history-scroll{padding:18px 16px}
+}
 /* APP_CSS_EMBED_END */
 </style>
 </head>
@@ -3338,6 +3360,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
     <!-- 図鑑(独立) -->
     <button class="t-btn t-codex-btn" id="btnCodex">📚 平安ものしり図鑑<small id="titleCodexProgress">図鑑 0 / 0</small></button>
     <button class="t-btn t-codex-btn" id="btnCareer">🏯 平安立身伝<small id="titleCareerProgress">官位 童殿上</small></button>
+    <button class="t-btn t-codex-btn" id="btnHistory">📜 あゆみ<small id="titleHistoryProgress">まだ記録がありません</small></button>
     <button class="t-onboard-help" id="btnOnboardHelp">❓ はじめての方へ</button>
 
     <div id="dailyQuestPanel" class="daily-quest-panel">
@@ -3555,6 +3578,17 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
       <button class="onboard-skip" id="onboardSkip">自分で選ぶ</button>
       <a class="onboard-skip" id="onboardKamakuraLink" href="?map=kamakura" style="text-decoration:underline;text-underline-offset:3px;">🏯 新登場: 鎌倉の武家屋敷を歩く</a>
     </div>
+  </div>
+</div>
+
+<!-- 波3: あゆみ(プレイ履歴タイムライン)パネル -->
+<div id="historyPanel" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+  <div class="history-scroll">
+    <div class="history-head">
+      <div><h2 id="historyTitle">📜 あゆみ</h2></div>
+      <button class="tb-btn" id="historyClose">✕ 閉じる</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
   </div>
 </div>
 
@@ -10407,9 +10441,51 @@ function shareGameText(text){
     toast(text,3200);
   }
 }
+/* ============================================================
+   波3: あゆみ(プレイ履歴タイムライン) — 主要な達成イベントを軽量ログとして記録する。
+   直近HISTORY_MAX件までの{ts,icon,label}をlocalStorageへ追記するだけで、既存の
+   進捗/実績/称号/官位ロジックには一切手を入れない(recordProgress/checkAchievementUnlocks/
+   setSelectedTitle/位階すいか皆伝の各所へ追記フックを足すのみ)。
+============================================================ */
+const HISTORY_KEY="shinden3d-history-v1";
+const HISTORY_MAX=50;
+function historyLoad(){
+  try{const a=JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");return Array.isArray(a)?a:[];}catch(e){return [];}
+}
+function historyAdd(icon,label){
+  try{
+    const list=historyLoad();
+    list.push({ts:Date.now(),icon:icon||"📌",label:String(label||"")});
+    while(list.length>HISTORY_MAX)list.shift();
+    localStorage.setItem(HISTORY_KEY,JSON.stringify(list));
+  }catch(e){}
+  historyUpdateBadge();
+}
+function historyUpdateBadge(){
+  const el=$("titleHistoryProgress");if(!el)return;
+  const n=historyLoad().length;
+  el.textContent=n?`記録 ${n}件`:"まだ記録がありません";
+}
+/* recordProgress(k)のうち、主要な達成/クリア相当のkindだけをあゆみへ記録する。
+   gloss(用語カード1枚めくり)やcodexView(図鑑閲覧)、mistake等の高頻度キーは対象外
+   (直近50件の枠が細かい記録で埋まってしまうため)。 */
+const HISTORY_PROGRESS_LABEL={
+  emaki:{icon:"📖",label:"再現モードで絵巻を再現した"},
+  onmyo:{icon:"🔮",label:"太極六壬式盤で占った"},
+  daily:{icon:"☀️",label:"本日の平安任務を達成した"},
+  secret:{icon:"🌌",label:"夜半の隠し発見を見つけた"},
+  quiz:{icon:"📜",label:"名称当てクイズを終えた"},
+  quest:{icon:"👘",label:"貴族の一日体験を達成した"},
+  ikaiSuika:{icon:"🏯",label:"位階出世ゲームを終えた"},
+  taiji:{icon:"⚡",label:"物の怪退治をクリアした"},
+  kaimami:{icon:"🌙",label:"垣間見ミッションに成功した"},
+  utakai:{icon:"🎴",label:"歌合を終えた"},
+  renai:{icon:"💕",label:"恋愛モードの結末を見た"}
+};
 let ACH_READY=false;
 function recordProgress(k,n=1){
   const p=loadProgress();p[k]=(p[k]||0)+n;saveProgress(p);
+  const hl=HISTORY_PROGRESS_LABEL[k];if(hl)historyAdd(hl.icon,hl.label);
   checkAchievementUnlocks();
   if(APP.codexOpen&&codexTab==="ach")renderAchievementsPage();
 }
@@ -10437,7 +10513,7 @@ function funnyMistakeLine(kind,base){
   return (base?base+"　":"")+a[i];
 }
 function selectedTitle(){try{return localStorage.getItem(TITLE_KEY)||"平安入門者";}catch(e){return "平安入門者";}}
-function setSelectedTitle(t){try{localStorage.setItem(TITLE_KEY,t);}catch(e){}updateCodexProgress();renderAchievementsPage();toast(`称号を「${t}」に設定しました`,2400);}
+function setSelectedTitle(t){try{localStorage.setItem(TITLE_KEY,t);}catch(e){}updateCodexProgress();renderAchievementsPage();toast(`称号を「${t}」に設定しました`,2400);historyAdd("🎖️","称号を「"+t+"」に設定した");}
 const ACHIEVEMENTS=[
   {id:"gloss1",title:"言の葉見習い",desc:"用語カードを1枚めくる",kind:"gloss",need:1,action:"gloss",mission:"用語カードへ"},
   {id:"gloss10",title:"語彙の蔵人",desc:"用語カードを10枚めくる",kind:"gloss",need:10,action:"gloss",mission:"用語カードへ"},
@@ -10487,7 +10563,7 @@ function saveSeenAchievements(s){try{localStorage.setItem(ACH_SEEN_KEY,JSON.stri
 function checkAchievementUnlocks(){
   if(!ACH_READY)return;
   const seen=seenAchievements();let changed=false,first=null;
-  ACHIEVEMENTS.forEach(a=>{if(!seen.has(a.id)&&achievementUnlocked(a)){seen.add(a.id);changed=true;if(!first)first=a;}});
+  ACHIEVEMENTS.forEach(a=>{if(!seen.has(a.id)&&achievementUnlocked(a)){seen.add(a.id);changed=true;if(!first)first=a;historyAdd("🏅","実績解除: "+a.title);}});
   if(changed){saveSeenAchievements(seen);if(first)setTimeout(()=>toast(`実績解除: ${first.title}`,4200),650);}
   if(typeof careerCheck==="function")careerCheck();
 }
@@ -10960,6 +11036,22 @@ $("careerPanel").addEventListener("click",e=>{if(e.target===$("careerPanel"))car
 $("senjiClose").onclick=careerCloseSenji;
 $("careerSenji").addEventListener("click",e=>{if(e.target===$("careerSenji"))careerCloseSenji();});
 $("senjiShare").onclick=()=>{shareGameText("【寝殿造り探訪】官位『"+CAREER_RANKS[CAREER.rank].name+"』に昇進！ #寝殿造り探訪");};
+/* 波3: あゆみ(プレイ履歴)パネル — 新しい順に「日時・アイコン・内容」を並べる。空なら空状態を出す */
+function historyRenderPanel(){
+  const list=$("historyList");if(!list)return;
+  const items=historyLoad().slice().reverse();
+  if(!items.length){list.innerHTML='<div class="history-empty">まだ記録がありません。散策やクイズに挑戦してみよう。</div>';return;}
+  list.innerHTML=items.map(it=>{
+    const d=new Date(it.ts||0),valid=!isNaN(d.getTime());
+    const dt=valid?`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`:"";
+    return `<div class="history-item"><span class="hi-icon">${it.icon||"📌"}</span><span class="hi-body"><span class="hi-label">${it.label||""}</span><span class="hi-time">${dt}</span></span></div>`;
+  }).join("");
+}
+function historyOpenPanel(){historyRenderPanel();$("historyPanel").classList.add("open");}
+function historyClosePanel(){$("historyPanel").classList.remove("open");}
+$("btnHistory").onclick=historyOpenPanel;
+$("historyClose").onclick=historyClosePanel;
+$("historyPanel").addEventListener("click",e=>{if(e.target===$("historyPanel"))historyClosePanel();});
 $("btnOnboardHelp").onclick=()=>{onboardOpen();};
 $("onboardSkip").onclick=onboardClose;
 $("onboardStartWalk").onclick=()=>{
@@ -10972,6 +11064,7 @@ $("onboardStartWalk").onclick=()=>{
 addEventListener("keydown",e=>{if(e.key==="Escape"){
   if($("careerSenji").classList.contains("show"))careerCloseSenji();
   else if($("careerPanel").classList.contains("open"))careerClosePanel();
+  else if($("historyPanel").classList.contains("open"))historyClosePanel();
 }});
 
 /* 収集データの引き継ぎ(バックアップ/復元) — localStorageは原則永続だが、URL/オリジンの違いや
@@ -11011,6 +11104,7 @@ $("codexImport").onclick=()=>{
   else{toast("コードが正しくありません。全文を貼り付けてください",2800);beep(170,.18,"sawtooth",.1);}
 };
 updateCodexProgress();
+historyUpdateBadge();
 renderDailyQuestPanel();
 let toastTimer=0;
 function toast(s,ms=2600){$("toast").textContent=s;$("toast").style.display="block";
@@ -12590,6 +12684,7 @@ function ikaiStep(dt){
           // M2: 太政大臣どうしの合体(皆伝)を初めて成し遂げた時だけ特別演出+永続フラグ
           if(!ikaiDaijodaijinAchieved()){
             ikaiMarkDaijodaijin();
+            historyAdd("👑","位階出世ゲームで太政大臣に上り詰めた");
             if(typeof tjfxFelled==="function")tjfxFelled("太政大臣ニ至ル");
             if(typeof juiceCelebrate==="function")juiceCelebrate();
           }
@@ -23618,6 +23713,7 @@ if(APP.map==="kamakura"){
       +"html.map-kamakura #btnTaikenMode,html.map-kamakura #btnMiniGameMode,"
       +"html.map-kamakura #btnRenaiMode,html.map-kamakura #btnStory,"
       +"html.map-kamakura #btnCareer,"
+      +"html.map-kamakura #btnHistory,"
       +"html.map-kamakura #tbMap,"
       +"html.map-kamakura #onboardKamakuraLink{display:none!important;}";
     /* ---- 配色(計画§1): 平安=金×朱×暖色の雅 → 鎌倉=藍×鉄紺×柿渋の質実。
