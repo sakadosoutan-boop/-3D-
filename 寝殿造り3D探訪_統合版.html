@@ -5278,7 +5278,8 @@ const ENV_PAL={
   dusk: {top:"#b98fb0",hor:"#e6b27a",grd:"#5a4636",sun:"#ffd49a",sunU:.60},
   night:{top:"#0a1020",hor:"#1b2236",grd:"#070a12",sun:"#aab8dc",sunU:.24}
 };
-const ENV_IBL_ENABLED=!IS_TOUCH&&!navigator.webdriver;
+const ENV_IBL_PARAM_OFF=/[?&]ibl=0/.test(location.search); // [波11] ?ibl=0 で明示無効化(低性能端末/不具合時のフォールバック)
+const ENV_IBL_ENABLED=!IS_TOUCH&&!navigator.webdriver&&!ENV_IBL_PARAM_OFF;
 const pmrem=ENV_IBL_ENABLED?new THREE.PMREMGenerator(renderer):null;
 if(pmrem)pmrem.compileEquirectangularShader();
 let _envRT=null;
