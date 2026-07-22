@@ -2322,3 +2322,34 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
   .qt-choice-btn{font-size:13px}
   .qt-export-btns .tb-btn{flex:1 1 100%}
 }
+
+/* ====== 波6-C2/C4: NPC雑談ボタン強調 & 自動ガイドツアー ====== */
+#btnTour{border-color:rgba(201,162,63,.55);color:#f0d890}
+#btnTour:hover,#btnTour:focus-visible{background:rgba(201,162,63,.22)}
+body.taiji-mode #btnTour,body.utakai-mode #btnTour,body.saigen-mode #btnTour,
+body.story-mode #btnTour{display:none!important}
+
+#tourOverlay{position:fixed;z-index:56;left:50%;bottom:0;transform:translateX(-50%);width:min(560px,calc(100vw - 24px));
+  padding:0 0 max(14px,env(safe-area-inset-bottom));display:none;pointer-events:none;font-family:var(--sans)}
+body.tour-mode #tourOverlay{display:block}
+body.tour-mode #topbar,body.tour-mode #worldStatusBar,body.tour-mode #minimapWrap,
+body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{display:none!important}
+.tour-card{pointer-events:auto;position:relative;margin:0 10px;padding:14px 16px 12px;border-radius:12px;
+  background:linear-gradient(145deg,rgba(24,18,12,.92),rgba(49,30,16,.90));
+  border:1px solid rgba(201,162,63,.5);box-shadow:0 -14px 42px rgba(0,0,0,.42),0 0 0 1px rgba(255,244,210,.08) inset;
+  backdrop-filter:blur(8px);color:#f7edd8;animation:tourCardIn .32s ease both}
+@keyframes tourCardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.tour-progress{font-size:10.5px;letter-spacing:.18em;color:#d6b866;text-transform:uppercase;margin-bottom:4px}
+.tour-title{font-family:var(--serif);font-size:17px;letter-spacing:.05em;color:#fff5d7;margin-bottom:6px}
+.tour-text{font-size:13px;line-height:1.75;color:#e7dabd;min-height:1.2em}
+.tour-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:11px}
+.tour-actions button{min-height:34px;border-radius:7px;border:1px solid rgba(201,162,63,.45);
+  background:rgba(255,248,226,.09);color:#f7edd8;font-family:var(--sans);font-size:12px;padding:6px 12px;cursor:pointer}
+.tour-actions button:hover,.tour-actions button:focus-visible{background:rgba(201,162,63,.24)}
+#tourQuitBtn{color:#f0b8b8;border-color:rgba(179,64,42,.5)}
+@media (max-width:520px){
+  #tourOverlay{width:calc(100vw - 16px)}
+  .tour-card{margin:0 4px;padding:12px 13px 11px}
+  .tour-title{font-size:15px}.tour-text{font-size:12px}
+  .tour-actions button{font-size:11px;padding:6px 10px}
+}

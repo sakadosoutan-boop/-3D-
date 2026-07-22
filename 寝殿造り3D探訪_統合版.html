@@ -3375,6 +3375,37 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
   .qt-choice-btn{font-size:13px}
   .qt-export-btns .tb-btn{flex:1 1 100%}
 }
+
+/* ====== 波6-C2/C4: NPC雑談ボタン強調 & 自動ガイドツアー ====== */
+#btnTour{border-color:rgba(201,162,63,.55);color:#f0d890}
+#btnTour:hover,#btnTour:focus-visible{background:rgba(201,162,63,.22)}
+body.taiji-mode #btnTour,body.utakai-mode #btnTour,body.saigen-mode #btnTour,
+body.story-mode #btnTour{display:none!important}
+
+#tourOverlay{position:fixed;z-index:56;left:50%;bottom:0;transform:translateX(-50%);width:min(560px,calc(100vw - 24px));
+  padding:0 0 max(14px,env(safe-area-inset-bottom));display:none;pointer-events:none;font-family:var(--sans)}
+body.tour-mode #tourOverlay{display:block}
+body.tour-mode #topbar,body.tour-mode #worldStatusBar,body.tour-mode #minimapWrap,
+body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{display:none!important}
+.tour-card{pointer-events:auto;position:relative;margin:0 10px;padding:14px 16px 12px;border-radius:12px;
+  background:linear-gradient(145deg,rgba(24,18,12,.92),rgba(49,30,16,.90));
+  border:1px solid rgba(201,162,63,.5);box-shadow:0 -14px 42px rgba(0,0,0,.42),0 0 0 1px rgba(255,244,210,.08) inset;
+  backdrop-filter:blur(8px);color:#f7edd8;animation:tourCardIn .32s ease both}
+@keyframes tourCardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.tour-progress{font-size:10.5px;letter-spacing:.18em;color:#d6b866;text-transform:uppercase;margin-bottom:4px}
+.tour-title{font-family:var(--serif);font-size:17px;letter-spacing:.05em;color:#fff5d7;margin-bottom:6px}
+.tour-text{font-size:13px;line-height:1.75;color:#e7dabd;min-height:1.2em}
+.tour-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:11px}
+.tour-actions button{min-height:34px;border-radius:7px;border:1px solid rgba(201,162,63,.45);
+  background:rgba(255,248,226,.09);color:#f7edd8;font-family:var(--sans);font-size:12px;padding:6px 12px;cursor:pointer}
+.tour-actions button:hover,.tour-actions button:focus-visible{background:rgba(201,162,63,.24)}
+#tourQuitBtn{color:#f0b8b8;border-color:rgba(179,64,42,.5)}
+@media (max-width:520px){
+  #tourOverlay{width:calc(100vw - 16px)}
+  .tour-card{margin:0 4px;padding:12px 13px 11px}
+  .tour-title{font-size:15px}.tour-text{font-size:12px}
+  .tour-actions button{font-size:11px;padding:6px 10px}
+}
 /* APP_CSS_EMBED_END */
 </style>
 </head>
@@ -3581,6 +3612,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
   <!-- 表示設定 -->
   <span class="tb-sep"></span>
   <button class="tb-btn tb-icon on" id="tbMap" title="地図の表示">🗺</button>
+  <button class="tb-btn" id="btnTour" title="邸内を自動で巡るナレーション付きツアー">🎎 自動ガイド</button>
   <!-- 右端ツール -->
   <span class="spacer"></span>
   <button class="tb-btn" id="tbCodex">📚 図鑑</button>
@@ -3874,6 +3906,19 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 <div id="tjfxFelled"><div class="tjfx-band"><div class="tjfx-band-text"></div></div></div>
 <div id="tjfxDied"><div class="tjfx-band"><div class="tjfx-band-text"></div></div></div>
 <div id="dialogueBubble"><div id="dialogueName"></div><div id="dialogueText"></div></div>
+
+<!-- 波6-C4: 自動ガイドツアー(ナレーション付き自動周遊) -->
+<div id="tourOverlay">
+  <div class="tour-card">
+    <div class="tour-progress" id="tourProgress"></div>
+    <div class="tour-title" id="tourTitle"></div>
+    <div class="tour-text" id="tourText"></div>
+    <div class="tour-actions">
+      <button id="tourSkipBtn" type="button">次へ ▶</button>
+      <button id="tourQuitBtn" type="button">✕ 中断して散策へ</button>
+    </div>
+  </div>
+</div>
 
 <!-- 位階出世ゲーム(すいかゲーム風マージ) -->
 <div id="ikaiHud">
@@ -9682,7 +9727,7 @@ class AmbientAudio {
 /* ============================================================
    アプリ状態・操作系(マウス/キーボード+タッチ両対応)
 ============================================================ */
-const APP={mode:"title",view:"fp",time:"day",season:"spring",labelMode:1,minimap:true,quiz:null,quest:null,questRole:"male",kaimami:null,utakai:null,codexOpen:false,renai:null,onmyo:{lastNotifyMs:0}}; // labelMode 0:なし 1:近く 2:すべて
+const APP={mode:"title",view:"fp",time:"day",season:"spring",labelMode:1,minimap:true,quiz:null,quest:null,questRole:"male",kaimami:null,utakai:null,codexOpen:false,renai:null,onmyo:{lastNotifyMs:0},tour:null}; // labelMode 0:なし 1:近く 2:すべて
 const _urlMap=/[?&]map=(\w+)/.exec(location.search); APP.map=_urlMap?_urlMap[1]:"heian";
 const START_POS=new THREE.Vector3(0,1.62,26);
 const player={pos:START_POS.clone(),yaw:0,pitch:-.02};
@@ -10196,9 +10241,81 @@ const raycaster=new THREE.Raycaster();
 const INSTRUMENT_IDS=new Set(["biwa","koto","sho","ryuteki"]);
 const instrumentLast={};
 const NPC_DIALOGUES={
-  himegimi:["庭の風が、御簾をかすかに揺らしております。","今宵の月には、どのような歌が似合うでしょう。","誰かがこちらを見ているような……気のせいでしょうか。"],
-  nyobo:["姫君のお文は、わたくしがお預かりいたします。","御簾の内へは、どうぞ静かに。","今朝は東の庭の花が、たいそう見事でした。"],
-  kikoshi:["簀子より先へ進むには、まだ便りが足りぬようだ。","一目だけでも、お姿を拝したいものだ。","この歌を、女房どのに託していただけまいか。"],
+  himegimi:["庭の風が、御簾をかすかに揺らしております。","今宵の月には、どのような歌が似合うでしょう。","誰かがこちらを見ているような……気のせいでしょうか。",
+    "十二単の重さは、慣れぬ人にはさぞ驚くことでしょう。","文を書くにも、墨の香りひとつで心が落ち着きますの。"],
+  nyobo:["姫君のお文は、わたくしがお預かりいたします。","御簾の内へは、どうぞ静かに。","今朝は東の庭の花が、たいそう見事でした。",
+    "十二単は色を幾重にも重ねる「かさね色目」が命。季節の彩りを違えぬよう気を配ります。",
+    "文には香を焚きしめますの。焚く香の匂いだけで、どなたからのお便りか分かりますことよ。",
+    "御格子は日暮れとともに下ろします。夜風は思いのほか冷えますゆえ。",
+    "和歌の返しは、三日のうちにお届けするのが恋の作法とか。",
+    "几帳の陰から覗くのは、はしたないことと承知の上でございます。"],
+  kikoshi:["簀子より先へ進むには、まだ便りが足りぬようだ。","一目だけでも、お姿を拝したいものだ。","この歌を、女房どのに託していただけまいか。",
+    "直衣の色を選ぶにも品格が要る。今日は控えめな鈍色にしてみた。",
+    "牛車の榻(しじ)に足をかける仕草にも、家柄が表れるというもの。",
+    "垣間見とは無粋な真似だが、御簾の内の気配だけでも心が乱れる。",
+    "和歌の返しが遅れれば、それだけで見限られてしまうのが恋の怖さよ。"],
+  keishi:["政所の帳簿は一日たりとも滞らせませぬ。米も絹も、出入りをすべて控えおきます。",
+    "儀式の差配も家司の役目。装束の色目一つ間違えば、主人の恥となりまする。",
+    "殿の御位が上がれば、我ら家司の禄もまた変わりますゆえ、励みがいがございます。",
+    "荘園からの年貢が届く日は、朝から気が抜けませぬ。",
+    "客人をお迎えする座次一つにも、身分の上下がうるそうございますな。",
+    "文机に向かい通す日々ですが、これも殿の御用あってのこと。",
+    "下働きの者どもの差配も、我らの仕事にございます。",
+    "主人が任官なさる噂を聞けば、我らも夜も眠れませぬ。"],
+  zuishin:["随身は弓矢を帯び、殿の御前後を固めるが役目。今日も油断なく参ります。",
+    "随身には四位五位の子弟が選ばれることもあれば、下級の舎人あがりもおります。",
+    "牛車の左右を進むときは、歩みの調子を牛飼童と合わせねばなりませぬ。",
+    "随身が着る装束の色は、主人の位階によって定められておりまする。",
+    "夜の警固は特に気を張ります。物の怪より、盗人の方がよほど恐ろしい。",
+    "弓の弦は湿気に弱い。雨の日は殊更に気を配ります。",
+    "行列の格式は、随身の数と立ち居振る舞いで決まるとも申しますな。"],
+  toneri:["舎人は牛車の牛を引き、文を届け、力仕事は何でも致します。",
+    "牛の機嫌をとるのも舎人の腕の見せどころ。急かせば臍を曲げますゆえ。",
+    "殿のお使いで遠方へ走ることもございます。健脚こそ舎人の値打ちにございます。",
+    "雨の日の渡殿はよう滑ります。荷を運ぶにも気を張りますな。",
+    "殿方の従者として、時には和歌の使いも承ります。",
+    "牛車の榻を出し入れするのも、案外に力の要る仕事にございます。",
+    "日が暮れれば篝火の薪を集めるのも我らの役目。"],
+  menoto:["乳母は乳を差し上げるだけでなく、母君に代わって我が子のごとくお育て申します。",
+    "若君・姫君が興入れなさる先まで、乳母がお供することもございますのよ。",
+    "乳母子(めのとご)は乳兄弟。生涯変わらぬ絆となりましょう。",
+    "夜泣きなさる時も、そばを離れずお守りするのが乳母の務め。",
+    "お小さい頃からお世話しておりますと、我が子も同然の情がわきまする。",
+    "乳母の一族は、お育てした貴人と末永く縁を結びますの。",
+    "読み書きも、まずは乳母がお教えすることが多うございますよ。"],
+  myobu:["命婦は取り次ぎ役。お二方の文をそっと橋渡しするのも仕事のうちです。",
+    "女房より実務寄りとはいえ、御方様の御用は片時も休まりませぬ。",
+    "言伝一つにも間違いは許されませぬ。お言葉は正しく伝えてこそ。",
+    "宮仕えの命婦もおりますれば、私邸の命婦もおります。呼び名は同じでも役目は様々。",
+    "殿方からのお文をお預かりする時ほど、胸が高鳴ることもございませんわ。",
+    "取り次ぎの塩梅一つで、恋の行方が変わることもございますのよ。",
+    "女房どのとの繋がりも大事な仕事道具、日頃から誼を通じております。"],
+  gejo:["炊事も洗濯も掃除も、みな私どもの仕事にございます。",
+    "井戸端の水仕事は冬が一等つろうございます。",
+    "華やかなお邸の裏で、こうして働く者もおるのですよ。",
+    "薪割りも水汲みも、日々の暮らしを支える大事な役目と思うております。",
+    "御殿の奥は見たこともございませんが、廊下の掃除はよう存じておりますよ。",
+    "雑事に追われる毎日ですが、季節の花を見る楽しみだけは忘れませぬ。"],
+  genan:["門の番も庭掃除も、下男の仕事は数え切れませぬ。",
+    "築地の崩れを見つけたら、すぐさま殿に言上いたします。",
+    "夜の見廻りは気を張りますな。物盗りが忍び込まぬとも限りませぬゆえ。",
+    "薪割りに水汲み、牛馬の世話まで、体が幾つあっても足りませぬ。",
+    "広いお邸を守るには、こうした下働きが要り用にございます。",
+    "門前で人を待たせるのも仕事のうち。名乗りを確かめてからお通しします。"],
+  aruji:["朝廷への出仕と、この邸の差配と、なかなかに忙しいものよ。",
+    "寝殿に座せば、邸の秩序がおのずと定まる。これも家の格式ゆえ。",
+    "和歌の一つも詠めねば、殿上人としての面目が立たぬ。",
+    "家司どもの働きあってこそ、この邸は保たれておる。",
+    "御世の政のことを思えば、夜もおちおち眠れぬこともある。",
+    "客人を迎える座次にも、家の格式が表れるものよ。",
+    "子らの行く末を思うのも、また主人たる者の務めであろう。"],
+  kita_no_kata:["北の対に住まうゆえ、北の方と呼ばれるのですよ。",
+    "奥向きのことは、すべてわたくしが差配しております。",
+    "子女の教育も、女房たちの差配も、気の抜けぬ日々にございます。",
+    "香を合わせるのが何よりの楽しみ。季節ごとに調えを変えますの。",
+    "殿のお帰りが遅い日は、つい灯りを長く灯してしまいますわ。",
+    "女房たちの諍いを収めるのも、北の方の役目のうちですのよ。",
+    "和歌のやり取りは、殿と睦まじく過ごした頃を思い出させますわ。"],
   warawa:["待て待て、雀たち！","あっ、また屋根へ逃げた！","静かに近づけば、もっとそばで見られるかな。"],
   monban:["お通りの名を伺おう。","門前では足音をお静かに。","今宵は警固を厳しくせよとの仰せだ。"],
   seimei:["星の巡りが、今宵の気配を告げている。","式神よ、邸の四方を静かに守れ。","闇を恐れることはない。恐れは形を得るゆえ。"],
@@ -10230,6 +10347,7 @@ function playInstrument(id){
 }
 function pick(sx,sy){
   if(APP.mode==="title")return;
+  if(APP.tour&&APP.tour.active)return; // 波6-C4: 自動ガイドツアー中は画面タップでの調べる/ギミック操作を止める(専用オーバーレイのボタンで操作)
   if(APP.mode==="taiji"){taijiShoot(sx,sy);return;}
   if(APP.mode==="utakai"){if(APP.utakai&&APP.utakai.focus&&APP.utakai.focus.active)finishFocusAction();return;}
   if(APP.mode==="saigen"){if(APP.saigen)saigenNext();return;} // 紙芝居:画面タップで次の段へ
@@ -10283,7 +10401,11 @@ function pick(sx,sy){
   }
   if(gim)toggleGim(gim);
   if(id&&ITEMS[id]){
-    if(NPC_DIALOGUES[id]){showNPCDialogue(id);unlockCodex(id);}else showInfo(id);
+    if(NPC_DIALOGUES[id]){
+      // 波6-C2: 散策中は近づいてから話しかける(遠くから連打で豆知識を消費させない)
+      if(APP.mode==="walk"&&hit.distance>7){toast("もう少し近づいてから声をかけよう",1600);return;}
+      showNPCDialogue(id);unlockCodex(id);
+    }else showInfo(id);
     if(APP.mode==="quest")questNotifyClick(id);
   }
 }
@@ -11310,6 +11432,7 @@ $("codexTabAch").onclick=()=>setCodexTab("ach");
 $("codexTabDiscover").onclick=()=>setCodexTab("discover");
 $("codex").addEventListener("click",e=>{if(e.target===$("codex"))closeCodex();});
 addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&APP&&APP.tour&&APP.tour.active){endTour(true);e.preventDefault();return;}
   if(e.key==="Escape"&&APP&&APP.gisshaCarry&&APP.gisshaCarry.active){endGisshaCarry(false,false);e.preventDefault();return;}
   if(e.key==="Escape"&&$("onmyoDivinationPanel")&&$("onmyoDivinationPanel").style.display!=="none"){closeOnmyoDivinationPanel();e.preventDefault();return;}
   if(e.key==="Escape"&&$("renaiUranaiPanel")&&$("renaiUranaiPanel").style.display!=="none"){renaiUranaiClose();e.preventDefault();return;}
@@ -11558,6 +11681,192 @@ function koyomiClosePanel(){$("koyomiPanel").classList.remove("open");}
 $("btnKoyomi").onclick=koyomiOpenPanel;
 $("koyomiClose").onclick=koyomiClosePanel;
 $("koyomiPanel").addEventListener("click",e=>{if(e.target===$("koyomiPanel"))koyomiClosePanel();});
+
+/* ============================================================
+   波6-C1: 年中行事イベント — 散策入場時、実日付/季節に近い年中行事があれば
+   告知トースト＋最小限の演出オブジェクトを1つ添える。KOYOMI_EVENTS(波4)と
+   APP.season を突き合わせて選ぶだけの軽量判定(毎フレーム処理は一切行わない)。
+   演出オブジェクトは散策(walk)のときのみ表示し、退場時に必ず片付ける。
+============================================================ */
+const KOYOMI_WALK_VISUALS={
+  "上巳・曲水の宴":{key:"joushi",seasons:["spring"],announce:"本日は上巳・曲水の宴の頃。南庭に雛人形が飾られています。"},
+  "端午節会":{key:"tango",seasons:["summer"],announce:"本日は端午節会の頃。軒先に菖蒲が飾られています。"},
+  "七夕・乞巧奠":{key:"tanabata",seasons:["summer"],announce:"本日は七夕・乞巧奠の頃。笹に願いごとの短冊が結ばれています。"},
+  "中秋観月の宴":{key:"kangetsu",seasons:["autumn"],announce:"本日は中秋観月の宴の頃。南庭に月見の支度が整えられています。"}
+};
+const koyomiWalkDeco={joushi:null,tango:null,tanabata:null,kangetsu:null};
+const koyomiWalkShownKeys=new Set();
+function koyomiWalkBuildDeco(){
+  // 上巳: 紅の毛氈を敷いた雛壇(男雛・女雛を簡略形状で表現)
+  {
+    const g=new THREE.Group();
+    g.add(box(1.15,.09,.60,M({color:0x7c1e2a,roughness:.85}),0,.045,0,false));
+    g.add(box(1.22,.02,.68,M({color:0xb2233a,roughness:.88}),0,.10,0,false));
+    [-1,1].forEach(s=>{
+      g.add(cyl(.10,.145,.30,M({color:s>0?0x263047:0xa8324c,roughness:.82}),s*.26,.30,0,10));
+      const head=new THREE.Mesh(new THREE.SphereGeometry(.082,10,8),M({color:0xf2dcc0,roughness:.72}));head.castShadow=false;head.position.set(s*.26,.48,0);g.add(head);
+      if(s>0){const hat=new THREE.Mesh(new THREE.ConeGeometry(.058,.09,8),M({color:0x1b1b1b,roughness:.6}));hat.castShadow=false;hat.position.set(s*.26,.55,0);g.add(hat);}
+      else{const kan=new THREE.Mesh(new THREE.TorusGeometry(.07,.012,6,10),M({color:0xd8b04a,metalness:.5,roughness:.4}));kan.castShadow=false;kan.rotation.x=Math.PI/2;kan.position.set(s*.26,.56,0);g.add(kan);}
+    });
+    g.position.set(7.2,groundH(7.2,13.5),13.5);g.visible=false;world.add(g);koyomiWalkDeco.joushi=g;
+  }
+  // 端午: 束ねた菖蒲(薄い葉状の板を扇に立て、根元を組紐で結ぶ)
+  {
+    const g=new THREE.Group();
+    const leafMat=M({color:0x3f6b2e,roughness:.9,side:THREE.DoubleSide});
+    for(let i=0;i<7;i++){
+      const a=(i-3)*.16;
+      const leaf=box(.045,.92,.008,leafMat,Math.sin(a)*.16,.46,Math.cos(a)*.03-.03,false);
+      leaf.rotation.z=a*.5;leaf.rotation.y=a;g.add(leaf);
+    }
+    g.add(cyl(.055,.06,.10,M({color:0x5a3b22,roughness:.86}),0,.10,0,8,false));
+    g.position.set(-7.2,groundH(-7.2,13.5),13.5);g.visible=false;world.add(g);koyomiWalkDeco.tango=g;
+  }
+  // 七夕: 笹の葉に願いごとの短冊(五色の紙片)を結ぶ
+  {
+    const g=new THREE.Group();
+    g.add(cyl(.045,.07,2.3,M({color:0x4a7a3a,roughness:.86}),0,1.15,0,8));
+    const leafMat=M({color:0x5c9448,roughness:.88,side:THREE.DoubleSide});
+    for(let i=0;i<9;i++){
+      const y=.55+i*.20,side=i%2?1:-1,a=side*.55;
+      const leaf=box(.30,.05,.010,leafMat,Math.sin(a)*.30*side,y,0,false);leaf.rotation.z=a;leaf.rotation.y=side*.3;g.add(leaf);
+    }
+    const tanColors=[0xd8394a,0xe8c94a,0x4a86d8,0x3fa860,0xe8e8e8];
+    tanColors.forEach((c,i)=>{
+      const strip=box(.045,.24,.006,M({color:c,roughness:.7}),(i-2)*.10,1.55-i*.06,.02,false);
+      strip.rotation.z=(i-2)*.08;g.add(strip);
+    });
+    g.position.set(7.2,groundH(7.2,18.5),18.5);g.visible=false;world.add(g);koyomiWalkDeco.tanabata=g;
+  }
+  // 観月: 低い月見台+団子の盛り(白い球を三段に積む)
+  {
+    const g=new THREE.Group();
+    g.add(cyl(.42,.46,.09,M({color:0x6b4a2a,roughness:.82}),0,.045,0,10));
+    g.add(cyl(.11,.13,.16,M({color:0xead9b8,roughness:.86}),0,.17,0,10,false));
+    const dangoMat=M({color:0xf3ead6,roughness:.7});
+    const layout=[[0,0],[ .075,.065],[-.075,.065],[.075,-.065],[-.075,-.065]];
+    layout.forEach(([dx,dz],i)=>{const s=new THREE.Mesh(new THREE.SphereGeometry(.052,9,7),dangoMat);s.castShadow=false;s.position.set(dx,.29+(i>0?.06:0),dz);g.add(s);});
+    g.position.set(-7.2,groundH(-7.2,23),23);g.visible=false;world.add(g);koyomiWalkDeco.kangetsu=g; // 家司の巡回路(-12.5..-3.5,17.8..18.8)と重ならぬよう少し南へ
+  }
+  window.KOYOMI_WALK_DECO_STATUS={built:true,count:Object.keys(koyomiWalkDeco).length};
+}
+koyomiWalkBuildDeco();
+function koyomiWalkHideAllDeco(){Object.values(koyomiWalkDeco).forEach(g=>{if(g)g.visible=false;});}
+function koyomiWalkPick(){
+  const now=new Date(),year=now.getFullYear();
+  const todayDoy=koyomiDayOfYear(now.getMonth()+1,now.getDate(),year);
+  const candidates=Object.keys(KOYOMI_WALK_VISUALS).map(title=>{
+    const ev=KOYOMI_EVENTS.find(e=>e.title===title);if(!ev)return null;
+    const evDoy=koyomiDayOfYear(ev.m,ev.d,year);
+    let diff=Math.abs(evDoy-todayDoy);diff=Math.min(diff,365-diff);
+    return {title,ev,diff,visual:KOYOMI_WALK_VISUALS[title]};
+  }).filter(Boolean);
+  if(!candidates.length)return null;
+  const near=candidates.filter(c=>c.diff<=6).sort((a,b)=>a.diff-b.diff)[0]; // 実日付が±6日以内の行事を優先
+  if(near)return {...near,byDate:true};
+  const seasonal=candidates.filter(c=>c.visual.seasons.includes(APP.season)).sort((a,b)=>a.diff-b.diff)[0]; // なければ今の季節に合う行事から日付が近いもの
+  if(seasonal)return {...seasonal,byDate:false};
+  return null;
+}
+function koyomiWalkCheck(){
+  koyomiWalkHideAllDeco();
+  const pick=koyomiWalkPick();
+  if(!pick){window.KOYOMI_WALK_STATUS={active:false};return;}
+  const g=koyomiWalkDeco[pick.visual.key];if(g)g.visible=true;
+  window.KOYOMI_WALK_STATUS={active:true,title:pick.title,byDate:pick.byDate};
+  const shownKey=pick.title+"|"+(pick.byDate?"date":"season");
+  if(!koyomiWalkShownKeys.has(shownKey)){
+    koyomiWalkShownKeys.add(shownKey);
+    setTimeout(()=>{if(APP.mode==="walk")toast(pick.visual.announce,4200);},900); // 「ドラッグで見回し…」の案内トーストと重ならぬよう少し遅らせる
+  }
+}
+
+/* ============================================================
+   波6-C4: 自動ガイドツアー — 邸内の見どころをカメラがイージング移動しながら
+   巡り、各地点でナレーションを表示する受動的な鑑賞モード。散策(walk)の上に
+   薄く乗る演出で、モードは"walk"のまま(APP.tourが有効な間だけ操作を止める)。
+   既存の enterMode / pick / animate を壊さぬよう、非破壊の追加のみで実装する。
+============================================================ */
+const TOUR_WAYPOINTS=[
+  {name:"南庭",kana:"みなみのにわ",x:0,z:17,lookX:0,lookZ:0,
+    text:"寝殿の正面に広がる南庭。白砂を敷き、儀式や来客を出迎える晴れの場として整えられました。桜や紅葉など、四季の彩りも大切にされています。"},
+  {name:"寝殿",kana:"しんでん",x:0,z:6,lookX:0,lookZ:-3,
+    text:"邸の中心となる正殿で、「寝殿造り」の名の由来です。主人の座があり、儀式や来客の応対はここで行われました。"},
+  {name:"東の渡殿",kana:"ひがしのわたどの",x:16,z:-6,lookX:22,lookZ:-7.5,
+    text:"寝殿と東の対を結ぶ、屋根付きの渡り廊下。雨の日でも靴を履かずに建物間を行き来できる、寝殿造り独特のつくりです。"},
+  {name:"東の対",kana:"ひがしのたい",x:29,z:-10,lookX:35,lookZ:-12,
+    text:"家族が暮らす対屋の一つ。『源氏物語』でも対屋は姫君や公達の住まいとして重要な舞台になります。"},
+  {name:"北の対",kana:"きたのたい",x:0,z:-29,lookX:0,lookZ:-39,
+    text:"主人の正妻・北の方が暮らす対屋。呼び名がそのまま身分と住まいの位置を示す、寝殿造りらしい呼び名です。"},
+  {name:"西の対",kana:"にしのたい",x:-29,z:-10,lookX:-35,lookZ:-12,
+    text:"東の対と対をなす建物。『源氏物語』では紫の上が住んだ二条院の西の対がよく知られています。"},
+  {name:"池泉庭園",kana:"ちせんていえん",x:-18,z:25,lookX:-12,lookZ:33,
+    text:"南庭の先に広がる、池を中心とした庭園。舟遊びや月見など、四季を通じた遊びの舞台となりました。"}
+];
+const TOUR_DWELL_MS=5200;
+function tourYawTo(fromX,fromZ,toX,toZ){return Math.atan2(fromX-toX,fromZ-toZ);} // カメラは既定でyaw=0のとき-Z方向を向くため、向き先ベクトルの符号を反転して合わせる
+function updateTourHud(wp,narrating){
+  const pEl=$("tourProgress"),tEl=$("tourTitle"),xEl=$("tourText");
+  if(pEl)pEl.textContent="GUIDE TOUR　"+(APP.tour.idx+1)+" / "+TOUR_WAYPOINTS.length;
+  if(tEl)tEl.textContent=wp.name+"（"+wp.kana+"）";
+  if(xEl)xEl.textContent=narrating?wp.text:"";
+}
+function tourAdvance(){
+  if(!APP.tour||!APP.tour.active)return;
+  APP.tour.idx++;
+  if(APP.tour.idx>=TOUR_WAYPOINTS.length){endTour(false);return;}
+  const wp=TOUR_WAYPOINTS[APP.tour.idx];
+  const fromX=player.pos.x,fromZ=player.pos.z,fromYaw=player.yaw;
+  const toYaw=tourYawTo(wp.x,wp.z,wp.lookX,wp.lookZ);
+  APP.tour.from={x:fromX,z:fromZ,yaw:fromYaw};
+  APP.tour.to={x:wp.x,z:wp.z,yaw:toYaw};
+  APP.tour.phase="move";
+  APP.tour.t0=performance.now();
+  const dist=Math.hypot(wp.x-fromX,wp.z-fromZ);
+  APP.tour.moveDur=Math.max(1200,Math.min(4200,dist*95));
+  updateTourHud(wp,false);
+}
+/* animate() の fp ブランチから毎フレーム呼ばれ、player.pos/yaw を直接書き換えて
+   ウェイポイント間をイージング移動する。既存のカメラ補間(dummyCam lerp/slerp)が
+   player.pos/yaw を追いかける仕組みをそのまま再利用するため、animate 本体には
+   「入力を止める」以外の変更を加えずに済む。 */
+function updateTourCamera(){
+  const T=APP.tour;if(!T||!T.active)return;
+  const wp=TOUR_WAYPOINTS[T.idx];if(!wp)return;
+  const now=performance.now();
+  if(T.phase==="move"){
+    const u=Math.max(0,Math.min(1,(now-T.t0)/T.moveDur)),s=u*u*(3-2*u);
+    player.pos.x=T.from.x+(T.to.x-T.from.x)*s;
+    player.pos.z=T.from.z+(T.to.z-T.from.z)*s;
+    let dyaw=T.to.yaw-T.from.yaw;while(dyaw>Math.PI)dyaw-=Math.PI*2;while(dyaw<-Math.PI)dyaw+=Math.PI*2;
+    player.yaw=T.from.yaw+dyaw*s;player.pitch=-.04;
+    if(u>=1){T.phase="dwell";T.t0=now;updateTourHud(wp,true);}
+  }else if(T.phase==="dwell"){
+    player.pos.x=T.to.x;player.pos.z=T.to.z;player.yaw=T.to.yaw;player.pitch=-.04;
+    if(now-T.t0>=TOUR_DWELL_MS)tourAdvance();
+  }
+}
+function startTour(){
+  if(APP.mode!=="walk")enterMode("walk");
+  APP.view="fp";
+  APP.tour={active:true,idx:-1,phase:"dwell",t0:performance.now(),
+    from:{x:player.pos.x,z:player.pos.z,yaw:player.yaw},to:{x:player.pos.x,z:player.pos.z,yaw:player.yaw}};
+  document.body.classList.add("tour-mode");
+  updateControlUI();
+  closeInfo();closeCodex();
+  beep(660,.07);
+  tourAdvance();
+}
+function endTour(interrupted,silent){
+  if(!APP.tour)return;
+  APP.tour=null;
+  document.body.classList.remove("tour-mode");
+  updateControlUI();
+  if(!silent)toast(interrupted?"自動ガイドツアーを中断しました":"自動ガイドツアーが終わりました。散策を続けましょう",3000);
+}
+if($("btnTour"))$("btnTour").onclick=()=>startTour();
+if($("tourSkipBtn"))$("tourSkipBtn").onclick=()=>{if(APP.tour&&APP.tour.active)tourAdvance();};
+if($("tourQuitBtn"))$("tourQuitBtn").onclick=()=>endTour(true);
 
 /* ====== 波5-K2: 教員向け小テスト(4択・CSV書き出し) ======
    出題はGLOSSARY(古文重要語)とITEMS(用語・建築、和歌を除く)からランダムにN問。
@@ -12199,6 +12508,11 @@ function enterMode(m){
   if(m==="renaiSim")renaiShowTargetPicker("sim");
   if((m==="renaiShort"||m==="renaiSim")&&typeof RENAI_BGM!=="undefined")RENAI_BGM.start(APP.season); // 優美な和風BGMを流す
   if(m==="walk")toast("ドラッグで見回し、タップ/クリックで調べられます",3400);
+  // 波6-C1: 散策入場時のみ年中行事の軽量演出を判定・表示し、退場時は必ず片付ける
+  if(m==="walk"&&typeof koyomiWalkCheck==="function")koyomiWalkCheck();
+  else if(typeof koyomiWalkHideAllDeco==="function")koyomiWalkHideAllDeco();
+  // 波6-C4: 散策以外へ遷移したら自動ガイドツアーを必ず中断する
+  if(m!=="walk"&&APP.tour&&APP.tour.active&&typeof endTour==="function")endTour(true,true);
   scheduleModeBrief(m);
   if(typeof updateWakaVisibility==="function")updateWakaVisibility();
   // [音] タイトルのテーマを止め、ゲーム内の環境音(bed/合成フォールバック)へ切替
@@ -19997,12 +20311,14 @@ function animate(now){
       // それ以外(短編の本編HUD/シミュのピッカー画面など)は座に着いたまま(見回しのみ可)
       const renaiNoMove=(APP.mode==="renaiSim"&&(!APP.renai||APP.renai.phase!=="hub"))||(APP.mode==="renaiShort"&&(!APP.renai||APP.renai.phase!=="approach"));
       const gisshaCarryNoMove=!!(APP.gisshaCarry&&APP.gisshaCarry.active);
-      if(!APP.codexOpen&&APP.mode!=="utakai"&&APP.mode!=="saigen"&&!renaiNoMove&&!gisshaCarryNoMove){ // 歌合・再現中は座に着いたまま(見回しのみ可)
+      const tourActive=!!(APP.tour&&APP.tour.active); // 波6-C4: 自動ガイドツアー中はプレイヤー操作を止め、カメラはツアー側が制御する
+      if(!APP.codexOpen&&APP.mode!=="utakai"&&APP.mode!=="saigen"&&!renaiNoMove&&!gisshaCarryNoMove&&!tourActive){ // 歌合・再現中は座に着いたまま(見回しのみ可)
         if(keys.w||keys.arrowup)mz-=1;if(keys.s||keys.arrowdown)mz+=1;
         if(keys.a||keys.arrowleft)mx-=1;if(keys.d||keys.arrowright)mx+=1;
         mx+=joy.vx;mz+=joy.vy;
       }
       if(APP.mode==="renaiShort"&&APP.renai&&APP.renai.phase==="approach")renaiIntroUpdate(dt); // 恋文ショート冒頭の3D導入のみ。他モードは一切走らない
+      if(tourActive)updateTourCamera(); // player.pos/yaw を直接書き換え、以降のカメラ補間(dummyCam)にそのまま乗せる
       const m=Math.hypot(mx,mz);
       const running=keys.shift||(joy.active&&Math.hypot(joy.vx,joy.vy)>0.8); // ジョイを倒し切るとダッシュ(小型ジョイでも届くよう0.8)
       if(!tjRoll&&m>0.01){
