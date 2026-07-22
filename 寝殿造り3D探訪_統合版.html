@@ -2055,6 +2055,10 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
 #gfx .gfx-opts input[type=range]{height:28px;min-width:150px}
 #gfx .gfx-opts span[id$="Val"]{font-family:var(--sans);font-size:12px!important;color:#ead8ae!important}
 .gfx-note{font-size:11px;color:#cdbf9f;line-height:1.7;margin-top:9px;padding:9px 11px;border:1px solid rgba(201,162,63,.2);border-radius:8px;background:rgba(201,162,63,.06)}
+.keybind-key{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--kin);background:rgba(201,162,63,.14);border:1px solid rgba(201,162,63,.4);
+  border-radius:6px;padding:5px 10px;min-width:56px;text-align:center;letter-spacing:.04em}
+.keybind-row.capturing{border-color:rgba(255,218,140,.9);box-shadow:0 0 0 1px rgba(255,218,140,.35)}
+.keybind-row.capturing .keybind-key{color:#fff;background:rgba(255,218,140,.22);border-color:rgba(255,218,140,.88)}
 .t-credit{margin-top:14px;background:none;border:0;color:#8d8068;font-size:11px;letter-spacing:.12em;
   font-family:var(--sans);text-decoration:underline;text-underline-offset:3px;opacity:.85}
 .t-credit:hover{color:var(--kin)}
@@ -4457,6 +4461,24 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
       <button class="tb-btn" id="gfxInvY_on">反転</button>
     </span>
   </div>
+  <div class="gfx-section">⌨️ 移動キー（PC操作向け）</div>
+  <div class="gfx-row keybind-row" data-action="forward"><span class="gfx-lbl">前進</span>
+    <span class="gfx-opts"><span class="keybind-key" id="kbKey_forward"></span><button class="tb-btn" id="kbSet_forward">変更</button></span>
+  </div>
+  <div class="gfx-row keybind-row" data-action="back"><span class="gfx-lbl">後退</span>
+    <span class="gfx-opts"><span class="keybind-key" id="kbKey_back"></span><button class="tb-btn" id="kbSet_back">変更</button></span>
+  </div>
+  <div class="gfx-row keybind-row" data-action="left"><span class="gfx-lbl">左移動</span>
+    <span class="gfx-opts"><span class="keybind-key" id="kbKey_left"></span><button class="tb-btn" id="kbSet_left">変更</button></span>
+  </div>
+  <div class="gfx-row keybind-row" data-action="right"><span class="gfx-lbl">右移動</span>
+    <span class="gfx-opts"><span class="keybind-key" id="kbKey_right"></span><button class="tb-btn" id="kbSet_right">変更</button></span>
+  </div>
+  <div class="gfx-row keybind-row" data-action="run"><span class="gfx-lbl">早歩き</span>
+    <span class="gfx-opts"><span class="keybind-key" id="kbKey_run"></span><button class="tb-btn" id="kbSet_run">変更</button></span>
+  </div>
+  <div class="gfx-row"><span class="gfx-opts"><button class="tb-btn" id="kbReset">既定に戻す</button></span></div>
+  <p class="gfx-note">「変更」を押した後、割り当てたいキーを押すと反映（Escで取消）。スマートフォンのジョイスティック操作には影響しません。</p>
   <div class="gfx-section">🔊 音声</div>
   <div class="gfx-row"><span class="gfx-lbl">BGM・環境音</span>
     <span class="gfx-opts">
@@ -9915,6 +9937,30 @@ const orbit={yaw:.7,pitch:.95,r:120};
 const keys={};
 addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;});
 addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false;});
+/* 波10: 散策(通常移動)の移動キー再割り当て。退治モード(TAIJI_CONTROLS_PC)は対象外＝一切触れない。
+   KEYBIND={action:[key,...]} をlocalStorage(shinden3d-keybind-v1)へ保存。keyActive(action)で判定する。 */
+const KEYBIND_KEY="shinden3d-keybind-v1";
+const KEYBIND_ACTIONS=["forward","back","left","right","run"];
+const KEYBIND_DEFAULT={forward:["w","arrowup"],back:["s","arrowdown"],left:["a","arrowleft"],right:["d","arrowright"],run:["shift"]};
+function cloneKeybindDefault(){const o={};KEYBIND_ACTIONS.forEach(a=>o[a]=KEYBIND_DEFAULT[a].slice());return o;}
+function loadKeybind(){
+  const out=cloneKeybindDefault();
+  try{
+    const raw=localStorage.getItem(KEYBIND_KEY);
+    if(!raw)return out;
+    const o=JSON.parse(raw);
+    if(o&&typeof o==="object")KEYBIND_ACTIONS.forEach(a=>{if(Array.isArray(o[a])&&o[a].every(k=>typeof k==="string"))out[a]=o[a].slice();});
+  }catch(e){}
+  return out;
+}
+let KEYBIND=loadKeybind();
+function saveKeybind(){try{localStorage.setItem(KEYBIND_KEY,JSON.stringify(KEYBIND));}catch(e){}}
+function resetKeybind(){KEYBIND=cloneKeybindDefault();saveKeybind();}
+function keyActive(action){
+  const list=KEYBIND[action];if(!list)return false;
+  for(let i=0;i<list.length;i++)if(keys[list[i]])return true;
+  return false;
+}
 
 const joyEl=document.getElementById("joy"),knob=document.getElementById("joyKnob");
 const joy={active:false,id:null,vx:0,vy:0,dynamic:false,_t0:0,_used:false};
@@ -16724,6 +16770,53 @@ applyJoy(PREFS.get("joyMode","fixed")); // 起動時にジョイ方式を復元
 GFX.init();
 
 /* ============================================================
+   移動キー再割り当てUI(設定パネル「⌨️ 移動キー」)。
+   対象は散策等の通常移動(keyActive)のみ。退治モード(TAIJI_CONTROLS_PC)は一切変更しない。
+============================================================ */
+const KEYBIND_ACTION_LABEL={forward:"前進",back:"後退",left:"左移動",right:"右移動",run:"早歩き"};
+const KEYBIND_DISPLAY_NAME={w:"W",a:"A",s:"S",d:"D",shift:"Shift"," ":"Space",arrowup:"↑",arrowdown:"↓",arrowleft:"←",arrowright:"→"};
+function keyDisplayName(k){return KEYBIND_DISPLAY_NAME[k]||(k.length===1?k.toUpperCase():k);}
+function keybindRowLabel(action){
+  const list=KEYBIND[action]||[];
+  return list.length?list.map(keyDisplayName).join(" / "):"(未設定)";
+}
+function refreshKeybindUi(){
+  KEYBIND_ACTIONS.forEach(a=>{const el=$("kbKey_"+a);if(el)el.textContent=keybindRowLabel(a);});
+}
+let keybindCapturing=null;
+function startKeybindCapture(action){
+  if(keybindCapturing)endKeybindCapture();
+  keybindCapturing=action;
+  const btn=$("kbSet_"+action);if(btn){btn.textContent="キー入力待ち…(Escで取消)";btn.classList.add("on");}
+  const row=btn&&btn.closest(".keybind-row");if(row)row.classList.add("capturing");
+}
+function endKeybindCapture(){
+  if(!keybindCapturing)return;
+  const action=keybindCapturing;
+  const btn=$("kbSet_"+action);if(btn){btn.textContent="変更";btn.classList.remove("on");}
+  const row=btn&&btn.closest(".keybind-row");if(row)row.classList.remove("capturing");
+  keybindCapturing=null;
+}
+addEventListener("keydown",e=>{
+  if(!keybindCapturing)return;
+  const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))return; // 検索入力中は無効
+  e.preventDefault();e.stopPropagation();
+  const action=keybindCapturing,k=e.key.toLowerCase();
+  if(k==="escape"){endKeybindCapture();return;}
+  KEYBIND_ACTIONS.forEach(a=>{if(a!==action)KEYBIND[a]=KEYBIND[a].filter(x=>x!==k);}); // 他アクションと重複したら奪って上書き
+  KEYBIND[action]=[k];
+  saveKeybind();refreshKeybindUi();endKeybindCapture();
+  toast(KEYBIND_ACTION_LABEL[action]+"を「"+keyDisplayName(k)+"」に割り当てた",1800);beep(620,.05);
+},true);
+KEYBIND_ACTIONS.forEach(a=>{
+  const b=$("kbSet_"+a);
+  if(b)b.onclick=()=>{if(keybindCapturing===a){endKeybindCapture();return;}startKeybindCapture(a);beep(560,.05);};
+});
+const kbResetBtn=$("kbReset");
+if(kbResetBtn)kbResetBtn.onclick=()=>{endKeybindCapture();resetKeybind();refreshKeybindUi();toast("移動キーを既定に戻した",1600);beep(560,.05);};
+refreshKeybindUi();
+
+/* ============================================================
    歌合(うたあわせ)モード — 集めた和歌短冊で左方として競う
    既存の WAKA_DATA(収集和歌) と codexUnlocked(収集状態) を再利用。
 ============================================================ */
@@ -20866,14 +20959,14 @@ function animate(now){
       const gisshaCarryNoMove=!!(APP.gisshaCarry&&APP.gisshaCarry.active);
       const tourActive=!!(APP.tour&&APP.tour.active); // 波6-C4: 自動ガイドツアー中はプレイヤー操作を止め、カメラはツアー側が制御する
       if(!APP.codexOpen&&APP.mode!=="utakai"&&APP.mode!=="saigen"&&!renaiNoMove&&!gisshaCarryNoMove&&!tourActive){ // 歌合・再現中は座に着いたまま(見回しのみ可)
-        if(keys.w||keys.arrowup)mz-=1;if(keys.s||keys.arrowdown)mz+=1;
-        if(keys.a||keys.arrowleft)mx-=1;if(keys.d||keys.arrowright)mx+=1;
+        if(keyActive("forward"))mz-=1;if(keyActive("back"))mz+=1;
+        if(keyActive("left"))mx-=1;if(keyActive("right"))mx+=1;
         mx+=joy.vx;mz+=joy.vy;
       }
       if(APP.mode==="renaiShort"&&APP.renai&&APP.renai.phase==="approach")renaiIntroUpdate(dt); // 恋文ショート冒頭の3D導入のみ。他モードは一切走らない
       if(tourActive)updateTourCamera(); // player.pos/yaw を直接書き換え、以降のカメラ補間(dummyCam)にそのまま乗せる
       const m=Math.hypot(mx,mz);
-      const running=keys.shift||(joy.active&&Math.hypot(joy.vx,joy.vy)>0.8); // ジョイを倒し切るとダッシュ(小型ジョイでも届くよう0.8)
+      const running=keyActive("run")||(joy.active&&Math.hypot(joy.vx,joy.vy)>0.8); // ジョイを倒し切るとダッシュ(小型ジョイでも届くよう0.8)
       if(!tjRoll&&m>0.01){
         mx/=Math.max(1,m);mz/=Math.max(1,m);
         let sp=(running?10.5:5.6)*dt;

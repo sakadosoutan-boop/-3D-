@@ -1002,6 +1002,10 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
 #gfx .gfx-opts input[type=range]{height:28px;min-width:150px}
 #gfx .gfx-opts span[id$="Val"]{font-family:var(--sans);font-size:12px!important;color:#ead8ae!important}
 .gfx-note{font-size:11px;color:#cdbf9f;line-height:1.7;margin-top:9px;padding:9px 11px;border:1px solid rgba(201,162,63,.2);border-radius:8px;background:rgba(201,162,63,.06)}
+.keybind-key{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--kin);background:rgba(201,162,63,.14);border:1px solid rgba(201,162,63,.4);
+  border-radius:6px;padding:5px 10px;min-width:56px;text-align:center;letter-spacing:.04em}
+.keybind-row.capturing{border-color:rgba(255,218,140,.9);box-shadow:0 0 0 1px rgba(255,218,140,.35)}
+.keybind-row.capturing .keybind-key{color:#fff;background:rgba(255,218,140,.22);border-color:rgba(255,218,140,.88)}
 .t-credit{margin-top:14px;background:none;border:0;color:#8d8068;font-size:11px;letter-spacing:.12em;
   font-family:var(--sans);text-decoration:underline;text-underline-offset:3px;opacity:.85}
 .t-credit:hover{color:var(--kin)}
