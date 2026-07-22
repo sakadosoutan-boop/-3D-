@@ -1495,14 +1495,58 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
   font-size:8px;font-weight:700;text-align:center;line-height:1.1;color:#fff6df;
   text-shadow:-1px -1px 0 rgba(0,0,0,.85),1px -1px 0 rgba(0,0,0,.85),-1px 1px 0 rgba(0,0,0,.85),1px 1px 0 rgba(0,0,0,.85);
   border:1px solid rgba(0,0,0,.35);box-shadow:inset 0 1px 3px rgba(255,255,255,.3)}
-#ikaiGameOver,#ikaiHelp{position:absolute;inset:0;z-index:2;display:none;align-items:center;justify-content:center;background:rgba(4,2,1,.7)}
-#ikaiGameOver.show,#ikaiHelp.show{display:flex}
-.ikai-card{width:min(300px,88%);text-align:center;padding:18px 16px;border:1px solid rgba(201,162,63,.6);border-radius:10px;
+#ikaiGameOver,#ikaiHelp,#ikaiGallery{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(4,2,1,.7)}
+#ikaiGameOver,#ikaiHelp{z-index:2}
+#ikaiGallery{z-index:4;background:rgba(4,2,1,.84)}
+#ikaiGameOver.show,#ikaiHelp.show,#ikaiGallery.show{display:flex}
+.ikai-card{width:min(300px,88%);max-height:min(640px,90vh);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  text-align:center;padding:18px 16px;border:1px solid rgba(201,162,63,.6);border-radius:10px;
   background:linear-gradient(180deg,rgba(30,20,12,.97),rgba(15,10,6,.98));box-shadow:0 16px 40px rgba(0,0,0,.5)}
 .ikai-card-title{font-family:var(--serif,serif);font-size:18px;font-weight:900;color:#f0dfa8;letter-spacing:.1em;margin-bottom:10px;text-shadow:0 2px 8px #000}
 .ikai-card-detail{font-size:12.5px;line-height:1.9;color:#e9dcc2;margin-bottom:14px}
 .ikai-card-text{font-size:12px;line-height:1.85;color:#d8c6a0;margin-bottom:14px;text-align:left}
-.ikai-card .t-btn{width:100%;margin-top:6px;min-height:42px}
+.ikai-card .t-btn{width:100%;margin-top:6px;min-height:42px;flex:none}
+/* 位階出世ゲーム: 今回のスコアが自己ベストを更新した時の強調表示 */
+.ikai-newbest{display:none;margin:0 0 12px;padding:7px 10px;border-radius:8px;border:1px solid rgba(228,199,106,.85);
+  background:linear-gradient(90deg,rgba(212,175,55,.24),rgba(212,175,55,.08));color:#ffe9ad;font-weight:900;
+  letter-spacing:.16em;font-size:13px;text-align:center;text-shadow:0 2px 6px #000}
+.ikai-newbest.show{display:block;animation:ikaiNewBestPop .5s cubic-bezier(.2,.9,.25,1)}
+@keyframes ikaiNewBestPop{0%{transform:scale(.82);opacity:0}60%{transform:scale(1.07);opacity:1}100%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.ikai-newbest.show{animation:none}}
+/* 位階出世ゲーム: ローカルスコア番付(上位5件) */
+.ikai-rank-wrap{margin-bottom:12px;text-align:left}
+.ikai-rank-title{font-size:11px;letter-spacing:.14em;color:#d8c6a0;opacity:.85;margin-bottom:5px}
+.ikai-rank-table{width:100%;border-collapse:collapse;font-size:11.5px;color:#e9dcc2}
+.ikai-rank-table th{font-weight:700;color:#c9b183;font-size:9.5px;letter-spacing:.08em;text-align:left;padding:2px 4px;border-bottom:1px solid rgba(201,162,63,.35)}
+.ikai-rank-table td{padding:3px 4px;border-bottom:1px solid rgba(201,162,63,.16)}
+.ikai-rank-table td:first-child{width:2.6em;color:#c9b183}
+.ikai-rank-table td:nth-child(2){font-weight:900;color:#ffd9a0}
+.ikai-rank-table td:last-child{color:#b7a685;font-size:10.5px;text-align:right}
+.ikai-rank-table tr.is-now td{color:#fff2c8;background:rgba(212,175,55,.16)}
+/* 殿上人ギャラリー(これまでに生成した位階の図鑑) */
+.ikai-gallery-card{width:min(360px,92vw);max-height:min(600px,88vh);display:flex;flex-direction:column;
+  padding:16px 14px 14px;overflow:hidden;text-align:center}
+.ikai-gallery-card>*{flex:none}
+.ikai-gallery-count{font-size:11px;color:#d8c6a0;letter-spacing:.08em;margin:-4px 0 10px}
+.ikai-gallery-grid{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:7px;margin:0 -2px 12px;padding:0 2px}
+.ikai-gallery-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid rgba(201,162,63,.28);
+  border-radius:8px;background:rgba(255,255,255,.03);text-align:left}
+.ikai-gallery-row.locked{background:rgba(0,0,0,.18);border-color:rgba(201,162,63,.14)}
+.ikai-gallery-icon-wrap{position:relative;width:38px;height:38px;flex:none}
+.ikai-gallery-icon{width:38px;height:38px;display:block}
+.ikai-gallery-row.locked .ikai-gallery-icon{filter:grayscale(1) brightness(.5);opacity:.55}
+.ikai-gallery-lock{position:absolute;right:-4px;bottom:-4px;font-size:12px;filter:drop-shadow(0 1px 2px #000)}
+.ikai-gallery-crown{position:absolute;left:50%;top:-10px;transform:translateX(-50%);font-size:8px;font-weight:900;
+  letter-spacing:.04em;color:#3a2a08;background:linear-gradient(180deg,#ffe9ad,#d4af37);padding:1px 4px;border-radius:6px;
+  white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.ikai-gallery-text{min-width:0;flex:1}
+.ikai-gallery-name{font-family:var(--serif,serif);font-size:13.5px;font-weight:900;color:#f0dfa8;
+  display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.ikai-gallery-row.locked .ikai-gallery-name{color:#8a7c5e}
+.ikai-gallery-kana{font-family:var(--sans);font-size:9.5px;font-weight:400;color:#b7a685}
+.ikai-gallery-desc{font-size:10.5px;line-height:1.5;color:#cdbd9c;margin-top:2px}
+.ikai-gallery-row.locked .ikai-gallery-desc{color:#7a6f57}
 /* 季節選択(退治) */
 #taijiSeason{display:none;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 #taijiSeason .ss-btn{padding:8px 12px;border:1px solid rgba(170,100,60,.7);background:rgba(40,20,30,.6);color:#e8d8c0;border-radius:5px;cursor:pointer;font-size:12px;font-family:var(--sans)}
@@ -3599,7 +3643,13 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
     <div class="ikai-card">
       <div class="ikai-card-title">出世叶わず…</div>
       <div class="ikai-card-detail" id="ikaiGoDetail"></div>
+      <div class="ikai-newbest" id="ikaiNewBest">新記録！自己最高を更新した</div>
+      <div class="ikai-rank-wrap">
+        <div class="ikai-rank-title">今回の番付(上位5)</div>
+        <table class="ikai-rank-table" id="ikaiRankTable"></table>
+      </div>
       <button class="t-btn gold" id="ikaiRetry">もう一度出仕する</button>
+      <button class="t-btn" id="ikaiGalleryBtn" type="button">殿上人ギャラリー</button>
       <button class="t-btn" id="ikaiToTitle">表紙へ戻る</button>
     </div>
   </div>
@@ -3608,6 +3658,14 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
       <div class="ikai-card-title">位階出世ゲーム</div>
       <div class="ikai-card-text">盤上をドラッグして狙いを定め、離すと童殿上の貴族が降ってくる。同じ位どうしがぶつかると合体して、ひとつ上の位に出世する。積み上がって上の朱線を越えたまま少し経つと出仕終了。目指せ太政大臣！</div>
       <button class="t-btn gold" id="ikaiHelpStart">出仕を始める</button>
+    </div>
+  </div>
+  <div id="ikaiGallery">
+    <div class="ikai-card ikai-gallery-card">
+      <div class="ikai-card-title">殿上人ギャラリー</div>
+      <div class="ikai-gallery-count" id="ikaiGalleryCount"></div>
+      <div class="ikai-gallery-grid" id="ikaiGalleryGrid"></div>
+      <button class="t-btn gold" id="ikaiGalleryClose" type="button">閉じる</button>
     </div>
   </div>
 </div>
@@ -12299,6 +12357,19 @@ const RANK_LADDER=[
   {name:"大臣",kana:"だいじん",r:75,col:"#b8860b",robe:"#8a640a",accent:"#fff0c0"},
   {name:"太政大臣",kana:"だいじょうだいじん",r:88,col:"#d4af37",robe:"#a8842a",accent:"#fff8e0"}
 ];
+/* 殿上人ギャラリー用の一言解説(史実に即した短文、RANK_LADDERとindex対応) */
+const IKAI_RANK_LORE=[
+  "元服前の少年。まだ位階を持たぬ身分。",
+  "地下人(じげにん)の位。昇殿はまだ許されない。",
+  "貴族の仲間入り。昇殿を許される境目の位。",
+  "上流貴族の入口。殿上人として仕える者も多い。",
+  "公卿(くぎょう)の位。「上達部」と呼ばれる最上流。",
+  "太政官の会議に加わる重職。「宰相」とも呼ばれる。",
+  "大納言に次いで国政を議する太政官の要職。",
+  "天皇への奏上を取り次ぐ太政官の重鎮。",
+  "左大臣・右大臣など、太政官を率いる臣下の最高位。",
+  "太政官の最高位。適任者のみに置かれる名誉職。"
+];
 /* 本家スイカゲームの「重く・シビアに積み上がる」手応えに寄せた調整。
    反発を抑えて実際に不安定に積み上がるようにし、危険ラインと猶予も本家並みに厳しくしてある */
 const IKAI_CFG={gravity:2000,wallRest:.16,floorRest:.1,collRest:.05,damping:.994,dangerY:46,overGraceMs:950,dropCdMs:460,W:280,H:400};
@@ -12307,6 +12378,35 @@ function ikaiLoadBest(){try{return parseInt(localStorage.getItem("shinden3d-ikai
 function ikaiSaveBest(v){try{localStorage.setItem("shinden3d-ikai-best",String(v));}catch(e){}}
 function ikaiSeenHelp(){try{return localStorage.getItem("shinden3d-ikai-help")==="1";}catch(e){return false;}}
 function ikaiMarkHelpSeen(){try{localStorage.setItem("shinden3d-ikai-help","1");}catch(e){}}
+/* M1: ローカルスコア履歴(上位5件、日付つき) */
+function ikaiLoadScores(){try{const raw=JSON.parse(localStorage.getItem("shinden3d-ikai-scores")||"[]");return Array.isArray(raw)?raw.filter(e=>e&&typeof e.score==="number"&&typeof e.date==="string"):[];}catch(e){return [];}}
+function ikaiSaveScores(list){try{localStorage.setItem("shinden3d-ikai-scores",JSON.stringify(list));}catch(e){}}
+function ikaiFormatDate(d){const p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())}`;}
+/** 今回のスコアを挿入・降順ソート・上位5件に切り詰めて保存する。{list, entry}を返す(entryは今回のスコアの参照。上位5件から漏れていた場合はlistに含まれない) */
+function ikaiRecordScore(score){
+  const list=ikaiLoadScores();
+  const entry={score,date:ikaiFormatDate(new Date())};
+  list.push(entry);
+  list.sort((a,b)=>b.score-a.score);
+  const top5=list.slice(0,5);
+  ikaiSaveScores(top5);
+  return {list:top5,entry};
+}
+function ikaiScoreRankRows(list,thisEntry){
+  if(!list.length)return `<tr><td colspan="3">まだ記録がない</td></tr>`;
+  return list.map((e,i)=>`<tr class="${e===thisEntry?"is-now":""}"><td>${i+1}位</td><td>${e.score}</td><td>${e.date}</td></tr>`).join("");
+}
+/* M2: これまでに生成した位階(rank index)の集合、および太政大臣「皆伝」到達フラグ */
+function ikaiLoadRanks(){try{const raw=JSON.parse(localStorage.getItem("shinden3d-ikai-ranks")||"[]");return new Set(Array.isArray(raw)?raw.filter(n=>Number.isInteger(n)&&n>=0&&n<RANK_LADDER.length):[]);}catch(e){return new Set();}}
+function ikaiSaveRanks(set){try{localStorage.setItem("shinden3d-ikai-ranks",JSON.stringify([...set]));}catch(e){}}
+let IKAI_RANKS_SEEN=null;
+function ikaiRecordRank(rankIdx){
+  if(rankIdx<0||rankIdx>=RANK_LADDER.length)return;
+  if(!IKAI_RANKS_SEEN)IKAI_RANKS_SEEN=ikaiLoadRanks();
+  if(!IKAI_RANKS_SEEN.has(rankIdx)){IKAI_RANKS_SEEN.add(rankIdx);ikaiSaveRanks(IKAI_RANKS_SEEN);}
+}
+function ikaiDaijodaijinAchieved(){try{return localStorage.getItem("shinden3d-ikai-daijodaijin")==="1";}catch(e){return false;}}
+function ikaiMarkDaijodaijin(){try{localStorage.setItem("shinden3d-ikai-daijodaijin","1");}catch(e){}}
 /* スポーンは下位の位ほど多く出す(本家の「小さい果物が大半、たまに大きめ」という配分を再現) */
 function ikaiRandomSpawnRank(){
   const r=Math.random();
@@ -12323,6 +12423,8 @@ function startIkaiSuika(){
   $("ikaiScore").textContent="0";$("ikaiBest").textContent=String(IKAI.best);
   ikaiUpdateNextIcon();
   $("ikaiGameOver").classList.remove("show");
+  {const nb=$("ikaiNewBest");if(nb)nb.classList.remove("show");}
+  {const gl=$("ikaiGallery");if(gl)gl.classList.remove("show");}
   $("ikaiHelp").classList.toggle("show",!ikaiSeenHelp());
   // 3Dシーンはこの間まったく見えないため、影マップ更新を止めて軽量化する(退治モードと同じ手法)
   renderer.shadowMap.autoUpdate=false;
@@ -12331,6 +12433,7 @@ function startIkaiSuika(){
 function stopIkaiSuika(){
   IKAI=null;
   renderer.shadowMap.autoUpdate=true;renderer.shadowMap.needsUpdate=true;
+  const gl=$("ikaiGallery");if(gl)gl.classList.remove("show"); // モード離脱時にギャラリーが開いたまま残らないようにする
 }
 function ikaiUpdateNextIcon(){
   const el=$("ikaiNextIcon");if(!el||!IKAI)return;
@@ -12349,6 +12452,7 @@ function ikaiDrop(){
   S.dropCd=now+IKAI_CFG.dropCdMs;
   const r=RANK_LADDER[S.current].r;
   S.pieces.push({id:S.nextId++,rank:S.current,x:Math.max(r,Math.min(S.W-r,S.hoverX)),y:34,vx:0,vy:80,spawnAt:now});
+  ikaiRecordRank(S.current);
   S.current=S.next;S.next=ikaiRandomSpawnRank();
   ikaiUpdateNextIcon();
   beep(440,.05,"triangle",.05);
@@ -12413,9 +12517,16 @@ function ikaiStep(dt){
         if(newRank<RANK_LADDER.length){
           S.pieces.push({id:S.nextId++,rank:newRank,x:nx,y:ny,vx:(a.vx+b.vx)*.15,vy:(a.vy+b.vy)*.15-40,spawnAt:performance.now()});
           ikaiSpawnParticles(nx,ny,RANK_LADDER[newRank].col);
+          ikaiRecordRank(newRank);
         }else{
           ikaiSpawnParticles(nx,ny,"#ffe27a");ikaiSpawnParticles(nx,ny,"#fff8e0");
           toast("皆伝出世！太政大臣に上り詰めた",2400);
+          // M2: 太政大臣どうしの合体(皆伝)を初めて成し遂げた時だけ特別演出+永続フラグ
+          if(!ikaiDaijodaijinAchieved()){
+            ikaiMarkDaijodaijin();
+            if(typeof tjfxFelled==="function")tjfxFelled("太政大臣ニ至ル");
+            if(typeof juiceCelebrate==="function")juiceCelebrate();
+          }
         }
         S.score+=ikaiMergeScore(rank);
         beep(300+rank*60,.08,"triangle",.07);
@@ -12524,20 +12635,65 @@ function ikaiLoop(ts){
 }
 function ikaiGameOver(){
   const S=IKAI;if(!S||S.over)return;S.over=true;
-  if(S.score>S.best){S.best=S.score;ikaiSaveBest(S.best);}
+  const isNewBest=S.score>S.best;
+  if(isNewBest){S.best=S.score;ikaiSaveBest(S.best);}
   $("ikaiBest").textContent=String(S.best);
   const topRank=S.pieces.reduce((m,p)=>Math.max(m,p.rank),0);
   const el=$("ikaiGoDetail");
   if(el)el.innerHTML=`最終得点: <b>${S.score}</b><br>最高到達位: <b>${RANK_LADDER[topRank].name}</b><br>自己最高: <b>${S.best}</b>`;
+  // M1: ローカルスコア番付(上位5件、日付つき)を更新して表示
+  const {list:scoreList,entry:scoreEntry}=ikaiRecordScore(S.score);
+  const rankTable=$("ikaiRankTable");
+  if(rankTable)rankTable.innerHTML=`<tr><th>順位</th><th>得点</th><th>日付</th></tr>${ikaiScoreRankRows(scoreList,scoreEntry)}`;
+  const nb=$("ikaiNewBest");
+  if(nb)nb.classList.toggle("show",isNewBest);
   $("ikaiGameOver").classList.add("show");
   seNG();
+  if(isNewBest&&typeof juiceCelebrate==="function")juiceCelebrate(); // 新記録は紙吹雪で祝う
   recordProgress("ikaiSuika",1);gainParam("miyabi",2);
 }
+/* M2: 殿上人ギャラリー(生成済みの位階を一覧表示) */
+function ikaiDrawGalleryIcon(cv,rankIdx){
+  const ctx=cv.getContext("2d");const w=cv.width,h=cv.height;
+  ctx.clearRect(0,0,w,h);
+  const cfg=RANK_LADDER[rankIdx],targetR=Math.min(w,h)*.4,scale=targetR/cfg.r;
+  ctx.save();ctx.translate(w/2,h/2);ctx.scale(scale,scale);
+  ikaiDrawPiece(ctx,{rank:rankIdx,x:0,y:0});
+  ctx.restore();
+}
+function ikaiRenderGallery(){
+  const grid=$("ikaiGalleryGrid");if(!grid)return;
+  IKAI_RANKS_SEEN=ikaiLoadRanks();
+  const daijodaijin=ikaiDaijodaijinAchieved();
+  grid.textContent="";
+  RANK_LADDER.forEach((cfg,i)=>{
+    const got=IKAI_RANKS_SEEN.has(i);
+    const row=document.createElement("div");
+    row.className="ikai-gallery-row"+(got?"":" locked");
+    const iconWrap=document.createElement("div");iconWrap.className="ikai-gallery-icon-wrap";
+    const cv=document.createElement("canvas");cv.width=76;cv.height=76;cv.className="ikai-gallery-icon";
+    iconWrap.appendChild(cv);
+    if(!got){const lock=document.createElement("span");lock.className="ikai-gallery-lock";lock.textContent="🔒";iconWrap.appendChild(lock);}
+    else if(i===RANK_LADDER.length-1&&daijodaijin){const crown=document.createElement("span");crown.className="ikai-gallery-crown";crown.textContent="皆伝";iconWrap.appendChild(crown);}
+    const text=document.createElement("div");text.className="ikai-gallery-text";
+    text.innerHTML=`<div class="ikai-gallery-name">${cfg.name}<span class="ikai-gallery-kana">${cfg.kana}</span></div><div class="ikai-gallery-desc">${IKAI_RANK_LORE[i]||""}</div>`;
+    row.appendChild(iconWrap);row.appendChild(text);
+    grid.appendChild(row);
+    ikaiDrawGalleryIcon(cv,i);
+  });
+  const cnt=$("ikaiGalleryCount");if(cnt)cnt.textContent=`出世済み ${IKAI_RANKS_SEEN.size}/${RANK_LADDER.length}${daijodaijin?"　太政大臣まで皆伝済み":""}`;
+}
+function ikaiOpenGallery(){ikaiRenderGallery();const g=$("ikaiGallery");if(g)g.classList.add("show");}
+function ikaiCloseGallery(){const g=$("ikaiGallery");if(g)g.classList.remove("show");}
 $("btnIkaiSuika").onclick=()=>{beep(600,.08);initAudio();hideSubPanel("miniGameSubPanel");enterMode("ikaiSuika");};
 $("ikaiQuit").onclick=()=>{beep(400,.06);enterMode("walk");};
 $("ikaiRetry").onclick=()=>{beep(600,.07);startIkaiSuika();};
 $("ikaiToTitle").onclick=()=>{beep(400,.06);location.reload();};
 $("ikaiHelpStart").onclick=()=>{$("ikaiHelp").classList.remove("show");ikaiMarkHelpSeen();beep(520,.06);};
+$("ikaiGalleryBtn").onclick=()=>{beep(560,.07);ikaiOpenGallery();};
+$("ikaiGalleryClose").onclick=()=>{beep(400,.05);ikaiCloseGallery();};
+$("ikaiGallery").addEventListener("click",e=>{if(e.target===$("ikaiGallery"))ikaiCloseGallery();});
+addEventListener("keydown",e=>{if(e.key==="Escape"){const g=$("ikaiGallery");if(g&&g.classList.contains("show"))ikaiCloseGallery();}});
 /* ============================================================
    物の怪退治モード
 ============================================================ */

@@ -442,14 +442,58 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
   font-size:8px;font-weight:700;text-align:center;line-height:1.1;color:#fff6df;
   text-shadow:-1px -1px 0 rgba(0,0,0,.85),1px -1px 0 rgba(0,0,0,.85),-1px 1px 0 rgba(0,0,0,.85),1px 1px 0 rgba(0,0,0,.85);
   border:1px solid rgba(0,0,0,.35);box-shadow:inset 0 1px 3px rgba(255,255,255,.3)}
-#ikaiGameOver,#ikaiHelp{position:absolute;inset:0;z-index:2;display:none;align-items:center;justify-content:center;background:rgba(4,2,1,.7)}
-#ikaiGameOver.show,#ikaiHelp.show{display:flex}
-.ikai-card{width:min(300px,88%);text-align:center;padding:18px 16px;border:1px solid rgba(201,162,63,.6);border-radius:10px;
+#ikaiGameOver,#ikaiHelp,#ikaiGallery{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(4,2,1,.7)}
+#ikaiGameOver,#ikaiHelp{z-index:2}
+#ikaiGallery{z-index:4;background:rgba(4,2,1,.84)}
+#ikaiGameOver.show,#ikaiHelp.show,#ikaiGallery.show{display:flex}
+.ikai-card{width:min(300px,88%);max-height:min(640px,90vh);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  text-align:center;padding:18px 16px;border:1px solid rgba(201,162,63,.6);border-radius:10px;
   background:linear-gradient(180deg,rgba(30,20,12,.97),rgba(15,10,6,.98));box-shadow:0 16px 40px rgba(0,0,0,.5)}
 .ikai-card-title{font-family:var(--serif,serif);font-size:18px;font-weight:900;color:#f0dfa8;letter-spacing:.1em;margin-bottom:10px;text-shadow:0 2px 8px #000}
 .ikai-card-detail{font-size:12.5px;line-height:1.9;color:#e9dcc2;margin-bottom:14px}
 .ikai-card-text{font-size:12px;line-height:1.85;color:#d8c6a0;margin-bottom:14px;text-align:left}
-.ikai-card .t-btn{width:100%;margin-top:6px;min-height:42px}
+.ikai-card .t-btn{width:100%;margin-top:6px;min-height:42px;flex:none}
+/* 位階出世ゲーム: 今回のスコアが自己ベストを更新した時の強調表示 */
+.ikai-newbest{display:none;margin:0 0 12px;padding:7px 10px;border-radius:8px;border:1px solid rgba(228,199,106,.85);
+  background:linear-gradient(90deg,rgba(212,175,55,.24),rgba(212,175,55,.08));color:#ffe9ad;font-weight:900;
+  letter-spacing:.16em;font-size:13px;text-align:center;text-shadow:0 2px 6px #000}
+.ikai-newbest.show{display:block;animation:ikaiNewBestPop .5s cubic-bezier(.2,.9,.25,1)}
+@keyframes ikaiNewBestPop{0%{transform:scale(.82);opacity:0}60%{transform:scale(1.07);opacity:1}100%{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.ikai-newbest.show{animation:none}}
+/* 位階出世ゲーム: ローカルスコア番付(上位5件) */
+.ikai-rank-wrap{margin-bottom:12px;text-align:left}
+.ikai-rank-title{font-size:11px;letter-spacing:.14em;color:#d8c6a0;opacity:.85;margin-bottom:5px}
+.ikai-rank-table{width:100%;border-collapse:collapse;font-size:11.5px;color:#e9dcc2}
+.ikai-rank-table th{font-weight:700;color:#c9b183;font-size:9.5px;letter-spacing:.08em;text-align:left;padding:2px 4px;border-bottom:1px solid rgba(201,162,63,.35)}
+.ikai-rank-table td{padding:3px 4px;border-bottom:1px solid rgba(201,162,63,.16)}
+.ikai-rank-table td:first-child{width:2.6em;color:#c9b183}
+.ikai-rank-table td:nth-child(2){font-weight:900;color:#ffd9a0}
+.ikai-rank-table td:last-child{color:#b7a685;font-size:10.5px;text-align:right}
+.ikai-rank-table tr.is-now td{color:#fff2c8;background:rgba(212,175,55,.16)}
+/* 殿上人ギャラリー(これまでに生成した位階の図鑑) */
+.ikai-gallery-card{width:min(360px,92vw);max-height:min(600px,88vh);display:flex;flex-direction:column;
+  padding:16px 14px 14px;overflow:hidden;text-align:center}
+.ikai-gallery-card>*{flex:none}
+.ikai-gallery-count{font-size:11px;color:#d8c6a0;letter-spacing:.08em;margin:-4px 0 10px}
+.ikai-gallery-grid{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;gap:7px;margin:0 -2px 12px;padding:0 2px}
+.ikai-gallery-row{display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid rgba(201,162,63,.28);
+  border-radius:8px;background:rgba(255,255,255,.03);text-align:left}
+.ikai-gallery-row.locked{background:rgba(0,0,0,.18);border-color:rgba(201,162,63,.14)}
+.ikai-gallery-icon-wrap{position:relative;width:38px;height:38px;flex:none}
+.ikai-gallery-icon{width:38px;height:38px;display:block}
+.ikai-gallery-row.locked .ikai-gallery-icon{filter:grayscale(1) brightness(.5);opacity:.55}
+.ikai-gallery-lock{position:absolute;right:-4px;bottom:-4px;font-size:12px;filter:drop-shadow(0 1px 2px #000)}
+.ikai-gallery-crown{position:absolute;left:50%;top:-10px;transform:translateX(-50%);font-size:8px;font-weight:900;
+  letter-spacing:.04em;color:#3a2a08;background:linear-gradient(180deg,#ffe9ad,#d4af37);padding:1px 4px;border-radius:6px;
+  white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.ikai-gallery-text{min-width:0;flex:1}
+.ikai-gallery-name{font-family:var(--serif,serif);font-size:13.5px;font-weight:900;color:#f0dfa8;
+  display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.ikai-gallery-row.locked .ikai-gallery-name{color:#8a7c5e}
+.ikai-gallery-kana{font-family:var(--sans);font-size:9.5px;font-weight:400;color:#b7a685}
+.ikai-gallery-desc{font-size:10.5px;line-height:1.5;color:#cdbd9c;margin-top:2px}
+.ikai-gallery-row.locked .ikai-gallery-desc{color:#7a6f57}
 /* 季節選択(退治) */
 #taijiSeason{display:none;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 #taijiSeason .ss-btn{padding:8px 12px;border:1px solid rgba(170,100,60,.7);background:rgba(40,20,30,.6);color:#e8d8c0;border-radius:5px;cursor:pointer;font-size:12px;font-family:var(--sans)}
