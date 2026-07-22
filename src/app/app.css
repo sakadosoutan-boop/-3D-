@@ -558,6 +558,52 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
   .kai-stat b{font-size:12.5px}
   .kai-title{font-size:13px}
 }
+/* 波8: 蹴鞠(タイミングゲーム) — 3D世界を完全に覆う独立オーバーレイ。kaiHud/ikaiHudの構造・軽量化手法を踏襲。背景は不透明 */
+#kemariHud{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+  background:radial-gradient(circle at 50% 26%,#233b1e 0%,#0c140a 62%,#030401 100%);font-family:var(--sans);overflow-y:auto}
+#kemariHud.show{display:flex}
+.kmr-top{width:min(460px,94vw);display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex:none}
+#kemariQuit{width:34px;height:34px;border-radius:50%;border:1px solid rgba(201,162,63,.5);background:rgba(20,14,8,.7);color:#e9dcc2;font-size:14px;cursor:pointer}
+.kmr-title{font-family:var(--serif,serif);font-size:15px;font-weight:900;letter-spacing:.14em;color:#f0e2c0;text-shadow:0 2px 8px #000}
+.kmr-stats{display:flex;gap:8px}
+.kmr-stat{padding:4px 10px;border-radius:8px;border:1px solid rgba(199,107,60,.4);background:rgba(24,16,9,.7);font-size:11px;color:#e0cdb0;text-align:center}
+.kmr-stat span{display:block;font-size:8.5px;letter-spacing:.1em;opacity:.75}
+.kmr-stat b{font-size:14px;color:#ffb877}
+.kmr-judge{min-height:26px;margin:2px 0 4px;font-family:var(--serif,serif);font-size:16px;font-weight:900;
+  letter-spacing:.1em;color:#ffe9ad;text-shadow:0 2px 8px #000;opacity:0;transform:translateY(4px);
+  transition:opacity .18s ease,transform .18s ease;flex:none}
+.kmr-judge.show{opacity:1;transform:translateY(0)}
+.kmr-judge.miss{color:#ff9a8a}
+.kmr-judge.perfect{color:#ffe9ad}
+.kmr-judge.good{color:#bfe6c8}
+@media (prefers-reduced-motion:reduce){.kmr-judge{transition:none}}
+.kmr-board{position:relative;width:min(300px,80vw);aspect-ratio:280/420;margin-top:2px;touch-action:none}
+#kemariCanvas{width:100%;height:100%;border-radius:10px;border:1px solid rgba(199,107,60,.5);box-shadow:0 14px 40px rgba(0,0,0,.5);display:block}
+#kemariGameOver,#kemariHelp{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,4,2,.72);z-index:2}
+#kemariGameOver.show,#kemariHelp.show{display:flex}
+.kmr-card{width:min(300px,88%);max-height:min(640px,90vh);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  text-align:center;padding:18px 16px;border:1px solid rgba(199,107,60,.55);border-radius:10px;
+  background:linear-gradient(180deg,rgba(28,22,12,.97),rgba(14,11,6,.98));box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.kmr-card-title{font-family:var(--serif,serif);font-size:18px;font-weight:900;color:#f0e2c0;letter-spacing:.1em;margin-bottom:10px;text-shadow:0 2px 8px #000}
+.kmr-card-detail{font-size:12.5px;line-height:1.9;color:#e9dcc2;margin-bottom:14px}
+.kmr-card-text{font-size:12px;line-height:1.85;color:#cdbd9c;margin-bottom:14px;text-align:left}
+.kmr-card .t-btn{width:100%;margin-top:6px;min-height:42px;flex:none}
+.kmr-newbest{display:none;margin:0 0 12px;padding:7px 10px;border-radius:8px;border:1px solid rgba(228,199,106,.85);
+  background:linear-gradient(90deg,rgba(212,175,55,.24),rgba(212,175,55,.08));color:#ffe9ad;font-weight:900;
+  letter-spacing:.14em;font-size:13px;text-align:center;text-shadow:0 2px 6px #000}
+.kmr-newbest.show{display:block;animation:ikaiNewBestPop .5s cubic-bezier(.2,.9,.25,1)}
+@media (prefers-reduced-motion:reduce){.kmr-newbest.show{animation:none}}
+@media (max-width:480px){
+  .kmr-stat{padding:3px 7px;font-size:9.5px}
+  .kmr-stat b{font-size:12.5px}
+  .kmr-title{font-size:13px}
+  .kmr-judge{font-size:14px}
+}
+@media (orientation:landscape) and (max-height:520px){
+  .kmr-board{width:min(220px,52vh)}
+  .kmr-top{margin-bottom:3px}
+}
 /* 季節選択(退治) */
 #taijiSeason{display:none;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 #taijiSeason .ss-btn{padding:8px 12px;border:1px solid rgba(170,100,60,.7);background:rgba(40,20,30,.6);color:#e8d8c0;border-radius:5px;cursor:pointer;font-size:12px;font-family:var(--sans)}

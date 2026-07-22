@@ -1611,6 +1611,52 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
   .kai-stat b{font-size:12.5px}
   .kai-title{font-size:13px}
 }
+/* 波8: 蹴鞠(タイミングゲーム) — 3D世界を完全に覆う独立オーバーレイ。kaiHud/ikaiHudの構造・軽量化手法を踏襲。背景は不透明 */
+#kemariHud{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+  background:radial-gradient(circle at 50% 26%,#233b1e 0%,#0c140a 62%,#030401 100%);font-family:var(--sans);overflow-y:auto}
+#kemariHud.show{display:flex}
+.kmr-top{width:min(460px,94vw);display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex:none}
+#kemariQuit{width:34px;height:34px;border-radius:50%;border:1px solid rgba(201,162,63,.5);background:rgba(20,14,8,.7);color:#e9dcc2;font-size:14px;cursor:pointer}
+.kmr-title{font-family:var(--serif,serif);font-size:15px;font-weight:900;letter-spacing:.14em;color:#f0e2c0;text-shadow:0 2px 8px #000}
+.kmr-stats{display:flex;gap:8px}
+.kmr-stat{padding:4px 10px;border-radius:8px;border:1px solid rgba(199,107,60,.4);background:rgba(24,16,9,.7);font-size:11px;color:#e0cdb0;text-align:center}
+.kmr-stat span{display:block;font-size:8.5px;letter-spacing:.1em;opacity:.75}
+.kmr-stat b{font-size:14px;color:#ffb877}
+.kmr-judge{min-height:26px;margin:2px 0 4px;font-family:var(--serif,serif);font-size:16px;font-weight:900;
+  letter-spacing:.1em;color:#ffe9ad;text-shadow:0 2px 8px #000;opacity:0;transform:translateY(4px);
+  transition:opacity .18s ease,transform .18s ease;flex:none}
+.kmr-judge.show{opacity:1;transform:translateY(0)}
+.kmr-judge.miss{color:#ff9a8a}
+.kmr-judge.perfect{color:#ffe9ad}
+.kmr-judge.good{color:#bfe6c8}
+@media (prefers-reduced-motion:reduce){.kmr-judge{transition:none}}
+.kmr-board{position:relative;width:min(300px,80vw);aspect-ratio:280/420;margin-top:2px;touch-action:none}
+#kemariCanvas{width:100%;height:100%;border-radius:10px;border:1px solid rgba(199,107,60,.5);box-shadow:0 14px 40px rgba(0,0,0,.5);display:block}
+#kemariGameOver,#kemariHelp{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,4,2,.72);z-index:2}
+#kemariGameOver.show,#kemariHelp.show{display:flex}
+.kmr-card{width:min(300px,88%);max-height:min(640px,90vh);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  text-align:center;padding:18px 16px;border:1px solid rgba(199,107,60,.55);border-radius:10px;
+  background:linear-gradient(180deg,rgba(28,22,12,.97),rgba(14,11,6,.98));box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.kmr-card-title{font-family:var(--serif,serif);font-size:18px;font-weight:900;color:#f0e2c0;letter-spacing:.1em;margin-bottom:10px;text-shadow:0 2px 8px #000}
+.kmr-card-detail{font-size:12.5px;line-height:1.9;color:#e9dcc2;margin-bottom:14px}
+.kmr-card-text{font-size:12px;line-height:1.85;color:#cdbd9c;margin-bottom:14px;text-align:left}
+.kmr-card .t-btn{width:100%;margin-top:6px;min-height:42px;flex:none}
+.kmr-newbest{display:none;margin:0 0 12px;padding:7px 10px;border-radius:8px;border:1px solid rgba(228,199,106,.85);
+  background:linear-gradient(90deg,rgba(212,175,55,.24),rgba(212,175,55,.08));color:#ffe9ad;font-weight:900;
+  letter-spacing:.14em;font-size:13px;text-align:center;text-shadow:0 2px 6px #000}
+.kmr-newbest.show{display:block;animation:ikaiNewBestPop .5s cubic-bezier(.2,.9,.25,1)}
+@media (prefers-reduced-motion:reduce){.kmr-newbest.show{animation:none}}
+@media (max-width:480px){
+  .kmr-stat{padding:3px 7px;font-size:9.5px}
+  .kmr-stat b{font-size:12.5px}
+  .kmr-title{font-size:13px}
+  .kmr-judge{font-size:14px}
+}
+@media (orientation:landscape) and (max-height:520px){
+  .kmr-board{width:min(220px,52vh)}
+  .kmr-top{margin-bottom:3px}
+}
 /* 季節選択(退治) */
 #taijiSeason{display:none;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 #taijiSeason .ss-btn{padding:8px 12px;border:1px solid rgba(170,100,60,.7);background:rgba(40,20,30,.6);color:#e8d8c0;border-radius:5px;cursor:pointer;font-size:12px;font-family:var(--sans)}
@@ -3543,6 +3589,7 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
         <button class="t-btn gold" id="btnKaimami"><span class="mode-meta">潜入 / 物語</span><span class="mode-name">🌙 垣間見ミッション</span><small>女房と侍従の目を避けて忍ぶ</small></button>
         <button class="t-btn" id="btnIkaiSuika" style="border-color:rgba(212,175,55,.75)"><span class="mode-meta">合体 / 出世</span><span class="mode-name">🏯 位階出世ゲーム</span><small>同じ位の貴族を重ねて出世させよう</small></button>
         <button class="t-btn" id="btnKaiawase" style="border-color:rgba(120,190,170,.75)"><span class="mode-meta">記憶 / 教養</span><span class="mode-name">🐚 貝合わせ</span><small>対の絵柄をそろえて平安の雅を学ぶ</small></button>
+        <button class="t-btn" id="btnKemari" style="border-color:rgba(199,107,60,.75)"><span class="mode-meta">リズム / 反射</span><span class="mode-name">⚽ 蹴鞠</span><small>鞠を落とさぬよう調子よく蹴り続けよう</small></button>
       </div>
       <button class="t-back-btn" id="miniGameBack">← 戻る</button>
     </div>
@@ -4059,6 +4106,39 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
       <div class="kai-card-panel-title">貝合わせ</div>
       <div class="kai-card-panel-text">平安の姫君たちが興じた「貝合わせ」は、蛤(はまぐり)の貝殻の内側に絵や歌を描き、対になる片方を探し当てて遊ぶ雅な遊戯。蛤の殻は元の対でなければぴったり合わないことから、夫婦和合の象徴ともされた。ここでは伏せた貝を2枚めくり、同じ絵柄が出れば対がそろって取れる神経衰弱として再現する。全ての対をそろえればクリア。手数と時間が少ないほど上出来。</div>
       <button class="t-btn gold" id="kaiHelpStart">はじめる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 波8: 蹴鞠(タイミングゲーム) -->
+<div id="kemariHud">
+  <div class="kmr-top">
+    <button id="kemariQuit" title="やめて散策へ戻る">✕</button>
+    <div class="kmr-title">蹴鞠</div>
+    <div class="kmr-stats">
+      <div class="kmr-stat"><span>続け鞠</span><b id="kmrRally">0</b></div>
+      <div class="kmr-stat"><span>得点</span><b id="kmrScore">0</b></div>
+      <div class="kmr-stat"><span>最長</span><b id="kmrBest">0</b></div>
+    </div>
+  </div>
+  <div id="kmrJudge" class="kmr-judge"></div>
+  <div class="kmr-board">
+    <canvas id="kemariCanvas"></canvas>
+  </div>
+  <div id="kemariGameOver">
+    <div class="kmr-card">
+      <div class="kmr-card-title">鞠を落としてしまった…</div>
+      <div class="kmr-card-detail" id="kmrGoDetail"></div>
+      <div class="kmr-newbest" id="kmrNewBest">新記録！自己最高を更新した</div>
+      <button class="t-btn gold" id="kmrRetry">もう一度蹴る</button>
+      <button class="t-btn" id="kmrToTitle">表紙へ戻る</button>
+    </div>
+  </div>
+  <div id="kemariHelp">
+    <div class="kmr-card">
+      <div class="kmr-card-title">蹴鞠</div>
+      <div class="kmr-card-text">平安貴族に愛された遊び「蹴鞠(けまり)」。鹿革でこしらえた鞠を、地面に落とさぬよう仲間内で蹴り上げ合う。鞠庭(まりにわ)の四隅には「懸(かかり)」と呼ばれる松・桜・柳・楓の木が植えられ、蹴鞠の目印とされた。鞠が弧を描いて足もとの間合いに来た瞬間にタップ/クリックして蹴り返そう。ぴったりの間合いなら「見事」、少しずれても「良し」。外すと空を蹴って鞠を落としてしまう。続けざまに決めるほど「続け鞠」が伸び、調子(テンポ)も上がっていく。</div>
+      <button class="t-btn gold" id="kmrHelpStart">はじめる</button>
     </div>
   </div>
 </div>
@@ -9311,7 +9391,7 @@ const SFX = {
       return;
     }
     // タイトル画面中、および位階出世ゲーム(3D世界を隠すCanvas2D専用モード)中は環境音を停止
-    if(typeof APP !== "undefined" && (APP.mode === "title" || APP.mode === "ikaiSuika" || APP.mode === "kaiawase")){
+    if(typeof APP !== "undefined" && (APP.mode === "title" || APP.mode === "ikaiSuika" || APP.mode === "kaiawase" || APP.mode === "kemari")){
       if(this._bedMedia){try{this._bedMedia.pause();this._bedMedia.currentTime=0;}catch(e){}}
       this._bedMedia=null;this._curBed=null;this._curScene=null;return;
     }
@@ -9574,7 +9654,7 @@ class AmbientAudio {
     if (!this.ctx || !this.playing) return;
     const t = this.ctx.currentTime;
     // タイトル画面・位階出世ゲーム中は環境音(合成のせせらぎ/風)を一切鳴らさない(テーマのみ)
-    const title = (typeof APP !== "undefined" && (APP.mode === "title" || APP.mode === "ikaiSuika" || APP.mode === "kaiawase"));
+    const title = (typeof APP !== "undefined" && (APP.mode === "title" || APP.mode === "ikaiSuika" || APP.mode === "kaiawase" || APP.mode === "kemari"));
     const quietSaigen = (typeof APP !== "undefined" && APP.mode === "saigen" && APP.saigen && APP.saigen.scene && APP.saigen.scene.cricket);
     const paused = (typeof SFX !== "undefined" && !!SFX._backgroundPaused);
     const haveWater = !!(typeof SFX !== "undefined" && SFX.media && SFX.media[SFX.beds.water]);
@@ -9685,6 +9765,7 @@ class AmbientAudio {
       if (typeof APP !== "undefined" && APP.mode === "taiji") return;  // 波AN: ボス戦(河童・大鬼等)中は鳥・虫の環境音を止める(戦闘BGMに集中/河童戦の虫鳴り対策)
       if (typeof APP !== "undefined" && APP.mode === "ikaiSuika") return;  // 位階出世ゲーム(3D世界を隠すCanvas2D専用モード)中は鳥・虫の環境音を止める
       if (typeof APP !== "undefined" && APP.mode === "kaiawase") return;  // 波7: 貝合わせ(3D世界を隠す独立オーバーレイ)中も同様に鳥・虫の環境音を止める
+      if (typeof APP !== "undefined" && APP.mode === "kemari") return;  // 波8: 蹴鞠(3D世界を隠す独立オーバーレイ)中も同様に鳥・虫の環境音を止める
       if (typeof APP !== "undefined" && APP.storyIndoor) return;  // 波AA: 物語モードの屋内(教室・病室)では外の鳥・虫を鳴かせない
       if (typeof SFX !== "undefined" && SFX._backgroundPaused) return;  // 再現専用音などで背景音を止めている間は通常の鳥虫を鳴らさない
       // 音風景表に基づき、最小間隔つきで鳴き声を再生(重なり防止)
@@ -10939,6 +11020,7 @@ const HISTORY_PROGRESS_LABEL={
   quest:{icon:"👘",label:"貴族の一日体験を達成した"},
   ikaiSuika:{icon:"🏯",label:"位階出世ゲームを終えた"},
   kaiawase:{icon:"🐚",label:"貝合わせで全ての対をそろえた"},
+  kemari:{icon:"⚽",label:"蹴鞠で鞠を蹴り続けた"},
   taiji:{icon:"⚡",label:"物の怪退治をクリアした"},
   kaimami:{icon:"🌙",label:"垣間見ミッションに成功した"},
   utakai:{icon:"🎴",label:"歌合を終えた"},
@@ -12526,7 +12608,7 @@ function enterMode(m){
   if(m!=="renaiShort"&&m!=="renaiSim"&&typeof renaiHideTargetPicker==="function")renaiHideTargetPicker(); // 恋愛モード以外へ遷移時はピッカーを閉じる
   $("title").classList.add("hide");
   $("topbar").style.display="flex";
-  const worldBar=$("worldStatusBar");if(worldBar)worldBar.style.display=(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"||m==="story"||m==="ikaiSuika"||m==="kaiawase")?"none":"flex";
+  const worldBar=$("worldStatusBar");if(worldBar)worldBar.style.display=(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"||m==="story"||m==="ikaiSuika"||m==="kaiawase"||m==="kemari")?"none":"flex";
   requestAnimationFrame(syncTopbarH); // topbar高さをCSS変数に同期
   $("quizHud").style.display=m==="quiz"?"block":"none";
   $("questHud").style.display=(m==="quest"||m==="kaimami")?"block":"none";
@@ -12540,6 +12622,8 @@ function enterMode(m){
   if(m!=="ikaiSuika"&&typeof stopIkaiSuika==="function")stopIkaiSuika();
   {const khud=$("kaiHud");if(khud)khud.classList.toggle("show",m==="kaiawase");} // 波7: 貝合わせ
   if(m!=="kaiawase"&&typeof stopKaiawase==="function")stopKaiawase();
+  {const kmhud=$("kemariHud");if(kmhud)kmhud.classList.toggle("show",m==="kemari");} // 波8: 蹴鞠
+  if(m!=="kemari"&&typeof stopKemari==="function")stopKemari();
   if(window.UTAKAI_STAGE)window.UTAKAI_STAGE.visible=(m==="utakai");
   if(window.SAIGEN_STAGE)window.SAIGEN_STAGE.visible=(m==="saigen");
   if(typeof updateGisshaYardVisibility==="function")updateGisshaYardVisibility(m);
@@ -12590,13 +12674,13 @@ function enterMode(m){
   $("dangerVignette").style.opacity=0;
   closeInfo();closeCodex();
   $("modeTag").textContent=m==="quest"?(APP.questRole==="female"?"女性貴族の一日":"男性貴族の一日"):
-    {walk:"自由散策",quiz:APP.quizTA?"タイムアタック":"名称当てクイズ",kaimami:"垣間見",taiji:"物の怪退治",utakai:"歌合モード",saigen:"再現モード",renaiShort:"恋文ショート体験",renaiSim:"恋愛シミュレーション",story:"物語(試験中)",ikaiSuika:"位階出世ゲーム",kaiawase:"貝合わせ"}[m]||m;
+    {walk:"自由散策",quiz:APP.quizTA?"タイムアタック":"名称当てクイズ",kaimami:"垣間見",taiji:"物の怪退治",utakai:"歌合モード",saigen:"再現モード",renaiShort:"恋文ショート体験",renaiSim:"恋愛シミュレーション",story:"物語(試験中)",ikaiSuika:"位階出世ゲーム",kaiawase:"貝合わせ",kemari:"蹴鞠"}[m]||m;
   if(typeof renaiUiUpdateTools==="function")renaiUiUpdateTools();
   // モード別ボタン表示制御(全モード統一)
   {const cond=["tbHome","tbTime","tbSeason","tbCodex","tbMap"];
    cond.forEach(id=>{const e=$(id);if(e)e.style.display="";});}
   // 戦闘・歌合・再現・恋愛は専用HUDを使うため、世界状態バーは閉じる
-  if(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"||m==="ikaiSuika"||m==="kaiawase"){const wb=$("worldStatusBar");if(wb)wb.style.display="none";}
+  if(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"||m==="ikaiSuika"||m==="kaiawase"||m==="kemari"){const wb=$("worldStatusBar");if(wb)wb.style.display="none";}
   updateControlUI();
   if(m==="quiz"){const pk=$("quizDiffPicker");pk.style.display="flex";}
   if(m==="quest")startQuest();
@@ -12607,6 +12691,7 @@ function enterMode(m){
   if(m==="story"&&typeof startStory==="function")startStory(); // 波M: 隠しゲート(?story=1)からのみ到達
   if(m==="ikaiSuika")startIkaiSuika();
   if(m==="kaiawase"&&typeof startKaiawase==="function")startKaiawase();
+  if(m==="kemari"&&typeof startKemari==="function")startKemari();
   if(m==="renaiShort")renaiShowTargetPicker("short");
   if(m==="renaiSim")renaiShowTargetPicker("sim");
   if((m==="renaiShort"||m==="renaiSim")&&typeof RENAI_BGM!=="undefined")RENAI_BGM.start(APP.season); // 優美な和風BGMを流す
@@ -12628,7 +12713,7 @@ function updateControlUI(){
   const fp=APP.view==="fp"&&APP.mode!=="title";
   const renaiShortApproach=APP.mode==="renaiShort"&&APP.renai&&APP.renai.phase==="approach"; // 恋文ショート冒頭の3D導入(女房に歩み寄る場面)だけは移動UIを出す
   const renaiSimHub=APP.mode==="renaiSim"&&APP.renai&&APP.renai.phase==="hub"; // 恋の母屋3Dハブ(育成SIM本編)も移動UIを出す
-  const uta=APP.mode==="utakai"||APP.mode==="saigen"||APP.mode==="ikaiSuika"||APP.mode==="kaiawase"||(APP.mode==="renaiShort"&&!renaiShortApproach)||(APP.mode==="renaiSim"&&!renaiSimHub); // 歌合・再現・位階出世ゲーム・貝合わせ・恋愛(HUD本編)は移動UI・調べる・照準は不要
+  const uta=APP.mode==="utakai"||APP.mode==="saigen"||APP.mode==="ikaiSuika"||APP.mode==="kaiawase"||APP.mode==="kemari"||(APP.mode==="renaiShort"&&!renaiShortApproach)||(APP.mode==="renaiSim"&&!renaiSimHub); // 歌合・再現・位階出世ゲーム・貝合わせ・蹴鞠・恋愛(HUD本編)は移動UI・調べる・照準は不要
   $("joy").style.display=(fp&&IS_TOUCH&&!joy.dynamic&&!uta)?"block":"none"; // どこでも方式は触れた時だけ出す
   $("interactBtn").style.display=(fp&&IS_TOUCH&&!uta)?"block":"none";
   $("crosshair").style.display=(fp&&!uta)?"block":"none";
@@ -14089,6 +14174,188 @@ $("kaiDiffNormal").onclick=()=>kaiChooseDifficulty("normal");
 $("kaiDiffHard").onclick=()=>kaiChooseDifficulty("hard");
 $("kaiRetry").onclick=()=>{beep(600,.07);const d=(KAI&&KAI.diff)||"normal";const go=$("kaiGameOver");if(go)go.classList.remove("show");kaiChooseDifficulty(d);};
 $("kaiToTitle").onclick=()=>{beep(400,.06);location.reload();};
+/* ============================================================
+   波8: 蹴鞠(けまり) — タイミング(リズム)ゲーム
+   平安貴族の遊び「蹴鞠」を、鞠が弧を描いて足もとへ落ちてくる瞬間にタップ/クリックで
+   蹴り返すリズムゲームとして再現する。Three.jsシーンとは独立したCanvas2Dの独自演出
+   (ikaiSuika/kaiawaseと同じ、3D世界を完全に覆う軽量オーバーレイ)。
+============================================================ */
+const KEMARI_CFG={
+  W:280,H:420,          // 盤面(ikaiSuikaと同寸のCanvas座標系)
+  baseT:1300,           // 最初の間合い(鞠が上がって足もとへ戻るまでの周期・ms)
+  minT:640,             // どれだけ調子が上がっても、これより短くはしない(乱打化の防止)
+  tStep:16,             // 続け鞠1回ごとにbaseTから縮める量(ms)
+  perfectHalf:85,       // 「見事」判定の許容(理想タイミングの前後、ms)
+  goodHalf:170,         // 「良し」判定の許容(同上)。これを超えたタップ/放置は空蹴り
+  peakBase:150,         // 鞠が上がる高さ(px、通常)
+  peakBonus:45          // 「見事」で蹴った直後は、次の弧をこの分だけ高く見せる
+};
+const KEMARI_KAKEGOE=["アリ","ヤア","オウ"]; // 蹴鞠の伝統の掛け声
+/* 鞠庭の四隅の「懸(かかり)」— 松・桜・柳・楓。ヘルプの小ネタ用に演出でも隅へ描く */
+const KEMARI_KAKARI=[{e:"🌲",n:"松"},{e:"🌸",n:"桜"},{e:"🍃",n:"柳"},{e:"🍁",n:"楓"}];
+let KMR=null,kmrLoopActive=false,_kmrLastTs=0;
+function kmrLoadBest(){try{const o=JSON.parse(localStorage.getItem("shinden3d-kemari-best")||"{}");return{rally:Number(o.rally)||0,score:Number(o.score)||0};}catch(e){return{rally:0,score:0};}}
+function kmrSaveBest(o){try{localStorage.setItem("shinden3d-kemari-best",JSON.stringify(o));}catch(e){}}
+function kmrSeenHelp(){try{return localStorage.getItem("shinden3d-kemari-help")==="1";}catch(e){return false;}}
+function kmrMarkHelpSeen(){try{localStorage.setItem("shinden3d-kemari-help","1");}catch(e){}}
+function kmrShowJudge(text,kind){
+  const el=$("kmrJudge");if(!el)return;
+  el.textContent=text;
+  el.className="kmr-judge show "+(kind||"");
+  if(KMR)KMR._judgeTimer=setTimeout(()=>{el.classList.remove("show");},kind==="miss"?1400:820);
+}
+function startKemari(){
+  KMR=null;
+  if(KMR&&KMR._judgeTimer)clearTimeout(KMR._judgeTimer);
+  const go=$("kemariGameOver");if(go)go.classList.remove("show");
+  const nb=$("kmrNewBest");if(nb)nb.classList.remove("show");
+  const jd=$("kmrJudge");if(jd){jd.textContent="";jd.className="kmr-judge";}
+  const best=kmrLoadBest();
+  KMR={rally:0,score:0,over:false,phase:"idle",kickTime:0,T:KEMARI_CFG.baseT,peak:KEMARI_CFG.peakBase,best,_judgeTimer:null};
+  $("kmrRally").textContent="0";$("kmrScore").textContent="0";
+  $("kmrBest").textContent=String(best.rally||0);
+  const help=$("kemariHelp");const seen=kmrSeenHelp();
+  if(help)help.classList.toggle("show",!seen);
+  // 3Dシーンはこの間まったく見えないため、影マップ更新を止めて軽量化する(位階出世ゲーム/貝合わせと同じ手法)
+  renderer.shadowMap.autoUpdate=false;
+  if(!kmrLoopActive){kmrLoopActive=true;_kmrLastTs=0;requestAnimationFrame(kemariLoop);}
+  if(seen)kemariBeginFlight(300);
+}
+function stopKemari(){
+  if(KMR&&KMR._judgeTimer)clearTimeout(KMR._judgeTimer);
+  KMR=null;
+  renderer.shadowMap.autoUpdate=true;renderer.shadowMap.needsUpdate=true;
+}
+function kemariBeginFlight(delay){
+  const S=KMR;if(!S)return;
+  S.phase="wait";
+  setTimeout(()=>{
+    if(!KMR||KMR.over)return;
+    KMR.phase="flight";KMR.kickTime=performance.now();
+  },delay||0);
+}
+/** タップ/クリック/スペースキーによる「蹴る」入力。理想の着地時刻(kickTime+T)との差でPerfect/Good/Missを判定する */
+function kemariAttemptKick(){
+  const S=KMR;if(!S||S.over||S.phase!=="flight")return;
+  const elapsed=performance.now()-S.kickTime;
+  const diff=Math.abs(elapsed-S.T);
+  if(diff<=KEMARI_CFG.perfectHalf)kemariJudge("perfect");
+  else if(diff<=KEMARI_CFG.goodHalf)kemariJudge("good");
+  else kemariJudge("miss");
+}
+function kemariJudge(kind){
+  const S=KMR;if(!S||S.over)return;
+  if(kind==="miss"){
+    S.over=true;S.phase="over";
+    seNG();
+    kmrShowJudge("空蹴り…","miss");
+    kemariGameOver();
+    return;
+  }
+  S.rally++;
+  const bonus=kind==="perfect"?(150+S.rally*3):(70+S.rally*2);
+  S.score+=bonus;
+  $("kmrRally").textContent=String(S.rally);
+  $("kmrScore").textContent=String(S.score);
+  const voice=KEMARI_KAKEGOE[Math.floor(Math.random()*KEMARI_KAKEGOE.length)];
+  kmrShowJudge((kind==="perfect"?"見事！ ":"良し！ ")+voice,kind);
+  beep(kind==="perfect"?880:660,.07,"triangle",.06);
+  S.peak=KEMARI_CFG.peakBase+(kind==="perfect"?KEMARI_CFG.peakBonus:0);
+  S.T=Math.max(KEMARI_CFG.minT,KEMARI_CFG.baseT-S.rally*KEMARI_CFG.tStep);
+  S.phase="flight";S.kickTime=performance.now();
+  if(S.rally>0&&S.rally%10===0)toast(`続け鞠 ${S.rally}！`,1200);
+}
+function kemariGameOver(){
+  const S=KMR;if(!S)return;
+  const prevBest=kmrLoadBest();
+  const isNewBest=S.score>prevBest.score;
+  const nextBest={rally:Math.max(S.rally,prevBest.rally),score:Math.max(S.score,prevBest.score)};
+  kmrSaveBest(nextBest);
+  $("kmrBest").textContent=String(nextBest.rally);
+  const el=$("kmrGoDetail");
+  if(el)el.innerHTML=`続け鞠: <b>${S.rally}回</b><br>得点: <b>${S.score}</b><br>自己最高: <b>${nextBest.rally}回 / ${nextBest.score}点</b>`;
+  const nb=$("kmrNewBest");if(nb)nb.classList.toggle("show",isNewBest);
+  const go=$("kemariGameOver");if(go)go.classList.add("show");
+  if(isNewBest&&typeof juiceCelebrate==="function")juiceCelebrate(); // 新記録は紙吹雪で祝う
+  recordProgress("kemari",1);gainParam("miyabi",2);
+}
+function kemariDrawScene(ctx,S){
+  const {W,H}=KEMARI_CFG,groundY=H-64;
+  // 鞠庭(まりにわ)の地面
+  const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#1c2f1c");bg.addColorStop(1,"#0d160c");
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="rgba(90,130,70,.35)";ctx.fillRect(0,groundY+18,W,H-(groundY+18));
+  // 四隅の懸(かかり) — 松・桜・柳・楓
+  ctx.font="18px sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";
+  const corners=[[22,26],[W-22,26],[22,groundY-18],[W-22,groundY-18]];
+  KEMARI_KAKARI.forEach((k,i)=>{ctx.globalAlpha=.8;ctx.fillText(k.e,corners[i][0],corners[i][1]);});
+  ctx.globalAlpha=1;
+  // 蹴る間合い(足もとの的)
+  ctx.strokeStyle="rgba(255,210,150,.55)";ctx.setLineDash([5,4]);ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(W/2,groundY,30,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
+  if(S&&!S.over&&(S.phase==="flight"||S.phase==="wait")){
+    const elapsed=performance.now()-S.kickTime;
+    const frac=S.phase==="flight"?Math.min(1.15,elapsed/S.T):0;
+    const y=groundY-Math.sin(Math.min(1,frac)*Math.PI)*S.peak;
+    // 目安リング(接近円): 蹴り時刻に向けて外側から縮んでくる、いわゆる「approach circle」
+    if(S.phase==="flight"&&frac<1.05){
+      const ringR=30+Math.max(0,(1-frac))*46;
+      ctx.strokeStyle="rgba(255,255,255,.4)";ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(W/2,groundY,ringR,0,Math.PI*2);ctx.stroke();
+    }
+    // 鞠(まり) — 鹿革の白鞠
+    ctx.save();ctx.translate(W/2,y);
+    ctx.beginPath();ctx.ellipse(0,groundY-y+6,16,5,0,0,Math.PI*2);ctx.fillStyle="rgba(0,0,0,.25)";ctx.fill();
+    const grad=ctx.createRadialGradient(-4,-4,2,0,0,13);grad.addColorStop(0,"#fff8e6");grad.addColorStop(1,"#d8c49a");
+    ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.fillStyle=grad;ctx.fill();
+    ctx.strokeStyle="rgba(120,90,50,.6)";ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.arc(0,0,13,.2,2.0);ctx.stroke();
+    ctx.beginPath();ctx.arc(0,0,13,2.6,4.4);ctx.stroke();
+    ctx.restore();
+  }
+  // 蹴る側の貴族(簡易シルエット)
+  ctx.save();ctx.translate(W/2,groundY+14);
+  ctx.fillStyle="rgba(20,16,10,.85)";
+  ctx.beginPath();ctx.arc(0,-30,8,0,Math.PI*2);ctx.fill(); // 頭
+  ctx.beginPath();ctx.moveTo(-13,-22);ctx.quadraticCurveTo(0,-8,13,-22);ctx.lineTo(16,4);ctx.lineTo(-16,4);ctx.closePath();ctx.fill(); // 装束
+  ctx.restore();
+}
+function kemariRender(){
+  const cv=$("kemariCanvas");if(!cv)return;
+  if(!cv._ctx){
+    const dpr=Math.min(2,window.devicePixelRatio||1);
+    cv.width=KEMARI_CFG.W*dpr;cv.height=KEMARI_CFG.H*dpr;
+    const ctx=cv.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);cv._ctx=ctx;
+  }
+  kemariDrawScene(cv._ctx,KMR);
+}
+function kemariLoop(ts){
+  if(typeof APP==="undefined"||APP.mode!=="kemari"){kmrLoopActive=false;return;}
+  requestAnimationFrame(kemariLoop);
+  const S=KMR;
+  if(S&&!S.over&&S.phase==="flight"){
+    const elapsed=performance.now()-S.kickTime;
+    if(elapsed>S.T+KEMARI_CFG.goodHalf)kemariJudge("miss"); // 蹴らずに間合いを逃した=空蹴り
+  }
+  kemariRender();
+}
+(function bindKemariInput(){
+  const hud=$("kemariHud");if(!hud)return;
+  hud.addEventListener("pointerdown",e=>{
+    if(typeof APP==="undefined"||APP.mode!=="kemari")return;
+    if(e.target.closest("#kemariGameOver")||e.target.closest("#kemariHelp"))return; // 結果/ヘルプ表示中は蹴らない
+    e.preventDefault();
+    kemariAttemptKick();
+  });
+})();
+addEventListener("keydown",e=>{
+  if((e.code==="Space"||e.key===" ")&&typeof APP!=="undefined"&&APP.mode==="kemari"){e.preventDefault();kemariAttemptKick();}
+});
+$("btnKemari").onclick=()=>{beep(600,.08);initAudio();hideSubPanel("miniGameSubPanel");enterMode("kemari");};
+$("kemariQuit").onclick=()=>{beep(400,.06);enterMode("walk");};
+$("kmrHelpStart").onclick=()=>{$("kemariHelp").classList.remove("show");kmrMarkHelpSeen();beep(520,.06);kemariBeginFlight(300);};
+$("kmrRetry").onclick=()=>{beep(600,.07);const go=$("kemariGameOver");if(go)go.classList.remove("show");startKemari();};
+$("kmrToTitle").onclick=()=>{beep(400,.06);location.reload();};
 /* ============================================================
    物の怪退治モード
 ============================================================ */
@@ -20714,9 +20981,9 @@ function animate(now){
     if(APP.mode==="saigen")saigenUpdate(dt);
     if(APP.mode==="story"&&typeof storyUpdate==="function")storyUpdate(dt); // 波M
   }
-  // 位階出世ゲーム・貝合わせはdiv/Canvasの独立オーバーレイで3D世界を完全に覆うため、
+  // 位階出世ゲーム・貝合わせ・蹴鞠はdiv/Canvasの独立オーバーレイで3D世界を完全に覆うため、
   // 見えない3Dシーンの描画(ミニマップ・ブルーム合成・renderer本体)を丸ごと休止して軽量化する
-  if(APP.mode!=="ikaiSuika"&&APP.mode!=="kaiawase"){
+  if(APP.mode!=="ikaiSuika"&&APP.mode!=="kaiawase"&&APP.mode!=="kemari"){
     drawMinimap();    /* ミニマップ(独立2Dキャンバス) */
     BLOOM.update();   /* 夜/夕かつ高品質時のみブルームを有効化 */
     BLOOM.render();   /* 条件に応じ composer(ブルーム) か 通常描画 を選択 */
