@@ -498,6 +498,66 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 .ikai-gallery-kana{font-family:var(--sans);font-size:9.5px;font-weight:400;color:#b7a685}
 .ikai-gallery-desc{font-size:10.5px;line-height:1.5;color:#cdbd9c;margin-top:2px}
 .ikai-gallery-row.locked .ikai-gallery-desc{color:#7a6f57}
+/* 波7: 貝合わせ(神経衰弱型) — 3D世界を完全に覆う独立オーバーレイ。ikaiHudの構造・軽量化手法を踏襲 */
+#kaiHud{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+  background:radial-gradient(circle at 50% 26%,#182827 0%,#070d0c 62%,#020403 100%);font-family:var(--sans);overflow-y:auto}
+#kaiHud.show{display:flex}
+.kai-top{width:min(460px,94vw);display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex:none}
+#kaiQuit{width:34px;height:34px;border-radius:50%;border:1px solid rgba(201,162,63,.5);background:rgba(20,14,8,.7);color:#e9dcc2;font-size:14px;cursor:pointer}
+.kai-title{font-family:var(--serif,serif);font-size:15px;font-weight:900;letter-spacing:.14em;color:#dcefe8;text-shadow:0 2px 8px #000}
+.kai-stats{display:flex;gap:8px}
+.kai-stat{padding:4px 10px;border-radius:8px;border:1px solid rgba(120,190,170,.35);background:rgba(14,22,20,.7);font-size:11px;color:#c8ded6;text-align:center}
+.kai-stat span{display:block;font-size:8.5px;letter-spacing:.1em;opacity:.75}
+.kai-stat b{font-size:14px;color:#a8e8cf}
+#kaiLoreBanner{width:min(460px,94vw);min-height:34px;margin:2px 0 6px;padding:6px 12px;border-radius:9px;
+  border:1px solid rgba(120,190,170,.32);background:rgba(12,20,18,.72);color:#cfe6dc;font-size:11.5px;line-height:1.6;
+  text-align:center;flex:none;transition:background .3s,border-color .3s}
+#kaiLoreBanner.hit{border-color:rgba(212,175,55,.75);background:rgba(212,175,55,.14);color:#ffe9ad}
+.kai-diff-picker{display:none;flex-direction:column;gap:10px;width:min(320px,90vw);margin-top:10px;flex:none}
+.kai-diff-picker.show{display:flex}
+.kai-diff-picker .sp-title{text-align:center;font-size:11px;letter-spacing:.16em;color:#a8ccc0;margin-bottom:2px}
+.kai-diff-picker .t-btn small{display:block;font-size:10px;opacity:.75;margin-top:2px}
+.kai-board{display:grid;gap:7px;width:min(460px,94vw);margin:2px auto 8px;flex:none}
+.kai-card{position:relative;aspect-ratio:3/4;cursor:pointer}
+/* 神経衰弱の「めくり」はopacity/scaleのクロスフェードで再現する(rotateY+backface-visibilityの3D反転は、
+   グリッド端のカードでperspectiveの歪みにより裏面の角がわずかに透けて見える環境があるため避ける) */
+.kai-card-inner{position:absolute;inset:0}
+.kai-card-face{position:absolute;inset:0;border-radius:9px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:2px;
+  transition:opacity .3s ease,transform .3s ease}
+.kai-card-back{background:radial-gradient(circle at 32% 28%,#f2e6ca,#cdb488 68%,#a2875a);
+  border:1px solid rgba(110,84,40,.55);box-shadow:0 4px 10px rgba(0,0,0,.35),inset 0 0 0 3px rgba(255,255,255,.18);
+  opacity:1;transform:scale(1)}
+.kai-card-back::after{content:"🐚";font-size:clamp(15px,5.5vw,26px);opacity:.8;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+.kai-card-front{background:linear-gradient(160deg,rgba(28,24,14,.96),rgba(13,11,6,.98));
+  border:1px solid rgba(201,162,63,.55);color:#f0dfa8;opacity:0;transform:scale(.86);pointer-events:none}
+.kai-card.flipped .kai-card-back,.kai-card.matched .kai-card-back{opacity:0;transform:scale(.86)}
+.kai-card.flipped .kai-card-front,.kai-card.matched .kai-card-front{opacity:1;transform:scale(1)}
+.kai-card.matched .kai-card-front{border-color:rgba(130,224,178,.8);box-shadow:0 0 12px rgba(130,224,178,.4)}
+.kai-card.matched{cursor:default}
+.kai-card-emoji{font-size:clamp(15px,5vw,24px);line-height:1}
+.kai-card-kanji{font-family:var(--serif,serif);font-weight:900;font-size:clamp(10px,2.8vw,14px);margin-top:2px;letter-spacing:.03em}
+.kai-card-kana{font-size:7.5px;opacity:.72;margin-top:1px;letter-spacing:.04em}
+#kaiGameOver,#kaiHelp{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,4,3,.72);z-index:2}
+#kaiGameOver.show,#kaiHelp.show{display:flex}
+.kai-card-panel{width:min(300px,88%);max-height:min(640px,90vh);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  text-align:center;padding:18px 16px;border:1px solid rgba(120,190,170,.5);border-radius:10px;
+  background:linear-gradient(180deg,rgba(18,26,24,.97),rgba(8,12,10,.98));box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.kai-card-panel-title{font-family:var(--serif,serif);font-size:18px;font-weight:900;color:#dcefe8;letter-spacing:.1em;margin-bottom:10px;text-shadow:0 2px 8px #000}
+.kai-card-panel-detail{font-size:12.5px;line-height:1.9;color:#e9dcc2;margin-bottom:14px}
+.kai-card-panel-text{font-size:12px;line-height:1.85;color:#cdbd9c;margin-bottom:14px;text-align:left}
+.kai-card-panel .t-btn{width:100%;margin-top:6px;min-height:42px;flex:none}
+.kai-newbest{display:none;margin:0 0 12px;padding:7px 10px;border-radius:8px;border:1px solid rgba(228,199,106,.85);
+  background:linear-gradient(90deg,rgba(212,175,55,.24),rgba(212,175,55,.08));color:#ffe9ad;font-weight:900;
+  letter-spacing:.14em;font-size:13px;text-align:center;text-shadow:0 2px 6px #000}
+.kai-newbest.show{display:block;animation:ikaiNewBestPop .5s cubic-bezier(.2,.9,.25,1)}
+@media (prefers-reduced-motion:reduce){.kai-newbest.show{animation:none}.kai-card-face{transition:none}}
+@media (max-width:480px){
+  .kai-stat{padding:3px 7px;font-size:9.5px}
+  .kai-stat b{font-size:12.5px}
+  .kai-title{font-size:13px}
+}
 /* 季節選択(退治) */
 #taijiSeason{display:none;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 #taijiSeason .ss-btn{padding:8px 12px;border:1px solid rgba(170,100,60,.7);background:rgba(40,20,30,.6);color:#e8d8c0;border-radius:5px;cursor:pointer;font-size:12px;font-family:var(--sans)}

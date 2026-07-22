@@ -1551,6 +1551,66 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 .ikai-gallery-kana{font-family:var(--sans);font-size:9.5px;font-weight:400;color:#b7a685}
 .ikai-gallery-desc{font-size:10.5px;line-height:1.5;color:#cdbd9c;margin-top:2px}
 .ikai-gallery-row.locked .ikai-gallery-desc{color:#7a6f57}
+/* 波7: 貝合わせ(神経衰弱型) — 3D世界を完全に覆う独立オーバーレイ。ikaiHudの構造・軽量化手法を踏襲 */
+#kaiHud{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+  background:radial-gradient(circle at 50% 26%,#182827 0%,#070d0c 62%,#020403 100%);font-family:var(--sans);overflow-y:auto}
+#kaiHud.show{display:flex}
+.kai-top{width:min(460px,94vw);display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex:none}
+#kaiQuit{width:34px;height:34px;border-radius:50%;border:1px solid rgba(201,162,63,.5);background:rgba(20,14,8,.7);color:#e9dcc2;font-size:14px;cursor:pointer}
+.kai-title{font-family:var(--serif,serif);font-size:15px;font-weight:900;letter-spacing:.14em;color:#dcefe8;text-shadow:0 2px 8px #000}
+.kai-stats{display:flex;gap:8px}
+.kai-stat{padding:4px 10px;border-radius:8px;border:1px solid rgba(120,190,170,.35);background:rgba(14,22,20,.7);font-size:11px;color:#c8ded6;text-align:center}
+.kai-stat span{display:block;font-size:8.5px;letter-spacing:.1em;opacity:.75}
+.kai-stat b{font-size:14px;color:#a8e8cf}
+#kaiLoreBanner{width:min(460px,94vw);min-height:34px;margin:2px 0 6px;padding:6px 12px;border-radius:9px;
+  border:1px solid rgba(120,190,170,.32);background:rgba(12,20,18,.72);color:#cfe6dc;font-size:11.5px;line-height:1.6;
+  text-align:center;flex:none;transition:background .3s,border-color .3s}
+#kaiLoreBanner.hit{border-color:rgba(212,175,55,.75);background:rgba(212,175,55,.14);color:#ffe9ad}
+.kai-diff-picker{display:none;flex-direction:column;gap:10px;width:min(320px,90vw);margin-top:10px;flex:none}
+.kai-diff-picker.show{display:flex}
+.kai-diff-picker .sp-title{text-align:center;font-size:11px;letter-spacing:.16em;color:#a8ccc0;margin-bottom:2px}
+.kai-diff-picker .t-btn small{display:block;font-size:10px;opacity:.75;margin-top:2px}
+.kai-board{display:grid;gap:7px;width:min(460px,94vw);margin:2px auto 8px;flex:none}
+.kai-card{position:relative;aspect-ratio:3/4;cursor:pointer}
+/* 神経衰弱の「めくり」はopacity/scaleのクロスフェードで再現する(rotateY+backface-visibilityの3D反転は、
+   グリッド端のカードでperspectiveの歪みにより裏面の角がわずかに透けて見える環境があるため避ける) */
+.kai-card-inner{position:absolute;inset:0}
+.kai-card-face{position:absolute;inset:0;border-radius:9px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:2px;
+  transition:opacity .3s ease,transform .3s ease}
+.kai-card-back{background:radial-gradient(circle at 32% 28%,#f2e6ca,#cdb488 68%,#a2875a);
+  border:1px solid rgba(110,84,40,.55);box-shadow:0 4px 10px rgba(0,0,0,.35),inset 0 0 0 3px rgba(255,255,255,.18);
+  opacity:1;transform:scale(1)}
+.kai-card-back::after{content:"🐚";font-size:clamp(15px,5.5vw,26px);opacity:.8;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+.kai-card-front{background:linear-gradient(160deg,rgba(28,24,14,.96),rgba(13,11,6,.98));
+  border:1px solid rgba(201,162,63,.55);color:#f0dfa8;opacity:0;transform:scale(.86);pointer-events:none}
+.kai-card.flipped .kai-card-back,.kai-card.matched .kai-card-back{opacity:0;transform:scale(.86)}
+.kai-card.flipped .kai-card-front,.kai-card.matched .kai-card-front{opacity:1;transform:scale(1)}
+.kai-card.matched .kai-card-front{border-color:rgba(130,224,178,.8);box-shadow:0 0 12px rgba(130,224,178,.4)}
+.kai-card.matched{cursor:default}
+.kai-card-emoji{font-size:clamp(15px,5vw,24px);line-height:1}
+.kai-card-kanji{font-family:var(--serif,serif);font-weight:900;font-size:clamp(10px,2.8vw,14px);margin-top:2px;letter-spacing:.03em}
+.kai-card-kana{font-size:7.5px;opacity:.72;margin-top:1px;letter-spacing:.04em}
+#kaiGameOver,#kaiHelp{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(2,4,3,.72);z-index:2}
+#kaiGameOver.show,#kaiHelp.show{display:flex}
+.kai-card-panel{width:min(300px,88%);max-height:min(640px,90vh);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  text-align:center;padding:18px 16px;border:1px solid rgba(120,190,170,.5);border-radius:10px;
+  background:linear-gradient(180deg,rgba(18,26,24,.97),rgba(8,12,10,.98));box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.kai-card-panel-title{font-family:var(--serif,serif);font-size:18px;font-weight:900;color:#dcefe8;letter-spacing:.1em;margin-bottom:10px;text-shadow:0 2px 8px #000}
+.kai-card-panel-detail{font-size:12.5px;line-height:1.9;color:#e9dcc2;margin-bottom:14px}
+.kai-card-panel-text{font-size:12px;line-height:1.85;color:#cdbd9c;margin-bottom:14px;text-align:left}
+.kai-card-panel .t-btn{width:100%;margin-top:6px;min-height:42px;flex:none}
+.kai-newbest{display:none;margin:0 0 12px;padding:7px 10px;border-radius:8px;border:1px solid rgba(228,199,106,.85);
+  background:linear-gradient(90deg,rgba(212,175,55,.24),rgba(212,175,55,.08));color:#ffe9ad;font-weight:900;
+  letter-spacing:.14em;font-size:13px;text-align:center;text-shadow:0 2px 6px #000}
+.kai-newbest.show{display:block;animation:ikaiNewBestPop .5s cubic-bezier(.2,.9,.25,1)}
+@media (prefers-reduced-motion:reduce){.kai-newbest.show{animation:none}.kai-card-face{transition:none}}
+@media (max-width:480px){
+  .kai-stat{padding:3px 7px;font-size:9.5px}
+  .kai-stat b{font-size:12.5px}
+  .kai-title{font-size:13px}
+}
 /* 季節選択(退治) */
 #taijiSeason{display:none;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 #taijiSeason .ss-btn{padding:8px 12px;border:1px solid rgba(170,100,60,.7);background:rgba(40,20,30,.6);color:#e8d8c0;border-radius:5px;cursor:pointer;font-size:12px;font-family:var(--sans)}
@@ -3482,6 +3542,7 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
         <button class="t-btn combat" id="btnTaiji" style="border-color:rgba(150,80,200,.7)"><span class="mode-meta">戦闘 / ボス</span><span class="mode-name">⚡ 物の怪退治</span><small>夜の邸に潜む怪異を弓矢で退散</small></button>
         <button class="t-btn gold" id="btnKaimami"><span class="mode-meta">潜入 / 物語</span><span class="mode-name">🌙 垣間見ミッション</span><small>女房と侍従の目を避けて忍ぶ</small></button>
         <button class="t-btn" id="btnIkaiSuika" style="border-color:rgba(212,175,55,.75)"><span class="mode-meta">合体 / 出世</span><span class="mode-name">🏯 位階出世ゲーム</span><small>同じ位の貴族を重ねて出世させよう</small></button>
+        <button class="t-btn" id="btnKaiawase" style="border-color:rgba(120,190,170,.75)"><span class="mode-meta">記憶 / 教養</span><span class="mode-name">🐚 貝合わせ</span><small>対の絵柄をそろえて平安の雅を学ぶ</small></button>
       </div>
       <button class="t-back-btn" id="miniGameBack">← 戻る</button>
     </div>
@@ -3961,6 +4022,43 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
       <div class="ikai-gallery-count" id="ikaiGalleryCount"></div>
       <div class="ikai-gallery-grid" id="ikaiGalleryGrid"></div>
       <button class="t-btn gold" id="ikaiGalleryClose" type="button">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 波7: 貝合わせ(神経衰弱型) -->
+<div id="kaiHud">
+  <div class="kai-top">
+    <button id="kaiQuit" title="やめて散策へ戻る">✕</button>
+    <div class="kai-title">貝合わせ</div>
+    <div class="kai-stats">
+      <div class="kai-stat"><span>手数</span><b id="kaiMoves">0</b></div>
+      <div class="kai-stat"><span>時間</span><b id="kaiTime">0:00</b></div>
+      <div class="kai-stat"><span>ベスト</span><b id="kaiBest">--</b></div>
+    </div>
+  </div>
+  <div id="kaiLoreBanner">2枚めくって、同じ絵柄の貝をそろえよう。</div>
+  <div id="kaiDiffPicker" class="kai-diff-picker">
+    <div class="sp-title">── 難度を選択 ──</div>
+    <button class="t-btn" id="kaiDiffEasy" data-diff="easy"><span class="mode-name">やさしい</span><small>6対・12枚</small></button>
+    <button class="t-btn gold" id="kaiDiffNormal" data-diff="normal"><span class="mode-name">ふつう</span><small>8対・16枚</small></button>
+    <button class="t-btn" id="kaiDiffHard" data-diff="hard"><span class="mode-name">むずかしい</span><small>10対・20枚</small></button>
+  </div>
+  <div class="kai-board" id="kaiBoard"></div>
+  <div id="kaiGameOver">
+    <div class="kai-card-panel">
+      <div class="kai-card-panel-title">貝合わせ、揃いました</div>
+      <div class="kai-card-panel-detail" id="kaiGoDetail"></div>
+      <div class="kai-newbest" id="kaiNewBest">新記録！自己最高を更新した</div>
+      <button class="t-btn gold" id="kaiRetry">もう一度合わせる</button>
+      <button class="t-btn" id="kaiToTitle">表紙へ戻る</button>
+    </div>
+  </div>
+  <div id="kaiHelp">
+    <div class="kai-card-panel">
+      <div class="kai-card-panel-title">貝合わせ</div>
+      <div class="kai-card-panel-text">平安の姫君たちが興じた「貝合わせ」は、蛤(はまぐり)の貝殻の内側に絵や歌を描き、対になる片方を探し当てて遊ぶ雅な遊戯。蛤の殻は元の対でなければぴったり合わないことから、夫婦和合の象徴ともされた。ここでは伏せた貝を2枚めくり、同じ絵柄が出れば対がそろって取れる神経衰弱として再現する。全ての対をそろえればクリア。手数と時間が少ないほど上出来。</div>
+      <button class="t-btn gold" id="kaiHelpStart">はじめる</button>
     </div>
   </div>
 </div>
@@ -9213,7 +9311,7 @@ const SFX = {
       return;
     }
     // タイトル画面中、および位階出世ゲーム(3D世界を隠すCanvas2D専用モード)中は環境音を停止
-    if(typeof APP !== "undefined" && (APP.mode === "title" || APP.mode === "ikaiSuika")){
+    if(typeof APP !== "undefined" && (APP.mode === "title" || APP.mode === "ikaiSuika" || APP.mode === "kaiawase")){
       if(this._bedMedia){try{this._bedMedia.pause();this._bedMedia.currentTime=0;}catch(e){}}
       this._bedMedia=null;this._curBed=null;this._curScene=null;return;
     }
@@ -9476,7 +9574,7 @@ class AmbientAudio {
     if (!this.ctx || !this.playing) return;
     const t = this.ctx.currentTime;
     // タイトル画面・位階出世ゲーム中は環境音(合成のせせらぎ/風)を一切鳴らさない(テーマのみ)
-    const title = (typeof APP !== "undefined" && (APP.mode === "title" || APP.mode === "ikaiSuika"));
+    const title = (typeof APP !== "undefined" && (APP.mode === "title" || APP.mode === "ikaiSuika" || APP.mode === "kaiawase"));
     const quietSaigen = (typeof APP !== "undefined" && APP.mode === "saigen" && APP.saigen && APP.saigen.scene && APP.saigen.scene.cricket);
     const paused = (typeof SFX !== "undefined" && !!SFX._backgroundPaused);
     const haveWater = !!(typeof SFX !== "undefined" && SFX.media && SFX.media[SFX.beds.water]);
@@ -9586,6 +9684,7 @@ class AmbientAudio {
       if (typeof APP !== "undefined" && APP.mode === "title") return;  // タイトル中は鳴き声を出さない(テーマのみ)
       if (typeof APP !== "undefined" && APP.mode === "taiji") return;  // 波AN: ボス戦(河童・大鬼等)中は鳥・虫の環境音を止める(戦闘BGMに集中/河童戦の虫鳴り対策)
       if (typeof APP !== "undefined" && APP.mode === "ikaiSuika") return;  // 位階出世ゲーム(3D世界を隠すCanvas2D専用モード)中は鳥・虫の環境音を止める
+      if (typeof APP !== "undefined" && APP.mode === "kaiawase") return;  // 波7: 貝合わせ(3D世界を隠す独立オーバーレイ)中も同様に鳥・虫の環境音を止める
       if (typeof APP !== "undefined" && APP.storyIndoor) return;  // 波AA: 物語モードの屋内(教室・病室)では外の鳥・虫を鳴かせない
       if (typeof SFX !== "undefined" && SFX._backgroundPaused) return;  // 再現専用音などで背景音を止めている間は通常の鳥虫を鳴らさない
       // 音風景表に基づき、最小間隔つきで鳴き声を再生(重なり防止)
@@ -10839,6 +10938,7 @@ const HISTORY_PROGRESS_LABEL={
   quiz:{icon:"📜",label:"名称当てクイズを終えた"},
   quest:{icon:"👘",label:"貴族の一日体験を達成した"},
   ikaiSuika:{icon:"🏯",label:"位階出世ゲームを終えた"},
+  kaiawase:{icon:"🐚",label:"貝合わせで全ての対をそろえた"},
   taiji:{icon:"⚡",label:"物の怪退治をクリアした"},
   kaimami:{icon:"🌙",label:"垣間見ミッションに成功した"},
   utakai:{icon:"🎴",label:"歌合を終えた"},
@@ -12426,7 +12526,7 @@ function enterMode(m){
   if(m!=="renaiShort"&&m!=="renaiSim"&&typeof renaiHideTargetPicker==="function")renaiHideTargetPicker(); // 恋愛モード以外へ遷移時はピッカーを閉じる
   $("title").classList.add("hide");
   $("topbar").style.display="flex";
-  const worldBar=$("worldStatusBar");if(worldBar)worldBar.style.display=(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"||m==="story"||m==="ikaiSuika")?"none":"flex";
+  const worldBar=$("worldStatusBar");if(worldBar)worldBar.style.display=(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"||m==="story"||m==="ikaiSuika"||m==="kaiawase")?"none":"flex";
   requestAnimationFrame(syncTopbarH); // topbar高さをCSS変数に同期
   $("quizHud").style.display=m==="quiz"?"block":"none";
   $("questHud").style.display=(m==="quest"||m==="kaimami")?"block":"none";
@@ -12438,6 +12538,8 @@ function enterMode(m){
   {const shud=$("storyHud");if(shud)shud.style.display=(m==="story")?"block":"none";} // 波M(初回起動前はまだ無い)
   {const ihud=$("ikaiHud");if(ihud)ihud.classList.toggle("show",m==="ikaiSuika");}
   if(m!=="ikaiSuika"&&typeof stopIkaiSuika==="function")stopIkaiSuika();
+  {const khud=$("kaiHud");if(khud)khud.classList.toggle("show",m==="kaiawase");} // 波7: 貝合わせ
+  if(m!=="kaiawase"&&typeof stopKaiawase==="function")stopKaiawase();
   if(window.UTAKAI_STAGE)window.UTAKAI_STAGE.visible=(m==="utakai");
   if(window.SAIGEN_STAGE)window.SAIGEN_STAGE.visible=(m==="saigen");
   if(typeof updateGisshaYardVisibility==="function")updateGisshaYardVisibility(m);
@@ -12488,13 +12590,13 @@ function enterMode(m){
   $("dangerVignette").style.opacity=0;
   closeInfo();closeCodex();
   $("modeTag").textContent=m==="quest"?(APP.questRole==="female"?"女性貴族の一日":"男性貴族の一日"):
-    {walk:"自由散策",quiz:APP.quizTA?"タイムアタック":"名称当てクイズ",kaimami:"垣間見",taiji:"物の怪退治",utakai:"歌合モード",saigen:"再現モード",renaiShort:"恋文ショート体験",renaiSim:"恋愛シミュレーション",story:"物語(試験中)",ikaiSuika:"位階出世ゲーム"}[m]||m;
+    {walk:"自由散策",quiz:APP.quizTA?"タイムアタック":"名称当てクイズ",kaimami:"垣間見",taiji:"物の怪退治",utakai:"歌合モード",saigen:"再現モード",renaiShort:"恋文ショート体験",renaiSim:"恋愛シミュレーション",story:"物語(試験中)",ikaiSuika:"位階出世ゲーム",kaiawase:"貝合わせ"}[m]||m;
   if(typeof renaiUiUpdateTools==="function")renaiUiUpdateTools();
   // モード別ボタン表示制御(全モード統一)
   {const cond=["tbHome","tbTime","tbSeason","tbCodex","tbMap"];
    cond.forEach(id=>{const e=$(id);if(e)e.style.display="";});}
   // 戦闘・歌合・再現・恋愛は専用HUDを使うため、世界状態バーは閉じる
-  if(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"||m==="ikaiSuika"){const wb=$("worldStatusBar");if(wb)wb.style.display="none";}
+  if(m==="taiji"||m==="utakai"||m==="saigen"||m==="renaiShort"||m==="renaiSim"||m==="ikaiSuika"||m==="kaiawase"){const wb=$("worldStatusBar");if(wb)wb.style.display="none";}
   updateControlUI();
   if(m==="quiz"){const pk=$("quizDiffPicker");pk.style.display="flex";}
   if(m==="quest")startQuest();
@@ -12504,6 +12606,7 @@ function enterMode(m){
   if(m==="saigen")startSaigen();
   if(m==="story"&&typeof startStory==="function")startStory(); // 波M: 隠しゲート(?story=1)からのみ到達
   if(m==="ikaiSuika")startIkaiSuika();
+  if(m==="kaiawase"&&typeof startKaiawase==="function")startKaiawase();
   if(m==="renaiShort")renaiShowTargetPicker("short");
   if(m==="renaiSim")renaiShowTargetPicker("sim");
   if((m==="renaiShort"||m==="renaiSim")&&typeof RENAI_BGM!=="undefined")RENAI_BGM.start(APP.season); // 優美な和風BGMを流す
@@ -12525,7 +12628,7 @@ function updateControlUI(){
   const fp=APP.view==="fp"&&APP.mode!=="title";
   const renaiShortApproach=APP.mode==="renaiShort"&&APP.renai&&APP.renai.phase==="approach"; // 恋文ショート冒頭の3D導入(女房に歩み寄る場面)だけは移動UIを出す
   const renaiSimHub=APP.mode==="renaiSim"&&APP.renai&&APP.renai.phase==="hub"; // 恋の母屋3Dハブ(育成SIM本編)も移動UIを出す
-  const uta=APP.mode==="utakai"||APP.mode==="saigen"||APP.mode==="ikaiSuika"||(APP.mode==="renaiShort"&&!renaiShortApproach)||(APP.mode==="renaiSim"&&!renaiSimHub); // 歌合・再現・位階出世ゲーム・恋愛(HUD本編)は移動UI・調べる・照準は不要
+  const uta=APP.mode==="utakai"||APP.mode==="saigen"||APP.mode==="ikaiSuika"||APP.mode==="kaiawase"||(APP.mode==="renaiShort"&&!renaiShortApproach)||(APP.mode==="renaiSim"&&!renaiSimHub); // 歌合・再現・位階出世ゲーム・貝合わせ・恋愛(HUD本編)は移動UI・調べる・照準は不要
   $("joy").style.display=(fp&&IS_TOUCH&&!joy.dynamic&&!uta)?"block":"none"; // どこでも方式は触れた時だけ出す
   $("interactBtn").style.display=(fp&&IS_TOUCH&&!uta)?"block":"none";
   $("crosshair").style.display=(fp&&!uta)?"block":"none";
@@ -13815,6 +13918,177 @@ $("ikaiGalleryBtn").onclick=()=>{beep(560,.07);ikaiOpenGallery();};
 $("ikaiGalleryClose").onclick=()=>{beep(400,.05);ikaiCloseGallery();};
 $("ikaiGallery").addEventListener("click",e=>{if(e.target===$("ikaiGallery"))ikaiCloseGallery();});
 addEventListener("keydown",e=>{if(e.key==="Escape"){const g=$("ikaiGallery");if(g&&g.classList.contains("show"))ikaiCloseGallery();}});
+/* ============================================================
+   波7: 貝合わせ(かいあわせ) — 神経衰弱型ミニゲーム
+   平安の姫君の遊び「貝合わせ」(蛤の殻の内側に絵や歌を描いて対をそろえる遊戯)を、
+   div/CSSの独立オーバーレイ(3D世界を完全に覆う。ikaiSuikaと同じ軽量化手法)で再現する。
+============================================================ */
+/* 各対に平安文化の題材(花鳥風月・和歌の景物)を持たせ、一致時に読み仮名つきの一言解説を出す教育要素 */
+const KAI_THEMES=[
+  {emoji:"🌸",kanji:"桜",kana:"さくら",lore:"春を彩る花。「久方の光のどけき春の日にしづ心なく花の散るらむ」でも知られる、和歌に最も愛された花。"},
+  {emoji:"🐦",kanji:"郭公",kana:"ほととぎす",lore:"夏を告げる鳥。初音を待ちわびる心が『枕草子』をはじめ多くの和歌・物語に描かれた。"},
+  {emoji:"🌕",kanji:"月",kana:"つき",lore:"秋の夜を彩る風物。『源氏物語』でも月を眺めて物思う場面がたびたび描かれる。"},
+  {emoji:"❄️",kanji:"雪",kana:"ゆき",lore:"冬を彩る風物。雪の朝に文を交わし合う贈答歌が多く残る、清らかさの象徴。"},
+  {emoji:"🍁",kanji:"紅葉",kana:"もみじ",lore:"秋の彩り。『源氏物語』紅葉賀の巻では、紅葉の下で舞う場面が華やかに描かれる。"},
+  {emoji:"🟣",kanji:"藤",kana:"ふじ",lore:"晩春に咲く花。御簾からこぼれる紫の花房は、藤原氏になぞらえて好んで描かれた。"},
+  {emoji:"✨",kanji:"蛍",kana:"ほたる",lore:"夏の夜に光る虫。『源氏物語』蛍の巻で、放たれた光が姫君の姿をほのかに照らす場面が知られる。"},
+  {emoji:"🐤",kanji:"千鳥",kana:"ちどり",lore:"冬の水辺に群れ鳴く鳥。その声は和歌にしばしば詠まれ、もの寂しい冬の景物とされた。"},
+  {emoji:"🌲",kanji:"松風",kana:"まつかぜ",lore:"松に吹く風の音。『源氏物語』松風の巻にも通じる、静けさと孤独を思わせる響き。"},
+  {emoji:"🌼",kanji:"女郎花",kana:"おみなえし",lore:"秋の七草の一つ。可憐な姿がしばしば女性にたとえられ、多くの和歌に詠まれた。"}
+];
+const KAI_DIFF={easy:{n:6,label:"やさしい"},normal:{n:8,label:"ふつう"},hard:{n:10,label:"むずかしい"}};
+let KAI=null,KAI_TIMER=null,kaiLoreTimer=null;
+function kaiShuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+function kaiLoadBest(){try{return JSON.parse(localStorage.getItem("shinden3d-kaiawase-best")||"{}");}catch(e){return {};}}
+function kaiSaveBest(obj){try{localStorage.setItem("shinden3d-kaiawase-best",JSON.stringify(obj));}catch(e){}}
+function kaiSeenHelp(){try{return localStorage.getItem("shinden3d-kaiawase-help")==="1";}catch(e){return false;}}
+function kaiMarkHelpSeen(){try{localStorage.setItem("shinden3d-kaiawase-help","1");}catch(e){}}
+function kaiFormatTime(sec){const s=Math.max(0,Math.floor(sec));const m=Math.floor(s/60),r=s%60;return `${m}:${String(r).padStart(2,"0")}`;}
+function kaiUpdateBestDisplay(diffKey){
+  const el=$("kaiBest");if(!el)return;
+  if(!diffKey){el.textContent="--";return;}
+  const best=kaiLoadBest()[diffKey];
+  el.textContent=best?`${best.moves}手/${kaiFormatTime(best.time)}`:"--";
+}
+function startKaiawase(){
+  KAI=null;
+  if(KAI_TIMER){clearInterval(KAI_TIMER);KAI_TIMER=null;}
+  const go=$("kaiGameOver");if(go)go.classList.remove("show");
+  const nb=$("kaiNewBest");if(nb)nb.classList.remove("show");
+  const board=$("kaiBoard");if(board)board.innerHTML="";
+  const mv=$("kaiMoves");if(mv)mv.textContent="0";
+  const tm=$("kaiTime");if(tm)tm.textContent="0:00";
+  kaiUpdateBestDisplay(null);
+  const lore=$("kaiLoreBanner");if(lore){lore.textContent="2枚めくって、同じ絵柄の貝をそろえよう。";lore.classList.remove("hit");}
+  const dp=$("kaiDiffPicker");if(dp)dp.classList.add("show");
+  const help=$("kaiHelp");if(help)help.classList.toggle("show",!kaiSeenHelp());
+  // 3Dシーンはこの間まったく見えないため、影マップ更新を止めて軽量化する(位階出世ゲームと同じ手法)
+  renderer.shadowMap.autoUpdate=false;
+}
+function stopKaiawase(){
+  KAI=null;
+  if(KAI_TIMER){clearInterval(KAI_TIMER);KAI_TIMER=null;}
+  if(kaiLoreTimer){clearTimeout(kaiLoreTimer);kaiLoreTimer=null;}
+  renderer.shadowMap.autoUpdate=true;renderer.shadowMap.needsUpdate=true;
+  const dp=$("kaiDiffPicker");if(dp)dp.classList.remove("show");
+}
+function kaiRenderBoard(){
+  const board=$("kaiBoard");if(!board||!KAI)return;
+  board.innerHTML="";
+  const total=KAI.cards.length;
+  const cols=total<=12?4:(total<=16?4:5);
+  board.style.gridTemplateColumns=`repeat(${cols},1fr)`;
+  KAI.cardEls=[];
+  KAI.cards.forEach((c,idx)=>{
+    const el=document.createElement("div");
+    el.className="kai-card";el.dataset.idx=String(idx);
+    el.innerHTML=`<div class="kai-card-inner">
+      <div class="kai-card-face kai-card-back"></div>
+      <div class="kai-card-face kai-card-front">
+        <div class="kai-card-emoji">${c.t.emoji}</div>
+        <div class="kai-card-kanji">${c.t.kanji}</div>
+        <div class="kai-card-kana">${c.t.kana}</div>
+      </div>
+    </div>`;
+    board.appendChild(el);
+    KAI.cardEls[idx]=el;
+  });
+}
+function kaiSetFlipped(idx,on){const el=KAI&&KAI.cardEls[idx];if(el)el.classList.toggle("flipped",on);}
+function kaiSetMatched(idx){const el=KAI&&KAI.cardEls[idx];if(el){el.classList.add("matched");el.classList.remove("flipped");}}
+function kaiChooseDifficulty(diffKey){
+  const cfg=KAI_DIFF[diffKey];if(!cfg)return;
+  const dp=$("kaiDiffPicker");if(dp)dp.classList.remove("show");
+  const themes=kaiShuffle(KAI_THEMES.slice()).slice(0,cfg.n);
+  let deck=[];themes.forEach(t=>{deck.push({t,matched:false});deck.push({t,matched:false});});
+  deck=kaiShuffle(deck);
+  KAI={diff:diffKey,n:cfg.n,cards:deck,flippedIdx:[],matchedCount:0,moves:0,over:false,locked:false,startTs:Date.now(),cardEls:[]};
+  const mv=$("kaiMoves");if(mv)mv.textContent="0";
+  const tm=$("kaiTime");if(tm)tm.textContent="0:00";
+  kaiUpdateBestDisplay(diffKey);
+  kaiRenderBoard();
+  if(KAI_TIMER)clearInterval(KAI_TIMER);
+  KAI_TIMER=setInterval(kaiTick,500);
+  beep(600,.06);
+}
+function kaiTick(){
+  if(!KAI||KAI.over||typeof APP==="undefined"||APP.mode!=="kaiawase"){if(KAI_TIMER){clearInterval(KAI_TIMER);KAI_TIMER=null;}return;}
+  const el=$("kaiTime");if(el)el.textContent=kaiFormatTime((Date.now()-KAI.startTs)/1000);
+}
+function kaiShowLore(t){
+  const el=$("kaiLoreBanner");if(!el)return;
+  el.textContent=`${t.kanji}(${t.kana}): ${t.lore}`;
+  el.classList.add("hit");
+  if(kaiLoreTimer)clearTimeout(kaiLoreTimer);
+  kaiLoreTimer=setTimeout(()=>{el.classList.remove("hit");el.textContent="2枚めくって、同じ絵柄の貝をそろえよう。";},3600);
+}
+function kaiOnCardClick(idx){
+  if(!KAI||KAI.over||KAI.locked)return;
+  const card=KAI.cards[idx];if(!card||card.matched)return;
+  if(KAI.flippedIdx.includes(idx))return;
+  if(KAI.flippedIdx.length>=2)return;
+  KAI.flippedIdx.push(idx);
+  kaiSetFlipped(idx,true);
+  beep(520,.04,"sine",.05);
+  if(KAI.flippedIdx.length===2){
+    KAI.moves++;const mv=$("kaiMoves");if(mv)mv.textContent=String(KAI.moves);
+    KAI.locked=true;
+    const [i1,i2]=KAI.flippedIdx;
+    const match=KAI.cards[i1].t===KAI.cards[i2].t;
+    if(match){
+      setTimeout(()=>{
+        if(!KAI)return;
+        KAI.cards[i1].matched=true;KAI.cards[i2].matched=true;
+        kaiSetMatched(i1);kaiSetMatched(i2);
+        KAI.matchedCount++;KAI.flippedIdx=[];KAI.locked=false;
+        seOK();
+        kaiShowLore(KAI.cards[i1].t);
+        if(KAI.matchedCount>=KAI.n)kaiWin();
+      },420);
+    }else{
+      setTimeout(()=>{
+        if(!KAI)return;
+        kaiSetFlipped(i1,false);kaiSetFlipped(i2,false);
+        KAI.flippedIdx=[];KAI.locked=false;
+        seNG();
+      },780);
+    }
+  }
+}
+function kaiWin(){
+  const S=KAI;if(!S||S.over)return;S.over=true;
+  if(KAI_TIMER){clearInterval(KAI_TIMER);KAI_TIMER=null;}
+  const elapsed=(Date.now()-S.startTs)/1000;
+  const bestAll=kaiLoadBest();
+  const prev=bestAll[S.diff];
+  const isNewBest=!prev||S.moves<prev.moves||(S.moves===prev.moves&&elapsed<prev.time);
+  if(isNewBest){bestAll[S.diff]={moves:S.moves,time:elapsed};kaiSaveBest(bestAll);}
+  kaiUpdateBestDisplay(S.diff);
+  const bestNow=bestAll[S.diff];
+  const el=$("kaiGoDetail");
+  if(el)el.innerHTML=`難度: <b>${KAI_DIFF[S.diff].label}</b><br>手数: <b>${S.moves}手</b><br>時間: <b>${kaiFormatTime(elapsed)}</b><br>自己最高: <b>${bestNow.moves}手/${kaiFormatTime(bestNow.time)}</b>`;
+  const nb=$("kaiNewBest");if(nb)nb.classList.toggle("show",isNewBest);
+  const go=$("kaiGameOver");if(go)go.classList.add("show");
+  seOK();
+  if(isNewBest&&typeof juiceCelebrate==="function")juiceCelebrate(); // 新記録は紙吹雪で祝う
+  recordProgress("kaiawase",1);gainParam("miyabi",2);
+}
+(function bindKaiInput(){
+  const board=$("kaiBoard");if(!board)return;
+  board.addEventListener("click",e=>{
+    if(typeof APP==="undefined"||APP.mode!=="kaiawase")return;
+    const el=e.target.closest(".kai-card");if(!el)return;
+    kaiOnCardClick(parseInt(el.dataset.idx,10));
+  });
+})();
+$("btnKaiawase").onclick=()=>{beep(600,.08);initAudio();hideSubPanel("miniGameSubPanel");enterMode("kaiawase");};
+$("kaiQuit").onclick=()=>{beep(400,.06);enterMode("walk");};
+$("kaiHelpStart").onclick=()=>{$("kaiHelp").classList.remove("show");kaiMarkHelpSeen();beep(520,.06);};
+$("kaiDiffEasy").onclick=()=>kaiChooseDifficulty("easy");
+$("kaiDiffNormal").onclick=()=>kaiChooseDifficulty("normal");
+$("kaiDiffHard").onclick=()=>kaiChooseDifficulty("hard");
+$("kaiRetry").onclick=()=>{beep(600,.07);const d=(KAI&&KAI.diff)||"normal";const go=$("kaiGameOver");if(go)go.classList.remove("show");kaiChooseDifficulty(d);};
+$("kaiToTitle").onclick=()=>{beep(400,.06);location.reload();};
 /* ============================================================
    物の怪退治モード
 ============================================================ */
@@ -20440,9 +20714,9 @@ function animate(now){
     if(APP.mode==="saigen")saigenUpdate(dt);
     if(APP.mode==="story"&&typeof storyUpdate==="function")storyUpdate(dt); // 波M
   }
-  // 位階出世ゲームはCanvas2Dの独立オーバーレイで3D世界を完全に覆うため、
+  // 位階出世ゲーム・貝合わせはdiv/Canvasの独立オーバーレイで3D世界を完全に覆うため、
   // 見えない3Dシーンの描画(ミニマップ・ブルーム合成・renderer本体)を丸ごと休止して軽量化する
-  if(APP.mode!=="ikaiSuika"){
+  if(APP.mode!=="ikaiSuika"&&APP.mode!=="kaiawase"){
     drawMinimap();    /* ミニマップ(独立2Dキャンバス) */
     BLOOM.update();   /* 夜/夕かつ高品質時のみブルームを有効化 */
     BLOOM.render();   /* 条件に応じ composer(ブルーム) か 通常描画 を選択 */
