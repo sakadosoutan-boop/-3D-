@@ -1289,18 +1289,11 @@ body.taiji-weapon-bow .er-fire{background:radial-gradient(circle at 36% 30%,#ff6
 /* 波AO: スマホで御神酒がタップしても効かないFB。小さな札を指で押しやすくし、取りこぼした指が
    背後のキャンバス(視点ドラッグ)に落ちないよう当たり判定を外側へ拡張する(河童戦の回復不能を解消) */
 @media (pointer:coarse){
-  .er-slot.sake,.er-slot.kotodama{width:64px;height:64px;z-index:6}
-  .er-slot.sake .er-ic,.er-slot.kotodama .er-ic{font-size:27px}
-  .er-slot.sake .er-nm,.er-slot.kotodama .er-nm{font-size:8.5px}
-  .er-slot.sake::after,.er-slot.kotodama::after{content:"";position:absolute;inset:-14px;border-radius:14px}
+  .er-slot.sake{width:64px;height:64px;z-index:6}
+  .er-slot.sake .er-ic{font-size:27px}
+  .er-slot.sake .er-nm{font-size:8.5px}
+  .er-slot.sake::after{content:"";position:absolute;inset:-14px;border-radius:14px}
 }
-/* 言霊祓い: 体勢崩し(チャンス)専用の追加攻撃ボタン。通常は控えめ、好機のみ金色に発光 */
-.er-slot.kotodama{border-color:rgba(190,140,255,.5);background:linear-gradient(180deg,rgba(40,26,58,.9),rgba(18,12,28,.92))}
-.er-slot.kotodama .er-ic{font-family:var(--serif,serif);font-size:19px;color:#e6d4ff}
-.er-slot.kotodama .er-badge{display:block;right:-4px;top:-6px;min-width:22px;text-align:center;background:linear-gradient(180deg,rgba(72,40,110,.98),rgba(30,16,48,.96));color:#f0e2ff}
-.er-slot.kotodama.empty{filter:grayscale(.85) brightness(.58);opacity:.58}
-.er-slot.kotodama.ready{border-color:#ffe27a;box-shadow:0 0 0 2px rgba(255,226,122,.5),0 0 16px rgba(255,214,106,.6);animation:kdReadyPulse 1.1s ease-in-out infinite}
-@keyframes kdReadyPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 /* 右下: ガード/パリィ + 攻撃 */
 #erActions{position:absolute;right:calc(env(safe-area-inset-right) + 12px);bottom:calc(env(safe-area-inset-bottom) + 12px);display:flex;align-items:flex-end;gap:12px;pointer-events:none}
 .er-act{pointer-events:auto;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;color:#fff;
@@ -1440,69 +1433,6 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 .tjfx-band-text{font-family:var(--serif);font-size:clamp(26px,8vw,52px);font-weight:900;letter-spacing:.3em;padding-left:.3em;white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis}
 #tjfxFelled .tjfx-band-text{color:#e8c86a;text-shadow:0 0 4px #000,0 0 18px rgba(232,200,106,.85),0 0 36px rgba(232,200,106,.45)}
 #tjfxDied .tjfx-band-text{color:#b3202a;text-shadow:0 0 24px rgba(179,32,42,.6),0 2px 10px #000}
-/* 言霊祓い: かな連鎖詠唱オーバーレイ */
-#kotodamaOverlay{position:fixed;inset:0;z-index:112;display:none;align-items:center;justify-content:center;
-  padding:max(16px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
-  background:radial-gradient(circle at 50% 40%,rgba(70,30,110,.34),rgba(8,3,14,.88) 62%,rgba(2,1,5,.95));backdrop-filter:blur(3px)}
-#kotodamaOverlay.show{display:flex}
-.kd-panel{width:min(400px,94vw);text-align:center;padding:16px 16px 18px;border:1px solid rgba(200,160,255,.5);border-radius:12px;
-  background:linear-gradient(180deg,rgba(36,22,52,.94),rgba(16,10,24,.96));box-shadow:0 20px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);font-family:var(--sans)}
-.kd-title{font-family:var(--serif,serif);font-size:19px;font-weight:900;letter-spacing:.14em;color:#f0e2ff;text-shadow:0 2px 8px #000,0 0 16px rgba(180,120,255,.4)}
-.kd-title small{display:block;margin-top:4px;font-family:var(--sans);font-size:10.5px;font-weight:400;letter-spacing:.05em;color:#c9b6e0}
-.kd-targets{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:11px 0}
-.kd-target{padding:4px 10px;border-radius:999px;border:1px solid rgba(200,170,255,.4);background:rgba(60,36,84,.55);color:#d8c6f0;font-size:12px;letter-spacing:.06em}
-.kd-target.done{border-color:#ffe27a;background:linear-gradient(180deg,rgba(116,88,20,.7),rgba(70,52,10,.75));color:#fff2c8;text-decoration:line-through;text-decoration-color:rgba(255,226,122,.6)}
-.kd-timer{position:relative;height:6px;margin:0 2px 12px;border-radius:3px;background:rgba(0,0,0,.5);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.6)}
-.kd-timer-fill{height:100%;width:100%;background:linear-gradient(90deg,#c99bff,#7a4bd6);transition:width .08s linear}
-.kd-gridwrap{position:relative;width:min(320px,80vw);margin:0 auto}
-.kd-lines{position:absolute;inset:0;pointer-events:none;overflow:visible}
-.kd-lines line{stroke:rgba(255,226,150,.85);stroke-width:3;stroke-linecap:round}
-.kd-grid{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;touch-action:none}
-.kd-tile{position:relative;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;border-radius:8px;
-  border:1px solid rgba(200,170,255,.34);background:linear-gradient(180deg,rgba(52,34,72,.85),rgba(28,18,40,.9));
-  color:#ecdcff;font-family:var(--serif,serif);font-size:clamp(15px,4.6vw,20px);font-weight:700;-webkit-user-select:none;user-select:none;
-  box-shadow:0 3px 8px rgba(0,0,0,.4);transition:transform .1s,background .15s,border-color .15s}
-.kd-tile.active{border-color:#ffe27a;background:linear-gradient(180deg,rgba(120,88,30,.9),rgba(70,48,14,.92));transform:scale(1.08);box-shadow:0 0 10px rgba(255,214,106,.5)}
-.kd-tile.used{border-color:#ffe27a;background:linear-gradient(180deg,rgba(90,68,18,.55),rgba(50,36,10,.6));color:#fff2c8;opacity:.72}
-.kd-tile.fail{animation:kdShake .3s ease}
-@keyframes kdShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-.kd-chain{min-height:16px;margin-top:10px;font-size:12px;letter-spacing:.06em;color:#ffe7ba;text-shadow:0 1px 4px #000}
-.kd-cancel{margin-top:12px;min-height:38px;padding:8px 16px;border-radius:999px;border:1px solid rgba(200,170,255,.4);
-  background:rgba(255,255,255,.06);color:#d8c6f0;font-size:11.5px;letter-spacing:.04em;cursor:pointer;font-family:var(--sans)}
-#kdResult{position:fixed;z-index:113;left:50%;top:40%;transform:translate(-50%,-50%) scale(.9);pointer-events:none;opacity:0;text-align:center;
-  font-family:var(--serif,serif);font-weight:900;font-size:clamp(24px,6.4vw,44px);letter-spacing:.1em;color:#fff2d8;
-  text-shadow:0 0 16px rgba(200,150,255,.9),0 3px 10px #000;white-space:nowrap}
-#kdResult.show{animation:kdResultShow .95s cubic-bezier(.2,.9,.25,1)}
-@keyframes kdResultShow{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}25%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-62%) scale(1.02)}}
-/* 位階出世ゲーム(すいかゲーム風マージ) */
-#ikaiHud{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;
-  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
-  background:radial-gradient(circle at 50% 30%,#3a2c14 0%,#0a0704 62%,#030201 100%);font-family:var(--sans)}
-#ikaiHud.show{display:flex}
-.ikai-top{width:min(420px,94vw);display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-#ikaiQuit{width:34px;height:34px;border-radius:50%;border:1px solid rgba(201,162,63,.5);background:rgba(20,14,8,.7);color:#e9dcc2;font-size:14px;cursor:pointer}
-.ikai-title{font-family:var(--serif,serif);font-size:15px;font-weight:900;letter-spacing:.14em;color:#f0dfa8;text-shadow:0 2px 8px #000}
-.ikai-stats{display:flex;gap:8px}
-.ikai-stat{padding:4px 10px;border-radius:8px;border:1px solid rgba(201,162,63,.4);background:rgba(24,16,9,.7);font-size:11px;color:#d8c6a0;text-align:center}
-.ikai-stat span{display:block;font-size:8.5px;letter-spacing:.1em;opacity:.75}
-.ikai-stat b{font-size:14px;color:#ffd9a0}
-.ikai-board{position:relative;width:min(300px,80vw);aspect-ratio:280/400;margin-top:2px}
-#ikaiCanvas{width:100%;height:100%;border-radius:10px;border:1px solid rgba(201,162,63,.5);box-shadow:0 14px 40px rgba(0,0,0,.5);touch-action:none;display:block}
-.ikai-next-wrap{position:absolute;right:-6px;top:-6px;display:flex;flex-direction:column;align-items:center;gap:3px;
-  padding:5px 7px;border-radius:9px;border:1px solid rgba(201,162,63,.42);background:rgba(20,14,8,.86);box-shadow:0 6px 16px rgba(0,0,0,.4)}
-.ikai-next-wrap span{font-size:8.5px;letter-spacing:.1em;color:#d8c6a0}
-.ikai-next-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:8px;font-weight:700;text-align:center;line-height:1.1;color:#fff6df;
-  text-shadow:-1px -1px 0 rgba(0,0,0,.85),1px -1px 0 rgba(0,0,0,.85),-1px 1px 0 rgba(0,0,0,.85),1px 1px 0 rgba(0,0,0,.85);
-  border:1px solid rgba(0,0,0,.35);box-shadow:inset 0 1px 3px rgba(255,255,255,.3)}
-#ikaiGameOver,#ikaiHelp{position:absolute;inset:0;z-index:2;display:none;align-items:center;justify-content:center;background:rgba(4,2,1,.7)}
-#ikaiGameOver.show,#ikaiHelp.show{display:flex}
-.ikai-card{width:min(300px,88%);text-align:center;padding:18px 16px;border:1px solid rgba(201,162,63,.6);border-radius:10px;
-  background:linear-gradient(180deg,rgba(30,20,12,.97),rgba(15,10,6,.98));box-shadow:0 16px 40px rgba(0,0,0,.5)}
-.ikai-card-title{font-family:var(--serif,serif);font-size:18px;font-weight:900;color:#f0dfa8;letter-spacing:.1em;margin-bottom:10px;text-shadow:0 2px 8px #000}
-.ikai-card-detail{font-size:12.5px;line-height:1.9;color:#e9dcc2;margin-bottom:14px}
-.ikai-card-text{font-size:12px;line-height:1.85;color:#d8c6a0;margin-bottom:14px;text-align:left}
-.ikai-card .t-btn{width:100%;margin-top:6px;min-height:42px}
 /* 季節選択(退治) */
 #taijiSeason{display:none;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 #taijiSeason .ss-btn{padding:8px 12px;border:1px solid rgba(170,100,60,.7);background:rgba(40,20,30,.6);color:#e8d8c0;border-radius:5px;cursor:pointer;font-size:12px;font-family:var(--sans)}
@@ -6856,6 +6786,406 @@ function updateHouseholdWalk(dt,t){
     if(it&&it.labelPos)it.labelPos.set(root.position.x,root.position.y+(root.userData.labelOffset||1.8),root.position.z);
   });
 }
+
+/* APP_LIVING_ESTATE_EMBED_BEGIN (src/app/living-estate.js から自動生成。ここを直接編集しない) */
+/*
+ * Living estate: embedded after household people and updateHouseholdWalk.
+ * It only orchestrates the figures already placed in the scene.
+ */
+(function livingEstateSystem(){
+  "use strict";
+
+  if(typeof window==="undefined"||window.LIVING_ESTATE)return;
+
+  const VERSION="1.0.0";
+  const STORAGE_KEY="shinden3d-estate-life-v1";
+  const TIMES=["dawn","day","dusk","night"];
+  const ROLES=["keishi","menoto","myobu","gejo","zuishin","toneri","genan"];
+  const ROLE_NAMES={
+    keishi:"家司",menoto:"乳母",myobu:"女房",gejo:"下女",
+    zuishin:"随身",toneri:"舎人",genan:"下男・番人"
+  };
+  const ACTIVITY_NAMES={
+    ledger:"政所で帳簿を整える",errand:"使いの段取りをする",receive:"文を取り次ぐ",
+    childCare:"子女の世話をする",meal:"食事の支度をする",letter:"文を代筆する",
+    prepare:"装いと調度を整える",clean:"掃除をする",wash:"洗い物をする",
+    guard:"門と車寄を警護する",patrol:"外周を見回る",escort:"来客を先導する",
+    message:"文や荷を届ける",stable:"牛車まわりを整える",garden:"庭を手入れする",
+    rest:"持ち場で休む"
+  };
+
+  // Existing routes are used as the safety envelope.  Reversing or pausing them
+  // changes the day's rhythm without sending people through walls or the pond.
+  const SCHEDULES={
+    keishi:{
+      dawn:{activity:"ledger",route:"base",speed:.068},day:{activity:"errand",route:"reverse",speed:.096},
+      dusk:{activity:"receive",route:"base",speed:.074},night:{activity:"rest",route:"home",speed:0}
+    },
+    menoto:{
+      dawn:{activity:"childCare",route:"base",speed:.064},day:{activity:"meal",route:"reverse",speed:.078},
+      dusk:{activity:"childCare",route:"base",speed:.066},night:{activity:"rest",route:"home",speed:0}
+    },
+    myobu:{
+      dawn:{activity:"letter",route:"base",speed:.066},day:{activity:"prepare",route:"reverse",speed:.072},
+      dusk:{activity:"letter",route:"base",speed:.062},night:{activity:"rest",route:"home",speed:0}
+    },
+    gejo:{
+      dawn:{activity:"clean",route:"base",speed:.080},day:{activity:"wash",route:"reverse",speed:.086},
+      dusk:{activity:"clean",route:"base",speed:.070},night:{activity:"rest",route:"home",speed:0}
+    },
+    zuishin:{
+      dawn:{activity:"guard",route:"base",speed:.074},day:{activity:"escort",route:"reverse",speed:.090},
+      dusk:{activity:"patrol",route:"base",speed:.084},night:{activity:"guard",route:"reverse",speed:.062}
+    },
+    toneri:{
+      dawn:{activity:"stable",route:"base",speed:.082},day:{activity:"message",route:"reverse",speed:.104},
+      dusk:{activity:"message",route:"base",speed:.090},night:{activity:"rest",route:"home",speed:0}
+    },
+    genan:{
+      dawn:{activity:"garden",route:"base",speed:.078},day:{activity:"patrol",route:"reverse",speed:.088},
+      dusk:{activity:"garden",route:"base",speed:.072},night:{activity:"guard",route:"home",speed:0}
+    }
+  };
+
+  const OVERHEARD=[
+    {id:"keishi-ledger",time:"dawn",roles:["keishi","myobu"],anchor:{x:-8,z:18,r:7},cooldown:76000,name:"家司と女房",text:"政所では、荘園から届く米や布の記録も確かめます。屋敷の運営を支える大切な仕事なのです。"},
+    {id:"menoto-care",time:"day",roles:["menoto","myobu"],anchor:{x:8,z:2,r:7},cooldown:76000,name:"乳母と女房",text:"乳母は授乳だけでなく、子の成長後も後見役として深い結びつきを持ちました。"},
+    {id:"myobu-letter",time:"dusk",roles:["myobu","keishi"],anchor:{x:1,z:-3,r:7},cooldown:76000,name:"女房と家司",text:"女房は和歌や手紙の教養を生かし、御簾の内と外を結ぶ文の取次も担いました。"},
+    {id:"gejo-water",time:"dawn",roles:["gejo","genan"],anchor:{x:15,z:5,r:8},cooldown:76000,name:"下女と下男",text:"炊事、洗濯、掃除には多くの水と薪が要ります。屋敷の暮らしは見えない仕事で成り立ちます。"},
+    {id:"zuishin-guard",time:"dusk",roles:["zuishin","toneri"],anchor:{x:45,z:15,r:9},cooldown:76000,name:"随身と舎人",text:"随身は弓矢を携え主人を守り、舎人は使者や荷運び、牛を引く役目を果たしました。"},
+    {id:"genan-gate",time:"night",roles:["genan","zuishin"],anchor:{x:-51,z:3,r:9},cooldown:76000,name:"番人と随身",text:"門と築地は屋敷の境です。夜の見回りは、内と外を分けるためにも欠かせません。"},
+    {id:"toneri-cart",time:"day",roles:["toneri","zuishin"],anchor:{x:45,z:18,r:9},cooldown:76000,name:"舎人と随身",text:"牛車を使う外出では、牛を引く者、先導する者、警護する者が役割を分けて付き従いました。"}
+  ];
+  const ARRIVALS={
+    messenger:{label:"使者の到着",hint:"門の近くで、舎人が文を受け取っている。",actor:"toneri",duration:18000,anchor:{x:43,z:18}},
+    visitor:{label:"来客の到着",hint:"東門で、随身が来客を迎えている。",actor:"zuishin",duration:20000,anchor:{x:49,z:11}},
+    oxCart:{label:"牛車の到着",hint:"車宿の方から、牛車がゆっくり近づいてくる。",actor:"toneri",duration:22000,anchor:{x:46,z:17}}
+  };
+  const ARRIVAL_BY_TIME={dawn:"messenger",day:"visitor",dusk:"oxCart",night:"messenger"};
+
+  const state={
+    ready:false,actors:Object.create(null),base:Object.create(null),phase:"day",cycle:0,
+    lastTime:null,lastUpdate:0,lastWalkMode:null,lastStatusAt:0,panel:null,panelOpen:false,button:null,overlay:null,overlayTimer:0,
+    heardCycle:Object.create(null),heardLast:Object.create(null),storage:{heard:Object.create(null)},
+    arrival:null,nextArrival:null,autoArrivalAt:0,lastArrival:null,destroyed:false
+  };
+
+  function safeStoreLoad(){
+    try{
+      const raw=localStorage.getItem(STORAGE_KEY),parsed=raw?JSON.parse(raw):null;
+      if(parsed&&typeof parsed==="object")state.storage={heard:parsed.heard||Object.create(null)};
+    }catch(e){state.storage={heard:Object.create(null)};}
+  }
+  function safeStoreSave(){
+    try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state.storage));}catch(e){}
+  }
+  function say(message,ms){if(typeof toast==="function")toast(message,ms||2400);}
+  function sound(f){if(typeof beep==="function")beep(f,.045,"sine",.055);}
+  function walkMode(){return !!(APP&&APP.mode==="walk");}
+  function blocked(){return !walkMode()||!!(APP&&APP.gisshaCarry&&APP.gisshaCarry.active);}
+  function actorFor(id){return state.actors[id]||null;}
+  function actorDistance(root){
+    if(!root||!player||!player.pos)return Infinity;
+    return Math.hypot(root.position.x-player.pos.x,root.position.z-player.pos.z);
+  }
+  function near(point,radius){
+    if(!point||!player||!player.pos)return false;
+    return Math.hypot(player.pos.x-point.x,player.pos.z-point.z)<=radius;
+  }
+  function cloneRoute(route){return route.map(p=>({x:p.x,z:p.z}));}
+
+  function rememberActors(){
+    if(!Array.isArray(householdPeople))return false;
+    householdPeople.forEach(root=>{
+      const id=root&&root.userData&&root.userData.householdId;
+      if(!id||ROLES.indexOf(id)<0)return;
+      state.actors[id]=root;
+      if(!state.base[id]){
+        const current=root.userData.walkRoute||[];
+        state.base[id]={
+          route:cloneRoute(current),walkReady:!!root.userData.walkReady,
+          speed:root.userData.walkSpeed||.08,phase:root.userData.walkPhase||0,
+          home:root.userData.home?{x:root.userData.home.x,z:root.userData.home.z,yaw:root.userData.home.yaw}:null
+        };
+      }
+    });
+    return Object.keys(state.actors).length>0;
+  }
+  function routeFor(id,kind){
+    const base=state.base[id];
+    if(!base)return [];
+    if(kind==="home"&&base.home)return [{x:base.home.x,z:base.home.z}];
+    const route=cloneRoute(base.route);
+    return kind==="reverse"?route.reverse():route;
+  }
+  function applyActorSchedule(id,time){
+    const root=actorFor(id),spec=SCHEDULES[id]&&SCHEDULES[id][time];
+    if(!root||!spec)return;
+    const route=routeFor(id,spec.route);
+    root.userData.walkRoute=route;
+    root.userData.walkReady=walkMode()&&route.length>1&&spec.speed>0;
+    root.userData.walkSpeed=spec.speed;
+    root.userData.estateActivity=spec.activity;
+    root.userData.estateActivityName=ACTIVITY_NAMES[spec.activity]||spec.activity;
+    root.userData.estateScheduleTime=time;
+    if(spec.route==="home"&&state.base[id]&&state.base[id].home){
+      const home=state.base[id].home;
+      root.position.set(home.x,groundH(home.x,home.z),home.z);
+      root.rotation.y=home.yaw||0;
+    }
+  }
+  function applySchedule(time,reason){
+    const next=TIMES.indexOf(time)>=0?time:"day";
+    state.phase=next;
+    ROLES.forEach(id=>applyActorSchedule(id,next));
+    if(reason==="time"){
+      state.cycle++;
+      state.nextArrival=ARRIVAL_BY_TIME[next]||null;
+      state.autoArrivalAt=performance.now()+17000;
+    }
+    refreshPanel();
+    refreshStatus();
+  }
+  function pauseActors(){
+    ROLES.forEach(id=>{
+      const root=actorFor(id);
+      if(root)root.userData.walkReady=false;
+    });
+  }
+
+  function createUi(){
+    if(!document||state.destroyed)return;
+    if(!document.querySelector("#estateLifeStyles")){
+      const css=document.createElement("style");
+      css.id="estateLifeStyles";
+      css.textContent="\n#estateLifePanel{position:fixed;z-index:58;right:12px;top:calc(var(--topbar-h,52px) + 10px);width:min(350px,calc(100vw - 24px));max-height:min(72vh,610px);overflow:auto;display:none;padding:12px;background:rgba(35,25,17,.96);border:1px solid rgba(207,170,93,.72);border-radius:7px;color:#f4e8ce;font-family:var(--sans,system-ui);box-shadow:0 10px 30px rgba(0,0,0,.38)}\n#estateLifePanel.open{display:block}#estateLifePanel .el-head{display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(222,193,126,.28);padding-bottom:8px;margin-bottom:8px}#estateLifePanel h2{font:600 17px var(--serif,serif);margin:0;color:#f1d782}#estateLifePanel .el-close{margin-left:auto;min-width:34px;min-height:32px;border:1px solid rgba(207,170,93,.55);border-radius:5px;background:#4d3422;color:#fff;font-size:18px}#estateLifePanel .el-time{font-size:12px;color:#d9c68e;margin:0 0 8px}#estateLifePanel .el-row{display:flex;justify-content:space-between;gap:10px;padding:7px 2px;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;line-height:1.35}#estateLifePanel .el-row strong{font-family:var(--serif,serif);white-space:nowrap;color:#f4e8ce}#estateLifePanel .el-row span{text-align:right;color:#d7c7a7}#estateLifePanel .el-section{font:600 12px var(--serif,serif);color:#e2c673;margin:13px 0 5px}#estateLifePanel .el-event{width:100%;margin:4px 0;min-height:35px;display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid rgba(207,170,93,.38);border-radius:5px;background:#473223;color:#f8edcf;padding:6px 8px;font:12px var(--sans,system-ui);text-align:left}#estateLifePanel .el-event small{color:#d5ba78;font-size:10px}#estateLifePanel .el-event:disabled{opacity:.52}#estateLifeHeard{position:fixed;z-index:55;left:50%;bottom:94px;transform:translateX(-50%);width:min(430px,calc(100vw - 28px));display:none;padding:11px 13px;background:rgba(31,23,16,.94);border-left:3px solid #d0a848;border-radius:5px;color:#f4e8ce;box-shadow:0 8px 20px rgba(0,0,0,.3);font-family:var(--sans,system-ui);pointer-events:none}#estateLifeHeard.show{display:block}#estateLifeHeard b{display:block;margin-bottom:3px;color:#e5c66e;font-family:var(--serif,serif);font-size:14px}#estateLifeHeard span{font-size:12px;line-height:1.55}@media(max-width:640px){#estateLifePanel{right:10px;top:calc(var(--topbar-h,52px) + 7px);max-height:64vh;padding:10px}#estateLifePanel .el-row{font-size:11.5px}#estateLifeHeard{bottom:84px}}\n";
+      document.head.appendChild(css);
+    }
+    const topbar=document.getElementById("topbar");
+    if(topbar&&!state.button){
+      const button=document.createElement("button");
+      button.type="button";button.id="tbEstateLife";button.className="tb-btn";
+      button.setAttribute("aria-label","屋敷の一日の日課を開く");button.title="屋敷の一日";button.textContent="日課";
+      button.addEventListener("click",()=>state.panelOpen?closeSchedule():openSchedule());
+      const spacer=topbar.querySelector(".spacer");
+      topbar.insertBefore(button,spacer||null);state.button=button;
+    }
+    if(!state.panel){
+      const panel=document.createElement("section");
+      panel.id="estateLifePanel";panel.setAttribute("role","dialog");panel.setAttribute("aria-label","屋敷の一日");
+      document.body.appendChild(panel);state.panel=panel;
+    }
+    if(!state.overlay){
+      const overlay=document.createElement("div");overlay.id="estateLifeHeard";overlay.setAttribute("aria-live","polite");
+      document.body.appendChild(overlay);state.overlay=overlay;
+    }
+  }
+  function element(tag,className,text){
+    const node=document.createElement(tag);if(className)node.className=className;if(text!=null)node.textContent=text;return node;
+  }
+  function refreshPanel(){
+    const panel=state.panel;if(!panel)return;
+    const fragment=document.createDocumentFragment();
+    const head=element("div","el-head"),title=element("h2","","屋敷の一日");
+    const close=element("button","el-close","×");close.type="button";close.setAttribute("aria-label","日課を閉じる");close.onclick=closeSchedule;
+    head.append(title,close);fragment.appendChild(head);
+    fragment.appendChild(element("p","el-time",({dawn:"朝",day:"昼",dusk:"夕",night:"夜"}[state.phase]||state.phase)+"の務め"));
+    ROLES.forEach(id=>{
+      const root=actorFor(id),name=ROLE_NAMES[id]||id,activity=root&&root.userData&&root.userData.estateActivityName||"持ち場を整える";
+      const row=element("div","el-row");row.append(element("strong","",name),element("span","",activity));fragment.appendChild(row);
+    });
+    fragment.appendChild(element("div","el-section","来訪の気配"));
+    Object.keys(ARRIVALS).forEach(type=>{
+      const def=ARRIVALS[type],button=element("button","el-event");button.type="button";
+      button.setAttribute("aria-label",def.label+"を始める");
+      const stateText=state.arrival&&state.arrival.type===type?"進行中":state.nextArrival===type?"まもなく":"散策中に開始";
+      button.append(element("span","",def.label),element("small","",stateText));
+      button.disabled=!!state.arrival||!walkMode();button.onclick=()=>triggerArrival(type);
+      fragment.appendChild(button);
+    });
+    fragment.appendChild(element("div","el-section","聞き耳"));
+    const heard=Object.keys(state.storage.heard||{}).length;
+    fragment.appendChild(element("p","el-time","屋敷を歩くと、役目にまつわる会話が聞こえることがあります。記録済み: "+heard+" / "+OVERHEARD.length));
+    panel.replaceChildren(fragment);
+  }
+  function openSchedule(){createUi();if(!state.panel)return false;state.panelOpen=true;state.panel.classList.add("open");refreshPanel();sound(520);return true;}
+  function closeSchedule(){if(!state.panel)return;state.panelOpen=false;state.panel.classList.remove("open");}
+
+  function canShowHeard(){
+    if(blocked()||!state.overlay)return false;
+    const standard=document.getElementById("dialogueBubble");
+    if(standard&&standard.classList.contains("show"))return false;
+    return !(state.arrival&&state.arrival.minimized===false);
+  }
+  function showHeard(entry){
+    if(!canShowHeard())return;
+    state.overlay.replaceChildren(element("b","",entry.name),element("span","",entry.text));
+    state.overlay.classList.add("show");clearTimeout(state.overlayTimer);
+    state.overlayTimer=setTimeout(()=>{if(state.overlay)state.overlay.classList.remove("show");},5600);
+    state.heardLast[entry.id]=performance.now();state.heardCycle[entry.id]=state.cycle;
+    if(!state.storage.heard[entry.id]){
+      state.storage.heard[entry.id]=true;safeStoreSave();
+      if(typeof recordProgress==="function")recordProgress("estateLife",1);
+      if(typeof gainParam==="function")gainParam("knowledge",1);
+    }
+    sound(660);refreshPanel();
+  }
+  function updateOverheard(now){
+    if(!walkMode()||state.arrival||!player||!player.pos)return;
+    for(let i=0;i<OVERHEARD.length;i++){
+      const entry=OVERHEARD[i];
+      if(entry.time!==state.phase||state.heardCycle[entry.id]===state.cycle)continue;
+      if(now-(state.heardLast[entry.id]||0)<entry.cooldown)continue;
+      if(!near(entry.anchor,entry.anchor.r))continue;
+      let rolesReady=true;
+      for(let r=0;r<entry.roles.length;r++){
+        const actor=actorFor(entry.roles[r]);
+        if(!actor||!actor.userData.estateActivity){rolesReady=false;break;}
+      }
+      if(rolesReady){showHeard(entry);break;}
+    }
+  }
+
+  function saveArrivalActors(event){
+    event.actorState=[];
+    const ids=event.type==="visitor"?["zuishin","toneri"]:["toneri",event.type==="oxCart"?"zuishin":null];
+    ids.forEach(id=>{
+      if(!id)return;const root=actorFor(id);if(!root)return;
+      event.actorState.push({id,route:cloneRoute(root.userData.walkRoute||[]),ready:!!root.userData.walkReady,speed:root.userData.walkSpeed||.08});
+    });
+  }
+  function applyArrivalActors(event){
+    event.actorState.forEach(saved=>{
+      const root=actorFor(saved.id),base=state.base[saved.id];if(!root||!base)return;
+      const forward=cloneRoute(base.route),route=saved.id==="zuishin"?forward.slice().reverse():forward;
+      root.userData.walkRoute=route;root.userData.walkReady=route.length>1;root.userData.walkSpeed=saved.id==="toneri"?.11:.092;
+      root.userData.estateActivity="arrival";root.userData.estateActivityName=event.type==="messenger"?"使者を迎える":event.type==="visitor"?"来客を先導する":"牛車を整える";
+    });
+  }
+  function rememberCart(event){
+    const cart=GISSHA_YARD&&GISSHA_YARD.cart;if(!cart)return;
+    event.cart={position:cart.position.clone(),rotation:cart.rotation.clone(),visible:cart.visible};
+  }
+  function restoreCart(event){
+    const cart=GISSHA_YARD&&GISSHA_YARD.cart;
+    if(cart&&event&&event.cart){cart.position.copy(event.cart.position);cart.rotation.copy(event.cart.rotation);cart.visible=event.cart.visible;}
+  }
+  function createVisitor(event){
+    if(event.type!=="visitor"||typeof makeHeianFigure!=="function"||typeof THREE==="undefined"||!scene)return;
+    try{
+      const root=new THREE.Group();
+      const figure=makeHeianFigure({role:"kikoshi",palette:[0x33495b,0x74523b,0xc6a15b],scale:.98,prop:"shaku",pose:"standing"});
+      root.add(figure);root.position.set(55,groundH(55,12),12);root.rotation.y=-Math.PI/2;
+      root.userData.estateVisitor=true;root.userData.householdId="estate_visitor";
+      scene.add(root);event.visitor=root;
+    }catch(e){event.visitor=null;}
+  }
+  function removeVisitor(event){
+    if(event&&event.visitor&&event.visitor.parent)event.visitor.parent.remove(event.visitor);
+    if(event)event.visitor=null;
+  }
+  function triggerArrival(type){
+    const def=ARRIVALS[type];
+    if(!def||!walkMode())return false;
+    if(state.arrival)return false;
+    if(APP&&APP.gisshaCarry&&APP.gisshaCarry.active){say("牛車運びが終わってから来客を迎えよう",2200);return false;}
+    if(type==="oxCart"&&(!GISSHA_YARD||!GISSHA_YARD.cart||typeof gisshaCarrySetCart!=="function"))return false;
+    const event={type,def,started:performance.now(),duration:def.duration,actorState:[],notified:false,minimized:false,cart:null,visitor:null};
+    saveArrivalActors(event);applyArrivalActors(event);rememberCart(event);
+    createVisitor(event);
+    if(type==="oxCart")gisshaCarrySetCart(.88,0);
+    state.arrival=event;state.lastArrival=type;state.nextArrival=null;say(def.label+"。"+def.hint,3100);sound(600);refreshPanel();refreshStatus();return true;
+  }
+  function finishArrival(silent){
+    const event=state.arrival;if(!event)return;
+    restoreCart(event);removeVisitor(event);state.arrival=null;applySchedule(state.phase,"arrival");
+    if(!silent)say("来客の対応がひと段落した",2200);
+    refreshPanel();refreshStatus();
+  }
+  function updateArrival(now){
+    const event=state.arrival;
+    if(!event){
+      if(walkMode()&&state.nextArrival&&state.autoArrivalAt&&now>=state.autoArrivalAt)triggerArrival(state.nextArrival);
+      return;
+    }
+    if(!walkMode()||(APP&&APP.gisshaCarry&&APP.gisshaCarry.active)){finishArrival(true);return;}
+    const elapsed=now-event.started;
+    if(event.type==="visitor"&&event.visitor){
+      const u=Math.min(1,elapsed/Math.max(1,event.duration*.42)),smooth=u*u*(3-2*u);
+      const x=55+(49-55)*smooth,z=12+(11.5-12)*smooth;
+      event.visitor.position.set(x,groundH(x,z),z);
+    }
+    if(event.type==="oxCart"&&typeof gisshaCarrySetCart==="function"){
+      const u=Math.min(1,elapsed/event.duration),smooth=u*u*(3-2*u);
+      gisshaCarrySetCart(.88-.68*smooth,0);
+    }
+    if(!event.notified&&near(event.def.anchor,9)){event.notified=true;say(event.def.hint,2500);}
+    if(elapsed>=event.duration)finishArrival(false);
+  }
+
+  function refreshStatus(){
+    const phases={};ROLES.forEach(id=>{const root=actorFor(id);phases[id]=root&&root.userData&&root.userData.estateActivity||null;});
+    window.LIVING_ESTATE_STATUS={
+      version:VERSION,ready:state.ready,actorCount:Object.keys(state.actors).length,phase:state.phase,
+      schedulePhases:phases,overheardCount:OVERHEARD.length,heardCount:Object.keys(state.storage.heard||{}).length,
+      arrivalTypes:Object.keys(ARRIVALS),activeArrival:state.arrival&&state.arrival.type||null,nextArrival:state.nextArrival
+    };
+  }
+  function update(dt,t){
+    if(state.destroyed)return;
+    if(!state.ready){init();if(!state.ready)return;}
+    const now=performance.now(),time=APP&&APP.time||"day",isWalk=walkMode();
+    if(time!==state.lastTime){state.lastTime=time;applySchedule(time,"time");}
+    if(isWalk!==state.lastWalkMode){
+      state.lastWalkMode=isWalk;
+      if(isWalk)applySchedule(time,"mode");else pauseActors();
+    }else if(!isWalk)pauseActors();
+    updateArrival(now);
+    if(isWalk)updateOverheard(now);
+    state.lastUpdate=now;
+    if(now-state.lastStatusAt>=500){state.lastStatusAt=now;refreshStatus();}
+  }
+  function setTimeForTest(time){
+    if(TIMES.indexOf(time)<0)return false;
+    if(APP)APP.time=time;state.lastTime=time;applySchedule(time,"time");return true;
+  }
+  function reset(options){
+    finishArrival(true);state.heardCycle=Object.create(null);state.heardLast=Object.create(null);
+    if(options&&options.clearProgress){state.storage={heard:Object.create(null)};safeStoreSave();}
+    state.lastTime=null;state.lastWalkMode=null;applySchedule((APP&&APP.time)||"day","reset");refreshStatus();
+  }
+  function destroy(){
+    if(state.destroyed)return;
+    finishArrival(true);clearTimeout(state.overlayTimer);
+    ROLES.forEach(id=>{
+      const root=actorFor(id),base=state.base[id];if(!root||!base)return;
+      root.userData.walkRoute=cloneRoute(base.route);root.userData.walkReady=base.walkReady;root.userData.walkSpeed=base.speed;root.userData.walkPhase=base.phase;
+    });
+    if(state.panel&&state.panel.parentNode)state.panel.parentNode.removeChild(state.panel);
+    if(state.button&&state.button.parentNode)state.button.parentNode.removeChild(state.button);
+    if(state.overlay&&state.overlay.parentNode)state.overlay.parentNode.removeChild(state.overlay);
+    state.destroyed=true;state.ready=false;refreshStatus();
+  }
+  function init(){
+    if(state.ready||state.destroyed)return state.ready;
+    safeStoreLoad();rememberActors();createUi();
+    state.lastTime=APP&&APP.time||"day";applySchedule(state.lastTime,"init");
+    state.nextArrival=ARRIVAL_BY_TIME[state.phase]||null;
+    state.autoArrivalAt=performance.now()+17000;
+    state.ready=Object.keys(state.actors).length>0;refreshStatus();return state.ready;
+  }
+
+  window.LIVING_ESTATE={
+    version:VERSION,get ready(){return state.ready;},schedules:SCHEDULES,
+    get status(){return window.LIVING_ESTATE_STATUS;},update,setTimeForTest,triggerArrival,
+    openSchedule,closeSchedule,reset,destroy,init
+  };
+  // This file is embedded before APP is declared in the single-file build.
+  // Deferring initialization lets the enclosing script finish its declarations.
+  if(typeof queueMicrotask==="function")queueMicrotask(init);
+  else setTimeout(init,0);
+})();
+/* APP_LIVING_ESTATE_EMBED_END */
 
 /* ============================================================
    夜の怪異(鬼・式神) — 夜だけ出現
@@ -14891,6 +15221,111 @@ $("gfxJ_dynamic").onclick=()=>{PREFS.set("joyMode","dynamic");applyJoy("dynamic"
 applyJoy(PREFS.get("joyMode","fixed")); // 起動時にジョイ方式を復元
 GFX.init();
 
+/* APP_LOW_POWER_EMBED_BEGIN (src/app/low-power.js から自動生成。ここを直接編集しない) */
+(function(){
+"use strict";
+const STORAGE_KEY="lowPowerMode";
+let active=false,previous=null;
+
+function prefGet(key,fallback){
+  try{const value=PREFS.get(key);return value==null?fallback:value;}catch(e){return fallback;}
+}
+function prefSet(key,value){try{PREFS.set(key,value);}catch(e){}}
+function fpsButtons(value){
+  [["gfxFc_30",30],["gfxFc_60",60],["gfxFc_0",0]].forEach(([id,n])=>{
+    const button=document.getElementById(id);if(button)button.classList.toggle("on",n===value);
+  });
+}
+function setFps(value){APP_FPSCAP=value;fpsButtons(value);}
+function particleGroups(){
+  const groups=[];
+  if(typeof petals!=="undefined"&&petals)groups.push(petals);
+  if(typeof autumnLeaves!=="undefined"&&autumnLeaves)groups.push(autumnLeaves);
+  if(typeof leaves!=="undefined"&&leaves&&leaves.isObject3D)groups.push(leaves);
+  if(typeof snowFall!=="undefined"&&snowFall)groups.push(snowFall);
+  if(typeof rainFall!=="undefined"&&rainFall)groups.push(rainFall);
+  if(typeof fireflies!=="undefined"&&fireflies)groups.push(fireflies);
+  if(typeof tourouGroup!=="undefined"&&tourouGroup)groups.push(tourouGroup);
+  return groups;
+}
+function syncUi(){
+  const on=document.getElementById("gfxEco_on"),off=document.getElementById("gfxEco_off");
+  if(on)on.classList.toggle("on",active);
+  if(off)off.classList.toggle("on",!active);
+  ["gfxP_auto","gfxP_high","gfxP_medium","gfxP_low","gfxB_auto","gfxB_on","gfxB_off","gfxFc_30","gfxFc_60","gfxFc_0"].forEach(id=>{
+    const button=document.getElementById(id);if(button)button.disabled=active;
+  });
+  const note=document.getElementById("gfxEcoNote");
+  if(note)note.textContent=active?"30fps・影なし・発光と季節粒子を停止中":"通常設定を使用中";
+}
+function apply(on,{persist=true,silent=false}={}){
+  on=!!on;
+  if(on===active){syncUi();return active;}
+  if(on){
+    previous={
+      quality:typeof GFX!=="undefined"?GFX.preset:"auto",
+      bloom:typeof GFX!=="undefined"?GFX.bloom:"auto",
+      fps:APP_FPSCAP,
+      shadows:!!(renderer&&renderer.shadowMap&&renderer.shadowMap.enabled)
+    };
+    active=true;
+    if(typeof QUALITY!=="undefined")QUALITY.setForced(3);
+    if(typeof BLOOM!=="undefined")BLOOM.setMode("off");
+    setFps(30);
+    if(renderer&&renderer.shadowMap)renderer.shadowMap.enabled=false;
+    particleGroups().forEach(group=>{group.visible=false;});
+  }else{
+    active=false;
+    const restore=previous||{
+      quality:prefGet("gfxPreset","auto"),bloom:prefGet("gfxBloom","auto"),
+      fps:+prefGet("fpscap",IS_TOUCH?30:60),shadows:true
+    };
+    if(typeof GFX!=="undefined"){
+      GFX.setPreset(restore.quality||"auto");
+      GFX.setBloom(restore.bloom||"auto");
+    }else{
+      if(typeof QUALITY!=="undefined")QUALITY.setForced(null);
+      if(typeof BLOOM!=="undefined")BLOOM.setMode(restore.bloom||"auto");
+    }
+    setFps(Number.isFinite(+restore.fps)?+restore.fps:(IS_TOUCH?30:60));
+    if(renderer&&renderer.shadowMap){renderer.shadowMap.enabled=restore.shadows!==false;renderer.shadowMap.needsUpdate=true;}
+    previous=null;
+    if(typeof applySeason==="function"&&APP&&APP.season)applySeason(APP.season);
+  }
+  if(persist)prefSet(STORAGE_KEY,on?"1":"0");
+  syncUi();
+  if(!silent&&typeof beep==="function")beep(on?420:620,.05,"triangle",.05);
+  if(!silent&&typeof toast==="function")toast(on?"省電力モードを開始しました":"通常描画へ戻しました",1800);
+  return active;
+}
+function update(){
+  if(!active)return;
+  if(APP_FPSCAP!==30)setFps(30);
+  if(renderer&&renderer.shadowMap&&renderer.shadowMap.enabled)renderer.shadowMap.enabled=false;
+  particleGroups().forEach(group=>{if(group.visible)group.visible=false;});
+}
+function installUi(){
+  if(document.getElementById("gfxEco_on"))return;
+  const graphicsTitle=[...document.querySelectorAll("#gfx .gfx-section")].find(el=>el.textContent.includes("グラフィック"));
+  const firstRow=graphicsTitle&&graphicsTitle.nextElementSibling;
+  if(!firstRow||!firstRow.parentNode)return;
+  const row=document.createElement("div");row.className="gfx-row";row.id="gfxEcoRow";
+  row.innerHTML='<span class="gfx-lbl">省電力モード<small id="gfxEcoNote" style="display:block;color:#b9ab8c;line-height:1.45"></small></span>'+
+    '<span class="gfx-opts"><button class="tb-btn" id="gfxEco_on" type="button">入</button><button class="tb-btn" id="gfxEco_off" type="button">切</button></span>';
+  firstRow.parentNode.insertBefore(row,firstRow);
+  document.getElementById("gfxEco_on").onclick=()=>apply(true);
+  document.getElementById("gfxEco_off").onclick=()=>apply(false);
+  syncUi();
+}
+
+installUi();
+const saved=prefGet(STORAGE_KEY,"0")==="1";
+if(saved)apply(true,{persist:false,silent:true});else syncUi();
+window.LOW_POWER={version:1,get active(){return active;},enable:()=>apply(true),disable:()=>apply(false),set:apply,update,getStatus:()=>({active,fps:APP_FPSCAP,quality:QUALITY.forced,bloom:BLOOM.mode,shadows:renderer.shadowMap.enabled})};
+window.LOW_POWER_STATUS={ready:true,storageKey:STORAGE_KEY,stops:["shadows","bloom","seasonal-particles"],fps:30};
+})();
+/* APP_LOW_POWER_EMBED_END */
+
 /* ============================================================
    歌合(うたあわせ)モード — 集めた和歌短冊で左方として競う
    既存の WAKA_DATA(収集和歌) と codexUnlocked(収集状態) を再利用。
@@ -18475,6 +18910,254 @@ if($("rnExitTop"))$("rnExitTop").onclick=()=>{
   setTimeout(()=>location.reload(),180);
 };
 
+/* APP_KOH_AWASE_EMBED_BEGIN (src/app/koh-awase.js から自動生成。ここを直接編集しない) */
+/*
+ * 薫物合（香合わせ）: standalone, no external assets.
+ * This source is embedded after the existing mini-game scripts.
+ */
+(function(){
+  "use strict";
+
+  const STORAGE_KEY="shinden3d-koh-awase-v1";
+  const MODAL_ID="kohAwaseModal";
+  const ENTRY_ID="kohAwaseEntry";
+  const QUESTION_COUNT=5;
+  const BANK=[
+    {id:"umehana-name",kind:"name",prompt:"春の花を思わせる代表的な名はどれ？",choices:["梅花","荷葉","黒方","落葉"],answer:0,explain:"梅花（ばいか）は、春の花を思わせる代表名です。香りの調合は家や人によって異なり、この印象は固定のレシピを意味しません。"},
+    {id:"kayo-summer",kind:"season",prompt:"夏の池辺の軽やかな趣に合う代表名はどれ？",choices:["菊花","侍従","荷葉","黒方"],answer:2,explain:"荷葉（かよう）は蓮の葉を思わせる、夏の軽やかな連想と結ばれる代表名です。実際の香りは一通りではありません。"},
+    {id:"jiju-autumn-wind",kind:"impression",prompt:"穏やかな秋風を思わせる、とされる代表名はどれ？",choices:["侍従","梅花","落葉","荷葉"],answer:0,explain:"侍従（じじゅう）は、落ち着いた秋風のような印象と結ばれる代表名です。名称は季節・場・人の教養を含む遊びでした。"},
+    {id:"kikka-autumn",kind:"season",prompt:"菊の季節を連想させる代表名はどれ？",choices:["菊花","荷葉","梅花","黒方"],answer:0,explain:"菊花（きっか）は秋と菊を連想させる代表名です。香そのものだけでなく、季節にふさわしい名を味わうことも大切でした。"},
+    {id:"rakuyo-leaves",kind:"impression",prompt:"散る葉・晩秋の景色を重ねる代表名はどれ？",choices:["黒方","落葉","侍従","梅花"],answer:1,explain:"落葉（らくよう）は、落ち葉や秋の深まりを思わせる代表名です。ここでは代表的な連想を学び、香りを画面で再現するものではありません。"},
+    {id:"kurobo-formal",kind:"impression",prompt:"重厚であらたまった場を思わせる代表名はどれ？",choices:["黒方","荷葉","菊花","梅花"],answer:0,explain:"黒方（くろぼう）は重厚で格式ある趣と結ばれる代表名です。各家の処方や配合量には幅があり、単一の香りに決められません。"},
+    {id:"kneaded-incense",kind:"history",prompt:"平安期の薫物として最も近い説明はどれ？",choices:["香木を一種類だけ焚くもの","香料を練り合わせた練香","花を水に浮かべる遊び","茶葉を比べる会"],answer:1,explain:"薫物は香料を練り合わせる練香です。材料・比率・熟成などは家ごとに伝えられ、同名でも同じ処方とは限りません。"},
+    {id:"contest-judgement",kind:"history",prompt:"薫物合で香り以外にも重んじられたものは？",choices:["季節・名・場にふさわしい趣","走る速さ","金銀の量だけ","一度に焚く量"],answer:0,explain:"薫物合は香りだけの点数競技ではありません。季節、名、贈る相手や場面をどう結びつけるかも、教養の見せどころでした。"},
+    {id:"recipe-variation",kind:"history",prompt:"六種の薫物の処方について、適切なのはどれ？",choices:["全国で完全に同じだった","家や人により違いがあった","画面で正確に再現できる","香料は一種類だけだった"],answer:1,explain:"六種は代表的な名ですが、処方と印象は家・人・時代により変わります。このゲームの説明は固定の万能レシピではありません。"},
+    {id:"kodo-difference",kind:"history",prompt:"平安の薫物合と、後世に整った香道の違いとして適切なのは？",choices:["まったく同じ作法だった","薫物合は練香と季節・場の趣を競う遊びだった","香道は平安にだけ存在した","どちらも香りを使わない"],answer:1,explain:"平安の薫物合は練香と季節・名・場を味わう遊びです。後世の香道は香木を聞く作法などを整えた別の文化として発達しました。"},
+    {id:"six-representatives",kind:"history",prompt:"代表的な六種の薫物に含まれないものはどれ？",choices:["梅花","荷葉","藤袴","黒方"],answer:2,explain:"代表的な六種は梅花・荷葉・侍従・菊花・落葉・黒方です。名前は香りと季節や情景を結ぶための大切な手がかりでした。"},
+    {id:"spring-choice",kind:"season",prompt:"春の文に添えるなら、まず検討したい代表名は？",choices:["梅花","落葉","黒方","侍従"],answer:0,explain:"梅花は春の花を思わせる代表名として扱えます。ただし実際の選択では、相手・場面・家の伝承も考え合わせます。"},
+    {id:"autumn-choice",kind:"season",prompt:"深まる秋の便りに、散る葉の景色を添えるなら？",choices:["荷葉","落葉","梅花","黒方"],answer:1,explain:"落葉は晩秋の景色を結ぶ代表名です。薫物合では、このように景色や季節を名で響かせることが大切でした。"},
+    {id:"screen-limits",kind:"history",prompt:"この画面上の香合わせ学習について正しいのは？",choices:["実物と同じ香りを再現している","香りは再現せず、名称と文化的な趣を学ぶ","一つの正解処方を決める","香道の作法をそのまま再現する"],answer:1,explain:"画面では匂いそのものは再現できません。ここでは名称、季節、場、処方に幅があることを通して、薫物合の考え方を学びます。"}
+  ];
+
+  let stored={bestScore:0,plays:0,masteredQuestionIds:[]};
+  let session=null;
+  let modal=null;
+  let priorFocus=null;
+
+  function text(value){ return String(value==null?"":value); }
+  function uniqueStrings(value){ return Array.from(new Set(Array.isArray(value)?value.filter(v=>typeof v==="string"):[])); }
+  function readState(){
+    try{
+      const raw=window.localStorage&&window.localStorage.getItem(STORAGE_KEY);
+      if(!raw)return {bestScore:0,plays:0,masteredQuestionIds:[]};
+      const parsed=JSON.parse(raw);
+      return {
+        bestScore:Math.max(0,Math.min(QUESTION_COUNT,Number(parsed.bestScore)||0)),
+        plays:Math.max(0,Number(parsed.plays)||0),
+        masteredQuestionIds:uniqueStrings(parsed.masteredQuestionIds)
+      };
+    }catch(error){ return {bestScore:0,plays:0,masteredQuestionIds:[]}; }
+  }
+  function writeState(){
+    try{ if(window.localStorage)window.localStorage.setItem(STORAGE_KEY,JSON.stringify(stored)); }catch(error){}
+  }
+  function safeCall(fn,args){ try{ if(typeof fn==="function")fn.apply(null,args||[]); }catch(error){} }
+  function signal(kind){
+    try{
+      if(typeof window.beep==="function")window.beep(kind==="good"?740:220,kind==="good"?.08:.13,kind==="good"?"sine":"triangle",.055);
+    }catch(error){}
+  }
+  function shuffle(items){
+    const copy=items.slice();
+    for(let i=copy.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1));const temp=copy[i];copy[i]=copy[j];copy[j]=temp; }
+    return copy;
+  }
+  function create(tag,className,content){
+    const node=document.createElement(tag);
+    if(className)node.className=className;
+    if(content!==undefined)node.textContent=text(content);
+    return node;
+  }
+  function injectStyle(){
+    if(document.querySelector("#kohAwaseStyle"))return;
+    const style=document.createElement("style");
+    style.id="kohAwaseStyle";
+    style.textContent=`
+      .koh-awase-entry{background:linear-gradient(135deg,#234a45,#16342f)!important;border-color:#86b9a9!important;color:#f7f1dd!important}
+      .koh-awase-entry:hover,.koh-awase-entry:focus-visible{filter:brightness(1.15);outline:2px solid #f3d17a;outline-offset:2px}
+      .koh-awase-modal{position:fixed;inset:0;z-index:10090;display:none;align-items:center;justify-content:center;padding:clamp(12px,3vh,28px);background:rgba(14,19,18,.84);font-family:serif}
+      .koh-awase-modal.is-open{display:flex}.koh-awase-sheet{width:min(660px,100%);max-height:min(790px,calc(100vh - 24px));overflow:auto;box-sizing:border-box;background:#f6f0df;color:#29271e;border:2px solid #b7954c;border-radius:8px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
+      .koh-awase-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px 12px;background:#203f3a;color:#fff9e9;border-bottom:3px solid #b7954c}.koh-awase-kicker{margin:0;font-size:12px;color:#d9c180}.koh-awase-title{margin:3px 0 0;font-size:24px;line-height:1.15}.koh-awase-close{flex:0 0 38px;width:38px;height:38px;border:1px solid #d9c180;border-radius:5px;background:transparent;color:#fff9e9;font-size:23px;cursor:pointer}
+      .koh-awase-body{padding:18px;display:grid;gap:14px}.koh-awase-score{display:flex;justify-content:space-between;gap:10px;color:#67592d;font-size:14px}.koh-awase-note{margin:0;padding:10px 12px;border-left:4px solid #ad7b2a;background:#eee4c9;font-size:14px;line-height:1.55}.koh-awase-question{margin:0;font-size:20px;line-height:1.45}.koh-awase-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}.koh-awase-option{min-height:52px;padding:10px 12px;text-align:left;border:1px solid #9b8554;border-radius:5px;background:#fffaf0;color:#29271e;font:inherit;font-size:16px;line-height:1.35;cursor:pointer}.koh-awase-option:hover,.koh-awase-option:focus-visible{border-color:#3e756b;background:#edf6ed;outline:2px solid #609f90;outline-offset:1px}.koh-awase-option.is-correct{background:#dceede;border-color:#367451}.koh-awase-option.is-wrong{background:#f3d9d1;border-color:#9e4e3d}.koh-awase-option:disabled{cursor:default;opacity:1}.koh-awase-feedback{min-height:74px;padding:12px;border:1px solid #c4b181;border-radius:5px;background:#fff9eb;line-height:1.55}.koh-awase-feedback[hidden]{display:none}.koh-awase-actions{display:flex;justify-content:flex-end;gap:10px}.koh-awase-action{min-height:44px;padding:8px 16px;border:1px solid #755a21;border-radius:5px;background:#9b6e20;color:#fffbea;font:inherit;font-weight:bold;cursor:pointer}.koh-awase-action:hover,.koh-awase-action:focus-visible{background:#795415;outline:2px solid #d2b566;outline-offset:2px}.koh-awase-review{display:grid;gap:10px}.koh-awase-review-item{padding:11px;border-left:4px solid #a45b45;background:#fff9eb;line-height:1.5}.koh-awase-complete{margin:0;font-size:20px;line-height:1.45}.koh-awase-facts{color:#67592d;font-size:14px}
+      @media(max-width:390px){.koh-awase-modal{padding:8px}.koh-awase-sheet{max-height:calc(100vh - 16px)}.koh-awase-head{padding:12px}.koh-awase-title{font-size:21px}.koh-awase-body{padding:13px;gap:11px}.koh-awase-question{font-size:18px}.koh-awase-options{grid-template-columns:1fr}.koh-awase-option{min-height:46px;font-size:15px}.koh-awase-note,.koh-awase-feedback{font-size:13px}.koh-awase-actions{justify-content:stretch}.koh-awase-action{width:100%}}
+      @media(prefers-reduced-motion:reduce){.koh-awase-modal,.koh-awase-option{scroll-behavior:auto!important;transition:none!important}}
+    `;
+    document.head.appendChild(style);
+  }
+  function ensureModal(){
+    if(modal)return modal;
+    injectStyle();
+    modal=create("div","koh-awase-modal");
+    modal.id=MODAL_ID;
+    modal.setAttribute("role","dialog");
+    modal.setAttribute("aria-modal","true");
+    modal.setAttribute("aria-labelledby","kohAwaseTitle");
+    modal.addEventListener("mousedown",event=>{ if(event.target===modal)close(); });
+    modal.addEventListener("keydown",handleKeydown);
+    document.body.appendChild(modal);
+    return modal;
+  }
+  function renderFrame(){
+    const root=ensureModal();
+    root.replaceChildren();
+    const sheet=create("section","koh-awase-sheet");
+    const head=create("header","koh-awase-head");
+    const headingWrap=create("div");
+    headingWrap.append(create("p","koh-awase-kicker","平安の練香を、名と季節から味わう"));
+    const heading=create("h2","koh-awase-title","薫物合 香合わせ");heading.id="kohAwaseTitle";headingWrap.append(heading);
+    const closeButton=create("button","koh-awase-close","×");closeButton.type="button";closeButton.setAttribute("aria-label","香合わせを閉じる");closeButton.title="閉じる（Esc）";closeButton.addEventListener("click",close);
+    head.append(headingWrap,closeButton);sheet.append(head);
+    root.append(sheet);
+    return sheet;
+  }
+  function appendIntro(body){
+    body.append(create("p","koh-awase-note","薫物は香料を練り合わせた練香です。梅花・荷葉・侍従・菊花・落葉・黒方は代表的な名。処方や印象は家や人によって異なり、画面で実物の香りを再現するものではありません。"));
+  }
+  function open(){
+    priorFocus=document.activeElement;
+    const root=ensureModal();
+    root.classList.add("is-open");
+    if(!session)start();else if(session.complete)renderComplete();else renderQuestion();
+    const focusable=root.querySelector("button:not([disabled])");if(focusable)focusable.focus();
+  }
+  function close(){
+    if(!modal)return;
+    modal.classList.remove("is-open");
+    if(priorFocus&&typeof priorFocus.focus==="function")try{priorFocus.focus();}catch(error){}
+  }
+  function start(){
+    stored=readState();
+    const questions=shuffle(BANK).slice(0,QUESTION_COUNT);
+    session={questions,index:0,score:0,answered:false,missed:[],complete:false};
+    stored.plays+=1;writeState();
+    if(modal&&modal.classList.contains("is-open"))renderQuestion();
+    return getState();
+  }
+  function renderQuestion(){
+    if(!session)return;
+    const question=session.questions[session.index];
+    if(!question){renderComplete();return;}
+    const sheet=renderFrame();const body=create("main","koh-awase-body");
+    const score=create("div","koh-awase-score");
+    score.append(create("span",null,`第 ${session.index+1} 問 / ${QUESTION_COUNT}`),create("span",null,`正答 ${session.score}`));
+    body.append(score);appendIntro(body);body.append(create("p","koh-awase-question",question.prompt));
+    const options=create("div","koh-awase-options");options.setAttribute("role","group");options.setAttribute("aria-label","答えを選ぶ");
+    question.choices.forEach((choice,index)=>{
+      const button=create("button","koh-awase-option",`${index+1}. ${choice}`);button.type="button";button.dataset.index=String(index);button.addEventListener("click",()=>answer(index));options.append(button);
+    });
+    body.append(options);
+    const feedback=create("div","koh-awase-feedback");feedback.id="kohAwaseFeedback";feedback.hidden=true;feedback.setAttribute("aria-live","polite");body.append(feedback);
+    const actions=create("div","koh-awase-actions");const nextButton=create("button","koh-awase-action","次の香へ");nextButton.type="button";nextButton.hidden=true;nextButton.addEventListener("click",next);actions.append(nextButton);body.append(actions);sheet.append(body);
+    if(session.answered)showAnswerState(question,session.selectedIndex,false);
+  }
+  function awardMastery(question){
+    if(stored.masteredQuestionIds.includes(question.id))return;
+    stored.masteredQuestionIds.push(question.id);writeState();
+    safeCall(window.recordProgress,["kohAwase",1]);
+    safeCall(window.gainParam,["knowledge",1]);
+    safeCall(window.gainParam,["miyabi",1]);
+    safeCall(window.markDailyMission,["quiz"]);
+  }
+  function answer(index){
+    if(!session||session.answered||session.complete)return false;
+    const question=session.questions[session.index];
+    if(!question||index<0||index>=question.choices.length)return false;
+    session.answered=true;
+    session.selectedIndex=index;
+    const correct=index===question.answer;
+    if(correct){session.score+=1;awardMastery(question);signal("good");}else{session.missed.push(question);signal("bad");}
+    if(!modal)return correct;
+    showAnswerState(question,index,true);
+    return correct;
+  }
+  function showAnswerState(question,index,focusNext){
+    if(!modal||!question)return;
+    const correct=index===question.answer;
+    modal.querySelectorAll(".koh-awase-option").forEach((button,optionIndex)=>{
+      button.disabled=true;
+      if(optionIndex===question.answer)button.classList.add("is-correct");
+      if(optionIndex===index&&!correct)button.classList.add("is-wrong");
+    });
+    const feedback=modal.querySelector("#kohAwaseFeedback");
+    if(feedback){feedback.hidden=false;feedback.textContent=`${correct?"正解。":"今回はここを確認。"} ${question.explain}`;}
+    const nextButton=modal.querySelector(".koh-awase-action");
+    if(nextButton){nextButton.hidden=false;nextButton.textContent=session.index===QUESTION_COUNT-1?"復習帳を見る":"次の香へ";if(focusNext)nextButton.focus();}
+  }
+  function next(){
+    if(!session||!session.answered)return;
+    session.index+=1;session.answered=false;session.selectedIndex=null;
+    if(session.index>=session.questions.length)renderComplete();else renderQuestion();
+  }
+  function renderComplete(){
+    if(!session)return;
+    session.complete=true;stored.bestScore=Math.max(stored.bestScore,session.score);writeState();
+    const sheet=renderFrame();const body=create("main","koh-awase-body");
+    body.append(create("p","koh-awase-complete",`${QUESTION_COUNT}問を聞き終えました。正答は ${session.score} 問です。`));
+    body.append(create("p","koh-awase-facts",`最高記録 ${stored.bestScore} / ${QUESTION_COUNT}・学んだ事実 ${stored.masteredQuestionIds.length} / ${BANK.length}`));
+    appendIntro(body);
+    const review=create("section","koh-awase-review");review.setAttribute("aria-label","復習帳");
+    review.append(create("h3",null,session.missed.length?"もう一度確かめる香":"今回の要点"));
+    const items=session.missed.length?session.missed:session.questions;
+    items.forEach(question=>{
+      const item=create("div","koh-awase-review-item");item.append(create("strong",null,question.prompt),create("div",null,question.explain));review.append(item);
+    });
+    body.append(review);
+    const actions=create("div","koh-awase-actions");const again=create("button","koh-awase-action","もう一度合せる");again.type="button";again.addEventListener("click",start);actions.append(again);body.append(actions);sheet.append(body);again.focus();
+  }
+  function handleKeydown(event){
+    if(!modal||!modal.classList.contains("is-open"))return;
+    if(event.key==="Escape"){event.preventDefault();close();return;}
+    if(!session||session.answered||session.complete)return;
+    const number=Number(event.key);
+    if(number>=1&&number<=4){event.preventDefault();answer(number-1);return;}
+    const buttons=Array.from(modal.querySelectorAll(".koh-awase-option:not([disabled])"));
+    const active=document.activeElement;const current=buttons.indexOf(active);
+    if((event.key==="ArrowDown"||event.key==="ArrowRight")&&buttons.length){event.preventDefault();buttons[(current+1+buttons.length)%buttons.length].focus();}
+    if((event.key==="ArrowUp"||event.key==="ArrowLeft")&&buttons.length){event.preventDefault();buttons[(current-1+buttons.length)%buttons.length].focus();}
+  }
+  function injectEntry(){
+    const host=document.querySelector("#taikenSubPanel .t-modes");
+    if(!host||document.getElementById(ENTRY_ID))return !!host;
+    const button=create("button","t-btn koh-awase-entry");
+    button.id=ENTRY_ID;button.type="button";button.title="薫物合を学ぶ";button.setAttribute("aria-label","薫物合 香合わせを開く");
+    const meta=create("span","mode-meta","香文化 / 学習");
+    const icon=create("span","cat-icon","香");
+    const name=create("span","mode-name","香合わせ");
+    const detail=create("small",null,"六種の薫物を名・季節・場から読み解く");
+    button.append(meta,icon,name,detail);
+    button.addEventListener("click",open);host.append(button);return true;
+  }
+  function getState(){
+    const current=session&&!session.complete?session.questions[session.index]:null;
+    return {bestScore:stored.bestScore,plays:stored.plays,masteredQuestionIds:stored.masteredQuestionIds.slice(),session:session?{index:session.index,score:session.score,answered:session.answered,complete:session.complete,questionId:current?current.id:null,answer:current?current.answer:null}:null};
+  }
+  function reset(){
+    stored={bestScore:0,plays:0,masteredQuestionIds:[]};session=null;
+    try{if(window.localStorage)window.localStorage.removeItem(STORAGE_KEY);}catch(error){}
+    return getState();
+  }
+  function boot(){
+    stored=readState();injectStyle();
+    if(injectEntry())return;
+    let attempts=0;
+    const timer=window.setInterval(()=>{attempts+=1;if(injectEntry()||attempts>=40)window.clearInterval(timer);},250);
+  }
+  window.KOH_AWASE={open,close,start,answer,next,getState,questionBank:BANK.slice(),reset};
+  window.KOH_AWASE_STATUS={ready:true,questions:BANK.length,storageKey:STORAGE_KEY};
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
+})();
+/* APP_KOH_AWASE_EMBED_END */
+
 let __lastFrameMs=0;
 function animate(now){
   if(window.__SHINDEN_BENCH_PAUSE)return;
@@ -18957,6 +19640,7 @@ function animate(now){
   updateFlyingLife(dt,t);
   updateSparrowChase(t);
   updateHouseholdWalk(dt,t);
+  if(window.LIVING_ESTATE)window.LIVING_ESTATE.update(dt,t);
   updateGisshaCarry(dt,t);
   // 蛍は「夏」かつ「夜」のときだけ舞う(昼夜の遷移中に月明かりが残って札だけ出るのを防ぐためtimeで厳密に判定)
   const fireflyOn=!taijiLightMode&&(APP.season==="summer")&&(APP.time==="night")&&(cur.moon>0.04);
@@ -19148,6 +19832,7 @@ function animate(now){
   // 位階出世ゲームはCanvas2Dの独立オーバーレイで3D世界を完全に覆うため、
   // 見えない3Dシーンの描画(ミニマップ・ブルーム合成・renderer本体)を丸ごと休止して軽量化する
   if(APP.mode!=="ikaiSuika"){
+    if(window.LOW_POWER)window.LOW_POWER.update();
     drawMinimap();    /* ミニマップ(独立2Dキャンバス) */
     BLOOM.update();   /* 夜/夕かつ高品質時のみブルームを有効化 */
     BLOOM.render();   /* 条件に応じ composer(ブルーム) か 通常描画 を選択 */
@@ -19745,6 +20430,27 @@ window.STORY_EMBED={"manifest":{"version":1,"basePath":"story/chapters/","chapte
       return { type: "ending", endingId };
     }
 
+    migrateSaveData(raw){
+      const data = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if(!data || !data.state)throw new Error("Invalid story save data");
+      const version = data.version == null ? 1 : Number(data.version);
+      if(!Number.isFinite(version) || version < 1 || version > 1){
+        throw new Error(`Unsupported story save version: ${data.version}`);
+      }
+      const saved = data.state || {};
+      return {
+        version: 1,
+        currentSequenceId: data.currentSequenceId || null,
+        state: Object.assign({}, saved, {
+          routeFlags: Object.assign({}, saved.routeFlags || {}),
+          collected: Object.assign({}, saved.collected || {}),
+          completedChapters: Object.assign({}, saved.completedChapters || {}),
+          params: Object.assign({}, STORY_DEFAULT_PARAMS, saved.params || {}),
+          history: Array.isArray(saved.history) ? saved.history.slice() : []
+        })
+      };
+    }
+
     serialize(){
       return JSON.stringify({
         version: 1,
@@ -19754,9 +20460,8 @@ window.STORY_EMBED={"manifest":{"version":1,"basePath":"story/chapters/","chapte
     }
 
     deserialize(raw){
-      const data = typeof raw === "string" ? JSON.parse(raw) : raw;
-      if(!data || !data.state)throw new Error("Invalid story save data");
-      this.state = Object.assign({}, data.state);
+      const data = this.migrateSaveData(raw);
+      this.state = data.state;
       this.currentSequenceId = data.currentSequenceId || null;
       return this.snapshot();
     }
@@ -22799,12 +23504,12 @@ function stChapterComplete(chapterId){
    全ての読み書きは try/catch で保護し、失敗してもスロットや進行を壊さない。 */
 const ST_SLOT_N=[1,2,3];
 function stSlotKey(n){return "shinden3d-story-slot"+n+"-v1";}
-function stSlotLoad(n){try{const r=JSON.parse(localStorage.getItem(stSlotKey(n)));return (r&&r.meta&&r.data)?r:null;}catch(e){return null;}}
+function stSlotLoad(n){try{const r=JSON.parse(localStorage.getItem(stSlotKey(n)));return (r&&r.meta&&r.data&&(!r.format||r.format===1))?r:null;}catch(e){return null;}}
 function stSlotSave(n){
   try{
     if(!SM||!SM.state||!stStoryInProgress())return false;
     const st=SM.state;
-    const rec={data:SM.serialize(), // SM.serialize()は文字列(JSON)を返す
+    const rec={format:1,data:SM.serialize(), // SM.serialize()は文字列(JSON)を返す
       meta:{ch:st.chapterId,seq:SM.currentSequenceId,params:Object.assign({},st.params||{}),
             flags:Object.assign({},st.routeFlags||{}),savedAt:Date.now()}}; // 波AN: ED予兆表示のため routeFlags も保存
     localStorage.setItem(stSlotKey(n),JSON.stringify(rec));
@@ -22817,6 +23522,10 @@ function stStoryInProgress(){
   return !!(SM&&SM.state&&SM.state.chapterId>=1&&SM.state.chapterId<=5&&
     SM.currentSequenceId&&SM.currentSequenceId!=="chapter_complete"&&!SM.state.endingId);
 }
+window.STORY_SLOTS={
+  version:1,count:ST_SLOT_N.length,key:stSlotKey,load:stSlotLoad,save:stSlotSave,
+  remove:stSlotDelete,canSave:stStoryInProgress
+};
 function stFmtSaveTime(ms){
   try{const d=new Date(ms),p=n=>String(n).padStart(2,"0");
     return p(d.getMonth()+1)+"/"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
@@ -22836,7 +23545,7 @@ function stRecordRoom(){
     const asv=JSON.parse(localStorage.getItem("shinden3d-story-save-v1")||"null");
     const s=asv&&asv.state;
     if(s&&s.chapterId){
-      const p=s.params||{},done=s.endingId?"（結末到達済み）":(s.currentSequenceId==="chapter_complete"?"（章クリア）":"進行中");
+      const p=s.params||{},done=s.endingId?"（結末到達済み）":(asv.currentSequenceId==="chapter_complete"?"（章クリア）":"進行中");
       autoRow='<div class="st-slot-row st-slot-auto"><div class="st-slot-info"><b>▶ オートセーブ</b>'+
         '<span class="st-slot-empty">自動・常に最新</span>第'+esc(s.chapterId)+'話 '+esc(done)+
         ' ｜ 現'+(p.realityEgo|0)+'/雅'+(p.fantasySynchro|0)+'/蝕'+(p.brainErosion|0)+fcLabel(p,s.routeFlags)+
