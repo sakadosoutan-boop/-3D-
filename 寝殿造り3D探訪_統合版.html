@@ -20308,6 +20308,12 @@ if($("rnExitTop"))$("rnExitTop").onclick=()=>{
 };
 
 let __lastFrameMs=0;
+/* 波9: 着座HUDモード判定(歌合/再現/恋文ショート/恋愛シミュ/物語)。
+   これらはカメラがほぼ固定でHUD/演出に集中するため、裏の3Dシーンの
+   純装飾(鳥・蝶・蜻蛉・雀の追いかけっこ・池の月映り)だけ更新頻度を間引く。
+   household/各モードのstaged演出には一切関与しない。 */
+function isSeatedHudMode(){return APP.mode==="utakai"||APP.mode==="saigen"||APP.mode==="renaiShort"||APP.mode==="renaiSim"||APP.mode==="story";}
+let __decoFrame=0;  /* 波9: 装飾アニメ間引き用の軽量フレームカウンタ(animateごとに加算) */
 function animate(now){
   if(window.__SHINDEN_BENCH_PAUSE)return;
   requestAnimationFrame(animate);
@@ -20323,6 +20329,10 @@ function animate(now){
   const dt=Math.min(clock.getDelta(),.08);
   const t=clock.elapsedTime;
   __perf.tick(dt);  /* [Phase0] パフォーマンス計測 */
+  __decoFrame++;
+  /* 波9: 着座HUDモードのときだけ、純装飾(鳥・蝶・蜻蛉・雀・月映り)を3フレームに1回に間引く。
+     表示/非表示や他の演出には影響しない(位置更新の頻度のみを下げる)。 */
+  const decoThrottleSkip=isSeatedHudMode()&&(__decoFrame%3!==0);
   QUALITY.update(dt,APP_FPSCAP);  /* 適応的品質: 負荷に応じ描画解像度を自動調整。上限fpsを渡し誤降格を防ぐ */
 
   /* --- 時間遷移とフォグカラーの自動同期 --- */
@@ -20664,6 +20674,7 @@ function animate(now){
   for(const bf of butterflies){
     if(taijiLightMode){bf.g.visible=false;continue;}
     if(!bf.g.visible)continue;
+    if(decoThrottleSkip)continue;  /* 波9: 着座HUDモードは3f毎に間引き(表示は維持) */
     const a=t*bf.spd+bf.phase;
     bf.g.position.x=bf.bx+Math.cos(a*1.2)*2.2+Math.sin(a*.7)*.8;
     bf.g.position.y=bf.by+Math.sin(a*.9)*.55;
@@ -20680,6 +20691,7 @@ function animate(now){
   for(const df of dragonflies){
     if(taijiLightMode){df.g.visible=false;continue;}
     if(!df.g.visible)continue;
+    if(decoThrottleSkip)continue;  /* 波9: 着座HUDモードは3f毎に間引き(表示は維持) */
     const a=t*df.spd+df.phase;
     df.g.position.x=df.bx+Math.sin(a*2.1)*df.r;
     df.g.position.y=df.by+Math.sin(a*3.3)*.35;
@@ -20772,8 +20784,8 @@ function animate(now){
   // 池面の月映り(雨のときは非表示)
   {const reOn=(APP.time==="night")&&!(rainFall&&rainFall.visible);
    moonRefl.visible=reOn;
-   if(reOn){moonRefl.material.opacity=0.13+Math.sin(t*0.83)*0.04+Math.sin(t*1.9)*0.02;
-     /* 水面のさざ波で映りが伸び縮みする揺らぎ */
+   if(reOn&&!decoThrottleSkip){moonRefl.material.opacity=0.13+Math.sin(t*0.83)*0.04+Math.sin(t*1.9)*0.02;
+     /* 水面のさざ波で映りが伸び縮みする揺らぎ(波9: 着座HUDモードは3f毎に間引き) */
      moonRefl.scale.set(1+Math.sin(t*1.7)*0.07,1+Math.sin(t*1.1+1.3)*0.13,1);}}
   // 灯籠流し: 夏の夜
   {const tOn=(APP.season==="summer"&&APP.time==="night");
@@ -20788,8 +20800,8 @@ function animate(now){
      const rp=(t*.32+ud.phase)%1,sc=1.0+rp*1.9;
      l.ripple.scale.set(sc,sc,sc);l.ripple.material.opacity=(1-rp)*0.20;
    });}}
-  updateFlyingLife(dt,t);
-  updateSparrowChase(t);
+  if(!decoThrottleSkip)updateFlyingLife(dt,t);  /* 波9: 着座HUDモードは3f毎に間引き(表示自体は消さない) */
+  if(!decoThrottleSkip)updateSparrowChase(t);   /* 波9: 同上 */
   updateHouseholdWalk(dt,t);
   updateGisshaCarry(dt,t);
   // 蛍は「夏」かつ「夜」のときだけ舞う(昼夜の遷移中に月明かりが残って札だけ出るのを防ぐためtimeで厳密に判定)
