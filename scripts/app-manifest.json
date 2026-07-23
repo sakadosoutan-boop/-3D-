@@ -51,6 +51,13 @@
     "end": "/* APP_KOH_AWASE_EMBED_END */"
   },
   {
+    "name": "kemari",
+    "src": "src/app/kemari.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_KEMARI_EMBED_BEGIN (src/app/kemari.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_KEMARI_EMBED_END */"
+  },
+  {
     "name": "living-estate",
     "src": "src/app/living-estate.js",
     "kind": "markers-exist",

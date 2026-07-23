@@ -132,24 +132,86 @@ async function launchBrowser() {
           && restored?.shadows === before?.shadows;
       } catch (_) {}
       let kohAwaseOk = false;
+      let kohCanvasOk = false;
       try {
         window.KOH_AWASE?.reset?.();
+        window.KOH_AWASE?.start?.({ seed: 20260723 });
         window.KOH_AWASE?.open?.();
         await new Promise((resolve) => setTimeout(resolve, 100));
-        const state = window.KOH_AWASE?.getState?.();
-        const optionsBefore = document.querySelectorAll('#kohAwaseModal .koh-awase-option');
-        const answer = state?.session?.answer;
-        const answered = Number.isInteger(answer) ? window.KOH_AWASE.answer(answer) : false;
-        const feedback = document.getElementById('kohAwaseFeedback')?.textContent || '';
+        const initial = window.KOH_AWASE?.getTestState?.();
+        const briefOk = initial?.phase === 'motif'
+          && document.querySelectorAll('#kohAwaseModal .koh-awase-brief-item').length === 3
+          && document.querySelectorAll('#kohAwaseModal .koh-awase-option').length === 0;
+        const canvas = document.querySelector('#kohAwaseModal canvas');
+        if (canvas?.width && canvas?.height) {
+          const pixels = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height)?.data;
+          const colors = new Set();
+          for (let i = 0; pixels && i < pixels.length; i += Math.max(4, Math.floor(pixels.length / 1600 / 4) * 4)) {
+            colors.add(`${pixels[i] >> 4},${pixels[i + 1] >> 4},${pixels[i + 2] >> 4}`);
+          }
+          kohCanvasOk = colors.size >= 12;
+        }
+        let roundsOk = true;
+        for (let roundIndex = 0; roundIndex < 3; roundIndex += 1) {
+          roundsOk = window.KOH_AWASE.next() === true && roundsOk;
+          const state = window.KOH_AWASE.getState();
+          const round = state.session.rounds[state.session.index];
+          const scenario = window.KOH_AWASE.scenarioBank.find((item) => item.id === round.scenarioId);
+          window.KOH_AWASE.setBlend('byakudan', 2);
+          window.KOH_AWASE.setBlend('jinko', 1);
+          window.KOH_AWASE.setBlend('kanso', 1);
+          window.KOH_AWASE.setBlend('kakkou', 1);
+          roundsOk = window.KOH_AWASE.setTitle(scenario.title) === true && roundsOk;
+          roundsOk = window.KOH_AWASE.setHeat(scenario.heat) === true && roundsOk;
+          roundsOk = window.KOH_AWASE.submitBlend() === true && roundsOk;
+          roundsOk = document.querySelectorAll('#kohAwaseModal .koh-awase-option').length === 4 && roundsOk;
+          const listenScore = window.KOH_AWASE.answer(0);
+          roundsOk = Number.isFinite(listenScore) && listenScore >= 4 && roundsOk;
+          roundsOk = window.KOH_AWASE.finishRound() === true && roundsOk;
+          roundsOk = window.KOH_AWASE.next() === true && roundsOk;
+        }
+        const completed = window.KOH_AWASE.getState();
         kohAwaseOk = window.KOH_AWASE_STATUS?.ready === true
           && window.KOH_AWASE_STATUS?.questions >= 12
+          && window.KOH_AWASE_STATUS?.gameLoop === 'brief-blend-listen-review'
           && !!document.getElementById('kohAwaseEntry')
-          && optionsBefore.length === 4
-          && answered === true
-          && [...document.querySelectorAll('#kohAwaseModal .koh-awase-option')].every((button) => button.disabled)
-          && feedback.includes('正解')
-          && window.KOH_AWASE.getState().masteredQuestionIds.length === 1;
+          && briefOk
+          && roundsOk
+          && completed.session.complete === true
+          && completed.session.score > 0
+          && document.querySelectorAll('#kohAwaseModal .koh-awase-review-item').length === 3;
         window.KOH_AWASE.close();
+      } catch (_) {}
+      let kemariOk = false;
+      let kemariCanvasOk = false;
+      try {
+        localStorage.setItem('shinden3d-kemari-help', '1');
+        if (typeof enterMode === 'function') enterMode('kemari');
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const initial = window.KEMARI_GAME?.getState?.();
+        window.KEMARI_GAME?.selectTechnique?.('pass');
+        window.KEMARI_GAME?.move?.(1);
+        const selected = window.KEMARI_GAME?.getState?.();
+        for (let i = 0; i < 30; i += 1) window.KEMARI_GAME?.testResolve?.('perfect');
+        const completed = window.KEMARI_GAME?.getState?.();
+        const canvas = document.getElementById('kemariCanvas');
+        if (canvas?.width && canvas?.height) {
+          const pixels = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height)?.data;
+          const colors = new Set();
+          for (let i = 0; pixels && i < pixels.length; i += Math.max(4, Math.floor(pixels.length / 1800 / 4) * 4)) {
+            colors.add(`${pixels[i] >> 4},${pixels[i + 1] >> 4},${pixels[i + 2] >> 4}`);
+          }
+          kemariCanvasOk = colors.size >= 18;
+        }
+        kemariOk = initial?.poise === 3
+          && initial?.round === 1
+          && selected?.selected === 'pass'
+          && completed?.round === 4
+          && completed?.rally === 30
+          && completed?.victory === true
+          && document.getElementById('kemariGameOver')?.classList.contains('show')
+          && (document.getElementById('kmrGoTitle')?.textContent || '').includes('四懸');
+        if (typeof enterMode === 'function') enterMode('walk');
       } catch (_) {}
       let livingEstateOk = false;
       let livingEstateModeOk = false;
@@ -532,6 +594,9 @@ async function launchBrowser() {
         lowPowerOk,
         lowPowerRestoreOk,
         kohAwaseOk,
+        kohCanvasOk,
+        kemariOk,
+        kemariCanvasOk,
         livingEstateOk,
         livingEstateModeOk,
         livingEstateArrivalOk,
@@ -583,11 +648,24 @@ async function launchBrowser() {
       const kohRect = document.getElementById('kohAwaseModal')?.getBoundingClientRect();
       const kohFits = !!kohRect && kohRect.left >= 0 && kohRect.right <= innerWidth && kohRect.bottom <= innerHeight;
       window.KOH_AWASE?.close?.();
+      localStorage.setItem('shinden3d-kemari-help', '1');
+      if (typeof enterMode === 'function') enterMode('kemari');
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      const kemariBoardRect = document.getElementById('kemariBoard')?.getBoundingClientRect();
+      const kemariControlsRect = document.getElementById('kmrControls')?.getBoundingClientRect();
+      const kemariFits = !!kemariBoardRect
+        && !!kemariControlsRect
+        && kemariBoardRect.left >= 0
+        && kemariBoardRect.right <= innerWidth
+        && kemariControlsRect.left >= 0
+        && kemariControlsRect.right <= innerWidth
+        && kemariControlsRect.bottom <= innerHeight;
+      if (typeof enterMode === 'function') enterMode('walk');
       window.LIVING_ESTATE?.openSchedule?.();
       const estateRect = document.getElementById('estateLifePanel')?.getBoundingClientRect();
       const estateFits = !!estateRect && estateRect.left >= 0 && estateRect.right <= innerWidth && estateRect.bottom <= innerHeight;
       window.LIVING_ESTATE?.closeSchedule?.();
-      return { kohFits, estateFits, horizontalOverflow: document.documentElement.scrollWidth <= innerWidth };
+      return { kohFits, kemariFits, estateFits, horizontalOverflow: document.documentElement.scrollWidth <= innerWidth };
     });
     if (status.missing.length) errors.push(`missing UI ids: ${status.missing.join(', ')}`);
     if (!status.walkOk) errors.push('walk mode did not start');
@@ -595,10 +673,13 @@ async function launchBrowser() {
     if (!status.gfxOk) errors.push('graphics settings did not open');
     if (!status.lowPowerOk || !status.lowPowerRestoreOk) errors.push('low-power mode did not apply and restore cleanly');
     if (!status.kohAwaseOk) errors.push('standalone koh-awase learning flow failed');
+    if (!status.kohCanvasOk) errors.push('koh-awase canvas did not render enough visual detail');
+    if (!status.kemariOk) errors.push('kemari four-round cooperative game flow failed');
+    if (!status.kemariCanvasOk) errors.push('kemari canvas did not render enough visual detail');
     if (!status.livingEstateOk) errors.push('living-estate schedules or daily-life panel failed');
     if (!status.livingEstateModeOk) errors.push('living-estate actors did not pause and resume with walk mode');
     if (!status.livingEstateArrivalOk) errors.push('living-estate visitor/cart arrival safeguards failed');
-    if (!mobileStatus.kohFits || !mobileStatus.estateFits || !mobileStatus.horizontalOverflow) errors.push('new panels overflowed the 390px mobile viewport');
+    if (!mobileStatus.kohFits || !mobileStatus.kemariFits || !mobileStatus.estateFits || !mobileStatus.horizontalOverflow) errors.push('new panels overflowed the 390px mobile viewport');
     if (!status.kaimamiOk) errors.push('kaimami mode did not start');
     if (status.kaimamiRoutes.join(',') !== 'east,north,tsumado') errors.push(`unexpected kaimami routes: ${status.kaimamiRoutes.join(',')}`);
     if (!status.kaimamiTextOk) errors.push('kaimami instructions did not mention the three observation points');
@@ -657,10 +738,10 @@ async function launchBrowser() {
     if (!status.modelSmoke.gisshaCarryOk) errors.push('gissha carry mini-game did not start and move the cart');
     if (!status.modelSmoke.onmyoDivinationOk) errors.push('onmyo divination panel did not register/open/resolve');
     if (errors.length) {
-      console.error(JSON.stringify({ status, errors }, null, 2));
+      console.error(JSON.stringify({ status, mobileStatus, errors }, null, 2));
       process.exit(1);
     }
-    console.log(JSON.stringify({ status: 'ok', target, app: status }, null, 2));
+    console.log(JSON.stringify({ status: 'ok', target, app: status, mobile: mobileStatus }, null, 2));
   } finally {
     await browser.close();
   }
