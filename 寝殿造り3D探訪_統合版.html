@@ -21216,7 +21216,8 @@ function batchStaticArchitecture(){
   });
   window.STATIC_BATCH_STATS={batches:batchCount,sources:sourceCount};
 }
-batchStaticArchitecture();
+/* 波13: 静的建築の InstancedMesh 一括化。?nobatch=1 で無効化(低性能端末の切り分け・A/B計測・不具合時のフォールバック)。既定=有効。 */
+if(!/[?&]nobatch=1/.test(location.search))batchStaticArchitecture();
 
 /* 影の最適化(軽量化): 影を落とすのは一定サイズ以上の立体だけに限定する。
    小物(取手・脚・細部)はシャドウマップ描画(ライト視点での全シーン再描画)から外し、
