@@ -5330,9 +5330,9 @@ const ENV_IBL_PARAM_OFF=/[?&]ibl=0/.test(location.search); // [波11] ?ibl=0 で
 const ENV_IBL_ENABLED=!IS_TOUCH&&!navigator.webdriver&&!ENV_IBL_PARAM_OFF;
 const pmrem=ENV_IBL_ENABLED?new THREE.PMREMGenerator(renderer):null;
 if(pmrem)pmrem.compileEquirectangularShader();
-let _envRT=null;
-function makeSkyEnv(timeKey){
-  if(!pmrem){scene.environment=null;return;}
+const _envCache={};
+// 時刻ごとのIBL(PMREM)を1度だけ生成して返す。fromEquirectangularはGPUで複数のブラーパスを走らせる重い処理のため
+function _buildEnvRT(timeKey){
   const p=ENV_PAL[timeKey]||ENV_PAL.day;
   const tex=canv(16,256,(x,w,h)=>{
     const g=x.createLinearGradient(0,0,0,h);
@@ -5345,12 +5345,19 @@ function makeSkyEnv(timeKey){
   tex.mapping=THREE.EquirectangularReflectionMapping;
   tex.wrapS=tex.wrapT=THREE.ClampToEdgeWrapping;
   const rt=pmrem.fromEquirectangular(tex);
-  if(_envRT)_envRT.dispose();
-  _envRT=rt;
-  scene.environment=rt.texture;
   tex.dispose();
+  return rt;
+}
+function makeSkyEnv(timeKey){
+  if(!pmrem){scene.environment=null;return;}
+  const key=ENV_PAL[timeKey]?timeKey:"day";
+  // [perf]時刻ごとに一度だけ生成しキャッシュ。切替は参照差し替えのみ=PMREM再生成コストゼロ(夕→夜のヒッチを根絶)
+  if(!_envCache[key])_envCache[key]=_buildEnvRT(key);
+  scene.environment=_envCache[key].texture;
 }
 makeSkyEnv("day");   // 初期(昼)のIBLを生成
+// [perf]残り3時刻のIBLもロード中に先行生成=実プレイ中の時刻切替でPMREM再生成が発生しないようにする
+if(pmrem){["dawn","dusk","night"].forEach(k=>{if(!_envCache[k])_envCache[k]=_buildEnvRT(k);});}
 
 /* 天空を巡る3Dの太陽と月 */
 const TEX_moonMap = canv(128,128, (x,w,h) => {
@@ -6849,7 +6856,7 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     flame.position.y=1.68;flame.visible=false;g.add(flame);
     const halo=new THREE.Mesh(new THREE.SphereGeometry(.38,12,8),new THREE.MeshBasicMaterial({color:0xffb85a,transparent:true,opacity:.0,depthWrite:false}));
     halo.position.y=1.68;halo.visible=false;halo.userData.noAutoShadow=true;g.add(halo);
-    const light=new THREE.PointLight(0xffaa55,0,9,2);light.position.y=1.8;light.visible=false;g.add(light);
+    const light=new THREE.PointLight(0xffaa55,0,9,2);light.position.y=1.8;light.visible=true;g.add(light); // [perf]常時visible+intensityのみ変動=光源数不変で夜切替時のシェーダ再コンパイルを回避
     shinden.add(g);register(g,"toudai");
     gimmicks.lamps.push({flame,halo,light,lit:false,g,phase:x*.73+z*.41});
     return g;
@@ -7083,7 +7090,7 @@ function kagaribi(x,z){
   const flame=new THREE.Mesh(new THREE.ConeGeometry(.23,.72,10),MAT.flame);flame.position.y=by+.46;flame.visible=false;g.add(flame);
   const flame2=new THREE.Mesh(new THREE.ConeGeometry(.13,.46,8),new THREE.MeshBasicMaterial({color:0xffe27a}));flame2.position.y=by+.56;flame2.visible=false;g.add(flame2);
   const halo=new THREE.Mesh(new THREE.SphereGeometry(.95,12,8),new THREE.MeshBasicMaterial({color:0xffa84a,transparent:true,opacity:0,depthWrite:false}));halo.position.y=by+.4;halo.visible=false;halo.userData.noAutoShadow=true;g.add(halo);
-  const light=new THREE.PointLight(0xffa050,0,17,2);light.position.y=by+.5;light.visible=false;g.add(light);
+  const light=new THREE.PointLight(0xffa050,0,17,2);light.position.y=by+.5;light.visible=true;g.add(light); // [perf]常時visible=光源数不変で夜切替の再コンパイル回避
   world.add(g);register(g,"kagaribi",new THREE.Vector3(x,2.5,z));
   gimmicks.kagaribi.push({flame,flame2,halo,light,phase:x*.7+z*.41});
   window.KAGARIBI.push({x,z});
@@ -21804,8 +21811,8 @@ function animate(now){
   // 灯台のゆらぎ ＋ 光源の明滅（フリッカー）
   gimmicks.lamps.forEach(st=>{
     const active=st.lit&&APP.time==="night",want=active?1.35:0;
-    st.light.visible=active;
-    
+    // [perf]light.visibleは常時true固定(intensityのみ変動)。光源数を一定に保ち夜切替時のシェーダ再コンパイルを防ぐ
+
     if (active) {
       // 複数の異なる周期のSin波をノイズ代わりにして、あたたかくフリッカー明滅させます
       const flicker = 1.0 + (Math.sin(t * 19.0+st.phase) * 0.07 + Math.sin(t * 31.0 + 1.5+st.phase) * 0.05);
@@ -21835,7 +21842,7 @@ function animate(now){
   // 篝火: 夜になると自動で灯る(全季節)
   gimmicks.kagaribi.forEach(st=>{
     const active=(APP.time==="night");
-    st.light.visible=active;
+    // [perf]light.visibleは常時true固定(intensityのみ変動)。光源数を一定に保ち夜切替時の再コンパイルを防ぐ
     if(active){
       const flicker=1.0+(Math.sin(t*17+st.phase)*0.10+Math.sin(t*27+1.2+st.phase)*0.07);
       st.light.intensity+=((3.0*flicker)-st.light.intensity)*Math.min(1,dt*8);
