@@ -11,6 +11,10 @@
   const PREF_KEY = "shinden3d-online-pref-v1";
   const PENDING_KEY = "shinden3d-online-pending-v1";
   const ACTIVE_KEY = "shinden3d-online-active-v1";
+  const PRODUCTION_CONFIG = {
+    url: "https://cbyvvsevykqrhpvvvnjo.supabase.co",
+    anonKey: "sb_publishable_unPMDrLMLCxKhb95Ks8O9w_lLERwI7H",
+  };
   const MODES = {
     quiz: { label: "早押し絵巻クイズ", unit: "点", order: "desc", live: true },
     quiz_ta: { label: "名称当てタイムアタック", unit: "秒", order: "asc" },
@@ -72,8 +76,8 @@
     const local = readLocal(CONFIG_KEY, {}) || {};
     const metaUrl = document.querySelector('meta[name="shinden-online-url"]')?.content || "";
     const metaKey = document.querySelector('meta[name="shinden-online-key"]')?.content || "";
-    const url = String(runtime.url || local.url || metaUrl || "").replace(/\/+$/, "");
-    const anonKey = String(runtime.anonKey || runtime.publishableKey || local.anonKey || metaKey || "");
+    const url = String(runtime.url || local.url || metaUrl || PRODUCTION_CONFIG.url || "").replace(/\/+$/, "");
+    const anonKey = String(runtime.anonKey || runtime.publishableKey || local.anonKey || metaKey || PRODUCTION_CONFIG.anonKey || "");
     return { url, anonKey, enabled: runtime.enabled !== false && !!url && !!anonKey };
   }
   function configured() { return !!transportOverride || config().enabled; }

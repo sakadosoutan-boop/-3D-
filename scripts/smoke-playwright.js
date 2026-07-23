@@ -45,6 +45,9 @@ async function launchBrowser() {
   page.on('console', (message) => {
     if (message.type() === 'error' && !isIgnorableConsoleError(message.text())) errors.push(message.text());
   });
+  await page.addInitScript(() => {
+    window.SHINDEN_ONLINE_CONFIG = { enabled: false };
+  });
 
   try {
     await page.goto(target, { waitUntil: 'load', timeout: 45_000 });
