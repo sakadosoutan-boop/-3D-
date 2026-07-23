@@ -4461,6 +4461,12 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
       <button class="tb-btn" id="gfxInvY_on">反転</button>
     </span>
   </div>
+  <div class="gfx-row"><span class="gfx-lbl">柱・建物のあたり判定</span>
+    <span class="gfx-opts">
+      <button class="tb-btn" id="gfxCollide_off">通り抜け</button>
+      <button class="tb-btn" id="gfxCollide_on">通れない</button>
+    </span>
+  </div>
   <div class="gfx-section">⌨️ 移動キー（PC操作向け）</div>
   <div class="gfx-row keybind-row" data-action="forward"><span class="gfx-lbl">前進</span>
     <span class="gfx-opts"><span class="keybind-key" id="kbKey_forward"></span><button class="tb-btn" id="kbSet_forward">変更</button></span>
@@ -5467,6 +5473,42 @@ function groundH(x,z){let h=bridgeGroundH(x,z);
 /* 池(円の合成で近似) */
 const pondCircles=[[-22,40,17],[-2,47,15],[-34,28,11],[14,50,10],[-12,33,9]];
 function inPond(x,z){return pondCircles.some(c=>((x-c[0])**2+(z-c[1])**2)<c[2]*c[2]);}
+/* ── 波12: 散策/クイズ/一日体験モードの当たり判定(柱・建物すり抜け防止) ──
+   物語モードの storySolidResolve と同じ押し出しアルゴリズムを、静的な建物コライダー WALK_SOLIDS に適用する。
+   建物の中核(母屋)・対屋・中門廊を矩形で塞ぐが、簀子(縁)・廂・庭は歩けるまま＝部屋を眺める学習体験は保つ。
+   矩形/円の外へ放射状に押し出すだけなので、決してプレイヤーを閉じ込めない。設定トグルと ?nocollide=1 で無効化可。 */
+const WALK_SOLIDS=[
+  {x:0,z:-4.5,hw:13.6,hd:6.1},                                          // 寝殿(母屋の核)
+  {x:35,z:-12,hw:10,hd:7},{x:-35,z:-12,hw:10,hd:7},{x:0,z:-39,hw:11,hd:6.5}, // 東・西・北の対屋
+  {x:24,z:12,hw:2.2,hd:9},{x:-24,z:12,hw:2.2,hd:9}                       // 中門廊(南へ伸びる細い廊)
+];
+function walkSolidResolve(x,z){
+  const S=WALK_SOLIDS;
+  for(let it=0;it<5;it++){
+    let moved=false;
+    for(let i=0;i<S.length;i++){
+      const o=S[i];
+      if(o.hw!=null){ // 矩形(壁)
+        const ax=Math.abs(x-o.x),az=Math.abs(z-o.z);
+        if(ax<o.hw-1e-4&&az<o.hd-1e-4){
+          const px=o.hw-ax,pz=o.hd-az;
+          if(px<pz)x=o.x+Math.sign(x-o.x||1)*o.hw;else z=o.z+Math.sign(z-o.z||1)*o.hd;
+          moved=true;
+        }
+      }else{ // 円(柱・立木・石など)
+        const dx=x-o.x,dz=z-o.z,d2=dx*dx+dz*dz;
+        if(d2<o.r*o.r-1e-4){
+          if(d2<1e-6){x=o.x+o.r;z=o.z;}else{const d=Math.sqrt(d2);x=o.x+dx/d*o.r;z=o.z+dz/d*o.r;}
+          moved=true;
+        }
+      }
+    }
+    if(!moved)break;
+  }
+  return {x,z};
+}
+const WALK_COLLIDE_FORCED_OFF=/[?&]nocollide=1/.test(location.search);
+function walkCollideOn(){return !WALK_COLLIDE_FORCED_OFF&&APP.collideWalk!==false;}
 /* 建物の正規入口ゾーン（地面→建物床への許容遷移）
  * skipSouth=true: 垣間見モード時に寝殿南正面を封鎖し、妻戸経路のみ許容する */
 function inBuildingEntrance(x,z,skipSouth){
@@ -12505,6 +12547,16 @@ let APP_FPSCAP=IS_TOUCH?30:60;
   if($("gfxFont_l"))$("gfxFont_l").onclick=()=>setFontScale("l");
   if($("gfxFont_xl"))$("gfxFont_xl").onclick=()=>setFontScale("xl");
   {const fs=PREFS.get("fontscale");setFontScale(fs==="l"||fs==="xl"?fs:"n",true);}
+  /* 波12: 柱・建物のあたり判定トグル(散策/クイズ/一日体験。既定=通れない) */
+  function setWalkCollide(on,silent){
+    APP.collideWalk=!!on;PREFS.set("collide",on?"1":"0");
+    if($("gfxCollide_on"))$("gfxCollide_on").classList.toggle("on",on);
+    if($("gfxCollide_off"))$("gfxCollide_off").classList.toggle("on",!on);
+    if(!silent)beep(560,.04);
+  }
+  if($("gfxCollide_on"))$("gfxCollide_on").onclick=()=>setWalkCollide(true);
+  if($("gfxCollide_off"))$("gfxCollide_off").onclick=()=>setWalkCollide(false);
+  {const cv=PREFS.get("collide");setWalkCollide(cv!=="0",true);}
   if($("gfxInvY_on"))$("gfxInvY_on").onclick=()=>{APP_INV_Y=true;PREFS.set("invY","1");beep(600,.04);};
   if($("gfxInvY_off"))$("gfxInvY_off").onclick=()=>{APP_INV_Y=false;PREFS.set("invY","0");beep(540,.04);};
   if($("gfxAud_on"))$("gfxAud_on").onclick=()=>setAmbientAudio(true);
@@ -20997,6 +21049,11 @@ function animate(now){
           if(!(groundH(r.x,r.z)<0.05&&inPond(r.x,r.z))){player.pos.x=r.x;player.pos.z=r.z;}
           else toastPond();
         }else{
+          // 波12: 散策/クイズ/一日体験は柱・建物のすり抜けを防止(押し出し式・トグル/?nocollide=1で無効)。
+          // 建物の中核(母屋)・対屋・中門廊のみ塞ぎ、簀子(縁)・廂・庭は歩けるまま＝部屋を眺める学習体験は保つ。
+          if(walkCollideOn()&&(APP.mode==="walk"||APP.mode==="quiz"||APP.mode==="quest")){
+            const wr=walkSolidResolve(cx,cz);cx=wr.x;cz=wr.z;
+          }
           // 従来モード(垣間見など): 地面→建物床への直接侵入を防ぐ一方通行の壁
           const wallBlocked=(APP.mode==="kaimami")&&prevGH<0.5&&gh>=1.05&&!inBuildingEntrance(cx,cz,true);
           if(wallBlocked){
