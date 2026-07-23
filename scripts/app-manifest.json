@@ -58,6 +58,13 @@
     "end": "/* APP_KEMARI_EMBED_END */"
   },
   {
+    "name": "online-competition",
+    "src": "src/app/online-competition.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_ONLINE_COMPETITION_EMBED_BEGIN (src/app/online-competition.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_ONLINE_COMPETITION_EMBED_END */"
+  },
+  {
     "name": "living-estate",
     "src": "src/app/living-estate.js",
     "kind": "markers-exist",

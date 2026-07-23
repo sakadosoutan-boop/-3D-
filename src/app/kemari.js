@@ -78,6 +78,7 @@ function kmrInitialState(){
   const best=kmrLoadBest();
   return {
     version:2,seed:(Date.now()^Math.floor(Math.random()*0xffffffff))>>>0,
+    startedAt:kmrNow(),onlineSubmitted:false,
     best,round:0,roundHits:0,rally:0,score:0,combo:0,maxCombo:0,
     stamina:100,miyabi:18,poise:3,teamSync:0,
     playerX:0,targetX:0,selected:"receive",phase:"intro",over:false,victory:false,
@@ -274,6 +275,14 @@ function kemariGameOver(victory){
   if((S.score>prev.score||won)&&typeof juiceCelebrate==="function")kmrSafe(()=>juiceCelebrate());
   if(typeof recordProgress==="function")kmrSafe(()=>recordProgress("kemari",1));
   if(typeof gainParam==="function")kmrSafe(()=>gainParam("miyabi",won?5:2));
+  if(!S.onlineSubmitted&&window.ONLINE_COMPETITION){
+    S.onlineSubmitted=true;
+    const duration=Math.max(0,Math.round(kmrNow()-S.startedAt));
+    const meta={rally:S.rally,maxCombo:S.maxCombo,victory:won,round:S.round+1};
+    window.ONLINE_COMPETITION.finishChallenge("kemari",S.score,duration,meta)
+      .then(handled=>{if(!handled)window.ONLINE_COMPETITION.submitScore("kemari",S.score,duration,meta);})
+      .catch(()=>window.ONLINE_COMPETITION.submitScore("kemari",S.score,duration,meta));
+  }
 }
 
 function kmrBurst(S,ball,kind){

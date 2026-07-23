@@ -213,6 +213,72 @@ async function launchBrowser() {
           && (document.getElementById('kmrGoTitle')?.textContent || '').includes('四懸');
         if (typeof enterMode === 'function') enterMode('walk');
       } catch (_) {}
+      let onlineCompetitionOk = false;
+      let onlineQuizSeedOk = false;
+      let onlineRankingOk = false;
+      let onlineCompetitionError = null;
+      try {
+        const submitted = [];
+        let mockMatch = null;
+        const mockTransport = {
+          async ensureSession() { return { access_token: 'smoke' }; },
+          async setProfile() { return true; },
+          async createMatch(mode) {
+            mockMatch = {
+              id: 'match-smoke', room_code: 'HEIAN1', mode, seed: 20260723, status: 'waiting',
+              players: [{ is_self: true, is_host: true, display_name: '東方', status: 'ready', progress: 0, score: 0 }],
+            };
+            return mockMatch;
+          },
+          async joinMatch() { return mockMatch; },
+          async getMatch() { return mockMatch; },
+          async startMatch() { mockMatch.status = 'active'; return mockMatch; },
+          async updateMatch(data) {
+            const self = mockMatch.players.find((player) => player.is_self);
+            Object.assign(self, { progress: data.progress, score: data.score, status: data.status, duration_ms: data.durationMs });
+            return mockMatch;
+          },
+          async leaveMatch() { return true; },
+          async submitScore(data) { submitted.push(data); return { accepted: true }; },
+          async leaderboard() {
+            return [
+              { rank: 1, display_name: '東方', score: 1420, duration_ms: 12340, is_self: true },
+              { rank: 2, display_name: '西方', score: 1180, duration_ms: 14600 },
+            ];
+          },
+        };
+        window.ONLINE_COMPETITION?.configure?.({ transport: mockTransport });
+        window.ONLINE_COMPETITION?.setDisplayName?.('東方');
+        window.ONLINE_COMPETITION?.open?.();
+        await window.ONLINE_COMPETITION?.createMatch?.('quiz');
+        mockMatch.players.push({ is_self: false, is_host: false, display_name: '西方', status: 'ready', progress: 0, score: 0 });
+        await window.ONLINE_COMPETITION?.startMatch?.();
+        const firstQuiz = window.ONLINE_COMPETITION?.buildQuiz?.(20260723).map((question) => question.id).join(',');
+        const secondQuiz = window.ONLINE_COMPETITION?.buildQuiz?.(20260723).map((question) => question.id).join(',');
+        const differentQuiz = window.ONLINE_COMPETITION?.buildQuiz?.(20260724).map((question) => question.id).join(',');
+        onlineQuizSeedOk = !!firstQuiz && firstQuiz === secondQuiz && firstQuiz !== differentQuiz;
+        for (let index = 0; index < 10; index += 1) {
+          const quiz = window.ONLINE_COMPETITION?.__test?.getState?.().quiz;
+          await window.ONLINE_COMPETITION?.answerQuiz?.(quiz.questions[quiz.index].answer);
+          await new Promise((resolve) => setTimeout(resolve, 700));
+        }
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        const afterMatch = window.ONLINE_COMPETITION?.getStatus?.();
+        document.querySelectorAll('#onlineCompetitionModal .online-tab')[1]?.click();
+        await new Promise((resolve) => setTimeout(resolve, 120));
+        onlineRankingOk = document.querySelectorAll('#onlineCompetitionModal .online-ranking-row').length === 2
+          && (document.querySelector('#onlineCompetitionModal .online-ranking-row')?.textContent || '').includes('東方');
+        onlineCompetitionOk = window.ONLINE_COMPETITION_STATUS?.ready === true
+          && window.ONLINE_COMPETITION_STATUS?.quizCount === 10
+          && !!document.getElementById('onlineCompetitionEntry')
+          && afterMatch?.screen === 'result'
+          && submitted.some((item) => item.mode === 'quiz')
+          && (document.getElementById('onlineCompetitionModal')?.textContent || '').includes('順位表');
+        window.ONLINE_COMPETITION?.close?.();
+        window.ONLINE_COMPETITION?.configure?.({ clear: true });
+      } catch (error) {
+        onlineCompetitionError = error.message || String(error);
+      }
       let livingEstateOk = false;
       let livingEstateModeOk = false;
       let livingEstateArrivalOk = false;
@@ -597,6 +663,10 @@ async function launchBrowser() {
         kohCanvasOk,
         kemariOk,
         kemariCanvasOk,
+        onlineCompetitionOk,
+        onlineQuizSeedOk,
+        onlineRankingOk,
+        onlineCompetitionError,
         livingEstateOk,
         livingEstateModeOk,
         livingEstateArrivalOk,
@@ -648,6 +718,11 @@ async function launchBrowser() {
       const kohRect = document.getElementById('kohAwaseModal')?.getBoundingClientRect();
       const kohFits = !!kohRect && kohRect.left >= 0 && kohRect.right <= innerWidth && kohRect.bottom <= innerHeight;
       window.KOH_AWASE?.close?.();
+      window.ONLINE_COMPETITION?.open?.();
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      const onlineRect = document.querySelector('#onlineCompetitionModal .online-sheet')?.getBoundingClientRect();
+      const onlineFits = !!onlineRect && onlineRect.left >= 0 && onlineRect.right <= innerWidth && onlineRect.bottom <= innerHeight;
+      window.ONLINE_COMPETITION?.close?.();
       localStorage.setItem('shinden3d-kemari-help', '1');
       if (typeof enterMode === 'function') enterMode('kemari');
       await new Promise((resolve) => setTimeout(resolve, 80));
@@ -665,7 +740,7 @@ async function launchBrowser() {
       const estateRect = document.getElementById('estateLifePanel')?.getBoundingClientRect();
       const estateFits = !!estateRect && estateRect.left >= 0 && estateRect.right <= innerWidth && estateRect.bottom <= innerHeight;
       window.LIVING_ESTATE?.closeSchedule?.();
-      return { kohFits, kemariFits, estateFits, horizontalOverflow: document.documentElement.scrollWidth <= innerWidth };
+      return { kohFits, onlineFits, kemariFits, estateFits, horizontalOverflow: document.documentElement.scrollWidth <= innerWidth };
     });
     if (status.missing.length) errors.push(`missing UI ids: ${status.missing.join(', ')}`);
     if (!status.walkOk) errors.push('walk mode did not start');
@@ -676,10 +751,14 @@ async function launchBrowser() {
     if (!status.kohCanvasOk) errors.push('koh-awase canvas did not render enough visual detail');
     if (!status.kemariOk) errors.push('kemari four-round cooperative game flow failed');
     if (!status.kemariCanvasOk) errors.push('kemari canvas did not render enough visual detail');
+    if (status.onlineCompetitionError) errors.push(`online competition smoke failed: ${status.onlineCompetitionError}`);
+    if (!status.onlineCompetitionOk) errors.push('online match did not create, start, finish, and submit a score');
+    if (!status.onlineQuizSeedOk) errors.push('online quiz seed did not produce a stable shared question set');
+    if (!status.onlineRankingOk) errors.push('online shared ranking did not render');
     if (!status.livingEstateOk) errors.push('living-estate schedules or daily-life panel failed');
     if (!status.livingEstateModeOk) errors.push('living-estate actors did not pause and resume with walk mode');
     if (!status.livingEstateArrivalOk) errors.push('living-estate visitor/cart arrival safeguards failed');
-    if (!mobileStatus.kohFits || !mobileStatus.kemariFits || !mobileStatus.estateFits || !mobileStatus.horizontalOverflow) errors.push('new panels overflowed the 390px mobile viewport');
+    if (!mobileStatus.kohFits || !mobileStatus.onlineFits || !mobileStatus.kemariFits || !mobileStatus.estateFits || !mobileStatus.horizontalOverflow) errors.push('new panels overflowed the 390px mobile viewport');
     if (!status.kaimamiOk) errors.push('kaimami mode did not start');
     if (status.kaimamiRoutes.join(',') !== 'east,north,tsumado') errors.push(`unexpected kaimami routes: ${status.kaimamiRoutes.join(',')}`);
     if (!status.kaimamiTextOk) errors.push('kaimami instructions did not mention the three observation points');
