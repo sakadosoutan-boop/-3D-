@@ -7700,7 +7700,8 @@ function updateHouseholdWalk(dt,t){
     visitor:{label:"来客の到着",hint:"東門で、随身が来客を迎えている。",actor:"zuishin",duration:20000,anchor:{x:49,z:11}},
     oxCart:{label:"牛車の到着",hint:"車宿の方から、牛車がゆっくり近づいてくる。",actor:"toneri",duration:22000,anchor:{x:46,z:17}}
   };
-  const ARRIVAL_BY_TIME={dawn:"messenger",day:"visitor",dusk:"oxCart",night:"messenger"};
+  // [fix]来客・使者・牛車の到着は日のあるうち(朝/昼/夕)のみ。夜は屋敷を静かに閉じるため到着なし
+  const ARRIVAL_BY_TIME={dawn:"messenger",day:"visitor",dusk:"oxCart",night:null};
 
   const state={
     ready:false,actors:Object.create(null),base:Object.create(null),phase:"day",cycle:0,
@@ -7719,6 +7720,9 @@ function updateHouseholdWalk(dt,t){
     try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state.storage));}catch(e){}
   }
   function say(message,ms){if(typeof toast==="function")toast(message,ms||2400);}
+  // [fix]屋敷生活系の通知には出所を示すタグを付け、何の機能のメッセージか(=「日課」パネル)が分かるようにする
+  const ESTATE_TAG="〔屋敷の一日〕";
+  function notify(message,ms){say(ESTATE_TAG+" "+message,ms);}
   function sound(f){if(typeof beep==="function")beep(f,.045,"sine",.055);}
   function walkMode(){return !!(APP&&APP.mode==="walk");}
   function blocked(){return !walkMode()||!!(APP&&APP.gisshaCarry&&APP.gisshaCarry.active);}
@@ -7837,9 +7841,10 @@ function updateHouseholdWalk(dt,t){
     Object.keys(ARRIVALS).forEach(type=>{
       const def=ARRIVALS[type],button=element("button","el-event");button.type="button";
       button.setAttribute("aria-label",def.label+"を始める");
-      const stateText=state.arrival&&state.arrival.type===type?"進行中":state.nextArrival===type?"まもなく":"散策中に開始";
+      const isNight=!!(APP&&APP.time==="night"); // [fix]夜は来客対応なし
+      const stateText=state.arrival&&state.arrival.type===type?"進行中":isNight?"夜は休み":state.nextArrival===type?"まもなく":"散策中に開始";
       button.append(element("span","",def.label),element("small","",stateText));
-      button.disabled=!!state.arrival||!walkMode();button.onclick=()=>triggerArrival(type);
+      button.disabled=!!state.arrival||!walkMode()||isNight;button.onclick=()=>triggerArrival(type);
       fragment.appendChild(button);
     });
     fragment.appendChild(element("div","el-section","聞き耳"));
@@ -7927,18 +7932,19 @@ function updateHouseholdWalk(dt,t){
     const def=ARRIVALS[type];
     if(!def||!walkMode())return false;
     if(state.arrival)return false;
-    if(APP&&APP.gisshaCarry&&APP.gisshaCarry.active){say("牛車運びが終わってから来客を迎えよう",2200);return false;}
+    if(APP&&APP.time==="night"){notify("来客の対応は日のあるうちに。夜は屋敷を静かに閉じています",2600);return false;} // [fix]夜は来客対応をしない
+    if(APP&&APP.gisshaCarry&&APP.gisshaCarry.active){notify("牛車運びが終わってから来客を迎えよう",2200);return false;}
     if(type==="oxCart"&&(!GISSHA_YARD||!GISSHA_YARD.cart||typeof gisshaCarrySetCart!=="function"))return false;
     const event={type,def,started:performance.now(),duration:def.duration,actorState:[],notified:false,minimized:false,cart:null,visitor:null};
     saveArrivalActors(event);applyArrivalActors(event);rememberCart(event);
     createVisitor(event);
     if(type==="oxCart")gisshaCarrySetCart(.88,0);
-    state.arrival=event;state.lastArrival=type;state.nextArrival=null;say(def.label+"。"+def.hint,3100);sound(600);refreshPanel();refreshStatus();return true;
+    state.arrival=event;state.lastArrival=type;state.nextArrival=null;notify(def.label+"。"+def.hint,3100);sound(600);refreshPanel();refreshStatus();return true;
   }
   function finishArrival(silent){
     const event=state.arrival;if(!event)return;
     restoreCart(event);removeVisitor(event);state.arrival=null;applySchedule(state.phase,"arrival");
-    if(!silent)say("来客の対応がひと段落した",2200);
+    if(!silent)notify("来客の対応がひと段落した",2200);
     refreshPanel();refreshStatus();
   }
   function updateArrival(now){
@@ -7958,7 +7964,7 @@ function updateHouseholdWalk(dt,t){
       const u=Math.min(1,elapsed/event.duration),smooth=u*u*(3-2*u);
       gisshaCarrySetCart(.88-.68*smooth,0);
     }
-    if(!event.notified&&near(event.def.anchor,9)){event.notified=true;say(event.def.hint,2500);}
+    if(!event.notified&&near(event.def.anchor,9)){event.notified=true;notify(event.def.hint,2500);}
     if(elapsed>=event.duration)finishArrival(false);
   }
 
