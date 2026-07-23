@@ -331,29 +331,29 @@ begin
     join public.profiles p on p.id = s.player_id
     where s.mode = v_mode and s.created_at >= v_start
   ), best_per_player as (
-    select *, row_number() over (
-      partition by player_id
+    select e.*, row_number() over (
+      partition by e.player_id
       order by
-        case when v_mode = 'quiz_ta' then coalesce(duration_ms, 2147483647) else 0 end asc,
-        case when v_mode <> 'quiz_ta' then score else 0 end desc,
-        created_at asc
+        case when v_mode = 'quiz_ta' then coalesce(e.duration_ms, 2147483647) else 0 end asc,
+        case when v_mode <> 'quiz_ta' then e.score else 0 end desc,
+        e.created_at asc
     ) as player_position
-    from eligible
+    from eligible e
   ), ranked as (
-    select *, rank() over (
+    select b.*, rank() over (
       order by
-        case when v_mode = 'quiz_ta' then coalesce(duration_ms, 2147483647) else 0 end asc,
-        case when v_mode <> 'quiz_ta' then score else 0 end desc,
-        created_at asc
+        case when v_mode = 'quiz_ta' then coalesce(b.duration_ms, 2147483647) else 0 end asc,
+        case when v_mode <> 'quiz_ta' then b.score else 0 end desc,
+        b.created_at asc
     ) as board_rank
-    from best_per_player
-    where player_position = 1
+    from best_per_player b
+    where b.player_position = 1
   )
   select board_rank::integer, ranked.player_id, ranked.display_name,
          ranked.score, ranked.duration_ms, ranked.created_at,
          ranked.player_id = v_user_id
   from ranked
-  order by board_rank, created_at
+  order by board_rank, ranked.created_at
   limit v_limit;
 end;
 $$;
@@ -384,24 +384,24 @@ begin
     from public.scores s
     where s.mode = v_mode and s.created_at >= v_start
   ), best_per_player as (
-    select *, row_number() over (
-      partition by player_id
+    select e.*, row_number() over (
+      partition by e.player_id
       order by
-        case when v_mode = 'quiz_ta' then coalesce(duration_ms, 2147483647) else 0 end asc,
-        case when v_mode <> 'quiz_ta' then score else 0 end desc,
-        created_at asc
+        case when v_mode = 'quiz_ta' then coalesce(e.duration_ms, 2147483647) else 0 end asc,
+        case when v_mode <> 'quiz_ta' then e.score else 0 end desc,
+        e.created_at asc
     ) as player_position
-    from eligible
+    from eligible e
   ), ranked as (
-    select *, rank() over (
+    select b.*, rank() over (
       order by
-        case when v_mode = 'quiz_ta' then coalesce(duration_ms, 2147483647) else 0 end asc,
-        case when v_mode <> 'quiz_ta' then score else 0 end desc,
-        created_at asc
+        case when v_mode = 'quiz_ta' then coalesce(b.duration_ms, 2147483647) else 0 end asc,
+        case when v_mode <> 'quiz_ta' then b.score else 0 end desc,
+        b.created_at asc
     ) as board_rank,
     count(*) over () as board_size
-    from best_per_player
-    where player_position = 1
+    from best_per_player b
+    where b.player_position = 1
   )
   select board_rank::integer, board_size::integer, ranked.score,
          ranked.duration_ms, ranked.created_at
