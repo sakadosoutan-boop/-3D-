@@ -3410,6 +3410,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 .koyomi-item .ko-date{font-size:12px;font-weight:700;color:var(--shu);width:66px;flex:none;padding-top:1px}
 .koyomi-item .ko-body{display:flex;flex-direction:column;min-width:0;flex:1}
 .koyomi-item .ko-title{font-size:14px;font-weight:700;color:#3a2c18;word-break:break-word}
+.koyomi-item .ko-greg{font-size:11px;font-weight:700;color:var(--shu);letter-spacing:.03em;margin:1px 0 2px}
 .koyomi-item .ko-kana{font-size:10.5px;font-weight:400;color:#8a7550;margin-left:7px;letter-spacing:.06em}
 .koyomi-item .ko-text{font-size:12px;line-height:1.65;color:#4a3c26;margin-top:2px}
 @media (max-width:480px){
@@ -3446,7 +3447,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 .discover-hint{font-size:11.5px;line-height:1.6;color:#5a4c38;margin-top:6px}
 .discover-empty{grid-column:1/-1;text-align:center;color:#7a6a4a;padding:24px;font-family:var(--sans);font-size:13px}
 
-/* ====== 波5: 教員向け小テスト(4択・CSV書き出し) ====== */
+/* ====== 波5: 力だめし小テスト(4択・CSV書き出し) ====== */
 #quizTeacherPanel{position:fixed;z-index:83;inset:0;display:none;align-items:center;justify-content:center;
   padding:18px;background:rgba(10,6,4,.82);backdrop-filter:blur(5px)}
 #quizTeacherPanel.open{display:flex}
@@ -3613,7 +3614,7 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
     <button class="t-btn t-codex-btn" id="btnCareer">🏯 平安立身伝<small id="titleCareerProgress">官位 童殿上</small></button>
     <button class="t-btn t-codex-btn" id="btnHistory">📜 あゆみ<small id="titleHistoryProgress">まだ記録がありません</small></button>
     <button class="t-btn t-codex-btn" id="btnKoyomi">📅 平安の暦<small id="titleKoyomiProgress">今日の行事を見る</small></button>
-    <button class="t-btn t-codex-btn" id="btnQuizTeacher">🧑‍🏫 教員向け小テスト<small>4択・CSV書き出し</small></button>
+    <button class="t-btn t-codex-btn" id="btnQuizTeacher">📝 力だめし小テスト<small>4択・結果を書き出し</small></button>
     <button class="t-onboard-help" id="btnOnboardHelp">❓ はじめての方へ</button>
 
     <div id="dailyQuestPanel" class="daily-quest-panel">
@@ -3859,21 +3860,21 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
       <button class="tb-btn" id="koyomiClose">✕ 閉じる</button>
     </div>
     <div class="koyomi-today" id="koyomiToday"></div>
-    <div class="koyomi-note" id="koyomiNote">※ 平安時代の年中行事は、月の満ち欠けを基準にした旧暦(太陰太陽暦)の日付で営まれていました。ここでは月日が近い行事として、同じ月日を新暦(現在のカレンダー)にあてはめて紹介します。実際の季節感とは1か月前後ずれることがあります。</div>
+    <div class="koyomi-note" id="koyomiNote">※ 平安時代の年中行事は、月の満ち欠けを基準にした旧暦(太陰太陽暦)で営まれていました。旧暦の日付は新暦(現在のカレンダー)では毎年15日ほど前後にずれ、季節も約1か月遅れて対応します。各行事に旧暦の日付と、それが新暦ではおおよそいつ頃かを併記しています(新暦の時期は概算です)。</div>
     <div class="koyomi-section-title">年間の主な年中行事</div>
     <div class="koyomi-list" id="koyomiList"></div>
   </div>
 </div>
 
-<!-- 波5: 教員向け小テスト(4択・CSV書き出し)パネル -->
+<!-- 波5: 力だめし小テスト(4択・CSV書き出し)パネル -->
 <div id="quizTeacherPanel" role="dialog" aria-modal="true" aria-labelledby="qtTitle">
   <div class="qt-scroll">
     <div class="qt-head">
-      <div><h2 id="qtTitle">🧑‍🏫 教員向け小テスト</h2></div>
+      <div><h2 id="qtTitle">📝 力だめし小テスト</h2></div>
       <button class="tb-btn" id="qtClose">✕ 閉じる</button>
     </div>
     <div id="qtIntro">
-      <p>図鑑の用語・建築や古文の重要語からランダムに出題する4択の小テストです。教員の自習教材づくりや生徒の実力確認にお使いください。採点後、結果をCSVで書き出せます。</p>
+      <p>図鑑の用語・建築や古文の重要語からランダムに出題する4択の小テストです。採点後、結果をCSVで書き出して自分の記録に残せます。</p>
       <label>出題数:
         <select id="qtCount">
           <option value="5">5問</option>
@@ -12288,27 +12289,32 @@ $("historyPanel").addEventListener("click",e=>{if(e.target===$("historyPanel"))h
    注記: 平安の行事は旧暦(太陰太陽暦)。ここでは同じ月日を新暦にあてはめて案内する簡易表示。
    干支の日(子日・酉日・亥日・卯日・辰日)にあたる行事は月日を目安として1つ割り当てている。
 ============================================================ */
+/* 各行事は「旧暦(m,d)」で営まれた。旧暦(太陰太陽暦)の日付は新暦(グレゴリオ暦)では毎年15日ほど
+   前後にずれるため、gm/gd に代表的な新暦の時期(概算)を持たせる。今日は何の日/散策演出の判定は
+   新暦(gm,gd)で行い、表示では旧暦と新暦の両方を示す。 */
 const KOYOMI_EVENTS=[
-  {m:1,d:1,title:"元日節会",kana:"がんじつのせちえ",text:"天皇が大極殿・清涼殿で年始の政をはじめ、群臣から祝賀を受ける。一年で最も重んじられた宮中儀式。"},
-  {m:1,d:7,title:"白馬節会",kana:"あおうまのせちえ",text:"左右馬寮が引く白馬(あおうま)を清涼殿の庭で天覧し、一年の邪気を払う。七草粥を食す日でもある。"},
-  {m:1,d:10,title:"子日の遊び",kana:"ねのひのあそび",text:"正月最初の子(ね)の日、野に出て若菜を摘み、小松を根ごと引いて長寿を祈る春の行楽(旧暦の干支の日にあたるため月日は目安)。"},
-  {m:1,d:15,title:"望粥",kana:"もちがゆ",text:"小豆を入れた粥を食べて一年の無病息災を祈る。十五日粥ともいう。"},
-  {m:2,d:4,title:"祈年祭",kana:"としごいのまつり",text:"神祇官が諸国の神々を祀り、その年の五穀豊穣をあらかじめ祈る国家的な祭儀。"},
-  {m:3,d:3,title:"上巳・曲水の宴",kana:"じょうし・きょくすいのえん",text:"水辺で身の穢れを祓い、流れる盃が前を過ぎるまでに和歌を詠む雅な遊び。のちの雛祭りの源流とされる。"},
-  {m:4,d:8,title:"灌仏会",kana:"かんぶつえ",text:"釈迦の誕生を祝う仏事。誕生仏の像に甘茶を注いでまつる。花祭りともいう。"},
-  {m:4,d:17,title:"賀茂祭(葵祭)",kana:"かもまつり(あおいまつり)",text:"賀茂神社の例祭で、都をあげての一大行事。見物の牛車の場所取り「車争ひ」は『源氏物語』にも描かれる(旧暦四月の酉の日にあたるため月日は目安)。"},
-  {m:5,d:5,title:"端午節会",kana:"たんごのせちえ",text:"菖蒲や蓬で邪気を払い、天皇の御前で騎射(きしゃ)や競馬(くらべうま)を行って武を競う。"},
-  {m:6,d:30,title:"夏越の祓",kana:"なごしのはらえ",text:"一年前半の罪穢れを祓う大祓(おおはらえ)。茅の輪(ちのわ)をくぐって残り半年の無病息災を祈る。"},
-  {m:7,d:7,title:"七夕・乞巧奠",kana:"たなばた・きっこうでん",text:"織女と牽牛の二星に手芸や和歌の上達を願う。梶の葉に歌をしたためる風習もあった。"},
-  {m:7,d:15,title:"盂蘭盆会",kana:"うらぼんえ",text:"祖先の霊を供養する仏事。灯籠や供物を捧げる。"},
-  {m:8,d:15,title:"中秋観月の宴",kana:"ちゅうしゅうかんげつのえん",text:"一年で最も美しいとされる名月を眺めながら、詩歌管弦を楽しむ観月の宴が催された。"},
-  {m:9,d:9,title:"重陽節会",kana:"ちょうようのせちえ",text:"菊の花を浮かべた菊花酒を飲み、前夜に菊にかぶせた綿(着せ綿)で肌を拭って長寿を祈る。"},
-  {m:10,d:10,title:"亥の子",kana:"いのこ",text:"亥の子餅を食べて無病息災と子孫繁栄を祈る。この頃から火桶を使い始める目安ともされた(旧暦十月亥の日にあたるため月日は目安)。"},
-  {m:11,d:23,title:"新嘗祭",kana:"にいなめさい",text:"その年に収穫した新穀を天神地祇に供え、天皇自らも食す収穫感謝の祭儀(旧暦十一月中の卯の日にあたるため月日は目安)。"},
-  {m:11,d:24,title:"豊明節会",kana:"とよあかりのせちえ",text:"新嘗祭の翌日に催される宴。五節(ごせち)の舞姫たちの舞が華やかに披露される。"},
-  {m:12,d:30,title:"追儺",kana:"ついな",text:"大晦日の夜に鬼を払う年越しの儀式。のちの節分の豆まきの源流とされる。"}
+  {m:1,d:1,gm:2,gd:4,title:"元日節会",kana:"がんじつのせちえ",text:"天皇が大極殿・清涼殿で年始の政をはじめ、群臣から祝賀を受ける。一年で最も重んじられた宮中儀式。旧暦元日は新暦では立春前後にあたる。"},
+  {m:1,d:7,gm:2,gd:10,title:"白馬節会",kana:"あおうまのせちえ",text:"左右馬寮が引く白馬(あおうま)を清涼殿の庭で天覧し、一年の邪気を払う。七草粥を食す日でもある。"},
+  {m:1,d:10,gm:2,gd:12,title:"子日の遊び",kana:"ねのひのあそび",text:"正月最初の子(ね)の日、野に出て若菜を摘み、小松を根ごと引いて長寿を祈る春の行楽(旧暦の干支の日にあたるため日は目安)。"},
+  {m:1,d:15,gm:2,gd:19,title:"望粥",kana:"もちがゆ",text:"小豆を入れた粥を食べて一年の無病息災を祈る。十五日粥ともいう。旧暦十五日は満月にあたる。"},
+  {m:2,d:4,gm:3,gd:6,title:"祈年祭",kana:"としごいのまつり",text:"神祇官が諸国の神々を祀り、その年の五穀豊穣をあらかじめ祈る国家的な祭儀。"},
+  {m:3,d:3,gm:4,gd:5,title:"上巳・曲水の宴",kana:"じょうし・きょくすいのえん",text:"水辺で身の穢れを祓い、流れる盃が前を過ぎるまでに和歌を詠む雅な遊び。のちの雛祭りの源流とされる。"},
+  {m:4,d:8,gm:5,gd:12,title:"灌仏会",kana:"かんぶつえ",text:"釈迦の誕生を祝う仏事。誕生仏の像に甘茶を注いでまつる。花祭りともいう(現在は新暦4月8日に行う寺も多い)。"},
+  {m:4,d:17,gm:5,gd:15,title:"賀茂祭(葵祭)",kana:"かもまつり(あおいまつり)",text:"賀茂神社の例祭で、都をあげての一大行事。見物の牛車の場所取り「車争ひ」は『源氏物語』にも描かれる(旧暦四月の酉の日にあたるため日は目安。現在の葵祭は新暦5月15日)。"},
+  {m:5,d:5,gm:6,gd:8,title:"端午節会",kana:"たんごのせちえ",text:"菖蒲や蓬で邪気を払い、天皇の御前で騎射(きしゃ)や競馬(くらべうま)を行って武を競う。"},
+  {m:6,d:30,gm:8,gd:1,title:"夏越の祓",kana:"なごしのはらえ",text:"一年前半の罪穢れを祓う大祓(おおはらえ)。茅の輪(ちのわ)をくぐって残り半年の無病息災を祈る。"},
+  {m:7,d:7,gm:8,gd:14,title:"七夕・乞巧奠",kana:"たなばた・きっこうでん",text:"織女と牽牛の二星に手芸や和歌の上達を願う。梶の葉に歌をしたためる風習もあった。旧暦七夕は新暦では八月中旬にあたり「伝統的七夕」として今も残る。"},
+  {m:7,d:15,gm:8,gd:22,title:"盂蘭盆会",kana:"うらぼんえ",text:"祖先の霊を供養する仏事。灯籠や供物を捧げる。旧暦盆は新暦八月の月遅れ盆にあたる。"},
+  {m:8,d:15,gm:9,gd:21,title:"中秋観月の宴",kana:"ちゅうしゅうかんげつのえん",text:"一年で最も美しいとされる名月を眺めながら、詩歌管弦を楽しむ観月の宴が催された。中秋の名月は新暦では九月から十月上旬に巡ってくる。"},
+  {m:9,d:9,gm:10,gd:16,title:"重陽節会",kana:"ちょうようのせちえ",text:"菊の花を浮かべた菊花酒を飲み、前夜に菊にかぶせた綿(着せ綿)で肌を拭って長寿を祈る。"},
+  {m:10,d:10,gm:11,gd:14,title:"亥の子",kana:"いのこ",text:"亥の子餅を食べて無病息災と子孫繁栄を祈る。この頃から火桶を使い始める目安ともされた(旧暦十月亥の日にあたるため日は目安)。"},
+  {m:11,d:23,gm:12,gd:23,title:"新嘗祭",kana:"にいなめさい",text:"その年に収穫した新穀を天神地祇に供え、天皇自らも食す収穫感謝の祭儀(旧暦十一月中の卯の日にあたるため日は目安。現在の勤労感謝の日=新暦11月23日はこれに由来)。"},
+  {m:11,d:24,gm:12,gd:26,title:"豊明節会",kana:"とよあかりのせちえ",text:"新嘗祭の翌日に催される宴。五節(ごせち)の舞姫たちの舞が華やかに披露される。"},
+  {m:12,d:30,gm:2,gd:3,title:"追儺",kana:"ついな",text:"大晦日の夜に鬼を払う年越しの儀式。のちの節分の豆まきの源流とされる。旧暦大晦日は新暦では立春の前日=節分の頃にあたる。"}
 ];
 function koyomiDayOfYear(m,d,year){return Math.floor((Date.UTC(year,m-1,d)-Date.UTC(year,0,1))/86400000);}
+/* 新暦の概算時期を「◯月上旬/中旬/下旬ごろ」で表す */
+function koyomiGregLabel(gm,gd){const w=gd<=10?"上旬":gd<=20?"中旬":"下旬";return `新暦${gm}月${w}ごろ`;}
 /* 今日(または直近)の行事を1件返す。年またぎ(12月末→1月頭)は翌年として扱い、うるう年の最大1日の
    誤差は演出用途のため許容する。diffDays=0は「本日」。 */
 function koyomiFindNear(now){
@@ -12316,7 +12322,7 @@ function koyomiFindNear(now){
   const y=now.getFullYear(),todayDoy=koyomiDayOfYear(now.getMonth()+1,now.getDate(),y);
   let best=null,bestDiff=Infinity;
   KOYOMI_EVENTS.forEach(ev=>{
-    let diff=koyomiDayOfYear(ev.m,ev.d,y)-todayDoy;
+    let diff=koyomiDayOfYear(ev.gm,ev.gd,y)-todayDoy; // 新暦の概算日で比較(旧暦をそのまま新暦に当てはめない)
     if(diff<0)diff+=365;
     if(diff<bestDiff){bestDiff=diff;best=ev;}
   });
@@ -12335,7 +12341,7 @@ function koyomiRenderPanel(){
     const nearHtml=near.event?
       `<div class="koyomi-near-label">${near.isToday?"★ 本日の行事":`次の行事まで あと${near.diffDays}日`}</div>
        <div class="koyomi-near-title">${near.event.title}<span class="koyomi-near-kana">${near.event.kana}</span></div>
-       <div class="koyomi-near-date">${near.event.m}月${near.event.d}日ごろ</div>
+       <div class="koyomi-near-date">旧暦${near.event.m}月${near.event.d}日 ・ ${koyomiGregLabel(near.event.gm,near.event.gd)}</div>
        <div class="koyomi-near-text">${near.event.text}</div>`:"";
     todayEl.innerHTML=`<div class="koyomi-date-label">今日の日付</div><div class="koyomi-date-big">${now.getMonth()+1}月${now.getDate()}日<span class="koyomi-date-wd">(${wd})</span></div>${nearHtml}`;
   }
@@ -12343,7 +12349,7 @@ function koyomiRenderPanel(){
   if(listEl){
     listEl.innerHTML=KOYOMI_EVENTS.map(ev=>{
       const isNext=near.event===ev;
-      return `<div class="koyomi-item${isNext?" next":""}"><div class="ko-date">${ev.m}月${ev.d}日</div><div class="ko-body"><div class="ko-title">${ev.title}<span class="ko-kana">${ev.kana}</span></div><div class="ko-text">${ev.text}</div></div></div>`;
+      return `<div class="koyomi-item${isNext?" next":""}"><div class="ko-date">旧暦<br>${ev.m}月${ev.d}日</div><div class="ko-body"><div class="ko-title">${ev.title}<span class="ko-kana">${ev.kana}</span></div><div class="ko-greg">${koyomiGregLabel(ev.gm,ev.gd)}</div><div class="ko-text">${ev.text}</div></div></div>`;
     }).join("");
   }
 }
@@ -12428,7 +12434,7 @@ function koyomiWalkPick(){
   const todayDoy=koyomiDayOfYear(now.getMonth()+1,now.getDate(),year);
   const candidates=Object.keys(KOYOMI_WALK_VISUALS).map(title=>{
     const ev=KOYOMI_EVENTS.find(e=>e.title===title);if(!ev)return null;
-    const evDoy=koyomiDayOfYear(ev.m,ev.d,year);
+    const evDoy=koyomiDayOfYear(ev.gm,ev.gd,year); // 新暦の概算日で近さを判定
     let diff=Math.abs(evDoy-todayDoy);diff=Math.min(diff,365-diff);
     return {title,ev,diff,visual:KOYOMI_WALK_VISUALS[title]};
   }).filter(Boolean);
@@ -12539,7 +12545,7 @@ if($("btnTour"))$("btnTour").onclick=()=>startTour();
 if($("tourSkipBtn"))$("tourSkipBtn").onclick=()=>{if(APP.tour&&APP.tour.active)tourAdvance();};
 if($("tourQuitBtn"))$("tourQuitBtn").onclick=()=>endTour(true);
 
-/* ====== 波5-K2: 教員向け小テスト(4択・CSV書き出し) ======
+/* ====== 波5-K2: 力だめし小テスト(4択・CSV書き出し) ======
    出題はGLOSSARY(古文重要語)とITEMS(用語・建築、和歌を除く)からランダムにN問。
    GLOSSARY由来は「用語→意味」、ITEMS由来は「説明→用語」の4択。誤答選択肢は
    同じ出題元(同カテゴリ)から重複なく生成する。既存の図鑑・クイズ機能とは独立。 */

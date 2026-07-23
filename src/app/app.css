@@ -2357,6 +2357,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 .koyomi-item .ko-date{font-size:12px;font-weight:700;color:var(--shu);width:66px;flex:none;padding-top:1px}
 .koyomi-item .ko-body{display:flex;flex-direction:column;min-width:0;flex:1}
 .koyomi-item .ko-title{font-size:14px;font-weight:700;color:#3a2c18;word-break:break-word}
+.koyomi-item .ko-greg{font-size:11px;font-weight:700;color:var(--shu);letter-spacing:.03em;margin:1px 0 2px}
 .koyomi-item .ko-kana{font-size:10.5px;font-weight:400;color:#8a7550;margin-left:7px;letter-spacing:.06em}
 .koyomi-item .ko-text{font-size:12px;line-height:1.65;color:#4a3c26;margin-top:2px}
 @media (max-width:480px){
@@ -2393,7 +2394,7 @@ body.juice-shake canvas{animation:juiceShakeK .22s}
 .discover-hint{font-size:11.5px;line-height:1.6;color:#5a4c38;margin-top:6px}
 .discover-empty{grid-column:1/-1;text-align:center;color:#7a6a4a;padding:24px;font-family:var(--sans);font-size:13px}
 
-/* ====== 波5: 教員向け小テスト(4択・CSV書き出し) ====== */
+/* ====== 波5: 力だめし小テスト(4択・CSV書き出し) ====== */
 #quizTeacherPanel{position:fixed;z-index:83;inset:0;display:none;align-items:center;justify-content:center;
   padding:18px;background:rgba(10,6,4,.82);backdrop-filter:blur(5px)}
 #quizTeacherPanel.open{display:flex}
