@@ -112,6 +112,85 @@ async function launchBrowser() {
       const gfx = document.getElementById('gfx');
       const gfxOk = !!gfx && getComputedStyle(gfx).display !== 'none';
       if (gfx) gfx.style.display = 'none';
+      let lowPowerOk = false;
+      let lowPowerRestoreOk = false;
+      try {
+        const before = window.LOW_POWER?.getStatus?.();
+        window.LOW_POWER?.enable?.();
+        const enabled = window.LOW_POWER?.getStatus?.();
+        lowPowerOk = window.LOW_POWER_STATUS?.ready === true
+          && enabled?.active === true
+          && enabled?.fps === 30
+          && enabled?.quality === 3
+          && enabled?.bloom === 'off'
+          && enabled?.shadows === false
+          && !!document.getElementById('gfxEco_on')?.classList.contains('on');
+        window.LOW_POWER?.disable?.();
+        const restored = window.LOW_POWER?.getStatus?.();
+        lowPowerRestoreOk = restored?.active === false
+          && restored?.fps === before?.fps
+          && restored?.shadows === before?.shadows;
+      } catch (_) {}
+      let kohAwaseOk = false;
+      try {
+        window.KOH_AWASE?.reset?.();
+        window.KOH_AWASE?.open?.();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const state = window.KOH_AWASE?.getState?.();
+        const optionsBefore = document.querySelectorAll('#kohAwaseModal .koh-awase-option');
+        const answer = state?.session?.answer;
+        const answered = Number.isInteger(answer) ? window.KOH_AWASE.answer(answer) : false;
+        const feedback = document.getElementById('kohAwaseFeedback')?.textContent || '';
+        kohAwaseOk = window.KOH_AWASE_STATUS?.ready === true
+          && window.KOH_AWASE_STATUS?.questions >= 12
+          && !!document.getElementById('kohAwaseEntry')
+          && optionsBefore.length === 4
+          && answered === true
+          && [...document.querySelectorAll('#kohAwaseModal .koh-awase-option')].every((button) => button.disabled)
+          && feedback.includes('正解')
+          && window.KOH_AWASE.getState().masteredQuestionIds.length === 1;
+        window.KOH_AWASE.close();
+      } catch (_) {}
+      let livingEstateOk = false;
+      let livingEstateModeOk = false;
+      let livingEstateArrivalOk = false;
+      try {
+        const estate = window.LIVING_ESTATE;
+        estate?.init?.();
+        estate?.setTimeForTest?.('dawn');
+        estate?.update?.(0.016, 1);
+        const keishi = window.householdPeople?.find((root) => root.userData?.householdId === 'keishi');
+        const scheduleOk = window.LIVING_ESTATE_STATUS?.ready === true
+          && window.LIVING_ESTATE_STATUS?.actorCount === 7
+          && window.LIVING_ESTATE_STATUS?.overheardCount >= 7
+          && window.LIVING_ESTATE_STATUS?.schedulePhases?.keishi === 'ledger'
+          && keishi?.userData?.estateActivityName?.includes('帳簿');
+        estate?.openSchedule?.();
+        const panelOk = !!document.getElementById('tbEstateLife')
+          && document.getElementById('estateLifePanel')?.classList.contains('open')
+          && (document.getElementById('estateLifePanel')?.textContent || '').includes('来訪の気配');
+        estate?.closeSchedule?.();
+        APP.mode = 'title';
+        estate?.update?.(0.016, 2);
+        const paused = keishi?.userData?.walkReady === false;
+        APP.mode = 'walk';
+        estate?.update?.(0.016, 3);
+        const resumed = keishi?.userData?.walkReady === true;
+        livingEstateOk = scheduleOk && panelOk;
+        livingEstateModeOk = paused && resumed;
+
+        const visitorStarted = estate?.triggerArrival?.('visitor') === true;
+        estate?.update?.(0.016, 4);
+        const visitorVisible = scene.children.some((root) => root.userData?.estateVisitor === true);
+        estate?.reset?.();
+        const visitorRemoved = !scene.children.some((root) => root.userData?.estateVisitor === true)
+          && window.LIVING_ESTATE_STATUS?.activeArrival == null;
+        const previousCarry = APP.gisshaCarry;
+        APP.gisshaCarry = { active: true };
+        const carryGuarded = estate?.triggerArrival?.('oxCart') === false;
+        APP.gisshaCarry = previousCarry;
+        livingEstateArrivalOk = visitorStarted && visitorVisible && visitorRemoved && carryGuarded;
+      } catch (_) {}
       if (typeof enterMode === 'function') enterMode('kaimami');
       await new Promise((resolve) => setTimeout(resolve, 500));
       const kaimamiOk = typeof APP !== 'undefined' && APP.mode === 'kaimami';
@@ -218,6 +297,31 @@ async function launchBrowser() {
       const storySpeaker = document.getElementById('stSpk')?.textContent || '';
       const storyChapterStartedOk = storyChapterTitle.includes('第1話') && storySaveOk;
       const storyDialogueOk = getComputedStyle(document.getElementById('stBox')).display !== 'none' && (storyText.length > 0 || storySpeaker.length > 0);
+      let storySlotsOk = false;
+      let storySlotsDetail = {};
+      try {
+        const slots = window.STORY_SLOTS;
+        const saved = slots?.save?.(1);
+        const record = slots?.load?.(1);
+        const serialized = JSON.parse(record?.data || '{}');
+        const migratedManager = new StoryManager({ saveKey: 'shinden3d-story-smoke-migrate-v1' });
+        const legacyData = { ...serialized };
+        delete legacyData.version;
+        migratedManager.deserialize(legacyData);
+        localStorage.setItem(slots.key(2), '{broken');
+        localStorage.setItem(slots.key(3), JSON.stringify({data: record.data, meta: record.meta}));
+        storySlotsDetail = {
+          saved: saved === true,
+          format: record?.format === 1,
+          chapter: record?.meta?.ch === 1,
+          sequence: typeof serialized.currentSequenceId === 'string' && serialized.currentSequenceId === record?.meta?.seq,
+          migrated: migratedManager.state.chapterId === 1 && migratedManager.currentSequenceId === serialized.currentSequenceId,
+          corruptRejected: slots.load(2) === null,
+          legacyLoaded: slots.load(3)?.data === record?.data,
+        };
+        storySlotsOk = Object.values(storySlotsDetail).every(Boolean);
+        localStorage.removeItem('shinden3d-story-smoke-migrate-v1');
+      } catch (error) { storySlotsDetail.error = error.message || String(error); }
       // 波AN: フレッシュ状態(結末未到達)ではHUDのゲージも隠れているのが正しい
       const storyHudGaugeGatedOk = document.querySelectorAll('#stParamViz .st-ed-orb').length === 0;
       if (typeof stExitToTitle === 'function') stExitToTitle();
@@ -269,6 +373,9 @@ async function launchBrowser() {
         error: null,
       };
       try {
+        if (typeof enterMode === 'function') enterMode('walk');
+        window.LIVING_ESTATE?.setTimeForTest?.('day');
+        window.LIVING_ESTATE?.update?.(0.016, 8);
         const standing = makeHeianFigure({
           role: 'himegimi',
           palette: [0x8f2438, 0xc04a42, 0xe28335, 0x77863f],
@@ -422,6 +529,12 @@ async function launchBrowser() {
         walkOk,
         codexOk,
         gfxOk,
+        lowPowerOk,
+        lowPowerRestoreOk,
+        kohAwaseOk,
+        livingEstateOk,
+        livingEstateModeOk,
+        livingEstateArrivalOk,
         kaimamiOk,
         kaimamiRoutes,
         kaimamiTextOk: kaimamiText.includes('三つの観察地点'),
@@ -453,6 +566,8 @@ async function launchBrowser() {
         storyGalleryLockOk,
         storyChapterStartedOk,
         storyDialogueOk,
+        storySlotsOk,
+        storySlotsDetail,
         storyHudGaugeGatedOk,
         storyExitOk,
         modelSmoke,
@@ -460,10 +575,30 @@ async function launchBrowser() {
         objects: typeof scene !== 'undefined' ? scene.children.length : null,
       };
     });
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobileStatus = await page.evaluate(async () => {
+      if (typeof enterMode === 'function') enterMode('walk');
+      window.KOH_AWASE?.open?.();
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      const kohRect = document.getElementById('kohAwaseModal')?.getBoundingClientRect();
+      const kohFits = !!kohRect && kohRect.left >= 0 && kohRect.right <= innerWidth && kohRect.bottom <= innerHeight;
+      window.KOH_AWASE?.close?.();
+      window.LIVING_ESTATE?.openSchedule?.();
+      const estateRect = document.getElementById('estateLifePanel')?.getBoundingClientRect();
+      const estateFits = !!estateRect && estateRect.left >= 0 && estateRect.right <= innerWidth && estateRect.bottom <= innerHeight;
+      window.LIVING_ESTATE?.closeSchedule?.();
+      return { kohFits, estateFits, horizontalOverflow: document.documentElement.scrollWidth <= innerWidth };
+    });
     if (status.missing.length) errors.push(`missing UI ids: ${status.missing.join(', ')}`);
     if (!status.walkOk) errors.push('walk mode did not start');
     if (!status.codexOk) errors.push('codex did not open');
     if (!status.gfxOk) errors.push('graphics settings did not open');
+    if (!status.lowPowerOk || !status.lowPowerRestoreOk) errors.push('low-power mode did not apply and restore cleanly');
+    if (!status.kohAwaseOk) errors.push('standalone koh-awase learning flow failed');
+    if (!status.livingEstateOk) errors.push('living-estate schedules or daily-life panel failed');
+    if (!status.livingEstateModeOk) errors.push('living-estate actors did not pause and resume with walk mode');
+    if (!status.livingEstateArrivalOk) errors.push('living-estate visitor/cart arrival safeguards failed');
+    if (!mobileStatus.kohFits || !mobileStatus.estateFits || !mobileStatus.horizontalOverflow) errors.push('new panels overflowed the 390px mobile viewport');
     if (!status.kaimamiOk) errors.push('kaimami mode did not start');
     if (status.kaimamiRoutes.join(',') !== 'east,north,tsumado') errors.push(`unexpected kaimami routes: ${status.kaimamiRoutes.join(',')}`);
     if (!status.kaimamiTextOk) errors.push('kaimami instructions did not mention the three observation points');
@@ -494,6 +629,7 @@ async function launchBrowser() {
     if (!status.storyGalleryLockOk) errors.push('story ending gallery did not lock unreached endings');
     if (!status.storyChapterStartedOk) errors.push('story chapter 1 did not start or save progress');
     if (!status.storyDialogueOk) errors.push('story chapter 1 did not show dialogue text');
+    if (!status.storySlotsOk) errors.push('story manual save slots did not preserve, restore, or migrate safely');
     if (!status.storyHudGaugeGatedOk) errors.push('story ending gauge should be hidden in the HUD until an ending is reached');
     if (!status.storyExitOk) errors.push('story mode did not return to title cleanly');
     if (status.modelSmoke.error) errors.push(`model smoke failed: ${status.modelSmoke.error}`);

@@ -497,6 +497,27 @@
       return { type: "ending", endingId };
     }
 
+    migrateSaveData(raw){
+      const data = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if(!data || !data.state)throw new Error("Invalid story save data");
+      const version = data.version == null ? 1 : Number(data.version);
+      if(!Number.isFinite(version) || version < 1 || version > 1){
+        throw new Error(`Unsupported story save version: ${data.version}`);
+      }
+      const saved = data.state || {};
+      return {
+        version: 1,
+        currentSequenceId: data.currentSequenceId || null,
+        state: Object.assign({}, saved, {
+          routeFlags: Object.assign({}, saved.routeFlags || {}),
+          collected: Object.assign({}, saved.collected || {}),
+          completedChapters: Object.assign({}, saved.completedChapters || {}),
+          params: Object.assign({}, STORY_DEFAULT_PARAMS, saved.params || {}),
+          history: Array.isArray(saved.history) ? saved.history.slice() : []
+        })
+      };
+    }
+
     serialize(){
       return JSON.stringify({
         version: 1,
@@ -506,9 +527,8 @@
     }
 
     deserialize(raw){
-      const data = typeof raw === "string" ? JSON.parse(raw) : raw;
-      if(!data || !data.state)throw new Error("Invalid story save data");
-      this.state = Object.assign({}, data.state);
+      const data = this.migrateSaveData(raw);
+      this.state = data.state;
       this.currentSequenceId = data.currentSequenceId || null;
       return this.snapshot();
     }

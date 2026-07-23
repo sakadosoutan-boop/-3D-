@@ -1688,12 +1688,12 @@ function stChapterComplete(chapterId){
    全ての読み書きは try/catch で保護し、失敗してもスロットや進行を壊さない。 */
 const ST_SLOT_N=[1,2,3];
 function stSlotKey(n){return "shinden3d-story-slot"+n+"-v1";}
-function stSlotLoad(n){try{const r=JSON.parse(localStorage.getItem(stSlotKey(n)));return (r&&r.meta&&r.data)?r:null;}catch(e){return null;}}
+function stSlotLoad(n){try{const r=JSON.parse(localStorage.getItem(stSlotKey(n)));return (r&&r.meta&&r.data&&(!r.format||r.format===1))?r:null;}catch(e){return null;}}
 function stSlotSave(n){
   try{
     if(!SM||!SM.state||!stStoryInProgress())return false;
     const st=SM.state;
-    const rec={data:SM.serialize(), // SM.serialize()は文字列(JSON)を返す
+    const rec={format:1,data:SM.serialize(), // SM.serialize()は文字列(JSON)を返す
       meta:{ch:st.chapterId,seq:SM.currentSequenceId,params:Object.assign({},st.params||{}),
             flags:Object.assign({},st.routeFlags||{}),savedAt:Date.now()}}; // 波AN: ED予兆表示のため routeFlags も保存
     localStorage.setItem(stSlotKey(n),JSON.stringify(rec));
@@ -1706,6 +1706,10 @@ function stStoryInProgress(){
   return !!(SM&&SM.state&&SM.state.chapterId>=1&&SM.state.chapterId<=5&&
     SM.currentSequenceId&&SM.currentSequenceId!=="chapter_complete"&&!SM.state.endingId);
 }
+window.STORY_SLOTS={
+  version:1,count:ST_SLOT_N.length,key:stSlotKey,load:stSlotLoad,save:stSlotSave,
+  remove:stSlotDelete,canSave:stStoryInProgress
+};
 function stFmtSaveTime(ms){
   try{const d=new Date(ms),p=n=>String(n).padStart(2,"0");
     return p(d.getMonth()+1)+"/"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
@@ -1725,7 +1729,7 @@ function stRecordRoom(){
     const asv=JSON.parse(localStorage.getItem("shinden3d-story-save-v1")||"null");
     const s=asv&&asv.state;
     if(s&&s.chapterId){
-      const p=s.params||{},done=s.endingId?"（結末到達済み）":(s.currentSequenceId==="chapter_complete"?"（章クリア）":"進行中");
+      const p=s.params||{},done=s.endingId?"（結末到達済み）":(asv.currentSequenceId==="chapter_complete"?"（章クリア）":"進行中");
       autoRow='<div class="st-slot-row st-slot-auto"><div class="st-slot-info"><b>▶ オートセーブ</b>'+
         '<span class="st-slot-empty">自動・常に最新</span>第'+esc(s.chapterId)+'話 '+esc(done)+
         ' ｜ 現'+(p.realityEgo|0)+'/雅'+(p.fantasySynchro|0)+'/蝕'+(p.brainErosion|0)+fcLabel(p,s.routeFlags)+

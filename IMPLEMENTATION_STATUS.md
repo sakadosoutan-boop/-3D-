@@ -1,8 +1,8 @@
 # 実装済み棚卸し — main / branch status
 
-最終更新: 2026-07-08
-基準: `origin/main` = `69a5c68` (`docs: consolidate duplicate archive notes`)
-検証: `npm test` / `npm run verify:public` 通過済み
+最終更新: 2026-07-22
+基準: GitHub `origin/main`（公開直前に再同期）
+検証: `npm test` / Playwright スモーク通過、公開後に `npm run verify:public` を実施
 
 ## main に実装済み
 
@@ -11,6 +11,7 @@
 - 単一HTMLアプリ本体、GitHub Pages 用 `index.html`、PWA/OGP/アイコン。
 - Three.js r128、手続き生成モデル/テクスチャ、主要画像の data URI 内蔵、一部GLBモデル併用。
 - 季節/時刻/名称札/画質/ブルーム/ジョイ設定の localStorage 永続化。
+- 低性能端末向け軽量描画モード。低画質、30fps、影/ブルーム/季節粒子の抑制を一括適用し、解除時に従来設定を復元。
 - `npm test` 系の検証基盤:
   - `build:story:check`
   - `verify:html`
@@ -54,11 +55,15 @@
 - 物語モード「御簾の向こうへ」:
   - 6章構成、章JSON、HTML埋め込み同期。
   - 選択肢、パラメータ、ミニゲーム連携、章別BGM、演出オブジェクト。
-  - ED1-ED5、回想、未到達ロック、手動記録、オートセーブ。
+  - ED1-ED5、回想、未到達ロック、章選択、3枠の手動記録、オートセーブ。
+  - 保存形式v1と旧形式の移行、破損スロットの安全な除外。
   - ED分岐ゲージは結末到達後に解放。
 - 恋愛/陰陽系:
   - 恋の母屋ハブ、香合わせ、牛車外出、30日イベント。
   - 陰陽寮の占い補正、散策中の占い通知。
+- 独立した香合わせ学習:
+  - 六種の薫物を中心とした全14問、5問1組、即時解説、間違えた知識の振り返り。
+  - 恋愛日数や恋愛パラメータを進めず、初回習得だけ学習進捗へ反映。
 - 車宿/牛車運び:
   - `kurumayadori` 図鑑/札/3Dモデル。
   - モード別表示制御。退治/物語/恋愛/歌合/再現では邪魔にならない。
@@ -74,39 +79,24 @@
 - 既存の座位人物は座位のまま維持。
 - 主人、北の方、子女、家司、乳母、命婦、下女、随身、舎人、下男/番人を図鑑/札/モデルとして追加。
 - 歩ける屋敷人物に巡回ルートを付与。
+- 家司、乳母、命婦、下女、随身、舎人、下男/番人に朝・昼・夕・夜の日課を付与。
+- 役職に関する会話の聞き耳、使者・来客・牛車の到着イベントを追加。主人など既存の座位/静止人物は対象外。
 - 主人モデルは貴公子とかぶらないよう色変更し、塗籠以外へ配置。
 - 主人の立ち姿の裾を滑らかに調整。
 
-## main に含まれる主要リモートブランチ
+## リモートブランチの扱い
 
-`git branch -r --merged origin/main` で確認済み。
+ブランチ一覧は作業中に変わるため、この文書へ固定しません。公開直前に次を実行し、その時点の状態を判断してください。
 
-- `origin/claude/story-mode-expansion-1kk3is`
-- `origin/codex/main-safe-reapply-20260708`
-- `origin/codex/stability-ci-docs`
-- `origin/codex/kitsune-boss-rig`
-- `origin/codex/handoff-quickwins`
-- `origin/claude/heian-3d-balance-review-n4ckxf`
-- `origin/claude/saigen-mode-dev-clespl`
-- `origin/claude/busy-sagan-bg2t95`
-- `origin/claude/friendly-albattani-9po8fx`
-- `origin/claude/gifted-brahmagupta-mqbn1w`
+```bash
+git fetch origin --prune
+git branch -r --merged origin/main
+git branch -r --no-merged origin/main
+```
 
-## 未統合ブランチの扱い
-
-`git branch -r --no-merged origin/main` で確認済み。
-
-| ブランチ | 状態 | 扱い |
-|---|---|---|
-| `origin/codex/story-priority-implementation` | 履歴上は未マージ。ストーリーゲージ/スモーク等は main 側の新仕様に吸収済み | 丸ごとマージしない。必要な差分だけ確認 |
-| `origin/codex/saigen-fix` | 資料/シナリオパッケージ系 | 必要な資料だけ個別確認 |
-| `origin/claude/codex-integration-y7np8q` | Codex MCP 連携セットアップ | 本体ゲームとは別系統。必要時に個別レビュー |
-| `origin/claude/continuation-alsfsk` | 上と同系統の継続ブランチ | 個別レビュー |
-| `origin/claude/design-app-builder-opus-cg5jl4` | 設計図3Dビルダー | 大きな別機能。mainへ入れるなら別PRで検証 |
-| `origin/claude/workflow-automation-strategy-jofjos` | SOP/自動化/運用キット | 本体外の運用系。個別判断 |
-| `origin/claude/vercel-skills-integration-axr2kp` | `.gitignore` 系 | 必要なら小さく cherry-pick |
-| `origin/claude/handoff-docs-publish-qbox12` | 古い起動修正/チュートリアル削除系 | main に後続実装あり。戻さない |
-| `origin/claude/handoff-docs-publish-9lrfwo` | 和歌短冊リファクタ WIP | WIP。丸ごとマージ禁止 |
+- 未統合ブランチを丸ごとマージせず、まず `git diff --name-status origin/main...origin/<branch>` で責任範囲を確認する。
+- 2026-07-22時点の `origin/claude/heian-3d-balance-review-n4ckxf` は位階すいかゲームと `src/app/app.css` を更新中。生活/香合わせ/軽量描画の3モジュールとは正本を分離している。
+- `origin/codex/story-priority-implementation` など古い作業ブランチは、mainに後続実装があるため丸ごと戻さない。
 
 ## 整理方針
 

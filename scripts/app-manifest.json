@@ -35,5 +35,26 @@
     "kind": "markers-exist",
     "begin": "/* APP_KAMAKURA_EMBED_BEGIN (src/app/map-kamakura.js から自動生成。ここを直接編集しない) */",
     "end": "/* APP_KAMAKURA_EMBED_END */"
+  },
+  {
+    "name": "low-power",
+    "src": "src/app/low-power.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_LOW_POWER_EMBED_BEGIN (src/app/low-power.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_LOW_POWER_EMBED_END */"
+  },
+  {
+    "name": "koh-awase",
+    "src": "src/app/koh-awase.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_KOH_AWASE_EMBED_BEGIN (src/app/koh-awase.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_KOH_AWASE_EMBED_END */"
+  },
+  {
+    "name": "living-estate",
+    "src": "src/app/living-estate.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_LIVING_ESTATE_EMBED_BEGIN (src/app/living-estate.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_LIVING_ESTATE_EMBED_END */"
   }
 ]
