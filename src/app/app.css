@@ -558,51 +558,73 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
   .kai-stat b{font-size:12.5px}
   .kai-title{font-size:13px}
 }
-/* 波8: 蹴鞠(タイミングゲーム) — 3D世界を完全に覆う独立オーバーレイ。kaiHud/ikaiHudの構造・軽量化手法を踏襲。背景は不透明 */
+/* 蹴鞠「八人の鞠庭」— 位置取り・蹴り分け・連携を読むCanvas競技 */
 #kemariHud{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;
-  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
-  background:radial-gradient(circle at 50% 26%,#233b1e 0%,#0c140a 62%,#030401 100%);font-family:var(--sans);overflow-y:auto}
+  padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
+  background:linear-gradient(180deg,#172619 0%,#071009 100%);font-family:var(--sans);overflow:hidden;color:#f5ead2}
 #kemariHud.show{display:flex}
-.kmr-top{width:min(460px,94vw);display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex:none}
-#kemariQuit{width:34px;height:34px;border-radius:50%;border:1px solid rgba(201,162,63,.5);background:rgba(20,14,8,.7);color:#e9dcc2;font-size:14px;cursor:pointer}
-.kmr-title{font-family:var(--serif,serif);font-size:15px;font-weight:900;letter-spacing:.14em;color:#f0e2c0;text-shadow:0 2px 8px #000}
-.kmr-stats{display:flex;gap:8px}
-.kmr-stat{padding:4px 10px;border-radius:8px;border:1px solid rgba(199,107,60,.4);background:rgba(24,16,9,.7);font-size:11px;color:#e0cdb0;text-align:center}
-.kmr-stat span{display:block;font-size:8.5px;letter-spacing:.1em;opacity:.75}
-.kmr-stat b{font-size:14px;color:#ffb877}
-.kmr-judge{min-height:26px;margin:2px 0 4px;font-family:var(--serif,serif);font-size:16px;font-weight:900;
-  letter-spacing:.1em;color:#ffe9ad;text-shadow:0 2px 8px #000;opacity:0;transform:translateY(4px);
-  transition:opacity .18s ease,transform .18s ease;flex:none}
-.kmr-judge.show{opacity:1;transform:translateY(0)}
-.kmr-judge.miss{color:#ff9a8a}
-.kmr-judge.perfect{color:#ffe9ad}
-.kmr-judge.good{color:#bfe6c8}
-@media (prefers-reduced-motion:reduce){.kmr-judge{transition:none}}
-.kmr-board{position:relative;width:min(300px,80vw);aspect-ratio:280/420;margin-top:2px;touch-action:none}
-#kemariCanvas{width:100%;height:100%;border-radius:10px;border:1px solid rgba(199,107,60,.5);box-shadow:0 14px 40px rgba(0,0,0,.5);display:block}
-#kemariGameOver,#kemariHelp{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(3,4,2,.72);z-index:2}
+.kmr-top{width:min(780px,96vw);min-height:42px;display:grid;grid-template-columns:40px minmax(86px,1fr) auto;align-items:center;gap:8px;flex:none}
+#kemariQuit{width:36px;height:36px;border-radius:50%;border:1px solid rgba(230,199,119,.62);background:#21170f;color:#f2e6cb;font-size:15px;cursor:pointer}
+#kemariQuit:hover,#kemariQuit:focus-visible{background:#6e2c28;outline:2px solid #f0cc78;outline-offset:2px}
+.kmr-title{font-family:var(--serif,serif);font-size:16px;font-weight:900;letter-spacing:.12em;color:#fff1c8;text-shadow:0 2px 7px #000}
+.kmr-title small{display:block;margin-top:2px;font:9px var(--sans);letter-spacing:.08em;color:#b9c9a8}
+.kmr-stats{display:grid;grid-template-columns:repeat(6,minmax(48px,auto));gap:5px}
+.kmr-stat{min-width:52px;padding:4px 8px;border-radius:6px;border:1px solid rgba(215,179,96,.42);background:#251b11;font-size:10px;color:#dccca9;text-align:center}
+.kmr-stat span{display:block;font-size:8px;line-height:1.2;letter-spacing:.06em;color:#b7aa8d}
+.kmr-stat b{display:block;min-height:17px;font-size:14px;line-height:17px;color:#ffca73}
+.kmr-stat.kmr-life b{color:#f58b76}.kmr-stat.kmr-flow b{color:#91d7b1}
+.kmr-mission{width:min(780px,96vw);min-height:30px;display:flex;align-items:center;gap:8px;margin:4px 0;
+  padding:5px 9px;box-sizing:border-box;border-left:3px solid #c79a42;background:rgba(20,16,10,.82);font-size:11px;color:#d8c8a7}
+#kmrRound{flex:0 0 auto;color:#f6cf79;font-family:var(--serif,serif);font-weight:800}
+#kmrObjective{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kmr-flowline{width:min(780px,96vw);min-height:25px;box-sizing:border-box;margin:-1px 0 4px;padding:4px 9px;
+  border:1px solid rgba(117,170,137,.26);border-top:0;border-radius:0 0 6px 6px;background:rgba(12,23,16,.84);
+  color:#bcd7c2;font-size:10px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kmr-judge{position:absolute;z-index:3;left:50%;top:12px;min-width:128px;max-width:82%;padding:6px 12px;border:1px solid rgba(247,207,116,.62);
+  border-radius:6px;background:rgba(23,15,9,.9);font-family:var(--serif,serif);font-size:16px;font-weight:900;text-align:center;
+  letter-spacing:.08em;color:#ffe9ad;text-shadow:0 2px 8px #000;opacity:0;transform:translate(-50%,6px);
+  transition:opacity .16s ease,transform .16s ease;pointer-events:none}
+.kmr-judge.show{opacity:1;transform:translate(-50%,0)}
+.kmr-judge.miss{color:#ff9a8a;border-color:#b84c43}.kmr-judge.perfect{color:#ffe28e;border-color:#e7bd57}.kmr-judge.good{color:#bfe6c8;border-color:#68ad83}
+.kmr-board{position:relative;width:min(780px,96vw);aspect-ratio:720/500;max-height:calc(100vh - 205px);margin:0;touch-action:none;flex:1 1 auto}
+#kemariCanvas{width:100%;height:100%;border-radius:7px;border:1px solid rgba(218,177,88,.62);background:#1c3220;
+  box-shadow:0 12px 34px rgba(0,0,0,.48),inset 0 0 0 1px rgba(255,255,255,.05);display:block}
+#kemariGameOver,#kemariHelp{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;background:rgba(5,8,4,.82);z-index:5}
 #kemariGameOver.show,#kemariHelp.show{display:flex}
-.kmr-card{width:min(300px,88%);max-height:min(640px,90vh);overflow-y:auto;-webkit-overflow-scrolling:touch;
-  text-align:center;padding:18px 16px;border:1px solid rgba(199,107,60,.55);border-radius:10px;
-  background:linear-gradient(180deg,rgba(28,22,12,.97),rgba(14,11,6,.98));box-shadow:0 16px 40px rgba(0,0,0,.5)}
-.kmr-card-title{font-family:var(--serif,serif);font-size:18px;font-weight:900;color:#f0e2c0;letter-spacing:.1em;margin-bottom:10px;text-shadow:0 2px 8px #000}
-.kmr-card-detail{font-size:12.5px;line-height:1.9;color:#e9dcc2;margin-bottom:14px}
-.kmr-card-text{font-size:12px;line-height:1.85;color:#cdbd9c;margin-bottom:14px;text-align:left}
+.kmr-card{width:min(520px,94%);max-height:94%;overflow-y:auto;-webkit-overflow-scrolling:touch;text-align:center;padding:18px 18px;
+  border:1px solid rgba(218,181,95,.68);border-radius:8px;background:#21180f;box-shadow:0 16px 40px rgba(0,0,0,.56)}
+.kmr-card-title{font-family:var(--serif,serif);font-size:20px;font-weight:900;color:#ffe7ad;letter-spacing:.08em;margin-bottom:8px;text-shadow:0 2px 8px #000}
+.kmr-card-detail{font-size:12.5px;line-height:1.8;color:#ede1c8;margin-bottom:12px}
+.kmr-card-text{font-size:12px;line-height:1.75;color:#d4c4a4;margin-bottom:12px;text-align:left}
+.kmr-help-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0;text-align:left}
+.kmr-help-grid span{padding:7px;border:1px solid rgba(208,171,88,.35);border-radius:5px;background:#142018;color:#ddcfb0;font-size:10px;line-height:1.5}
 .kmr-card .t-btn{width:100%;margin-top:6px;min-height:42px;flex:none}
-.kmr-newbest{display:none;margin:0 0 12px;padding:7px 10px;border-radius:8px;border:1px solid rgba(228,199,106,.85);
-  background:linear-gradient(90deg,rgba(212,175,55,.24),rgba(212,175,55,.08));color:#ffe9ad;font-weight:900;
-  letter-spacing:.14em;font-size:13px;text-align:center;text-shadow:0 2px 6px #000}
+.kmr-newbest{display:none;margin:0 0 10px;padding:7px 10px;border-radius:6px;border:1px solid rgba(228,199,106,.85);
+  background:#4d3b18;color:#ffe9ad;font-weight:900;letter-spacing:.12em;font-size:13px;text-align:center;text-shadow:0 2px 6px #000}
 .kmr-newbest.show{display:block;animation:ikaiNewBestPop .5s cubic-bezier(.2,.9,.25,1)}
-@media (prefers-reduced-motion:reduce){.kmr-newbest.show{animation:none}}
-@media (max-width:480px){
-  .kmr-stat{padding:3px 7px;font-size:9.5px}
-  .kmr-stat b{font-size:12.5px}
-  .kmr-title{font-size:13px}
-  .kmr-judge{font-size:14px}
+.kmr-controls{width:min(780px,96vw);height:54px;display:grid;grid-template-columns:62px 1fr 1fr 1fr 1.15fr 62px;gap:6px;margin-top:6px;flex:none}
+.kmr-control{min-width:0;border:1px solid rgba(218,181,95,.55);border-radius:7px;background:#251b11;color:#f3e8ce;font:700 11px var(--sans);cursor:pointer;touch-action:manipulation}
+.kmr-control strong{display:block;font-size:16px;line-height:1.1;color:#ffd17b}
+.kmr-control[data-action="receive"]{background:#254938;border-color:#70a98d}.kmr-control[data-action="high"]{background:#643426;border-color:#c47c58}
+.kmr-control[data-action="pass"]{background:#4a3b20;border-color:#b79a4d}
+.kmr-control[data-action="kick"]{background:#8a3b28;border-color:#e09a62;color:#fff2d6}
+.kmr-control.selected{box-shadow:inset 0 0 0 2px #f4d078;filter:brightness(1.18)}
+.kmr-control:active,.kmr-control.pressed{filter:brightness(1.28);transform:translateY(1px)}
+.kmr-control:focus-visible{outline:2px solid #ffd57a;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.kmr-judge,.kmr-control{transition:none}.kmr-newbest.show{animation:none}}
+@media (max-width:520px){
+  .kmr-top{grid-template-columns:36px 1fr}.kmr-title{font-size:14px}.kmr-title small{display:none}
+  .kmr-stats{grid-column:1/-1;width:100%;grid-template-columns:repeat(6,1fr)}
+  .kmr-stat{min-width:0;padding:3px 2px}.kmr-stat b{font-size:12px}
+  .kmr-mission{margin:3px 0}.kmr-board{max-height:calc(100vh - 225px)}
+  .kmr-controls{height:58px;grid-template-columns:42px 1fr 1fr 1fr 1.1fr 42px;gap:3px}
+  .kmr-control{font-size:9px}.kmr-control strong{font-size:15px}.kmr-help-grid{grid-template-columns:1fr}
+  .kmr-card{padding:14px}.kmr-card-title{font-size:18px}.kmr-judge{font-size:14px}
 }
-@media (orientation:landscape) and (max-height:520px){
-  .kmr-board{width:min(220px,52vh)}
-  .kmr-top{margin-bottom:3px}
+@media (orientation:landscape) and (max-height:560px){
+  #kemariHud{padding:4px 8px}.kmr-top{min-height:34px}.kmr-mission{min-height:24px;margin:2px 0}
+  .kmr-board{max-height:calc(100vh - 124px)}.kmr-controls{position:absolute;right:9px;bottom:7px;width:52%;height:44px;z-index:4;opacity:.94}
+  .kmr-control{font-size:8px}.kmr-control strong{font-size:13px}
 }
 /* 季節選択(退治) */
 #taijiSeason{display:none;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
