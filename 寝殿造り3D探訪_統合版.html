@@ -5474,15 +5474,14 @@ function groundH(x,z){let h=bridgeGroundH(x,z);
 /* 池(円の合成で近似) */
 const pondCircles=[[-22,40,17],[-2,47,15],[-34,28,11],[14,50,10],[-12,33,9]];
 function inPond(x,z){return pondCircles.some(c=>((x-c[0])**2+(z-c[1])**2)<c[2]*c[2]);}
-/* ── 波12: 散策/クイズ/一日体験モードの当たり判定(柱・建物すり抜け防止) ──
+/* ── 波12→波14で再設計: 散策/クイズ/一日体験モードの当たり判定(柱・実在壁のみ・建物すり抜け防止) ──
    物語モードの storySolidResolve と同じ押し出しアルゴリズムを、静的な建物コライダー WALK_SOLIDS に適用する。
-   建物の中核(母屋)・対屋・中門廊を矩形で塞ぐが、簀子(縁)・廂・庭は歩けるまま＝部屋を眺める学習体験は保つ。
+   旧方式は建物footprint全体を粗い矩形で塞いでおり、廂・母屋の「入れるべき内部」まで丸ごと塞いでいた。
+   新方式は computeWalkSolids()(SH/TAI 等の実座標定義の直後に定義)が、実際の柱の生成式・
+   塗籠(唯一の実在する壁)の生成式をそのまま再利用して精密な柱(小円/小矩形)・壁(薄い矩形)のみを列挙する。
+   簀子(縁)・廂の間口・妻戸・階段・渡殿の通路帯にはそもそも柱を置かないので、歩いて通り抜けられる。
    矩形/円の外へ放射状に押し出すだけなので、決してプレイヤーを閉じ込めない。設定トグルと ?nocollide=1 で無効化可。 */
-const WALK_SOLIDS=[
-  {x:0,z:-4.5,hw:13.6,hd:6.1},                                          // 寝殿(母屋の核)
-  {x:35,z:-12,hw:10,hd:7},{x:-35,z:-12,hw:10,hd:7},{x:0,z:-39,hw:11,hd:6.5}, // 東・西・北の対屋
-  {x:24,z:12,hw:2.2,hd:9},{x:-24,z:12,hw:2.2,hd:9}                       // 中門廊(南へ伸びる細い廊)
-];
+let WALK_SOLIDS=[]; // computeWalkSolids() が SH/TAI 定義後に実値を詰める(下記 computeWalkSolids 呼び出し箇所を参照)
 function walkSolidResolve(x,z){
   const S=WALK_SOLIDS;
   for(let it=0;it<5;it++){
@@ -6904,6 +6903,94 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
   }
 }
 register(shinden,"shinden",new THREE.Vector3(SH.cx,12.5,SH.cz));
+
+/* ── 波14: WALK_SOLIDS(散策/クイズ/一日体験の当たり判定)を精密化 ──
+   実際の建物生成コード(母屋の柱・廂の柱・塗籠・building()の柱リング・corridor()の柱列・
+   中門・釣殿の柱)と同じ座標式で、柱(小円/小矩形)と塗籠の実在壁(薄い矩形)だけを集める。
+   束柱(簀子縁の下の低い支柱)・upperWall/屋根・床・半蔀(格子窓)・高欄(低い手すり)・
+   北廂の外壁(実在するが唯一の実在壁=塗籠と別扱いにするとの合意により対象外)は含めない
+   ＝迷ったときは「塞がない」方に倒す。SH/TAI が定義済みの、この位置(shinden 生成直後)で計算する。 */
+function computeWalkSolids(){
+  const S=[];
+  const colMargin=0.15; // 柱の実半径+この余白で押し出す(通行帯を過度に狭めない)
+  // ---- 寝殿: 母屋の柱(NX×NZ、外周リングのみ・中央列は左右端の2本だけ) ----
+  {
+    const H=SH,NX=6,NZ=2,r=0.21+colMargin;
+    for(let i=0;i<=NX;i++)for(let j=0;j<=NZ;j++){
+      if(j===1&&i>0&&i<NX)continue;
+      S.push({x:H.cx+(-H.mw/2+H.mw*i/NX),z:H.cz+(-H.md/2+H.md*j/NZ),r});
+    }
+  }
+  // ---- 寝殿: 廂の柱(HX×HZ、北東・北西の妻戸中央は角柱を除外=本体の生成規則と同じ) ----
+  {
+    const H=SH,HX=8,HZ=2,r=0.19+colMargin;
+    for(let i=0;i<=HX;i++)for(let j=0;j<=HZ;j++){
+      if(j===1&&i>0&&i<HX)continue;
+      if(j===0&&(i===0||i===HX))continue;
+      S.push({x:H.cx+(-H.hw/2+H.hw*i/HX),z:H.cz+(-H.hd/2+H.hd*j/HZ),r});
+    }
+  }
+  // ---- 寝殿: 塗籠(母屋西側・寝殿で唯一の実在する壁)。東面の戸口(z≈±0.7内)は開けたまま ----
+  {
+    const H=SH,NW=5.4,ND=H.md,nx0=-H.mw/2+NW/2,t=0.09; // t=壁厚(見た目.18)の半分
+    S.push({x:H.cx+nx0,z:H.cz+(-ND/2+.1),hw:NW/2,hd:t});              // 北壁
+    S.push({x:H.cx+nx0,z:H.cz+( ND/2-.1),hw:NW/2,hd:t});              // 南壁
+    S.push({x:H.cx+(-H.mw/2+.1),z:H.cz,hw:t,hd:ND/2});                // 西壁
+    S.push({x:H.cx+(nx0+NW/2-.1),z:H.cz+(-ND/4-.35),hw:t,hd:(ND/2-0.7)/2}); // 東面(戸口の北側)
+    S.push({x:H.cx+(nx0+NW/2-.1),z:H.cz+( ND/4+.35),hw:t,hd:(ND/2-0.7)/2}); // 東面(戸口の南側)
+    // 東面の鴨居(戸口上部の梁, y=f3+1.9〜f3+ph)は頭上構造なので対象外＝戸口はそのまま通れる
+  }
+  // ---- building()と同じ柱リング配置式(対屋)。妻戸のある辺は柱を間引く ----
+  function ringColumns(x0,z0,w,d,doors,r){
+    const nx=Math.max(2,Math.round(w/3)),nz=Math.max(1,Math.round(d/3));
+    const blocksDoor=(x,z)=>doors.some(dd=>{
+      const side=dd[0],off=dd[1],half=1.34;
+      if(side==="S")return Math.abs(z-d/2)<.25&&Math.abs(x-off)<half;
+      if(side==="N")return Math.abs(z+d/2)<.25&&Math.abs(x-off)<half;
+      if(side==="E")return Math.abs(x-w/2)<.25&&Math.abs(z-off)<half;
+      if(side==="W")return Math.abs(x+w/2)<.25&&Math.abs(z-off)<half;
+      return false;
+    });
+    for(let i=0;i<=nx;i++)for(let j=0;j<=nz;j++){
+      if(i>0&&i<nx&&j>0&&j<nz)continue;
+      const px=-w/2+w*i/nx,pz=-d/2+d*j/nz;
+      if(blocksDoor(px,pz))continue;
+      S.push({x:x0+px,z:z0+pz,r});
+    }
+  }
+  ringColumns(TAI.e.x,TAI.e.z,19,13,[["W",4.5],["S",0]],0.15+colMargin);
+  ringColumns(TAI.w.x,TAI.w.z,19,13,[["E",4.5],["S",0]],0.15+colMargin);
+  ringColumns(TAI.n.x,TAI.n.z,21,12,[["S",0]],0.15+colMargin);
+  // ---- corridor()と同じ柱列配置式(渡殿・中門廊。進行方向に垂直な両側2列) ----
+  function corridorColumns(x1,z1,x2,z2,r){
+    const dx=x2-x1,dz=z2-z1,L=Math.hypot(dx,dz);if(L<0.01)return;
+    const n=Math.max(2,Math.round(L/2.6));
+    const ux=dx/L,uz=dz/L,px=-uz,pz=ux; // 進行方向に垂直な単位ベクトル
+    for(let i=0;i<=n;i++){
+      const bx=x1+dx*i/n,bz=z1+dz*i/n;
+      S.push({x:bx+px*1.15,z:bz+pz*1.15,r});
+      S.push({x:bx-px*1.15,z:bz-pz*1.15,r});
+    }
+  }
+  const corR=0.11+colMargin;
+  corridorColumns(11.8,-7.5,25.5,-7.5,corR);   // 東渡殿(寝殿東妻戸→東対)
+  corridorColumns(-11.8,-7.5,-25.5,-7.5,corR); // 西透渡殿(寝殿西妻戸→西対)
+  corridorColumns(0,-8.8,0,-33,corR);          // 北渡殿(寝殿北廂→北対)
+  [1,-1].forEach(side=>{
+    const X=side*35;
+    corridorColumns(X,-5.5,X,18.5,corR);       // 対屋南端→中門
+    corridorColumns(X,21.5,X,30.5,corR);       // 中門→釣殿
+    // 中門(柱4本)
+    [[-1.7,-1.1],[-1.7,1.1],[1.7,-1.1],[1.7,1.1]].forEach(p=>S.push({x:X+p[0],z:20+p[1],r:0.17+colMargin}));
+    // 釣殿(3×3配置・中央を除く外周8本の柱)
+    [-1,0,1].forEach(i=>[-1,0,1].forEach(j=>{
+      if(i===0&&j===0)return;
+      S.push({x:X+i*3.6,z:34.5+j*3.6,r:0.13+colMargin});
+    }));
+  });
+  return S;
+}
+WALK_SOLIDS=computeWalkSolids();
 
 /* ============================================================
    篝火(かがり火) — 南庭に立つ鉄籠の屋外照明。夜になると灯る。
