@@ -5548,6 +5548,21 @@ function walkSolidResolve(x,z){
   }
   return {x,z};
 }
+/* 薄い壁(塗籠・格子)のすり抜け(トンネリング)を防ぐ掃引式解決。現在地→目標を細かく刻み、
+   各刻みで押し出す。1フレームの移動量が壁厚を超えても、途中点が必ず壁の帯に入るので確実に止まる。
+   刻み幅0.08は最も薄い壁帯(≈0.2)より十分細かい。柱(円)にもそのまま効く。 */
+function walkMoveResolve(fromX,fromZ,toX,toZ){
+  const dx=toX-fromX,dz=toZ-fromZ,dist=Math.hypot(dx,dz);
+  if(dist<1e-6)return walkSolidResolve(toX,toZ);
+  const steps=Math.min(24,Math.max(1,Math.ceil(dist/0.08)));
+  const sx=dx/steps,sz=dz/steps;
+  let x=fromX,z=fromZ;
+  for(let s=0;s<steps;s++){
+    x+=sx;z+=sz;
+    const r=walkSolidResolve(x,z);x=r.x;z=r.z;
+  }
+  return {x,z};
+}
 const WALK_COLLIDE_FORCED_OFF=/[?&]nocollide=1/.test(location.search);
 function walkCollideOn(){return !WALK_COLLIDE_FORCED_OFF&&APP.collideWalk!==false;}
 /* 建物の正規入口ゾーン（地面→建物床への許容遷移）
@@ -6980,6 +6995,22 @@ function computeWalkSolids(){
     S.push({x:H.cx+(nx0+NW/2-.1),z:H.cz+(-ND/4-.35),hw:t,hd:(ND/2-0.7)/2}); // 東面(戸口の北側)
     S.push({x:H.cx+(nx0+NW/2-.1),z:H.cz+( ND/4+.35),hw:t,hd:(ND/2-0.7)/2}); // 東面(戸口の南側)
     // 東面の鴨居(戸口上部の梁, y=f3+1.9〜f3+ph)は頭上構造なので対象外＝戸口はそのまま通れる
+  }
+  // ---- 寝殿: 半蔀(格子)の外周壁。実在する格子/壁の位置のみ薄い壁として塞ぐ。
+  //      南中央2間(i=3,4=階の動線)・南北の隅(妻戸)・北中央(北渡殿)は開口＝通れるまま(本体メッシュと一致) ----
+  {
+    const H=SH,HX=8,bayW=H.hw/HX,t=0.12,shw=(bayW-.36)/2;
+    // 南面(廂外周 z=hd/2)。半蔀があるのは i=1,2,5,6(生成規則と同じ)
+    [1,2,5,6].forEach(i=>S.push({x:H.cx+(-H.hw/2+bayW*(i+.5)),z:H.cz+H.hd/2,hw:shw,hd:t}));
+    // 東面(x=hw/2)・西面(x=-hw/2)の半蔀2枚ずつ(local cz,幅): (-2.05,3.7)(3.4,6.4)。妻戸の開口は空けたまま
+    [[-2.05,3.7],[3.4,6.4]].forEach(([lz,w])=>{
+      S.push({x:H.cx+H.hw/2,z:H.cz+lz,hw:t,hd:w/2});
+      S.push({x:H.cx-H.hw/2,z:H.cz+lz,hw:t,hd:w/2});
+    });
+    // 北面の壁(実在)。北渡殿の開口(x∈[-1.2,1.2])だけ残して左右2枚
+    const nz=H.cz-H.hd/2+.05,nHalf=(H.hw-.3)/2,gap=1.2,seg=(nHalf-gap)/2,cen=gap+seg;
+    S.push({x:H.cx-cen,z:nz,hw:seg,hd:t});
+    S.push({x:H.cx+cen,z:nz,hw:seg,hd:t});
   }
   // ---- building()と同じ柱リング配置式(対屋)。妻戸のある辺は柱を間引く ----
   function ringColumns(x0,z0,w,d,doors,r){
@@ -22265,7 +22296,7 @@ function animate(now){
           // 波12: 散策/クイズ/一日体験は柱・建物のすり抜けを防止(押し出し式・トグル/?nocollide=1で無効)。
           // 建物の中核(母屋)・対屋・中門廊のみ塞ぎ、簀子(縁)・廂・庭は歩けるまま＝部屋を眺める学習体験は保つ。
           if(walkCollideOn()&&(APP.mode==="walk"||APP.mode==="quiz"||APP.mode==="quest")){
-            const wr=walkSolidResolve(cx,cz);cx=wr.x;cz=wr.z;
+            const wr=walkMoveResolve(player.pos.x,player.pos.z,cx,cz);cx=wr.x;cz=wr.z; // 掃引式=薄い壁もすり抜けない
           }
           // 従来モード(垣間見など): 地面→建物床への直接侵入を防ぐ一方通行の壁
           const wallBlocked=(APP.mode==="kaimami")&&prevGH<0.5&&gh>=1.05&&!inBuildingEntrance(cx,cz,true);
