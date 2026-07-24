@@ -1628,6 +1628,10 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 .kmr-stat.kmr-life b{color:#f58b76}.kmr-stat.kmr-flow b{color:#91d7b1}
 .kmr-mission{width:min(780px,96vw);min-height:30px;display:flex;align-items:center;gap:8px;margin:4px 0;
   padding:5px 9px;box-sizing:border-box;border-left:3px solid #c79a42;background:rgba(20,16,10,.82);font-size:11px;color:#d8c8a7}
+.kmr-versus{width:min(780px,96vw);min-height:28px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;
+  padding:4px 9px;box-sizing:border-box;border:1px solid rgba(184,104,75,.5);background:#301a15;color:#f5dcc7;font-size:10px}
+.kmr-versus[hidden]{display:none}.kmr-versus span{color:#f0a87e;font-weight:900}.kmr-versus b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kmr-versus strong{color:#ffd281;font-size:12px}
 #kmrRound{flex:0 0 auto;color:#f6cf79;font-family:var(--serif,serif);font-weight:800}
 #kmrObjective{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kmr-flowline{width:min(780px,96vw);min-height:25px;box-sizing:border-box;margin:-1px 0 4px;padding:4px 9px;
@@ -1642,6 +1646,15 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 .kmr-board{position:relative;width:min(780px,96vw);aspect-ratio:720/500;max-height:calc(100vh - 205px);margin:0;touch-action:none;flex:1 1 auto}
 #kemariCanvas{width:100%;height:100%;border-radius:7px;border:1px solid rgba(218,177,88,.62);background:#1c3220;
   box-shadow:0 12px 34px rgba(0,0,0,.48),inset 0 0 0 1px rgba(255,255,255,.05);display:block}
+.kmr-readout{position:absolute;z-index:2;left:10px;right:10px;bottom:9px;min-height:52px;display:grid;grid-template-columns:70px 86px minmax(150px,1fr) 112px;
+  align-items:center;gap:8px;padding:6px 8px;box-sizing:border-box;border:1px solid rgba(237,209,140,.4);border-radius:6px;background:rgba(8,13,9,.88);
+  box-shadow:0 6px 20px rgba(0,0,0,.32);pointer-events:none}
+.kmr-cue span,.kmr-sync span{display:block;color:#aebda9;font-size:8px;line-height:1.2}.kmr-cue b{display:block;margin-top:2px;color:#ffe09a;font:900 15px var(--serif)}
+.kmr-timing>span{display:block;margin-bottom:4px;color:#d8cfbb;font-size:9px;text-align:center}.kmr-timing-track{position:relative;height:9px;border-radius:2px;background:#28291e;overflow:hidden}
+.kmr-timing-track i{position:absolute;inset:0 auto 0 0;width:0;background:#b88b42}.kmr-timing-track em{position:absolute;right:7%;top:0;width:13%;height:100%;border-left:1px solid #fff0ae;border-right:1px solid #fff0ae;background:rgba(255,223,126,.25)}
+.kmr-readout.is-ready .kmr-timing-track i{background:#70c69a}.kmr-readout.is-ready .kmr-timing>span{color:#9ce1b8;font-weight:900}
+.kmr-readout.is-queued .kmr-timing>span{color:#ffd36f}.kmr-sync b{color:#9bd5b6;font-size:12px}.kmr-sync>div{height:5px;margin-top:3px;background:#253026}
+.kmr-sync i{display:block;width:0;height:100%;background:#72c5a4}.kmr-readout.is-flow .kmr-sync i{background:#f0c968;box-shadow:0 0 8px #f0c968}
 #kemariGameOver,#kemariHelp{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;background:rgba(5,8,4,.82);z-index:5}
 #kemariGameOver.show,#kemariHelp.show{display:flex}
 .kmr-card{width:min(520px,94%);max-height:94%;overflow-y:auto;-webkit-overflow-scrolling:touch;text-align:center;padding:18px 18px;
@@ -1661,6 +1674,7 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 .kmr-control[data-action="receive"]{background:#254938;border-color:#70a98d}.kmr-control[data-action="high"]{background:#643426;border-color:#c47c58}
 .kmr-control[data-action="pass"]{background:#4a3b20;border-color:#b79a4d}
 .kmr-control[data-action="kick"]{background:#8a3b28;border-color:#e09a62;color:#fff2d6}
+.kmr-control[data-action="kick"].is-ready{background:#a94b2f;border-color:#ffd17b;box-shadow:0 0 0 2px rgba(255,209,123,.24),0 0 16px rgba(219,116,58,.38)}
 .kmr-control.selected{box-shadow:inset 0 0 0 2px #f4d078;filter:brightness(1.18)}
 .kmr-control:active,.kmr-control.pressed{filter:brightness(1.28);transform:translateY(1px)}
 .kmr-control:focus-visible{outline:2px solid #ffd57a;outline-offset:2px}
@@ -1670,6 +1684,9 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
   .kmr-stats{grid-column:1/-1;width:100%;grid-template-columns:repeat(6,1fr)}
   .kmr-stat{min-width:0;padding:3px 2px}.kmr-stat b{font-size:12px}
   .kmr-mission{margin:3px 0}.kmr-board{max-height:calc(100vh - 225px)}
+  .kmr-readout{left:5px;right:5px;bottom:5px;grid-template-columns:52px 62px minmax(96px,1fr);gap:4px;padding:5px}
+  .kmr-readout .kmr-sync{grid-column:1/-1;display:grid;grid-template-columns:30px 34px 1fr;align-items:center;gap:4px}.kmr-sync>div{margin-top:0}
+  .kmr-cue b{font-size:13px}.kmr-timing>span{font-size:8px}.kmr-versus{font-size:9px}
   .kmr-controls{height:58px;grid-template-columns:42px 1fr 1fr 1fr 1.1fr 42px;gap:3px}
   .kmr-control{font-size:9px}.kmr-control strong{font-size:15px}.kmr-help-grid{grid-template-columns:1fr}
   .kmr-card{padding:14px}.kmr-card-title{font-size:18px}.kmr-judge{font-size:14px}
@@ -2024,6 +2041,11 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
 .r-card h2{font-size:20px;letter-spacing:.26em;color:var(--shu);margin-bottom:10px;text-shadow:0 1px 0 rgba(255,255,255,.58)}
 .r-rank{font-size:clamp(40px,11vw,58px);font-weight:800;letter-spacing:.12em;margin:6px 0 8px;color:#2c170c;text-shadow:0 1px 0 rgba(255,255,255,.6)}
 .r-detail{font-size:13px;font-family:var(--sans);line-height:1.9;color:#5a4c36;background:rgba(255,255,255,.34);border:1px solid rgba(184,155,86,.48);border-radius:7px;padding:10px 12px}
+.quiz-online-rank{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;margin-top:9px;padding:8px 10px;
+  border:1px solid rgba(76,126,106,.44);border-radius:6px;background:rgba(235,247,239,.7);font-size:11px;line-height:1.45;text-align:left}
+.quiz-online-rank span{color:#52675a}.quiz-online-rank b{color:#1f6246;text-align:right;font-size:12px}
+.quiz-online-rank.is-loading b{color:#75653f}.quiz-online-rank.is-queued{border-color:rgba(177,126,54,.48);background:rgba(250,240,216,.74)}
+.quiz-online-rank.is-queued b,.quiz-online-rank.is-offline b{color:#815f29}
 .r-next{display:none;margin-top:10px;padding:9px 11px;border-radius:7px;border:1px solid rgba(138,59,42,.32);
   background:linear-gradient(180deg,rgba(255,250,236,.72),rgba(244,230,198,.52));font-family:var(--sans);
   font-size:12px;line-height:1.65;color:#6a4a32;text-align:left}
@@ -4233,10 +4255,24 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
       <b id="kmrBest" hidden>0</b>
     </div>
   </div>
+  <div class="kmr-versus" id="kmrVersus" hidden>
+    <span>御前試合・同一鞠順</span>
+    <b id="kmrRivalName">対戦相手</b>
+    <strong id="kmrRivalScore">挑戦中</strong>
+  </div>
   <div class="kmr-mission"><b id="kmrRound">1/4</b><span id="kmrObjective">仲間の声と鞠の影を見て、受ける位置へ。</span></div>
   <div class="kmr-flowline" id="kmrFlow" aria-live="polite">鞠庭に入り、仲間の声と鞠の弧を読む。</div>
   <div class="kmr-board" id="kemariBoard">
     <canvas id="kemariCanvas"></canvas>
+    <div class="kmr-readout" id="kmrReadout">
+      <div class="kmr-cue"><span>落下</span><b id="kmrLaneCue">中央</b></div>
+      <div class="kmr-cue"><span>蹴り</span><b id="kmrTechniqueCue">受け</b></div>
+      <div class="kmr-timing">
+        <span id="kmrTimingCue">位置を合わせる</span>
+        <div class="kmr-timing-track"><i id="kmrTimingFill"></i><em></em></div>
+      </div>
+      <div class="kmr-sync"><span>連携</span><b id="kmrSync">0%</b><div><i id="kmrSyncFill"></i></div></div>
+    </div>
     <div id="kmrJudge" class="kmr-judge" aria-live="polite"></div>
     <div id="kemariGameOver">
       <div class="kmr-card">
@@ -4250,7 +4286,7 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
     <div id="kemariHelp">
       <div class="kmr-card">
         <div class="kmr-card-title">八人の鞠庭</div>
-        <div class="kmr-card-text">蹴鞠は勝敗よりも、仲間と鞠を地に落とさず渡し続けることを尊ぶ遊びです。四隅に松・桜・柳・楓の「懸」が立つ鞠庭で、呼び声と鞠の影を読み、受ける位置へ動きましょう。鹿革の鞠が足元へ来た瞬間、状況に合う蹴りを選びます。</div>
+        <div class="kmr-card-text">蹴鞠は勝敗よりも、仲間と鞠を地に落とさず渡し続けることを尊ぶ遊びです。四隅に松・桜・柳・楓の「懸」が立つ鞠庭で、落下輪へ移動し、示された蹴り方を選びます。「蹴る」は少し早めに押しても構えとして受け付け、鞠が足元へ来た瞬間に蹴ります。</div>
         <div class="kmr-help-grid">
           <span><b>受け</b><br>安定して正面へ返す。まず間を整える。</span>
           <span><b>高蹴り</b><br>雅と得点が大きい。遅い鞠には不向き。</span>
@@ -13973,7 +14009,7 @@ function quizAnswer(id){
     else toast(funnyMistakeLine("quiz","そこには何もないようだ…"),2400);
   }
 }
-/* ローカル順位記録(localStorage)。ta=タイム(昇順=速い順) / quiz=得点(降順)。オンライン化は後日 */
+/* 端末内順位記録(localStorage)。ta=タイム(昇順=速い順) / quiz=得点(降順)。共有順位とは分けて保持する。 */
 const LB_KEY="shinden3d-lb-v1";
 const LB=(()=>{
   let data={ta:[],quiz:[]};
@@ -13994,10 +14030,38 @@ const LB=(()=>{
       let s='<div style="margin-top:9px;border-top:1px solid #b89b56;padding-top:7px;font-size:12px;text-align:left;font-family:var(--sans)"><b>この端末の記録 上位5</b><br>';
       if(!top.length)s+='まだ記録がありません<br>';
       top.forEach((e,i)=>{s+='&nbsp;'+(i+1)+'位　'+(mode==="ta"?e.v.toFixed(1)+' 秒':e.v+' 点')+'<br>';});
-      return s+'<small style="color:#7a6a4a">※端末内記録。共有順位はタイトルの「オンライン御前試合」で確認できます。</small></div>';
+      return s+'<small style="color:#7a6a4a">※この端末だけの記録です。</small></div>';
     }
   };
 })();
+function quizOnlineRankBlock(mode){
+  const token=mode+"-"+Date.now()+"-"+Math.random().toString(36).slice(2,7);
+  return `<div class="quiz-online-rank is-loading" id="quizOnlineRank" data-request="${token}"><span>共有順位・今週</span><b>オンライン順位を確認中…</b></div>`;
+}
+function submitQuizOnlineResult(mode,score,durationMs,metadata){
+  const online=window.ONLINE_COMPETITION,el=$("quizOnlineRank");
+  if(!el)return;
+  const token=el.dataset.request;
+  const set=(kind,text)=>{
+    const current=$("quizOnlineRank");
+    if(!current||current.dataset.request!==token)return;
+    current.className="quiz-online-rank "+kind;
+    const value=current.querySelector("b");if(value)value.textContent=text;
+  };
+  if(!online?.submitScore){set("is-offline","オンライン順位は利用できません");return;}
+  Promise.resolve(online.submitScore(mode,score,durationMs,metadata)).then(async result=>{
+    if(result?.queued){set("is-queued","通信復帰後に自動送信します");return;}
+    if(result?.offline||result?.ignored){set("is-offline","オンライン順位は利用できません");return;}
+    try{
+      const mine=await online.getMyRank?.(mode,"weekly");
+      if(mine?.rank){
+        set("is-ready",`${mine.rank}位${mine.totalPlayers?` / ${mine.totalPlayers}人中`:""}`);
+      }else{
+        set("is-ready","記録を送信しました");
+      }
+    }catch(e){set("is-ready","記録を送信しました（順位取得待ち）");}
+  }).catch(()=>set("is-queued","通信復帰後に自動送信します"));
+}
 function endQuiz(){
   /* 波M: ストーリー内クイズは結果画面を出さず、成否だけ物語へ返す */
   if(APP.storyQuiz){
@@ -14030,9 +14094,9 @@ function endQuiz(){
     $("resRank").textContent=rank.label;
     const taCombo=(q.comboBonus>0?"　コンボ短縮 <b>-"+q.comboBonus+"秒</b>":"")+((q.maxCombo||0)>=2?"　最大コンボ <b>"+q.maxCombo+"連</b>":""); // 波B
     $("resDetail").innerHTML="記録:<b>"+tot.toFixed(1)+"秒</b>(お手つき "+q.miss+"回 = +"+q.penalty+"秒)"+taCombo+"<br>"+rank.comment+
-      "<br>あなたの順位: <b>"+lbr.rank+"位</b> / "+lbr.total+"件中"+LB.html("ta")+rankTable;
+      "<br>この端末: <b>"+lbr.rank+"位</b> / "+lbr.total+"件中"+LB.html("ta")+quizOnlineRankBlock("quiz_ta")+rankTable;
     if(ri<=1)juiceCelebrate(); // 波B: 韋駄天・関白は紙吹雪
-    window.ONLINE_COMPETITION?.submitScore?.("quiz_ta",Math.round(tot*1000),Math.round(tot*1000),{
+    submitQuizOnlineResult("quiz_ta",Math.round(tot*1000),Math.round(tot*1000),{
       mistakes:q.miss,maxCombo:q.maxCombo||0,source:"quiz_ta"
     });
     showResultPanel();seOK();
@@ -14047,12 +14111,12 @@ function endQuiz(){
              sc>=35?["六位蔵人","ろくいのくろうど — 出世はこれから!"]:
                     ["地下人","じげにん — まずは散策モードで修行を!"];
   const lbr=LB.add("quiz",sc);
-  $("resTitle").textContent="結果発表";
+  $("resTitle").textContent="名称当てクイズ 結果";
   $("resRank").textContent=rank[0];
   const missed=(q.missed||[]).slice();
   $("resDetail").innerHTML="得点:"+sc+"点 / お手つき:"+q.miss+"回"+((q.maxCombo||0)>=2?" / 最大コンボ:"+q.maxCombo+"連":"")+"<br>"+rank[1]+
-    "<br>あなたの順位: <b>"+lbr.rank+"位</b> / "+lbr.total+"件中"+LB.html("quiz");
-  window.ONLINE_COMPETITION?.submitScore?.("quiz",sc,
+    "<br>この端末: <b>"+lbr.rank+"位</b> / "+lbr.total+"件中"+LB.html("quiz")+quizOnlineRankBlock("quiz");
+  submitQuizOnlineResult("quiz",sc,
     Number.isFinite(q.tStart)?Math.max(0,Math.round(performance.now()-q.tStart)):0,
     {mistakes:q.miss,maxCombo:q.maxCombo||0,source:"quiz"});
   if(sc>=92)juiceCelebrate(); // 波B: 関白は紙吹雪
@@ -14945,8 +15009,8 @@ $("kaiToTitle").onclick=()=>{beep(400,.06);location.reload();};
  */
 const KEMARI_CFG={
   W:720,H:500,groundY:350,
-  baseFlight:1850,minFlight:1120,
-  perfectWindow:0.075,goodWindow:0.16,saveWindow:0.245,
+  baseFlight:1950,minFlight:1300,
+  perfectWindow:0.085,goodWindow:0.18,saveWindow:0.26,
   rounds:[
     {name:"初懸・松",goal:5,blurb:"受けで鞠の間を知る"},
     {name:"中懸・桜",goal:7,blurb:"高蹴りと渡しで輪をつなぐ"},
@@ -14981,6 +15045,9 @@ function kmrEase(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
 function kmrRand(S){S.seed=(S.seed*1664525+1013904223)>>>0;return S.seed/4294967296;}
 function kmrPick(S,a){return a[Math.floor(kmrRand(S)*a.length)];}
 function kmrSafe(fn){try{return fn();}catch(e){return undefined;}}
+function kmrOnlineContext(){
+  return kmrSafe(()=>window.ONLINE_COMPETITION?.consumeChallengeContext?.("kemari"))||null;
+}
 
 function kmrLoadBest(){
   try{
@@ -15017,13 +15084,16 @@ function kmrClearTimers(S){if(!S)return;(S.timers||[]).forEach(clearTimeout);S.t
 
 function kmrInitialState(){
   const best=kmrLoadBest();
+  const online=kmrOnlineContext();
   return {
-    version:2,seed:(Date.now()^Math.floor(Math.random()*0xffffffff))>>>0,
+    version:3,seed:online?.seed?Number(online.seed)>>>0:(Date.now()^Math.floor(Math.random()*0xffffffff))>>>0,
     startedAt:kmrNow(),onlineSubmitted:false,
     best,round:0,roundHits:0,rally:0,score:0,combo:0,maxCombo:0,
     stamina:100,miyabi:18,poise:3,teamSync:0,
     playerX:0,targetX:0,selected:"receive",phase:"intro",over:false,victory:false,
     delivery:null,nextPartner:1,impact:0,shake:0,particles:[],trails:[],
+    kickQueued:false,quickStep:false,flowTurns:0,
+    online,onlineSyncBusy:false,onlineNextSync:0,onlineNextPublish:0,
     lastTs:0,lastHud:0,judgeTimer:null,timers:[],helpOpen:false,
     message:"鞠庭に入り、仲間の声と鞠の弧を読む。"
   };
@@ -15075,8 +15145,8 @@ function kemariBeginFlight(delay){
   S.phase="wait";
   kmrTimer(S,()=>{
     if(KMR!==S||S.over)return;
-    S.delivery=kmrCreateDelivery(S);S.phase="flight";
-    const cue=S.round<2?`　構え: ${KEMARI_CFG.techniques[S.delivery.technique].label}`:"　弧と仲間の位置を読め";
+    S.delivery=kmrCreateDelivery(S);S.phase="flight";S.kickQueued=false;S.quickStep=false;
+    const cue=`　${["左","中央","右"][S.delivery.lane+1]}へ・${KEMARI_CFG.techniques[S.delivery.technique].label}`;
     S.message=`${S.delivery.call}${cue}`;
     kmrShowJudge(`${["左の鞠足","正面の鞠足","右の鞠足"][S.delivery.partner]}「${S.delivery.call}」`,"good");
   },Math.max(0,delay||0));
@@ -15097,6 +15167,11 @@ function startKemari(){
   if(judge){judge.textContent="";judge.className="kmr-judge";}
   KMR.helpOpen=!kmrSeenHelp()&&!!help;if(help)help.classList.toggle("show",KMR.helpOpen);
   kmrSetText("kmrRally",0);kmrSetText("kmrScore",0);kmrSetText("kmrBest",KMR.best.rally||0);
+  const versus=kmr$("kmrVersus");
+  if(versus){
+    versus.hidden=!KMR.online;
+    if(KMR.online){kmrSetText("kmrRivalName",KMR.online.opponentName);kmrSetText("kmrRivalScore",KMR.online.opponentStatus==="finished"?`${KMR.online.opponentScore}点`:"挑戦中");}
+  }
   kmrUpdateHud(true);
   if(typeof renderer!=="undefined"&&renderer&&renderer.shadowMap){renderer.shadowMap.autoUpdate=false;}
   if(!kmrLoopActive){kmrLoopActive=true;_kmrLastTs=0;requestAnimationFrame(kemariLoop);}
@@ -15121,15 +15196,31 @@ function kmrInputQuality(S,now){
   const position=Math.abs(S.playerX-d.lane);
   const technique=S.selected===d.technique;
   const tired=S.stamina<28?.035:0;
-  const perfect=KEMARI_CFG.perfectWindow-tired,good=KEMARI_CFG.goodWindow-tired,save=KEMARI_CFG.saveWindow;
+  const flow=S.flowTurns>0;
+  const perfect=KEMARI_CFG.perfectWindow-tired+(flow?.025:0);
+  const good=KEMARI_CFG.goodWindow-tired+(flow?.045:0);
+  const save=KEMARI_CFG.saveWindow+(flow?.04:0);
   if(time<=perfect&&position<=.27&&technique)return{kind:"perfect",time,position,technique};
   if(time<=good&&position<=.58&&technique)return{kind:"good",time,position,technique};
+  if(time<=save&&Math.abs(S.targetX-d.lane)<=.12&&position<=1.05){
+    S.playerX=d.lane;S.stamina=kmrClamp(S.stamina-10,0,100);S.quickStep=true;
+    return{kind:"save",time,position:0,technique,quickStep:true};
+  }
   if(time<=save&&position<=.86)return{kind:"save",time,position,technique};
   return{kind:"miss",time,position,technique};
 }
-function kemariAttemptKick(){
+function kemariAttemptKick(fromQueue){
   const S=KMR;if(!S||S.over||S.phase!=="flight")return false;
-  const result=kmrInputQuality(S,kmrNow());
+  const now=kmrNow(),progress=(now-S.delivery.start)/S.delivery.flight;
+  if(!fromQueue&&progress<1-KEMARI_CFG.goodWindow){
+    if(progress>=.42){
+      S.kickQueued=true;S.message="蹴る構え。落下の瞬間に合わせる。";
+      kmrShowJudge("蹴りを構えた","good");kmrUpdateHud(true);return true;
+    }
+    S.message="まだ遠い。落下地点へ先に寄る。";kmrShowJudge("先に位置を合わせる","good");kmrUpdateHud(true);return false;
+  }
+  S.kickQueued=false;
+  const result=kmrInputQuality(S,now);
   kmrResolveKick(result.kind,result);return result.kind!=="miss";
 }
 function kemariJudge(kind){
@@ -15143,22 +15234,29 @@ function kmrResolveKick(kind,data){
   const correct=data.technique;
   const scoreBase=kind==="perfect"?190:kind==="good"?112:48;
   S.combo=kind==="save"?0:S.combo+1;S.maxCombo=Math.max(S.maxCombo,S.combo);
-  const multiplier=1+Math.min(1.5,S.combo*.08)+S.miyabi*.004;
+  const flowActive=S.flowTurns>0;
+  const multiplier=1+Math.min(1.5,S.combo*.08)+S.miyabi*.004+(flowActive?.3:0);
   const earned=Math.round(scoreBase*multiplier+(correct?25:0));
   S.score+=earned;S.rally++;S.roundHits++;S.teamSync=kmrClamp(S.teamSync+(kind==="perfect"?15:kind==="good"?9:3),0,100);
   S.miyabi=kmrClamp(S.miyabi+(kind==="perfect"?8:kind==="good"?4:-4),0,100);
   const cost=d.technique==="high"?13:d.technique==="pass"?9:6;
   S.stamina=kmrClamp(S.stamina-cost-(Math.abs(S.targetX-S.playerX)>.42?3:0),0,100);
+  if(flowActive)S.flowTurns--;
+  let flowStarted=false;
+  if(S.teamSync>=100&&S.flowTurns<=0){
+    S.flowTurns=3;S.teamSync=58;flowStarted=true;
+  }
   S.impact=1;S.shake=kind==="perfect"?5:2;
   kmrBurst(S,kmrBallAt(S,kmrNow()),kind);
   const call=kmrPick(S,KEMARI_KAKEGOE);
   const label=kind==="perfect"?"見事":kind==="good"?"良し":"拾い鞠";
-  const detail=correct?`${tech.label}で${call}`:`${tech.label}ではないが、仲間が拾った`;
-  S.message=`${label}。${detail}　+${earned}`;
-  kmrShowJudge(`${label}！ ${call}　+${earned}`,kind);
+  const detail=data.quickStep?`詰め足で拾い、${call}`:correct?`${tech.label}で${call}`:`${tech.label}ではないが、仲間が拾った`;
+  S.message=flowStarted?`連携の舞！ 三鞠のあいだ、蹴りの間が広がる。`:`${label}。${detail}　+${earned}`;
+  kmrShowJudge(flowStarted?`連携の舞　三鞠の好機`:`${label}！ ${call}　+${earned}`,flowStarted?"perfect":kind);
   kmrSound(kind);
   S.phase="return";
   S.nextPartner=kmrNextPartner(S,d,kind);
+  kmrPublishOnline(S);
   kmrUpdateHud(true);
   if(S.roundHits>=kmrRound().goal){
     kmrTimer(S,()=>kmrCompleteRound(S),kmrReduced()?260:720);
@@ -15226,6 +15324,28 @@ function kemariGameOver(victory){
   }
 }
 
+function kmrApplyOnlineContext(S,context){
+  if(!S||KMR!==S||!context||context.matchId!==S.online?.matchId)return;
+  S.online=context;
+  const versus=kmr$("kmrVersus");if(versus)versus.hidden=false;
+  kmrSetText("kmrRivalName",context.opponentName||"対戦相手");
+  kmrSetText("kmrRivalScore",context.opponentStatus==="finished"?`${context.opponentScore||0}点`:`${context.opponentScore||0}点・挑戦中`);
+}
+function kmrPublishOnline(S,force){
+  if(!S?.online||S.onlineSyncBusy||!window.ONLINE_COMPETITION?.updateChallengeProgress)return;
+  const now=kmrNow();if(!force&&now<S.onlineNextPublish)return;
+  S.onlineNextPublish=now+900;S.onlineSyncBusy=true;
+  Promise.resolve(window.ONLINE_COMPETITION.updateChallengeProgress("kemari",S.score,Math.round(now-S.startedAt),{
+    rally:S.rally,round:S.round+1,combo:S.combo,flow:S.flowTurns
+  })).then(context=>kmrApplyOnlineContext(S,context)).catch(()=>{}).finally(()=>{if(KMR===S)S.onlineSyncBusy=false;});
+}
+function kmrSyncOnline(S,now){
+  if(!S?.online||S.onlineSyncBusy||now<S.onlineNextSync||!window.ONLINE_COMPETITION?.syncChallenge)return;
+  S.onlineNextSync=now+1400;S.onlineSyncBusy=true;
+  Promise.resolve(window.ONLINE_COMPETITION.syncChallenge("kemari"))
+    .then(context=>kmrApplyOnlineContext(S,context)).catch(()=>{}).finally(()=>{if(KMR===S)S.onlineSyncBusy=false;});
+}
+
 function kmrBurst(S,ball,kind){
   if(!ball||kmrReduced()||kmrLowPower())return;
   const count=kind==="perfect"?12:kind==="good"?7:4;
@@ -15236,9 +15356,15 @@ function kmrBurst(S,ball,kind){
 }
 function kmrUpdate(dt){
   const S=KMR;if(!S)return;
+  const now=kmrNow();
   const move=Math.abs(S.targetX-S.playerX);
   if(move>.004){
-    const speed=(S.stamina<20?1.2:2.7)*dt;S.playerX=kmrLerp(S.playerX,S.targetX,Math.min(1,speed));
+    let pace=S.stamina<20?2.15:3.8;
+    if(S.phase==="flight"&&S.delivery){
+      const remaining=Math.max(.12,(1-(now-S.delivery.start)/S.delivery.flight)*S.delivery.flight/1000);
+      pace=Math.max(pace,Math.min(8.5,move/Math.max(.12,remaining-.1)*1.08));
+    }
+    S.playerX=kmrLerp(S.playerX,S.targetX,Math.min(1,pace*dt));
     S.stamina=kmrClamp(S.stamina-dt*4.4,0,100);
   }else S.stamina=kmrClamp(S.stamina+dt*2.25,0,100);
   S.impact=Math.max(0,S.impact-dt*3.8);S.shake=Math.max(0,S.shake-dt*13);
@@ -15246,9 +15372,15 @@ function kmrUpdate(dt){
     p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=125*dt;return p.life>0;
   });
   if(S.phase==="flight"&&S.delivery){
-    const p=(kmrNow()-S.delivery.start)/S.delivery.flight;
+    const p=(now-S.delivery.start)/S.delivery.flight;
+    if(S.kickQueued&&p>=1-(KEMARI_CFG.perfectWindow+(S.flowTurns>0?.025:0))*.72){
+      kemariAttemptKick(true);
+      kmrSyncOnline(S,now);
+      return;
+    }
     if(p>1+KEMARI_CFG.saveWindow)kmrDrop(S,{kind:"miss"});
   }
+  kmrSyncOnline(S,now);
 }
 function kmrUpdateHud(force){
   const S=KMR;if(!S)return;
@@ -15258,8 +15390,27 @@ function kmrUpdateHud(force){
   kmrSetText("kmrCombo",S.combo);kmrSetText("kmrStamina",Math.round(S.stamina));kmrSetText("kmrMiyabi",Math.round(S.miyabi));
   kmrSetText("kmrObjective",`${kmrRound().name} ${S.roundHits}/${kmrRound().goal}`);
   kmrSetText("kmrLives",`${"◈".repeat(S.poise)}${"◇".repeat(3-S.poise)}`);
-  const flow=S.delivery&&S.phase==="flight"&&S.round<2?`構え: ${KEMARI_CFG.techniques[S.delivery.technique].label}　${S.message}`:S.message;
-  kmrSetText("kmrFlow",flow);
+  kmrSetText("kmrFlow",S.message);
+  kmrSetText("kmrSync",S.flowTurns>0?`舞 ${S.flowTurns}`:`${Math.round(S.teamSync)}%`);
+  const syncFill=kmr$("kmrSyncFill");if(syncFill)syncFill.style.width=`${S.flowTurns>0?100:S.teamSync}%`;
+  const readout=kmr$("kmrReadout"),timingFill=kmr$("kmrTimingFill"),kick=kmr$("kmrKick");
+  if(readout){readout.classList.toggle("is-flow",S.flowTurns>0);readout.classList.toggle("is-queued",!!S.kickQueued);}
+  if(S.delivery&&S.phase==="flight"){
+    const d=S.delivery,p=kmrClamp((now-d.start)/d.flight,0,1.08);
+    const timing=p<1-KEMARI_CFG.goodWindow?"位置を合わせる":p<=1+KEMARI_CFG.saveWindow?"いま蹴る":"遅い";
+    kmrSetText("kmrLaneCue",["左","中央","右"][d.lane+1]);
+    kmrSetText("kmrTechniqueCue",KEMARI_CFG.techniques[d.technique].label);
+    kmrSetText("kmrTimingCue",S.kickQueued?"構え済み":timing);
+    if(timingFill)timingFill.style.width=`${kmrClamp(p,0,1)*100}%`;
+    const ready=p>=1-KEMARI_CFG.goodWindow&&p<=1+KEMARI_CFG.saveWindow;
+    if(readout)readout.classList.toggle("is-ready",ready);
+    if(kick)kick.classList.toggle("is-ready",ready||S.kickQueued);
+  }else{
+    kmrSetText("kmrLaneCue","待機");kmrSetText("kmrTechniqueCue","―");kmrSetText("kmrTimingCue","次の鞠を待つ");
+    if(timingFill)timingFill.style.width="0%";
+    if(readout)readout.classList.remove("is-ready");
+    if(kick)kick.classList.remove("is-ready");
+  }
   const controls=kmr$("kmrControls");
   if(controls){controls.dataset.phase=S.phase;controls.setAttribute("aria-label",S.phase==="flight"?"鞠を蹴る":"鞠が来るのを待つ");}
   [["kmrReceive","receive"],["kmrHigh","high"],["kmrPass","pass"]].forEach(([id,tech])=>{
@@ -15343,16 +15494,10 @@ function kmrDrawMeters(ctx,S){
 function kmrDrawPrompt(ctx,S){
   if(!S.delivery||S.phase!=="flight")return;
   const d=S.delivery,tech=KEMARI_CFG.techniques[d.technique],ball=kmrBallAt(S,kmrNow()),ts=kmrTextScale();
-  ctx.save();ctx.textAlign="center";ctx.font=`bold ${16*ts}px serif`;ctx.fillStyle=tech.color;ctx.fillText(S.round<2?`構え　${tech.label}`:"軌道を読む",KEMARI_CFG.W/2,111);
-  ctx.font=`${10*ts}px sans-serif`;ctx.fillStyle="#f4e6c9";ctx.fillText(S.round<2?tech.hint:"色・高さ・仲間の位置から蹴り分ける",KEMARI_CFG.W/2,127);
-  if(ball){const remain=kmrClamp(1-ball.p,0,1),r=25+remain*28;ctx.strokeStyle=tech.color;ctx.lineWidth=2;ctx.globalAlpha=.2+.7*(1-remain);ctx.beginPath();ctx.arc(KEMARI_CFG.W/2+S.playerX*148,KEMARI_CFG.groundY,r,0,Math.PI*2);ctx.stroke();}
-  ctx.restore();
-}
-function kmrDrawControls(ctx,S){
-  const {W,H}=KEMARI_CFG,y=H-54,techs=["receive","high","pass"],gap=8,chip=(W-36-gap*2)/3,ts=kmrTextScale();
-  ctx.save();ctx.fillStyle="rgba(8,11,8,.79)";ctx.fillRect(0,H-72,W,72);ctx.strokeStyle="rgba(235,207,140,.28)";ctx.beginPath();ctx.moveTo(0,H-72);ctx.lineTo(W,H-72);ctx.stroke();
-  ctx.fillStyle="#ddd2b7";ctx.font=`${10*ts}px sans-serif`;ctx.textAlign="center";ctx.fillText("A / D・左右で位置取り　Space / 鞠をタップで蹴る",W/2,H-59);
-  techs.forEach((id,i)=>{const x=12+i*(chip+gap),active=S.selected===id,tech=KEMARI_CFG.techniques[id];ctx.fillStyle=active?"rgba(250,231,174,.22)":"rgba(255,255,255,.06)";ctx.fillRect(x,y,chip,42);ctx.strokeStyle=active?tech.color:"rgba(255,255,255,.18)";ctx.lineWidth=active?2:1;ctx.strokeRect(x,y,chip,42);ctx.fillStyle=tech.color;ctx.font=`bold ${14*ts}px serif`;ctx.fillText(`${tech.label}　${tech.key}`,x+chip/2,y+18);ctx.fillStyle="#d8c9ad";ctx.font=`${9*ts}px sans-serif`;ctx.fillText(tech.hint,x+chip/2,y+33);});
+  const lane=["左","中央","右"][d.lane+1];
+  ctx.save();ctx.textAlign="center";ctx.font=`bold ${16*ts}px serif`;ctx.fillStyle=tech.color;ctx.fillText(`${lane}へ　${tech.label}`,KEMARI_CFG.W/2,111);
+  ctx.font=`${10*ts}px sans-serif`;ctx.fillStyle="#f4e6c9";ctx.fillText(S.kickQueued?"蹴る構え済み・落下に合わせて自動で蹴る":tech.hint,KEMARI_CFG.W/2,127);
+  if(ball){const remain=kmrClamp(1-ball.p,0,1),r=25+remain*28;ctx.strokeStyle=tech.color;ctx.lineWidth=2;ctx.globalAlpha=.2+.7*(1-remain);ctx.beginPath();ctx.arc(KEMARI_CFG.W/2+d.landX*148,KEMARI_CFG.groundY,r,0,Math.PI*2);ctx.stroke();}
   ctx.restore();
 }
 function kemariDrawScene(ctx,S){
@@ -15370,7 +15515,6 @@ function kemariDrawScene(ctx,S){
     kmrDrawFigure(ctx,W-190,226,"鞠足",false,"#76545c",.72);
     const ball=kmrBallAt(S,kmrNow());kmrDrawTrajectory(ctx,S,ball);kmrDrawBall(ctx,ball,S);kmrDrawPlayer(ctx,S);kmrDrawPrompt(ctx,S);
     S.particles.forEach(p=>{ctx.globalAlpha=kmrClamp(p.life/p.max,0,1);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,2.3,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;
-    kmrDrawControls(ctx,S);
     if(S.phase==="wait"||S.phase==="interlude"||S.phase==="recovery"){ctx.fillStyle="rgba(7,10,7,.38)";ctx.fillRect(0,0,W,H-72);ctx.fillStyle="#f5e4b7";ctx.font=`bold ${16*kmrTextScale()}px serif`;ctx.textAlign="center";ctx.fillText(S.message,W/2,H*.47);}
   }
   ctx.restore();
@@ -15396,8 +15540,11 @@ function kmrCanvasPoint(ev){
 function kmrHandlePointer(ev){
   const S=KMR;if(!S||S.over||S.helpOpen)return;
   const p=kmrCanvasPoint(ev);if(!p)return;
-  if(p.y>=KEMARI_CFG.H-54){const index=kmrClamp(Math.floor((p.x-12)/((KEMARI_CFG.W-20)/3)),0,2);kmrSetTechnique(["receive","high","pass"][index]);return;}
-  kmrMoveTo((p.x-KEMARI_CFG.W/2)/(KEMARI_CFG.W*.205));kemariAttemptKick();
+  if(p.y>=KEMARI_CFG.H-78)return;
+  const ball=kmrBallAt(S,kmrNow());
+  if(ball&&Math.hypot(p.x-ball.x,p.y-ball.y)<=62){kemariAttemptKick();return;}
+  kmrMoveTo((p.x-KEMARI_CFG.W/2)/(KEMARI_CFG.W*.205));
+  S.message="落下輪へ移動。蹴り方を選び、蹴る瞬間を待つ。";
 }
 function kmrBind(){
   if(_kmrBound)return;_kmrBound=true;
@@ -15426,12 +15573,9 @@ function kmrBind(){
     ["kmrReceive",()=>kmrSetTechnique("receive")],
     ["kmrHigh",()=>kmrSetTechnique("high")],
     ["kmrPass",()=>kmrSetTechnique("pass")],
-    ["kmrKick",()=>kemariAttemptKick()],
-    ["kmrControls",()=>kemariAttemptKick()]
+    ["kmrKick",()=>kemariAttemptKick()]
   ];
   controlActions.forEach(([id,action])=>{const el=kmr$(id);if(el)el.addEventListener("click",ev=>{
-    // kmrControls は個別ボタンを包む場合があるため、容器自身を押した時だけ蹴る。
-    if(id==="kmrControls"&&ev.target!==el)return;
     if(typeof APP!=="undefined"&&APP.mode==="kemari"){ev.preventDefault();action();}
   });});
 }
@@ -15449,11 +15593,28 @@ function kmrTestResolve(kind){
   else if(!S.over){S.delivery=kmrCreateDelivery(S);S.phase="flight";}
   kmrUpdateHud(true);kemariRender();return true;
 }
+function kmrTestDelivery(lane,technique,progress){
+  const S=KMR;if(!S||S.over)return false;
+  kmrClearTimers(S);
+  const flight=1500;
+  S.delivery={
+    partner:1,technique:KEMARI_CFG.techniques[technique]?technique:"receive",
+    lane:kmrClamp(Number(lane)||0,-1,1),fromX:0,drift:0,flight,peak:140,
+    start:kmrNow()-flight*kmrClamp(Number(progress)||0,0,1),call:"アリ",landX:kmrClamp(Number(lane)||0,-1,1)
+  };
+  S.phase="flight";S.kickQueued=false;S.quickStep=false;kmrUpdateHud(true);return true;
+}
+function kmrTestAdvance(progress){
+  const S=KMR;if(!S?.delivery)return false;
+  S.delivery.start=kmrNow()-S.delivery.flight*kmrClamp(Number(progress)||0,0,1.05);
+  kmrUpdate(.016);kmrUpdateHud(true);kemariRender();return true;
+}
 
 window.KEMARI_GAME={
-  version:2,start:startKemari,stop:stopKemari,attempt:kemariAttemptKick,
+  version:3,start:startKemari,stop:stopKemari,attempt:kemariAttemptKick,
   selectTechnique:kmrSetTechnique,move:kmrMovePlayer,beginFlight:kemariBeginFlight,testResolve:kmrTestResolve,
-  getState:()=>{const S=KMR;if(!S)return null;return{round:S.round+1,roundHits:S.roundHits,rally:S.rally,score:S.score,combo:S.combo,stamina:S.stamina,miyabi:S.miyabi,poise:S.poise,selected:S.selected,phase:S.phase,delivery:S.delivery&&{technique:S.delivery.technique,lane:S.delivery.lane,partner:S.delivery.partner},victory:S.victory};}
+  __test:{setDelivery:kmrTestDelivery,advance:kmrTestAdvance},
+  getState:()=>{const S=KMR;if(!S)return null;return{round:S.round+1,roundHits:S.roundHits,rally:S.rally,score:S.score,combo:S.combo,stamina:S.stamina,miyabi:S.miyabi,poise:S.poise,selected:S.selected,phase:S.phase,kickQueued:S.kickQueued,quickStep:S.quickStep,flowTurns:S.flowTurns,online:!!S.online,delivery:S.delivery&&{technique:S.delivery.technique,lane:S.delivery.lane,partner:S.delivery.partner},victory:S.victory};}
 };
 /* APP_KEMARI_EMBED_END */
 /* APP_ONLINE_COMPETITION_EMBED_BEGIN (src/app/online-competition.js から自動生成。ここを直接編集しない) */
@@ -15475,7 +15636,7 @@ window.KEMARI_GAME={
     anonKey: "sb_publishable_unPMDrLMLCxKhb95Ks8O9w_lLERwI7H",
   };
   const MODES = {
-    quiz: { label: "早押し絵巻クイズ", unit: "点", order: "desc", live: true },
+    quiz: { label: "名称当てクイズ", unit: "点", order: "desc", live: true },
     quiz_ta: { label: "名称当てタイムアタック", unit: "秒", order: "asc" },
     kemari: { label: "蹴鞠", unit: "点", order: "desc", challenge: true },
     koh_awase: { label: "香合わせ", unit: "点", order: "desc", challenge: true },
@@ -15497,6 +15658,7 @@ window.KEMARI_GAME={
     quiz: null,
     pollTimer: 0,
     lastMatchSignature: "",
+    challengeLaunch: null,
   };
   let modal = null;
   let transportOverride = null;
@@ -15826,6 +15988,11 @@ window.KEMARI_GAME={
   }
   function openChallengeGame() {
     const mode = state.match?.mode;
+    state.challengeLaunch = {
+      mode,
+      matchId: state.match?.id,
+      expiresAt: Date.now() + 5000,
+    };
     close(false);
     if (mode === "kemari") {
       if (typeof enterMode === "function") enterMode("kemari");
@@ -15890,6 +16057,63 @@ window.KEMARI_GAME={
       state.ranking = raw;
       state.myRank = firstResult(mine)?.rank || result?.my_rank || result?.myRank || null;
     });
+  }
+
+  async function getMyRank(mode, period = "weekly") {
+    if (!configured() || !MODES[mode]) return { available: false, rank: null, totalPlayers: null };
+    await identify();
+    const row = firstResult(await transport().myRank?.(mode, period));
+    return {
+      available: true,
+      rank: Number(row?.rank) || null,
+      totalPlayers: Number(row?.total_players || row?.totalPlayers) || null,
+      score: Number(row?.score) || 0,
+      durationMs: Number(row?.duration_ms || row?.durationMs) || 0,
+    };
+  }
+
+  function challengeContext(mode) {
+    const match = state.match;
+    if (!match || match.mode !== mode || !["active", "finished"].includes(match.status)) return null;
+    const rival = opponent(match);
+    return {
+      active: match.status === "active",
+      matchId: match.id,
+      seed: Number(match.seed || 1),
+      opponentName: rival?.display_name || rival?.name || "対戦相手",
+      opponentScore: Number(rival?.score) || 0,
+      opponentStatus: rival?.status || "waiting",
+    };
+  }
+
+  function consumeChallengeContext(mode) {
+    const launch = state.challengeLaunch;
+    state.challengeLaunch = null;
+    if (!launch || launch.mode !== mode || launch.expiresAt < Date.now() || launch.matchId !== state.match?.id) return null;
+    return challengeContext(mode);
+  }
+
+  async function syncChallenge(mode) {
+    const context = challengeContext(mode);
+    if (!context?.matchId) return context;
+    const next = normalizeMatch(await transport().getMatch(context.matchId));
+    if (state.match?.id === context.matchId) state.match = next;
+    return challengeContext(mode);
+  }
+
+  async function updateChallengeProgress(mode, score, durationMs, metadata) {
+    const context = challengeContext(mode);
+    if (!context?.active) return context;
+    const next = normalizeMatch(await transport().updateMatch({
+      matchId: context.matchId,
+      progress: Math.max(0, Number(metadata?.rally || metadata?.progress) || 0),
+      score: Math.max(0, Math.round(Number(score) || 0)),
+      status: "playing",
+      durationMs: Math.max(0, Math.round(Number(durationMs) || 0)),
+      payload: metadata || {},
+    }));
+    if (state.match?.id === context.matchId) state.match = next;
+    return challengeContext(mode);
   }
 
   function ensureModal() {
@@ -16113,7 +16337,8 @@ window.KEMARI_GAME={
 
   window.ONLINE_COMPETITION = {
     open, close, configure, createMatch, joinMatch, startMatch, leaveMatch, answerQuiz,
-    submitScore, finishChallenge, loadRanking, getStatus,
+    submitScore, finishChallenge, loadRanking, getMyRank, getStatus, launchChallenge: openChallengeGame,
+    getChallengeContext: challengeContext, consumeChallengeContext, syncChallenge, updateChallengeProgress,
     setDisplayName: name => setPref({ displayName: name }),
     buildQuiz: seed => buildQuiz(seed),
     __test: {
@@ -16122,7 +16347,7 @@ window.KEMARI_GAME={
       getState: () => state,
     },
   };
-  window.ONLINE_COMPETITION_STATUS = { ready: true, version: 1, modes: Object.keys(MODES), quizCount: QUIZ_COUNT };
+  window.ONLINE_COMPETITION_STATUS = { ready: true, version: 2, modes: Object.keys(MODES), quizCount: QUIZ_COUNT };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true }); else boot();
 })();
 /* APP_ONLINE_COMPETITION_EMBED_END */

@@ -4,8 +4,8 @@
  */
 const KEMARI_CFG={
   W:720,H:500,groundY:350,
-  baseFlight:1850,minFlight:1120,
-  perfectWindow:0.075,goodWindow:0.16,saveWindow:0.245,
+  baseFlight:1950,minFlight:1300,
+  perfectWindow:0.085,goodWindow:0.18,saveWindow:0.26,
   rounds:[
     {name:"初懸・松",goal:5,blurb:"受けで鞠の間を知る"},
     {name:"中懸・桜",goal:7,blurb:"高蹴りと渡しで輪をつなぐ"},
@@ -40,6 +40,9 @@ function kmrEase(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
 function kmrRand(S){S.seed=(S.seed*1664525+1013904223)>>>0;return S.seed/4294967296;}
 function kmrPick(S,a){return a[Math.floor(kmrRand(S)*a.length)];}
 function kmrSafe(fn){try{return fn();}catch(e){return undefined;}}
+function kmrOnlineContext(){
+  return kmrSafe(()=>window.ONLINE_COMPETITION?.consumeChallengeContext?.("kemari"))||null;
+}
 
 function kmrLoadBest(){
   try{
@@ -76,13 +79,16 @@ function kmrClearTimers(S){if(!S)return;(S.timers||[]).forEach(clearTimeout);S.t
 
 function kmrInitialState(){
   const best=kmrLoadBest();
+  const online=kmrOnlineContext();
   return {
-    version:2,seed:(Date.now()^Math.floor(Math.random()*0xffffffff))>>>0,
+    version:3,seed:online?.seed?Number(online.seed)>>>0:(Date.now()^Math.floor(Math.random()*0xffffffff))>>>0,
     startedAt:kmrNow(),onlineSubmitted:false,
     best,round:0,roundHits:0,rally:0,score:0,combo:0,maxCombo:0,
     stamina:100,miyabi:18,poise:3,teamSync:0,
     playerX:0,targetX:0,selected:"receive",phase:"intro",over:false,victory:false,
     delivery:null,nextPartner:1,impact:0,shake:0,particles:[],trails:[],
+    kickQueued:false,quickStep:false,flowTurns:0,
+    online,onlineSyncBusy:false,onlineNextSync:0,onlineNextPublish:0,
     lastTs:0,lastHud:0,judgeTimer:null,timers:[],helpOpen:false,
     message:"鞠庭に入り、仲間の声と鞠の弧を読む。"
   };
@@ -134,8 +140,8 @@ function kemariBeginFlight(delay){
   S.phase="wait";
   kmrTimer(S,()=>{
     if(KMR!==S||S.over)return;
-    S.delivery=kmrCreateDelivery(S);S.phase="flight";
-    const cue=S.round<2?`　構え: ${KEMARI_CFG.techniques[S.delivery.technique].label}`:"　弧と仲間の位置を読め";
+    S.delivery=kmrCreateDelivery(S);S.phase="flight";S.kickQueued=false;S.quickStep=false;
+    const cue=`　${["左","中央","右"][S.delivery.lane+1]}へ・${KEMARI_CFG.techniques[S.delivery.technique].label}`;
     S.message=`${S.delivery.call}${cue}`;
     kmrShowJudge(`${["左の鞠足","正面の鞠足","右の鞠足"][S.delivery.partner]}「${S.delivery.call}」`,"good");
   },Math.max(0,delay||0));
@@ -156,6 +162,11 @@ function startKemari(){
   if(judge){judge.textContent="";judge.className="kmr-judge";}
   KMR.helpOpen=!kmrSeenHelp()&&!!help;if(help)help.classList.toggle("show",KMR.helpOpen);
   kmrSetText("kmrRally",0);kmrSetText("kmrScore",0);kmrSetText("kmrBest",KMR.best.rally||0);
+  const versus=kmr$("kmrVersus");
+  if(versus){
+    versus.hidden=!KMR.online;
+    if(KMR.online){kmrSetText("kmrRivalName",KMR.online.opponentName);kmrSetText("kmrRivalScore",KMR.online.opponentStatus==="finished"?`${KMR.online.opponentScore}点`:"挑戦中");}
+  }
   kmrUpdateHud(true);
   if(typeof renderer!=="undefined"&&renderer&&renderer.shadowMap){renderer.shadowMap.autoUpdate=false;}
   if(!kmrLoopActive){kmrLoopActive=true;_kmrLastTs=0;requestAnimationFrame(kemariLoop);}
@@ -180,15 +191,31 @@ function kmrInputQuality(S,now){
   const position=Math.abs(S.playerX-d.lane);
   const technique=S.selected===d.technique;
   const tired=S.stamina<28?.035:0;
-  const perfect=KEMARI_CFG.perfectWindow-tired,good=KEMARI_CFG.goodWindow-tired,save=KEMARI_CFG.saveWindow;
+  const flow=S.flowTurns>0;
+  const perfect=KEMARI_CFG.perfectWindow-tired+(flow?.025:0);
+  const good=KEMARI_CFG.goodWindow-tired+(flow?.045:0);
+  const save=KEMARI_CFG.saveWindow+(flow?.04:0);
   if(time<=perfect&&position<=.27&&technique)return{kind:"perfect",time,position,technique};
   if(time<=good&&position<=.58&&technique)return{kind:"good",time,position,technique};
+  if(time<=save&&Math.abs(S.targetX-d.lane)<=.12&&position<=1.05){
+    S.playerX=d.lane;S.stamina=kmrClamp(S.stamina-10,0,100);S.quickStep=true;
+    return{kind:"save",time,position:0,technique,quickStep:true};
+  }
   if(time<=save&&position<=.86)return{kind:"save",time,position,technique};
   return{kind:"miss",time,position,technique};
 }
-function kemariAttemptKick(){
+function kemariAttemptKick(fromQueue){
   const S=KMR;if(!S||S.over||S.phase!=="flight")return false;
-  const result=kmrInputQuality(S,kmrNow());
+  const now=kmrNow(),progress=(now-S.delivery.start)/S.delivery.flight;
+  if(!fromQueue&&progress<1-KEMARI_CFG.goodWindow){
+    if(progress>=.42){
+      S.kickQueued=true;S.message="蹴る構え。落下の瞬間に合わせる。";
+      kmrShowJudge("蹴りを構えた","good");kmrUpdateHud(true);return true;
+    }
+    S.message="まだ遠い。落下地点へ先に寄る。";kmrShowJudge("先に位置を合わせる","good");kmrUpdateHud(true);return false;
+  }
+  S.kickQueued=false;
+  const result=kmrInputQuality(S,now);
   kmrResolveKick(result.kind,result);return result.kind!=="miss";
 }
 function kemariJudge(kind){
@@ -202,22 +229,29 @@ function kmrResolveKick(kind,data){
   const correct=data.technique;
   const scoreBase=kind==="perfect"?190:kind==="good"?112:48;
   S.combo=kind==="save"?0:S.combo+1;S.maxCombo=Math.max(S.maxCombo,S.combo);
-  const multiplier=1+Math.min(1.5,S.combo*.08)+S.miyabi*.004;
+  const flowActive=S.flowTurns>0;
+  const multiplier=1+Math.min(1.5,S.combo*.08)+S.miyabi*.004+(flowActive?.3:0);
   const earned=Math.round(scoreBase*multiplier+(correct?25:0));
   S.score+=earned;S.rally++;S.roundHits++;S.teamSync=kmrClamp(S.teamSync+(kind==="perfect"?15:kind==="good"?9:3),0,100);
   S.miyabi=kmrClamp(S.miyabi+(kind==="perfect"?8:kind==="good"?4:-4),0,100);
   const cost=d.technique==="high"?13:d.technique==="pass"?9:6;
   S.stamina=kmrClamp(S.stamina-cost-(Math.abs(S.targetX-S.playerX)>.42?3:0),0,100);
+  if(flowActive)S.flowTurns--;
+  let flowStarted=false;
+  if(S.teamSync>=100&&S.flowTurns<=0){
+    S.flowTurns=3;S.teamSync=58;flowStarted=true;
+  }
   S.impact=1;S.shake=kind==="perfect"?5:2;
   kmrBurst(S,kmrBallAt(S,kmrNow()),kind);
   const call=kmrPick(S,KEMARI_KAKEGOE);
   const label=kind==="perfect"?"見事":kind==="good"?"良し":"拾い鞠";
-  const detail=correct?`${tech.label}で${call}`:`${tech.label}ではないが、仲間が拾った`;
-  S.message=`${label}。${detail}　+${earned}`;
-  kmrShowJudge(`${label}！ ${call}　+${earned}`,kind);
+  const detail=data.quickStep?`詰め足で拾い、${call}`:correct?`${tech.label}で${call}`:`${tech.label}ではないが、仲間が拾った`;
+  S.message=flowStarted?`連携の舞！ 三鞠のあいだ、蹴りの間が広がる。`:`${label}。${detail}　+${earned}`;
+  kmrShowJudge(flowStarted?`連携の舞　三鞠の好機`:`${label}！ ${call}　+${earned}`,flowStarted?"perfect":kind);
   kmrSound(kind);
   S.phase="return";
   S.nextPartner=kmrNextPartner(S,d,kind);
+  kmrPublishOnline(S);
   kmrUpdateHud(true);
   if(S.roundHits>=kmrRound().goal){
     kmrTimer(S,()=>kmrCompleteRound(S),kmrReduced()?260:720);
@@ -285,6 +319,28 @@ function kemariGameOver(victory){
   }
 }
 
+function kmrApplyOnlineContext(S,context){
+  if(!S||KMR!==S||!context||context.matchId!==S.online?.matchId)return;
+  S.online=context;
+  const versus=kmr$("kmrVersus");if(versus)versus.hidden=false;
+  kmrSetText("kmrRivalName",context.opponentName||"対戦相手");
+  kmrSetText("kmrRivalScore",context.opponentStatus==="finished"?`${context.opponentScore||0}点`:`${context.opponentScore||0}点・挑戦中`);
+}
+function kmrPublishOnline(S,force){
+  if(!S?.online||S.onlineSyncBusy||!window.ONLINE_COMPETITION?.updateChallengeProgress)return;
+  const now=kmrNow();if(!force&&now<S.onlineNextPublish)return;
+  S.onlineNextPublish=now+900;S.onlineSyncBusy=true;
+  Promise.resolve(window.ONLINE_COMPETITION.updateChallengeProgress("kemari",S.score,Math.round(now-S.startedAt),{
+    rally:S.rally,round:S.round+1,combo:S.combo,flow:S.flowTurns
+  })).then(context=>kmrApplyOnlineContext(S,context)).catch(()=>{}).finally(()=>{if(KMR===S)S.onlineSyncBusy=false;});
+}
+function kmrSyncOnline(S,now){
+  if(!S?.online||S.onlineSyncBusy||now<S.onlineNextSync||!window.ONLINE_COMPETITION?.syncChallenge)return;
+  S.onlineNextSync=now+1400;S.onlineSyncBusy=true;
+  Promise.resolve(window.ONLINE_COMPETITION.syncChallenge("kemari"))
+    .then(context=>kmrApplyOnlineContext(S,context)).catch(()=>{}).finally(()=>{if(KMR===S)S.onlineSyncBusy=false;});
+}
+
 function kmrBurst(S,ball,kind){
   if(!ball||kmrReduced()||kmrLowPower())return;
   const count=kind==="perfect"?12:kind==="good"?7:4;
@@ -295,9 +351,15 @@ function kmrBurst(S,ball,kind){
 }
 function kmrUpdate(dt){
   const S=KMR;if(!S)return;
+  const now=kmrNow();
   const move=Math.abs(S.targetX-S.playerX);
   if(move>.004){
-    const speed=(S.stamina<20?1.2:2.7)*dt;S.playerX=kmrLerp(S.playerX,S.targetX,Math.min(1,speed));
+    let pace=S.stamina<20?2.15:3.8;
+    if(S.phase==="flight"&&S.delivery){
+      const remaining=Math.max(.12,(1-(now-S.delivery.start)/S.delivery.flight)*S.delivery.flight/1000);
+      pace=Math.max(pace,Math.min(8.5,move/Math.max(.12,remaining-.1)*1.08));
+    }
+    S.playerX=kmrLerp(S.playerX,S.targetX,Math.min(1,pace*dt));
     S.stamina=kmrClamp(S.stamina-dt*4.4,0,100);
   }else S.stamina=kmrClamp(S.stamina+dt*2.25,0,100);
   S.impact=Math.max(0,S.impact-dt*3.8);S.shake=Math.max(0,S.shake-dt*13);
@@ -305,9 +367,15 @@ function kmrUpdate(dt){
     p.life-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=125*dt;return p.life>0;
   });
   if(S.phase==="flight"&&S.delivery){
-    const p=(kmrNow()-S.delivery.start)/S.delivery.flight;
+    const p=(now-S.delivery.start)/S.delivery.flight;
+    if(S.kickQueued&&p>=1-(KEMARI_CFG.perfectWindow+(S.flowTurns>0?.025:0))*.72){
+      kemariAttemptKick(true);
+      kmrSyncOnline(S,now);
+      return;
+    }
     if(p>1+KEMARI_CFG.saveWindow)kmrDrop(S,{kind:"miss"});
   }
+  kmrSyncOnline(S,now);
 }
 function kmrUpdateHud(force){
   const S=KMR;if(!S)return;
@@ -317,8 +385,27 @@ function kmrUpdateHud(force){
   kmrSetText("kmrCombo",S.combo);kmrSetText("kmrStamina",Math.round(S.stamina));kmrSetText("kmrMiyabi",Math.round(S.miyabi));
   kmrSetText("kmrObjective",`${kmrRound().name} ${S.roundHits}/${kmrRound().goal}`);
   kmrSetText("kmrLives",`${"◈".repeat(S.poise)}${"◇".repeat(3-S.poise)}`);
-  const flow=S.delivery&&S.phase==="flight"&&S.round<2?`構え: ${KEMARI_CFG.techniques[S.delivery.technique].label}　${S.message}`:S.message;
-  kmrSetText("kmrFlow",flow);
+  kmrSetText("kmrFlow",S.message);
+  kmrSetText("kmrSync",S.flowTurns>0?`舞 ${S.flowTurns}`:`${Math.round(S.teamSync)}%`);
+  const syncFill=kmr$("kmrSyncFill");if(syncFill)syncFill.style.width=`${S.flowTurns>0?100:S.teamSync}%`;
+  const readout=kmr$("kmrReadout"),timingFill=kmr$("kmrTimingFill"),kick=kmr$("kmrKick");
+  if(readout){readout.classList.toggle("is-flow",S.flowTurns>0);readout.classList.toggle("is-queued",!!S.kickQueued);}
+  if(S.delivery&&S.phase==="flight"){
+    const d=S.delivery,p=kmrClamp((now-d.start)/d.flight,0,1.08);
+    const timing=p<1-KEMARI_CFG.goodWindow?"位置を合わせる":p<=1+KEMARI_CFG.saveWindow?"いま蹴る":"遅い";
+    kmrSetText("kmrLaneCue",["左","中央","右"][d.lane+1]);
+    kmrSetText("kmrTechniqueCue",KEMARI_CFG.techniques[d.technique].label);
+    kmrSetText("kmrTimingCue",S.kickQueued?"構え済み":timing);
+    if(timingFill)timingFill.style.width=`${kmrClamp(p,0,1)*100}%`;
+    const ready=p>=1-KEMARI_CFG.goodWindow&&p<=1+KEMARI_CFG.saveWindow;
+    if(readout)readout.classList.toggle("is-ready",ready);
+    if(kick)kick.classList.toggle("is-ready",ready||S.kickQueued);
+  }else{
+    kmrSetText("kmrLaneCue","待機");kmrSetText("kmrTechniqueCue","―");kmrSetText("kmrTimingCue","次の鞠を待つ");
+    if(timingFill)timingFill.style.width="0%";
+    if(readout)readout.classList.remove("is-ready");
+    if(kick)kick.classList.remove("is-ready");
+  }
   const controls=kmr$("kmrControls");
   if(controls){controls.dataset.phase=S.phase;controls.setAttribute("aria-label",S.phase==="flight"?"鞠を蹴る":"鞠が来るのを待つ");}
   [["kmrReceive","receive"],["kmrHigh","high"],["kmrPass","pass"]].forEach(([id,tech])=>{
@@ -402,16 +489,10 @@ function kmrDrawMeters(ctx,S){
 function kmrDrawPrompt(ctx,S){
   if(!S.delivery||S.phase!=="flight")return;
   const d=S.delivery,tech=KEMARI_CFG.techniques[d.technique],ball=kmrBallAt(S,kmrNow()),ts=kmrTextScale();
-  ctx.save();ctx.textAlign="center";ctx.font=`bold ${16*ts}px serif`;ctx.fillStyle=tech.color;ctx.fillText(S.round<2?`構え　${tech.label}`:"軌道を読む",KEMARI_CFG.W/2,111);
-  ctx.font=`${10*ts}px sans-serif`;ctx.fillStyle="#f4e6c9";ctx.fillText(S.round<2?tech.hint:"色・高さ・仲間の位置から蹴り分ける",KEMARI_CFG.W/2,127);
-  if(ball){const remain=kmrClamp(1-ball.p,0,1),r=25+remain*28;ctx.strokeStyle=tech.color;ctx.lineWidth=2;ctx.globalAlpha=.2+.7*(1-remain);ctx.beginPath();ctx.arc(KEMARI_CFG.W/2+S.playerX*148,KEMARI_CFG.groundY,r,0,Math.PI*2);ctx.stroke();}
-  ctx.restore();
-}
-function kmrDrawControls(ctx,S){
-  const {W,H}=KEMARI_CFG,y=H-54,techs=["receive","high","pass"],gap=8,chip=(W-36-gap*2)/3,ts=kmrTextScale();
-  ctx.save();ctx.fillStyle="rgba(8,11,8,.79)";ctx.fillRect(0,H-72,W,72);ctx.strokeStyle="rgba(235,207,140,.28)";ctx.beginPath();ctx.moveTo(0,H-72);ctx.lineTo(W,H-72);ctx.stroke();
-  ctx.fillStyle="#ddd2b7";ctx.font=`${10*ts}px sans-serif`;ctx.textAlign="center";ctx.fillText("A / D・左右で位置取り　Space / 鞠をタップで蹴る",W/2,H-59);
-  techs.forEach((id,i)=>{const x=12+i*(chip+gap),active=S.selected===id,tech=KEMARI_CFG.techniques[id];ctx.fillStyle=active?"rgba(250,231,174,.22)":"rgba(255,255,255,.06)";ctx.fillRect(x,y,chip,42);ctx.strokeStyle=active?tech.color:"rgba(255,255,255,.18)";ctx.lineWidth=active?2:1;ctx.strokeRect(x,y,chip,42);ctx.fillStyle=tech.color;ctx.font=`bold ${14*ts}px serif`;ctx.fillText(`${tech.label}　${tech.key}`,x+chip/2,y+18);ctx.fillStyle="#d8c9ad";ctx.font=`${9*ts}px sans-serif`;ctx.fillText(tech.hint,x+chip/2,y+33);});
+  const lane=["左","中央","右"][d.lane+1];
+  ctx.save();ctx.textAlign="center";ctx.font=`bold ${16*ts}px serif`;ctx.fillStyle=tech.color;ctx.fillText(`${lane}へ　${tech.label}`,KEMARI_CFG.W/2,111);
+  ctx.font=`${10*ts}px sans-serif`;ctx.fillStyle="#f4e6c9";ctx.fillText(S.kickQueued?"蹴る構え済み・落下に合わせて自動で蹴る":tech.hint,KEMARI_CFG.W/2,127);
+  if(ball){const remain=kmrClamp(1-ball.p,0,1),r=25+remain*28;ctx.strokeStyle=tech.color;ctx.lineWidth=2;ctx.globalAlpha=.2+.7*(1-remain);ctx.beginPath();ctx.arc(KEMARI_CFG.W/2+d.landX*148,KEMARI_CFG.groundY,r,0,Math.PI*2);ctx.stroke();}
   ctx.restore();
 }
 function kemariDrawScene(ctx,S){
@@ -429,7 +510,6 @@ function kemariDrawScene(ctx,S){
     kmrDrawFigure(ctx,W-190,226,"鞠足",false,"#76545c",.72);
     const ball=kmrBallAt(S,kmrNow());kmrDrawTrajectory(ctx,S,ball);kmrDrawBall(ctx,ball,S);kmrDrawPlayer(ctx,S);kmrDrawPrompt(ctx,S);
     S.particles.forEach(p=>{ctx.globalAlpha=kmrClamp(p.life/p.max,0,1);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,2.3,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;
-    kmrDrawControls(ctx,S);
     if(S.phase==="wait"||S.phase==="interlude"||S.phase==="recovery"){ctx.fillStyle="rgba(7,10,7,.38)";ctx.fillRect(0,0,W,H-72);ctx.fillStyle="#f5e4b7";ctx.font=`bold ${16*kmrTextScale()}px serif`;ctx.textAlign="center";ctx.fillText(S.message,W/2,H*.47);}
   }
   ctx.restore();
@@ -455,8 +535,11 @@ function kmrCanvasPoint(ev){
 function kmrHandlePointer(ev){
   const S=KMR;if(!S||S.over||S.helpOpen)return;
   const p=kmrCanvasPoint(ev);if(!p)return;
-  if(p.y>=KEMARI_CFG.H-54){const index=kmrClamp(Math.floor((p.x-12)/((KEMARI_CFG.W-20)/3)),0,2);kmrSetTechnique(["receive","high","pass"][index]);return;}
-  kmrMoveTo((p.x-KEMARI_CFG.W/2)/(KEMARI_CFG.W*.205));kemariAttemptKick();
+  if(p.y>=KEMARI_CFG.H-78)return;
+  const ball=kmrBallAt(S,kmrNow());
+  if(ball&&Math.hypot(p.x-ball.x,p.y-ball.y)<=62){kemariAttemptKick();return;}
+  kmrMoveTo((p.x-KEMARI_CFG.W/2)/(KEMARI_CFG.W*.205));
+  S.message="落下輪へ移動。蹴り方を選び、蹴る瞬間を待つ。";
 }
 function kmrBind(){
   if(_kmrBound)return;_kmrBound=true;
@@ -485,12 +568,9 @@ function kmrBind(){
     ["kmrReceive",()=>kmrSetTechnique("receive")],
     ["kmrHigh",()=>kmrSetTechnique("high")],
     ["kmrPass",()=>kmrSetTechnique("pass")],
-    ["kmrKick",()=>kemariAttemptKick()],
-    ["kmrControls",()=>kemariAttemptKick()]
+    ["kmrKick",()=>kemariAttemptKick()]
   ];
   controlActions.forEach(([id,action])=>{const el=kmr$(id);if(el)el.addEventListener("click",ev=>{
-    // kmrControls は個別ボタンを包む場合があるため、容器自身を押した時だけ蹴る。
-    if(id==="kmrControls"&&ev.target!==el)return;
     if(typeof APP!=="undefined"&&APP.mode==="kemari"){ev.preventDefault();action();}
   });});
 }
@@ -508,9 +588,26 @@ function kmrTestResolve(kind){
   else if(!S.over){S.delivery=kmrCreateDelivery(S);S.phase="flight";}
   kmrUpdateHud(true);kemariRender();return true;
 }
+function kmrTestDelivery(lane,technique,progress){
+  const S=KMR;if(!S||S.over)return false;
+  kmrClearTimers(S);
+  const flight=1500;
+  S.delivery={
+    partner:1,technique:KEMARI_CFG.techniques[technique]?technique:"receive",
+    lane:kmrClamp(Number(lane)||0,-1,1),fromX:0,drift:0,flight,peak:140,
+    start:kmrNow()-flight*kmrClamp(Number(progress)||0,0,1),call:"アリ",landX:kmrClamp(Number(lane)||0,-1,1)
+  };
+  S.phase="flight";S.kickQueued=false;S.quickStep=false;kmrUpdateHud(true);return true;
+}
+function kmrTestAdvance(progress){
+  const S=KMR;if(!S?.delivery)return false;
+  S.delivery.start=kmrNow()-S.delivery.flight*kmrClamp(Number(progress)||0,0,1.05);
+  kmrUpdate(.016);kmrUpdateHud(true);kemariRender();return true;
+}
 
 window.KEMARI_GAME={
-  version:2,start:startKemari,stop:stopKemari,attempt:kemariAttemptKick,
+  version:3,start:startKemari,stop:stopKemari,attempt:kemariAttemptKick,
   selectTechnique:kmrSetTechnique,move:kmrMovePlayer,beginFlight:kemariBeginFlight,testResolve:kmrTestResolve,
-  getState:()=>{const S=KMR;if(!S)return null;return{round:S.round+1,roundHits:S.roundHits,rally:S.rally,score:S.score,combo:S.combo,stamina:S.stamina,miyabi:S.miyabi,poise:S.poise,selected:S.selected,phase:S.phase,delivery:S.delivery&&{technique:S.delivery.technique,lane:S.delivery.lane,partner:S.delivery.partner},victory:S.victory};}
+  __test:{setDelivery:kmrTestDelivery,advance:kmrTestAdvance},
+  getState:()=>{const S=KMR;if(!S)return null;return{round:S.round+1,roundHits:S.roundHits,rally:S.rally,score:S.score,combo:S.combo,stamina:S.stamina,miyabi:S.miyabi,poise:S.poise,selected:S.selected,phase:S.phase,kickQueued:S.kickQueued,quickStep:S.quickStep,flowTurns:S.flowTurns,online:!!S.online,delivery:S.delivery&&{technique:S.delivery.technique,lane:S.delivery.lane,partner:S.delivery.partner},victory:S.victory};}
 };

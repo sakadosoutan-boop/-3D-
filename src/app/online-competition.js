@@ -16,7 +16,7 @@
     anonKey: "sb_publishable_unPMDrLMLCxKhb95Ks8O9w_lLERwI7H",
   };
   const MODES = {
-    quiz: { label: "早押し絵巻クイズ", unit: "点", order: "desc", live: true },
+    quiz: { label: "名称当てクイズ", unit: "点", order: "desc", live: true },
     quiz_ta: { label: "名称当てタイムアタック", unit: "秒", order: "asc" },
     kemari: { label: "蹴鞠", unit: "点", order: "desc", challenge: true },
     koh_awase: { label: "香合わせ", unit: "点", order: "desc", challenge: true },
@@ -38,6 +38,7 @@
     quiz: null,
     pollTimer: 0,
     lastMatchSignature: "",
+    challengeLaunch: null,
   };
   let modal = null;
   let transportOverride = null;
@@ -367,6 +368,11 @@
   }
   function openChallengeGame() {
     const mode = state.match?.mode;
+    state.challengeLaunch = {
+      mode,
+      matchId: state.match?.id,
+      expiresAt: Date.now() + 5000,
+    };
     close(false);
     if (mode === "kemari") {
       if (typeof enterMode === "function") enterMode("kemari");
@@ -431,6 +437,63 @@
       state.ranking = raw;
       state.myRank = firstResult(mine)?.rank || result?.my_rank || result?.myRank || null;
     });
+  }
+
+  async function getMyRank(mode, period = "weekly") {
+    if (!configured() || !MODES[mode]) return { available: false, rank: null, totalPlayers: null };
+    await identify();
+    const row = firstResult(await transport().myRank?.(mode, period));
+    return {
+      available: true,
+      rank: Number(row?.rank) || null,
+      totalPlayers: Number(row?.total_players || row?.totalPlayers) || null,
+      score: Number(row?.score) || 0,
+      durationMs: Number(row?.duration_ms || row?.durationMs) || 0,
+    };
+  }
+
+  function challengeContext(mode) {
+    const match = state.match;
+    if (!match || match.mode !== mode || !["active", "finished"].includes(match.status)) return null;
+    const rival = opponent(match);
+    return {
+      active: match.status === "active",
+      matchId: match.id,
+      seed: Number(match.seed || 1),
+      opponentName: rival?.display_name || rival?.name || "対戦相手",
+      opponentScore: Number(rival?.score) || 0,
+      opponentStatus: rival?.status || "waiting",
+    };
+  }
+
+  function consumeChallengeContext(mode) {
+    const launch = state.challengeLaunch;
+    state.challengeLaunch = null;
+    if (!launch || launch.mode !== mode || launch.expiresAt < Date.now() || launch.matchId !== state.match?.id) return null;
+    return challengeContext(mode);
+  }
+
+  async function syncChallenge(mode) {
+    const context = challengeContext(mode);
+    if (!context?.matchId) return context;
+    const next = normalizeMatch(await transport().getMatch(context.matchId));
+    if (state.match?.id === context.matchId) state.match = next;
+    return challengeContext(mode);
+  }
+
+  async function updateChallengeProgress(mode, score, durationMs, metadata) {
+    const context = challengeContext(mode);
+    if (!context?.active) return context;
+    const next = normalizeMatch(await transport().updateMatch({
+      matchId: context.matchId,
+      progress: Math.max(0, Number(metadata?.rally || metadata?.progress) || 0),
+      score: Math.max(0, Math.round(Number(score) || 0)),
+      status: "playing",
+      durationMs: Math.max(0, Math.round(Number(durationMs) || 0)),
+      payload: metadata || {},
+    }));
+    if (state.match?.id === context.matchId) state.match = next;
+    return challengeContext(mode);
   }
 
   function ensureModal() {
@@ -654,7 +717,8 @@
 
   window.ONLINE_COMPETITION = {
     open, close, configure, createMatch, joinMatch, startMatch, leaveMatch, answerQuiz,
-    submitScore, finishChallenge, loadRanking, getStatus,
+    submitScore, finishChallenge, loadRanking, getMyRank, getStatus, launchChallenge: openChallengeGame,
+    getChallengeContext: challengeContext, consumeChallengeContext, syncChallenge, updateChallengeProgress,
     setDisplayName: name => setPref({ displayName: name }),
     buildQuiz: seed => buildQuiz(seed),
     __test: {
@@ -663,6 +727,6 @@
       getState: () => state,
     },
   };
-  window.ONLINE_COMPETITION_STATUS = { ready: true, version: 1, modes: Object.keys(MODES), quizCount: QUIZ_COUNT };
+  window.ONLINE_COMPETITION_STATUS = { ready: true, version: 2, modes: Object.keys(MODES), quizCount: QUIZ_COUNT };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true }); else boot();
 })();
