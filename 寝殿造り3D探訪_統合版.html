@@ -7095,10 +7095,9 @@ function computeWalkSolids(){
       S.push({x:H.cx+H.hw/2,z:H.cz+lz,hw:t,hd:w/2});
       S.push({x:H.cx-H.hw/2,z:H.cz+lz,hw:t,hd:w/2});
     });
-    // 北面の壁(実在)。北渡殿の開口(x∈[-1.2,1.2])だけ残して左右2枚
-    const nz=H.cz-H.hd/2+.05,nHalf=(H.hw-.3)/2,gap=1.2,seg=(nHalf-gap)/2,cen=gap+seg;
-    S.push({x:H.cx-cen,z:nz,hw:seg,hd:t});
-    S.push({x:H.cx+cen,z:nz,hw:seg,hd:t});
+    // 北面は実在メッシュが全幅の塗籠壁(box(S.hw-.3,…) 開口なし)。北渡殿は側面が開いた廊で寝殿壁は塞がっているため全幅を一枚で塞ぐ
+    const nz=H.cz-H.hd/2+.05;
+    S.push({x:H.cx,z:nz,hw:(H.hw-.3)/2,hd:t});
   }
   // ---- building()と同じ柱リング配置式(対屋)。妻戸のある辺は柱を間引く ----
   function ringColumns(x0,z0,w,d,doors,r){
@@ -7121,6 +7120,28 @@ function computeWalkSolids(){
   ringColumns(TAI.e.x,TAI.e.z,19,13,[["W",4.5],["S",0]],0.15+colMargin);
   ringColumns(TAI.w.x,TAI.w.z,19,13,[["E",4.5],["S",0]],0.15+colMargin);
   ringColumns(TAI.n.x,TAI.n.z,21,12,[["S",0]],0.15+colMargin);
+  // ---- building()の半蔀壁(shitomiSeg)と同じ配置で対屋の壁を塞ぐ。妻戸(doors)の開口はgap分だけ空ける ----
+  function buildingWalls(x0,z0,w,d,doors){
+    const t=0.12,gap=2.9;
+    // [側, 中心x, 中心z, 軸('x'=x方向に伸びる壁 / 'z'=z方向), 長さ]
+    const sides=[["S",0,d/2-.12,"x",w],["N",0,-d/2+.12,"x",w],["E",w/2-.12,0,"z",d],["W",-w/2+.12,0,"z",d]];
+    const seg=(scx,scz,axis,L)=>{ if(L<0.6)return;
+      if(axis==="x")S.push({x:x0+scx,z:z0+scz,hw:L/2,hd:t});
+      else S.push({x:x0+scx,z:z0+scz,hw:t,hd:L/2}); };
+    sides.forEach(s=>{
+      const k=s[0],ccx=s[1],ccz=s[2],axis=s[3],len=s[4];
+      const door=doors.find(dd=>dd[0]===k);
+      if(door){
+        const off=door[1],lLen=(off-gap/2)-(-len/2)-.2,rLen=(len/2)-(off+gap/2)-.2;
+        const lc=(-len/2+(off-gap/2))/2,rc=((off+gap/2)+len/2)/2;
+        if(axis==="x"){ if(lLen>.6)seg(ccx+lc,ccz,axis,lLen); if(rLen>.6)seg(ccx+rc,ccz,axis,rLen); }
+        else{ if(lLen>.6)seg(ccx,ccz+lc,axis,lLen); if(rLen>.6)seg(ccx,ccz+rc,axis,rLen); }
+      }else seg(ccx,ccz,axis,len-.4);
+    });
+  }
+  buildingWalls(TAI.e.x,TAI.e.z,19,13,[["W",4.5],["S",0]]);
+  buildingWalls(TAI.w.x,TAI.w.z,19,13,[["E",4.5],["S",0]]);
+  buildingWalls(TAI.n.x,TAI.n.z,21,12,[["S",0]]);
   // ---- corridor()と同じ柱列配置式(渡殿・中門廊。進行方向に垂直な両側2列) ----
   function corridorColumns(x1,z1,x2,z2,r){
     const dx=x2-x1,dz=z2-z1,L=Math.hypot(dx,dz);if(L<0.01)return;
