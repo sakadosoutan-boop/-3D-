@@ -575,6 +575,10 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 .kmr-stat.kmr-life b{color:#f58b76}.kmr-stat.kmr-flow b{color:#91d7b1}
 .kmr-mission{width:min(780px,96vw);min-height:30px;display:flex;align-items:center;gap:8px;margin:4px 0;
   padding:5px 9px;box-sizing:border-box;border-left:3px solid #c79a42;background:rgba(20,16,10,.82);font-size:11px;color:#d8c8a7}
+.kmr-versus{width:min(780px,96vw);min-height:28px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;
+  padding:4px 9px;box-sizing:border-box;border:1px solid rgba(184,104,75,.5);background:#301a15;color:#f5dcc7;font-size:10px}
+.kmr-versus[hidden]{display:none}.kmr-versus span{color:#f0a87e;font-weight:900}.kmr-versus b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kmr-versus strong{color:#ffd281;font-size:12px}
 #kmrRound{flex:0 0 auto;color:#f6cf79;font-family:var(--serif,serif);font-weight:800}
 #kmrObjective{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kmr-flowline{width:min(780px,96vw);min-height:25px;box-sizing:border-box;margin:-1px 0 4px;padding:4px 9px;
@@ -589,6 +593,15 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 .kmr-board{position:relative;width:min(780px,96vw);aspect-ratio:720/500;max-height:calc(100vh - 205px);margin:0;touch-action:none;flex:1 1 auto}
 #kemariCanvas{width:100%;height:100%;border-radius:7px;border:1px solid rgba(218,177,88,.62);background:#1c3220;
   box-shadow:0 12px 34px rgba(0,0,0,.48),inset 0 0 0 1px rgba(255,255,255,.05);display:block}
+.kmr-readout{position:absolute;z-index:2;left:10px;right:10px;bottom:9px;min-height:52px;display:grid;grid-template-columns:70px 86px minmax(150px,1fr) 112px;
+  align-items:center;gap:8px;padding:6px 8px;box-sizing:border-box;border:1px solid rgba(237,209,140,.4);border-radius:6px;background:rgba(8,13,9,.88);
+  box-shadow:0 6px 20px rgba(0,0,0,.32);pointer-events:none}
+.kmr-cue span,.kmr-sync span{display:block;color:#aebda9;font-size:8px;line-height:1.2}.kmr-cue b{display:block;margin-top:2px;color:#ffe09a;font:900 15px var(--serif)}
+.kmr-timing>span{display:block;margin-bottom:4px;color:#d8cfbb;font-size:9px;text-align:center}.kmr-timing-track{position:relative;height:9px;border-radius:2px;background:#28291e;overflow:hidden}
+.kmr-timing-track i{position:absolute;inset:0 auto 0 0;width:0;background:#b88b42}.kmr-timing-track em{position:absolute;right:7%;top:0;width:13%;height:100%;border-left:1px solid #fff0ae;border-right:1px solid #fff0ae;background:rgba(255,223,126,.25)}
+.kmr-readout.is-ready .kmr-timing-track i{background:#70c69a}.kmr-readout.is-ready .kmr-timing>span{color:#9ce1b8;font-weight:900}
+.kmr-readout.is-queued .kmr-timing>span{color:#ffd36f}.kmr-sync b{color:#9bd5b6;font-size:12px}.kmr-sync>div{height:5px;margin-top:3px;background:#253026}
+.kmr-sync i{display:block;width:0;height:100%;background:#72c5a4}.kmr-readout.is-flow .kmr-sync i{background:#f0c968;box-shadow:0 0 8px #f0c968}
 #kemariGameOver,#kemariHelp{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;background:rgba(5,8,4,.82);z-index:5}
 #kemariGameOver.show,#kemariHelp.show{display:flex}
 .kmr-card{width:min(520px,94%);max-height:94%;overflow-y:auto;-webkit-overflow-scrolling:touch;text-align:center;padding:18px 18px;
@@ -608,6 +621,7 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 .kmr-control[data-action="receive"]{background:#254938;border-color:#70a98d}.kmr-control[data-action="high"]{background:#643426;border-color:#c47c58}
 .kmr-control[data-action="pass"]{background:#4a3b20;border-color:#b79a4d}
 .kmr-control[data-action="kick"]{background:#8a3b28;border-color:#e09a62;color:#fff2d6}
+.kmr-control[data-action="kick"].is-ready{background:#a94b2f;border-color:#ffd17b;box-shadow:0 0 0 2px rgba(255,209,123,.24),0 0 16px rgba(219,116,58,.38)}
 .kmr-control.selected{box-shadow:inset 0 0 0 2px #f4d078;filter:brightness(1.18)}
 .kmr-control:active,.kmr-control.pressed{filter:brightness(1.28);transform:translateY(1px)}
 .kmr-control:focus-visible{outline:2px solid #ffd57a;outline-offset:2px}
@@ -617,6 +631,9 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
   .kmr-stats{grid-column:1/-1;width:100%;grid-template-columns:repeat(6,1fr)}
   .kmr-stat{min-width:0;padding:3px 2px}.kmr-stat b{font-size:12px}
   .kmr-mission{margin:3px 0}.kmr-board{max-height:calc(100vh - 225px)}
+  .kmr-readout{left:5px;right:5px;bottom:5px;grid-template-columns:52px 62px minmax(96px,1fr);gap:4px;padding:5px}
+  .kmr-readout .kmr-sync{grid-column:1/-1;display:grid;grid-template-columns:30px 34px 1fr;align-items:center;gap:4px}.kmr-sync>div{margin-top:0}
+  .kmr-cue b{font-size:13px}.kmr-timing>span{font-size:8px}.kmr-versus{font-size:9px}
   .kmr-controls{height:58px;grid-template-columns:42px 1fr 1fr 1fr 1.1fr 42px;gap:3px}
   .kmr-control{font-size:9px}.kmr-control strong{font-size:15px}.kmr-help-grid{grid-template-columns:1fr}
   .kmr-card{padding:14px}.kmr-card-title{font-size:18px}.kmr-judge{font-size:14px}
@@ -971,6 +988,11 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
 .r-card h2{font-size:20px;letter-spacing:.26em;color:var(--shu);margin-bottom:10px;text-shadow:0 1px 0 rgba(255,255,255,.58)}
 .r-rank{font-size:clamp(40px,11vw,58px);font-weight:800;letter-spacing:.12em;margin:6px 0 8px;color:#2c170c;text-shadow:0 1px 0 rgba(255,255,255,.6)}
 .r-detail{font-size:13px;font-family:var(--sans);line-height:1.9;color:#5a4c36;background:rgba(255,255,255,.34);border:1px solid rgba(184,155,86,.48);border-radius:7px;padding:10px 12px}
+.quiz-online-rank{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;margin-top:9px;padding:8px 10px;
+  border:1px solid rgba(76,126,106,.44);border-radius:6px;background:rgba(235,247,239,.7);font-size:11px;line-height:1.45;text-align:left}
+.quiz-online-rank span{color:#52675a}.quiz-online-rank b{color:#1f6246;text-align:right;font-size:12px}
+.quiz-online-rank.is-loading b{color:#75653f}.quiz-online-rank.is-queued{border-color:rgba(177,126,54,.48);background:rgba(250,240,216,.74)}
+.quiz-online-rank.is-queued b,.quiz-online-rank.is-offline b{color:#815f29}
 .r-next{display:none;margin-top:10px;padding:9px 11px;border-radius:7px;border:1px solid rgba(138,59,42,.32);
   background:linear-gradient(180deg,rgba(255,250,236,.72),rgba(244,230,198,.52));font-family:var(--sans);
   font-size:12px;line-height:1.65;color:#6a4a32;text-align:left}

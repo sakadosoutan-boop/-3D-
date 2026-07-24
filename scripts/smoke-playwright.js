@@ -45,6 +45,9 @@ async function launchBrowser() {
   page.on('console', (message) => {
     if (message.type() === 'error' && !isIgnorableConsoleError(message.text())) errors.push(message.text());
   });
+  await page.addInitScript(() => {
+    window.SHINDEN_ONLINE_CONFIG = { enabled: false };
+  });
 
   try {
     await page.goto(target, { waitUntil: 'load', timeout: 45_000 });
@@ -189,10 +192,16 @@ async function launchBrowser() {
         if (typeof enterMode === 'function') enterMode('kemari');
         await new Promise((resolve) => setTimeout(resolve, 100));
         const initial = window.KEMARI_GAME?.getState?.();
-        window.KEMARI_GAME?.selectTechnique?.('pass');
+        window.KEMARI_GAME?.__test?.setDelivery?.(1, 'receive', 0.55);
+        window.KEMARI_GAME?.selectTechnique?.('receive');
         window.KEMARI_GAME?.move?.(1);
+        window.KEMARI_GAME?.attempt?.();
+        const queued = window.KEMARI_GAME?.getState?.();
+        window.KEMARI_GAME?.__test?.advance?.(0.95);
+        const assisted = window.KEMARI_GAME?.getState?.();
+        window.KEMARI_GAME?.selectTechnique?.('pass');
         const selected = window.KEMARI_GAME?.getState?.();
-        for (let i = 0; i < 30; i += 1) window.KEMARI_GAME?.testResolve?.('perfect');
+        for (let i = 0; i < 29; i += 1) window.KEMARI_GAME?.testResolve?.('perfect');
         const completed = window.KEMARI_GAME?.getState?.();
         const canvas = document.getElementById('kemariCanvas');
         if (canvas?.width && canvas?.height) {
@@ -205,10 +214,15 @@ async function launchBrowser() {
         }
         kemariOk = initial?.poise === 3
           && initial?.round === 1
+          && queued?.kickQueued === true
+          && assisted?.quickStep === true
+          && assisted?.rally === 1
           && selected?.selected === 'pass'
           && completed?.round === 4
           && completed?.rally === 30
           && completed?.victory === true
+          && window.KEMARI_GAME?.version === 3
+          && !!document.getElementById('kmrReadout')
           && document.getElementById('kemariGameOver')?.classList.contains('show')
           && (document.getElementById('kmrGoTitle')?.textContent || '').includes('四懸');
         if (typeof enterMode === 'function') enterMode('walk');
@@ -216,6 +230,9 @@ async function launchBrowser() {
       let onlineCompetitionOk = false;
       let onlineQuizSeedOk = false;
       let onlineRankingOk = false;
+      let normalQuizOnlineRankOk = false;
+      let onlineKemariLaunchOk = false;
+      let onlineKemariLaunchDetail = null;
       let onlineCompetitionError = null;
       try {
         const submitted = [];
@@ -246,6 +263,7 @@ async function launchBrowser() {
               { rank: 2, display_name: '西方', score: 1180, duration_ms: 14600 },
             ];
           },
+          async myRank() { return [{ rank: 2, total_players: 14, score: 88, duration_ms: 5200 }]; },
         };
         window.ONLINE_COMPETITION?.configure?.({ transport: mockTransport });
         window.ONLINE_COMPETITION?.setDisplayName?.('東方');
@@ -275,6 +293,36 @@ async function launchBrowser() {
           && submitted.some((item) => item.mode === 'quiz')
           && (document.getElementById('onlineCompetitionModal')?.textContent || '').includes('順位表');
         window.ONLINE_COMPETITION?.close?.();
+        APP.quiz = { ta: false, score: 88, miss: 1, missed: [], maxCombo: 3, tStart: performance.now() - 5200 };
+        APP.mode = 'quiz';
+        endQuiz();
+        await new Promise((resolve) => setTimeout(resolve, 140));
+        normalQuizOnlineRankOk = (document.getElementById('resTitle')?.textContent || '').includes('名称当てクイズ')
+          && (document.getElementById('quizOnlineRank')?.textContent || '').includes('共有順位・今週')
+          && (document.getElementById('quizOnlineRank')?.textContent || '').includes('2位 / 14人中');
+        closeResultPanel();
+        await window.ONLINE_COMPETITION?.leaveMatch?.();
+        window.ONLINE_COMPETITION?.open?.();
+        await window.ONLINE_COMPETITION?.createMatch?.('kemari');
+        mockMatch.players.push({ is_self: false, is_host: false, display_name: '西方', status: 'ready', progress: 0, score: 0 });
+        await window.ONLINE_COMPETITION?.startMatch?.();
+        const kemariBeforeLaunch = window.ONLINE_COMPETITION?.getStatus?.();
+        window.ONLINE_COMPETITION?.launchChallenge?.();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const onlineKemari = window.KEMARI_GAME?.getState?.();
+        if (typeof enterMode === 'function') enterMode('walk');
+        if (typeof enterMode === 'function') enterMode('kemari');
+        const ordinaryKemari = window.KEMARI_GAME?.getState?.();
+        onlineKemariLaunchOk = onlineKemari?.online === true && ordinaryKemari?.online === false;
+        onlineKemariLaunchDetail = {
+          screen: kemariBeforeLaunch?.screen,
+          matchMode: kemariBeforeLaunch?.match?.mode,
+          appMode: APP.mode,
+          online: onlineKemari?.online,
+          ordinary: ordinaryKemari?.online
+        };
+        if (typeof enterMode === 'function') enterMode('walk');
+        await window.ONLINE_COMPETITION?.leaveMatch?.();
         window.ONLINE_COMPETITION?.configure?.({ clear: true });
       } catch (error) {
         onlineCompetitionError = error.message || String(error);
@@ -666,6 +714,9 @@ async function launchBrowser() {
         onlineCompetitionOk,
         onlineQuizSeedOk,
         onlineRankingOk,
+        normalQuizOnlineRankOk,
+        onlineKemariLaunchOk,
+        onlineKemariLaunchDetail,
         onlineCompetitionError,
         livingEstateOk,
         livingEstateModeOk,
@@ -755,6 +806,8 @@ async function launchBrowser() {
     if (!status.onlineCompetitionOk) errors.push('online match did not create, start, finish, and submit a score');
     if (!status.onlineQuizSeedOk) errors.push('online quiz seed did not produce a stable shared question set');
     if (!status.onlineRankingOk) errors.push('online shared ranking did not render');
+    if (!status.normalQuizOnlineRankOk) errors.push('normal quiz result did not show the shared weekly rank');
+    if (!status.onlineKemariLaunchOk) errors.push('online kemari launch leaked into an ordinary kemari session');
     if (!status.livingEstateOk) errors.push('living-estate schedules or daily-life panel failed');
     if (!status.livingEstateModeOk) errors.push('living-estate actors did not pause and resume with walk mode');
     if (!status.livingEstateArrivalOk) errors.push('living-estate visitor/cart arrival safeguards failed');
