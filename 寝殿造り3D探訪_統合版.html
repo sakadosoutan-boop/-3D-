@@ -3620,6 +3620,25 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
   .tour-title{font-size:15px}.tour-text{font-size:12px}
   .tour-actions button{font-size:11px;padding:6px 10px}
 }
+
+/* ===== 時代の移動パネル(平安 寝殿造り ⇄ 鎌倉 武家屋敷) ===== */
+#eraPanel{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(12,8,6,.62);backdrop-filter:blur(2px)}
+#eraPanel.open{display:flex}
+#eraPanel .era-card{width:min(430px,calc(100vw - 28px));max-height:90vh;overflow:auto;padding:20px 18px 16px;background:linear-gradient(180deg,#2a1d14,#1c130d);border:1px solid rgba(207,170,93,.7);border-radius:12px;color:#f4e8ce;box-shadow:0 18px 48px rgba(0,0,0,.5);font-family:var(--sans,system-ui)}
+#eraPanel .era-title{font:700 20px var(--serif,serif);color:#f1d782;text-align:center;margin-bottom:8px}
+#eraPanel .era-lead{font-size:12.5px;line-height:1.6;color:#dccaa4;text-align:center;margin-bottom:15px}
+#eraPanel .era-opt{width:100%;display:flex;align-items:center;gap:12px;text-align:left;margin:9px 0;padding:13px 13px;border:1px solid rgba(207,170,93,.5);border-radius:9px;background:rgba(72,50,34,.72);color:#f8edcf;cursor:pointer;transition:border-color .15s,background .15s}
+#eraPanel .era-opt:hover,#eraPanel .era-opt:focus-visible{border-color:#f1d782;background:rgba(96,66,42,.85);outline:none}
+#eraPanel .era-opt .era-emoji{font-size:30px;line-height:1;flex:0 0 auto}
+#eraPanel .era-opt .era-body{flex:1;display:flex;flex-direction:column;gap:3px}
+#eraPanel .era-opt .era-body b{font:700 15px var(--serif,serif);color:#f4e8ce}
+#eraPanel .era-opt .era-body small{font-size:11px;line-height:1.5;color:#cdbb96}
+#eraPanel .era-opt .era-badge{flex:0 0 auto;font-size:10.5px;font-weight:700;color:#0e0b07;background:#e5c66e;border-radius:999px;padding:2px 8px;white-space:nowrap}
+#eraPanel .era-opt .era-badge:empty{display:none}
+#eraPanel .era-opt.current{border-color:#e5c66e;background:rgba(110,80,44,.9)}
+#eraPanel .era-close{width:100%;margin-top:12px;min-height:40px;border:1px solid rgba(207,170,93,.45);border-radius:7px;background:#3c2a1c;color:#f4e8ce;font-size:13px;cursor:pointer}
+#eraPanel .era-close:hover{background:#4a3423}
+@media(max-width:640px){#eraPanel .era-card{padding:16px 13px 13px}#eraPanel .era-title{font-size:18px}#eraPanel .era-opt .era-emoji{font-size:26px}}
 /* APP_CSS_EMBED_END */
 </style>
 </head>
@@ -3718,6 +3737,7 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
     <button class="t-btn t-codex-btn" id="btnHistory">📜 あゆみ<small id="titleHistoryProgress">まだ記録がありません</small></button>
     <button class="t-btn t-codex-btn" id="btnKoyomi">📅 平安の暦<small id="titleKoyomiProgress">今日の行事を見る</small></button>
     <button class="t-btn t-codex-btn" id="btnQuizTeacher">📝 力だめし小テスト<small>4択・結果を書き出し</small></button>
+    <button class="t-btn t-codex-btn" id="btnEraTitle">🏯 時代を移動 ─ 鎌倉の武家屋敷へ<small>堀と土塁に囲まれた主殿を歩く(散策専用)</small></button>
     <button class="t-onboard-help" id="btnOnboardHelp">❓ はじめての方へ</button>
 
     <div id="dailyQuestPanel" class="daily-quest-panel">
@@ -3829,6 +3849,7 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
   <span class="tb-sep"></span>
   <button class="tb-btn tb-icon on" id="tbMap" title="地図の表示">🗺</button>
   <button class="tb-btn" id="btnTour" title="邸内を自動で巡るナレーション付きツアー">🎎 自動ガイド</button>
+  <button class="tb-btn" id="tbEra" title="時代を移動する(平安の寝殿造り ⇄ 鎌倉の武家屋敷)">🕰 時代</button>
   <!-- 右端ツール -->
   <span class="spacer"></span>
   <button class="tb-btn" id="tbCodex">📚 図鑑</button>
@@ -3941,6 +3962,25 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
       <button class="onboard-skip" id="onboardSkip">自分で選ぶ</button>
       <a class="onboard-skip" id="onboardKamakuraLink" href="?map=kamakura" style="text-decoration:underline;text-underline-offset:3px;">🏯 新登場: 鎌倉の武家屋敷を歩く</a>
     </div>
+  </div>
+</div>
+
+<!-- 時代の移動(平安 寝殿造り ⇄ 鎌倉 武家屋敷) -->
+<div id="eraPanel" role="dialog" aria-modal="true" aria-labelledby="eraTitle">
+  <div class="era-card">
+    <div class="era-title" id="eraTitle">🕰 時代を移動する</div>
+    <div class="era-lead">同じ「住まい」を、二つの時代で歩き比べてみよう。<br>選ぶとその時代のマップを読み込み直します（覚えた図鑑などの記録は残ります）。</div>
+    <button class="era-opt" id="eraHeian" type="button">
+      <span class="era-emoji">🏛</span>
+      <span class="era-body"><b>平安時代 ─ 寝殿造り</b><small>貴族の邸宅。散策・クイズ・物語・ミニゲームで遊べる本編</small></span>
+      <span class="era-badge" id="eraHeianBadge"></span>
+    </button>
+    <button class="era-opt" id="eraKamakura" type="button">
+      <span class="era-emoji">🏯</span>
+      <span class="era-body"><b>鎌倉時代 ─ 武家屋敷</b><small>武士の館。堀と土塁に囲まれた主殿を歩く（散策専用）</small></span>
+      <span class="era-badge" id="eraKamakuraBadge"></span>
+    </button>
+    <button class="era-close" id="eraClose" type="button">閉じる</button>
   </div>
 </div>
 
@@ -13534,6 +13574,39 @@ $("creditsLink").onclick=()=>$("credits").style.display="flex";
 $("creditsClose").onclick=()=>$("credits").style.display="none";
 $("credits").onclick=e=>{if(e.target===$("credits"))$("credits").style.display="none";};
 $("tbTitle").onclick=()=>{location.reload();};
+
+/* ===== 時代の移動(平安 寝殿造り ⇄ 鎌倉 武家屋敷) =====
+   鎌倉マップは読込時に APP.map==="kamakura" で分岐して worldK を構築する方式のため、
+   実行時のワールド差し替えではなく URL パラメータを付け替えて読み直すことで安全に行き来する。
+   図鑑等の記録は localStorage に残るため、時代をまたいでも失われない。 */
+function gotoEra(era){
+  const url=new URL(location.href);
+  if(era==="kamakura")url.searchParams.set("map","kamakura");
+  else url.searchParams.delete("map");
+  if((era==="kamakura")===(APP.map==="kamakura")){eraClose();return;} // 同じ時代なら何もしない
+  try{if(typeof SFX!=="undefined"&&SFX.stopBed)SFX.stopBed();}catch(e){}
+  document.body.style.transition="opacity .34s ease";document.body.style.opacity="0"; // 暗転してから読み直す
+  setTimeout(()=>{location.href=url.toString();},350);
+}
+function eraOpen(){
+  const p=$("eraPanel");if(!p)return;
+  const isKama=(APP.map==="kamakura");
+  const heian=$("eraHeian"),kama=$("eraKamakura");
+  heian.classList.toggle("current",!isKama);kama.classList.toggle("current",isKama);
+  $("eraHeianBadge").textContent=!isKama?"今ここ":"";
+  $("eraKamakuraBadge").textContent=isKama?"今ここ":"";
+  p.classList.add("open");if(typeof beep==="function")beep(528,.05);
+}
+function eraClose(){const p=$("eraPanel");if(p)p.classList.remove("open");}
+if($("tbEra"))$("tbEra").onclick=eraOpen;
+if($("eraClose"))$("eraClose").onclick=eraClose;
+if($("eraHeian"))$("eraHeian").onclick=()=>gotoEra("heian");
+if($("eraKamakura"))$("eraKamakura").onclick=()=>gotoEra("kamakura");
+if($("eraPanel"))$("eraPanel").addEventListener("click",e=>{if(e.target===$("eraPanel"))eraClose();});
+addEventListener("keydown",e=>{if(e.key==="Escape")eraClose();});
+/* タイトル画面のオンボーディング内リンクも、離脱でなく暗転付きの gotoEra 経由に統一 */
+if($("onboardKamakuraLink"))$("onboardKamakuraLink").addEventListener("click",e=>{e.preventDefault();gotoEra("kamakura");});
+if($("btnEraTitle"))$("btnEraTitle").onclick=eraOpen;
 // サブパネル切り替えヘルパー
 function showSubPanel(id){
   $("mainModes").style.display="none";
