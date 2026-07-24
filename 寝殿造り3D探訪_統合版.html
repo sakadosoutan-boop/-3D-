@@ -22501,6 +22501,10 @@ if($("rnExitTop"))$("rnExitTop").onclick=()=>{
 /* APP_KOH_AWASE_EMBED_END */
 
 let __lastFrameMs=0;
+/* [発熱対策] 最後にユーザー操作があった時刻。無操作放置時のfps低減に用いる */
+let __lastActivity=performance.now();
+function __markActivity(){__lastActivity=performance.now();}
+["pointerdown","pointermove","pointerup","keydown","wheel","touchstart","touchmove"].forEach(ev=>addEventListener(ev,__markActivity,{passive:true}));
 /* 波9: 着座HUDモード判定(歌合/再現/恋文ショート/恋愛シミュ/物語)。
    これらはカメラがほぼ固定でHUD/演出に集中するため、裏の3Dシーンの
    純装飾(鳥・蝶・蜻蛉・雀の追いかけっこ・池の月映り)だけ更新頻度を間引く。
@@ -22510,11 +22514,18 @@ let __decoFrame=0;  /* 波9: 装飾アニメ間引き用の軽量フレームカ
 function animate(now){
   if(window.__SHINDEN_BENCH_PAUSE)return;
   requestAnimationFrame(animate);
+  if(now===undefined)now=performance.now();
+  /* [発熱対策] タブが非表示の間は描画を完全に休止。ブラウザのrAF間引きに上乗せしGPUを遊ばせる(復帰時のdt跳ねは時計を空回しして防ぐ) */
+  if(document.hidden){__lastFrameMs=now;clock.getDelta();return;}
   /* フレームレート上限: スマホの発熱・電池消費を抑える(既定モバイル30fps)。
      描画前に間引くことで GPU/CPU 稼働を大幅削減。clock は描画フレームのみ進む。 */
-  if(APP_FPSCAP>0){
-    if(now===undefined)now=performance.now();
-    const interval=1000/APP_FPSCAP;
+  let __cap=APP_FPSCAP;
+  /* [発熱対策] タッチ端末で自由散策/撮影中に一定時間無操作なら実効fpsを一段落とし、放置時の発熱・電池消費を抑える。何か操作すれば即座に通常fpsへ復帰 */
+  if(IS_TOUCH&&__cap>0&&(now-__lastActivity>7000)&&(APP.mode==="walk"||APP.mode==="photo")&&!(APP.gisshaCarry&&APP.gisshaCarry.active)){
+    __cap=Math.min(__cap,18);
+  }
+  if(__cap>0){
+    const interval=1000/__cap;
     if(now-__lastFrameMs<interval-1)return;
     __lastFrameMs=now-((now-__lastFrameMs)%interval);  // 累積ドリフトを避けて一定間隔を保つ
   }
@@ -23196,6 +23207,13 @@ function animate(now){
   // 見えない3Dシーンの描画(ミニマップ・ブルーム合成・renderer本体)を丸ごと休止して軽量化する
   if(APP.mode!=="ikaiSuika"&&APP.mode!=="kaiawase"&&APP.mode!=="kemari"){
     if(window.LOW_POWER)window.LOW_POWER.update();
+    /* [発熱対策] 自由散策では影マップの更新を2フレームに1回へ間引く。太陽はほぼ静止しキャスターも大半が静的なので体感差はなく、影パスのGPU負荷を約半減できる。他モード(退治戦など動きの速い影)は毎フレーム更新へ戻す */
+    if(APP.mode==="walk"){
+      if(renderer.shadowMap.autoUpdate){renderer.shadowMap.autoUpdate=false;renderer.shadowMap.__throttle=true;}
+      if(renderer.shadowMap.__throttle)renderer.shadowMap.needsUpdate=(__decoFrame%2===0);
+    }else if(renderer.shadowMap.__throttle){
+      renderer.shadowMap.__throttle=false;renderer.shadowMap.autoUpdate=true;renderer.shadowMap.needsUpdate=true;
+    }
     drawMinimap();    /* ミニマップ(独立2Dキャンバス) */
     BLOOM.update();   /* 夜/夕かつ高品質時のみブルームを有効化 */
     BLOOM.render();   /* 条件に応じ composer(ブルーム) か 通常描画 を選択 */
