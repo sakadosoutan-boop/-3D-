@@ -176,7 +176,8 @@
       document.head.appendChild(css);
     }
     const topbar=document.getElementById("topbar");
-    if(topbar&&!state.button){
+    // [UI引き算]「⋯」メニューがある本編では日課はメニュー側から開くため、重複するトップバーボタンは作らない
+    if(topbar&&!state.button&&!document.getElementById("tbMoreMenu")){
       const button=document.createElement("button");
       button.type="button";button.id="tbEstateLife";button.className="tb-btn";
       button.setAttribute("aria-label","屋敷の一日の日課を開く");button.title="屋敷の一日";button.textContent="日課";

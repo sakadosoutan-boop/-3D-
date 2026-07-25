@@ -1757,7 +1757,7 @@ body.photo-mode.filter-emaki #c{filter:sepia(.5) saturate(1.3) contrast(1.08) br
 body.photo-mode.filter-sumi #c{filter:grayscale(1) contrast(1.32) brightness(1.04)}
 body.photo-mode.filter-yuu #c{filter:saturate(1.5) contrast(1.06) brightness(1.05) hue-rotate(-8deg) sepia(.16)}
 /* トップバー折りたたみ: 銘・モード名・開閉ボタン以外を隠してプレイ画面を広く使う */
-#topbar.collapsed>:not(.brand):not(#modeTag):not(#tbCollapse):not(#tbTitle){display:none!important}
+#topbar.collapsed>:not(.brand):not(#modeTag):not(#tbMore):not(#tbTitle){display:none!important}
 #topbar.collapsed + #worldStatusBar{top:var(--topbar-h,46px)}
 /* 文字サイズ: 解説・図鑑など読み物パネルを拡大(zoomでレイアウトごと拡大) */
 body.font-l #info,body.font-l #codex,body.font-l #toast{zoom:1.18}
@@ -3661,10 +3661,60 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
 #eraPanel .era-close{width:100%;margin-top:12px;min-height:40px;border:1px solid rgba(207,170,93,.45);border-radius:7px;background:#3c2a1c;color:#f4e8ce;font-size:13px;cursor:pointer}
 #eraPanel .era-close:hover{background:#4a3423}
 @media(max-width:640px){#eraPanel .era-card{padding:16px 13px 13px}#eraPanel .era-title{font-size:18px}#eraPanel .era-opt .era-emoji{font-size:26px}}
+
+/* ===== 和風ラインアイコン ＋ トップバーの引き算 ===== */
+.wic{width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;vertical-align:-4px;overflow:visible}
+.wic.dots{fill:currentColor;stroke:none}
+.tb-btn .wic{width:17px;height:17px;vertical-align:-3px}
+.tb-btn .tb-lbl{margin-left:6px}
+.tb-btn:has(.tb-lbl){display:inline-flex;align-items:center}
+#worldStatusBar .tb-btn{display:inline-flex;align-items:center}
+#worldStatusBar .wic{width:15px;height:15px}
+/* ⋯ そのほかの機能メニュー */
+#tbMoreMenu{position:fixed;z-index:60;top:calc(var(--topbar-h,52px) + 6px);right:max(8px,env(safe-area-inset-right));width:min(268px,calc(100vw - 20px));display:none;flex-direction:column;gap:2px;padding:7px;background:linear-gradient(180deg,rgba(41,28,19,.98),rgba(28,19,12,.98));border:1px solid rgba(207,170,93,.62);border-radius:10px;box-shadow:0 14px 34px rgba(0,0,0,.46)}
+#tbMoreMenu.open{display:flex}
+.tbm-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;border:0;border-radius:7px;background:transparent;color:#f4e8ce;cursor:pointer;font-family:var(--sans)}
+.tbm-item:hover,.tbm-item:focus-visible{background:rgba(207,170,93,.16);outline:none}
+.tbm-item .wic{color:var(--kin);width:19px;height:19px}
+.tbm-item span{display:flex;flex-direction:column;gap:1px;line-height:1.3}
+.tbm-item b{font:600 13px var(--serif,serif);color:#f4e8ce}
+.tbm-item small{font-size:10.5px;color:#c3b491}
+
+/* トップバーの狭幅対応: アイコン主体＋はみ出しは横スクロールで全項目に到達可能に(引き算後も操作性を担保) */
+@media (max-width:640px){
+  #topbar{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #topbar::-webkit-scrollbar{display:none}
+  #topbar .spacer{flex:0 0 2px}
+  #topbar .tb-lbl{display:none}      /* 時代・図鑑はアイコンのみ(titleでラベル補完) */
+  #topbar .brand{display:none}
+  #modeTag{font-size:11px;padding:0 9px;letter-spacing:.08em}
+  #tbMoreMenu{width:min(280px,calc(100vw - 16px))}
+}
 /* APP_CSS_EMBED_END */
 </style>
 </head>
 <body>
+<!-- 和風ラインアイコン(単色・currentColor継承)。絵文字を統一感のあるアイコンへ置換するためのスプライト -->
+<svg id="waIcons" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden"><defs>
+  <symbol id="ic-home" viewBox="0 0 24 24"><path d="M3 11.3 12 4.8l9 6.5"/><path d="M5.4 10.4V19h13.2v-8.6"/><path d="M9.8 19v-4.6h4.4V19"/></symbol>
+  <symbol id="ic-eye" viewBox="0 0 24 24"><path d="M2.4 12S6 5.9 12 5.9 21.6 12 21.6 12 18 18.1 12 18.1 2.4 12 2.4 12Z"/><circle cx="12" cy="12" r="2.7"/></symbol>
+  <symbol id="ic-return" viewBox="0 0 24 24"><path d="M5.6 8.4A8 8 0 1 1 4 13.2"/><path d="M3.4 4v4.6H8"/></symbol>
+  <symbol id="ic-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6.4l2.3 5.4L12 17.6 9.7 11.8Z"/></symbol>
+  <symbol id="ic-era" viewBox="0 0 24 24"><path d="M6.4 4h11.2M6.4 20h11.2"/><path d="M8 4c0 4.6 8 3.4 8 8s-8 3.4-8 8"/><path d="M16 4c0 4.6-8 3.4-8 8s8 3.4 8 8"/></symbol>
+  <symbol id="ic-book" viewBox="0 0 24 24"><path d="M12 6.4C9.5 5 6.4 5 3.9 5.6v12.2C6.4 17.2 9.5 17.2 12 18.6c2.5-1.4 5.6-1.4 8.1-.8V5.6C17.6 5 14.5 5 12 6.4Z"/><path d="M12 6.4v12.2"/></symbol>
+  <symbol id="ic-tune" viewBox="0 0 24 24"><path d="M4 8h8.4M16.6 8H20M4 16h3.4M11.6 16H20"/><circle cx="14.5" cy="8" r="2.2"/><circle cx="9.5" cy="16" r="2.2"/></symbol>
+  <symbol id="ic-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.4 9.2a2.7 2.7 0 1 1 3.4 2.8c-.7.3-.9.9-.9 1.7"/><path d="M12 16.6h.01"/></symbol>
+  <symbol id="ic-more" viewBox="0 0 24 24"><circle cx="5.6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.4" cy="12" r="1.7"/></symbol>
+  <symbol id="ic-lantern" viewBox="0 0 24 24"><path d="M12 3v1.8M9.6 4.8h4.8"/><path d="M8.6 8.1c1-1.2 5.8-1.2 6.8 0v7.7c-1 1.2-5.8 1.2-6.8 0Z"/><path d="M9.1 11h5.8M9.1 13.5h5.8"/><path d="M11 19.4h2"/></symbol>
+  <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.1"/><path d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></symbol>
+  <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M20 13.6A8 8 0 1 1 10.4 4a6.3 6.3 0 0 0 9.6 9.6Z"/></symbol>
+  <symbol id="ic-dawn" viewBox="0 0 24 24"><path d="M2.6 18.4h18.8"/><path d="M7.7 18.4a4.3 4.3 0 0 1 8.6 0"/><path d="M12 5.6v3.2M6.4 9.4 7.9 10.9M17.6 9.4 16.1 10.9M2.8 14h3M18.2 14h3"/></symbol>
+  <symbol id="ic-dusk" viewBox="0 0 24 24"><path d="M2.6 18.4h18.8"/><path d="M7.7 18.4a4.3 4.3 0 0 1 8.6 0"/><path d="M12 11.2V8M8.6 12l-1.4-1.4M15.4 12l1.4-1.4"/></symbol>
+  <symbol id="ic-spring" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M12 10c0-2.8-1.6-4.8 0-6.6 1.6 1.8 0 3.8 0 6.6ZM14 12c2.8 0 4.8-1.6 6.6 0-1.8 1.6-3.8 0-6.6 0ZM12 14c0 2.8 1.6 4.8 0 6.6-1.6-1.8 0-3.8 0-6.6ZM10 12c-2.8 0-4.8 1.6-6.6 0 1.8-1.6 3.8 0 6.6 0Z"/></symbol>
+  <symbol id="ic-summer" viewBox="0 0 24 24"><circle cx="12" cy="9.6" r="3.4"/><path d="M12 2.8v1.6M4.8 9.6H3.2M20.8 9.6h-1.6M6.4 4.4 7.6 5.6M17.6 4.4 16.4 5.6"/><path d="M4 17.6q2-1.6 4 0t4 0 4 0 4 0M4 20.4q2-1.6 4 0t4 0 4 0 4 0"/></symbol>
+  <symbol id="ic-autumn" viewBox="0 0 24 24"><path d="M12 3.2c4 3 6 6.4 6 9.8a6 6 0 0 1-12 0c0-3.4 2-6.8 6-9.8Z"/><path d="M12 20.8V8.4M12 12.4l3-2M12 15.4l-3-2"/></symbol>
+  <symbol id="ic-winter" viewBox="0 0 24 24"><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/><path d="M12 6.2 9.8 8m2.2-1.8L14.2 8M12 17.8 9.8 16m2.2 1.8L14.2 16M5.6 9l.5 2.7M5.6 15l.5-2.7M18.4 9l-.5 2.7M18.4 15l-.5-2.7"/></symbol>
+</defs></svg>
 <canvas id="c"></canvas>
 <div id="vignette"></div>
 <div id="dangerVignette"></div>
@@ -3859,30 +3909,34 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
 </div>
 
 <div id="topbar">
-  <button class="tb-btn tb-icon" id="tbTitle" title="表紙へ">🏠</button>
+  <button class="tb-btn tb-icon" id="tbTitle" title="表紙へ"><svg class="wic"><use href="#ic-home"/></svg></button>
   <span class="brand">寝殿造り探訪</span>
   <span id="modeTag">自由散策</span>
-  <button class="tb-btn" id="tbCollapse" title="ツールバーの開閉">≡</button>
   <!-- 視点・位置 -->
   <span class="tb-sep"></span>
-  <button class="tb-btn tb-icon" id="tbView" title="俯瞰 / 歩行">👁</button>
-  <button class="tb-btn tb-icon" id="tbHome" title="開始位置へ戻る">↻</button>
-  <!-- 表示設定 -->
-  <span class="tb-sep"></span>
-  <button class="tb-btn tb-icon on" id="tbMap" title="地図の表示">🗺</button>
-  <button class="tb-btn" id="btnTour" title="邸内を自動で巡るナレーション付きツアー">🎎 自動ガイド</button>
-  <button class="tb-btn" id="tbEra" title="時代を移動する(平安の寝殿造り ⇄ 鎌倉の武家屋敷)">🕰 時代</button>
+  <button class="tb-btn tb-icon" id="tbView" title="俯瞰 / 歩行"><svg class="wic"><use href="#ic-eye"/></svg></button>
+  <button class="tb-btn tb-icon" id="tbHome" title="開始位置へ戻る"><svg class="wic"><use href="#ic-return"/></svg></button>
+  <button class="tb-btn tb-icon on" id="tbMap" title="地図の表示"><svg class="wic"><use href="#ic-compass"/></svg></button>
+  <button class="tb-btn" id="tbEra" title="時代を移動する(平安の寝殿造り ⇄ 鎌倉の武家屋敷)"><svg class="wic"><use href="#ic-era"/></svg><span class="tb-lbl">時代</span></button>
   <!-- 右端ツール -->
   <span class="spacer"></span>
-  <button class="tb-btn" id="tbCodex">📚 図鑑</button>
+  <button class="tb-btn tb-icon" id="tbMore" title="そのほかの機能" aria-haspopup="true" aria-expanded="false"><svg class="wic dots"><use href="#ic-more"/></svg></button>
+  <button class="tb-btn" id="tbCodex" title="ものしり図鑑"><svg class="wic"><use href="#ic-book"/></svg><span class="tb-lbl">図鑑</span></button>
   <span class="tb-sep"></span>
-  <button class="tb-btn" id="tbGfx">⚙ 設定</button>
-  <button class="tb-btn" id="tbHelp">?</button>
+  <button class="tb-btn tb-icon" id="tbGfx" title="設定"><svg class="wic"><use href="#ic-tune"/></svg></button>
+  <button class="tb-btn tb-icon" id="tbHelp" title="遊び方・ヘルプ"><svg class="wic"><use href="#ic-help"/></svg></button>
+</div>
+
+<!-- そのほかの機能(トップバー右の⋯から開く小メニュー) -->
+<div id="tbMoreMenu" role="menu" aria-label="そのほかの機能">
+  <button class="tbm-item" id="tbmTour" type="button" role="menuitem"><svg class="wic"><use href="#ic-lantern"/></svg><span><b>家司の案内をたのむ</b><small>家司が邸内を巡って解説してくれる</small></span></button>
+  <button class="tbm-item" id="tbmEstate" type="button" role="menuitem"><svg class="wic"><use href="#ic-book"/></svg><span><b>屋敷の日課</b><small>時刻ごとの家人のつとめ・来訪の気配</small></span></button>
+  <button class="tbm-item" id="tbmCollapse" type="button" role="menuitem"><svg class="wic"><use href="#ic-eye"/></svg><span><b>ツールバーを畳む</b><small>画面を広く使う</small></span></button>
 </div>
 
 <div id="worldStatusBar" aria-label="時間帯と季節">
-  <button class="tb-btn" id="tbTime">☀ 昼</button>
-  <button class="tb-btn" id="tbSeason">🌸 春</button>
+  <button class="tb-btn" id="tbTime" title="時間帯を変える"><svg class="wic" id="tbTimeIc"><use href="#ic-sun"/></svg><span class="tb-lbl" id="tbTimeLbl">昼</span></button>
+  <button class="tb-btn" id="tbSeason" title="季節を変える"><svg class="wic" id="tbSeasonIc"><use href="#ic-spring"/></svg><span class="tb-lbl" id="tbSeasonLbl">春</span></button>
 </div>
 
 <div id="minimapWrap"><canvas id="minimap" width="352" height="352"></canvas><div id="minimapLabel">南庭</div></div>
@@ -7983,7 +8037,8 @@ function updateHouseholdWalk(dt,t){
       document.head.appendChild(css);
     }
     const topbar=document.getElementById("topbar");
-    if(topbar&&!state.button){
+    // [UI引き算]「⋯」メニューがある本編では日課はメニュー側から開くため、重複するトップバーボタンは作らない
+    if(topbar&&!state.button&&!document.getElementById("tbMoreMenu")){
       const button=document.createElement("button");
       button.type="button";button.id="tbEstateLife";button.className="tb-btn";
       button.setAttribute("aria-label","屋敷の一日の日課を開く");button.title="屋敷の一日";button.textContent="日課";
@@ -9797,7 +9852,10 @@ const SEASONS={
 const SEASON_ORDER=["spring","summer","autumn","winter"];
 function applySeason(key){
   APP.season=key;const s=SEASONS[key];if(typeof SFX!=="undefined")SFX.updateBed();/* [音]季節変更で環境音を即時切替 */
-  $("tbSeason")&&($("tbSeason").textContent={spring:"🌸 春",summer:"🪷 夏",autumn:"🍁 秋",winter:"❄ 冬"}[key]);
+  {const _si={spring:"ic-spring",summer:"ic-summer",autumn:"ic-autumn",winter:"ic-winter"}[key];
+   const _sl={spring:"春",summer:"夏",autumn:"秋",winter:"冬"}[key];
+   const _su=document.querySelector("#tbSeasonIc use");if(_su&&_si)_su.setAttribute("href","#"+_si);
+   const _sll=$("tbSeasonLbl");if(_sll&&_sl)_sll.textContent=_sl;}
   // 地面の草色
   MAT.grass.color.setHex(s.grass);
   // 松・常緑樹も季節色に(秋=紅葉色 / 冬=雪化粧の白み)
@@ -12891,7 +12949,7 @@ function endTour(interrupted,silent){
   updateControlUI();
   if(!silent)toast(interrupted?"自動ガイドツアーを中断しました":"自動ガイドツアーが終わりました。散策を続けましょう",3000);
 }
-if($("btnTour"))$("btnTour").onclick=()=>startTour();
+/* 自動ガイド(邸ツアー)は「⋯」メニューの「家司の案内」から開始する(tbmTour) */
 if($("tourSkipBtn"))$("tourSkipBtn").onclick=()=>{if(APP.tour&&APP.tour.active)tourAdvance();};
 if($("tourQuitBtn"))$("tourQuitBtn").onclick=()=>endTour(true);
 
@@ -13205,7 +13263,12 @@ const ambient=new THREE.AmbientLight(0xfff0dd,0.18);scene.add(ambient);
 const cur={sky:new THREE.Color(TIMES.day.sky),fog:new THREE.Color(TIMES.day.fog),sunC:new THREE.Color(TIMES.day.sunC),
   ambC:new THREE.Color(TIMES.day.ambC),
   sunI:1.25,hemi:.62,amb:.18,moon:0,exp:1.05,int:.35,sunP:new THREE.Vector3(60,95,45)};
-function setTime(t){APP.time=t;$("tbTime").textContent={dawn:"🌅 朝",day:"☀ 昼",dusk:"🌇 夕",night:"🌙 夜"}[t];makeSkyEnv(t);if(typeof SFX!=="undefined")SFX.updateBed();/* [Phase1]IBL再生成 + [音]環境音を即時切替 */}
+function setTime(t){APP.time=t;
+  const _ti={dawn:"ic-dawn",day:"ic-sun",dusk:"ic-dusk",night:"ic-moon"}[t]||"ic-sun";
+  const _tl={dawn:"朝",day:"昼",dusk:"夕",night:"夜"}[t]||"昼";
+  const _tu=document.querySelector("#tbTimeIc use");if(_tu)_tu.setAttribute("href","#"+_ti);
+  const _tll=$("tbTimeLbl");if(_tll)_tll.textContent=_tl;
+  makeSkyEnv(t);if(typeof SFX!=="undefined")SFX.updateBed();/* [Phase1]IBL再生成 + [音]環境音を即時切替 */}
 $("tbTime").onclick=()=>{setTime(APP.time==="dawn"?"day":APP.time==="day"?"dusk":APP.time==="dusk"?"night":"dawn");PREFS.set("time",APP.time);AUTO_TIME._last=performance.now();beep(520,.06);}; // 手動切替でタイマーリセット
 $("tbSeason").onclick=()=>{const i=SEASON_ORDER.indexOf(APP.season);
   applySeason(SEASON_ORDER[(i+1)%4]);PREFS.set("season",APP.season);beep(560,.06);};
@@ -13588,19 +13651,35 @@ $("tbHome").onclick=()=>{
   joy.active=false;joy.vx=joy.vy=0;knob.style.transform="translate(-50%,-50%)";
   closeInfo();updateControlUI();toast("開始位置へ戻りました");
 };
-/* トップバー折りたたみの開閉(localStorage保存) */
+/* トップバー折りたたみの開閉(localStorage保存)。畳むトグルは「⋯」メニュー内から呼ぶ */
 function applyTopbarCollapsed(on){
   $("topbar").classList.toggle("collapsed",on);
-  $("tbCollapse").textContent=on?"≡＋":"≡";
-  $("tbCollapse").title=on?"ツールバーを開く":"ツールバーを畳む";
+  const mi=$("tbmCollapse");if(mi){const b=mi.querySelector("b");if(b)b.textContent=on?"ツールバーを戻す":"ツールバーを畳む";}
   requestAnimationFrame(syncTopbarH);
 }
-$("tbCollapse").onclick=()=>{
+function toggleTopbarCollapsed(){
   const on=!$("topbar").classList.contains("collapsed");
   try{localStorage.setItem("shinden3d-tbcollapse",on?"1":"0");}catch(e){}
   applyTopbarCollapsed(on);beep(520,.05);
-};
+}
 try{if(localStorage.getItem("shinden3d-tbcollapse")==="1")applyTopbarCollapsed(true);}catch(e){}
+
+/* トップバー右の「⋯ そのほかの機能」小メニュー */
+function tbMoreClose(){const m=$("tbMoreMenu");if(m)m.classList.remove("open");const b=$("tbMore");if(b)b.setAttribute("aria-expanded","false");}
+function tbMoreToggle(){
+  const m=$("tbMoreMenu");if(!m)return;
+  const open=!m.classList.contains("open");
+  m.classList.toggle("open",open);
+  const b=$("tbMore");if(b)b.setAttribute("aria-expanded",open?"true":"false");
+  if(open&&typeof beep==="function")beep(528,.05);
+}
+if($("tbMore"))$("tbMore").onclick=e=>{e.stopPropagation();tbMoreToggle();};
+if($("tbmTour"))$("tbmTour").onclick=()=>{tbMoreClose();if(typeof startTour==="function")startTour();};
+if($("tbmEstate"))$("tbmEstate").onclick=()=>{tbMoreClose();if(window.LIVING_ESTATE&&window.LIVING_ESTATE.openSchedule)window.LIVING_ESTATE.openSchedule();else toast("屋敷の日課は散策中にひらけます",2000);};
+if($("tbmCollapse"))$("tbmCollapse").onclick=()=>{tbMoreClose();toggleTopbarCollapsed();};
+/* メニュー外タップ/Escで閉じる */
+document.addEventListener("click",e=>{const m=$("tbMoreMenu");if(m&&m.classList.contains("open")&&!m.contains(e.target)&&e.target!==$("tbMore")&&!$("tbMore").contains(e.target))tbMoreClose();});
+addEventListener("keydown",e=>{if(e.key==="Escape")tbMoreClose();});
 $("tbHelp").onclick=()=>$("help").style.display="flex";
 $("helpClose").onclick=()=>$("help").style.display="none";
 /* ヘルプは全画面ロックにせず、背景タップ／Escでも閉じられるように(#58) */

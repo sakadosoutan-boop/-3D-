@@ -704,7 +704,7 @@ body.photo-mode.filter-emaki #c{filter:sepia(.5) saturate(1.3) contrast(1.08) br
 body.photo-mode.filter-sumi #c{filter:grayscale(1) contrast(1.32) brightness(1.04)}
 body.photo-mode.filter-yuu #c{filter:saturate(1.5) contrast(1.06) brightness(1.05) hue-rotate(-8deg) sepia(.16)}
 /* トップバー折りたたみ: 銘・モード名・開閉ボタン以外を隠してプレイ画面を広く使う */
-#topbar.collapsed>:not(.brand):not(#modeTag):not(#tbCollapse):not(#tbTitle){display:none!important}
+#topbar.collapsed>:not(.brand):not(#modeTag):not(#tbMore):not(#tbTitle){display:none!important}
 #topbar.collapsed + #worldStatusBar{top:var(--topbar-h,46px)}
 /* 文字サイズ: 解説・図鑑など読み物パネルを拡大(zoomでレイアウトごと拡大) */
 body.font-l #info,body.font-l #codex,body.font-l #toast{zoom:1.18}
@@ -2608,3 +2608,32 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
 #eraPanel .era-close{width:100%;margin-top:12px;min-height:40px;border:1px solid rgba(207,170,93,.45);border-radius:7px;background:#3c2a1c;color:#f4e8ce;font-size:13px;cursor:pointer}
 #eraPanel .era-close:hover{background:#4a3423}
 @media(max-width:640px){#eraPanel .era-card{padding:16px 13px 13px}#eraPanel .era-title{font-size:18px}#eraPanel .era-opt .era-emoji{font-size:26px}}
+
+/* ===== 和風ラインアイコン ＋ トップバーの引き算 ===== */
+.wic{width:18px;height:18px;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;vertical-align:-4px;overflow:visible}
+.wic.dots{fill:currentColor;stroke:none}
+.tb-btn .wic{width:17px;height:17px;vertical-align:-3px}
+.tb-btn .tb-lbl{margin-left:6px}
+.tb-btn:has(.tb-lbl){display:inline-flex;align-items:center}
+#worldStatusBar .tb-btn{display:inline-flex;align-items:center}
+#worldStatusBar .wic{width:15px;height:15px}
+/* ⋯ そのほかの機能メニュー */
+#tbMoreMenu{position:fixed;z-index:60;top:calc(var(--topbar-h,52px) + 6px);right:max(8px,env(safe-area-inset-right));width:min(268px,calc(100vw - 20px));display:none;flex-direction:column;gap:2px;padding:7px;background:linear-gradient(180deg,rgba(41,28,19,.98),rgba(28,19,12,.98));border:1px solid rgba(207,170,93,.62);border-radius:10px;box-shadow:0 14px 34px rgba(0,0,0,.46)}
+#tbMoreMenu.open{display:flex}
+.tbm-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;border:0;border-radius:7px;background:transparent;color:#f4e8ce;cursor:pointer;font-family:var(--sans)}
+.tbm-item:hover,.tbm-item:focus-visible{background:rgba(207,170,93,.16);outline:none}
+.tbm-item .wic{color:var(--kin);width:19px;height:19px}
+.tbm-item span{display:flex;flex-direction:column;gap:1px;line-height:1.3}
+.tbm-item b{font:600 13px var(--serif,serif);color:#f4e8ce}
+.tbm-item small{font-size:10.5px;color:#c3b491}
+
+/* トップバーの狭幅対応: アイコン主体＋はみ出しは横スクロールで全項目に到達可能に(引き算後も操作性を担保) */
+@media (max-width:640px){
+  #topbar{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #topbar::-webkit-scrollbar{display:none}
+  #topbar .spacer{flex:0 0 2px}
+  #topbar .tb-lbl{display:none}      /* 時代・図鑑はアイコンのみ(titleでラベル補完) */
+  #topbar .brand{display:none}
+  #modeTag{font-size:11px;padding:0 9px;letter-spacing:.08em}
+  #tbMoreMenu{width:min(280px,calc(100vw - 16px))}
+}

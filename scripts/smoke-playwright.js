@@ -342,7 +342,9 @@ async function launchBrowser() {
           && window.LIVING_ESTATE_STATUS?.schedulePhases?.keishi === 'ledger'
           && keishi?.userData?.estateActivityName?.includes('帳簿');
         estate?.openSchedule?.();
-        const panelOk = !!document.getElementById('tbEstateLife')
+        // 日課の起点は「⋯」メニュー内の #tbmEstate(旧 #tbEstateLife を集約) または LIVING_ESTATE.openSchedule
+        const estateEntryOk = !!document.getElementById('tbmEstate') || !!document.getElementById('tbEstateLife');
+        const panelOk = estateEntryOk
           && document.getElementById('estateLifePanel')?.classList.contains('open')
           && (document.getElementById('estateLifePanel')?.textContent || '').includes('来訪の気配');
         estate?.closeSchedule?.();
