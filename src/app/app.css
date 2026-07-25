@@ -2637,3 +2637,7 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
   #modeTag{font-size:11px;padding:0 9px;letter-spacing:.08em}
   #tbMoreMenu{width:min(280px,calc(100vw - 16px))}
 }
+
+/* タイトル画面のアイコン(モードカードの大アイコン＋一覧ボタンの行頭アイコン) */
+#title .cat-icon .wic{width:26px;height:26px;stroke-width:1.5;color:var(--kin);vertical-align:middle}
+.t-codex-btn .tci{width:18px;height:18px;stroke-width:1.6;margin-right:9px;vertical-align:-4px;color:var(--kin);flex:0 0 auto}
