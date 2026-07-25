@@ -16,6 +16,7 @@
     anonKey: "sb_publishable_unPMDrLMLCxKhb95Ks8O9w_lLERwI7H",
   };
   const MODES = {
+    gozen5: { label: "御前五番勝負", unit: "点", order: "desc", challenge: true, featured: true },
     quiz: { label: "名称当てクイズ", unit: "点", order: "desc", live: true },
     quiz_ta: { label: "名称当てタイムアタック", unit: "秒", order: "asc" },
     kemari: { label: "蹴鞠", unit: "点", order: "desc", challenge: true },
@@ -374,7 +375,9 @@
       expiresAt: Date.now() + 5000,
     };
     close(false);
-    if (mode === "kemari") {
+    if (mode === "gozen5") {
+      window.GOZEN_FIVE?.startOnline?.();
+    } else if (mode === "kemari") {
       if (typeof enterMode === "function") enterMode("kemari");
     } else if (mode === "koh_awase") {
       window.KOH_AWASE?.start?.({ seed: Number(state.match?.seed || 1) });
@@ -383,15 +386,16 @@
   }
   async function finishChallenge(mode, score, durationMs, metadata) {
     if (!state.match || state.match.mode !== mode || state.match.status !== "active") return false;
-    await withBusy(async () => {
+    const completed = await withBusy(async () => {
       await transport().updateMatch({
         matchId: state.match.id, progress: 1, score, status: "finished", durationMs: durationMs || 0, payload: metadata || {},
       });
       await submitScore(mode, score, durationMs, Object.assign({ source: "online_match" }, metadata), true);
       state.match = normalizeMatch(await transport().getMatch(state.match.id));
       state.screen = "result"; open(); schedulePoll(300);
+      return true;
     });
-    return true;
+    return completed === true;
   }
 
   async function submitScore(mode, score, durationMs, metadata, immediate) {
@@ -463,6 +467,7 @@
       opponentName: rival?.display_name || rival?.name || "対戦相手",
       opponentScore: Number(rival?.score) || 0,
       opponentStatus: rival?.status || "waiting",
+      opponentProgress: rival?.progress && typeof rival.progress === "object" ? rival.progress : {},
     };
   }
 
@@ -528,7 +533,7 @@
     nameLabel.append(nameInput); identity.append(nameLabel);
     const modeLabel = create("label", null, "種目");
     const modeSelect = create("select"); modeSelect.id = "onlineMatchMode";
-    ["quiz", "kemari", "koh_awase"].forEach(id => {
+    ["gozen5", "quiz", "kemari", "koh_awase"].forEach(id => {
       const option = create("option", null, modeMeta(id).label); option.value = id; modeSelect.append(option);
     });
     modeLabel.append(modeSelect); identity.append(modeLabel); body.append(identity);
@@ -592,7 +597,9 @@
   function renderChallenge(body) {
     const match = state.match, own = ownPlayer(match), rival = opponent(match);
     body.append(create("p", "online-mode-label", `${modeMeta(match?.mode).label} 御前勝負`));
-    body.append(create("p", "online-challenge-copy", "同じ種目を一度ずつ遊び、記録の高い方が勝ちです。終了すると結果が自動で届きます。"));
+    body.append(create("p", "online-challenge-copy", match?.mode === "gozen5"
+      ? "札・貝・香・歌・鞠の五局を、同じ出題と同じ鞠順で競います。相手を待たずに進められます。"
+      : "同じ種目を一度ずつ遊び、記録の高い方が勝ちです。終了すると結果が自動で届きます。"));
     const players = create("div", "online-players");
     [own, rival].filter(Boolean).forEach(player => {
       const item = create("div", "online-player");
@@ -692,7 +699,7 @@
     if (!host || document.getElementById(ENTRY_ID)) return !!host;
     const entry = create("button", "t-btn t-cat-btn online-entry");
     entry.id = ENTRY_ID; entry.type = "button";
-    entry.append(create("span", "mode-meta", "対戦 / 共有順位"), create("div", "cat-icon", "競"), create("span", "mode-name", "オンライン御前試合"), create("small", null, "クイズ・蹴鞠・香合わせで競う"));
+    entry.append(create("span", "mode-meta", "対戦 / 共有順位"), create("div", "cat-icon", "競"), create("span", "mode-name", "オンライン御前試合"), create("small", null, "五番勝負・クイズ・蹴鞠・香合わせで競う"));
     entry.addEventListener("click", open); host.append(entry); return true;
   }
   function boot() {
@@ -727,6 +734,6 @@
       getState: () => state,
     },
   };
-  window.ONLINE_COMPETITION_STATUS = { ready: true, version: 2, modes: Object.keys(MODES), quizCount: QUIZ_COUNT };
+  window.ONLINE_COMPETITION_STATUS = { ready: true, version: 3, modes: Object.keys(MODES), quizCount: QUIZ_COUNT };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true }); else boot();
 })();

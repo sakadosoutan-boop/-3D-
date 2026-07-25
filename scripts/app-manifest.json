@@ -65,6 +65,13 @@
     "end": "/* APP_ONLINE_COMPETITION_EMBED_END */"
   },
   {
+    "name": "gozen-five",
+    "src": "src/app/gozen-five.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_GOZEN_FIVE_EMBED_BEGIN (src/app/gozen-five.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_GOZEN_FIVE_EMBED_END */"
+  },
+  {
     "name": "living-estate",
     "src": "src/app/living-estate.js",
     "kind": "markers-exist",

@@ -12,8 +12,10 @@ browser gets only a Supabase project URL and publishable/anon key, never a
 2. Enable CAPTCHA or Turnstile and configure Auth rate limits before opening
    the game to the public. Anonymous accounts are still authenticated users,
    so this is the first abuse-control layer.
-3. Run `migrations/20260723_online_competition.sql` in the SQL Editor or apply
-   it with the Supabase CLI.
+3. Run `migrations/20260723_online_competition.sql`, then
+   `migrations/20260724_fix_online_ranking.sql` and
+   `migrations/20260724_gozen_five.sql` in the SQL Editor, or apply them in
+   order with the Supabase CLI.
 4. Put only the project URL and the publishable/anon key in the game's public
    deployment configuration. Do not commit a service-role key to this
    repository or place it in the HTML.
@@ -69,7 +71,7 @@ signed-in anonymous user has that role.
 | RPC | Input | Result and rules |
 | --- | --- | --- |
 | `online_set_profile` | `p_display_name` | Creates or updates the caller profile. Names are trimmed, 2-12 visible characters. |
-| `online_submit_score` | `p_mode`, `p_score`, `p_duration_ms`, `p_metadata` | Adds one bounded score. Modes: `quiz`, `quiz_ta`, `kemari`, `koh_awase`. Scores are `0..100000`; duration is at most 30 minutes. Time attack needs a duration of at least one second. Each player is limited to 20 submissions per 10 minutes. |
+| `online_submit_score` | `p_mode`, `p_score`, `p_duration_ms`, `p_metadata` | Adds one bounded score. Modes: `gozen5`, `quiz`, `quiz_ta`, `kemari`, `koh_awase`. Scores are `0..100000`; `gozen5` is additionally limited to `0..5000`. Duration is at most 30 minutes. Time attack needs a duration of at least one second. Each player is limited to 20 submissions per 10 minutes. |
 | `online_leaderboard` | `p_mode`, `p_period`, `p_limit` | Returns top 1-100. Period is `daily`, `weekly`, or `all_time`. One best score per player is used; `quiz_ta` sorts by shortest duration, all other modes by highest score. |
 | `online_my_rank` | `p_mode`, `p_period` | Returns the caller's rank, total ranked players, and best record for that period. Call alongside `online_leaderboard` so the player's rank remains visible even outside the top list. |
 | `online_create_match` | `p_mode`, `p_expires_in_seconds`, `p_settings` | Creates a waiting two-player room. Expiry is clamped to 60-1800 seconds. The server generates both the six-character room code and the deterministic numeric seed. |
@@ -98,6 +100,12 @@ shared leaderboard. The server validates identity, room membership, score and
 time bounds, but a static client cannot fully prove gameplay. Treat rankings as
 friendly competition; stronger anti-cheat needs an authoritative game server or
 server-verifiable event log.
+
+For `gozen5`, the migration also rejects decreasing bout progress or score,
+limits each bout to 1000 and the total to 5000, verifies that all five bout
+scores add up to the submitted total, and freezes a player's completed result.
+The five sub-seeds are derived in the client from the server-issued room seed
+and fixed discipline salts; players never choose the room seed.
 
 ## Operational checks
 
