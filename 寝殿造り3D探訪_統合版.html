@@ -15428,8 +15428,9 @@ function kemariBeginFlight(delay){
   kmrTimer(S,()=>{
     if(KMR!==S||S.over)return;
     S.delivery=kmrCreateDelivery(S);S.phase="flight";S.kickQueued=false;S.quickStep=false;
-    const cue=`　${["左","中央","右"][S.delivery.lane+1]}へ・${KEMARI_CFG.techniques[S.delivery.technique].label}`;
-    S.message=`${S.delivery.call}${cue}`;
+    /* [UI整理] 掛け声はふき出し、行き先と蹴り方は盤面中央の大書き、こつは下の一行 ——
+       同じ文言を三か所に出さないよう、それぞれ別の情報を担当させる */
+    S.message=KEMARI_CFG.techniques[S.delivery.technique].hint;
     kmrShowJudge(`${["左の鞠足","正面の鞠足","右の鞠足"][S.delivery.partner]}「${S.delivery.call}」`,"good");
   },Math.max(0,delay||0));
 }
@@ -15701,28 +15702,107 @@ function kmrUpdateHud(force){
   });
 }
 
+/* 色を明暗に振る小ヘルパー(装束の陰影付け用) */
+function kmrShade(hex,amt){
+  const n=parseInt(hex.slice(1),16);
+  const cl=v=>Math.max(0,Math.min(255,Math.round(v)));
+  const r=cl(((n>>16)&255)+255*amt),g=cl(((n>>8)&255)+255*amt),b=cl((n&255)+255*amt);
+  return `rgb(${r},${g},${b})`;
+}
+/* 懸(かかり)の木: 鞠庭の四隅に立つ松・桜・柳・楓。幹と枝を持たせ、樹種ごとに葉の付き方を描き分ける */
 function kmrDrawTree(ctx,k,x,y,scale){
-  ctx.save();ctx.translate(x,y);ctx.lineCap="round";
-  ctx.strokeStyle="#493526";ctx.lineWidth=5*scale;ctx.beginPath();ctx.moveTo(0,36*scale);ctx.lineTo(0,-11*scale);ctx.stroke();
-  if(k.kind==="pine"){
-    ctx.fillStyle=k.color;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(0,(-34+i*14)*scale);ctx.lineTo((-19+i*3)*scale,(5+i*12)*scale);ctx.lineTo((19-i*3)*scale,(5+i*12)*scale);ctx.closePath();ctx.fill();}
-  }else if(k.kind==="willow"){
-    ctx.strokeStyle=k.color;ctx.lineWidth=3*scale;for(let i=-3;i<=3;i++){ctx.beginPath();ctx.moveTo(i*4*scale,-20*scale);ctx.quadraticCurveTo(i*7*scale,2*scale,i*8*scale,22*scale);ctx.stroke();}
-  }else{
-    ctx.fillStyle=k.color;for(let i=0;i<14;i++){const a=i*2.4;ctx.beginPath();ctx.arc(Math.cos(a)*15*scale,(-18+Math.sin(a)*11)*scale,5*scale,0,Math.PI*2);ctx.fill();}
+  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);ctx.lineCap="round";
+  // 幹(根元を太く、上へ細く)＋枝
+  ctx.strokeStyle="#4a3626";ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(0,38);ctx.quadraticCurveTo(-2,10,-1,-14);ctx.stroke();
+  ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-1,-2);ctx.quadraticCurveTo(-9,-8,-15,-16);ctx.moveTo(-1,-6);ctx.quadraticCurveTo(8,-12,14,-19);ctx.stroke();
+  const c=k.color,lo=kmrShade(c,-.10),hi=kmrShade(c,.10);
+  if(k.kind==="pine"){                          // 松: 層になった枝葉
+    for(let i=0;i<4;i++){
+      const w=23-i*4.2,yy=-16-i*11;
+      ctx.fillStyle=i%2?lo:c;ctx.beginPath();
+      ctx.moveTo(0,yy-13);ctx.quadraticCurveTo(w*.75,yy-2,w,yy+7);
+      ctx.quadraticCurveTo(w*.3,yy+3,0,yy+9);
+      ctx.quadraticCurveTo(-w*.3,yy+3,-w,yy+7);ctx.quadraticCurveTo(-w*.75,yy-2,0,yy-13);
+      ctx.closePath();ctx.fill();
+    }
+  }else if(k.kind==="willow"){                  // 柳: 細くしなだれる枝を疎らに
+    ctx.fillStyle=lo;ctx.beginPath();ctx.ellipse(0,-26,17,8,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=c;ctx.beginPath();ctx.ellipse(-3,-29,12,6,0,0,Math.PI*2);ctx.fill();
+    ctx.lineWidth=1.5;
+    for(let i=-3;i<=3;i++){
+      ctx.strokeStyle=i%2?c:hi;ctx.beginPath();
+      const x0=i*5;ctx.moveTo(x0,-26);
+      ctx.bezierCurveTo(x0+i*2.4,-14,x0+i*3.6,-2,x0+i*3.2+1.5,14+Math.abs(i)*3);ctx.stroke();
+    }
+  }else if(k.kind==="sakura"){                  // 桜: ふくらむ花叢＋散る花びら
+    [[0,-34,17],[-15,-22,12],[15,-22,12],[-8,-12,10],[9,-11,10]].forEach(([bx,by,br],i)=>{
+      ctx.fillStyle=i%2?hi:c;ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);ctx.fill();});
+    ctx.fillStyle=kmrShade(c,.18);
+    for(let i=0;i<9;i++){const a=i*2.1;ctx.beginPath();ctx.ellipse(Math.cos(a)*20,-24+Math.sin(a)*15,2.4,1.6,a,0,Math.PI*2);ctx.fill();}
+  }else{                                        // 楓: 丸い葉叢に浅い切れ込みを入れ、紅葉の色を重ねる
+    [[0,-33,16],[-14,-21,12],[14,-21,12],[-7,-11,10],[8,-10,10]].forEach(([bx,by,br],i)=>{
+      ctx.fillStyle=i%2?lo:c;ctx.beginPath();
+      for(let s=0;s<=18;s++){const a=s/18*Math.PI*2,rr=br*(1-.14*Math.abs(Math.sin(a*2.5)));
+        const px=bx+Math.cos(a)*rr,py=by+Math.sin(a)*rr*.88;s===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+      ctx.closePath();ctx.fill();});
+    ctx.fillStyle=kmrShade(c,.16);
+    [[-6,-30,5],[7,-26,4.4],[-12,-16,3.8]].forEach(([bx,by,br])=>{ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);ctx.fill();});
   }
   ctx.restore();
 }
+/* 鞠庭(まりにわ): 空・遠景の築地塀・白砂の庭・懸の木。平面的な塗りをやめ、奥行きのある庭に */
 function kmrDrawPaper(ctx){
-  const {W,H}=KEMARI_CFG;
-  const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#263d3b");sky.addColorStop(.5,"#56725a");sky.addColorStop(.51,"#a59a70");sky.addColorStop(1,"#687043");
-  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
-  ctx.fillStyle="rgba(255,239,187,.06)";for(let y=0;y<H;y+=12){ctx.fillRect(0,y,W,1);}
-  const light=ctx.createLinearGradient(0,0,W,0);light.addColorStop(0,"rgba(255,238,181,0)");light.addColorStop(.5,"rgba(255,238,181,.16)");light.addColorStop(1,"rgba(255,238,181,0)");ctx.fillStyle=light;ctx.fillRect(0,0,W,H*.55);
-  ctx.fillStyle="rgba(27,52,32,.35)";ctx.fillRect(0,KEMARI_CFG.groundY+28,W,H-KEMARI_CFG.groundY);
-  ctx.strokeStyle="rgba(255,232,171,.36)";ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(W/2,KEMARI_CFG.groundY+30,270,58,0,0,Math.PI*2);ctx.stroke();
-  ctx.strokeStyle="rgba(57,73,38,.5)";for(let i=0;i<9;i++){ctx.beginPath();ctx.moveTo(0,KEMARI_CFG.groundY+34+i*8);ctx.lineTo(W,KEMARI_CFG.groundY+21+i*9);ctx.stroke();}
-  kmrDrawTree(ctx,KEMARI_KAKARI[0],55,77,1.05);kmrDrawTree(ctx,KEMARI_KAKARI[1],W-55,77,1.05);kmrDrawTree(ctx,KEMARI_KAKARI[2],55,KEMARI_CFG.groundY-5,1.05);kmrDrawTree(ctx,KEMARI_KAKARI[3],W-55,KEMARI_CFG.groundY-5,1.05);
+  const {W,H,groundY}=KEMARI_CFG;
+  // 空(薄明の青緑→淡金)
+  const sky=ctx.createLinearGradient(0,0,0,groundY);
+  sky.addColorStop(0,"#33506b");sky.addColorStop(.55,"#7f9ea4");sky.addColorStop(1,"#e0cfa4");
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,groundY);
+  // 薄雲(空の余白を埋め、庭に空気感を出す)
+  ctx.fillStyle="rgba(255,247,226,.14)";
+  [[130,58,86,13],[330,36,64,10],[560,66,96,14],[240,92,58,9],[640,30,52,8]].forEach(([cx,cy,cw,ch])=>{
+    ctx.beginPath();ctx.ellipse(cx,cy,cw,ch,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.ellipse(cx+cw*.42,cy+ch*.4,cw*.6,ch*.75,0,0,Math.PI*2);ctx.fill();
+  });
+  // 遠山のシルエット
+  ctx.fillStyle="rgba(58,74,74,.5)";ctx.beginPath();ctx.moveTo(0,groundY-96);
+  for(let i=0;i<=W;i+=40)ctx.lineTo(i,groundY-96-Math.sin(i*.011)*22-Math.sin(i*.026)*11);
+  ctx.lineTo(W,groundY);ctx.lineTo(0,groundY);ctx.closePath();ctx.fill();
+  // 寝殿の大屋根(檜皮葺)。鞠庭が邸内の南庭であることを一目で伝える。反りのある軒と長い棟で寝殿らしい稜線に
+  ctx.save();
+  const rB=groundY-72,rT=groundY-126,cx0=W/2;   // 軒先 / 棟。低く横長にして遠景の建物として収める
+  ctx.fillStyle="#4f3d2d";ctx.beginPath();
+  ctx.moveTo(cx0-352,rB);                                   // 左の軒先
+  ctx.quadraticCurveTo(cx0-292,rB-10,cx0-186,rT+7);          // 反りのある流れ
+  ctx.lineTo(cx0-168,rT);ctx.lineTo(cx0+168,rT);             // 棟
+  ctx.quadraticCurveTo(cx0+292,rB-10,cx0+352,rB);
+  ctx.closePath();ctx.fill();
+  ctx.fillStyle="#3a2c20";ctx.fillRect(cx0-176,rT-6,352,7);  // 棟木
+  ctx.strokeStyle="rgba(255,246,222,.08)";ctx.lineWidth=1;   // 檜皮の葺き足
+  for(let i=1;i<4;i++){const t=i/4,y=rB-(rB-rT)*t,hw=352-184*t;
+    ctx.beginPath();ctx.moveTo(cx0-hw,y);ctx.lineTo(cx0+hw,y);ctx.stroke();}
+  ctx.fillStyle="#7f6a51";ctx.fillRect(cx0-330,rB-2,660,8); // 軒桁
+  ctx.restore();
+  // 築地塀(ついじべい)と桧皮葺の屋根
+  ctx.fillStyle="#6d5c48";ctx.fillRect(0,groundY-64,W,26);
+  ctx.fillStyle="#4b3d2f";ctx.fillRect(0,groundY-70,W,8);
+  ctx.strokeStyle="rgba(255,246,220,.14)";ctx.lineWidth=1;
+  for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(0,groundY-58+i*8);ctx.lineTo(W,groundY-58+i*8);ctx.stroke();}
+  // 白砂の庭(手前ほど明るく)
+  const gnd=ctx.createLinearGradient(0,groundY-38,0,H);
+  gnd.addColorStop(0,"#b3a984");gnd.addColorStop(.4,"#cdc2a0");gnd.addColorStop(1,"#ded3b2");
+  ctx.fillStyle=gnd;ctx.fillRect(0,groundY-38,W,H-groundY+38);
+  // 箒目(遠近に合わせて間隔を開く)
+  ctx.strokeStyle="rgba(255,250,236,.30)";ctx.lineWidth=1.2;
+  for(let i=0;i<16;i++){const yy=groundY-30+i*i*.9+i*3.4;if(yy>H)break;
+    ctx.beginPath();ctx.moveTo(0,yy);ctx.bezierCurveTo(W*.3,yy-2,W*.7,yy+2,W,yy);ctx.stroke();}
+  // 鞠の輪(懸の内側の見当)
+  ctx.strokeStyle="rgba(120,96,58,.30)";ctx.lineWidth=1.6;
+  ctx.beginPath();ctx.ellipse(W/2,groundY+30,268,60,0,0,Math.PI*2);ctx.stroke();
+  // 四本懸: 奥2本は小さく、手前2本は大きく=遠近
+  kmrDrawTree(ctx,KEMARI_KAKARI[0],58,groundY-44,.86);
+  kmrDrawTree(ctx,KEMARI_KAKARI[1],W-58,groundY-44,.86);
+  kmrDrawTree(ctx,KEMARI_KAKARI[2],34,groundY+52,1.18);
+  kmrDrawTree(ctx,KEMARI_KAKARI[3],W-34,groundY+52,1.18);
 }
 function kmrDrawTrajectory(ctx,S,ball){
   const d=S.delivery;if(!d||!ball)return;
@@ -15739,46 +15819,112 @@ function kmrDrawTrajectory(ctx,S,ball){
   ctx.strokeStyle=KEMARI_CFG.techniques[d.technique].color;ctx.lineWidth=2;ctx.beginPath();ctx.arc(tx,KEMARI_CFG.groundY,17+Math.abs(Math.sin(now*.006))*3,0,Math.PI*2);ctx.stroke();
   ctx.restore();
 }
+/* 鞠(まり): 鹿革を八片に縫い合わせた白い鞠。縫い目と艶で革らしさを出す */
 function kmrDrawBall(ctx,ball,S){
   if(!ball)return;
   const r=14+ball.arc*3;ctx.save();ctx.translate(ball.x,ball.y);
-  ctx.fillStyle="rgba(13,10,6,.28)";ctx.beginPath();ctx.ellipse(0,KEMARI_CFG.groundY-ball.y+8,17,4,0,0,Math.PI*2);ctx.fill();
-  const grad=ctx.createRadialGradient(-r*.35,-r*.42,2,0,0,r);grad.addColorStop(0,"#fff9db");grad.addColorStop(.6,"#e5c986");grad.addColorStop(1,"#9b7548");
+  const drop=KEMARI_CFG.groundY-ball.y;
+  ctx.fillStyle=`rgba(96,80,48,${kmrClamp(.30-drop*.0007,.05,.30)})`;
+  ctx.beginPath();ctx.ellipse(0,drop+10,18,4.6,0,0,Math.PI*2);ctx.fill();
+  const grad=ctx.createRadialGradient(-r*.38,-r*.44,r*.1,0,0,r*1.06);
+  grad.addColorStop(0,"#fffdf3");grad.addColorStop(.55,"#f0e2c1");grad.addColorStop(1,"#b99a68");
   ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fillStyle=grad;ctx.fill();
-  ctx.strokeStyle="rgba(93,61,34,.72)";ctx.lineWidth=1.35;
-  for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(0,0,r,-.4+i*2.05,.95+i*2.05);ctx.stroke();}
+  ctx.save();ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.clip();
+  ctx.strokeStyle="rgba(120,88,48,.42)";ctx.lineWidth=1.15;   // 縦の縫い目(革の継ぎ)
+  for(let i=0;i<3;i++){const o=(i-1)*r*.56;ctx.beginPath();ctx.ellipse(o,0,r*.34,r,0,0,Math.PI*2);ctx.stroke();}
+  ctx.beginPath();ctx.ellipse(0,0,r,r*.3,0,0,Math.PI*2);ctx.stroke();  // 赤道の縫い目
+  ctx.restore();
+  ctx.strokeStyle="rgba(120,92,52,.55)";ctx.lineWidth=1.1;ctx.beginPath();ctx.arc(0,0,r-.4,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle="rgba(255,255,255,.5)";ctx.beginPath();ctx.ellipse(-r*.34,-r*.4,r*.24,r*.16,-.6,0,Math.PI*2);ctx.fill(); // 艶
   ctx.restore();
 }
-function kmrDrawFigure(ctx,x,y,label,active,accent,scale=1){
-  ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);const sway=active&&!kmrReduced()?Math.sin(kmrNow()*.008+x)*2:0;
-  ctx.translate(0,sway);
-  ctx.fillStyle="rgba(23,19,17,.88)";ctx.beginPath();ctx.arc(0,-34,9,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle=accent;ctx.beginPath();ctx.moveTo(-19,-22);ctx.quadraticCurveTo(0,-9,19,-22);ctx.lineTo(23,13);ctx.lineTo(-23,13);ctx.closePath();ctx.fill();
-  ctx.fillStyle="rgba(255,243,218,.86)";ctx.font=`${10*kmrTextScale()}px serif`;ctx.textAlign="center";ctx.fillText(label,0,28);ctx.restore();
+/* 鞠足(まりあし)の立ち姿。烏帽子・水干(菊綴・大袖)・指貫袴・鞠沓まで描く。
+   原点は足元。robe=水干の色、kick>0で蹴り足が振り上がる。 */
+function kmrDrawKemariFigure(ctx,o){
+  const robe=o.robe||"#7d5e8e",hakama=o.hakama||kmrShade(robe,-.20),
+        kick=o.kick||0,scale=o.scale||1,dim=o.dim||0;
+  const lo=kmrShade(robe,-.13),hi=kmrShade(robe,.10),skin="#f0d9bd";
+  ctx.save();ctx.scale(scale,scale);if(dim)ctx.globalAlpha=1-dim;
+  ctx.fillStyle="rgba(92,76,46,.30)";ctx.beginPath();ctx.ellipse(0,2,19,5,0,0,Math.PI*2);ctx.fill(); // 影
+  // 脚と鞠沓(蹴り足は前へ振り上げる)
+  ctx.strokeStyle=hakama;ctx.lineCap="round";ctx.lineWidth=9;
+  ctx.beginPath();ctx.moveTo(-6,-19);ctx.lineTo(-7,-2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(6,-19);ctx.lineTo(7+kick*.5,-2-kick*.9);ctx.stroke();
+  ctx.fillStyle="#4a3b2c";
+  ctx.beginPath();ctx.ellipse(-7,-1,6,3.4,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(7+kick*.5,-1-kick*.9,6,3.4,-kick*.03,0,Math.PI*2);ctx.fill();
+  // 指貫袴(裾を絞ったふくらみのある袴)
+  ctx.fillStyle=hakama;ctx.beginPath();
+  ctx.moveTo(-13,-44);ctx.quadraticCurveTo(-20,-30,-12,-17);ctx.lineTo(-1,-17);
+  ctx.lineTo(-1,-30);ctx.lineTo(1,-30);ctx.lineTo(1,-17);ctx.lineTo(12,-17);
+  ctx.quadraticCurveTo(20,-30,13,-44);ctx.closePath();ctx.fill();
+  ctx.fillStyle=kmrShade(hakama,-.08);ctx.fillRect(-13,-46,26,4); // 腰紐
+  // 水干の身頃(肩から裾へ広がる)
+  ctx.fillStyle=robe;ctx.beginPath();
+  ctx.moveTo(-11,-72);ctx.quadraticCurveTo(0,-67,11,-72);
+  ctx.lineTo(16,-42);ctx.quadraticCurveTo(0,-38,-16,-42);ctx.closePath();ctx.fill();
+  // 大袖(左右へ垂れる袂)
+  [-1,1].forEach(s=>{
+    ctx.fillStyle=s<0?lo:robe;ctx.beginPath();
+    ctx.moveTo(s*9,-70);ctx.quadraticCurveTo(s*23,-64,s*22,-48);
+    ctx.quadraticCurveTo(s*17,-44,s*12,-46);ctx.quadraticCurveTo(s*13,-58,s*7,-66);
+    ctx.closePath();ctx.fill();
+    ctx.fillStyle=skin;ctx.beginPath();ctx.ellipse(s*19,-45,3.4,3,0,0,Math.PI*2);ctx.fill(); // 手
+  });
+  // 襟と菊綴(水干の胸紐)
+  ctx.fillStyle=kmrShade(robe,.22);ctx.beginPath();
+  ctx.moveTo(-6,-72);ctx.lineTo(0,-58);ctx.lineTo(6,-72);ctx.lineTo(3,-73);ctx.lineTo(0,-63);ctx.lineTo(-3,-73);ctx.closePath();ctx.fill();
+  ctx.fillStyle="#f3e6c4";[[-5,-62],[5,-62],[0,-52]].forEach(([kx,ky])=>{ctx.beginPath();ctx.arc(kx,ky,1.9,0,Math.PI*2);ctx.fill();});
+  ctx.fillStyle=hi;ctx.fillRect(-15,-45,30,3); // 裾の縁
+  // 首・顔・髪
+  ctx.fillStyle=kmrShade(skin,-.09);ctx.fillRect(-3,-77,6,6);
+  ctx.fillStyle=skin;ctx.beginPath();ctx.ellipse(0,-84,7.4,8.6,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#241c18";ctx.beginPath();ctx.ellipse(0,-88,7.6,6.2,0,Math.PI,0);ctx.fill(); // 生え際
+  ctx.fillStyle="rgba(40,30,24,.85)";
+  ctx.beginPath();ctx.ellipse(-2.9,-84,1.25,.85,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(2.9,-84,1.25,.85,0,0,Math.PI*2);ctx.fill();
+  // 烏帽子(えぼし): 黒漆の被り物。後ろへわずかに傾ぐ低めの立烏帽子
+  ctx.fillStyle="#1b181d";ctx.beginPath();
+  ctx.moveTo(-7.6,-89);ctx.quadraticCurveTo(-8.4,-96,-6.2,-101);
+  ctx.quadraticCurveTo(-3.4,-104.5,0.4,-103.6);
+  ctx.quadraticCurveTo(5.6,-102.6,7.4,-96);ctx.quadraticCurveTo(8.2,-91.5,7.6,-89);
+  ctx.quadraticCurveTo(0,-85.4,-7.6,-89);ctx.closePath();ctx.fill();
+  ctx.strokeStyle="rgba(255,255,255,.14)";ctx.lineWidth=.9;ctx.beginPath();
+  ctx.moveTo(-4.2,-100);ctx.quadraticCurveTo(-6,-95,-5.2,-90);ctx.stroke();
+  ctx.restore();
 }
+/* 仲間の鞠足。名札は小さく足元へ添える(画面の文字量を抑える) */
+function kmrDrawFigure(ctx,x,y,label,active,accent,scale=1){
+  ctx.save();ctx.translate(x,y);
+  const sway=active&&!kmrReduced()?Math.sin(kmrNow()*.008+x)*2:0;
+  ctx.translate(0,sway);
+  kmrDrawKemariFigure(ctx,{robe:accent,scale,dim:active?0:.18});
+  if(active&&!kmrReduced()){ // 手番の鞠足に淡い光輪
+    ctx.strokeStyle="rgba(255,232,168,.5)";ctx.lineWidth=1.6;
+    ctx.beginPath();ctx.ellipse(0,2,22*scale,6*scale,0,0,Math.PI*2);ctx.stroke();
+  }
+  ctx.fillStyle=active?"rgba(255,240,205,.92)":"rgba(238,228,205,.55)";
+  ctx.font=`${9.5*kmrTextScale()}px serif`;ctx.textAlign="center";ctx.fillText(label,0,17);
+  ctx.restore();
+}
+/* 自分。正面向きで、蹴りの瞬間に足が振り上がる */
 function kmrDrawPlayer(ctx,S){
   const x=KEMARI_CFG.W/2+S.playerX*148,y=KEMARI_CFG.groundY+18;
-  ctx.save();ctx.translate(x,y);const kick=S.impact>0?Math.sin(S.impact*Math.PI)*11:0;
-  ctx.fillStyle="rgba(22,16,12,.94)";ctx.beginPath();ctx.arc(0,-40,10,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle="#604e85";ctx.beginPath();ctx.moveTo(-22,-27);ctx.quadraticCurveTo(0,-9,22,-27);ctx.lineTo(27,13);ctx.lineTo(-27,13);ctx.closePath();ctx.fill();
-  ctx.strokeStyle="#292018";ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(-8,9);ctx.lineTo(-17-kick,23);ctx.moveTo(8,9);ctx.lineTo(17+kick,23);ctx.stroke();ctx.restore();
-}
-function kmrDrawMeters(ctx,S){
-  const {W}=KEMARI_CFG;
-  const ts=kmrTextScale();
-  ctx.save();ctx.fillStyle="rgba(10,16,12,.72)";ctx.fillRect(12,12,W-24,70);
-  ctx.strokeStyle="rgba(246,220,154,.35)";ctx.strokeRect(12,12,W-24,70);
-  ctx.font=`bold ${11*ts}px serif`;ctx.fillStyle="#f4dfb0";ctx.textAlign="left";ctx.fillText(`${kmrRound().name}　${S.roundHits}/${kmrRound().goal}`,21,31);
-  const bars=[{label:"体力",value:S.stamina,color:"#d68b68"},{label:"雅",value:S.miyabi,color:"#ddb865"},{label:"連携",value:S.teamSync,color:"#78c5ad"}];
-  bars.forEach((bar,i)=>{const y=42+i*12;ctx.fillStyle="rgba(255,255,255,.12)";ctx.fillRect(56,y,122,6);ctx.fillStyle=bar.color;ctx.fillRect(56,y,122*bar.value/100,6);ctx.fillStyle="#e7dbc2";ctx.font=`${9*ts}px sans-serif`;ctx.fillText(bar.label,21,y+6);});
-  ctx.textAlign="right";ctx.font=`bold ${11*ts}px serif`;ctx.fillStyle="#ffe5a9";ctx.fillText(`組 ${S.combo}　余裕 ${"◈".repeat(S.poise)}${"◇".repeat(3-S.poise)}`,W-20,31);ctx.restore();
+  const kick=S.impact>0?Math.sin(S.impact*Math.PI)*13:0;
+  ctx.save();ctx.translate(x,y);
+  kmrDrawKemariFigure(ctx,{robe:"#6f5aa2",hakama:"#3c3160",kick,scale:1.16});
+  ctx.restore();
 }
 function kmrDrawPrompt(ctx,S){
   if(!S.delivery||S.phase!=="flight")return;
   const d=S.delivery,tech=KEMARI_CFG.techniques[d.technique],ball=kmrBallAt(S,kmrNow()),ts=kmrTextScale();
   const lane=["左","中央","右"][d.lane+1];
-  ctx.save();ctx.textAlign="center";ctx.font=`bold ${16*ts}px serif`;ctx.fillStyle=tech.color;ctx.fillText(`${lane}へ　${tech.label}`,KEMARI_CFG.W/2,111);
-  ctx.font=`${10*ts}px sans-serif`;ctx.fillStyle="#f4e6c9";ctx.fillText(S.kickQueued?"蹴る構え済み・落下に合わせて自動で蹴る":tech.hint,KEMARI_CFG.W/2,127);
+  ctx.save();ctx.textAlign="center";ctx.font=`bold ${17*ts}px serif`;ctx.fillStyle=tech.color;
+  ctx.shadowColor="rgba(12,16,10,.75)";ctx.shadowBlur=6;
+  ctx.fillText(`${lane}へ　${tech.label}`,KEMARI_CFG.W/2,108);
+  /* こつ(hint)は下段の一行が担当。ここでは構えの状態だけを補う */
+  if(S.kickQueued){ctx.font=`${10*ts}px sans-serif`;ctx.fillStyle="#ffe9b4";ctx.fillText("蹴る構え済み・落下に合わせて自動で蹴る",KEMARI_CFG.W/2,124);}
+  ctx.shadowBlur=0;
   if(ball){const remain=kmrClamp(1-ball.p,0,1),r=25+remain*28;ctx.strokeStyle=tech.color;ctx.lineWidth=2;ctx.globalAlpha=.2+.7*(1-remain);ctx.beginPath();ctx.arc(KEMARI_CFG.W/2+d.landX*148,KEMARI_CFG.groundY,r,0,Math.PI*2);ctx.stroke();}
   ctx.restore();
 }
@@ -15787,14 +15933,15 @@ function kemariDrawScene(ctx,S){
   ctx.save();let dx=0,dy=0;if(S&&S.shake&&!kmrReduced()){dx=(Math.random()-.5)*S.shake;dy=(Math.random()-.5)*S.shake;}ctx.translate(dx,dy);
   kmrDrawPaper(ctx);
   if(S){
-    kmrDrawMeters(ctx,S);
-    kmrDrawFigure(ctx,132,KEMARI_CFG.groundY-5,"左の鞠足",S.delivery&&S.delivery.partner===0,"#7d5e8e");
-    kmrDrawFigure(ctx,KEMARI_CFG.W/2,KEMARI_CFG.groundY-52,"正面",S.delivery&&S.delivery.partner===1,"#9b694d");
-    kmrDrawFigure(ctx,W-132,KEMARI_CFG.groundY-5,"右の鞠足",S.delivery&&S.delivery.partner===2,"#426f7a");
-    kmrDrawFigure(ctx,190,226,"鞠足",false,"#657b4d",.72);
-    kmrDrawFigure(ctx,280,205,"鞠足",false,"#75654a",.7);
-    kmrDrawFigure(ctx,W-280,205,"鞠足",false,"#496b67",.7);
-    kmrDrawFigure(ctx,W-190,226,"鞠足",false,"#76545c",.72);
+    /* [UI整理] 盤面内のメーター枠は上部HUDと完全に重複するため描かない(情報の三重表示を解消) */
+    /* 立ち位置は奥ほど小さく上に。自分(中央手前)と重ならないよう正面の鞠足は一段奥へ置く */
+    kmrDrawFigure(ctx,116,KEMARI_CFG.groundY-8,"左の鞠足",S.delivery&&S.delivery.partner===0,"#7d5e8e",.94);
+    kmrDrawFigure(ctx,KEMARI_CFG.W/2,KEMARI_CFG.groundY-96,"正面",S.delivery&&S.delivery.partner===1,"#9b694d",.7);
+    kmrDrawFigure(ctx,W-116,KEMARI_CFG.groundY-8,"右の鞠足",S.delivery&&S.delivery.partner===2,"#426f7a",.94);
+    kmrDrawFigure(ctx,196,KEMARI_CFG.groundY-66,"鞠足",false,"#657b4d",.62);
+    kmrDrawFigure(ctx,300,KEMARI_CFG.groundY-108,"鞠足",false,"#75654a",.56);
+    kmrDrawFigure(ctx,W-300,KEMARI_CFG.groundY-108,"鞠足",false,"#496b67",.56);
+    kmrDrawFigure(ctx,W-196,KEMARI_CFG.groundY-66,"鞠足",false,"#76545c",.62);
     const ball=kmrBallAt(S,kmrNow());kmrDrawTrajectory(ctx,S,ball);kmrDrawBall(ctx,ball,S);kmrDrawPlayer(ctx,S);kmrDrawPrompt(ctx,S);
     S.particles.forEach(p=>{ctx.globalAlpha=kmrClamp(p.life/p.max,0,1);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,2.3,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;
     if(S.phase==="wait"||S.phase==="interlude"||S.phase==="recovery"){ctx.fillStyle="rgba(7,10,7,.38)";ctx.fillRect(0,0,W,H-72);ctx.fillStyle="#f5e4b7";ctx.font=`bold ${16*kmrTextScale()}px serif`;ctx.textAlign="center";ctx.fillText(S.message,W/2,H*.47);}
@@ -28387,7 +28534,7 @@ function stGate(){
   b.className="t-btn t-cat-btn gold recommended";b.id="btnStory";
   b.style.borderColor="rgba(185,165,230,.9)";
   b.innerHTML='<span class="mode-meta">物語 / 新機能</span>'
-    +'<div class="cat-icon">📖</div><span class="mode-name">御簾の向こうへ（デモ版）</span>'
+    +'<div class="cat-icon"><svg class="wic ci"><use href="#ic-scroll"/></svg></div><span class="mode-name">御簾の向こうへ（デモ版）</span>'
     +'<small>平安と現代をつなぐ、隠された物語を読む</small>';
   b.onclick=()=>{beep(700,.08);if(typeof initAudio==="function")initAudio();enterMode("story");};
   host.insertBefore(b,host.firstChild);
