@@ -7760,16 +7760,23 @@ function householdAdd(id,figure,x,z,yaw=0,labelY=1.8){
 function makeLowRankPerson({female=false,color=0x6f5438,under=0xc8a96a,tool="none",scale=1}={}){
   const g=new THREE.Group(),robe=heianTextile(color,false,female?3:1),inner=heianTextile(under,false,2),skin=HEIAN_SKIN,
     cord=M({color:0x574029,roughness:.84}),dark=M({color:0x17120e,roughness:.72});
-  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.20,.34,.78,11),inner);skirt.position.y=.40;g.add(skirt);
-  const body=new THREE.Mesh(new THREE.CylinderGeometry(.20,.28,.58,11),robe);body.position.y=.96;g.add(body);
-  g.add(box(.48,.050,.28,cord,0,.69,.02));
+  // [人物刷新] 下半身(裳/袴): 下すぼまりの円錐でなく自然なAラインにし、裾に細い縁取りを添える
+  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.205,.32,.80,14),inner);skirt.position.y=.42;g.add(skirt);
+  const hem=new THREE.Mesh(new THREE.CylinderGeometry(.325,.33,.045,14),robe);hem.position.y=.045;g.add(hem);
+  // 胴: 肩を広く腰を締めた台形にして樽のような寸胴感を解消
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(.265,.215,.60,14),robe);body.position.y=.965;g.add(body);
+  g.add(box(.46,.052,.27,cord,0,.685,.02));                       // 帯
+  const neck=cyl(.050,.060,.11,skin,0,1.27,.01,8);g.add(neck);   // 首(頭が肩に埋まらないよう短く通す)
+  // 打ち合わせのV字襟(内衣の色を胸元に覗かせる)
+  [-1,1].forEach(s=>{const col=box(.052,.20,.02,inner,s*.052,1.10,.19);col.rotation.z=s*.42;col.rotation.x=-.14;g.add(col);});
   [-1,1].forEach(s=>{
-    const arm=new THREE.Mesh(new THREE.CylinderGeometry(.048,.074,.48,8),robe);arm.position.set(s*.27,.98,.07);arm.rotation.z=s*.34;arm.rotation.x=-.12;g.add(arm);
-    const hand=new THREE.Mesh(new THREE.SphereGeometry(.044,8,6),skin);hand.position.set(s*.36,.78,.16);g.add(hand);
-    const leg=cyl(.050,.066,.38,inner,s*.105,.16,.01,8);g.add(leg);
-    const foot=box(.13,.055,.22,M({color:0xe4d7bf,roughness:.9}),s*.105,.035,.08);g.add(foot);
+    // 袖: 手首へ向けて広がる垂れ袖(直垂の袂)。棒状の腕から布の量感へ
+    const sleeve=new THREE.Mesh(new THREE.CylinderGeometry(.072,.135,.46,9),robe);sleeve.position.set(s*.255,.97,.05);sleeve.rotation.z=s*.30;sleeve.rotation.x=-.10;g.add(sleeve);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(.046,9,7),skin);hand.position.set(s*.365,.765,.155);hand.scale.set(1,.85,1.12);g.add(hand);
+    const leg=cyl(.052,.068,.40,inner,s*.10,.17,.01,8);g.add(leg);
+    const foot=box(.135,.055,.225,M({color:0xe4d7bf,roughness:.9}),s*.10,.035,.085);g.add(foot);
   });
-  const head=new THREE.Mesh(HEIAN_GEO.head,skin);head.position.set(0,1.37,.02);head.scale.set(.135,.165,.13);g.add(head);
+  const head=new THREE.Mesh(HEIAN_GEO.head,skin);head.position.set(0,1.375,.02);head.scale.set(.140,.160,.135);g.add(head);
   const hair=new THREE.Mesh(HEIAN_GEO.hairCap,HEIAN_HAIR);hair.position.set(0,1.45,0);hair.scale.set(.14,.12,.13);g.add(hair);
   if(female){
     const back=box(.22,.42,.055,HEIAN_HAIR,0,1.18,-.10);g.add(back);
