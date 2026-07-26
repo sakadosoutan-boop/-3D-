@@ -13281,10 +13281,11 @@ function drawMinimap(){
    時間システム(昼・夕・夜)
 ============================================================ */
 const TIMES={
- day:{sky:0xbfdcec,fog:0xcfe0ea,sunI:1.25,sunC:0xfff2dd,sunP:[60,95,45],hemi:.55,amb:.18,ambC:0xfff0dd,moon:0,exp:1.05,int:.35}, /* [Phase1] hemi .62→.55 (IBL補填分) */
- dawn:{sky:0xb8c4d6,fog:0xd8dde8,sunI:.85,sunC:0xffd9a8,sunP:[92,30,26],hemi:.46,amb:.14,ambC:0xffe6cf,moon:.06,exp:1.0,int:.42}, /* 早朝:朝靄白色フォグ */
- dusk:{sky:0xe8a368,fog:0xdf9a64,sunI:.7,sunC:0xff9a55,sunP:[-70,22,30],hemi:.34,amb:.12,ambC:0xffcaa0,moon:0,exp:1.0,int:.5},
- night:{sky:0x0d1626,fog:0x101a2c,sunI:0,sunC:0xffffff,sunP:[60,95,45],hemi:.055,amb:.012,ambC:0xffcf9a,moon:.34,exp:.88,int:.06}
+ /* [情感強化] 追加の描画パス・影を増やさず、光の色温度と斜光角のみで時間帯の情感を出す(スマホ負荷ゼロ) */
+ day:{sky:0xbcdbec,fog:0xccdfea,sunI:1.28,sunC:0xfff4e2,sunP:[54,90,52],hemi:.55,amb:.18,ambC:0xf1edff,moon:0,exp:1.06,int:.35}, /* 昼:わずかに暖色の陽と冷色の空色フィル */
+ dawn:{sky:0xc6c2d4,fog:0xdcd9e6,sunI:.82,sunC:0xffcf9a,sunP:[98,26,18],hemi:.44,amb:.15,ambC:0x9aa2c2,moon:.06,exp:1.0,int:.42}, /* 朝:低い暖色の陽＋冷たい朝影(ゴールデンアワー) */
+ dusk:{sky:0xe89a5c,fog:0xd88e58,sunI:.74,sunC:0xff8b42,sunP:[-88,16,26],hemi:.3,amb:.13,ambC:0x8f96be,moon:0,exp:.97,int:.5}, /* 夕:西へ長く差す黄金色の斜光＋青紫の陰(逢魔が時) */
+ night:{sky:0x0b1322,fog:0x0e1728,sunI:0,sunC:0xffffff,sunP:[60,95,45],hemi:.06,amb:.02,ambC:0x8496bc,moon:.36,exp:.9,int:.06} /* 夜:冷たい月あかりの陰(篝火の暖色を引き立てる) */
 };
 const ambient=new THREE.AmbientLight(0xfff0dd,0.18);scene.add(ambient);
 const cur={sky:new THREE.Color(TIMES.day.sky),fog:new THREE.Color(TIMES.day.fog),sunC:new THREE.Color(TIMES.day.sunC),
