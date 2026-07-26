@@ -227,12 +227,79 @@ async function launchBrowser() {
           && (document.getElementById('kmrGoTitle')?.textContent || '').includes('四懸');
         if (typeof enterMode === 'function') enterMode('walk');
       } catch (_) {}
+      async function playGozenFive() {
+        const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        let shellPairs = null;
+        for (let guard = 0; guard < 80; guard += 1) {
+          const state = window.GOZEN_FIVE?.getState?.();
+          if (!state || state.complete) return state;
+          if (state.phase === 'intro') {
+            document.querySelector('#gozenFiveModal .gozen5-intro .is-primary')?.click();
+            await wait(30);
+            continue;
+          }
+          if (state.phase === 'between') {
+            document.querySelector('#gozenFiveModal .gozen5-between .is-primary')?.click();
+            await wait(30);
+            continue;
+          }
+          if (state.boutId === 'kai') {
+            if (!shellPairs) {
+              const labels = Array.from(document.querySelectorAll('#gozenFiveModal .gozen5-shell')).map((button) => button.firstChild?.textContent || '');
+              const groups = new Map();
+              labels.forEach((label, index) => {
+                const indexes = groups.get(label) || [];
+                indexes.push(index);
+                groups.set(label, indexes);
+              });
+              shellPairs = Array.from(groups.values()).filter((indexes) => indexes.length === 2);
+              await wait(2450);
+            }
+            const pair = shellPairs.shift();
+            if (pair) {
+              document.querySelectorAll('#gozenFiveModal .gozen5-shell')[pair[0]]?.click();
+              await wait(20);
+              document.querySelectorAll('#gozenFiveModal .gozen5-shell')[pair[1]]?.click();
+              await wait(560);
+            }
+            continue;
+          }
+          if (state.boutId === 'kemari') {
+            document.querySelector('#gozenFiveModal .gozen5-kick')?.click();
+            await wait(480);
+            continue;
+          }
+          const choice = document.querySelector('#gozenFiveModal .gozen5-choice:not([disabled])');
+          if (choice) {
+            choice.click();
+            await wait(25);
+          }
+          document.querySelector('#gozenFiveModal .gozen5-feedback .gozen5-action')?.click();
+          await wait(25);
+        }
+        return window.GOZEN_FIVE?.getState?.();
+      }
+      let gozenFiveSoloOk = false;
+      try {
+        window.GOZEN_FIVE?.startSolo?.();
+        const initialFive = window.GOZEN_FIVE?.getState?.();
+        const completedFive = await playGozenFive();
+        gozenFiveSoloOk = window.GOZEN_FIVE_STATUS?.ready === true
+          && window.GOZEN_FIVE_STATUS?.bouts?.length === 5
+          && initialFive?.phase === 'intro'
+          && completedFive?.complete === true
+          && Object.keys(completedFive?.scores || {}).length === 5
+          && completedFive?.total > 500
+          && (document.getElementById('gozenFiveModal')?.textContent || '').includes('5000');
+        window.GOZEN_FIVE?.close?.();
+      } catch (_) {}
       let onlineCompetitionOk = false;
       let onlineQuizSeedOk = false;
       let onlineRankingOk = false;
       let normalQuizOnlineRankOk = false;
       let onlineKemariLaunchOk = false;
       let onlineKemariLaunchDetail = null;
+      let onlineGozenFiveOk = false;
       let onlineCompetitionError = null;
       try {
         const submitted = [];
@@ -288,6 +355,7 @@ async function launchBrowser() {
           && (document.querySelector('#onlineCompetitionModal .online-ranking-row')?.textContent || '').includes('東方');
         onlineCompetitionOk = window.ONLINE_COMPETITION_STATUS?.ready === true
           && window.ONLINE_COMPETITION_STATUS?.quizCount === 10
+          && window.ONLINE_COMPETITION_STATUS?.modes?.includes('gozen5')
           && !!document.getElementById('onlineCompetitionEntry')
           && afterMatch?.screen === 'result'
           && submitted.some((item) => item.mode === 'quiz')
@@ -322,6 +390,22 @@ async function launchBrowser() {
           ordinary: ordinaryKemari?.online
         };
         if (typeof enterMode === 'function') enterMode('walk');
+        await window.ONLINE_COMPETITION?.leaveMatch?.();
+        window.ONLINE_COMPETITION?.open?.();
+        await window.ONLINE_COMPETITION?.createMatch?.('gozen5');
+        mockMatch.players.push({ is_self: false, is_host: false, display_name: '西方', status: 'ready', progress: {}, score: 0 });
+        await window.ONLINE_COMPETITION?.startMatch?.();
+        window.ONLINE_COMPETITION?.launchChallenge?.();
+        await new Promise((resolve) => setTimeout(resolve, 80));
+        const onlineFiveStart = window.GOZEN_FIVE?.getState?.();
+        const onlineFiveDone = await playGozenFive();
+        await window.GOZEN_FIVE?.submit?.();
+        onlineGozenFiveOk = onlineFiveStart?.online === true
+          && onlineFiveStart?.seed === 20260723
+          && onlineFiveDone?.complete === true
+          && onlineFiveDone?.total > 500
+          && submitted.some((item) => item.mode === 'gozen5');
+        window.GOZEN_FIVE?.close?.();
         await window.ONLINE_COMPETITION?.leaveMatch?.();
         window.ONLINE_COMPETITION?.configure?.({ clear: true });
       } catch (error) {
@@ -713,12 +797,14 @@ async function launchBrowser() {
         kohCanvasOk,
         kemariOk,
         kemariCanvasOk,
+        gozenFiveSoloOk,
         onlineCompetitionOk,
         onlineQuizSeedOk,
         onlineRankingOk,
         normalQuizOnlineRankOk,
         onlineKemariLaunchOk,
         onlineKemariLaunchDetail,
+        onlineGozenFiveOk,
         onlineCompetitionError,
         livingEstateOk,
         livingEstateModeOk,
@@ -776,6 +862,11 @@ async function launchBrowser() {
       const onlineRect = document.querySelector('#onlineCompetitionModal .online-sheet')?.getBoundingClientRect();
       const onlineFits = !!onlineRect && onlineRect.left >= 0 && onlineRect.right <= innerWidth && onlineRect.bottom <= innerHeight;
       window.ONLINE_COMPETITION?.close?.();
+      window.GOZEN_FIVE?.startSolo?.();
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      const gozenFiveRect = document.querySelector('#gozenFiveModal .gozen5-sheet')?.getBoundingClientRect();
+      const gozenFiveFits = !!gozenFiveRect && gozenFiveRect.left >= 0 && gozenFiveRect.right <= innerWidth && gozenFiveRect.bottom <= innerHeight;
+      window.GOZEN_FIVE?.close?.();
       localStorage.setItem('shinden3d-kemari-help', '1');
       if (typeof enterMode === 'function') enterMode('kemari');
       await new Promise((resolve) => setTimeout(resolve, 80));
@@ -793,7 +884,7 @@ async function launchBrowser() {
       const estateRect = document.getElementById('estateLifePanel')?.getBoundingClientRect();
       const estateFits = !!estateRect && estateRect.left >= 0 && estateRect.right <= innerWidth && estateRect.bottom <= innerHeight;
       window.LIVING_ESTATE?.closeSchedule?.();
-      return { kohFits, onlineFits, kemariFits, estateFits, horizontalOverflow: document.documentElement.scrollWidth <= innerWidth };
+      return { kohFits, onlineFits, gozenFiveFits, kemariFits, estateFits, horizontalOverflow: document.documentElement.scrollWidth <= innerWidth };
     });
     if (status.missing.length) errors.push(`missing UI ids: ${status.missing.join(', ')}`);
     if (!status.walkOk) errors.push('walk mode did not start');
@@ -804,16 +895,18 @@ async function launchBrowser() {
     if (!status.kohCanvasOk) errors.push('koh-awase canvas did not render enough visual detail');
     if (!status.kemariOk) errors.push('kemari four-round cooperative game flow failed');
     if (!status.kemariCanvasOk) errors.push('kemari canvas did not render enough visual detail');
+    if (!status.gozenFiveSoloOk) errors.push('gozen five solo tournament did not complete all five bouts');
     if (status.onlineCompetitionError) errors.push(`online competition smoke failed: ${status.onlineCompetitionError}`);
     if (!status.onlineCompetitionOk) errors.push('online match did not create, start, finish, and submit a score');
     if (!status.onlineQuizSeedOk) errors.push('online quiz seed did not produce a stable shared question set');
     if (!status.onlineRankingOk) errors.push('online shared ranking did not render');
     if (!status.normalQuizOnlineRankOk) errors.push('normal quiz result did not show the shared weekly rank');
     if (!status.onlineKemariLaunchOk) errors.push('online kemari launch leaked into an ordinary kemari session');
+    if (!status.onlineGozenFiveOk) errors.push('online gozen five did not launch, complete, and submit its total');
     if (!status.livingEstateOk) errors.push('living-estate schedules or daily-life panel failed');
     if (!status.livingEstateModeOk) errors.push('living-estate actors did not pause and resume with walk mode');
     if (!status.livingEstateArrivalOk) errors.push('living-estate visitor/cart arrival safeguards failed');
-    if (!mobileStatus.kohFits || !mobileStatus.onlineFits || !mobileStatus.kemariFits || !mobileStatus.estateFits || !mobileStatus.horizontalOverflow) errors.push('new panels overflowed the 390px mobile viewport');
+    if (!mobileStatus.kohFits || !mobileStatus.onlineFits || !mobileStatus.gozenFiveFits || !mobileStatus.kemariFits || !mobileStatus.estateFits || !mobileStatus.horizontalOverflow) errors.push('new panels overflowed the 390px mobile viewport');
     if (!status.kaimamiOk) errors.push('kaimami mode did not start');
     if (status.kaimamiRoutes.join(',') !== 'east,north,tsumado') errors.push(`unexpected kaimami routes: ${status.kaimamiRoutes.join(',')}`);
     if (!status.kaimamiTextOk) errors.push('kaimami instructions did not mention the three observation points');
