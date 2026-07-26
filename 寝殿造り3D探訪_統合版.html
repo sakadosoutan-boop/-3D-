@@ -5208,27 +5208,34 @@ TEX.sunoko=canv(512,512,(x,w,h)=>{x.fillStyle="#1a120c";x.fillRect(0,0,w,h);
 /* 白砂・敷石混じりの庭床 */
 /* 白砂(枯山水): 淡いアイボリー地＋高密度の細粒＋箒目(砂紋)。溝の影と盛りのハイライトで立体感を出す。上下左右ともシームレス。 */
 TEX.sand=canv(1024,1024,(x,w,h)=>{
-  x.fillStyle="#e7e1d1";x.fillRect(0,0,w,h);
-  // 広いトーンむら(端は反対側にも描いて継ぎ目をなくす)。単調さを消しつつ白砂の明るさは保つ
-  for(let i=0;i<24;i++){const px=rnd(0,w),py=rnd(0,h),r=rnd(170,430),dark=rnd(0,1)<.5;
+  // 地色は白飛びを避けるため、やや沈んだ温かい灰白(白川砂の色)。強い陽の下で「白砂」に見える明度に置く
+  x.fillStyle="#cdc5b0";x.fillRect(0,0,w,h);
+  // 広いトーンむら(端は反対側にも描き継ぎ目をなくす)。掃き寄せの濃淡を作り単調さを消す
+  for(let i=0;i<26;i++){const px=rnd(0,w),py=rnd(0,h),r=rnd(150,420),dark=rnd(0,1)<.5;
     for(let ox=-1;ox<=1;ox++)for(let oy=-1;oy<=1;oy++){
       const cx0=px+ox*w,cy0=py+oy*h;if(cx0+r<0||cx0-r>w||cy0+r<0||cy0-r>h)continue;
       const g=x.createRadialGradient(cx0,cy0,0,cx0,cy0,r);
-      g.addColorStop(0,dark?"rgba(120,110,86,.055)":"rgba(255,252,242,.06)");g.addColorStop(1,"rgba(0,0,0,0)");
+      g.addColorStop(0,dark?"rgba(104,94,72,.12)":"rgba(255,252,244,.13)");g.addColorStop(1,"rgba(0,0,0,0)");
       x.fillStyle=g;x.fillRect(0,0,w,h);
     }}
-  // 細粒(低コントラストの微粒子を高密度で=実質シームレス)
-  for(let i=0;i<60000;i++){const v=rnd(-14,12)|0;x.fillStyle=`rgba(${214+v},${206+v},${186+v},${rnd(.04,.13)})`;x.fillRect(rnd(0,w),rnd(0,h),1,1);}
-  // 箒目(砂紋): 水平の平行掻き筋。線間隔はhを割り切り、横揺れはwを整数周期にして継ぎ目を一致させる
-  const lines=48,dy=h/lines,amp=h*0.011;
+  // 箒目(砂紋): 掻き寄せた溝と盛り。先に敷いてから粒子を載せ、砂粒が紋の上に乗って見えるようにする
+  const lines=40,dy=h/lines,amp=h*0.012;
   for(let i=0;i<lines;i++){
     const baseY=i*dy+dy*.5,ph=rnd(0,6.283),waves=2;
-    const draw=(off,col,lw)=>{x.beginPath();for(let sx=0;sx<=w;sx+=5){const yy=baseY+off+Math.sin(sx/w*6.283*waves+ph)*amp;sx===0?x.moveTo(sx,yy):x.lineTo(sx,yy);}x.strokeStyle=col;x.lineWidth=lw;x.stroke();};
-    draw( 1.6,"rgba(122,110,86,.20)",2.4); // 溝の影
-    draw(-0.5,"rgba(255,253,246,.30)",1.6); // 盛りのハイライト
+    const draw=(off,col,lw)=>{x.beginPath();for(let sx=0;sx<=w;sx+=4){const yy=baseY+off+Math.sin(sx/w*6.283*waves+ph)*amp;sx===0?x.moveTo(sx,yy):x.lineTo(sx,yy);}x.strokeStyle=col;x.lineWidth=lw;x.stroke();};
+    draw( 3.2,"rgba(96,86,64,.30)",5.0);   // 溝の谷(広く柔らかい影)
+    draw( 2.2,"rgba(88,78,58,.30)",2.2);   // 溝の芯
+    draw(-1.6,"rgba(255,253,247,.52)",3.0);// 盛りの稜(陽の当たる面)
   }
+  // 砂粒: 明暗2種の粒を高密度で散らし、近景でも「粒の集合」に見えるようにする
+  for(let i=0;i<130000;i++){const v=rnd(-30,26)|0,a=rnd(.05,.22);
+    x.fillStyle=`rgba(${208+v},${199+v},${176+v},${a})`;x.fillRect(rnd(0,w),rnd(0,h),1,1);}
+  // やや粗い粒(白く光る石英質)。まばらに置いてざらつきを出す
+  for(let i=0;i<5200;i++){const s=rnd(1,2.2);
+    x.fillStyle=rnd(0,1)<.55?`rgba(252,250,242,${rnd(.16,.4)})`:`rgba(118,106,84,${rnd(.10,.26)})`;
+    x.fillRect(rnd(0,w),rnd(0,h),s,s);}
 });
-TEX.sand.repeat.set(6,6);
+TEX.sand.repeat.set(5,5);
 /* 白砂: Canva生成の砂質感をPILでシームレス化し枯山水の掻き紋(砂紋)を合成した
    タイルを埋め込み。読み込み失敗時は上の手続き生成画にフォールバックする。 */
 (function(){return;/* [白砂刷新] Canva画像の上書きを停止し、高品質な手続き生成の白砂(箒目付き)を使用する */
@@ -5463,7 +5470,7 @@ const MAT={
  shuDark:M({map:TEX.shu,color:0xc6b3ab,roughness:.55}),  /* 同じ朱漆マップをやや暗く着色 */
  black:new THREE.MeshPhysicalMaterial({map:TEX.urushi,color:0xffffff,roughness:.5,metalness:.1,clearcoat:1.0,clearcoatRoughness:.18,envMapIntensity:.9}), /* [Phase1] 漆の濡れ光沢(clearcoat)＋梨地(金粉)の地肌 */
  kin:M({color:0xc9a23f,roughness:.28,metalness:1.0,envMapIntensity:1.15}), /* [Phase1] 金泥の輝き(IBL反射) */
- sand:M({map:TEX.sand,roughness:.98}),
+ sand:M({map:TEX.sand,color:0xd6cfbe,roughness:1,metalness:0}),/* [白砂] 強い陽で白飛びしないよう乗算色で明度を落とし、砂粒と箒目のコントラストを残す */
  stonePaving:M({map:TEX.stonePaving,roughness:.88}),
  grass:M({map:TEX.grass,roughness:1}),
  tatami:M({map:TEX.tatami,roughness:.9}),
