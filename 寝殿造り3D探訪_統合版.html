@@ -28387,7 +28387,7 @@ function stGate(){
   b.className="t-btn t-cat-btn gold recommended";b.id="btnStory";
   b.style.borderColor="rgba(185,165,230,.9)";
   b.innerHTML='<span class="mode-meta">物語 / 新機能</span>'
-    +'<div class="cat-icon"><svg class="wic ci"><use href="#ic-scroll"/></svg></div><span class="mode-name">御簾の向こうへ（デモ版）</span>'
+    +'<div class="cat-icon">📖</div><span class="mode-name">御簾の向こうへ（デモ版）</span>'
     +'<small>平安と現代をつなぐ、隠された物語を読む</small>';
   b.onclick=()=>{beep(700,.08);if(typeof initAudio==="function")initAudio();enterMode("story");};
   host.insertBefore(b,host.firstChild);
