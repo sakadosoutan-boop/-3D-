@@ -11134,9 +11134,30 @@ function beep(f,dur=.12,type="sine",vol=.18){
     g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+dur);
     o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+dur);}catch(e){}
 }
-const seOK=()=>{beep(740,.1);setTimeout(()=>beep(988,.2),90);};
-const seNG=()=>beep(170,.28,"square",.12);
-const seToggle=()=>beep(420,.07,"triangle",.12);
+/* 和楽器的な響き(軽いピッチベンド+オクターブ上の減衰する倍音)を持つ単発音。beep()より生の発音制御が要るため
+   AC/APP_SEの扱いはbeep()に準拠しつつ直接オシレータを組む。関数名・無引数の呼び出し規約は変えない。 */
+function _waPluck(f0,f1,dur,vol,type){
+  if(!APP_SE)return;
+  try{
+    AC=AC||(ambientAudio&&ambientAudio.ctx)||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended")AC.resume();
+    const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();
+    o.type=type||"triangle";
+    o.frequency.setValueAtTime(f0,t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t+Math.min(.05,dur*.3)); // 軽いピッチベンド
+    g.gain.setValueAtTime(vol,t);
+    g.gain.exponentialRampToValueAtTime(.001,t+dur);
+    o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+dur+.02);
+    const o2=AC.createOscillator(),g2=AC.createGain(); // オクターブ上の倍音を控えめに重ねて和楽器の響きに
+    o2.type="sine";o2.frequency.setValueAtTime(f1*2,t+.01);
+    g2.gain.setValueAtTime(vol*.35,t+.01);
+    g2.gain.exponentialRampToValueAtTime(.001,t+dur*.8);
+    o2.connect(g2);g2.connect(AC.destination);o2.start(t+.01);o2.stop(t+dur*.8+.02);
+  }catch(e){}
+}
+const seOK=()=>{_waPluck(600,740,.16,.085,"triangle");setTimeout(()=>_waPluck(784,988,.24,.07,"sine"),95);};
+const seNG=()=>_waPluck(210,160,.3,.1,"square");
+const seToggle=()=>_waPluck(460,420,.1,.09,"triangle");
 
 /* ====== 恋愛モード専用SEパレット(Phase G) ======
    命名規則: 全シンボルは renaiSe / RENAI_SE 前置で衝突を回避(既存 beep/seOK/seNG/RENAI_BGM とは別物)。
@@ -19609,11 +19630,104 @@ const REDUCED_MOTION=!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: 
 /* 時間の自動進行: 一定時間ごとに dawn→day→dusk→night→dawn と巡る */
 const AUTO_TIME={order:["dawn","day","dusk","night"],periodMs:4*60*1000,_last:0,_paused:false};
 AUTO_TIME._last=performance.now();
-/* 床材に応じた足音(合成)。簀子/畳など床上=木の軽い音、地面=低く鈍い音。音源未配置のため合成音 */
-function footstep(){
-  if(typeof beep!=="function")return;
-  if(groundH(player.pos.x,player.pos.z)>0.05) beep(120+Math.random()*30,.045,"triangle",.045);
-  else beep(70+Math.random()*22,.06,"sine",.035);
+/* ====== 床材別の足音エンジン(ノイズ+フィルタ+エンベロープの手続き合成) ======
+   音源未配置のため合成音。ホワイトノイズバッファを1度だけ生成してキャッシュし(GC対策)、
+   BiquadFilterで床材ごとの質感を作り分ける。groundH()の高さと座標から床材を推定:
+     簀子・廂(木, 1.1〜1.2くらい) / 母屋(畳, 1.25以上) / 屋外は白砂(南庭矩形内)・水際(池の縁)・土/草地。
+   1歩ごとにピッチ/音量/フィルタ周波数を乱数で揺らし、かかと→つま先の2層(数十ms差)で厚みを出す。
+   走行時・呼び出し側から速度を渡された時は音量が変わるが、引数なし呼び出しでも従来通り動作する。 */
+let _footstepNoiseBuf=null,_footstepNoiseCtx=null;
+function _footstepNoise(){
+  if(!AC)return null;
+  if(_footstepNoiseBuf&&_footstepNoiseCtx===AC)return _footstepNoiseBuf;
+  try{
+    const n=Math.floor(AC.sampleRate*0.5),buf=AC.createBuffer(1,n,AC.sampleRate),d=buf.getChannelData(0);
+    for(let i=0;i<n;i++)d[i]=Math.random()*2-1;
+    _footstepNoiseBuf=buf;_footstepNoiseCtx=AC;return buf;
+  }catch(e){return null;}
+}
+/* 屋内(寝殿内)は残響長め・屋外(庭)は短めのプログラム生成インパルス応答によるConvolver残響。
+   常時ONだが送り量は控えめ。LOW_POWER中は負荷を避けるため送らない(ノード自体を作らない)。 */
+const SPACE_REVERB={
+  indoor:null,outdoor:null,ctx:null,
+  _makeIR(sec,decay){
+    const rate=AC.sampleRate,len=Math.max(1,Math.floor(rate*sec)),buf=AC.createBuffer(2,len,rate);
+    for(let ch=0;ch<2;ch++){const d=buf.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay);}
+    return buf;
+  },
+  _ensure(){
+    if(!AC)return false;
+    if(this.ctx===AC&&this.indoor&&this.outdoor)return true;
+    try{
+      this.indoor=AC.createConvolver();this.indoor.buffer=this._makeIR(1.6,2.2);this.indoor.connect(AC.destination);
+      this.outdoor=AC.createConvolver();this.outdoor.buffer=this._makeIR(0.45,3.6);this.outdoor.connect(AC.destination);
+      this.ctx=AC;return true;
+    }catch(e){return false;}
+  },
+  /* node(既にdestinationへ接続済みのドライ経路を持つノード)を控えめな量だけ残響へ送る */
+  send(node,indoor,amount){
+    if(window.LOW_POWER&&window.LOW_POWER.active)return;
+    if(!amount||!this._ensure())return;
+    try{const g=AC.createGain();g.gain.value=amount;node.connect(g);g.connect(indoor?this.indoor:this.outdoor);}catch(e){}
+  }
+};
+/* 現在地の床材を推定(既存groundH/pondCirclesのみ使用。新規の当たり判定は追加しない) */
+function _footstepSurface(x,z){
+  const h=groundH(x,z);
+  if(h>=1.25)return{mat:"tatami",indoor:true};                 // 母屋: 畳敷きの室内
+  if(h>=0.05)return{mat:"wood",indoor:true};                    // 簀子・廂: 板敷き
+  let pondD=Infinity;
+  if(typeof pondCircles!=="undefined")pondCircles.forEach(c=>{const dd=Math.hypot(x-c[0],z-c[1])-c[2];if(dd<pondD)pondD=dd;});
+  if(pondD<1.6)return{mat:"wet",indoor:false};                  // 池の縁: 湿った軽い音
+  if(Math.abs(x)<58&&z>-59&&z<57)return{mat:"sand",indoor:false}; // 白砂敷きの南庭(court, 118x118)範囲内
+  return{mat:"earth",indoor:false};                             // 遠景の土・草地
+}
+/* 1回分の打音(かかと/つま先で2回呼ばれる)。ノイズ+フィルタの主成分に、木/水は短い倍音ティックを重ねる */
+function _footstepHit(surf,t,strength){
+  try{
+    const buf=_footstepNoise();if(!buf)return;
+    const src=AC.createBufferSource();src.buffer=buf;src.loop=true;
+    src.playbackRate.value=0.88+Math.random()*0.28;
+    const filt=AC.createBiquadFilter(),g=AC.createGain();
+    let type,freq,q,dur,vol,tickF=0,tickType="triangle";
+    switch(surf.mat){
+      case "tatami": type="lowpass";  freq=420+Math.random()*160; q=.7;  dur=.09+Math.random()*.02; vol=.05;  break;              // 畳・母屋: 低くこもった柔らかい音
+      case "wood":   type="bandpass"; freq=1450+Math.random()*950;q=1.1+Math.random()*.6; dur=.055+Math.random()*.02; vol=.065; tickF=180+Math.random()*70; break; // 簀子: 中高域の乾いた木の音+中空の響き
+      case "sand":   type="highpass"; freq=2200+Math.random()*1400;q=.6; dur=.05+Math.random()*.02; vol=.05;  break;              // 白砂: ざらついた砂利感(高域ノイズ+短い減衰)
+      case "wet":    type="lowpass";  freq=900+Math.random()*300; q=.9;  dur=.07+Math.random()*.02; vol=.055; tickF=310+Math.random()*40; tickType="sine"; break; // 水際: 湿った軽い音
+      default:       type="lowpass";  freq=380+Math.random()*140; q=.8;  dur=.08+Math.random()*.02; vol=.05;                     // 土・草地: 鈍く低い音
+    }
+    filt.type=type;filt.frequency.value=freq;filt.Q.value=q;
+    const v=Math.max(.001,vol*strength);
+    g.gain.setValueAtTime(.0001,t);
+    g.gain.exponentialRampToValueAtTime(v,t+.006);
+    g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    src.connect(filt);filt.connect(g);g.connect(AC.destination);
+    src.start(t);src.stop(t+dur+.02);
+    SPACE_REVERB.send(g,surf.indoor,surf.indoor?.16:.05);
+    if(tickF){
+      const o=AC.createOscillator(),og=AC.createGain();
+      o.type=tickType;o.frequency.value=tickF*(0.97+Math.random()*0.06);
+      og.gain.setValueAtTime(.0001,t);
+      og.gain.exponentialRampToValueAtTime(Math.max(.0006,v*.35),t+.004);
+      og.gain.exponentialRampToValueAtTime(.0001,t+dur*.8);
+      o.connect(og);og.connect(AC.destination);
+      o.start(t);o.stop(t+dur*.8+.02);
+    }
+  }catch(e){}
+}
+/* 引数はオプショナル(running:走行中か, speedScale:音量の明示的な係数)。無引数でも従来通り動作する。 */
+function footstep(running,speedScale){
+  if(!APP_SE)return;
+  try{
+    AC=AC||(typeof ambientAudio!=="undefined"&&ambientAudio&&ambientAudio.ctx)||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended")AC.resume();
+    const surf=_footstepSurface(player.pos.x,player.pos.z);
+    const strength=Math.max(.6,Math.min(1.35,speedScale!=null?speedScale:(running?1.15:0.9)));
+    const t0=AC.currentTime;
+    _footstepHit(surf,t0,strength);                                   // かかと
+    _footstepHit(surf,t0+0.026+Math.random()*0.018,strength*0.7);     // つま先(数十ms後・やや弱く)
+  }catch(e){}
 }
 
 /* ============================================================
@@ -24393,7 +24507,7 @@ function animate(now){
       if(moving){
         bobPhase+=dt*(running?13:9);
         footAccum+=dt*(running?2.3:1.6);
-        if(footAccum>=1){footAccum-=1;footstep();}
+        if(footAccum>=1){footAccum-=1;footstep(running);}
       }else{footAccum=0.6;}
       bobAmp+=((moving&&!REDUCED_MOTION?(running?.009:.005):0)-bobAmp)*Math.min(1,dt*8); // 揺れを最小限に
 
