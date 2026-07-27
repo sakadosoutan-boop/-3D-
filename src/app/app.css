@@ -2708,3 +2708,77 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
 /* タイトル画面のアイコン(モードカードの大アイコン＋一覧ボタンの行頭アイコン) */
 #title .cat-icon .wic{width:26px;height:26px;stroke-width:1.5;color:var(--kin);vertical-align:middle}
 .t-codex-btn .tci{width:18px;height:18px;stroke-width:1.6;margin-right:9px;vertical-align:-4px;color:var(--kin);flex:0 0 auto}
+
+/* ===== 起動ローディング(平安風) =====
+   重要: 本体スクリプトの同期実行中はメインスレッドが塞がる。
+   transform / opacity のアニメーションはコンポジタで処理されブロック中も進むが、
+   width/left/height 等はレイアウトを伴うため停止する。ここでは前者のみを使う。 */
+#bootLoader{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(120% 90% at 50% 18%,#3a2a1b 0%,#241a11 45%,#140e09 100%);
+  color:#f4e6c4;font-family:var(--serif,serif);overflow:hidden;
+  transition:opacity .55s ease,visibility .55s ease}
+#bootLoader.done{opacity:0;visibility:hidden;pointer-events:none}
+#bootLoader .bl-inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 24px;text-align:center}
+/* 花菱の輪と、その中で弾む鞠 */
+#bootLoader .bl-mon{position:relative;width:104px;height:104px;margin-bottom:2px}
+#bootLoader .bl-ring{position:absolute;inset:0;border-radius:50%;
+  border:1.5px solid rgba(201,162,63,.55);border-top-color:rgba(255,226,150,.95);border-right-color:rgba(201,162,63,.2);
+  animation:blSpin 2.6s linear infinite}
+#bootLoader .bl-ring::after{content:"";position:absolute;inset:11px;border-radius:50%;
+  border:1px solid rgba(201,162,63,.28);border-bottom-color:rgba(255,226,150,.6)}
+#bootLoader .bl-mari{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#fffdf3 0%,#f0e2c1 52%,#c2a271 100%);
+  box-shadow:inset 0 -3px 6px rgba(120,92,52,.34),0 2px 10px rgba(0,0,0,.34);
+  animation:blBounce 1.15s cubic-bezier(.42,0,.58,1) infinite}
+#bootLoader .bl-shadow{position:absolute;left:50%;top:50%;width:34px;height:9px;margin:20px 0 0 -17px;border-radius:50%;
+  background:rgba(0,0,0,.34);filter:blur(1px);animation:blShadow 1.15s cubic-bezier(.42,0,.58,1) infinite}
+#bootLoader .bl-title{font-size:27px;letter-spacing:.22em;text-indent:.22em;color:#f6ecd2;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+#bootLoader .bl-title b{font-weight:inherit;color:var(--shu-bright,#d4553a)}
+/* 支度の言葉。4つを重ねて opacity のみで巡回させる */
+#bootLoader .bl-msgs{position:relative;height:1.5em;width:min(92vw,420px)}
+#bootLoader .bl-msgs span{position:absolute;left:0;right:0;top:0;font-size:13px;line-height:1.5;letter-spacing:.06em;
+  color:#dcc79a;opacity:0;animation:blMsg 13.2s ease-in-out infinite}
+#bootLoader .bl-msgs span:nth-child(2){animation-delay:3.3s}
+#bootLoader .bl-msgs span:nth-child(3){animation-delay:6.6s}
+#bootLoader .bl-msgs span:nth-child(4){animation-delay:9.9s}
+/* 進捗の帯。scaleX なのでブロック中も伸び続ける */
+#bootLoader .bl-bar{position:relative;width:min(78vw,264px);height:4px;border-radius:999px;
+  background:rgba(255,240,205,.14);overflow:hidden}
+#bootLoader .bl-bar i{position:absolute;inset:0;border-radius:999px;transform-origin:left center;transform:scaleX(.03);
+  background:linear-gradient(90deg,rgba(201,162,63,.75),#f0d68a);animation:blBar 12s cubic-bezier(.16,.7,.24,1) forwards}
+#bootLoader.done .bl-bar i{transform:scaleX(1);animation:none}
+#bootLoader .bl-note{font-size:11.5px;letter-spacing:.16em;color:#a8977a}
+/* 舞い散る桜。translate3d と rotate のみ */
+#bootLoader .bl-petals{position:absolute;inset:0;z-index:1;pointer-events:none}
+#bootLoader .bl-petals i{position:absolute;top:-6%;width:11px;height:11px;opacity:0;
+  background:linear-gradient(140deg,#ffd9e4,#f5aec2);border-radius:11px 1px 11px 1px;
+  animation:blFall linear infinite}
+#bootLoader .bl-petals i:nth-child(1){left:7%;animation-duration:9s;animation-delay:0s}
+#bootLoader .bl-petals i:nth-child(2){left:18%;animation-duration:11s;animation-delay:1.4s;transform:scale(.75)}
+#bootLoader .bl-petals i:nth-child(3){left:29%;animation-duration:8s;animation-delay:2.6s}
+#bootLoader .bl-petals i:nth-child(4){left:41%;animation-duration:12s;animation-delay:.7s;transform:scale(.62)}
+#bootLoader .bl-petals i:nth-child(5){left:53%;animation-duration:9.6s;animation-delay:3.4s}
+#bootLoader .bl-petals i:nth-child(6){left:64%;animation-duration:10.6s;animation-delay:1.9s;transform:scale(.8)}
+#bootLoader .bl-petals i:nth-child(7){left:75%;animation-duration:8.6s;animation-delay:4.2s}
+#bootLoader .bl-petals i:nth-child(8){left:86%;animation-duration:11.6s;animation-delay:2.2s;transform:scale(.7)}
+#bootLoader .bl-petals i:nth-child(9){left:94%;animation-duration:9.2s;animation-delay:5.1s;transform:scale(.58)}
+#bootLoader .bl-petals i:nth-child(10){left:34%;animation-duration:13s;animation-delay:6.3s;transform:scale(.66)}
+@keyframes blSpin{to{transform:rotate(360deg)}}
+@keyframes blBounce{0%,100%{transform:translateY(-13px) scale(1,.98)}45%{transform:translateY(9px) scale(1.06,.94)}55%{transform:translateY(9px) scale(1.06,.94)}}
+@keyframes blShadow{0%,100%{transform:scale(.72);opacity:.22}50%{transform:scale(1.05);opacity:.4}}
+@keyframes blMsg{0%{opacity:0;transform:translateY(5px)}4%,21%{opacity:1;transform:translateY(0)}25%,100%{opacity:0;transform:translateY(-5px)}}
+@keyframes blBar{0%{transform:scaleX(.03)}55%{transform:scaleX(.72)}100%{transform:scaleX(.94)}}
+@keyframes blFall{0%{opacity:0;transform:translate3d(0,0,0) rotate(0)}
+  8%{opacity:.85}
+  50%{transform:translate3d(34px,52vh,0) rotate(220deg)}
+  92%{opacity:.7}
+  100%{opacity:0;transform:translate3d(-14px,106vh,0) rotate(460deg)}}
+@media (prefers-reduced-motion:reduce){
+  #bootLoader .bl-petals{display:none}
+  #bootLoader .bl-ring,#bootLoader .bl-mari,#bootLoader .bl-shadow{animation-duration:6s}
+}
+@media (max-width:520px){
+  #bootLoader .bl-title{font-size:22px}
+  #bootLoader .bl-mon{width:88px;height:88px}
+  #bootLoader .bl-msgs span{font-size:12px}
+}
