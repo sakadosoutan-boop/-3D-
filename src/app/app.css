@@ -2782,3 +2782,77 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
   #bootLoader .bl-mon{width:88px;height:88px}
   #bootLoader .bl-msgs span{font-size:12px}
 }
+
+/* ===== UI仕上げ: モーダル配置・操作フィードバック・遷移・一貫性 (追記ブロック) =====
+   目的: 縦長スマホでの余白/スクロール安全性、キーボード操作時のフォーカスリング、
+   タップ時の押下フィードバック統一、パネル表示の穏やかなフェード、タップ領域44pxの確保。
+   既存デザイン(配色・トップバー構成・#bootLoader)は変更しない。 */
+
+/* --- A: 「難易度選択」「貴族の一日体験」パネルのセーフエリア対応とスクロール保険。
+   他の全画面パネル(#onmyoDivinationPanel 等)は env(safe-area-inset-*) と overflow-y:auto を
+   備えているが、この2つだけ抜けていたため揃える。中身が伸びても主要ボタンへ必ずスクロールで届く。 --- */
+#quizDiffPicker{padding:calc(env(safe-area-inset-top) + 18px) max(18px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 18px) max(18px,env(safe-area-inset-left));overflow-y:auto;-webkit-overflow-scrolling:touch}
+#quizDiffPicker .quiz-diff-card{max-height:calc(100dvh - 40px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+#questRolePicker{padding:calc(env(safe-area-inset-top) + 18px) max(18px,env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 18px) max(18px,env(safe-area-inset-left));overflow-y:auto;-webkit-overflow-scrolling:touch}
+#questRolePicker .role-card{max-height:calc(100dvh - 40px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+/* --- A: 図鑑/立身伝/あゆみ/暦/小テストは中身が長くなるスクロールパネル。
+   見出し(閉じるボタンを含む)をスクロール内で先頭固定にし、下までスクロールしても
+   「閉じる」に毎回スクロールで戻らず届くようにする(#result の sticky footer と同じ考え方を
+   見出し側にも適用。overflow-y:auto + border-radius の親を持つため角丸は自然にクリップされる)。 --- */
+.codex-head,.career-head{position:sticky;top:-24px;z-index:2;margin:-24px -30px 12px;padding:24px 30px 12px;
+  background:linear-gradient(90deg,#e8d8b8,#f5eddd 8%,#f5eddd 92%,#e8d8b8)}
+.history-head,.koyomi-head,.qt-head{position:sticky;top:-24px;z-index:2;margin:-24px -26px 14px;padding:24px 26px 14px;
+  background:linear-gradient(90deg,#e8d8b8,#f5eddd 8%,#f5eddd 92%,#e8d8b8)}
+@media (max-width:760px){
+  .codex-head,.career-head{top:-18px;margin:-18px -18px 12px;padding:18px 18px 12px}
+}
+@media (max-width:480px){
+  .history-head,.koyomi-head,.qt-head{top:-18px;margin:-18px -16px 14px;padding:18px 16px 14px}
+}
+/* 見出し内の閉じるボタンは共通の.tb-btn(34px)のままだと押しづらいため、この文脈だけ44pxを確保 */
+#codexClose,#careerClose,#historyClose,#koyomiClose,#qtClose,#helpClose,#creditsClose{min-height:44px}
+
+/* --- B: キーボード操作時のフォーカスリング + 押下フィードバックの統一。
+   .t-btn はタイトル画面/難易度選択/貴族の一日体験/立身伝などで最も使われる主要ボタンだが
+   focus-visible が未定義だった。金泥色のリングで統一する。
+   また従来は:hoverと:activeが同じ「持ち上がる」動きだったため、押下(:active)は沈む動きに分離する。 --- */
+.t-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(180,64,42,.45)}
+.t-btn:active{transform:translateY(1px);box-shadow:0 3px 10px rgba(180,64,42,.4)}
+.t-btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(201,162,63,.55),0 6px 18px rgba(180,64,42,.45)}
+#title .t-btn:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 24px rgba(180,64,42,.38)}
+#title .t-btn:active{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 4px 14px rgba(180,64,42,.4)}
+#title .t-btn:focus-visible{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 3px rgba(201,162,63,.6),0 8px 24px rgba(180,64,42,.38)}
+#title .t-btn.gold:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 24px rgba(200,160,40,.32)}
+
+.onboard-skip{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+.onboard-skip:focus-visible{outline:none;color:#3a2510;border-color:#8a3b2a;box-shadow:0 0 0 3px rgba(138,59,42,.28)}
+.onboard-skip:active{transform:translateY(1px)}
+
+.era-close{min-height:44px}
+.era-close:focus-visible{outline:none;background:#4a3423;box-shadow:0 0 0 3px rgba(207,170,93,.45)}
+.era-close:active,#eraPanel .era-opt:active{transform:translateY(1px)}
+
+/* 小さすぎるタップ領域を、見た目(サイズ・見え方)を変えずに疑似要素で44px相当まで拡張 */
+#infoClose{position:relative}
+#infoClose::before{content:"";position:absolute;inset:-6px}
+#questMin{position:relative}
+#questMin::before{content:"";position:absolute;inset:-9px}
+
+@media (prefers-reduced-motion:reduce){
+  .t-btn:hover,.t-btn:active,#title .t-btn:hover,#title .t-btn:active,.onboard-skip:active,.era-close:active,#eraPanel .era-opt:active{transform:none}
+}
+
+/* --- C: パネル表示の穏やかなフェード。display:noneから解除される度にanimationは再生されるため
+   JS側の変更なしで適用できる。突然の出現/消失だった短いオーバーレイに150〜220msの動きを付け、
+   reduced-motionでは無効化する。 --- */
+#quizDiffPicker,#questRolePicker,#help,#credits,#gfx,#eraPanel{animation:uiPanelFadeIn .2s ease both}
+@keyframes uiPanelFadeIn{from{opacity:0}to{opacity:1}}
+#quizDiffPicker .quiz-diff-card,#questRolePicker .role-card,.h-card,#eraPanel .era-card{
+  animation:uiPanelPopIn .22s cubic-bezier(.2,.85,.3,1) both}
+@keyframes uiPanelPopIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  #quizDiffPicker,#questRolePicker,#help,#credits,#gfx,#eraPanel,
+  #quizDiffPicker .quiz-diff-card,#questRolePicker .role-card,.h-card,#eraPanel .era-card{
+    animation:none}
+}
