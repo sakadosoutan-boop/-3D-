@@ -8006,8 +8006,12 @@ function makeLowRankPerson({female=false,color=0x6f5438,under=0xc8a96a,tool="non
   const g=new THREE.Group(),robe=heianTextile(color,false,female?3:1),inner=heianTextile(under,false,2),skin=HEIAN_SKIN,
     cord=M({color:0x574029,roughness:.84}),dark=M({color:0x17120e,roughness:.72});
   // [人物刷新] 下半身(裳/袴): 下すぼまりの円錐でなく自然なAラインにし、裾に細い縁取りを添える
-  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.205,.32,.80,14),inner);skirt.position.y=.42;g.add(skirt);
-  const hem=new THREE.Mesh(new THREE.CylinderGeometry(.325,.33,.045,14),robe);hem.position.y=.045;g.add(hem);
+  /* [歩行アニメ] 裾は腰を支点に揺らす。装束の人物は脚が衣に完全に隠れるため、
+     歩いて見える手がかりは「裾の振れ」しかない。腰(y=.82)にピボットを置き、
+     rotation.z=0 の間は従来と寸分違わぬ見た目になるよう子を相対位置へ据え直す。 */
+  const waist=new THREE.Group();waist.position.y=.82;g.add(waist);
+  const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.205,.32,.80,14),inner);skirt.position.y=.42-.82;waist.add(skirt);
+  const hem=new THREE.Mesh(new THREE.CylinderGeometry(.325,.33,.045,14),robe);hem.position.y=.045-.82;waist.add(hem);
   // 胴: 肩を広く腰を締めた台形にして樽のような寸胴感を解消
   const body=new THREE.Mesh(new THREE.CylinderGeometry(.265,.215,.60,14),robe);body.position.y=.965;g.add(body);
   g.add(box(.46,.052,.27,cord,0,.685,.02));                       // 帯
@@ -8056,6 +8060,7 @@ function makeLowRankPerson({female=false,color=0x6f5438,under=0xc8a96a,tool="non
     const scroll=box(.28,.13,.018,M({color:0xe7d9ba,roughness:.86}),0,.82,.34,false);g.add(scroll);
     [-1,1].forEach(s=>{const roll=cyl(.017,.017,.17,M({color:0xa47a4a,roughness:.72}),s*.155,.82,.34,7);roll.rotation.z=Math.PI/2;g.add(roll);});
   }
+  limbs.waist=waist; // 裾の揺れ用(腰ピボット)
   g.userData.limbs=limbs;
   g.scale.setScalar(scale);g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;
 }
@@ -8137,6 +8142,10 @@ function resetHouseholdLimbs(figure,blend){
     if(limbs.hipR)limbs.hipR.rotation.x+=(0-limbs.hipR.rotation.x)*blend;
     if(limbs.shoulderL)limbs.shoulderL.rotation.x+=(0-limbs.shoulderL.rotation.x)*blend;
     if(limbs.shoulderR)limbs.shoulderR.rotation.x+=(0-limbs.shoulderR.rotation.x)*blend;
+    if(limbs.waist){ // 裾も静止姿勢へなめらかに戻す
+      limbs.waist.rotation.z+=(0-limbs.waist.rotation.z)*blend;
+      limbs.waist.rotation.x+=(0-limbs.waist.rotation.x)*blend;
+    }
   }else{
     const legPivots=figure.userData&&Array.isArray(figure.userData.legs)?figure.userData.legs:null;
     if(legPivots&&legPivots.length>=2){
@@ -8186,6 +8195,13 @@ function updateHouseholdWalk(dt,t){
             legPivots[0].rotation.x=legSwing;legPivots[1].rotation.x=-legSwing;
           }
           figure.rotation.y=-legSwing*.16; // 胴の左右のわずかなひねり。root.rotation.y(進行方向)・position.y(bounce)とは別軸なので競合しない
+          /* [裾の揺れ] この人物は装束で脚が完全に隠れるため、脚を振っても見えない。
+             歩いて見える唯一の手がかりが裾なので、腰を支点に左右へ振る。
+             歩幅より少し遅らせる(位相差0.7rad)ことで布が体に遅れてついてくる二次モーションになる。 */
+          if(limbs&&limbs.waist){
+            limbs.waist.rotation.z=Math.sin(legPhase-0.7)*strideAmp*.19;
+            limbs.waist.rotation.x=Math.abs(Math.sin(legPhase))*strideAmp*.05;
+          }
         }
       }
       // 歩行に戻った時、アイドル中の見回し所作・視線追従(rotation.yへの加算オフセット)を持ち越さない
