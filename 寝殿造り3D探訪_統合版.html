@@ -29994,6 +29994,92 @@ if(APP.map==="kamakura"){
   })();
 }
 /* APP_KAMAKURA_EMBED_END */
+/* ============================================================
+   法線マップ(輝度勾配ベース・Sobel)
+   既存の手続き生成canvasテクスチャ(TEX.*)から、明暗の勾配で疑似的な
+   凹凸(XY傾き)を求めてRGBに(nx*.5+.5, ny*.5+.5, nz)を書き込み、
+   凹凸が効く面(屋根/板張り/簀子/塗籠壁/畳/白砂)だけに適用する。
+   起動直後の負荷と競合しないよう大きく遅延させ、1枚ずつ生成する。
+   IS_TOUCH/LOW_POWER/QUALITY低下時、および ?normal=0 指定時は行わない。
+============================================================ */
+(function(){
+  if(/[?&]normal=0/.test(location.search))return; // 明示的な無効化フォールバック
+  function normalMapDeviceDisabled(){
+    return IS_TOUCH
+      || (window.LOW_POWER&&window.LOW_POWER.active)
+      || (typeof QUALITY!=="undefined"&&QUALITY.level>0); // 低品質(自動降格含む)では発熱を増やさないため無効
+  }
+  /* 元canvasを縮小コピーし、輝度のSobel勾配からXY傾きを求めて法線マップ用canvasを返す。
+     タイル境界でも勾配が繋がるよう、サンプリングはラップ(周期境界)で行う。 */
+  function sobelNormalCanvas(srcCanvas,size){
+    const tmp=document.createElement("canvas");tmp.width=size;tmp.height=size;
+    const tx=tmp.getContext("2d");
+    tx.drawImage(srcCanvas,0,0,size,size); // 縮小はブラウザの補間任せ(コスト最小)
+    const src=tx.getImageData(0,0,size,size).data;
+    const lum=new Float32Array(size*size);
+    for(let i=0;i<size*size;i++){const o=i*4;lum[i]=(src[o]*0.299+src[o+1]*0.587+src[o+2]*0.114)/255;}
+    const L=(x,y)=>{x=((x%size)+size)%size;y=((y%size)+size)%size;return lum[y*size+x];};
+    const out=tx.createImageData(size,size);
+    const K=2.6; // 内部ゲイン(仕上がりの強弱は各材質のmaterial.normalScaleで調整)
+    for(let y=0;y<size;y++){
+      for(let x=0;x<size;x++){
+        const tl=L(x-1,y-1),tc=L(x,y-1),tr=L(x+1,y-1);
+        const ml=L(x-1,y),mr=L(x+1,y);
+        const bl=L(x-1,y+1),bc=L(x,y+1),br=L(x+1,y+1);
+        const gx=(tr+2*mr+br)-(tl+2*ml+bl);
+        const gy=(bl+2*bc+br)-(tl+2*tc+tr);
+        let nx=-gx*K,ny=-gy*K,nz=1;
+        const len=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
+        nx/=len;ny/=len;nz/=len;
+        const o=(y*size+x)*4;
+        out.data[o]=(nx*0.5+0.5)*255;
+        out.data[o+1]=(ny*0.5+0.5)*255;
+        out.data[o+2]=(nz*0.5+0.5)*255;
+        out.data[o+3]=255;
+      }
+    }
+    tx.putImageData(out,0,0);
+    return tmp;
+  }
+  /* 生成した法線マップをmaterialへ差し込む。元テクスチャ(TEX.*)は書き換えず、色マップとして使い続ける。
+     wrapS/wrapT/repeatは元テクスチャに揃え、ズレによる破綻を防ぐ。 */
+  function applyNormalMap(mat,srcTex,size,scale){
+    if(!mat||!srcTex||!srcTex.image)return;
+    try{
+      const nc=sobelNormalCanvas(srcTex.image,size);
+      const nt=new THREE.CanvasTexture(nc);
+      nt.wrapS=srcTex.wrapS;nt.wrapT=srcTex.wrapT;
+      if(srcTex.repeat)nt.repeat.copy(srcTex.repeat);
+      nt.needsUpdate=true;
+      mat.normalMap=nt;
+      mat.normalScale=new THREE.Vector2(scale,scale);
+      mat.needsUpdate=true;
+    }catch(e){console.warn("[法線マップ] 生成に失敗:",e);}
+  }
+  const normalMapTasks=[
+    ()=>applyNormalMap(MAT.roof,TEX.roof,256,0.55),      // 檜皮葺の葺き足段差
+    ()=>applyNormalMap(MAT.floor,TEX.woodFloor,256,0.35),// 板張りの目地
+    ()=>applyNormalMap(MAT.sunoko,TEX.sunoko,256,0.4),   // 簀子の板目
+    ()=>applyNormalMap(MAT.plaster,TEX.plaster,128,0.22),// 白漆喰壁の粒立ち
+    ()=>applyNormalMap(MAT.tatami,TEX.tatami,256,0.28),  // 畳表の織り目(表示はCanva写真に差し替わるが凹凸方向は概ね揃う)
+    ()=>applyNormalMap(MAT.sand,TEX.sand,256,0.5),       // 白砂の箒目
+  ];
+  let normalMapTaskIdx=0;
+  function normalMapStep(){
+    if(normalMapTaskIdx>=normalMapTasks.length)return;
+    if(normalMapDeviceDisabled())return; // 途中でLOW_POWER化/品質降格したら以降は行わない
+    try{normalMapTasks[normalMapTaskIdx]();}catch(e){console.warn("[法線マップ]",e);}
+    normalMapTaskIdx++;
+    const sched=window.requestIdleCallback?(cb)=>requestIdleCallback(cb,{timeout:800}):(cb)=>setTimeout(cb,150);
+    sched(normalMapStep);
+  }
+  // 起動直後の重い処理と競合しないよう大きく遅延させ、QUALITYの初回自動調整が済んでから判定する
+  setTimeout(()=>{
+    if(normalMapDeviceDisabled())return;
+    const sched=window.requestIdleCallback?(cb)=>requestIdleCallback(cb,{timeout:800}):(cb)=>setTimeout(cb,50);
+    sched(normalMapStep);
+  },4000);
+})();
 animate();
 
 /* ===== 恋愛モード 演出関数(Phase F) ===== */
