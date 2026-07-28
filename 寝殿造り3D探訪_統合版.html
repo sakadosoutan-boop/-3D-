@@ -10583,6 +10583,7 @@ const SOUNDSCAPE = {
 };
 
 const _sfxTmpVec = new THREE.Vector3();  // updateSpatialで火源のワールド座標取得に再利用(毎フレームの確保を避ける)
+const SFX_SPATIAL_PARAM_OFF=/[?&]spatial=0/.test(location.search); // [音]?spatial=0 で3D空間音響(定位/距離減衰)を明示無効化するフォールバック
 const SFX = {
   ctx:null, master:null, base:"sounds/",
   media:{},                         // ファイル名 -> HTMLAudioElement (file://対応)
@@ -10610,6 +10611,8 @@ const SFX = {
   bossBgm: { spring:"九尾狐戦.mp3", summer:"提灯・河童戦.mp3", autumn:"人魂・大鬼戦.mp3", winter:"雪女戦.mp3" }, // ボス戦BGM(ループ)
   _rot:{}, _last:{}, _active:[], _curScene:null, _bedMedia:null, _bedBase:0.34, _curBed:false,
   _fireMedia:null, _themeMedia:null, _bossMedia:null, _spatialT:0, _muted:false, _backgroundPaused:false,
+  /* [音]3D空間音響: 同時使用PannerNode(上限8)の登録簿 + 篝火/灯台/火桶の定位ループ(key別) */
+  _panners:[], _MAX_PANNERS:8, _spatialFires:{}, _listenerT:0,
 
   load(ctx){
     this.ctx = ctx;
@@ -10633,7 +10636,9 @@ const SFX = {
      [音バグ修正] 実録ファイルは存在するが同時発音数の上限で見送っただけの場合まで false を返すと、
      呼び出し元が「ロード失敗」と誤認して合成音フォールバックに落ちてしまう(実録優先の原則が崩れる)。
      ファイル欠損時のみ false、それ以外(容量超過)は true を返して"今回は無音"に留める。 */
-  playCall(cat, gain = 0.6){
+  /* spatialPos:{x,y,z} を渡すと(空間音響が有効かつPannerNode上限に余裕があれば)定位付きで再生する。
+     [音]渡さない/無効時は従来どおり無指定(画面中央)の直接再生にフォールバックする——既存呼び出し元は無改修で動く。 */
+  playCall(cat, gain = 0.6, spatialPos){
     const list = (this.pools[cat] || []).filter(f => this.media[f]);
     if(!list.length) return false;  // 本当にファイルが無い(または全滅)場合のみ合成音へ
     if(this._active.length >= 6) return true;  // 同時発音数の上限(クローン要素の残留と負荷=音とぎれを防ぐ)。実録は存在するので合成音には落とさず、今回は静かに見送る
@@ -10641,17 +10646,27 @@ const SFX = {
     try{
       const src=this.media[list[n]].cloneNode(true);src.volume=Math.max(0,Math.min(1,gain));
       src.playbackRate=0.97+Math.random()*.06;src.muted=this._muted;
-      const rec={src,media:true};this._active.push(rec);
+      const rec={src,media:true,panner:null};this._active.push(rec);
       // 再生終了/失敗(play()がPromiseを拒否した場合を含む)時は配列から外し、要素のバッファも解放してGCを促す(長時間プレイでの肥大化防止)
-      const done = () => { const i = this._active.indexOf(rec); if(i>=0) this._active.splice(i,1); try{src.onended=null;src.onerror=null;src.removeAttribute("src");src.load();}catch(e){} };
+      const done = () => { const i = this._active.indexOf(rec); if(i>=0) this._active.splice(i,1); if(rec.panner)this.releasePanner(rec.panner); try{src.onended=null;src.onerror=null;src.removeAttribute("src");src.load();}catch(e){} };
       src.onended = done; src.onerror = done;
+      if(spatialPos && this.spatialAllowed()){
+        try{
+          const panner=this.createPanner(spatialPos.x, spatialPos.y==null?1.6:spatialPos.y, spatialPos.z);
+          if(panner){
+            const node=this.ctx.createMediaElementSource(src);
+            node.connect(panner);panner.connect(this.master);
+            rec.panner=panner;this.registerPanner(panner,"call",cat);
+          }
+        }catch(e){ rec.panner=null; } // 接続に失敗しても通常再生は続行(定位なしにフォールバック)
+      }
       src.play().catch(done); // [音バグ修正] play()の拒否時にdoneを呼ばないと_activeに残留し続け、同時発音数の上限に恒久的に達してしまう(=以後ずっと合成音フォールバック化)
       return true;
     }catch(e){ return false; }
   },
   /* 季節/時間が変わったら再生中の長い鳴き声を止める(残留防止) */
   stopActiveCalls(fade = 0.3){
-    this._active.forEach(a=>{try{a.src.pause();a.src.currentTime=0;}catch(e){}});
+    this._active.forEach(a=>{try{a.src.pause();a.src.currentTime=0;}catch(e){} if(a.panner)this.releasePanner(a.panner);}); // [音]定位付きで鳴っていた鳴き声もPannerNodeを確実に切断する(ended/errorを介さないため個別に解放)
     this._active = [];
   },
   /* 波AE: 物語のstage.silence用——環境音(環境ベッド+鳴き声)を一時的に無音化し、msの後に自動復帰 */
@@ -10661,6 +10676,15 @@ const SFX = {
     clearTimeout(this._duckT);
     this._duckT=setTimeout(()=>{if(this._bedMedia&&this._curBed)this._bedMedia.volume=this._bedBase;},ms||4000);
   },
+  /* [音]鳥・虫の鳴き声ごとにランダムな方向・距離を与える。鳴くたびに違う位置から聞こえることで定位の効果を体感しやすくする。
+     種別により高さの目安を変える(鳥は樹上・空、虫や蛙は地表)。プレイヤー未初期化時はnullを返し、無指定(中央)再生にフォールバックする。 */
+  _callHeight:{spring_bird:5.5,hototogisu:6,kakkou:7,kari:9,tsuru:8,kawazu:0.2,insect4:0.4,higurashi:3},
+  _randomCallPos(pool){
+    if(typeof player==="undefined"||!player.pos)return null;
+    const ang=Math.random()*Math.PI*2, dist=7+Math.random()*16;
+    const h=this._callHeight[pool]!=null?this._callHeight[pool]:2;
+    return {x:player.pos.x+Math.sin(ang)*dist, y:player.pos.y+h, z:player.pos.z+Math.cos(ang)*dist};
+  },
   /* 音風景の鳴き声ルールを最小間隔つきで実行(重なり防止) */
   schedule(season, time, fallback){
     const sc = SOUNDSCAPE[season + "/" + time] || SOUNDSCAPE[season + "/day"]; if(!sc) return; // 未定義の組み合わせは昼の環境音にフォールバック
@@ -10669,7 +10693,7 @@ const SFX = {
       if(now - (this._last[c.pool] || 0) < c.gap) return;
       if(Math.random() < c.prob){
         this._last[c.pool] = now;
-        if(!this.playCall(c.pool, c.gain) && fallback) fallback(c.pool);
+        if(!this.playCall(c.pool, c.gain, this._randomCallPos(c.pool)) && fallback) fallback(c.pool);
       }
     });
   },
@@ -10683,7 +10707,11 @@ const SFX = {
     // タイトル画面中、および位階出世ゲーム(3D世界を隠すCanvas2D専用モード)中は環境音を停止
     if(typeof APP !== "undefined" && (APP.mode === "title" || APP.mode === "ikaiSuika" || APP.mode === "kaiawase" || APP.mode === "kemari")){
       if(this._bedMedia){try{this._bedMedia.pause();this._bedMedia.currentTime=0;}catch(e){}}
-      this._bedMedia=null;this._curBed=null;this._curScene=null;return;
+      this._bedMedia=null;this._curBed=null;this._curScene=null;
+      // [音]これらのモードではupdateSpatialが呼ばれなくなる(animate側がmode==="title"等で更新を止めるため)。
+      // 篝火/灯台/火桶の定位ループ・旧混合ループの双方を確実に片付け、鳴りっぱなしを防ぐ。
+      this._teardownAllFire();this._teardownLegacyFire();
+      return;
     }
     const scene = (typeof APP !== "undefined") ? APP.season + "/" + APP.time : null;
     if(scene !== this._curScene){ this.stopActiveCalls(); this._curScene = scene; }  // 季節/時間が変わったら長い声を停止
@@ -10702,9 +10730,10 @@ const SFX = {
     this._curBed = key;
   },
   /* 毎フレーム(間引き): せせらぎの距離減衰 + 焚火の近接再生 */
-  updateSpatial(px, pz){
-    const now = performance.now(); if(now - this._spatialT < 150) return; this._spatialT = now;
-    // せせらぎ: 屋内では消音、池から離れるほど小さく
+  updateSpatial(px, py, pz, yaw){
+    const now = performance.now(); if(now - this._spatialT < 80) return; this._spatialT = now; // [音]listener/pannerの同期を10〜15Hz程度に間引く
+    this.updateListener(px, py, pz, yaw);
+    // せせらぎ: 屋内では消音、池から離れるほど小さく(左右の定位付けは行わず、既存どおり距離減衰のみの近接ループとする)
     if(this._curBed === "water" && this._bedMedia){
       const indoor=(typeof groundH==="function")&&groundH(px,pz)>0.05;
       if(indoor){ this._bedMedia.volume=0; }else{
@@ -10714,8 +10743,18 @@ const SFX = {
         this._bedMedia.volume=this._bedBase*f;
       }
     }
-    // 火(焚火)ループは1本に統合。"燃えている"火源=夜の屋外篝火(KAGARIBI)＋点火中の屋内火桶・炭櫃(braziers)
-    // のうち最も近いものとの距離で音量を決める。離れれば自然に消える(=点けっぱなしでも遠ければ鳴らない)。
+    // 火(篝火/灯台/火桶): 空間音響が有効なら音源ごとに定位付きループ(A/C優先)、
+    // 無効(LOW_POWER中・?spatial=0)時は従来の"最も近い火源との距離だけで音量を決める単一混合ループ"へ確実にフォールバックする。
+    if(this.spatialAllowed()){
+      this._teardownLegacyFire();
+      this.updateFireSpatial(px, py, pz);
+    }else{
+      this._teardownAllFire();
+      this.updateLegacyFire(px, pz);
+    }
+  },
+  /* [音]空間音響が使えない/無効時のフォールバック——旧実装のまま(1本の混合ループ・距離減衰のみ) */
+  updateLegacyFire(px, pz){
     let fireD = Infinity;
     if(typeof APP !== "undefined" && APP.time === "night" && typeof KAGARIBI !== "undefined")
       KAGARIBI.forEach(k => { const dd = Math.hypot(px-k.x, pz-k.z); if(dd < fireD) fireD = dd; });
@@ -10736,6 +10775,108 @@ const SFX = {
       this._fireMedia=null;
     }
   },
+  _teardownLegacyFire(){
+    if(this._fireMedia){ try{this._fireMedia.pause();this._fireMedia.currentTime=0;}catch(e){} this._fireMedia=null; }
+  },
+  /* --- 空間音響: 共通ヘルパー --- */
+  /* LOW_POWER中・?spatial=0・AudioContext未初期化のいずれかならfalse(=無効)。呼び出し側は都度これで判定する。 */
+  spatialAllowed(){
+    return !!(this.ctx && !SFX_SPATIAL_PARAM_OFF && !(window.LOW_POWER && window.LOW_POWER.active));
+  },
+  /* PannerNodeを生成して返す。同時使用数の上限(_MAX_PANNERS)に達していればnull(呼び出し側は定位なし再生にフォールバックする)。
+     HRTFは負荷が高いためequalpowerを既定にし、距離減衰はinverseモデル。邸のスケール(±57程度)に合わせて調整。 */
+  createPanner(x,y,z){
+    if(!this.ctx || this._panners.length>=this._MAX_PANNERS)return null;
+    try{
+      const p=this.ctx.createPanner();
+      p.panningModel="equalpower";
+      p.distanceModel="inverse";
+      p.refDistance=2.5;   // これより近ければほぼ最大音量
+      p.maxDistance=90;    // 邸全体(±57程度)を覆う
+      p.rolloffFactor=1.15;
+      if(p.coneInnerAngle!=null){p.coneInnerAngle=360;p.coneOuterAngle=360;p.coneOuterGain=1;} // 指向性は使わず全方位
+      this.setPannerPos(p,x,y,z);
+      return p;
+    }catch(e){ return null; }
+  },
+  setPannerPos(node,x,y,z){
+    try{
+      if(node.positionX){ node.positionX.value=x; node.positionY.value=y; node.positionZ.value=z; }
+      else if(node.setPosition) node.setPosition(x,y,z);
+    }catch(e){}
+  },
+  registerPanner(node,kind,key){ this._panners.push({node,kind,key}); },
+  releasePanner(node){
+    if(!node)return;
+    const i=this._panners.findIndex(p=>p.node===node);
+    if(i>=0)this._panners.splice(i,1);
+    try{node.disconnect();}catch(e){}
+  },
+  /* AudioListenerをプレイヤーの位置・向きへ同期する(呼び出し元のupdateSpatialで10〜15Hz程度に間引き済み)。
+     AudioParam系(positionX等)と旧式setPosition/setOrientationの両方に対応する(ブラウザ差で片方しか無いことがある)。 */
+  updateListener(px,py,pz,yaw){
+    if(!this.ctx)return;
+    try{
+      const L=this.ctx.listener; if(!L)return;
+      const fx=-Math.sin(yaw||0), fz=-Math.cos(yaw||0); // 既存の前方ベクトル規約(player.yaw)に合わせる
+      if(L.positionX){
+        L.positionX.value=px;L.positionY.value=py;L.positionZ.value=pz;
+        L.forwardX.value=fx;L.forwardY.value=0;L.forwardZ.value=fz;
+        L.upX.value=0;L.upY.value=1;L.upZ.value=0;
+      }else if(L.setPosition){
+        L.setPosition(px,py,pz);
+        if(L.setOrientation)L.setOrientation(fx,0,fz,0,1,0);
+      }
+    }catch(e){}
+  },
+  /* [音]篝火(夜間)・点火中の灯台/火桶を定位対象として列挙する(距離判定はupdateFireSpatial側で行う) */
+  _fireCandidates(){
+    const list=[];
+    if(typeof APP !== "undefined" && APP.time === "night" && typeof KAGARIBI !== "undefined")
+      KAGARIBI.forEach((k,i)=>list.push({key:"kagaribi"+i,x:k.x,y:1.9,z:k.z}));
+    if(typeof gimmicks !== "undefined" && gimmicks.braziers)
+      gimmicks.braziers.forEach((b,i)=>{ if(!b.lit||!b.g)return; b.g.getWorldPosition(_sfxTmpVec); list.push({key:"brazier"+i,x:_sfxTmpVec.x,y:_sfxTmpVec.y+0.6,z:_sfxTmpVec.z}); });
+    if(typeof gimmicks !== "undefined" && gimmicks.lamps)
+      gimmicks.lamps.forEach((l,i)=>{ if(!l.lit||!l.g)return; l.g.getWorldPosition(_sfxTmpVec); list.push({key:"lamp"+i,x:_sfxTmpVec.x,y:_sfxTmpVec.y+1.7,z:_sfxTmpVec.z}); });
+    return list;
+  },
+  /* [音]篝火/灯台/火桶を音源ごとに定位付きループで鳴らす(優先度A/C: 位置がはっきりしていて効果が分かりやすい)。
+     1音源=1 PannerNode+1 <audio>クローン(使い終えたら必ず切断・破棄する)。範囲外(9m超)・消灯・夜明けで自動的に後片付けする。 */
+  updateFireSpatial(px,py,pz){
+    if(!this.media[this.loops.takibi])return;
+    const want=new Set();
+    this._fireCandidates().forEach(f=>{
+      const d=Math.hypot(px-f.x, pz-f.z);
+      if(d>=9)return; // 既存の距離しきい値(旧実装のfireD<9)を踏襲
+      want.add(f.key);
+      let rec=this._spatialFires[f.key];
+      if(!rec){
+        const panner=this.createPanner(f.x,f.y,f.z);
+        if(!panner)return; // 上限到達時は今回は見送る(次サイクルで再試行)
+        try{
+          const src=this.media[this.loops.takibi].cloneNode(true);
+          src.loop=true;src.muted=this._muted;
+          const node=this.ctx.createMediaElementSource(src);
+          node.connect(panner);panner.connect(this.master);
+          if(!this._backgroundPaused&&!this._muted)src.play().catch(()=>{});
+          rec={media:src,node,panner,x:f.x,y:f.y,z:f.z};
+          this._spatialFires[f.key]=rec;
+          this.registerPanner(panner,"fire",f.key);
+        }catch(e){ return; }
+      }
+      // 近接ループ自体の音量も距離でわずかに絞る(パナーの距離減衰と合わせ、近づくほどはっきり聞こえるようにする)
+      const g=Math.max(0.12, Math.min(0.55, (1-d/7.5)*0.55));
+      try{rec.media.volume=g;}catch(e){}
+    });
+    Object.keys(this._spatialFires).forEach(k=>{ if(!want.has(k)) this._teardownFire(k); });
+  },
+  _teardownFire(key){
+    const rec=this._spatialFires[key]; if(!rec)return;
+    try{rec.media.pause();rec.media.removeAttribute("src");rec.media.load();}catch(e){}
+    if(rec.panner)this.releasePanner(rec.panner);
+    delete this._spatialFires[key];
+  },
+  _teardownAllFire(){ Object.keys(this._spatialFires).forEach(k=>this._teardownFire(k)); },
   /* 火桶/炭櫃の点火・消火に連動。実制御はupdateSpatial(距離減衰)へ統合したので、ここでは即時に再計算させるだけ。 */
   setBrazier(on){ this._spatialT = 0; },
   /* タイトル画面のメインテーマ(小音量ループ)。ゲーム開始時(enterMode)にstopThemeで停止。
@@ -10815,9 +10956,10 @@ const SFX = {
   },
   setMuted(m){
     this._muted=m;
-    if(this.master&&this.ctx)this.master.gain.setTargetAtTime(m?0:1,this.ctx.currentTime,.15);
+    if(this.master&&this.ctx)this.master.gain.setTargetAtTime(m?0:1,this.ctx.currentTime,.15); // [音]master経由(パナー定位ループもここに接続)なのでこの一行で空間音響側も連動して消音される
     if(this._bedMedia)this._bedMedia.muted=m;if(this._fireMedia)this._fireMedia.muted=m;if(this._themeMedia)this._themeMedia.muted=m;if(this._bossMedia)this._bossMedia.muted=m;
     this._active.forEach(a=>a.src.muted=m);
+    Object.values(this._spatialFires).forEach(r=>{try{r.media.muted=m;}catch(e){}}); // [音]篝火/灯台/火桶の定位ループ
     if(!m&&!this._backgroundPaused){if(this._bedMedia)this._bedMedia.play().catch(()=>{});if(this._fireMedia)this._fireMedia.play().catch(()=>{});if(this._themeMedia)this.playTheme().catch(()=>{});if(this._bossMedia)this._bossMedia.play().catch(()=>{});}
   },
   setBackgroundPaused(paused){
@@ -10827,12 +10969,14 @@ const SFX = {
       if(this._fireMedia)this._fireMedia.pause();
       if(this._themeMedia)this._themeMedia.pause();
       if(this._bossMedia)this._bossMedia.pause();
+      Object.values(this._spatialFires).forEach(r=>{try{r.media.pause();}catch(e){}}); // [音]バックグラウンド中は定位ループも停止
       this.stopActiveCalls();
     }else if(!this._muted){
       if(this._bedMedia)this._bedMedia.play().catch(()=>{});
       if(this._fireMedia)this._fireMedia.play().catch(()=>{});
       if(this._themeMedia)this.playTheme().catch(()=>{}); // [音バグ修正] 直接play()せずplayThemeを経由し、title以外への復帰では再点火しないようにする
       if(this._bossMedia)this._bossMedia.play().catch(()=>{});
+      Object.values(this._spatialFires).forEach(r=>{try{r.media.play().catch(()=>{});}catch(e){}});
     }
   },
   /* 波AA: ED5「百年の夢」専用——チャイムを2倍速で鳴らし続け、雅楽(伎楽テーマ)と風を逆再生で流す */
@@ -24780,7 +24924,7 @@ function animate(now){
       const pulse=1+Math.sin(t*4)*.08;itemFocus.scale.setScalar(pulse);
       itemFocus.rotation.y=t*.6;
     }else itemFocus.visible=false;
-    if(typeof SFX!=="undefined"&&SFX.ctx)SFX.updateSpatial(player.pos.x,player.pos.z); // [音]せせらぎ距離減衰/焚火近接
+    if(typeof SFX!=="undefined"&&SFX.ctx)SFX.updateSpatial(player.pos.x,player.pos.y,player.pos.z,player.yaw); // [音]せせらぎ距離減衰/焚火近接 + 3D空間音響(listener同期・篝火/灯台/火桶の定位)
     questUpdate();
     if(APP.mode==="quiz")quizUpdate();
     if(APP.mode==="kaimami")kaimamiUpdate(dt);
