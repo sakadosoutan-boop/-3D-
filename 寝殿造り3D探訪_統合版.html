@@ -8014,12 +8014,21 @@ function makeLowRankPerson({female=false,color=0x6f5438,under=0xc8a96a,tool="non
   const neck=cyl(.050,.060,.11,skin,0,1.27,.01,8);g.add(neck);   // 首(頭が肩に埋まらないよう短く通す)
   // 打ち合わせのV字襟(内衣の色を胸元に覗かせる)
   [-1,1].forEach(s=>{const col=box(.052,.20,.02,inner,s*.052,1.10,.19);col.rotation.z=s*.42;col.rotation.x=-.14;g.add(col);});
+  // [歩行アニメ]肩(袖)と股関節(脚)にピボット用グループを設け、rotation.xのみで前後に振れるようにする。
+  // ピボットの位置=関節点(肩/股)に置き、子メッシュは元の絶対位置からピボット分を差し引いた相対位置に据え直す。
+  // → ピボットのrotation.xが0の間は従来と完全に同じ見た目(静止姿勢)になり、回転時も関節を中心に脚/袖全体が振れる(脚が胴の中心で回って千切れて見える事故を防ぐ)。
+  const limbs={};
   [-1,1].forEach(s=>{
-    // 袖: 手首へ向けて広がる垂れ袖(直垂の袂)。棒状の腕から布の量感へ
-    const sleeve=new THREE.Mesh(new THREE.CylinderGeometry(.072,.135,.46,9),robe);sleeve.position.set(s*.255,.97,.05);sleeve.rotation.z=s*.30;sleeve.rotation.x=-.10;g.add(sleeve);
-    const hand=new THREE.Mesh(new THREE.SphereGeometry(.046,9,7),skin);hand.position.set(s*.365,.765,.155);hand.scale.set(1,.85,1.12);g.add(hand);
-    const leg=cyl(.052,.068,.40,inner,s*.10,.17,.01,8);g.add(leg);
-    const foot=box(.135,.055,.225,M({color:0xe4d7bf,roughness:.9}),s*.10,.035,.085);g.add(foot);
+    const side=s<0?"L":"R";
+    // 肩ピボット: 袖の付け根付近(=肩)。子は元のposition/rotationからピボット位置分を引いた相対値。
+    const shoulder=new THREE.Group();shoulder.position.set(s*.255,1.06,.05);g.add(shoulder);
+    const sleeve=new THREE.Mesh(new THREE.CylinderGeometry(.072,.135,.46,9),robe);sleeve.position.set(0,.97-1.06,0);sleeve.rotation.z=s*.30;sleeve.rotation.x=-.10;shoulder.add(sleeve);
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(.046,9,7),skin);hand.position.set(s*.365-s*.255,.765-1.06,.155-.05);hand.scale.set(1,.85,1.12);shoulder.add(hand);
+    // 股関節ピボット: 脚の付け根(=股)。スカート(裳)の内側に隠れる高さに置く。
+    const hip=new THREE.Group();hip.position.set(s*.10,.37,.01);g.add(hip);
+    const leg=cyl(.052,.068,.40,inner,0,.17-.37,0,8);hip.add(leg);
+    const foot=box(.135,.055,.225,M({color:0xe4d7bf,roughness:.9}),0,.035-.37,.085-.01);hip.add(foot);
+    limbs["shoulder"+side]=shoulder;limbs["hip"+side]=hip;limbs["sleeve"+side]=sleeve;limbs["hand"+side]=hand;limbs["leg"+side]=leg;limbs["foot"+side]=foot;
   });
   const head=new THREE.Mesh(HEIAN_GEO.head,skin);head.position.set(0,1.375,.02);head.scale.set(.140,.160,.135);g.add(head);
   const hair=new THREE.Mesh(HEIAN_GEO.hairCap,HEIAN_HAIR);hair.position.set(0,1.45,0);hair.scale.set(.14,.12,.13);g.add(hair);
@@ -8047,6 +8056,7 @@ function makeLowRankPerson({female=false,color=0x6f5438,under=0xc8a96a,tool="non
     const scroll=box(.28,.13,.018,M({color:0xe7d9ba,roughness:.86}),0,.82,.34,false);g.add(scroll);
     [-1,1].forEach(s=>{const roll=cyl(.017,.017,.17,M({color:0xa47a4a,roughness:.72}),s*.155,.82,.34,7);roll.rotation.z=Math.PI/2;g.add(roll);});
   }
+  g.userData.limbs=limbs;
   g.scale.setScalar(scale);g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;
 }
 function makeKeishiObject(){
@@ -8118,9 +8128,28 @@ function makeChildNobleObject(color=0xc27b45){
   window.HOUSEHOLD_MODEL_STATUS={loaded:11,total:11,procedural:true};
 })();
 let _houseIdleGlanceGlobalT=-1e9; // [アイドル演出]所作(見回し)が複数人で同時に起きないようにする全体クールダウン用タイムスタンプ
+// [歩行アニメ]脚(hipL/hipR or legs[0,1])・肩(shoulderL/shoulderR、あれば)・胴のひねり(figure.rotation.y)を基準姿勢(0)へなめらかに戻す。
+// 歩行→静止の切替、およびREDUCED_MOTION/LOW_POWER/タイトルでの無効化時の両方から呼ばれる共通処理。
+function resetHouseholdLimbs(figure,blend){
+  const limbs=figure.userData&&figure.userData.limbs;
+  if(limbs){
+    if(limbs.hipL)limbs.hipL.rotation.x+=(0-limbs.hipL.rotation.x)*blend;
+    if(limbs.hipR)limbs.hipR.rotation.x+=(0-limbs.hipR.rotation.x)*blend;
+    if(limbs.shoulderL)limbs.shoulderL.rotation.x+=(0-limbs.shoulderL.rotation.x)*blend;
+    if(limbs.shoulderR)limbs.shoulderR.rotation.x+=(0-limbs.shoulderR.rotation.x)*blend;
+  }else{
+    const legPivots=figure.userData&&Array.isArray(figure.userData.legs)?figure.userData.legs:null;
+    if(legPivots&&legPivots.length>=2){
+      legPivots[0].rotation.x+=(0-legPivots[0].rotation.x)*blend;
+      legPivots[1].rotation.x+=(0-legPivots[1].rotation.x)*blend;
+    }
+  }
+  if(figure.rotation.y)figure.rotation.y+=(0-figure.rotation.y)*blend;
+}
 function updateHouseholdWalk(dt,t){
+  const lowPower=!!(window.LOW_POWER&&window.LOW_POWER.active);
   // [アイドル演出]立ち止まり中の人物に呼吸・重心の微揺れ・稀な所作を与える。REDUCED_MOTION/LOW_POWER/タイトル画面では無効にする
-  const idleOn=APP.mode!=="title"&&!REDUCED_MOTION&&!(window.LOW_POWER&&window.LOW_POWER.active);
+  const idleOn=APP.mode!=="title"&&!REDUCED_MOTION&&!lowPower;
   householdPeople.forEach(root=>{
     const route=root.userData.walkRoute;
     const figure=root.children[0];
@@ -8135,8 +8164,34 @@ function updateHouseholdWalk(dt,t){
       root.rotation.y=yaw+Math.sin(t*1.3+(root.userData.walkPhase||0))*.035;
       const bounce=Math.sin(t*7.0+(root.userData.walkPhase||0))*0.015;
       root.children.forEach(ch=>{ch.position.y=bounce;ch.rotation.z=0;});
-      // 歩行に戻った時、アイドル中の見回し所作(rotation.yへの加算オフセット)を持ち越さない
+      // [歩行アニメ]脚の交互振り(hipL/hipR.rotation.x、逆位相)+袖の振り(脚と逆相・振り幅は脚の6割)+胴のわずかなひねり(figure.rotation.y)。
+      // sinのみで計算し、毎フレームの新規オブジェクト生成はしない。REDUCED_MOTIONでは無効(=脚/腕/ひねりは基準姿勢のまま静かに滑らかに移動するだけ)。
+      if(figure&&!REDUCED_MOTION){
+        const limbs=figure.userData&&figure.userData.limbs;
+        const legPivots=!limbs&&figure.userData&&Array.isArray(figure.userData.legs)&&figure.userData.legs.length>=2?figure.userData.legs:null;
+        if(limbs||legPivots){
+          const spd=root.userData.walkSpeed||.08;
+          const legFreq=spd*90; // 歩行速度が速いほど脚の周期が短く(速く)なる
+          const strideAmp=Math.min(.55,.28+spd*2.4)*(lowPower?.82:1); // 速いほど歩幅もわずかに大きく。LOW_POWERでは振り幅を抑える
+          const legT=lowPower?Math.floor(t*15)/15:t; // LOW_POWER: 更新頻度を~15Hzへ間引いて負荷を抑える
+          const legPhase=legT*legFreq+(root.userData.walkPhase||0);
+          const legSwing=Math.sin(legPhase)*strideAmp;
+          if(limbs){
+            if(limbs.hipL)limbs.hipL.rotation.x=legSwing;
+            if(limbs.hipR)limbs.hipR.rotation.x=-legSwing;
+            const armSwing=legSwing*.6; // 腕(袖)は脚より振り幅を抑え、脚と逆相(右脚が前なら左腕が前)にする
+            if(limbs.shoulderR)limbs.shoulderR.rotation.x=armSwing;
+            if(limbs.shoulderL)limbs.shoulderL.rotation.x=-armSwing;
+          }else{
+            legPivots[0].rotation.x=legSwing;legPivots[1].rotation.x=-legSwing;
+          }
+          figure.rotation.y=-legSwing*.16; // 胴の左右のわずかなひねり。root.rotation.y(進行方向)・position.y(bounce)とは別軸なので競合しない
+        }
+      }
+      // 歩行に戻った時、アイドル中の見回し所作・視線追従(rotation.yへの加算オフセット)を持ち越さない
       if(root.userData._idleGlancePrev){root.userData._idleGlancePrev=0;}
+      if(root.userData._gazePrev){root.userData._gazePrev=0;}
+      root.userData._gazeCur=0;
       root.userData.idleGlanceStart=null;
     }else if(idleOn&&figure){
       const seed=root.userData.idleSeed||0;
@@ -8146,6 +8201,8 @@ function updateHouseholdWalk(dt,t){
       const blend=Math.min(1,dt*5); // 歩行→静止/静止→歩行の切替でカクつかないようになめらかに追従させる
       figure.position.y+=(breathe-figure.position.y)*blend;
       figure.rotation.z+=(sway-figure.rotation.z)*blend;
+      // 静止中は脚・腕・胴のひねりを基準姿勢へなめらかに戻す(歩行アニメとの切替をカクつかせない)
+      resetHouseholdLimbs(figure,blend);
       // 数十秒に一度、ランダムな人物が軽く向きを変えて周囲を見る所作(rotation.yへ加算→戻すだけで基準姿勢は変えない)
       if(root.userData.idleNextGlance===undefined)root.userData.idleNextGlance=t+16+(seed%44);
       let glanceOffset=0;
@@ -8163,13 +8220,37 @@ function updateHouseholdWalk(dt,t){
       }
       const prevGlance=root.userData._idleGlancePrev||0;
       if(glanceOffset!==prevGlance){root.rotation.y+=glanceOffset-prevGlance;root.userData._idleGlancePrev=glanceOffset;}
+      // [視線追従]静止中、プレイヤーが近ければ首/体をプレイヤー側へわずかに(最大±0.50rad≈29°)向ける。遠いと無効。
+      // idleGlance(見回し)とは独立した加算オフセット(_gazePrev)にして、両者が同時にrotation.yを奪い合わないようにする。
+      let gazeTarget=0;
+      if(player&&player.pos){
+        const dx=player.pos.x-root.position.x,dz=player.pos.z-root.position.z,dist=Math.hypot(dx,dz);
+        const GAZE_RADIUS=9,GAZE_MAX=.50;
+        if(dist<GAZE_RADIUS){
+          // 現在のrotation.yから既存の見回し/視線オフセット分を除いた「素の向き」を基準に、プレイヤー方向との差分を求める
+          const baseYaw=root.rotation.y-glanceOffset-(root.userData._gazePrev||0);
+          let diff=Math.atan2(dx,dz)-baseYaw;
+          diff=Math.atan2(Math.sin(diff),Math.cos(diff)); // [-π,π]に正規化
+          const near=1-Math.min(1,dist/GAZE_RADIUS); // 近いほど1に近づく(遠いほど無効化)
+          gazeTarget=Math.max(-GAZE_MAX,Math.min(GAZE_MAX,diff))*near;
+        }
+      }
+      const gazeBlend=Math.min(1,dt*3); // 急に振り向かないよう滑らかに補間
+      const gazeCur=(root.userData._gazeCur||0)+(gazeTarget-(root.userData._gazeCur||0))*gazeBlend;
+      root.userData._gazeCur=gazeCur;
+      const prevGaze=root.userData._gazePrev||0;
+      if(gazeCur!==prevGaze){root.rotation.y+=gazeCur-prevGaze;root.userData._gazePrev=gazeCur;}
     }else if(figure){
-      // REDUCED_MOTION/LOW_POWER/タイトル画面: アイドル演出を無効にし、値が残っていればなめらかに静止姿勢へ戻す
+      // REDUCED_MOTION/LOW_POWER/タイトル画面: アイドル演出(呼吸・重心・見回し・視線追従)を無効にし、値が残っていればなめらかに静止姿勢へ戻す
       const blend=Math.min(1,dt*5);
       if(figure.position.y)figure.position.y+=(0-figure.position.y)*blend;
       if(figure.rotation.z)figure.rotation.z+=(0-figure.rotation.z)*blend;
+      resetHouseholdLimbs(figure,blend);
       const prevGlance=root.userData._idleGlancePrev;
       if(prevGlance){root.rotation.y-=prevGlance;root.userData._idleGlancePrev=0;}
+      const prevGaze=root.userData._gazePrev;
+      if(prevGaze){root.rotation.y-=prevGaze;root.userData._gazePrev=0;}
+      root.userData._gazeCur=0;
       root.userData.idleGlanceStart=null;
     }
     const id=root.userData.householdId,it=interactables[id];
@@ -14851,15 +14932,18 @@ function makeKaimamiGuard(){
   const breast=box(.44,.33,.08,armor,0,1.22,.23,false);breast.rotation.x=-.04;g.add(breast);
   [-2,-1,0,1,2].forEach(i=>{const plate=box(.070,.34,.020,M({color:i%2?0x2e2b28:0x1f2020,roughness:.68,metalness:.06}),i*.075,1.22,.278,false);g.add(plate);});
   [1.39,1.27,1.15].forEach((y,j)=>{const lace=box(.47-j*.04,.016,.018,cord,0,y,.323,false);g.add(lace);});
-  const arms=[];
+  const arms=[],legs=[];
   [-1,1].forEach(s=>{const shoulder=new THREE.Mesh(HEIAN_GEO.sphere,robe);shoulder.position.set(s*.25,1.38,0);shoulder.scale.set(.14,.14,.14);g.add(shoulder);
     const sode=box(.20,.34,.065,armor,s*.39,1.24,.03,false);sode.rotation.z=s*.11;g.add(sode);
     [1.34,1.25,1.16].forEach(y=>{const l=box(.18,.012,.068,cord,s*.39,y,.073,false);l.rotation.z=s*.11;g.add(l);});
     const arm=new THREE.Mesh(new THREE.CylinderGeometry(.065,.095,.58,9),robe);arm.position.set(s*.31,1.12,.04);arm.rotation.z=s*.18;arm.userData.side=s;g.add(arm);arms.push(arm);
     const hand=new THREE.Mesh(new THREE.SphereGeometry(.055,9,7),skin);hand.position.set(s*.36,.82,.10);g.add(hand);
-    const leg=cyl(.07,.09,.48,under,s*.13,.20,.01,8);g.add(leg);
-    const foot=box(.16,.08,.28,M({color:0xe5ddca,roughness:.9}),s*.13,.045,.07);g.add(foot);
-    const strap=box(.17,.010,.030,M({color:0x5d3b22,roughness:.85}),s*.13,.095,.10,false);strap.rotation.z=s*.18;g.add(strap);
+    // [歩行アニメ]股関節ピボット: 家中(household)側で歩行時の脚振りに使う(既存の腕アニメ(userData.arms)には手を触れない・追加のみ)
+    const hip=new THREE.Group();hip.position.set(s*.13,.44,.01);g.add(hip);
+    const leg=cyl(.07,.09,.48,under,0,.20-.44,0,8);hip.add(leg);
+    const foot=box(.16,.08,.28,M({color:0xe5ddca,roughness:.9}),0,.045-.44,.07-.01);hip.add(foot);
+    const strap=box(.17,.010,.030,M({color:0x5d3b22,roughness:.85}),0,.095-.44,.10-.01,false);strap.rotation.z=s*.18;hip.add(strap);
+    legs.push(hip);
   });
   const head=new THREE.Mesh(HEIAN_GEO.head,skin);head.position.set(0,1.72,.01);head.scale.set(.145,.18,.14);g.add(head);
   const cap=new THREE.Mesh(new THREE.CylinderGeometry(.09,.12,.28,10),MAT.black);cap.position.set(0,1.99,-.02);cap.rotation.x=-.08;g.add(cap);
@@ -14877,7 +14961,7 @@ function makeKaimamiGuard(){
   const spear=new THREE.Mesh(new THREE.ConeGeometry(.045,.18,5),M({color:0xb9b4a8,roughness:.38,metalness:.35}));spear.position.set(.44,1.57,.04);spear.rotation.z=-.05;g.add(spear);
   const sword=box(.075,.72,.045,M({color:0x34251c,roughness:.68}),-.39,.70,-.05);sword.rotation.z=-.10;g.add(sword);
   const guardPlate=box(.18,.035,.050,M({color:0x4a3b25,roughness:.65}),-.36,1.05,-.02,false);guardPlate.rotation.z=-.10;g.add(guardPlate);
-  g.userData.head=head;g.userData.body=body;g.userData.arms=arms;
+  g.userData.head=head;g.userData.body=body;g.userData.arms=arms;g.userData.legs=legs;
   g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});g.visible=false;scene.add(g);return g;
 }
 const gateGuards=[
