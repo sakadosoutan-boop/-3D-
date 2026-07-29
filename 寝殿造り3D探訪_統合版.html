@@ -3909,6 +3909,51 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
   #quizDiffPicker .quiz-diff-card,#questRolePicker .role-card,.h-card,#eraPanel .era-card{
     animation:none}
 }
+
+/* ============================================================
+   波AF: 一時停止メニュー — 授業中でも即座に中断できるように。
+   #gfx/#historyPanel と同じ「フルスクリーン背景+.h-card」の型を踏襲する。
+============================================================ */
+#pauseMenu{position:fixed;z-index:20000;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(6,4,2,.86);padding:18px;backdrop-filter:blur(6px)}
+#pauseMenu.open{display:flex}
+.pause-card{min-width:min(320px,90vw);width:min(360px,90vw);text-align:center}
+.pause-card h3{font-family:var(--serif);letter-spacing:.12em;font-size:19px;color:#f7df9a;text-shadow:0 2px 8px #000}
+.pause-note{margin:10px 0 0;font-size:12px;line-height:1.7;color:#d3c2a2}
+.pause-actions{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.pause-btn{display:flex;align-items:center;gap:11px;justify-content:center;min-height:52px;font-size:15px;font-family:var(--sans)}
+.pause-btn .wic{width:20px;height:20px;color:var(--kin)}
+#tbPause.on{background:rgba(201,162,63,.34)}
+
+/* 波AF: 物語/再現の演出時だけ黒帯を出し、映画的な画面比にする(CSSのみ・既存のmode切替クラスに便乗) */
+.letterbox-bar{position:fixed;left:0;right:0;height:0;background:#000;z-index:15000;pointer-events:none;
+  transition:height .55s ease}
+#letterboxTop{top:0}
+#letterboxBottom{bottom:0}
+body.story-mode #letterboxTop,body.story-mode #letterboxBottom,
+body.saigen-mode #letterboxTop,body.saigen-mode #letterboxBottom{height:min(6.2vh,54px)}
+@media (prefers-reduced-motion:reduce){.letterbox-bar{transition:none}}
+
+/* ============================================================
+   波AF: 色覚サポート(設定でオン/オフ)。色だけに頼っている表示に、形・文字・模様を足す。
+   既定の見た目は変えず、body.cb-assist が付いた時だけ手がかりを重ねる。
+============================================================ */
+body.cb-assist .seal{overflow:visible}
+body.cb-assist .seal::after{content:"✓";position:absolute;right:-6px;bottom:-2px;font-size:30px;line-height:1;
+  color:inherit;text-shadow:0 2px 6px rgba(0,0,0,.5);font-family:var(--sans)}
+body.cb-assist .seal.batsu::after{content:"✕"}
+body.cb-assist #tjHpWrap{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 6px,transparent 6px 12px)}
+body.cb-assist.taiji-lowhp #tjHpFill{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.28) 0 5px,transparent 5px 10px)}
+body.cb-assist.taiji-lowhp #tjHpLabel::after{content:" ⚠危険";color:#ffe27a}
+body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf70}
+
+/* あゆみパネル: プレイ統計の要約(統計①の表示先) */
+.history-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;
+  margin:0 0 14px;padding:10px 12px;background:rgba(0,0,0,.22);border:1px solid rgba(201,162,63,.28);border-radius:8px}
+.history-stats .hs-item{display:flex;flex-direction:column;gap:2px}
+.history-stats .hs-val{font-family:var(--serif);font-size:17px;color:#f7df9a}
+.history-stats .hs-lbl{font-size:10.5px;color:#c3b491;letter-spacing:.04em}
+.history-stats .hs-modes{grid-column:1/-1;font-size:11px;color:#d3c2a2;line-height:1.8;border-top:1px solid rgba(201,162,63,.2);padding-top:7px;margin-top:2px}
 /* APP_CSS_EMBED_END */
 </style>
 </head>
@@ -3965,12 +4010,16 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
   <symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="1.6"/><path d="M4 9.6h16M8.2 3.4v4M15.8 3.4v4"/><path d="M7.6 13h3M13.4 13h3M7.6 16.4h3"/></symbol>
   <symbol id="ic-brush" viewBox="0 0 24 24"><path d="M4 20.2c.2-1.4.8-3 1.9-4.1l8-8 2.2 2.2-8 8c-1.1 1.1-2.7 1.7-4.1 1.9Z"/><path d="M14.4 5.9l2.4-2.4a1.5 1.5 0 0 1 2.1 0l.6.6a1.5 1.5 0 0 1 0 2.1L17.1 8.6Z"/></symbol>
   <symbol id="ic-steps" viewBox="0 0 24 24"><path d="M4 18.5c4.5 0 3.5-4.5 8-4.5s3.5-4.5 8-4.5"/><circle cx="4" cy="18.5" r="1.4"/><circle cx="12" cy="14" r="1.4"/><circle cx="20" cy="9.5" r="1.4"/></symbol>
+  <symbol id="ic-pause" viewBox="0 0 24 24"><path d="M8.4 5.2v13.6M15.6 5.2v13.6" stroke-width="2.6"/></symbol>
+  <symbol id="ic-gamepad" viewBox="0 0 24 24"><path d="M5.5 9.5h6.2l4.9-1.4a3 3 0 0 1 3.7 2.9v4.9a2.6 2.6 0 0 1-4.6 1.6l-1.6-2h-6.2l-1.6 2a2.6 2.6 0 0 1-4.6-1.6v-4.4a4 4 0 0 1 4.2-4Z"/><path d="M7.2 11.4v3M5.7 12.9h3"/><circle cx="16.2" cy="11.6" r=".9" fill="currentColor" stroke="none"/><circle cx="18.3" cy="13.6" r=".9" fill="currentColor" stroke="none"/></symbol>
 </defs></svg>
 <canvas id="c"></canvas>
 <div id="vignette"></div>
 <div id="dangerVignette"></div>
 <div id="cloudOverlay"></div>
 <div id="lightningFlash"></div>
+<div id="letterboxTop" class="letterbox-bar" aria-hidden="true"></div>
+<div id="letterboxBottom" class="letterbox-bar" aria-hidden="true"></div>
 
 <div id="title">
   <div id="titleAudioHint">🎵 画面をタップすると音楽が流れます</div>
@@ -4171,6 +4220,7 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
   <button class="tb-btn" id="tbEra" title="時代を移動する(平安の寝殿造り ⇄ 鎌倉の武家屋敷)"><svg class="wic"><use href="#ic-era"/></svg><span class="tb-lbl">時代</span></button>
   <!-- 右端ツール -->
   <span class="spacer"></span>
+  <button class="tb-btn tb-icon" id="tbPause" title="一時停止(Esc)"><svg class="wic"><use href="#ic-pause"/></svg></button>
   <button class="tb-btn tb-icon" id="tbMore" title="そのほかの機能" aria-haspopup="true" aria-expanded="false"><svg class="wic dots"><use href="#ic-more"/></svg></button>
   <button class="tb-btn" id="tbCodex" title="ものしり図鑑"><svg class="wic"><use href="#ic-book"/></svg><span class="tb-lbl">図鑑</span></button>
   <span class="tb-sep"></span>
@@ -4180,6 +4230,7 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
 
 <!-- そのほかの機能(トップバー右の⋯から開く小メニュー) -->
 <div id="tbMoreMenu" role="menu" aria-label="そのほかの機能">
+  <button class="tbm-item" id="tbmPause" type="button" role="menuitem"><svg class="wic"><use href="#ic-pause"/></svg><span><b>一時停止</b><small>操作を止めて授業の中断に(Escキーでも可)</small></span></button>
   <button class="tbm-item" id="tbmTour" type="button" role="menuitem"><svg class="wic"><use href="#ic-lantern"/></svg><span><b>家司の案内をたのむ</b><small>家司が邸内を巡って解説してくれる</small></span></button>
   <button class="tbm-item" id="tbmEstate" type="button" role="menuitem"><svg class="wic"><use href="#ic-book"/></svg><span><b>屋敷の日課</b><small>時刻ごとの家人のつとめ・来訪の気配</small></span></button>
   <button class="tbm-item" id="tbmCollapse" type="button" role="menuitem"><svg class="wic"><use href="#ic-eye"/></svg><span><b>ツールバーを畳む</b><small>画面を広く使う</small></span></button>
@@ -4318,6 +4369,7 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
       <div><h2 id="historyTitle">📜 あゆみ</h2></div>
       <button class="tb-btn" id="historyClose">✕ 閉じる</button>
     </div>
+    <div class="history-stats" id="historyStats"></div>
     <div class="history-list" id="historyList"></div>
   </div>
 </div>
@@ -5020,9 +5072,28 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
   <div class="gfx-row"><span class="gfx-lbl">撮影モード（UIを隠す）</span>
     <span class="gfx-opts"><button class="tb-btn" id="gfxPhoto">📷 撮影モード</button></span>
   </div>
+  <div class="gfx-row"><span class="gfx-lbl">色覚サポート（形・文字で併記）</span>
+    <span class="gfx-opts">
+      <button class="tb-btn" id="gfxCb_on">入</button>
+      <button class="tb-btn" id="gfxCb_off">切</button>
+    </span>
+  </div>
+  <p class="gfx-note">「色覚サポート」は正解/不正解・体力・危険などの色分けに、形や文字の手がかりを添えます。</p>
   <p class="gfx-note">「オート」は端末性能に応じて自動調整。動作が重いときは「中」「低」を。</p>
   <button class="tb-btn" id="gfxClose" style="margin-top:10px">閉じる</button>
 </div></div>
+
+<div id="pauseMenu" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+  <div class="h-card pause-card">
+    <h3 id="pauseTitle">⏸ 一時停止</h3>
+    <p class="pause-note">授業などで中断したいときは、ここから止められます。3Dの動きと音が止まり、操作も無効になります。</p>
+    <div class="pause-actions">
+      <button class="tb-btn pause-btn" id="pauseResume" type="button"><svg class="wic"><use href="#ic-eye"/></svg><span>つづける</span></button>
+      <button class="tb-btn pause-btn" id="pauseSettings" type="button"><svg class="wic"><use href="#ic-tune"/></svg><span>設定</span></button>
+      <button class="tb-btn pause-btn" id="pauseTitleBtn" type="button"><svg class="wic"><use href="#ic-home"/></svg><span>表紙へもどる</span></button>
+    </div>
+  </div>
+</div>
 
 <div id="joy"><div id="joyKnob"></div></div>
 <button id="interactBtn">調べる</button>
@@ -11707,6 +11778,34 @@ function keyActive(action){
 
 const joyEl=document.getElementById("joy"),knob=document.getElementById("joyKnob");
 const joy={active:false,id:null,vx:0,vy:0,dynamic:false,_t0:0,_used:false};
+/* ============================================================
+   波AF: ゲームパッド対応。接続イベントが来るまでは navigator.getGamepads() を一切呼ばず、
+   接続中のみ animate() から毎フレーム軽量ポーリングする(未接続時のコストは実質ゼロ)。
+   既存のキーボード/タッチ操作とは独立に mx/mz/lookX/lookY へ加算するだけで、既存操作を壊さない。
+============================================================ */
+const GAMEPAD={active:false,index:-1,mx:0,mz:0,lookX:0,lookY:0,prevA:false,prevB:false};
+addEventListener("gamepadconnected",e=>{GAMEPAD.active=true;GAMEPAD.index=e.gamepad.index;toast("🎮 ゲームパッドを接続しました(散策モードで移動・視点に使えます)",3000);});
+addEventListener("gamepaddisconnected",e=>{
+  if(e.gamepad.index!==GAMEPAD.index)return;
+  GAMEPAD.active=false;GAMEPAD.index=-1;GAMEPAD.mx=GAMEPAD.mz=GAMEPAD.lookX=GAMEPAD.lookY=0;
+});
+function gamepadPoll(){
+  GAMEPAD.mx=0;GAMEPAD.mz=0;GAMEPAD.lookX=0;GAMEPAD.lookY=0;
+  if(typeof navigator.getGamepads!=="function")return;
+  const gp=navigator.getGamepads()[GAMEPAD.index];if(!gp)return;
+  const dz=0.18,ax=v=>Math.abs(v)<dz?0:v;
+  GAMEPAD.mx=ax(gp.axes[0]||0);GAMEPAD.mz=ax(gp.axes[1]||0);
+  GAMEPAD.lookX=ax(gp.axes[2]||0);GAMEPAD.lookY=ax(gp.axes[3]||0);
+  const a=!!(gp.buttons[0]&&gp.buttons[0].pressed),b=!!(gp.buttons[1]&&gp.buttons[1].pressed);
+  if(a&&!GAMEPAD.prevA&&APP.mode==="walk"&&typeof pick==="function")pick(innerWidth/2,innerHeight/2); // 決定=調べる
+  if(b&&!GAMEPAD.prevB){ // 戻る: 開いている物を閉じる→無ければ一時停止を開閉
+    if(APP.codexOpen&&typeof closeCodex==="function")closeCodex();
+    else if($("info")&&$("info").classList.contains("open")&&typeof closeInfo==="function")closeInfo();
+    else if(PAUSE_STATE.active)closePauseMenu();
+    else if(pauseAllowed())openPauseMenu();
+  }
+  GAMEPAD.prevA=a;GAMEPAD.prevB=b;
+}
 function joyHandle(e){
   const r=joyEl.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;
   let t=null;for(const tt of e.touches)if(tt.identifier===joy.id)t=tt;
@@ -12818,6 +12917,56 @@ function historyUpdateBadge(){
   const n=historyLoad().length;
   el.textContent=n?`記録 ${n}件`:"まだ記録がありません";
 }
+/* ============================================================
+   波AF: プレイ時間統計。総時間・モード別時間・訪問回数をlocalStorageへ記録する。
+   毎フレームの書き込みは避け、メモリ上のSTAT_ACCへ蓄積してから30秒毎/離脱時にまとめて保存する。
+============================================================ */
+const PLAYTIME_KEY="shinden3d-playtime-v1";
+const STAT_ACC={total:0,byMode:{}};
+function statsLoad(){
+  try{const o=JSON.parse(localStorage.getItem(PLAYTIME_KEY)||"{}");
+    return {total:+o.total||0,byMode:(o.byMode&&typeof o.byMode==="object")?o.byMode:{},visits:(o.visits&&typeof o.visits==="object")?o.visits:{}};
+  }catch(e){return {total:0,byMode:{},visits:{}};}
+}
+function statsFlush(){
+  if(!STAT_ACC.total&&!Object.keys(STAT_ACC.byMode).length)return; // 増分が無ければ書き込みしない
+  const s=statsLoad();
+  s.total=(s.total||0)+STAT_ACC.total;
+  Object.keys(STAT_ACC.byMode).forEach(m=>{s.byMode[m]=(s.byMode[m]||0)+STAT_ACC.byMode[m];});
+  STAT_ACC.total=0;STAT_ACC.byMode={};
+  try{localStorage.setItem(PLAYTIME_KEY,JSON.stringify(s));}catch(e){}
+}
+function statsRecordVisit(mode){
+  if(!mode||mode==="title")return;
+  const s=statsLoad();
+  s.visits[mode]=(s.visits[mode]||0)+1;
+  try{localStorage.setItem(PLAYTIME_KEY,JSON.stringify(s));}catch(e){}
+}
+setInterval(statsFlush,30000); // 書き込み頻度を抑える(毎フレーム保存はしない)
+addEventListener("visibilitychange",()=>{if(document.hidden)statsFlush();});
+addEventListener("pagehide",statsFlush);
+const STAT_MODE_LABEL={walk:"自由散策",quiz:"クイズ",kaimami:"垣間見",taiji:"物の怪退治",utakai:"歌合",saigen:"再現",
+  renaiShort:"恋文体験",renaiSim:"恋愛シミュ",story:"物語",ikaiSuika:"位階出世",kaiawase:"貝合わせ",kemari:"蹴鞠",quest:"貴族の一日"};
+function statsFormatDuration(sec){
+  sec=Math.max(0,Math.round(sec));
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60);
+  if(h>0)return `${h}時間${m}分`;
+  if(m>0)return `${m}分`;
+  return `${sec}秒`;
+}
+function statsRenderSummary(){
+  const el=$("historyStats");if(!el)return;
+  statsFlush(); // 表示直前の端数もすぐ反映
+  const s=statsLoad();
+  const totalVisits=Object.values(s.visits||{}).reduce((a,b)=>a+b,0);
+  const modeRows=Object.entries(s.byMode||{}).filter(([,v])=>v>=5).sort((a,b)=>b[1]-a[1]).slice(0,6)
+    .map(([m,v])=>`${STAT_MODE_LABEL[m]||m} ${statsFormatDuration(v)}`).join("　/　");
+  el.innerHTML=`
+    <div class="hs-item"><span class="hs-val">${statsFormatDuration(s.total)}</span><span class="hs-lbl">総プレイ時間</span></div>
+    <div class="hs-item"><span class="hs-val">${totalVisits}</span><span class="hs-lbl">モード訪問回数</span></div>
+    ${modeRows?`<div class="hs-modes">モード別: ${modeRows}</div>`:""}
+  `;
+}
 /* recordProgress(k)のうち、主要な達成/クリア相当のkindだけをあゆみへ記録する。
    gloss(用語カード1枚めくり)やcodexView(図鑑閲覧)、mistake等の高頻度キーは対象外
    (直近50件の枠が細かい記録で埋まってしまうため)。 */
@@ -13423,6 +13572,90 @@ $("codexTabGloss").onclick=()=>setCodexTab("gloss");
 $("codexTabAch").onclick=()=>setCodexTab("ach");
 $("codexTabDiscover").onclick=()=>setCodexTab("discover");
 $("codex").addEventListener("click",e=>{if(e.target===$("codex"))closeCodex();});
+/* ============================================================
+   波AF: 一時停止メニュー。Esc / トップバーの一時停止ボタン / ⋯メニューから開く。
+   停止中はanimate()を早期returnさせて3D更新・時計を完全に止め、SFXも止める。
+   再開時は「止めていた実時間」だけ各モードのタイムスタンプ(performance.now()基準)を
+   まとめてずらし、クイズTAの経過秒やボスの各種クールダウンが再開直後に不自然に
+   進行/消滅しないようにする(退治・タイムアタックが一時停止で抜け道にならないための措置)。
+============================================================ */
+const PAUSE_STATE={active:false,heldStart:0,returnToPauseMenu:false};
+function pauseBlockingOverlayOpen(){
+  const ids=["gfx","help","credits","historyPanel","koyomiPanel","quizTeacherPanel","onmyoDivinationPanel","ikaiGallery"];
+  return ids.some(id=>{
+    const el=$(id);if(!el)return false;
+    if(el.classList&&(el.classList.contains("open")||el.classList.contains("show")))return true;
+    const disp=el.style&&el.style.display;
+    return disp==="flex"||disp==="block";
+  });
+}
+function pauseAllowed(){
+  if(!APP||APP.mode==="title")return false;
+  if(PAUSE_STATE.active)return false;
+  if(APP.tour&&APP.tour.active)return false;
+  if(APP.gisshaCarry&&APP.gisshaCarry.active)return false;
+  if(pauseBlockingOverlayOpen())return false;
+  return true;
+}
+/* 一時停止していた実時間(heldMs)だけ、performance.now()基準の各種タイマーを後ろへずらす。
+   (animate()自体は停止中に一切呼ばれないため、dt蓄積型のタイマーは自動的に止まっている。
+   ここで補うのは「実時計を直接読む」書き方のタイマーのみ) */
+function pauseShiftTimestamps(heldMs){
+  if(!heldMs||heldMs<=0)return;
+  const shift=(obj,keys)=>{ if(!obj)return; keys.forEach(k=>{ if(typeof obj[k]==="number"&&obj[k]>0)obj[k]+=heldMs; }); };
+  shift(APP.quiz,["tStart","qStart"]);
+  shift(APP.taiji,["tStart","slowUntil","ukonNext","fudaCd","gateMsgAt","sakeCd","sakeDrinkUntil","rollUntil","parryUntil"]);
+  shift(APP.kaimami,["noiseUntil","searchUntil","hintAt"]);
+  if(typeof AUTO_TIME!=="undefined"&&AUTO_TIME)AUTO_TIME._last+=heldMs;
+  if(typeof __lastActivity!=="undefined")__lastActivity+=heldMs;
+}
+function openPauseMenu(){
+  if(!pauseAllowed())return;
+  PAUSE_STATE.active=true;PAUSE_STATE.heldStart=performance.now();
+  document.body.classList.add("paused");
+  $("pauseMenu").classList.add("open");
+  const pb=$("tbPause");if(pb)pb.classList.add("on");
+  tbMoreClose();
+  if(typeof SFX!=="undefined"){
+    SFX.setBackgroundPaused(true);
+    if(SFX.ctx&&SFX.ctx.state==="running")SFX.ctx.suspend().catch(()=>{});
+  }
+}
+function closePauseMenu(){
+  if(!PAUSE_STATE.active)return;
+  const heldMs=performance.now()-PAUSE_STATE.heldStart;
+  PAUSE_STATE.active=false;PAUSE_STATE.returnToPauseMenu=false;
+  document.body.classList.remove("paused");
+  $("pauseMenu").classList.remove("open");
+  const pb=$("tbPause");if(pb)pb.classList.remove("on");
+  pauseShiftTimestamps(heldMs);
+  if(typeof __lastFrameMs!=="undefined")__lastFrameMs=performance.now();
+  if(typeof SFX!=="undefined"){
+    if(SFX.ctx&&SFX.ctx.state==="suspended")SFX.ctx.resume().catch(()=>{});
+    SFX.setBackgroundPaused(false);
+  }
+}
+$("pauseResume").onclick=closePauseMenu;
+$("pauseTitleBtn").onclick=()=>{location.reload();};
+$("pauseSettings").onclick=()=>{
+  $("pauseMenu").classList.remove("open");
+  PAUSE_STATE.returnToPauseMenu=true;
+  $("gfx").style.display="flex";
+};
+$("gfx").addEventListener("click",e=>{if(e.target===$("gfx")&&PAUSE_STATE.active&&PAUSE_STATE.returnToPauseMenu){PAUSE_STATE.returnToPauseMenu=false;$("pauseMenu").classList.add("open");}});
+$("gfxClose").addEventListener("click",()=>{if(PAUSE_STATE.active&&PAUSE_STATE.returnToPauseMenu){PAUSE_STATE.returnToPauseMenu=false;$("pauseMenu").classList.add("open");}});
+$("pauseMenu").addEventListener("click",e=>{if(e.target===$("pauseMenu"))closePauseMenu();});
+$("tbPause").onclick=()=>{if(PAUSE_STATE.active)closePauseMenu();else openPauseMenu();};
+$("tbmPause").onclick=()=>{tbMoreClose();openPauseMenu();};
+addEventListener("keydown",e=>{
+  if(e.key!=="Escape")return;
+  if(PAUSE_STATE.active&&PAUSE_STATE.returnToPauseMenu){ // 一時停止中に開いた設定パネルからのEsc: 設定を閉じて一時停止メニューへ戻る(いきなり再開しない)
+    PAUSE_STATE.returnToPauseMenu=false;$("gfx").style.display="none";$("pauseMenu").classList.add("open");
+    e.preventDefault();e.stopImmediatePropagation();return;
+  }
+  if(PAUSE_STATE.active){closePauseMenu();e.preventDefault();e.stopImmediatePropagation();return;}
+  if(pauseAllowed()){openPauseMenu();e.preventDefault();e.stopImmediatePropagation();return;}
+},true);
 addEventListener("keydown",e=>{
   if(e.key==="Escape"&&APP&&APP.tour&&APP.tour.active){endTour(true);e.preventDefault();return;}
   if(e.key==="Escape"&&APP&&APP.gisshaCarry&&APP.gisshaCarry.active){endGisshaCarry(false,false);e.preventDefault();return;}
@@ -13597,7 +13830,7 @@ function historyRenderPanel(){
     return `<div class="history-item"><span class="hi-icon">${it.icon||"📌"}</span><span class="hi-body"><span class="hi-label">${it.label||""}</span><span class="hi-time">${dt}</span></span></div>`;
   }).join("");
 }
-function historyOpenPanel(){historyRenderPanel();$("historyPanel").classList.add("open");}
+function historyOpenPanel(){historyRenderPanel();statsRenderSummary();$("historyPanel").classList.add("open");}
 function historyClosePanel(){$("historyPanel").classList.remove("open");}
 $("btnHistory").onclick=historyOpenPanel;
 $("historyClose").onclick=historyClosePanel;
@@ -14281,6 +14514,17 @@ let APP_FPSCAP=IS_TOUCH?30:60;
   if($("gfxFont_l"))$("gfxFont_l").onclick=()=>setFontScale("l");
   if($("gfxFont_xl"))$("gfxFont_xl").onclick=()=>setFontScale("xl");
   {const fs=PREFS.get("fontscale");setFontScale(fs==="l"||fs==="xl"?fs:"n",true);}
+  /* 波AF: 色覚サポート(正解/不正解・体力・危険等の色分けに形/文字を併記) */
+  function setCbAssist(on,silent){
+    document.body.classList.toggle("cb-assist",!!on);
+    PREFS.set("cbAssist",on?"1":"0");
+    if($("gfxCb_on"))$("gfxCb_on").classList.toggle("on",!!on);
+    if($("gfxCb_off"))$("gfxCb_off").classList.toggle("on",!on);
+    if(!silent)beep(560,.04);
+  }
+  if($("gfxCb_on"))$("gfxCb_on").onclick=()=>setCbAssist(true);
+  if($("gfxCb_off"))$("gfxCb_off").onclick=()=>setCbAssist(false);
+  {const cb=PREFS.get("cbAssist");setCbAssist(cb==="1",true);}
   /* 波12: 柱・建物のあたり判定トグル(散策/クイズ/一日体験。既定=通れない) */
   function setWalkCollide(on,silent){
     APP.collideWalk=!!on;PREFS.set("collide",on?"1":"0");
@@ -14429,6 +14673,7 @@ function enterMode(m){
   // 恋の母屋3Dハブ(renaiSim)から離れる/再入場する場合も同様に、行き先を問わず必ずステージを片付ける
   // (renaiSim→renaiSimの再入場でもピッカーからの再構築前に確実にdisposeし、二重生成・リークを防ぐ)
   if(APP.mode==="renaiSim"&&APP.renai&&APP.renai.phase==="hub"&&typeof disposeRenaiSimStage==="function")disposeRenaiSimStage();
+  if(m!==APP.mode&&typeof statsRecordVisit==="function")statsRecordVisit(m); // 波AF: モード訪問回数の記録(実際に切り替わる時のみ)
   APP.mode=m;
   hideModeBrief(true);
   // タイトルのサブパネルをリセット
@@ -14843,9 +15088,18 @@ function juiceStampRank(){
   el.classList.add("juice-stamp");
   beep(170,.1,"square",.16); // 印を押す「ドン」
 }
+/* 波AF: ヒットストップ。強い一撃/大きな成果の瞬間だけ実時間msぶんanimate()のdtを大きく減速する
+   (時計clock自体は止めないので一時停止とは独立に働く)。REDUCED_MOTIONとポーズ中は無効。 */
+let HITSTOP_UNTIL=0;
+function hitStop(ms){
+  if(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION)return;
+  if(typeof PAUSE_STATE!=="undefined"&&PAUSE_STATE.active)return;
+  HITSTOP_UNTIL=Math.max(HITSTOP_UNTIL,performance.now()+(ms||70));
+}
 /** 最高ランク時の金＋緋の紙吹雪。REDUCED_MOTIONでは何もしない(祝いのSEのみ) */
 function juiceCelebrate(){
   beep(660,.09);setTimeout(()=>beep(880,.09),120);setTimeout(()=>beep(1320,.16),260);
+  hitStop(70); // 波AF: 大成果の手応え(位階すいかの大合体・自己ベスト更新 等)
   if(typeof REDUCED_MOTION!=="undefined"&&REDUCED_MOTION)return;
   const COLORS=["#d2aa4c","#e4c76a","#8a3b2a","#c9a23f","#f0e0b0"];
   for(let i=0;i<26;i++){
@@ -20154,6 +20408,7 @@ function updateBoss(K,t,now,dt){
     if(b.hp<=0){
       b.dead=true;scene.remove(b.g);if(b.wrapId&&$(b.wrapId))$(b.wrapId).style.display="none";
       juiceShake(); // 波B: ボス撃破の衝撃
+      if(typeof hitStop==="function")hitStop(90); // 波AF: 退治モードの決定打(ボス撃破)に一瞬の間を作る
       if(K.lockTarget===b)K.lockTarget=null;
       if(list.length>1&&list.some(x=>!x.dead)){taijiMsg(b.cfg.name+"を退けた！",1700);if(typeof seArrowHit!=="undefined")seArrowHit();}
     }
@@ -24645,6 +24900,10 @@ function animate(now){
   if(now===undefined)now=performance.now();
   /* [発熱対策] タブが非表示の間は描画を完全に休止。ブラウザのrAF間引きに上乗せしGPUを遊ばせる(復帰時のdt跳ねは時計を空回しして防ぐ) */
   if(document.hidden){__lastFrameMs=now;clock.getDelta();return;}
+  /* 波AF: 一時停止中は3D/時計/音を完全に凍結する。clock.getDelta()をあえて呼ばない(=経過時間を進めない)。
+     再開時はclose側でclockに触らず、次フレームのgetDelta()が実時間の差分をまとめて1回で吸収する
+     (dtは直後でMath.min(...,.08)へ必ずクランプされるため、体感上のワープは起きない)。 */
+  if(typeof PAUSE_STATE!=="undefined"&&PAUSE_STATE.active){__lastFrameMs=now;return;}
   /* フレームレート上限: スマホの発熱・電池消費を抑える(既定モバイル30fps)。
      描画前に間引くことで GPU/CPU 稼働を大幅削減。clock は描画フレームのみ進む。 */
   let __cap=APP_FPSCAP;
@@ -24658,9 +24917,19 @@ function animate(now){
     __lastFrameMs=now-((now-__lastFrameMs)%interval);  // 累積ドリフトを避けて一定間隔を保つ
   }
   if(glLost){clock.getDelta();return;}  /* 喪失中は描画を休止。復帰後にdtが飛ばないよう時計だけ進める */
-  const dt=Math.min(clock.getDelta(),.08);
+  const __rawDt=clock.getDelta();
+  let dt=Math.min(__rawDt,.08);
+  /* 波AF: ヒットストップ。強い一撃の瞬間だけdtを大きく減速し、打撃の重みを出す(完全停止ではなく縮小)。
+     REDUCED_MOTIONでは無効。時計(clock)自体はそのまま進めるため一時停止とは競合しない。 */
+  if(typeof HITSTOP_UNTIL!=="undefined"&&HITSTOP_UNTIL>now)dt*=0.04;
   const t=clock.elapsedTime;
   __perf.tick(dt);  /* [Phase0] パフォーマンス計測 */
+  /* 波AF: プレイ時間統計をメモリ上へ蓄積(タイトル中は数えない)。書き込みは30秒毎にまとめて行う。
+     物理用dt(上の.08クランプ)ではなく__rawDtを1秒までで丸めた値を使う。理由:
+     ・.08クランプのままだとfps低下時に実プレイ時間を過小計上してしまう
+     ・かといって無制限だと一時停止直後の1フレームに"止めていた間"がまるごと乗ってしまう
+     1秒キャップならその両方を無視できる程度に抑えられる */
+  if(APP.mode!=="title"){const __statDt=Math.min(__rawDt,1);STAT_ACC.total+=__statDt;STAT_ACC.byMode[APP.mode]=(STAT_ACC.byMode[APP.mode]||0)+__statDt;}
   __decoFrame++;
   /* 波9: 着座HUDモードのときだけ、純装飾(鳥・蝶・蜻蛉・雀・月映り)を3フレームに1回に間引く。
      表示/非表示や他の演出には影響しない(位置更新の頻度のみを下げる)。 */
@@ -25223,6 +25492,7 @@ function animate(now){
         }
         updateTaijiControlsUi();
       }
+      if(GAMEPAD.active)gamepadPoll(); // 波AF: 未接続なら一切呼ばず、接続時のみ毎フレーム軽量ポーリング
       let mx=0,mz=0;
       // 恋文ショートは3D導入(approach)の間だけ移動可。恋愛シミュレーション(renaiSim)は3Dハブ(母屋・phase="hub")の間だけ移動可。
       // それ以外(短編の本編HUD/シミュのピッカー画面など)は座に着いたまま(見回しのみ可)
@@ -25233,6 +25503,14 @@ function animate(now){
         if(keyActive("forward"))mz-=1;if(keyActive("back"))mz+=1;
         if(keyActive("left"))mx-=1;if(keyActive("right"))mx+=1;
         mx+=joy.vx;mz+=joy.vy;
+        if(GAMEPAD.active&&APP.mode==="walk"){ // 波AF: ゲームパッドは散策モードの移動・視点にのみ対応
+          mx+=GAMEPAD.mx;mz+=GAMEPAD.mz;
+          if(APP.view==="fp"){
+            const gsc=(APP_SENS||5)/5;
+            player.yaw-=GAMEPAD.lookX*2.2*dt*gsc;
+            player.pitch=Math.max(-1.25,Math.min(1.25,player.pitch-GAMEPAD.lookY*1.8*dt*gsc*(APP_INV_Y?-1:1)));
+          }
+        }
       }
       if(APP.mode==="renaiShort"&&APP.renai&&APP.renai.phase==="approach")renaiIntroUpdate(dt); // 恋文ショート冒頭の3D導入のみ。他モードは一切走らない
       if(tourActive)updateTourCamera(); // player.pos/yaw を直接書き換え、以降のカメラ補間(dummyCam)にそのまま乗せる

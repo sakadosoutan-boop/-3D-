@@ -2856,3 +2856,48 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
   #quizDiffPicker .quiz-diff-card,#questRolePicker .role-card,.h-card,#eraPanel .era-card{
     animation:none}
 }
+
+/* ============================================================
+   波AF: 一時停止メニュー — 授業中でも即座に中断できるように。
+   #gfx/#historyPanel と同じ「フルスクリーン背景+.h-card」の型を踏襲する。
+============================================================ */
+#pauseMenu{position:fixed;z-index:20000;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(6,4,2,.86);padding:18px;backdrop-filter:blur(6px)}
+#pauseMenu.open{display:flex}
+.pause-card{min-width:min(320px,90vw);width:min(360px,90vw);text-align:center}
+.pause-card h3{font-family:var(--serif);letter-spacing:.12em;font-size:19px;color:#f7df9a;text-shadow:0 2px 8px #000}
+.pause-note{margin:10px 0 0;font-size:12px;line-height:1.7;color:#d3c2a2}
+.pause-actions{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.pause-btn{display:flex;align-items:center;gap:11px;justify-content:center;min-height:52px;font-size:15px;font-family:var(--sans)}
+.pause-btn .wic{width:20px;height:20px;color:var(--kin)}
+#tbPause.on{background:rgba(201,162,63,.34)}
+
+/* 波AF: 物語/再現の演出時だけ黒帯を出し、映画的な画面比にする(CSSのみ・既存のmode切替クラスに便乗) */
+.letterbox-bar{position:fixed;left:0;right:0;height:0;background:#000;z-index:15000;pointer-events:none;
+  transition:height .55s ease}
+#letterboxTop{top:0}
+#letterboxBottom{bottom:0}
+body.story-mode #letterboxTop,body.story-mode #letterboxBottom,
+body.saigen-mode #letterboxTop,body.saigen-mode #letterboxBottom{height:min(6.2vh,54px)}
+@media (prefers-reduced-motion:reduce){.letterbox-bar{transition:none}}
+
+/* ============================================================
+   波AF: 色覚サポート(設定でオン/オフ)。色だけに頼っている表示に、形・文字・模様を足す。
+   既定の見た目は変えず、body.cb-assist が付いた時だけ手がかりを重ねる。
+============================================================ */
+body.cb-assist .seal{overflow:visible}
+body.cb-assist .seal::after{content:"✓";position:absolute;right:-6px;bottom:-2px;font-size:30px;line-height:1;
+  color:inherit;text-shadow:0 2px 6px rgba(0,0,0,.5);font-family:var(--sans)}
+body.cb-assist .seal.batsu::after{content:"✕"}
+body.cb-assist #tjHpWrap{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 6px,transparent 6px 12px)}
+body.cb-assist.taiji-lowhp #tjHpFill{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.28) 0 5px,transparent 5px 10px)}
+body.cb-assist.taiji-lowhp #tjHpLabel::after{content:" ⚠危険";color:#ffe27a}
+body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf70}
+
+/* あゆみパネル: プレイ統計の要約(統計①の表示先) */
+.history-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;
+  margin:0 0 14px;padding:10px 12px;background:rgba(0,0,0,.22);border:1px solid rgba(201,162,63,.28);border-radius:8px}
+.history-stats .hs-item{display:flex;flex-direction:column;gap:2px}
+.history-stats .hs-val{font-family:var(--serif);font-size:17px;color:#f7df9a}
+.history-stats .hs-lbl{font-size:10.5px;color:#c3b491;letter-spacing:.04em}
+.history-stats .hs-modes{grid-column:1/-1;font-size:11px;color:#d3c2a2;line-height:1.8;border-top:1px solid rgba(201,162,63,.2);padding-top:7px;margin-top:2px}
