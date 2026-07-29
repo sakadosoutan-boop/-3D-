@@ -5901,6 +5901,94 @@ moonRefl.userData.noAutoShadow=true;
 scene.add(moonRefl);
 
 /* ============================================================
+   [音/天体] 月の満ち欠け
+   実日付から月齢(0=新月〜約29.53日の周期)を計算し、月面へ「陰(かげ)」を落とすカード
+   (moonMeshと同位置・常にカメラを向く半透明の板)で満ち欠けを表現する。
+   ・毎フレーム再生成はしない。月齢が変わった時(=通常は現実の日付が変わった時)だけcanvasを再描画する。
+   ・moonMesh本体のテクスチャ/マテリアルには手を入れない(球のUV展開に依存しない安全な実装)。
+============================================================ */
+const MOON_SYNODIC_DAYS = 29.530588853; // 朔望月
+const MOON_CRATER_SPOTS = Array.from({length:14},()=>({x:rnd(0.08,0.92),y:rnd(0.08,0.92),r:rnd(2.6,6.5)})); // 陰の質感用に一度だけ生成(再描画のたびに動かさない)
+function computeMoonAge(date){
+  // 既知の新月(2000-01-06 18:14 UTC)を基準に朔望月で割った余り=月齢(0=新月, 約14.77=満月)
+  const knownNewMoon = Date.UTC(2000,0,6,18,14,0);
+  let age = ((date.getTime()-knownNewMoon)/86400000) % MOON_SYNODIC_DAYS;
+  if(age<0) age += MOON_SYNODIC_DAYS;
+  return age;
+}
+function moonPhaseFromAge(age){
+  const frac = (1-Math.cos(2*Math.PI*age/MOON_SYNODIC_DAYS))/2; // 0(新月)〜1(満月) 見かけの照度
+  const waxing = age < MOON_SYNODIC_DAYS/2;                     // true=上弦へ向かう(満ちてゆく)
+  return {age,frac,waxing};
+}
+/* 旧暦の日付近似(月齢+1)に対応する呼び名。教材として満月・新月・十三夜等が分かるように。 */
+const MOON_NAMED_DAYS = [
+  {day:1, name:"新月"}, {day:3, name:"三日月"}, {day:7, name:"上弦の月"},
+  {day:13,name:"十三夜"}, {day:15,name:"十五夜(満月)"}, {day:16,name:"十六夜"},
+  {day:17,name:"立待月"}, {day:18,name:"居待月"}, {day:19,name:"寝待月"},
+  {day:23,name:"下弦の月"}, {day:26,name:"有明の月"}
+];
+function moonNamedDayLabel(age){
+  const day = age+1; // 月齢0=旧暦一日
+  let best=null,bestD=0.62; // ±0.62日以内なら「その夜」とみなす(教材として十分な精度)
+  MOON_NAMED_DAYS.forEach(n=>{
+    const d=Math.min(Math.abs(day-n.day), Math.abs(day-n.day-MOON_SYNODIC_DAYS), Math.abs(day-n.day+MOON_SYNODIC_DAYS));
+    if(d<bestD){bestD=d;best=n;}
+  });
+  return best?best.name:null;
+}
+/* 陰カードのテクスチャ(alpha=陰の濃さ)を描き直す。frac:0(新月)〜1(満月)、waxing:上弦へ向かう向きか。
+   球面のUV展開には依存せず、常にカメラを向く板の上に「欠け際が正しく見える平面投影」を直接描く手法。 */
+function paintMoonPhaseShadow(ctx,w,h,frac,waxing){
+  ctx.clearRect(0,0,w,h);
+  const cx=w/2, cy=h/2, r=w*0.478;
+  ctx.fillStyle="rgba(8,10,20,0.93)";
+  ctx.beginPath();
+  if(waxing) ctx.arc(cx,cy,r,Math.PI/2,Math.PI*1.5); else ctx.arc(cx,cy,r,-Math.PI/2,Math.PI/2); // 常に半分は陰の基準半円
+  ctx.closePath();ctx.fill();
+  const rx=r*Math.cos(frac*Math.PI); // frac<0.5→符号+(陰を足す=三日月) / frac>0.5→符号-(陰を削る=満ちてゆく)
+  ctx.beginPath();ctx.ellipse(cx,cy,Math.abs(rx),r,0,0,Math.PI*2);
+  if(rx>=0){ ctx.fillStyle="rgba(8,10,20,0.93)"; ctx.fill(); }
+  else{ ctx.save();ctx.globalCompositeOperation="destination-out";ctx.fill();ctx.restore(); }
+  // 陰の中にうっすらクレーター質感(既存TEX_moonMapと同じ乱数パターンを再利用し、違和感の少ない見た目に)
+  ctx.fillStyle="rgba(0,0,0,0.35)";
+  MOON_CRATER_SPOTS.forEach(c=>{ctx.beginPath();ctx.arc(c.x*w,c.y*h,c.r,0,Math.PI*2);ctx.fill();});
+}
+const MOON_PHASE = {age:0,frac:0,waxing:true,paintCount:0,lastCheck:0,announced:false};
+const _moonShadowCanvas=(()=>{const c=document.createElement("canvas");c.width=c.height=160;return c;})();
+const _moonShadowCtx=_moonShadowCanvas.getContext("2d");
+const TEX_moonPhaseShadow=new THREE.CanvasTexture(_moonShadowCanvas);
+TEX_moonPhaseShadow.encoding=THREE.sRGBEncoding;
+const moonPhaseShadow=new THREE.Mesh(
+  new THREE.PlaneGeometry(19.6,19.6),
+  new THREE.MeshBasicMaterial({map:TEX_moonPhaseShadow,transparent:true,depthWrite:false,side:THREE.DoubleSide})
+);
+moonPhaseShadow.userData.noAutoShadow=true;moonPhaseShadow.renderOrder=2;moonPhaseShadow.visible=false;
+scene.add(moonPhaseShadow);
+/* 月齢が変わった時だけ再描画する(=毎フレーム再生成の禁止)。強制再計算用のQA向けフックも用意 */
+function updateMoonPhase(date){
+  const p=moonPhaseFromAge(computeMoonAge(date||new Date()));
+  const changed = Math.abs(p.frac-MOON_PHASE.frac)>0.004 || p.waxing!==MOON_PHASE.waxing || MOON_PHASE.paintCount===0;
+  MOON_PHASE.age=p.age;MOON_PHASE.frac=p.frac;MOON_PHASE.waxing=p.waxing;
+  if(changed){
+    paintMoonPhaseShadow(_moonShadowCtx,_moonShadowCanvas.width,_moonShadowCanvas.height,p.frac,p.waxing);
+    TEX_moonPhaseShadow.needsUpdate=true;
+    MOON_PHASE.paintCount++;
+  }
+  return changed;
+}
+updateMoonPhase(new Date());
+setInterval(()=>updateMoonPhase(new Date()),300000); // 5分ごとに現実の日付跨ぎだけ拾う(重い処理ではないので十分軽い)
+/* QA/デバッグ用: 月齢を強制指定して即再描画(スクリーンショット比較などに使用。UIからは呼ばない) */
+window.__setMoonAgeForTest=function(age){
+  const p=moonPhaseFromAge(((age%MOON_SYNODIC_DAYS)+MOON_SYNODIC_DAYS)%MOON_SYNODIC_DAYS);
+  MOON_PHASE.age=p.age;MOON_PHASE.frac=p.frac;MOON_PHASE.waxing=p.waxing;
+  paintMoonPhaseShadow(_moonShadowCtx,_moonShadowCanvas.width,_moonShadowCanvas.height,p.frac,p.waxing);
+  TEX_moonPhaseShadow.needsUpdate=true;MOON_PHASE.paintCount++;
+  return MOON_PHASE;
+};
+
+/* ============================================================
    [視覚強化] 雲の流れ(ドローコール1個)
    canvasで生成した半透明の雲テクスチャを、カメラを常に包む巨大な半球(BackSide)の内側に貼る。
    scene.background(単色グラデ)の手前に薄く重なるだけなので、既存の空描画を壊さない。
@@ -10665,6 +10753,13 @@ const SFX = {
   _fireMedia:null, _themeMedia:null, _bossMedia:null, _spatialT:0, _muted:false, _backgroundPaused:false,
   /* [音]3D空間音響: 同時使用PannerNode(上限8)の登録簿 + 篝火/灯台/火桶の定位ループ(key別) */
   _panners:[], _MAX_PANNERS:8, _spatialFires:{}, _listenerT:0,
+  /* [音]雨音(合成ノイズ)の状態。mp3は使わずWebAudioのノイズ+バンドパスで生成(新規音源DLなし) */
+  _rain:null, _rainOnState:false, _rainIndoorState:null, _rainNoiseBuffer:null, _rainStopT:null,
+  /* [音]音楽の階層化: 昼=箏のみ/夜=琵琶を重ねる/年中行事=笙・龍笛も加える。既存の楽器mp3(試奏音)を低音量ループで流用する */
+  _MUSIC_FLAT: /[?&]music=flat/.test(location.search), // フォールバック: 従来どおりレイヤーなし(=このシステム自体を使わない)
+  musicFiles: { koto:"koto.mp3", biwa:"biwa.mp3", sho:"shou.mp3", ryuteki:"ryuteki.mp3" },
+  musicVol:   { koto:0.12,        biwa:0.09,       sho:0.07,       ryuteki:0.08 }, // 環境音ベッドと濁らないよう控えめに
+  _musicActive:{}, _MUSIC_MAX:3,
 
   load(ctx){
     this.ctx = ctx;
@@ -10763,6 +10858,8 @@ const SFX = {
       // [音]これらのモードではupdateSpatialが呼ばれなくなる(animate側がmode==="title"等で更新を止めるため)。
       // 篝火/灯台/火桶の定位ループ・旧混合ループの双方を確実に片付け、鳴りっぱなしを防ぐ。
       this._teardownAllFire();this._teardownLegacyFire();
+      this.stopRainAudio(true);   // [音]雨音も即座に破棄(タイトルへ戻って鳴りっぱなしにしない)
+      this._musicTeardownAll(true); // [音]音楽レイヤーも即座に破棄
       return;
     }
     const scene = (typeof APP !== "undefined") ? APP.season + "/" + APP.time : null;
@@ -10770,30 +10867,42 @@ const SFX = {
     const sc = (typeof APP !== "undefined") ? (SOUNDSCAPE[APP.season + "/" + APP.time] || SOUNDSCAPE[APP.season + "/day"]) : null;
     let key = sc ? sc.bed : null;
     if(key && !this.media[this.beds[key]]) key = null;
-    if(key === this._curBed) return;
-    if(this._bedMedia){try{this._bedMedia.pause();this._bedMedia.currentTime=0;}catch(e){}}
-    this._bedMedia=null;
-    if(key){
-      const base = key === "nightWind" ? 0.4 : key === "summer" ? 0.32 : 0.34;
-      const src=this.media[this.beds[key]].cloneNode(true);src.loop=true;src.volume=base;src.muted=this._muted;
-      if(!this._backgroundPaused&&!this._muted)src.play().catch(()=>{});
-      this._bedMedia=src;this._bedBase=base;
+    if(key !== this._curBed){
+      if(this._bedMedia){try{this._bedMedia.pause();this._bedMedia.currentTime=0;}catch(e){}}
+      this._bedMedia=null;
+      if(key){
+        const base = key === "nightWind" ? 0.4 : key === "summer" ? 0.32 : 0.34;
+        const src=this.media[this.beds[key]].cloneNode(true);src.loop=true;src.volume=base;src.muted=this._muted;
+        if(!this._backgroundPaused&&!this._muted)src.play().catch(()=>{});
+        this._bedMedia=src;this._bedBase=base;
+      }
+      this._curBed = key;
     }
-    this._curBed = key;
+    this._musicTick(); // [音]音楽の階層化: モード/季節/時刻が変わるたびに必要なレイヤーだけ出し入れする
   },
   /* 毎フレーム(間引き): せせらぎの距離減衰 + 焚火の近接再生 */
   updateSpatial(px, py, pz, yaw){
     const now = performance.now(); if(now - this._spatialT < 80) return; this._spatialT = now; // [音]listener/pannerの同期を10〜15Hz程度に間引く
     this.updateListener(px, py, pz, yaw);
     // せせらぎ: 屋内では消音、池から離れるほど小さく(左右の定位付けは行わず、既存どおり距離減衰のみの近接ループとする)
+    const snowMuffle=(typeof snowFall!=="undefined"&&snowFall&&snowFall.visible)?0.55:1; // [音]雪: 音が吸われて静かになる演出(新しい音は足さず既存bedを絞るだけ)
     if(this._curBed === "water" && this._bedMedia){
       const indoor=(typeof groundH==="function")&&groundH(px,pz)>0.05;
       if(indoor){ this._bedMedia.volume=0; }else{
         let d = Infinity;
         if(typeof pondCircles !== "undefined") pondCircles.forEach(c => { const dd = Math.hypot(px-c[0], pz-c[1]) - c[2]; if(dd < d) d = dd; });
         const f = Math.max(0, Math.min(1, 1 - Math.max(0,d)/18));
-        this._bedMedia.volume=this._bedBase*f;
+        this._bedMedia.volume=this._bedBase*f*snowMuffle;
       }
+    }else if(this._bedMedia){
+      // [音]水音以外のbed(主に冬のnightWind)は距離減衰が無いので、雪の消音演出をここでなだらかに反映する
+      const target=this._bedBase*snowMuffle;
+      this._bedMedia.volume+=(target-this._bedMedia.volume)*0.15;
+    }
+    // [音]雨音(合成)の出し入れ。indoorは_footstepSurfaceの判定(簀子/母屋)を流用し、屋根に当たる音のこもりを表現する
+    if(typeof rainFall!=="undefined"&&rainFall){
+      const indoor=(typeof _footstepSurface==="function")?_footstepSurface(px,pz).indoor:false;
+      this.updateRainAudio(!!rainFall.visible, indoor);
     }
     // 火(篝火/灯台/火桶): 空間音響が有効なら音源ごとに定位付きループ(A/C優先)、
     // 無効(LOW_POWER中・?spatial=0)時は従来の"最も近い火源との距離だけで音量を決める単一混合ループ"へ確実にフォールバックする。
@@ -11008,10 +11117,12 @@ const SFX = {
   },
   setMuted(m){
     this._muted=m;
-    if(this.master&&this.ctx)this.master.gain.setTargetAtTime(m?0:1,this.ctx.currentTime,.15); // [音]master経由(パナー定位ループもここに接続)なのでこの一行で空間音響側も連動して消音される
+    if(this.master&&this.ctx)this.master.gain.setTargetAtTime(m?0:1,this.ctx.currentTime,.15); // [音]master経由(パナー定位ループ・雨音・音楽レイヤーもここに接続なのでこの一行で連動して消音される)
     if(this._bedMedia)this._bedMedia.muted=m;if(this._fireMedia)this._fireMedia.muted=m;if(this._themeMedia)this._themeMedia.muted=m;if(this._bossMedia)this._bossMedia.muted=m;
     this._active.forEach(a=>a.src.muted=m);
     Object.values(this._spatialFires).forEach(r=>{try{r.media.muted=m;}catch(e){}}); // [音]篝火/灯台/火桶の定位ループ
+    Object.values(this._musicActive).forEach(r=>{try{r.media.muted=m;}catch(e){}}); // [音]音楽レイヤー
+    if(m&&this._rain) this.stopRainAudio(true); // [音]ミュート時は雨の合成ノードも破棄(残留させない)
     if(!m&&!this._backgroundPaused){if(this._bedMedia)this._bedMedia.play().catch(()=>{});if(this._fireMedia)this._fireMedia.play().catch(()=>{});if(this._themeMedia)this.playTheme().catch(()=>{});if(this._bossMedia)this._bossMedia.play().catch(()=>{});}
   },
   setBackgroundPaused(paused){
@@ -11022,6 +11133,7 @@ const SFX = {
       if(this._themeMedia)this._themeMedia.pause();
       if(this._bossMedia)this._bossMedia.pause();
       Object.values(this._spatialFires).forEach(r=>{try{r.media.pause();}catch(e){}}); // [音]バックグラウンド中は定位ループも停止
+      Object.values(this._musicActive).forEach(r=>{try{r.media.pause();}catch(e){}}); // [音]音楽レイヤーの<audio>本体も止める(AudioContext.suspendだけでは要素自体の再生・デコードは止まらないため)
       this.stopActiveCalls();
     }else if(!this._muted){
       if(this._bedMedia)this._bedMedia.play().catch(()=>{});
@@ -11029,6 +11141,7 @@ const SFX = {
       if(this._themeMedia)this.playTheme().catch(()=>{}); // [音バグ修正] 直接play()せずplayThemeを経由し、title以外への復帰では再点火しないようにする
       if(this._bossMedia)this._bossMedia.play().catch(()=>{});
       Object.values(this._spatialFires).forEach(r=>{try{r.media.play().catch(()=>{});}catch(e){}});
+      Object.values(this._musicActive).forEach(r=>{try{r.media.play().catch(()=>{});}catch(e){}});
     }
   },
   /* 波AA: ED5「百年の夢」専用——チャイムを2倍速で鳴らし続け、雅楽(伎楽テーマ)と風を逆再生で流す */
@@ -11085,6 +11198,172 @@ const SFX = {
     (this._ed5Handles||[]).forEach(h=>h&&h.stop&&h.stop());
     this._ed5Handles=[];
     this.updateBed();
+  },
+
+  /* ============================================================
+     [音]① 雨音: mp3を新規追加せず、ホワイトノイズ→バンドパス+ゆるいLFOで合成する。
+     屋外は開けた高域寄りの雨音、屋内(簀子/母屋)は屋根に当たるこもった低域寄りの雨音にクロスフェードする。
+     ノイズ源は雨が降り出した時に初めて生成し(起動時コスト0)、止んだら数秒のフェードの後に完全破棄する
+     (ノードを残留させない=スマホの発熱・電池対策)。
+  ============================================================ */
+  _ensureRainNoise(){
+    if(this._rainNoiseBuffer) return this._rainNoiseBuffer;
+    if(!this.ctx) return null;
+    const len=Math.floor(this.ctx.sampleRate*2); // 2秒のノイズループ(短くても聴感上は気にならない)
+    const buf=this.ctx.createBuffer(1,len,this.ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
+    this._rainNoiseBuffer=buf;
+    return buf;
+  },
+  /* 雨音グラフを新規に組み立てて再生開始(フェードインはstartRainAudio内で行う) */
+  startRainAudio(){
+    if(this._rain) return;
+    if(!APP_SE || !this.ctx || this._muted) return;
+    if(window.LOW_POWER && window.LOW_POWER.active) return; // [発熱対策] 低電力時は視覚の雨のみ(音の合成は省く)
+    const buf=this._ensureRainNoise(); if(!buf) return;
+    try{
+      const src=this.ctx.createBufferSource();src.buffer=buf;src.loop=true;
+      const outF=this.ctx.createBiquadFilter();outF.type="bandpass";outF.frequency.value=1900;outF.Q.value=0.55; // 屋外: 開けた高域寄りのざあざあという音
+      const inF=this.ctx.createBiquadFilter();inF.type="lowpass";inF.frequency.value=480;inF.Q.value=0.5;         // 屋内: 屋根越しのこもった低域寄りの音
+      const outG=this.ctx.createGain();outG.gain.value=1;
+      const inG=this.ctx.createGain();inG.gain.value=0;
+      const level=this.ctx.createGain();level.gain.value=0.40;
+      const fade=this.ctx.createGain();fade.gain.value=0;
+      const lfo1=this.ctx.createOscillator();lfo1.type="sine";lfo1.frequency.value=0.11;
+      const lfo2=this.ctx.createOscillator();lfo2.type="sine";lfo2.frequency.value=0.037;
+      const lfoGain=this.ctx.createGain();lfoGain.gain.value=0.10; // 強弱がゆるやかにうねる(雨脚の強弱感)
+      src.connect(outF);outF.connect(outG);outG.connect(level);
+      src.connect(inF);inF.connect(inG);inG.connect(level);
+      lfo1.connect(lfoGain);lfo2.connect(lfoGain);lfoGain.connect(level.gain);
+      level.connect(fade);fade.connect(this.master);
+      src.start();lfo1.start();lfo2.start();
+      this._rain={src,outF,inF,outG,inG,level,fade,lfo1,lfo2,lfoGain};
+      clearTimeout(this._rainStopT);this._rainStopT=null;
+      this._fadeRainGain(1);
+    }catch(e){ this._rain=null; }
+  },
+  _fadeRainGain(target){
+    if(!this._rain||!this.ctx) return;
+    try{ this._rain.fade.gain.setTargetAtTime(target, this.ctx.currentTime, target?1.6:1.1); }catch(e){}
+  },
+  /* 屋内外の質感クロスフェード(indoor切替時のみ呼ぶ。毎フレームは呼ばない) */
+  setRainIndoor(indoor){
+    if(!this._rain||!this.ctx) return;
+    const t=this.ctx.currentTime;
+    try{
+      this._rain.outG.gain.setTargetAtTime(indoor?0:1, t, 0.9);
+      this._rain.inG.gain.setTargetAtTime(indoor?1:0, t, 0.9);
+      this._rain.level.gain.setTargetAtTime(indoor?0.32:0.40, t, 0.9); // 屋内はやや控えめ(こもって遠く聞こえる)
+    }catch(e){}
+  },
+  /* フェードアウトして数秒後に完全破棄(hard=trueなら即座にstop/disconnectして残留を防ぐ) */
+  stopRainAudio(hard){
+    if(!this._rain) return;
+    if(!hard){
+      this._fadeRainGain(0);
+      clearTimeout(this._rainStopT);
+      this._rainStopT=setTimeout(()=>this._teardownRain(),1900);
+      return;
+    }
+    this._teardownRain();
+  },
+  _teardownRain(){
+    clearTimeout(this._rainStopT);this._rainStopT=null;
+    const r=this._rain; if(!r) return;
+    this._rain=null;
+    try{r.src.stop();}catch(e){}
+    try{r.lfo1.stop();}catch(e){}
+    try{r.lfo2.stop();}catch(e){}
+    [r.src,r.outF,r.inF,r.outG,r.inG,r.level,r.fade,r.lfo1,r.lfo2,r.lfoGain].forEach(n=>{try{n.disconnect();}catch(e){}});
+  },
+  /* rainOn(rainFall.visibleの実効値)とindoor(_footstepSurfaceの判定)に応じて出し入れする。呼び出し元(updateSpatial)は間引き済み */
+  updateRainAudio(rainOn, indoor){
+    const gate = APP_SE && this.ctx && !this._muted && !(window.LOW_POWER && window.LOW_POWER.active);
+    if(!gate){
+      if(this._rain) this.stopRainAudio(true); // 条件を外れたら即座に破棄(APP_SEオフ・LOW_POWER・ミュート時に残留させない)
+      this._rainOnState=false;this._rainIndoorState=null;
+      return;
+    }
+    if(rainOn){
+      if(!this._rain){ this.startRainAudio(); this._rainIndoorState=indoor; if(this._rain)this.setRainIndoor(indoor); }
+      else if(this._rainIndoorState!==indoor){ this._rainIndoorState=indoor; this.setRainIndoor(indoor); }
+      this._rainOnState=true;
+    }else if(this._rainOnState){
+      this.stopRainAudio(false);
+      this._rainOnState=false;
+    }
+  },
+
+  /* ============================================================
+     [音]③ 音楽の階層化: 昼=箏のみ/夜=琵琶を重ねる/年中行事=笙・龍笛も加える。
+     既存の楽器mp3(東西の対でタップ時に鳴らす試奏音)を低音量ループとして流用し、
+     個別GainNodeでフェードイン/アウトさせながら出し入れする(同時レイヤー数は_MUSIC_MAXで上限)。
+     ?music=flat で従来どおり無効化できる(既存のBGM/環境音の仕組みには一切手を入れない)。
+  ============================================================ */
+  _musicDesired(){
+    if(this._MUSIC_FLAT) return [];
+    if(typeof APP === "undefined" || APP.mode !== "walk") return []; // 他モードは専用BGM(UK_BGM/RENAI_BGM/ST_BGM/bossBgm等)に任せる
+    const festival=!!(window.KOYOMI_WALK_STATUS && window.KOYOMI_WALK_STATUS.active);
+    if(festival) return ["koto","sho","ryuteki"];               // 年中行事: 雅楽編成
+    if(APP.time==="night"||APP.time==="dusk") return ["koto","biwa"]; // 夜(夕含む): 箏+琵琶
+    return ["koto"];                                             // 昼: 箏のみ
+  },
+  /* モード/季節/時刻が変わるたびに呼ばれる(updateBed経由)。差分だけフェードイン/アウトする軽量処理 */
+  _musicTick(){
+    if(!APP_SE || !this.ctx || this._muted || (window.LOW_POWER && window.LOW_POWER.active)){
+      this._musicTeardownAll(false); // ゲートを外れたらなだらかに全レイヤーを退場させる
+      return;
+    }
+    const want=this._musicDesired().slice(0,this._MUSIC_MAX);
+    const wantSet=new Set(want);
+    Object.keys(this._musicActive).forEach(k=>{ if(!wantSet.has(k)) this._musicFadeOut(k); });
+    want.forEach(k=>{ if(!this._musicActive[k]) this._musicFadeIn(k); });
+  },
+  _musicFadeIn(key){
+    const existing=this._musicActive[key];
+    if(existing){
+      if(existing.fadingOut){ // 消えかけていた同じレイヤーを呼び戻す(新規ノードを作らずフェード方向だけ反転=上限カウントもずれない)
+        existing.fadingOut=false;
+        clearTimeout(existing.stopTimer);
+        try{ existing.gain.gain.setTargetAtTime(this.musicVol[key]||0.1, this.ctx.currentTime, 2.4); }catch(e){}
+      }
+      return;
+    }
+    if(Object.keys(this._musicActive).length>=this._MUSIC_MAX) return; // [音]同時再生数の上限(フェード中も含めて数える)
+    const file=this.musicFiles[key]; if(!file||!this.media[file]) return;
+    try{
+      const src=this.media[file].cloneNode(true);
+      src.loop=true;src.muted=this._muted;
+      const node=this.ctx.createMediaElementSource(src);
+      const gain=this.ctx.createGain();gain.gain.value=0;
+      node.connect(gain);gain.connect(this.master);
+      if(!this._backgroundPaused&&!this._muted) src.play().catch(()=>{});
+      gain.gain.setTargetAtTime(this.musicVol[key]||0.1, this.ctx.currentTime, 3.2); // ふわっと入る(唐突に鳴り始めない)
+      this._musicActive[key]={media:src,node,gain,fadingOut:false,stopTimer:null};
+    }catch(e){}
+  },
+  _musicFadeOut(key){
+    const rec=this._musicActive[key]; if(!rec||rec.fadingOut) return;
+    rec.fadingOut=true;
+    try{ rec.gain.gain.setTargetAtTime(0, this.ctx.currentTime, 2.2); }catch(e){}
+    rec.stopTimer=setTimeout(()=>{
+      if(this._musicActive[key]!==rec) return; // 既に別インスタンスへ置き換わっていたら何もしない
+      delete this._musicActive[key];
+      try{ rec.media.pause();rec.media.removeAttribute("src");rec.media.load(); }catch(e){}
+      try{ rec.node.disconnect();rec.gain.disconnect(); }catch(e){}
+    }, 3200);
+  },
+  /* hard=trueなら即座に停止・切断(残留を残さない。タイトル遷移/ゲーム終了用) */
+  _musicTeardownAll(hard){
+    Object.keys(this._musicActive).forEach(k=>{
+      if(hard){
+        const rec=this._musicActive[k]; delete this._musicActive[k];
+        clearTimeout(rec.stopTimer);
+        try{rec.media.pause();rec.media.removeAttribute("src");rec.media.load();}catch(e){}
+        try{rec.node.disconnect();rec.gain.disconnect();}catch(e){}
+      }else this._musicFadeOut(k);
+    });
   }
 };
 
@@ -24454,6 +24733,18 @@ function animate(now){
   moonHalo.position.copy(moonMesh.position);
   moonHalo.visible = moonMesh.visible;
   moonHalo.material.opacity = moonMesh.visible ? 0.26 + Math.sin(t*.7)*0.03 : 0;  /* [fix] 月暈を強調 */
+  // [天体] 満ち欠けの陰カード: 月と同位置、常にカメラを正面に見て貼り付く(テクスチャの再生成はしない。位置/向きの追従のみ)
+  moonPhaseShadow.visible = moonMesh.visible;
+  if(moonPhaseShadow.visible){
+    moonPhaseShadow.position.copy(moonMesh.position).addScaledVector(
+      _sfxTmpVec.copy(camera.position).sub(moonMesh.position).normalize(), 9.9);
+    moonPhaseShadow.quaternion.copy(camera.quaternion);
+    if(!MOON_PHASE.announced){
+      MOON_PHASE.announced=true;
+      const named=moonNamedDayLabel(MOON_PHASE.age);
+      if(named)toast("今宵は"+named+"です",3200);
+    }
+  }
 
   /* --- ギミックアニメ --- */
   gimmicks.shitomi.forEach(st=>{
