@@ -5412,6 +5412,20 @@ WAKA_DATA.forEach((w,i)=>{
    プロシージャル・テクスチャ工房
 ============================================================ */
 const TEX={};
+/* [視覚強化] 雲とリムライトの時刻別パレット。TIMES本体は既存コードが厳密に参照するので構造を変えず、別テーブルとして持つ。
+   雲ドーム/リムライトの生成(この少し下)より前に定義しておく必要がある */
+const CLOUD_PAL={
+ day:  {c:0xffffff,op:.50},
+ dawn: {c:0xffd9b0,op:.46},
+ dusk: {c:0xff9a5c,op:.56},
+ night:{c:0x2a3350,op:.26}
+};
+const RIM_PAL={
+ day:  {c:0xcfe3ff,i:.16},
+ dawn: {c:0xffd7a8,i:.24},
+ dusk: {c:0xff9a4d,i:.30},
+ night:{c:0x8fb0ff,i:.22}
+};
 function canv(w,h,fn){const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");fn(x,w,h);
   const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t;}
 function rnd(a,b){return a+Math.random()*(b-a);}
@@ -5786,12 +5800,19 @@ sun.shadow.mapSize.set(1024,1024);
 const sc=sun.shadow.camera;
 sc.left=-90;sc.right=90;sc.top=90;sc.bottom=-90;sc.far=320;
 sun.shadow.bias=-0.0008;
+sun.shadow.normalBias=0.028; // [視覚強化] 法線マップ導入後の斜面アクネ(縞ノイズ)をbiasだけでなくnormalBiasでも抑える
+sun.shadow.radius=2.4; // PCFSoftShadowMap下では直接の効果は薄いが、将来型の変更に備えて縁を柔らかくする設定を明示しておく
 
 scene.add(sun);
 scene.add(sun.target);
 
 const hemi=new THREE.HemisphereLight(0xbfd6e8,0x8a7a5c,.62);scene.add(hemi);
 const moon=new THREE.DirectionalLight(0x7e93c9,0);moon.position.set(-50,80,-40);scene.add(moon);
+/* [視覚強化] リムライト(輪郭光): 主光源(sun)の対角・やや上から弱く当て、人物や柱の輪郭を背景から浮き立たせる。
+   影を作らない(castShadow=false)ので描画コストはライト1灯分の計算のみで、シャドウマップは増えない。 */
+const rim=new THREE.DirectionalLight(0xcfe3ff,0);
+rim.position.set(-60,70,-50);rim.castShadow=false;
+scene.add(rim);scene.add(rim.target);
 const interiorLight=new THREE.PointLight(0xffe8c8,.35,40,1.8);interiorLight.position.set(0,4.0,-2);scene.add(interiorLight);
 
 /* ============================================================
@@ -5879,6 +5900,35 @@ moonRefl.position.set(-8,0.09,39);
 moonRefl.userData.noAutoShadow=true;
 scene.add(moonRefl);
 
+/* ============================================================
+   [視覚強化] 雲の流れ(ドローコール1個)
+   canvasで生成した半透明の雲テクスチャを、カメラを常に包む巨大な半球(BackSide)の内側に貼る。
+   scene.background(単色グラデ)の手前に薄く重なるだけなので、既存の空描画を壊さない。
+   texture.offset.x を毎フレーム微増させてゆっくり流す。色/濃さは時刻(cur.cloudC/cloudOp)に追従。
+============================================================ */
+TEX.clouds=canv(1024,256,(x,w,h)=>{
+  for(let i=0;i<26;i++){
+    const cx=rnd(0,w),cy=rnd(h*0.15,h*0.78),r=rnd(38,96),a=rnd(.32,.8);
+    [-w,0,w].forEach(off=>{ // 横方向にシームレスへ: 端をまたぐ雲を左右にも複製して描く
+      const g=x.createRadialGradient(cx+off,cy,0,cx+off,cy,r);
+      g.addColorStop(0,`rgba(255,255,255,${a})`);
+      g.addColorStop(.6,`rgba(255,255,255,${a*0.35})`);
+      g.addColorStop(1,"rgba(255,255,255,0)");
+      x.fillStyle=g;x.beginPath();x.arc(cx+off,cy,r,0,Math.PI*2);x.fill();
+    });
+  }
+});
+TEX.clouds.wrapS=THREE.RepeatWrapping;TEX.clouds.repeat.set(3,1);
+const CLOUDS_PARAM_OFF=/[?&]clouds=0/.test(location.search); // 明示的な無効化フォールバック
+const cloudDome=new THREE.Mesh(
+  new THREE.SphereGeometry(340,20,10,0,Math.PI*2,0,Math.PI*0.56),
+  new THREE.MeshBasicMaterial({map:TEX.clouds,color:CLOUD_PAL.day.c,opacity:CLOUD_PAL.day.op,transparent:true,depthWrite:false,side:THREE.BackSide,fog:false})
+);
+cloudDome.renderOrder=-1;        // 他の半透明物より先に描き、雲を最も奥として扱う
+cloudDome.frustumCulled=false;   // カメラを常時包むドームなので視錐台カリングで消えないようにする
+cloudDome.visible=!CLOUDS_PARAM_OFF;
+scene.add(cloudDome);
+
 /* ====== 共通ヘルパー ====== */
 const interactables={};      // id -> {root,meshes:[],labelPos:Vector3}
 const rayTargets=[];         // raycast対象メッシュ
@@ -5895,13 +5945,13 @@ function geoKey(){
 function sharedBoxGeo(w,h,d){
   const key=geoKey(w,h,d);
   let geo=GEO_CACHE.box.get(key);
-  if(!geo){geo=new THREE.BoxGeometry(w,h,d);GEO_CACHE.box.set(key,geo);}
+  if(!geo){geo=new THREE.BoxGeometry(w,h,d);geo.setAttribute("uv2",geo.attributes.uv);GEO_CACHE.box.set(key,geo);} // [AO] aoMapはuv2必須。既存uvを複製するだけ(見た目・負荷への影響なし)
   return geo;
 }
 function sharedCylGeo(rt,rb,h,seg){
   const key=geoKey(rt,rb,h,seg);
   let geo=GEO_CACHE.cyl.get(key);
-  if(!geo){geo=new THREE.CylinderGeometry(rt,rb,h,seg);GEO_CACHE.cyl.set(key,geo);}
+  if(!geo){geo=new THREE.CylinderGeometry(rt,rb,h,seg);geo.setAttribute("uv2",geo.attributes.uv);GEO_CACHE.cyl.set(key,geo);} // [AO] 同上
   return geo;
 }
 function box(w,h,d,mat,x=0,y=0,z=0,shadow=true){const m=new THREE.Mesh(sharedBoxGeo(w,h,d),mat);
@@ -5931,6 +5981,7 @@ function hipRoofGeo(w,d,h,ridge=0.42){
   const g=new THREE.BufferGeometry();
   g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
   g.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));
+  g.setAttribute("uv2",new THREE.Float32BufferAttribute(uv,2)); // [AO] aoMap用の第2UV(同一でよい)
   g.computeVertexNormals();return g;
 }
 function hipRoof(w,d,h,ridge,y){
@@ -6099,6 +6150,7 @@ const world=new THREE.Group();scene.add(world);
   const g1=new THREE.Mesh(new THREE.PlaneGeometry(400,400),MAT.grass);
   g1.rotation.x=-Math.PI/2;g1.position.y=-.06;g1.receiveShadow=true;world.add(g1);
   const court=new THREE.Mesh(new THREE.PlaneGeometry(118,118),MAT.sand);
+  court.geometry.setAttribute("uv2",court.geometry.attributes.uv); // [AO] 白砂のaoMap用uv2
   court.rotation.x=-Math.PI/2;court.position.set(0,0,-1);court.receiveShadow=true;world.add(court);
   const stepping=new THREE.Group();
   const stones=[[0,8,1.15,.72],[0,13,1.0,.62],[0,18,1.25,.7],[0,23,1.05,.66],[0,28,1.2,.72],
@@ -6680,7 +6732,7 @@ const TAI={e:{x:35,z:-12},w:{x:-35,z:-12},n:{x:0,z:-39}};
     g.add(box(3.55,.045,.6,MAT.kin,0,.415,0));
     const seg=[];for(let i=0;i<13;i++){const z=-.27+i*.045;seg.push([new THREE.Vector3(-1.72,.455,z),new THREE.Vector3(1.72,.455,z)]);}
     addStrings(g,seg);
-    const bridgeGeo=new THREE.ConeGeometry(.055,.15,4),bridges=new THREE.InstancedMesh(bridgeGeo,MAT.plaster,13);
+    const bridgeGeo=new THREE.ConeGeometry(.055,.15,4);bridgeGeo.setAttribute("uv2",bridgeGeo.attributes.uv);const bridges=new THREE.InstancedMesh(bridgeGeo,MAT.plaster,13); // [AO] MAT.plasterを使う唯一のbox()外ジオメトリにもuv2を用意
     for(let i=0;i<13;i++){mat4.makeTranslation(-1.35+i*.22,.49,-.27+i*.045);bridges.setMatrixAt(i,mat4);}bridges.instanceMatrix.needsUpdate=true;g.add(bridges);
     return g;
   }
@@ -13844,7 +13896,9 @@ const TIMES={
 const ambient=new THREE.AmbientLight(0xfff0dd,0.18);scene.add(ambient);
 const cur={sky:new THREE.Color(TIMES.day.sky),fog:new THREE.Color(TIMES.day.fog),sunC:new THREE.Color(TIMES.day.sunC),
   ambC:new THREE.Color(TIMES.day.ambC),
-  sunI:1.25,hemi:.62,amb:.18,moon:0,exp:1.05,int:.35,sunP:new THREE.Vector3(60,95,45)};
+  sunI:1.25,hemi:.62,amb:.18,moon:0,exp:1.05,int:.35,sunP:new THREE.Vector3(60,95,45),
+  cloudC:new THREE.Color(CLOUD_PAL.day.c),cloudOp:CLOUD_PAL.day.op,
+  rimC:new THREE.Color(RIM_PAL.day.c),rimI:RIM_PAL.day.i};
 function setTime(t){APP.time=t;
   const _ti={dawn:"ic-dawn",day:"ic-sun",dusk:"ic-dusk",night:"ic-moon"}[t]||"ic-sun";
   const _tl={dawn:"朝",day:"昼",dusk:"夕",night:"夜"}[t]||"昼";
@@ -19983,6 +20037,7 @@ function kaimamiUpdate(dt){
 const clock=new THREE.Clock();
 const tmpV=new THREE.Vector3();
 const _scSky=new THREE.Color(),_scFog=new THREE.Color(),_scSun=new THREE.Color(),_scAmb=new THREE.Color(); // 毎フレームのColor割当を避けGCかくつきを軽減
+const _scCloud=new THREE.Color(),_scRim=new THREE.Color(); // [視覚強化] 雲・リムライトの目標色も同様に使い回す
 let glLost=false;  /* WebGLコンテキスト喪失中フラグ(モバイルのスリープ復帰・GPUリセット対策) */
 let bobPhase=0, bobAmp=0, footAccum=0;  /* ヘッドボブ位相/振幅・足音タイマー */
 const REDUCED_MOTION=!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches); /* 動きを減らす設定 */
@@ -20087,6 +20142,71 @@ function footstep(running,speedScale){
     _footstepHit(surf,t0,strength);                                   // かかと
     _footstepHit(surf,t0+0.026+Math.random()*0.018,strength*0.7);     // つま先(数十ms後・やや弱く)
   }catch(e){}
+}
+
+/* ============================================================
+   [視覚強化・最重要] 白砂に残る足跡
+   白砂の庭(court, _footstepSurfaceがmat:"sand"&&indoor:falseを返す範囲)を歩いた時だけ、
+   小さな板ポリ(楕円のくぼみ・canvas生成)を足元に置き、時間経過でopacityをフェードして消す。
+   上限40枚のリングバッファ(古いものから使い回す)。屋内(簀子・畳)や池では残さない。
+   LOW_POWER/REDUCED_MOTION、および ?footprint=0 では完全に無効化する(発熱・メモリ対策)。
+============================================================ */
+const FOOTPRINT_PARAM_OFF=/[?&]footprint=0/.test(location.search);
+const FOOTPRINT_MAX=40;
+const FOOTPRINT_LIFE=15;          // 秒: フェードして消えるまでの寿命
+const FOOTPRINT_BASE_OPACITY=0.5;
+const FOOTPRINT_TEX=canv(64,128,(x,w,h)=>{
+  // 楕円のくぼみ(中心が濃く、縁は透明へ滲む)。白砂より少し沈んだ暖色で、踏み固められた影のように見せる
+  const g=x.createRadialGradient(w/2,h/2,0,w/2,h/2,h/2);
+  g.addColorStop(0,"rgba(90,76,54,.85)");
+  g.addColorStop(.55,"rgba(90,76,54,.45)");
+  g.addColorStop(1,"rgba(90,76,54,0)");
+  x.fillStyle=g;x.beginPath();x.ellipse(w/2,h/2,w*0.36,h*0.46,0,0,Math.PI*2);x.fill();
+});
+let _footprintPool=null,_footprintCursor=0,_footSide=-1;
+function _initFootprintPool(){
+  const geo=new THREE.PlaneGeometry(0.16,0.34);
+  const pool=[];
+  for(let i=0;i<FOOTPRINT_MAX;i++){
+    const mat=new THREE.MeshBasicMaterial({map:FOOTPRINT_TEX,transparent:true,depthWrite:false,opacity:0});
+    const m=new THREE.Mesh(geo,mat);
+    m.visible=false;m.frustumCulled=true;m.userData.life=FOOTPRINT_LIFE;
+    scene.add(m);pool.push(m);
+  }
+  return pool;
+}
+function footprintsAllowed(){
+  return !FOOTPRINT_PARAM_OFF && !REDUCED_MOTION && !(window.LOW_POWER&&window.LOW_POWER.active);
+}
+/* 移動→静止に関わらず、歩数(footAccum)ごとに1回呼ばれる。footstep()のSE可否(APP_SE)からは独立させ、
+   音を消していても足跡は残るようにする(視覚効果と音響効果を分離)。 */
+function footprintStep(){
+  if(!footprintsAllowed())return;
+  const surf=_footstepSurface(player.pos.x,player.pos.z);
+  if(surf.indoor||surf.mat!=="sand")return; // 屋内(簀子・畳)・水際・遠景の土では残さない
+  if(!_footprintPool)_footprintPool=_initFootprintPool();
+  _footSide=-_footSide;
+  const yaw=player.yaw;
+  const rightX=Math.cos(yaw),rightZ=-Math.sin(yaw);
+  const fx=player.pos.x+rightX*_footSide*0.10,fz=player.pos.z+rightZ*_footSide*0.10;
+  const m=_footprintPool[_footprintCursor];
+  _footprintCursor=(_footprintCursor+1)%FOOTPRINT_MAX;
+  m.position.set(fx,groundH(fx,fz)+0.012,fz);
+  m.rotation.order="YXZ";m.rotation.set(-Math.PI/2,yaw,0);
+  m.material.opacity=FOOTPRINT_BASE_OPACITY;
+  m.userData.life=0;
+  m.visible=true;
+}
+/* 毎フレーム呼び出し。プールが未生成(=まだ白砂を歩いていない)なら即return(コストゼロ) */
+function updateFootprints(dt){
+  if(!_footprintPool)return;
+  for(let i=0;i<_footprintPool.length;i++){
+    const m=_footprintPool[i];
+    if(!m.visible)continue;
+    m.userData.life+=dt;
+    if(m.userData.life>=FOOTPRINT_LIFE){m.visible=false;m.material.opacity=0;continue;}
+    m.material.opacity=FOOTPRINT_BASE_OPACITY*(1-m.userData.life/FOOTPRINT_LIFE);
+  }
 }
 
 /* ============================================================
@@ -24267,6 +24387,7 @@ function animate(now){
      表示/非表示や他の演出には影響しない(位置更新の頻度のみを下げる)。 */
   const decoThrottleSkip=isSeatedHudMode()&&(__decoFrame%3!==0);
   QUALITY.update(dt,APP_FPSCAP);  /* 適応的品質: 負荷に応じ描画解像度を自動調整。上限fpsを渡し誤降格を防ぐ */
+  updateFootprints(dt);           /* [視覚強化] 白砂の足跡フェード。プール未生成なら即return */
 
   /* --- 時間遷移とフォグカラーの自動同期 --- */
   const tg=TIMES[APP.time];
@@ -24278,10 +24399,15 @@ function animate(now){
   cur.amb+=(tg.amb-cur.amb)*lp;
   cur.moon+=(tg.moon-cur.moon)*lp;cur.exp+=(tg.exp-cur.exp)*lp;cur.int+=(tg.int-cur.int)*lp;
   cur.sunP.lerp(tmpV.set(...tg.sunP),lp);
+  /* [視覚強化] 雲・リムライトも同じ補間速度(lp)で時刻パレットへ追従させる */
+  const cloudTg=CLOUD_PAL[APP.time]||CLOUD_PAL.day, rimTg=RIM_PAL[APP.time]||RIM_PAL.day;
+  cur.cloudC.lerp(_scCloud.set(cloudTg.c),lp);cur.cloudOp+=(cloudTg.op-cur.cloudOp)*lp;
+  cur.rimC.lerp(_scRim.set(rimTg.c),lp);cur.rimI+=(rimTg.i-cur.rimI)*lp;
   if(APP.mode==="taiji"||APP.storyTokoyoSky){ // 禍々しい赤黒い気配: 空と霧を暗赤へ(波Z: 常世=第5話も同じ色調に)
     const om=1-Math.pow(.02,dt);
     cur.sky.lerp(_scSky.set(0x1a0407),om);cur.fog.lerp(_scFog.set(0x250409),om);
     cur.ambC.lerp(_scAmb.set(0x5a0c0c),om);cur.amb=Math.max(cur.amb,0.05);cur.moon=Math.max(cur.moon,0.18);
+    cur.cloudC.lerp(_scCloud.set(0x2a0810),om);cur.cloudOp=Math.max(cur.cloudOp,0.4);
   }
 
   if (scene.fog) {
@@ -24298,6 +24424,19 @@ function animate(now){
   sun.position.copy(cur.sunP);hemi.intensity=cur.hemi;moon.intensity=cur.moon;
   ambient.intensity=cur.amb;ambient.color.copy(cur.ambC);
   renderer.toneMappingExposure=cur.exp;
+
+  /* [視覚強化] リムライト: 主光源(sun)の対角・やや上から。影は作らない(castShadow=false)ので負荷は増えない */
+  rim.position.set(-cur.sunP.x*0.55,Math.max(40,cur.sunP.y*0.65+25),-cur.sunP.z*0.55);
+  rim.color.copy(cur.rimC);rim.intensity=cur.rimI;
+
+  /* [視覚強化] 雲: カメラに追従させ、色/濃さを時刻へ、offset.xでゆっくり流す。LOW_POWERでは非表示(発熱対策)、REDUCED_MOTIONでは位置/色は追従するが流れを止める */
+  cloudDome.visible=!CLOUDS_PARAM_OFF&&!(window.LOW_POWER&&window.LOW_POWER.active);
+  if(cloudDome.visible){
+    cloudDome.position.copy(camera.position);
+    cloudDome.material.color.copy(cur.cloudC);
+    cloudDome.material.opacity=cur.cloudOp;
+    if(!REDUCED_MOTION)TEX.clouds.offset.x=(TEX.clouds.offset.x+dt*0.0035)%1;
+  }
   const openFrac=gimmicks.shitomi.filter(s=>s.open).length/Math.max(1,gimmicks.shitomi.length);
   interiorLight.intensity=cur.int+(APP.time==="day"?openFrac*.4:0);
 
@@ -24866,7 +25005,7 @@ function animate(now){
       if(moving){
         bobPhase+=dt*(running?13:9);
         footAccum+=dt*(running?2.3:1.6);
-        if(footAccum>=1){footAccum-=1;footstep(running);}
+        if(footAccum>=1){footAccum-=1;footstep(running);footprintStep();}
       }else{footAccum=0.6;}
       bobAmp+=((moving&&!REDUCED_MOTION?(running?.009:.005):0)-bobAmp)*Math.min(1,dt*8); // 揺れを最小限に
 
@@ -30224,6 +30363,85 @@ if(APP.map==="kamakura"){
     sched(normalMapStep);
   },4000);
 })();
+
+/* ============================================================
+   [視覚強化] AOマップ(遮蔽) — 法線マップと同じ要領で、既存canvasテクスチャの輝度から
+   簡易的な遮蔽濃淡を生成してaoMapへ設定する。aoMapはuv2が必須なので、box()/cyl()/court/
+   hipRoofGeo/koto等の対象ジオメトリには事前にuv2(=既存uvの複製)を設定済み(見た目・負荷への影響なし)。
+   法線マップと同じくIS_TOUCH/LOW_POWER/QUALITY低下時は行わず、起動直後の負荷とも競合しないよう
+   大きく遅延させ、法線マップの後追いで1枚ずつ生成する。?ao=0 で明示的に無効化できる。
+============================================================ */
+(function(){
+  if(/[?&]ao=0/.test(location.search))return; // 明示的な無効化フォールバック
+  function aoMapDeviceDisabled(){
+    return IS_TOUCH
+      || (window.LOW_POWER&&window.LOW_POWER.active)
+      || (typeof QUALITY!=="undefined"&&QUALITY.level>0); // 低品質(自動降格含む)では発熱を増やさないため無効
+  }
+  /* 元canvasを縮小コピーし、輝度の局所コントラスト(近傍平均より暗い箇所ほど遮蔽が強い)から
+     グレースケールのAoMap用canvasを返す。aoMapはR成分だけが参照されるためグレースケールで十分 */
+  function aoCanvasFromLuminance(srcCanvas,size,strength){
+    const tmp=document.createElement("canvas");tmp.width=size;tmp.height=size;
+    const tx=tmp.getContext("2d");
+    tx.drawImage(srcCanvas,0,0,size,size);
+    const src=tx.getImageData(0,0,size,size).data;
+    const lum=new Float32Array(size*size);
+    for(let i=0;i<size*size;i++){const o=i*4;lum[i]=(src[o]*0.299+src[o+1]*0.587+src[o+2]*0.114)/255;}
+    const L=(x,y)=>{x=((x%size)+size)%size;y=((y%size)+size)%size;return lum[y*size+x];};
+    const out=tx.createImageData(size,size);
+    for(let y=0;y<size;y++){
+      for(let x=0;x<size;x++){
+        let sum=0;
+        for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)sum+=L(x+dx,y+dy);
+        const avg=sum/9,here=L(x,y);
+        const dark=Math.max(0,avg-here); // 近傍より暗い(=溝・継ぎ目)ほど遮蔽を強める
+        let ao=1-dark*strength;
+        ao=Math.max(0,Math.min(1,ao))*(0.6+0.4*here); // 素材全体の明暗も少し残し、白飛びを防ぐ
+        const v=Math.round(255*ao);
+        const o=(y*size+x)*4;
+        out.data[o]=out.data[o+1]=out.data[o+2]=v;out.data[o+3]=255;
+      }
+    }
+    tx.putImageData(out,0,0);
+    return tmp;
+  }
+  function applyAOMap(mat,srcTex,size,strength){
+    if(!mat||!srcTex||!srcTex.image)return;
+    try{
+      const ac=aoCanvasFromLuminance(srcTex.image,size,strength);
+      const at=new THREE.CanvasTexture(ac);
+      at.wrapS=srcTex.wrapS;at.wrapT=srcTex.wrapT;
+      if(srcTex.repeat)at.repeat.copy(srcTex.repeat);
+      at.needsUpdate=true;
+      mat.aoMap=at;mat.aoMapIntensity=1.0;
+      mat.needsUpdate=true;
+    }catch(e){console.warn("[AOマップ] 生成に失敗:",e);}
+  }
+  const aoMapTasks=[
+    ()=>applyAOMap(MAT.sand,TEX.sand,256,2.6),       // 白砂の箒目の溝
+    ()=>applyAOMap(MAT.roof,TEX.roof,256,2.2),       // 檜皮葺の葺き足の重なり
+    ()=>applyAOMap(MAT.floor,TEX.woodFloor,256,2.0), // 板張りの目地
+    ()=>applyAOMap(MAT.sunoko,TEX.sunoko,256,2.0),   // 簀子の板目
+    ()=>applyAOMap(MAT.plaster,TEX.plaster,128,1.6), // 白漆喰壁の粒立ち
+    ()=>applyAOMap(MAT.tatami,TEX.tatami,256,1.6),   // 畳表の織り目
+  ];
+  let aoMapTaskIdx=0;
+  function aoMapStep(){
+    if(aoMapTaskIdx>=aoMapTasks.length)return;
+    if(aoMapDeviceDisabled())return; // 途中でLOW_POWER化/品質降格したら以降は行わない
+    try{aoMapTasks[aoMapTaskIdx]();}catch(e){console.warn("[AOマップ]",e);}
+    aoMapTaskIdx++;
+    const sched=window.requestIdleCallback?(cb)=>requestIdleCallback(cb,{timeout:800}):(cb)=>setTimeout(cb,150);
+    sched(aoMapStep);
+  }
+  // 法線マップ(4000ms〜)の後を追う形で開始。起動直後の負荷やQUALITY初回自動調整と競合しないようにする
+  setTimeout(()=>{
+    if(aoMapDeviceDisabled())return;
+    const sched=window.requestIdleCallback?(cb)=>requestIdleCallback(cb,{timeout:800}):(cb)=>setTimeout(cb,50);
+    sched(aoMapStep);
+  },7000);
+})();
+
 animate();
 
 /* ===== 恋愛モード 演出関数(Phase F) ===== */
