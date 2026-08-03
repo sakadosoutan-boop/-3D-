@@ -3954,6 +3954,25 @@ body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf
 .history-stats .hs-val{font-family:var(--serif);font-size:17px;color:#f7df9a}
 .history-stats .hs-lbl{font-size:10.5px;color:#c3b491;letter-spacing:.04em}
 .history-stats .hs-modes{grid-column:1/-1;font-size:11px;color:#d3c2a2;line-height:1.8;border-top:1px solid rgba(201,162,63,.2);padding-top:7px;margin-top:2px}
+
+/* 共同討伐: 共有するのはボス霊力と行動結果だけ。戦闘操作を覆わない小型HUDにする。 */
+.online-coop-settings{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:-5px 0 16px;padding:12px 0;border-top:1px solid rgba(123,92,45,.25);border-bottom:1px solid rgba(123,92,45,.25)}
+.online-coop-settings[hidden]{display:none}
+.online-coop-settings label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:700;color:#6a5940}
+.online-coop-settings select{min-height:42px;border:1px solid #9b7742;border-radius:4px;background:#fffaf0;color:#34291d;padding:8px 10px;font:inherit}
+.coop-hunt-hud{position:fixed;z-index:44;top:calc(env(safe-area-inset-top) + 112px);right:12px;width:min(270px,calc(100vw - 24px));display:none;pointer-events:none;color:#fff8df;background:rgba(17,23,22,.9);border:1px solid rgba(118,221,198,.62);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.42);padding:10px 11px;font-family:var(--sans);backdrop-filter:blur(5px)}
+.coop-hunt-hud.is-active{display:block}
+.coop-hunt-head{display:grid;grid-template-columns:34px 1fr 12px;align-items:center;gap:8px}
+.coop-hunt-sigil{display:grid;place-items:center;width:32px;height:32px;border:1px solid #e5c96f;border-radius:50%;color:#ffe79a;font-family:var(--serif);font-size:17px;background:#573a27}
+.coop-hunt-head b{display:block;font-family:var(--serif);font-size:13px;letter-spacing:0}.coop-hunt-head small{display:block;margin-top:2px;color:#acd9cf;font-size:9.5px}
+#coopHuntConnection{width:9px;height:9px;border-radius:50%;background:#d6a34b;box-shadow:0 0 8px currentColor}
+#coopHuntConnection.is-online{color:#78dfbd;background:#78dfbd}#coopHuntConnection.is-reconnecting{color:#e6a857;background:#e6a857;animation:coopPulse 1s steps(2,end) infinite}
+.coop-hunt-shared,.coop-hunt-member{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;font-size:10px}.coop-hunt-shared b,.coop-hunt-member b{font-variant-numeric:tabular-nums;color:#ffe28a}
+.coop-hunt-track{height:7px;margin-top:4px;overflow:hidden;background:#15100d;border:1px solid rgba(255,255,255,.22)}.coop-hunt-track i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#bd493b,#e9c45f,#59c8aa);transition:width .22s ease}
+.coop-hunt-member{padding-top:7px;border-top:1px solid rgba(255,255,255,.12)}.coop-hunt-hud p{min-height:14px;margin:6px 0 0;color:#d8d0b9;font-size:9.5px;line-height:1.45}.coop-hunt-hud.is-spectating{border-color:#d6a857}.coop-hunt-hud.is-spectating .coop-hunt-sigil{background:#523c2f}
+@keyframes coopPulse{50%{opacity:.32}}
+@media(max-width:600px){.online-coop-settings{grid-template-columns:1fr}.coop-hunt-hud{top:calc(env(safe-area-inset-top) + 112px);right:8px;width:min(218px,calc(100vw - 16px));padding:8px 9px}.coop-hunt-head{grid-template-columns:30px 1fr 10px}.coop-hunt-sigil{width:28px;height:28px;font-size:15px}.coop-hunt-head b{font-size:12px}.coop-hunt-hud p{font-size:9px}}
+@media(prefers-reduced-motion:reduce){#coopHuntConnection.is-reconnecting{animation:none}.coop-hunt-track i{transition:none}}
 /* APP_CSS_EMBED_END */
 </style>
 </head>
@@ -17128,6 +17147,7 @@ window.KEMARI_GAME={
     anonKey: "sb_publishable_unPMDrLMLCxKhb95Ks8O9w_lLERwI7H",
   };
   const MODES = {
+    coop_hunt: { label: "共同討伐", unit: "功", order: "desc", challenge: true, featured: true, noRanking: true },
     gozen5: { label: "御前五番勝負", unit: "点", order: "desc", challenge: true, featured: true },
     quiz: { label: "名称当てクイズ", unit: "点", order: "desc", live: true },
     quiz_ta: { label: "名称当てタイムアタック", unit: "秒", order: "asc" },
@@ -17271,8 +17291,8 @@ window.KEMARI_GAME={
       });
     }
     setProfile(displayName) { return this.rpc("online_set_profile", { p_display_name: displayName }); }
-    async createMatch(mode) {
-      const created = await this.rpc("online_create_match", { p_mode: mode });
+    async createMatch(mode, settings) {
+      const created = await this.rpc("online_create_match", { p_mode: mode, p_settings: settings || {} });
       return this.getMatch(created?.match_id || created?.id);
     }
     joinMatch(code) { return this.rpc("online_join_match", { p_room_code: code }); }
@@ -17296,6 +17316,13 @@ window.KEMARI_GAME={
     }
     myRank(mode, period) {
       return this.rpc("online_my_rank", { p_mode: mode, p_period: period === "all" ? "all_time" : period });
+    }
+    coopHuntState(matchId) { return this.rpc("coop_hunt_state", { p_match_id: matchId }); }
+    coopHuntAction(data) {
+      return this.rpc("coop_hunt_submit_action", {
+        p_match_id: data.matchId, p_action_id: data.actionId,
+        p_action_type: data.actionType, p_payload: data.payload || {},
+      });
     }
   }
   const nativeTransport = new SupabaseTransport(config);
@@ -17377,10 +17404,10 @@ window.KEMARI_GAME={
     }
     schedulePoll();
   }
-  async function createMatch(mode) {
+  async function createMatch(mode, settings) {
     await withBusy(async () => {
       await identify();
-      const match = normalizeMatch(await transport().createMatch(mode));
+      const match = normalizeMatch(await transport().createMatch(mode, settings));
       if (!match?.id) throw new Error("対戦部屋を作成できませんでした");
       state.match = match; state.screen = "waiting"; state.message = "相手を待っています";
       writeLocal(ACTIVE_KEY, { id: match.id, code: match.room_code || match.code });
@@ -17488,12 +17515,14 @@ window.KEMARI_GAME={
     };
     close(false);
     if (mode === "gozen5") {
-      window.GOZEN_FIVE?.startOnline?.();
+      return window.GOZEN_FIVE?.startOnline?.();
+    } else if (mode === "coop_hunt") {
+      return window.COOP_HUNT?.startOnline?.();
     } else if (mode === "kemari") {
-      if (typeof enterMode === "function") enterMode("kemari");
+      if (typeof enterMode === "function") return enterMode("kemari");
     } else if (mode === "koh_awase") {
       window.KOH_AWASE?.start?.({ seed: Number(state.match?.seed || 1) });
-      window.KOH_AWASE?.open?.();
+      return window.KOH_AWASE?.open?.();
     }
   }
   async function finishChallenge(mode, score, durationMs, metadata) {
@@ -17576,6 +17605,8 @@ window.KEMARI_GAME={
       active: match.status === "active",
       matchId: match.id,
       seed: Number(match.seed || 1),
+      settings: match.settings && typeof match.settings === "object" ? match.settings : {},
+      selfName: ownPlayer(match)?.display_name || ownPlayer(match)?.name || pref().displayName,
       opponentName: rival?.display_name || rival?.name || "対戦相手",
       opponentScore: Number(rival?.score) || 0,
       opponentStatus: rival?.status || "waiting",
@@ -17594,7 +17625,10 @@ window.KEMARI_GAME={
     const context = challengeContext(mode);
     if (!context?.matchId) return context;
     const next = normalizeMatch(await transport().getMatch(context.matchId));
-    if (state.match?.id === context.matchId) state.match = next;
+    if (state.match?.id === context.matchId) {
+      state.match = next;
+      if (matchFinished(next)) state.screen = "result";
+    }
     return challengeContext(mode);
   }
 
@@ -17611,6 +17645,28 @@ window.KEMARI_GAME={
     }));
     if (state.match?.id === context.matchId) state.match = next;
     return challengeContext(mode);
+  }
+
+  async function syncCoopHunt() {
+    const context = challengeContext("coop_hunt");
+    if (!context?.matchId) return null;
+    const value = transport().coopHuntState
+      ? await transport().coopHuntState(context.matchId)
+      : await transport().rpc("coop_hunt_state", { p_match_id: context.matchId });
+    return firstResult(value);
+  }
+
+  async function submitCoopHuntAction(actionType, payload, actionId) {
+    const context = challengeContext("coop_hunt");
+    if (!context?.active) throw new Error("共同討伐は終了しています");
+    const request = { matchId: context.matchId, actionId, actionType, payload: payload || {} };
+    const value = transport().coopHuntAction
+      ? await transport().coopHuntAction(request)
+      : await transport().rpc("coop_hunt_submit_action", {
+        p_match_id: request.matchId, p_action_id: request.actionId,
+        p_action_type: request.actionType, p_payload: request.payload,
+      });
+    return firstResult(value);
   }
 
   function ensureModal() {
@@ -17645,13 +17701,29 @@ window.KEMARI_GAME={
     nameLabel.append(nameInput); identity.append(nameLabel);
     const modeLabel = create("label", null, "種目");
     const modeSelect = create("select"); modeSelect.id = "onlineMatchMode";
-    ["gozen5", "quiz", "kemari", "koh_awase"].forEach(id => {
+    ["coop_hunt", "gozen5", "quiz", "kemari", "koh_awase"].forEach(id => {
       const option = create("option", null, modeMeta(id).label); option.value = id; modeSelect.append(option);
     });
     modeLabel.append(modeSelect); identity.append(modeLabel); body.append(identity);
+    const coopSettings = create("div", "online-coop-settings");
+    const seasonLabel = create("label", null, "討伐する怪異");
+    const seasonSelect = create("select"); seasonSelect.id = "onlineCoopSeason";
+    [["spring", "春・九尾の狐"], ["summer", "夏・河童の主"], ["autumn", "秋・合体人魂"], ["winter", "冬・雪女王"]].forEach(([id, label]) => {
+      const option = create("option", null, label); option.value = id; seasonSelect.append(option);
+    });
+    seasonLabel.append(seasonSelect);
+    const difficultyLabel = create("label", null, "難易度");
+    const difficultySelect = create("select"); difficultySelect.id = "onlineCoopDifficulty";
+    [["normal", "通常"], ["hard", "修羅"]].forEach(([id, label]) => {
+      const option = create("option", null, label); option.value = id; difficultySelect.append(option);
+    });
+    difficultyLabel.append(difficultySelect); coopSettings.append(seasonLabel, difficultyLabel); body.append(coopSettings);
+    const updateCoopSettings = () => { coopSettings.hidden = modeSelect.value !== "coop_hunt"; };
+    modeSelect.addEventListener("change", updateCoopSettings); updateCoopSettings();
     const createArea = create("section", "online-block");
     createArea.append(create("h3", null, "部屋をつくる"), create("p", null, "六文字の部屋番号を相手に伝えます。二人がそろうと開始できます。"));
-    createArea.append(button("新しい対戦部屋", "online-action is-primary", () => createMatch(modeSelect.value)));
+    createArea.append(button("新しい対戦部屋", "online-action is-primary", () => createMatch(modeSelect.value,
+      modeSelect.value === "coop_hunt" ? { season: seasonSelect.value, difficulty: difficultySelect.value } : {})));
     const joinArea = create("section", "online-block");
     joinArea.append(create("h3", null, "部屋に入る"));
     const joinRow = create("div", "online-code-row");
@@ -17664,6 +17736,10 @@ window.KEMARI_GAME={
     const match = state.match, code = match?.room_code || match?.code || "------";
     const codeBox = create("div", "online-room-code"); codeBox.append(create("span", null, "部屋番号"), create("strong", null, code));
     body.append(codeBox, create("p", "online-mode-label", modeMeta(match?.mode).label));
+    if (match?.mode === "coop_hunt") {
+      const seasonName = { spring: "春・九尾の狐", summer: "夏・河童の主", autumn: "秋・合体人魂", winter: "冬・雪女王" }[match.settings?.season] || "春・九尾の狐";
+      body.append(create("p", "online-wait", `${seasonName} / ${match.settings?.difficulty === "hard" ? "修羅" : "通常"}`));
+    }
     const players = create("div", "online-players");
     playerRows(match).forEach(player => {
       const item = create("div", "online-player");
@@ -17708,8 +17784,10 @@ window.KEMARI_GAME={
   }
   function renderChallenge(body) {
     const match = state.match, own = ownPlayer(match), rival = opponent(match);
-    body.append(create("p", "online-mode-label", `${modeMeta(match?.mode).label} 御前勝負`));
-    body.append(create("p", "online-challenge-copy", match?.mode === "gozen5"
+    body.append(create("p", "online-mode-label", match?.mode === "coop_hunt" ? "共同討伐 出陣前" : `${modeMeta(match?.mode).label} 御前勝負`));
+    body.append(create("p", "online-challenge-copy", match?.mode === "coop_hunt"
+      ? "二人で一体の怪異を祓います。操作と敵の動きは各端末で滑らかに処理し、共有霊力と攻撃の成果だけを同期します。"
+      : match?.mode === "gozen5"
       ? "札・貝・香・歌・鞠の五局を、同じ出題と同じ鞠順で競います。相手を待たずに進められます。"
       : "同じ種目を一度ずつ遊び、記録の高い方が勝ちです。終了すると結果が自動で届きます。"));
     const players = create("div", "online-players");
@@ -17728,11 +17806,12 @@ window.KEMARI_GAME={
       if (match?.mode === "quiz_ta") return (a.duration_ms || Infinity) - (b.duration_ms || Infinity);
       return (b.score || 0) - (a.score || 0);
     });
-    body.append(create("p", "online-result-title", "御前試合　決着"));
+    const coopFailed = match?.mode === "coop_hunt" && rows.length >= 2 && rows.every(player => player.progress?.down === true);
+    body.append(create("p", "online-result-title", match?.mode === "coop_hunt" ? (coopFailed ? "共同討伐　失敗" : "共同討伐　成就") : "御前試合　決着"));
     const board = create("div", "online-result-board");
     rows.forEach((player, index) => {
       const row = create("div", `online-result-row${player.is_self || player.self ? " is-self" : ""}`);
-      row.append(create("strong", null, `${index + 1}位`), create("span", null, player.display_name || player.name || "参加者"), create("b", null, formatValue(match?.mode, player.score, player.duration_ms)));
+      row.append(create("strong", null, match?.mode === "coop_hunt" ? (player.is_self || player.self ? "自" : "共") : `${index + 1}位`), create("span", null, player.display_name || player.name || "参加者"), create("b", null, formatValue(match?.mode, player.score, player.duration_ms)));
       board.append(row);
     });
     body.append(board, button("新しい勝負へ", "online-action is-primary", leaveMatch));
@@ -17748,7 +17827,7 @@ window.KEMARI_GAME={
   function renderRanking(body) {
     const controls = create("div", "online-ranking-controls");
     const mode = create("select"); mode.setAttribute("aria-label", "順位表の種目");
-    Object.keys(MODES).forEach(id => { const option = create("option", null, MODES[id].label); option.value = id; option.selected = id === state.rankingMode; mode.append(option); });
+    Object.keys(MODES).filter(id => !MODES[id].noRanking).forEach(id => { const option = create("option", null, MODES[id].label); option.value = id; option.selected = id === state.rankingMode; mode.append(option); });
     const period = create("select"); period.setAttribute("aria-label", "順位表の期間");
     Object.keys(PERIODS).forEach(id => { const option = create("option", null, PERIODS[id]); option.value = id; option.selected = id === state.rankingPeriod; period.append(option); });
     const reload = () => { state.rankingMode = mode.value; state.rankingPeriod = period.value; loadRanking(); };
@@ -17811,7 +17890,7 @@ window.KEMARI_GAME={
     if (!host || document.getElementById(ENTRY_ID)) return !!host;
     const entry = create("button", "t-btn t-cat-btn online-entry");
     entry.id = ENTRY_ID; entry.type = "button";
-    entry.append(create("span", "mode-meta", "対戦 / 共有順位"), create("div", "cat-icon", "競"), create("span", "mode-name", "オンライン御前試合"), create("small", null, "五番勝負・クイズ・蹴鞠・香合わせで競う"));
+    entry.append(create("span", "mode-meta", "共闘 / 対戦 / 共有順位"), create("div", "cat-icon", "競"), create("span", "mode-name", "オンライン御前試合"), create("small", null, "共同討伐・五番勝負・クイズ・蹴鞠・香合わせ"));
     entry.addEventListener("click", open); host.append(entry); return true;
   }
   function boot() {
@@ -17838,6 +17917,7 @@ window.KEMARI_GAME={
     open, close, configure, createMatch, joinMatch, startMatch, leaveMatch, answerQuiz,
     submitScore, finishChallenge, loadRanking, getMyRank, getStatus, launchChallenge: openChallengeGame,
     getChallengeContext: challengeContext, consumeChallengeContext, syncChallenge, updateChallengeProgress,
+    syncCoopHunt, submitCoopHuntAction,
     setDisplayName: name => setPref({ displayName: name }),
     buildQuiz: seed => buildQuiz(seed),
     __test: {
@@ -17846,10 +17926,373 @@ window.KEMARI_GAME={
       getState: () => state,
     },
   };
-  window.ONLINE_COMPETITION_STATUS = { ready: true, version: 3, modes: Object.keys(MODES), quizCount: QUIZ_COUNT };
+  window.ONLINE_COMPETITION_STATUS = { ready: true, version: 4, modes: Object.keys(MODES), quizCount: QUIZ_COUNT };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true }); else boot();
 })();
 /* APP_ONLINE_COMPETITION_EMBED_END */
+/* APP_COOP_HUNT_EMBED_BEGIN (src/app/coop-hunt.js から自動生成。ここを直接編集しない) */
+/* 寝殿造り3D探訪 共同討伐
+ * 移動と敵AIは端末内で処理し、共有ボスHPと行動イベントだけを同期する。
+ */
+(() => {
+  "use strict";
+
+  const HUD_ID = "coopHuntHud";
+  const STORAGE_KEY = "shinden3d-coop-hunt-v1";
+  const POLL_MS = 750;
+  const SEASON_NAMES = { spring: "九尾の狐", summer: "河童の主", autumn: "合体人魂", winter: "雪女王" };
+  const ACTION_NAMES = { attack: "一撃", focus: "大祓", guard: "弾き", down: "力尽きた" };
+  const state = {
+    active: false, context: null, snapshot: null, connected: false, syncing: false, syncPromise: null, sending: false,
+    timer: 0, raf: 0, lastSequence: 0, lastActionAt: {}, pending: [],
+    spirit: null, spiritMaterials: [], spiritActionUntil: 0, downed: false,
+    startedAt: 0, previous: null, serverEnding: false, lastError: "",
+  };
+
+  function el(id) { return document.getElementById(id); }
+  function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+  function loadSaved() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null"); } catch (_) { return null; }
+  }
+  function save() {
+    try {
+      if (!state.active || !state.context?.matchId) localStorage.removeItem(STORAGE_KEY);
+      else localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        matchId: state.context.matchId, context: state.context, downed: state.downed,
+        pending: state.pending.slice(-12), lastSequence: state.lastSequence,
+      }));
+    } catch (_) {}
+  }
+  function actionId() {
+    if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+    return `coop_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+  }
+  function ownPlayer(snapshot) { return snapshot?.players?.find(player => player.is_self); }
+  function teammate(snapshot) { return snapshot?.players?.find(player => !player.is_self); }
+
+  function ensureHud() {
+    let hud = el(HUD_ID);
+    if (hud) return hud;
+    hud = document.createElement("section");
+    hud.id = HUD_ID;
+    hud.className = "coop-hunt-hud";
+    hud.setAttribute("aria-live", "polite");
+    hud.innerHTML = `
+      <div class="coop-hunt-head"><span class="coop-hunt-sigil">共</span><div><b>共同討伐</b><small id="coopHuntBoss">共有霊力を接続中</small></div><i id="coopHuntConnection" title="通信状態"></i></div>
+      <div class="coop-hunt-shared"><span>共有霊力</span><b id="coopHuntHpText">-- / --</b></div>
+      <div class="coop-hunt-track"><i id="coopHuntHpFill"></i></div>
+      <div class="coop-hunt-member"><span id="coopHuntMate">共闘者</span><b id="coopHuntContribution">0功</b></div>
+      <p id="coopHuntEvent">二人の攻撃成果を同期します</p>`;
+    document.body.appendChild(hud);
+    return hud;
+  }
+
+  function renderHud(message) {
+    const hud = ensureHud();
+    hud.classList.toggle("is-active", state.active);
+    hud.classList.toggle("is-spectating", state.downed);
+    const boss = state.snapshot?.boss;
+    const mate = teammate(state.snapshot);
+    const hp = Math.max(0, Number(boss?.hp) || 0);
+    const maxHp = Math.max(1, Number(boss?.max_hp) || 1);
+    const season = state.context?.settings?.season || "spring";
+    const connection = el("coopHuntConnection");
+    if (connection) {
+      connection.className = state.connected ? "is-online" : "is-reconnecting";
+      connection.title = state.connected ? "同期中" : "再接続中";
+    }
+    if (el("coopHuntBoss")) el("coopHuntBoss").textContent = `${SEASON_NAMES[season] || "怪異"}${state.downed ? " / 見守り中" : ""}`;
+    if (el("coopHuntHpText")) el("coopHuntHpText").textContent = boss ? `${hp} / ${maxHp}` : "接続中";
+    if (el("coopHuntHpFill")) el("coopHuntHpFill").style.width = `${boss ? hp / maxHp * 100 : 100}%`;
+    if (el("coopHuntMate")) el("coopHuntMate").textContent = mate?.display_name || state.context?.opponentName || "共闘者";
+    if (el("coopHuntContribution")) el("coopHuntContribution").textContent = `${Number(mate?.contribution) || 0}功${mate?.down ? " / 離脱" : ""}`;
+    if (message && el("coopHuntEvent")) el("coopHuntEvent").textContent = message;
+  }
+
+  function disposeSpirit() {
+    if (state.raf) cancelAnimationFrame(state.raf);
+    state.raf = 0;
+    if (state.spirit && typeof scene !== "undefined") scene.remove(state.spirit);
+    state.spirit?.traverse?.(object => object.geometry?.dispose?.());
+    state.spiritMaterials.forEach(material => material.dispose?.());
+    state.spirit = null; state.spiritMaterials = [];
+  }
+
+  function makeSpirit() {
+    if (typeof THREE === "undefined" || typeof scene === "undefined") return;
+    disposeSpirit();
+    const group = new THREE.Group();
+    const material = new THREE.MeshBasicMaterial({ color: 0x77e4d0, transparent: true, opacity: .55, depthWrite: false, depthTest: false });
+    const glow = new THREE.MeshBasicMaterial({ color: 0xffdc7a, transparent: true, opacity: .72, depthWrite: false, depthTest: false });
+    state.spiritMaterials.push(material, glow);
+    const robe = new THREE.Mesh(new THREE.CylinderGeometry(.38, .72, 1.55, 7), material);
+    robe.position.y = .8; group.add(robe);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(.3, 8, 6), glow);
+    head.position.y = 1.78; group.add(head);
+    const hat = new THREE.Mesh(new THREE.ConeGeometry(.42, .46, 6), material);
+    hat.position.y = 2.14; group.add(hat);
+    [-1, 1].forEach(side => {
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(.09, .12, .88, 6), material);
+      arm.position.set(side * .46, 1.14, 0); arm.rotation.z = side * -.42; group.add(arm);
+    });
+    const arena = typeof TAIJI_BOSS_ARENA !== "undefined" ? TAIJI_BOSS_ARENA : { x: 62, z: -48 };
+    group.position.set(arena.x - 3.8, 0, arena.z + 7);
+    group.rotation.y = -2.4; group.userData.baseY = 0;
+    group.traverse(object => { if (object.isMesh) object.renderOrder = 80; });
+    scene.add(group); state.spirit = group;
+    animateSpirit();
+  }
+
+  function animateSpirit(now = performance.now()) {
+    if (!state.active || !state.spirit) return;
+    const spirit = state.spirit;
+    const attacking = now < state.spiritActionUntil;
+    if (typeof player !== "undefined" && typeof camera !== "undefined") {
+      const forward = new THREE.Vector3(); camera.getWorldDirection(forward); forward.y = 0;
+      if (forward.lengthSq() < .01) forward.set(0, 0, -1); else forward.normalize();
+      const side = new THREE.Vector3(-forward.z, 0, forward.x);
+      const target = new THREE.Vector3(player.pos.x, 0, player.pos.z).addScaledVector(forward, 4.6).addScaledVector(side, -2.15);
+      target.y = typeof groundH === "function" ? groundH(target.x, target.z) : Math.max(0, player.pos.y - 1.62);
+      spirit.position.lerp(target, .11); spirit.userData.baseY = target.y;
+      spirit.rotation.y = Math.atan2(forward.x, forward.z);
+    }
+    spirit.position.y = spirit.userData.baseY + Math.sin(now * .0025) * .08;
+    spirit.rotation.z = Math.sin(now * .0017) * .025;
+    const scale = attacking ? 1.1 : 1;
+    spirit.scale.lerp({ x: scale, y: 1, z: scale }, .18);
+    state.spiritMaterials.forEach((material, index) => { material.opacity = attacking ? (.78 - index * .04) : (.55 + index * .17); });
+    state.raf = requestAnimationFrame(animateSpirit);
+  }
+
+  function flashTeammateAction(action) {
+    state.spiritActionUntil = performance.now() + 480;
+    const name = action.display_name || state.context?.opponentName || "共闘者";
+    const label = ACTION_NAMES[action.action_type] || "援護";
+    renderHud(action.action_type === "down" ? `${name}が力尽きた。討伐を託された` : `${name}の${label}　${Number(action.damage) || 0}功`);
+  }
+
+  function applySharedHp(snapshot) {
+    if (!snapshot?.boss || typeof APP === "undefined" || !APP.taiji || typeof taijiBossList !== "function") return;
+    const bosses = taijiBossList(APP.taiji).filter(Boolean);
+    if (!bosses.length) return;
+    const max = Math.max(1, Number(snapshot.boss.max_hp) || 1);
+    const ratio = clamp((Number(snapshot.boss.hp) || 0) / max, 0, 1);
+    bosses.forEach(boss => {
+      if (boss.dead && ratio > 0) return;
+      boss.hp = Math.round(boss.maxHp * ratio);
+      if (typeof updateBossBar === "function") updateBossBar(boss);
+    });
+  }
+
+  async function acceptSnapshot(snapshot) {
+    if (!state.active || !snapshot || snapshot.match_id !== state.context?.matchId) return;
+    state.connected = true; state.snapshot = snapshot;
+    const own = ownPlayer(snapshot); state.downed = !!(state.downed || own?.down);
+    const actions = Array.isArray(snapshot.recent_actions) ? snapshot.recent_actions : [];
+    actions.filter(action => Number(action.sequence) > state.lastSequence && action.player_id !== own?.player_id).forEach(flashTeammateAction);
+    state.lastSequence = Math.max(Number(snapshot.event_sequence) || 0, state.lastSequence);
+    applySharedHp(snapshot); renderHud(); save();
+    if (snapshot.boss?.status === "failed") finishFromServer(false);
+    else if (snapshot.boss?.status === "defeated") {
+      if (APP?.taiji && !state.downed) applySharedHp(snapshot);
+      finishFromServer(true);
+    }
+  }
+
+  async function sync() {
+    if (!state.active) return null;
+    if (state.syncing) {
+      const current = state.syncPromise;
+      return current?.then(() => state.active ? sync() : state.snapshot);
+    }
+    state.syncing = true;
+    state.syncPromise = (async () => {
+      try {
+        const snapshot = await window.ONLINE_COMPETITION?.syncCoopHunt?.();
+        await acceptSnapshot(snapshot);
+        await flushPending();
+      } catch (error) {
+        state.lastError = error?.message || String(error);
+        state.connected = false; renderHud("通信をつなぎ直しています。攻撃は一時保存されます");
+      } finally {
+        state.syncing = false; state.syncPromise = null;
+        if (state.active) state.timer = window.setTimeout(sync, POLL_MS);
+      }
+    })();
+    return state.syncPromise;
+  }
+
+  async function flushPending() {
+    if (!state.active || !state.pending.length || state.sending) return;
+    const item = state.pending[0];
+    state.sending = true;
+    try {
+      const snapshot = await window.ONLINE_COMPETITION.submitCoopHuntAction(item.type, item.payload, item.id);
+      state.pending.shift(); save(); await acceptSnapshot(snapshot);
+    } catch (error) {
+      if (/cooling down/i.test(error?.message || "")) { state.pending.shift(); save(); return; }
+      throw error;
+    } finally { state.sending = false; }
+  }
+
+  function submitAction(type, payload = {}) {
+    if (!state.active || state.downed || !state.context?.active) return false;
+    const now = performance.now();
+    const localCooldown = { attack: 620, focus: 1720, guard: 850, down: 0 }[type] || 650;
+    if (now - (state.lastActionAt[type] || 0) < localCooldown) return false;
+    state.lastActionAt[type] = now;
+    state.pending.push({ id: actionId(), type, payload: { timing: clamp(Math.round(Number(payload.timing) || 620), 0, 1000), kind: String(payload.kind || "hit").slice(0, 16) } });
+    state.pending = state.pending.slice(-12); save();
+    flushPending().catch(() => {});
+    return true;
+  }
+
+  function restoreLocalSettings() {
+    if (!state.previous || typeof APP === "undefined") return;
+    APP.taijiDifficulty = state.previous.difficulty;
+    APP.taijiBossRush = state.previous.bossRush;
+    APP.taijiSeason = state.previous.season;
+    state.previous = null;
+  }
+
+  async function showResult() {
+    try { await window.ONLINE_COMPETITION?.syncChallenge?.("coop_hunt"); } catch (_) {}
+    window.ONLINE_COMPETITION?.open?.();
+  }
+
+  function finishFromServer(success) {
+    if (!state.active || state.serverEnding) return;
+    if (APP?.taiji && !APP.taiji.done) {
+      state.serverEnding = true;
+      if (success) {
+        const bosses = typeof taijiBossList === "function" ? taijiBossList(APP.taiji) : [];
+        if (bosses.length) applySharedHp({ boss: { hp: 0, max_hp: 1 } });
+        else { APP.taiji.done = true; window.setTimeout(() => endTaiji(false), 120); }
+      }
+      else { APP.taiji.done = true; window.setTimeout(() => endTaiji(true), 120); }
+      return;
+    }
+    state.active = false; state.connected = false;
+    clearTimeout(state.timer); state.timer = 0; disposeSpirit();
+    el(HUD_ID)?.classList.remove("is-active"); restoreLocalSettings(); save();
+    showResult();
+  }
+
+  function afterTaijiEnd(success) {
+    if (typeof APP !== "undefined") {
+      APP.mode = "walk"; APP.coopHuntActive = false;
+      if (el("modeTag")) el("modeTag").textContent = "自由散策";
+    }
+    disposeSpirit();
+    if (state.serverEnding || state.snapshot?.boss?.status === "defeated" || state.snapshot?.boss?.status === "failed") {
+      state.serverEnding = false; finishFromServer(success); return;
+    }
+    if (!success) {
+      state.downed = true; renderHud("力尽きた。共闘者の討伐を見守っています"); save();
+      state.pending.unshift({ id: actionId(), type: "down", payload: { timing: 0, kind: "down" } });
+      flushPending().catch(() => {});
+    }
+  }
+
+  async function startOnline() {
+    const context = window.ONLINE_COMPETITION?.consumeChallengeContext?.("coop_hunt");
+    if (!context?.active || state.active) return false;
+    const saved = loadSaved();
+    state.active = true; state.context = context; state.snapshot = null; state.connected = false;
+    state.lastError = "";
+    state.startedAt = Date.now(); state.downed = saved?.matchId === context.matchId && !!saved.downed;
+    state.pending = saved?.matchId === context.matchId && Array.isArray(saved.pending) ? saved.pending : [];
+    state.lastSequence = saved?.matchId === context.matchId ? Number(saved.lastSequence) || 0 : 0;
+    state.serverEnding = false;
+    const season = ["spring", "summer", "autumn", "winter"].includes(context.settings?.season) ? context.settings.season : "spring";
+    const difficulty = context.settings?.difficulty === "hard" ? "hard" : "normal";
+    state.previous = { difficulty: APP.taijiDifficulty, bossRush: APP.taijiBossRush, season: APP.taijiSeason };
+    APP.coopHuntActive = true; APP.taijiDifficulty = difficulty;
+    ensureHud(); renderHud("共闘者と共有霊力を結んでいます"); sync(); save();
+    try {
+      if (typeof showLoading === "function") showLoading("共闘の結界を準備中…");
+      if (typeof initAudio === "function") initAudio();
+      APP.taijiBossRush = true; APP.taijiSeason = season;
+      if (typeof applySeason === "function") applySeason(season);
+      if (typeof PREFS !== "undefined") PREFS.set("season", season);
+      if (location.protocol !== "file:" && typeof taijiWarmBossSeason === "function") {
+        await Promise.race([taijiWarmBossSeason(season), new Promise(resolve => setTimeout(resolve, 2600))]);
+      }
+      enterMode("taiji");
+      if (!state.active || !APP.taiji) return false;
+      APP.taiji.rushQueue = [season]; APP.taiji.rushIndex = 0; APP.taiji.total = 1; APP.taiji.season = season;
+      if (el("taijiRemain")) el("taijiRemain").textContent = "共闘";
+      if (el("taijiMsg")) el("taijiMsg").textContent = `${context.opponentName}と霊力を合わせ、${SEASON_NAMES[season]}を祓え`;
+      makeSpirit(); return true;
+    } catch (error) {
+      state.active = false; restoreLocalSettings(); renderHud(error?.message || "共同討伐を開始できませんでした");
+      return false;
+    }
+  }
+
+  function installHooks() {
+    if (typeof taijiWarmBossSeason === "function" && !taijiWarmBossSeason.__coopWrapped) {
+      const original = taijiWarmBossSeason;
+      const wrapped = function (season) {
+        if (state.active && location.protocol === "file:") return Promise.resolve(null);
+        return original(season);
+      };
+      wrapped.__coopWrapped = true; taijiWarmBossSeason = wrapped;
+    }
+    if (typeof taijiAttachBossAsset === "function" && !taijiAttachBossAsset.__coopWrapped) {
+      const original = taijiAttachBossAsset;
+      const wrapped = function (season, group) {
+        if (state.active && location.protocol === "file:") return;
+        return original(season, group);
+      };
+      wrapped.__coopWrapped = true; taijiAttachBossAsset = wrapped;
+    }
+    if (typeof damageBoss === "function" && !damageBoss.__coopWrapped) {
+      const original = damageBoss;
+      const wrapped = function (boss, damage, kind = "hit") {
+        if (!state.active || state.downed) return original(boss, damage, kind);
+        const before = typeof taijiBossList === "function" && APP?.taiji
+          ? taijiBossList(APP.taiji).map(item => ({ item, hp: item.hp })) : [];
+        const hit = original(boss, damage, kind);
+        if (!hit) return hit;
+        const allowed = !["silent", "dot", "ukon"].includes(kind);
+        if (state.snapshot?.boss) applySharedHp(state.snapshot);
+        else before.forEach(row => { row.item.hp = row.hp; updateBossBar(row.item); });
+        if (allowed) {
+          const type = ["kotodama", "fuda"].includes(kind) ? "focus" : ["parry", "reflect"].includes(kind) ? "guard" : "attack";
+          submitAction(type, { kind, timing: kind === "parry" ? 940 : kind === "kotodama" ? 900 : 700 });
+        }
+        return hit;
+      };
+      wrapped.__coopWrapped = true; damageBoss = wrapped;
+    }
+    if (typeof endTaiji === "function" && !endTaiji.__coopWrapped) {
+      const original = endTaiji;
+      const wrapped = function (failed) {
+        if (!state.active) return original(failed);
+        APP.storyTaiji = { done: success => afterTaijiEnd(success) };
+        return original(failed);
+      };
+      wrapped.__coopWrapped = true; endTaiji = wrapped;
+    }
+    if (typeof taijiQuit === "function" && !taijiQuit.__coopWrapped) {
+      const original = taijiQuit;
+      const wrapped = function () {
+        if (!state.active) return original();
+        if (APP?.taiji) { APP.taiji.done = true; endTaiji(true); }
+      };
+      wrapped.__coopWrapped = true; taijiQuit = wrapped;
+    }
+  }
+
+  installHooks();
+  window.COOP_HUNT = { startOnline, sync, getState: () => ({
+    active: state.active, connected: state.connected, downed: state.downed,
+    matchId: state.context?.matchId || null, snapshot: state.snapshot, pending: state.pending.length, lastError: state.lastError,
+  }) };
+  window.COOP_HUNT_STATUS = { ready: true, version: 1, transport: "shared-state", pollMs: POLL_MS };
+})();
+/* APP_COOP_HUNT_EMBED_END */
 /* APP_GOZEN_FIVE_EMBED_BEGIN (src/app/gozen-five.js から自動生成。ここを直接編集しない) */
 /*
  * 御前五番勝負

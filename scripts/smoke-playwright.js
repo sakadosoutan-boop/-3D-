@@ -300,16 +300,20 @@ async function launchBrowser() {
       let onlineKemariLaunchOk = false;
       let onlineKemariLaunchDetail = null;
       let onlineGozenFiveOk = false;
+      let onlineCoopHuntOk = false;
+      let onlineCoopHuntDetail = null;
       let onlineCompetitionError = null;
       try {
         const submitted = [];
         let mockMatch = null;
+        let mockCoop = null;
         const mockTransport = {
           async ensureSession() { return { access_token: 'smoke' }; },
           async setProfile() { return true; },
-          async createMatch(mode) {
+          async createMatch(mode, settings) {
             mockMatch = {
               id: 'match-smoke', room_code: 'HEIAN1', mode, seed: 20260723, status: 'waiting',
+              settings: settings || {},
               players: [{ is_self: true, is_host: true, display_name: '東方', status: 'ready', progress: 0, score: 0 }],
             };
             return mockMatch;
@@ -331,6 +335,15 @@ async function launchBrowser() {
             ];
           },
           async myRank() { return [{ rank: 2, total_players: 14, score: 88, duration_ms: 5200 }]; },
+          async coopHuntState() { return JSON.parse(JSON.stringify(mockCoop)); },
+          async coopHuntAction(data) {
+            const damage = data.actionType === 'focus' ? 300 : data.actionType === 'guard' ? 45 : data.actionType === 'down' ? 0 : 140;
+            mockCoop.event_sequence += 1;
+            mockCoop.boss.hp = Math.max(0, mockCoop.boss.hp - damage);
+            mockCoop.players[0].contribution += damage;
+            mockCoop.recent_actions.push({ sequence: mockCoop.event_sequence, action_id: data.actionId, action_type: data.actionType, damage, player_id: 'self', display_name: '東方', payload: data.payload });
+            return JSON.parse(JSON.stringify(mockCoop));
+          },
         };
         window.ONLINE_COMPETITION?.configure?.({ transport: mockTransport });
         window.ONLINE_COMPETITION?.setDisplayName?.('東方');
@@ -406,6 +419,37 @@ async function launchBrowser() {
           && onlineFiveDone?.total > 500
           && submitted.some((item) => item.mode === 'gozen5');
         window.GOZEN_FIVE?.close?.();
+        await window.ONLINE_COMPETITION?.leaveMatch?.();
+        window.ONLINE_COMPETITION?.open?.();
+        await window.ONLINE_COMPETITION?.createMatch?.('coop_hunt', { season: 'winter', difficulty: 'hard' });
+        mockMatch.players.push({ is_self: false, is_host: false, display_name: '西方', status: 'ready', progress: {}, score: 0 });
+        await window.ONLINE_COMPETITION?.startMatch?.();
+        mockCoop = {
+          match_id: mockMatch.id, status: 'active', event_sequence: 0,
+          boss: { key: 'snow_queen', max_hp: 1200, hp: 1200, phase: 1, status: 'active' },
+          players: [
+            { player_id: 'self', display_name: '東方', is_self: true, contribution: 0, down: false },
+            { player_id: 'mate', display_name: '西方', is_self: false, contribution: 0, down: false },
+          ],
+          recent_actions: [],
+        };
+        const coopStarted = await window.ONLINE_COMPETITION?.launchChallenge?.();
+        const coopLaunch = window.COOP_HUNT?.getState?.();
+        const coopAction = await window.ONLINE_COMPETITION?.submitCoopHuntAction?.('attack', { timing: 700, kind: 'arrow' }, 'smoke_coop_action_0001');
+        mockCoop.boss.hp = 0; mockCoop.boss.status = 'defeated'; mockCoop.status = 'finished';
+        mockMatch.status = 'finished'; mockMatch.players.forEach(player => { player.status = 'finished'; });
+        await new Promise((resolve) => setTimeout(resolve, 850));
+        await window.COOP_HUNT?.sync?.();
+        await new Promise((resolve) => setTimeout(resolve, 450));
+        const coopResult = window.ONLINE_COMPETITION?.getStatus?.();
+        onlineCoopHuntOk = coopStarted === true
+          && window.COOP_HUNT_STATUS?.ready === true
+          && coopLaunch?.active === true
+          && coopAction?.boss?.hp === 1060
+          && !!document.getElementById('coopHuntHud')
+          && coopResult?.screen === 'result'
+          && coopResult?.match?.mode === 'coop_hunt';
+        onlineCoopHuntDetail = { coopStarted, coopLaunch, actionHp: coopAction?.boss?.hp, appMode: APP.mode, resultScreen: coopResult?.screen, resultMode: coopResult?.match?.mode };
         await window.ONLINE_COMPETITION?.leaveMatch?.();
         window.ONLINE_COMPETITION?.configure?.({ clear: true });
       } catch (error) {
@@ -805,6 +849,8 @@ async function launchBrowser() {
         onlineKemariLaunchOk,
         onlineKemariLaunchDetail,
         onlineGozenFiveOk,
+        onlineCoopHuntOk,
+        onlineCoopHuntDetail,
         onlineCompetitionError,
         livingEstateOk,
         livingEstateModeOk,
@@ -862,6 +908,11 @@ async function launchBrowser() {
       const onlineRect = document.querySelector('#onlineCompetitionModal .online-sheet')?.getBoundingClientRect();
       const onlineFits = !!onlineRect && onlineRect.left >= 0 && onlineRect.right <= innerWidth && onlineRect.bottom <= innerHeight;
       window.ONLINE_COMPETITION?.close?.();
+      const coopHud = document.getElementById('coopHuntHud');
+      coopHud?.classList.add('is-active');
+      const coopHudRect = coopHud?.getBoundingClientRect();
+      const coopHudFits = !!coopHudRect && coopHudRect.left >= 0 && coopHudRect.right <= innerWidth && coopHudRect.bottom <= innerHeight;
+      coopHud?.classList.remove('is-active');
       window.GOZEN_FIVE?.startSolo?.();
       await new Promise((resolve) => setTimeout(resolve, 60));
       const gozenFiveRect = document.querySelector('#gozenFiveModal .gozen5-sheet')?.getBoundingClientRect();
@@ -884,7 +935,7 @@ async function launchBrowser() {
       const estateRect = document.getElementById('estateLifePanel')?.getBoundingClientRect();
       const estateFits = !!estateRect && estateRect.left >= 0 && estateRect.right <= innerWidth && estateRect.bottom <= innerHeight;
       window.LIVING_ESTATE?.closeSchedule?.();
-      return { kohFits, onlineFits, gozenFiveFits, kemariFits, estateFits, horizontalOverflow: document.documentElement.scrollWidth <= innerWidth };
+      return { kohFits, onlineFits, coopHudFits, gozenFiveFits, kemariFits, estateFits, horizontalOverflow: document.documentElement.scrollWidth <= innerWidth };
     });
     if (status.missing.length) errors.push(`missing UI ids: ${status.missing.join(', ')}`);
     if (!status.walkOk) errors.push('walk mode did not start');
@@ -903,10 +954,11 @@ async function launchBrowser() {
     if (!status.normalQuizOnlineRankOk) errors.push('normal quiz result did not show the shared weekly rank');
     if (!status.onlineKemariLaunchOk) errors.push('online kemari launch leaked into an ordinary kemari session');
     if (!status.onlineGozenFiveOk) errors.push('online gozen five did not launch, complete, and submit its total');
+    if (!status.onlineCoopHuntOk) errors.push(`online cooperative hunt flow failed: ${JSON.stringify(status.onlineCoopHuntDetail)}`);
     if (!status.livingEstateOk) errors.push('living-estate schedules or daily-life panel failed');
     if (!status.livingEstateModeOk) errors.push('living-estate actors did not pause and resume with walk mode');
     if (!status.livingEstateArrivalOk) errors.push('living-estate visitor/cart arrival safeguards failed');
-    if (!mobileStatus.kohFits || !mobileStatus.onlineFits || !mobileStatus.gozenFiveFits || !mobileStatus.kemariFits || !mobileStatus.estateFits || !mobileStatus.horizontalOverflow) errors.push('new panels overflowed the 390px mobile viewport');
+    if (!mobileStatus.kohFits || !mobileStatus.onlineFits || !mobileStatus.coopHudFits || !mobileStatus.gozenFiveFits || !mobileStatus.kemariFits || !mobileStatus.estateFits || !mobileStatus.horizontalOverflow) errors.push('new panels overflowed the 390px mobile viewport');
     if (!status.kaimamiOk) errors.push('kaimami mode did not start');
     if (status.kaimamiRoutes.join(',') !== 'east,north,tsumado') errors.push(`unexpected kaimami routes: ${status.kaimamiRoutes.join(',')}`);
     if (!status.kaimamiTextOk) errors.push('kaimami instructions did not mention the three observation points');

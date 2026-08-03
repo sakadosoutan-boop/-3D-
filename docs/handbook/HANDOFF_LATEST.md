@@ -1,6 +1,6 @@
 # 引き継ぎ資料（最新） — 寝殿造り3D探訪
 
-最終更新: 2026-07-24
+最終更新: 2026-08-03
 正本: GitHub `origin/main`
 現在の確認済み main: 公開直前に `git fetch origin` して更新すること
 
@@ -30,7 +30,7 @@ npm run verify:public
 - `npm run smoke`
 - `npm run verify:public`（公開URL確認）
 
-2026-07-24 時点のPlaywright smokeでは canvas、散策、図鑑、画質、軽量描画、独立香合わせ、蹴鞠、御前五番勝負の五局完走/オンライン送信、生活日課、来客、垣間見、退治、物語、手動セーブ移行、屋敷人物、絵巻机、車宿、牛車運び、太極六壬式盤、390px幅を確認している。
+2026-08-03 時点のPlaywright smokeでは canvas、散策、図鑑、画質、軽量描画、独立香合わせ、蹴鞠、御前五番勝負、共同討伐の開始/共有ダメージ/決着、生活日課、来客、垣間見、退治、物語、手動セーブ移行、屋敷人物、絵巻机、車宿、牛車運び、太極六壬式盤、390px幅を確認する。
 
 ## 現行 main の主な実装
 
@@ -46,6 +46,7 @@ npm run verify:public
 - 7役の朝昼夕夜の日課、会話の聞き耳、使者/来客/牛車の到着イベント。
 - 物語の章選択、3枠手動セーブ、旧保存形式の移行。
 - オンライン御前試合、共有順位、御前五番勝負（名称当て/貝/香/歌/鞠、5000点制、共通シード、途中保存）。
+- 共同討伐（四季ボス、通常/修羅、共有HP、サーバー算定ダメージ、行動重複排除、再接続、片方の戦闘不能継続、共同HUD/霊影）。相手座標とボスAIは同期しない。
 
 実装済み一覧とブランチ棚卸しは [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) が正本。
 
@@ -67,8 +68,10 @@ npm run verify:public
 - `src/app/koh-awase.js`: 独立香合わせ。恋愛日数を変更しない。
 - `src/app/low-power.js`: 軽量描画。解除時の設定復元を維持する。
 - `src/app/online-competition.js`: Supabase対戦部屋、共有順位、各ゲームへの明示的な対戦起動。
+- `src/app/coop-hunt.js`: 共同討伐の同期、共有HUD、共闘者の霊影、退治モードとの限定フック。HTMLはmanifestから生成する。
 - `src/app/gozen-five.js`: 御前五番勝負。対戦中の操作は端末内、各局終了時だけ進捗同期。
 - `supabase/migrations/20260724_gozen_five.sql`: `gozen5` モード、各局1000点/合計5000点の整合検査、単調進捗、終了結果の凍結。
+- `supabase/migrations/20260803_coop_hunt.sql`: `coop_hunt` モード、共有ボスラン/行動ログ、サーバー計算ダメージ、連番/重複排除/RLS。公開前に本番DBへ適用必須。
 - `story/story_manager.js` / `story/story_runtime.js`: セーブ移行と `window.STORY_SLOTS` の限定API。
 
 ## 未統合ブランチの扱い
