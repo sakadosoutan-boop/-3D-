@@ -3,7 +3,9 @@
  * 既存互換 API: startKemari / stopKemari / kemariAttemptKick / kemariBeginFlight。
  */
 const KEMARI_CFG={
-  W:720,H:500,groundY:350,
+  /* 場面図は 720×500 の固定縮尺で描く。画面が縦長のときは padTop/padBot のぶんだけ
+     空を上へ・白砂を下へ広げて画面を使い切る(場面そのものの比率と大きさは変えない)。 */
+  W:720,H:500,groundY:350,padTop:0,padBot:0,maxPad:400,
   baseFlight:1950,minFlight:1300,
   perfectWindow:0.085,goodWindow:0.18,saveWindow:0.26,
   rounds:[
@@ -109,6 +111,8 @@ function kmrMovePlayer(step){
   KMR.targetX=kmrClamp(KMR.targetX+step,-1,1);
   KMR.message=KMR.targetX<-.34?"左の間へ寄る":KMR.targetX>.34?"右の間へ寄る":"中央で鞠を待つ";
 }
+/* 盤面の座標から直接その位置へ寄る。現在は左右ボタンとキーで動かすため未使用だが、
+   外部(テスト・オンライン対戦)から位置を指定できるようAPIとして残す。 */
 function kmrMoveTo(x){
   if(!KMR||KMR.over)return;
   KMR.targetX=kmrClamp(x,-1,1);
@@ -465,55 +469,80 @@ function kmrDrawTree(ctx,k,x,y,scale){
 }
 /* 鞠庭(まりにわ): 空・遠景の築地塀・白砂の庭・懸の木。平面的な塗りをやめ、奥行きのある庭に */
 function kmrDrawPaper(ctx){
-  const {W,H,groundY}=KEMARI_CFG;
+  const {W,H,groundY,padTop,padBot}=KEMARI_CFG;
+  const top=-padTop,bottom=H+padBot;      // 縦長画面で広げた空と白砂の端
   // 空(薄明の青緑→淡金)
-  const sky=ctx.createLinearGradient(0,0,0,groundY);
+  const sky=ctx.createLinearGradient(0,top,0,groundY);
   sky.addColorStop(0,"#33506b");sky.addColorStop(.55,"#7f9ea4");sky.addColorStop(1,"#e0cfa4");
-  ctx.fillStyle=sky;ctx.fillRect(0,0,W,groundY);
+  ctx.fillStyle=sky;ctx.fillRect(0,top,W,groundY-top);
   // 薄雲(空の余白を埋め、庭に空気感を出す)
   ctx.fillStyle="rgba(255,247,226,.14)";
   [[130,58,86,13],[330,36,64,10],[560,66,96,14],[240,92,58,9],[640,30,52,8]].forEach(([cx,cy,cw,ch])=>{
     ctx.beginPath();ctx.ellipse(cx,cy,cw,ch,0,0,Math.PI*2);ctx.fill();
     ctx.beginPath();ctx.ellipse(cx+cw*.42,cy+ch*.4,cw*.6,ch*.75,0,0,Math.PI*2);ctx.fill();
   });
-  // 遠山のシルエット
-  ctx.fillStyle="rgba(58,74,74,.5)";ctx.beginPath();ctx.moveTo(0,groundY-96);
-  for(let i=0;i<=W;i+=40)ctx.lineTo(i,groundY-96-Math.sin(i*.011)*22-Math.sin(i*.026)*11);
-  ctx.lineTo(W,groundY);ctx.lineTo(0,groundY);ctx.closePath();ctx.fill();
-  // 寝殿の大屋根(檜皮葺)。鞠庭が邸内の南庭であることを一目で伝える。反りのある軒と長い棟で寝殿らしい稜線に
+  const hz=groundY-38;                          // 地平線(白砂のはじまり)。建物も塀もここに足を着ける
+  // 遠山のシルエット(寝殿の棟より高く出して、屋根の左右から覗かせる)
+  ctx.fillStyle="rgba(58,74,74,.5)";ctx.beginPath();ctx.moveTo(0,hz-78);
+  for(let i=0;i<=W;i+=40)ctx.lineTo(i,hz-78-Math.sin(i*.011)*30-Math.sin(i*.026)*13);
+  ctx.lineTo(W,hz);ctx.lineTo(0,hz);ctx.closePath();ctx.fill();
+  // 築地塀(ついじべい): 寝殿の左右にだけ覗かせ、邸内であることを示す
+  ctx.fillStyle="#6d5c48";ctx.fillRect(0,hz-26,W,26);
+  ctx.fillStyle="#4b3d2f";ctx.fillRect(0,hz-32,W,8);
+  /* 寝殿(南面)。以前は屋根だけが宙に浮き、奥の鞠足がその上に立っているように見えていた。
+     屋根→御簾の下がる廂→高欄つきの簀子→床下の柱、と地平まで積んで建物として立たせる。 */
   ctx.save();
-  const rB=groundY-72,rT=groundY-126,cx0=W/2;   // 軒先 / 棟。低く横長にして遠景の建物として収める
+  const cx0=W/2, bw=302;                        // 建物の半幅
+  const flr=hz-12,          // 床下(柱)の下端は地平のすこし手前
+        sun=hz-30,          // 簀子(えんがわ)の高さ
+        wallT=hz-70,        // 廂の壁の上端(＝軒下)
+        rB=hz-64, rT=hz-120;// 軒先 / 棟
+  // 床下の柱と、その影
+  ctx.fillStyle="rgba(38,28,20,.55)";ctx.fillRect(cx0-bw,sun,bw*2,flr-sun+12);
+  ctx.fillStyle="#4a3b2c";
+  for(let i=-5;i<=5;i++)ctx.fillRect(cx0+i*54-4,sun,8,flr-sun+12);
+  // 簀子(縁)と高欄
+  ctx.fillStyle="#8a7154";ctx.fillRect(cx0-bw-10,sun-9,bw*2+20,10);
+  ctx.fillStyle="#6d5840";ctx.fillRect(cx0-bw-10,sun+1,bw*2+20,4);
+  ctx.strokeStyle="#9d4a35";ctx.lineWidth=3;                        // 朱の高欄
+  ctx.beginPath();ctx.moveTo(cx0-bw-6,sun-20);ctx.lineTo(cx0+bw+6,sun-20);ctx.stroke();
+  ctx.lineWidth=2.4;
+  for(let i=-10;i<=10;i++){ctx.beginPath();ctx.moveTo(cx0+i*29,sun-20);ctx.lineTo(cx0+i*29,sun-9);ctx.stroke();}
+  // 廂の奥(暗がり)と、下がった御簾
+  ctx.fillStyle="#241a12";ctx.fillRect(cx0-bw,wallT,bw*2,sun-20-wallT);
+  ctx.fillStyle="#7d6a44";
+  for(let i=-4;i<=4;i++)ctx.fillRect(cx0+i*66-27,wallT+3,54,sun-26-wallT);   // 御簾
+  ctx.strokeStyle="rgba(30,22,12,.5)";ctx.lineWidth=1;
+  for(let y=wallT+7;y<sun-24;y+=5){ctx.beginPath();ctx.moveTo(cx0-bw,y);ctx.lineTo(cx0+bw,y);ctx.stroke();}
+  ctx.fillStyle="#4a3b2c";                                          // 柱
+  for(let i=-4;i<=4;i++)ctx.fillRect(cx0+i*66+27,wallT,10,sun-20-wallT);
+  // 檜皮葺の大屋根(反りのある軒)
   ctx.fillStyle="#4f3d2d";ctx.beginPath();
-  ctx.moveTo(cx0-352,rB);                                   // 左の軒先
-  ctx.quadraticCurveTo(cx0-292,rB-10,cx0-186,rT+7);          // 反りのある流れ
-  ctx.lineTo(cx0-168,rT);ctx.lineTo(cx0+168,rT);             // 棟
-  ctx.quadraticCurveTo(cx0+292,rB-10,cx0+352,rB);
+  ctx.moveTo(cx0-bw-52,rB);
+  ctx.quadraticCurveTo(cx0-262,rB-14,cx0-168,rT+8);
+  ctx.lineTo(cx0-150,rT);ctx.lineTo(cx0+150,rT);
+  ctx.quadraticCurveTo(cx0+262,rB-14,cx0+bw+52,rB);
   ctx.closePath();ctx.fill();
-  ctx.fillStyle="#3a2c20";ctx.fillRect(cx0-176,rT-6,352,7);  // 棟木
-  ctx.strokeStyle="rgba(255,246,222,.08)";ctx.lineWidth=1;   // 檜皮の葺き足
-  for(let i=1;i<4;i++){const t=i/4,y=rB-(rB-rT)*t,hw=352-184*t;
+  ctx.fillStyle="#3a2c20";ctx.fillRect(cx0-158,rT-6,316,7);          // 棟木
+  ctx.strokeStyle="rgba(255,246,222,.08)";ctx.lineWidth=1;           // 檜皮の葺き足
+  for(let i=1;i<4;i++){const t=i/4,y=rB-(rB-rT)*t,hw=(bw+52)-190*t;
     ctx.beginPath();ctx.moveTo(cx0-hw,y);ctx.lineTo(cx0+hw,y);ctx.stroke();}
-  ctx.fillStyle="#7f6a51";ctx.fillRect(cx0-330,rB-2,660,8); // 軒桁
+  ctx.fillStyle="#7f6a51";ctx.fillRect(cx0-bw-34,rB-2,(bw+34)*2,8);  // 軒桁
   ctx.restore();
-  // 築地塀(ついじべい)と桧皮葺の屋根
-  ctx.fillStyle="#6d5c48";ctx.fillRect(0,groundY-64,W,26);
-  ctx.fillStyle="#4b3d2f";ctx.fillRect(0,groundY-70,W,8);
-  ctx.strokeStyle="rgba(255,246,220,.14)";ctx.lineWidth=1;
-  for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(0,groundY-58+i*8);ctx.lineTo(W,groundY-58+i*8);ctx.stroke();}
   // 白砂の庭(手前ほど明るく)
-  const gnd=ctx.createLinearGradient(0,groundY-38,0,H);
+  const gnd=ctx.createLinearGradient(0,groundY-38,0,bottom);
   gnd.addColorStop(0,"#b3a984");gnd.addColorStop(.4,"#cdc2a0");gnd.addColorStop(1,"#ded3b2");
-  ctx.fillStyle=gnd;ctx.fillRect(0,groundY-38,W,H-groundY+38);
+  ctx.fillStyle=gnd;ctx.fillRect(0,groundY-38,W,bottom-groundY+38);
   // 箒目(遠近に合わせて間隔を開く)
   ctx.strokeStyle="rgba(255,250,236,.30)";ctx.lineWidth=1.2;
-  for(let i=0;i<16;i++){const yy=groundY-30+i*i*.9+i*3.4;if(yy>H)break;
+  for(let i=0;i<22;i++){const yy=groundY-30+i*i*.9+i*3.4;if(yy>bottom)break;
     ctx.beginPath();ctx.moveTo(0,yy);ctx.bezierCurveTo(W*.3,yy-2,W*.7,yy+2,W,yy);ctx.stroke();}
   // 鞠の輪(懸の内側の見当)
   ctx.strokeStyle="rgba(120,96,58,.30)";ctx.lineWidth=1.6;
   ctx.beginPath();ctx.ellipse(W/2,groundY+30,268,60,0,0,Math.PI*2);ctx.stroke();
   // 四本懸: 奥2本は小さく、手前2本は大きく=遠近
-  kmrDrawTree(ctx,KEMARI_KAKARI[0],58,groundY-44,.86);
-  kmrDrawTree(ctx,KEMARI_KAKARI[1],W-58,groundY-44,.86);
+  kmrDrawTree(ctx,KEMARI_KAKARI[0],58,groundY-18,.86);
+  kmrDrawTree(ctx,KEMARI_KAKARI[1],W-58,groundY-18,.86);
   kmrDrawTree(ctx,KEMARI_KAKARI[2],34,groundY+52,1.18);
   kmrDrawTree(ctx,KEMARI_KAKARI[3],W-34,groundY+52,1.18);
 }
@@ -642,29 +671,48 @@ function kmrDrawPrompt(ctx,S){
   ctx.restore();
 }
 function kemariDrawScene(ctx,S){
-  if(!ctx)return;const {W,H}=KEMARI_CFG;
+  if(!ctx)return;const {W,H,padTop,padBot}=KEMARI_CFG;
   ctx.save();let dx=0,dy=0;if(S&&S.shake&&!kmrReduced()){dx=(Math.random()-.5)*S.shake;dy=(Math.random()-.5)*S.shake;}ctx.translate(dx,dy);
+  ctx.translate(0,padTop);   // 以降は場面図(720×500)の座標系。上下の余白ぶんだけ原点を下げる
   kmrDrawPaper(ctx);
   if(S){
     /* [UI整理] 盤面内のメーター枠は上部HUDと完全に重複するため描かない(情報の三重表示を解消) */
-    /* 立ち位置は奥ほど小さく上に。自分(中央手前)と重ならないよう正面の鞠足は一段奥へ置く */
-    kmrDrawFigure(ctx,116,KEMARI_CFG.groundY-8,"左の鞠足",S.delivery&&S.delivery.partner===0,"#7d5e8e",.94);
-    kmrDrawFigure(ctx,KEMARI_CFG.W/2,KEMARI_CFG.groundY-96,"正面",S.delivery&&S.delivery.partner===1,"#9b694d",.7);
-    kmrDrawFigure(ctx,W-116,KEMARI_CFG.groundY-8,"右の鞠足",S.delivery&&S.delivery.partner===2,"#426f7a",.94);
-    kmrDrawFigure(ctx,196,KEMARI_CFG.groundY-66,"鞠足",false,"#657b4d",.62);
-    kmrDrawFigure(ctx,300,KEMARI_CFG.groundY-108,"鞠足",false,"#75654a",.56);
-    kmrDrawFigure(ctx,W-300,KEMARI_CFG.groundY-108,"鞠足",false,"#496b67",.56);
-    kmrDrawFigure(ctx,W-196,KEMARI_CFG.groundY-66,"鞠足",false,"#76545c",.62);
+    /* 八人の鞠足の立ち位置。全員が白砂(地平=groundY-38)より手前に足を着けるように置く。
+       以前は奥の4人を地平より上のy(groundY-66〜-108)に描いていたため、寝殿の屋根の上に
+       立っているように見えていた。奥ほど小さく・地平寄り、手前ほど大きく・下寄りにして遠近を出す。 */
+    const gy=KEMARI_CFG.groundY;
+    kmrDrawFigure(ctx,KEMARI_CFG.W/2,gy-26,"正面",S.delivery&&S.delivery.partner===1,"#9b694d",.68);
+    kmrDrawFigure(ctx,236,gy-22,"鞠足",false,"#75654a",.64);
+    kmrDrawFigure(ctx,W-236,gy-22,"鞠足",false,"#496b67",.64);
+    kmrDrawFigure(ctx,138,gy+4,"鞠足",false,"#657b4d",.84);
+    kmrDrawFigure(ctx,W-138,gy+4,"鞠足",false,"#76545c",.84);
+    kmrDrawFigure(ctx,74,gy+34,"左の鞠足",S.delivery&&S.delivery.partner===0,"#7d5e8e",1.0);
+    kmrDrawFigure(ctx,W-74,gy+34,"右の鞠足",S.delivery&&S.delivery.partner===2,"#426f7a",1.0);
     const ball=kmrBallAt(S,kmrNow());kmrDrawTrajectory(ctx,S,ball);kmrDrawBall(ctx,ball,S);kmrDrawPlayer(ctx,S);kmrDrawPrompt(ctx,S);
     S.particles.forEach(p=>{ctx.globalAlpha=kmrClamp(p.life/p.max,0,1);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,2.3,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;
-    if(S.phase==="wait"||S.phase==="interlude"||S.phase==="recovery"){ctx.fillStyle="rgba(7,10,7,.38)";ctx.fillRect(0,0,W,H-72);ctx.fillStyle="#f5e4b7";ctx.font=`bold ${16*kmrTextScale()}px serif`;ctx.textAlign="center";ctx.fillText(S.message,W/2,H*.47);}
+    if(S.phase==="wait"||S.phase==="interlude"||S.phase==="recovery"){ctx.fillStyle="rgba(7,10,7,.38)";ctx.fillRect(0,-padTop,W,H+padTop+padBot-72);ctx.fillStyle="#f5e4b7";ctx.font=`bold ${16*kmrTextScale()}px serif`;ctx.textAlign="center";ctx.fillText(S.message,W/2,H*.47);}
   }
   ctx.restore();
 }
+/* 盤面の実寸に合わせて上下の余白を決める。
+   スマホ縦画面では横幅が96vwで頭打ちになり、720×500のままだと画面の下半分が丸ごと余る。
+   余ったぶんは空と白砂へ配って、場面を引き伸ばさずに画面を使い切る。 */
+function kmrSyncPad(){
+  const cv=kmr$("kemariCanvas");if(!cv)return;
+  const r=cv.getBoundingClientRect();if(!r.width||!r.height)return;
+  const want=kmrClamp(Math.round(KEMARI_CFG.W*r.height/r.width),KEMARI_CFG.H,KEMARI_CFG.H+KEMARI_CFG.maxPad);
+  const extra=want-KEMARI_CFG.H,top=Math.round(extra*.45);
+  KEMARI_CFG.padTop=top;KEMARI_CFG.padBot=extra-top;
+}
 function kemariRender(){
   const cv=kmr$("kemariCanvas");if(!cv)return;
+  kmrSyncPad();
   const dpr=kmrLowPower()?1:Math.min(2,window.devicePixelRatio||1);
-  if(!cv._kmrCtx||cv._kmrDpr!==dpr){cv.width=KEMARI_CFG.W*dpr;cv.height=KEMARI_CFG.H*dpr;cv._kmrCtx=cv.getContext("2d",{alpha:false});cv._kmrDpr=dpr;}
+  const ch=KEMARI_CFG.H+KEMARI_CFG.padTop+KEMARI_CFG.padBot;
+  if(!cv._kmrCtx||cv._kmrDpr!==dpr||cv._kmrH!==ch){
+    cv.width=KEMARI_CFG.W*dpr;cv.height=ch*dpr;
+    cv._kmrCtx=cv.getContext("2d",{alpha:false});cv._kmrDpr=dpr;cv._kmrH=ch;
+  }
   const ctx=cv._kmrCtx;ctx.setTransform(dpr,0,0,dpr,0,0);kemariDrawScene(ctx,KMR);
 }
 function kemariLoop(ts){
@@ -675,23 +723,29 @@ function kemariLoop(ts){
   kmrUpdate(dt);kmrUpdateHud(false);kemariRender();
 }
 
-function kmrCanvasPoint(ev){
-  const cv=kmr$("kemariCanvas");if(!cv)return null;const r=cv.getBoundingClientRect();
-  return {x:(ev.clientX-r.left)*KEMARI_CFG.W/r.width,y:(ev.clientY-r.top)*KEMARI_CFG.H/r.height};
+/* 画面のどこを触っても「蹴る」。
+   以前は鞠から62px以内をタップした時だけ蹴りになり、外すと移動になってしまうため、
+   蹴りたいのに横へ動くという取り違えが起きていた。移動は左右ボタン(と A/D キー)が担当する。
+   ボタン・カード・ヘルプの上は本来の操作を優先するので、ここでは拾わない。 */
+function kmrIsControlTarget(t){
+  // ボタン類と、下段の操作ストリップ・カード類だけは本来の操作を優先する。
+  // 上部の得点欄や盤面の外の余白は「画面のどこでも」に含めて蹴りにする(✕はbuttonなので誤爆しない)。
+  return !!(t&&t.closest&&t.closest("button,a,input,select,textarea,.kmr-controls,.kmr-card,#kemariGameOver,#kemariHelp"));
 }
 function kmrHandlePointer(ev){
   const S=KMR;if(!S||S.over||S.helpOpen)return;
-  const p=kmrCanvasPoint(ev);if(!p)return;
-  if(p.y>=KEMARI_CFG.H-78)return;
-  const ball=kmrBallAt(S,kmrNow());
-  if(ball&&Math.hypot(p.x-ball.x,p.y-ball.y)<=62){kemariAttemptKick();return;}
-  kmrMoveTo((p.x-KEMARI_CFG.W/2)/(KEMARI_CFG.W*.205));
-  S.message="落下輪へ移動。蹴り方を選び、蹴る瞬間を待つ。";
+  if(kmrIsControlTarget(ev.target))return;
+  kemariAttemptKick();
 }
 function kmrBind(){
   if(_kmrBound)return;_kmrBound=true;
-  const hud=kmr$("kemariHud"),cv=kmr$("kemariCanvas");
-  if(cv){cv.addEventListener("pointerdown",ev=>{if(typeof APP!=="undefined"&&APP.mode==="kemari"){ev.preventDefault();kmrHandlePointer(ev);}});}
+  const hud=kmr$("kemariHud");
+  // 盤面だけでなくHUD全体で受ける(縦画面では盤の上下に余白が出るため)
+  if(hud){hud.addEventListener("pointerdown",ev=>{
+    if(typeof APP==="undefined"||APP.mode!=="kemari")return;
+    if(kmrIsControlTarget(ev.target))return;
+    ev.preventDefault();kmrHandlePointer(ev);
+  });}
   if(hud){hud.addEventListener("contextmenu",ev=>{if(typeof APP!=="undefined"&&APP.mode==="kemari")ev.preventDefault();});}
   addEventListener("keydown",ev=>{
     if(typeof APP==="undefined"||APP.mode!=="kemari"||!KMR||KMR.helpOpen)return;
@@ -754,7 +808,7 @@ function kmrTestAdvance(progress){
 
 window.KEMARI_GAME={
   version:3,start:startKemari,stop:stopKemari,attempt:kemariAttemptKick,
-  selectTechnique:kmrSetTechnique,move:kmrMovePlayer,beginFlight:kemariBeginFlight,testResolve:kmrTestResolve,
+  selectTechnique:kmrSetTechnique,move:kmrMovePlayer,moveTo:kmrMoveTo,beginFlight:kemariBeginFlight,testResolve:kmrTestResolve,
   __test:{setDelivery:kmrTestDelivery,advance:kmrTestAdvance},
   getState:()=>{const S=KMR;if(!S)return null;return{round:S.round+1,roundHits:S.roundHits,rally:S.rally,score:S.score,combo:S.combo,stamina:S.stamina,miyabi:S.miyabi,poise:S.poise,selected:S.selected,phase:S.phase,kickQueued:S.kickQueued,quickStep:S.quickStep,flowTurns:S.flowTurns,online:!!S.online,delivery:S.delivery&&{technique:S.delivery.technique,lane:S.delivery.lane,partner:S.delivery.partner},victory:S.victory};}
 };

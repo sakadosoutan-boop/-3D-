@@ -609,7 +609,18 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
   transition:opacity .16s ease,transform .16s ease;pointer-events:none}
 .kmr-judge.show{opacity:1;transform:translate(-50%,0)}
 .kmr-judge.miss{color:#ff9a8a;border-color:#b84c43}.kmr-judge.perfect{color:#ffe28e;border-color:#e7bd57}.kmr-judge.good{color:#bfe6c8;border-color:#68ad83}
-.kmr-board{position:relative;width:min(780px,96vw);aspect-ratio:720/500;max-height:calc(100vh - 205px);margin:0;touch-action:none;flex:1 1 auto}
+/* 鞠庭の盤面。Canvasは720×500の固定比で描いているので、要素側もその比を必ず守る。
+   以前は flex:1 1 auto で縦に伸び、幅は96vwのままだったため、スマホ縦画面で
+   鞠足も鞠も上下に引き伸ばされていた。高さの余りぶんは幅の上限側に折り返して比を保つ。
+   --kmr-reserve = 盤面以外(上部HUD・任務行・操作ボタン)が使う高さ。 */
+.kmr-board{position:relative;--kmr-reserve:205px;
+  --kmr-w:min(780px,96vw,calc((100dvh - var(--kmr-reserve)) * 720 / 500));
+  width:var(--kmr-w);
+  /* 高さは 720:500 〜 720:760 の範囲で伸びる。伸びたぶんはCanvas側が空と白砂を広げて埋める
+     (kmrSyncPad)。以前は flex:1 1 auto で無制限に伸び、場面ごと縦へ引き伸ばされていた。 */
+  height:min(calc(100dvh - var(--kmr-reserve)),calc(var(--kmr-w) * 900 / 720));
+  /* margin:auto で残りの縦余白を盤面の上下へ均等に吸わせ、操作ボタンを画面下端へ寄せる */
+  margin:auto;touch-action:none;flex:0 1 auto}
 #kemariCanvas{width:100%;height:100%;border-radius:7px;border:1px solid rgba(218,177,88,.62);background:#1c3220;
   box-shadow:0 12px 34px rgba(0,0,0,.48),inset 0 0 0 1px rgba(255,255,255,.05);display:block}
 .kmr-readout{position:absolute;z-index:2;left:10px;right:10px;bottom:9px;min-height:52px;display:grid;grid-template-columns:70px 86px minmax(150px,1fr) 112px;
@@ -649,7 +660,7 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
   .kmr-top{grid-template-columns:36px 1fr}.kmr-title{font-size:14px}.kmr-title small{display:none}
   .kmr-stats{grid-column:1/-1;width:100%;grid-template-columns:repeat(6,1fr)}
   .kmr-stat{min-width:0;padding:3px 2px}.kmr-stat b{font-size:12px}
-  .kmr-mission{margin:3px 0}.kmr-board{max-height:calc(100vh - 225px)}
+  .kmr-mission{margin:3px 0}.kmr-board{--kmr-reserve:225px}
   .kmr-readout{left:5px;right:5px;bottom:5px;grid-template-columns:52px 62px minmax(96px,1fr);gap:4px;padding:5px}
   .kmr-readout .kmr-sync{grid-column:1/-1;display:grid;grid-template-columns:30px 34px 1fr;align-items:center;gap:4px}.kmr-sync>div{margin-top:0}
   .kmr-cue b{font-size:13px}.kmr-timing>span{font-size:8px}.kmr-versus{font-size:9px}
@@ -659,7 +670,7 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 }
 @media (orientation:landscape) and (max-height:560px){
   #kemariHud{padding:4px 8px}.kmr-top{min-height:34px}.kmr-mission{min-height:24px;margin:2px 0}
-  .kmr-board{max-height:calc(100vh - 124px)}.kmr-controls{position:absolute;right:9px;bottom:7px;width:52%;height:44px;z-index:4;opacity:.94}
+  .kmr-board{--kmr-reserve:124px}.kmr-controls{position:absolute;right:9px;bottom:7px;width:52%;height:44px;z-index:4;opacity:.94}
   .kmr-control{font-size:8px}.kmr-control strong{font-size:13px}
 }
 /* 季節選択(退治) */
