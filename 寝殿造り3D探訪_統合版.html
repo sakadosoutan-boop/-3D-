@@ -4105,7 +4105,7 @@ body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf
 <div id="letterboxBottom" class="letterbox-bar" aria-hidden="true"></div>
 
 <div id="title">
-  <div id="titleAudioHint">🔈 表紙は無音です。散策に入ると庭の音が流れます</div>
+  <div id="titleAudioHint">🎵 画面をタップすると音楽が流れます</div>
   <div class="t-frame">
     <div class="t-kamon"><div class="kamon-circle">✿</div></div>
     <div class="t-eyebrow">古文・日本史　3D 学習シミュレーター</div>
@@ -4213,8 +4213,8 @@ body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf
     <details class="t-changelog">
       <summary>▸ 最近の更新</summary>
       <div class="cl-list">
-        <div>🔈 表紙の雅楽ループを廃止し、散策中の楽の音（箏・琵琶の重ね鳴らし）を既定で切にしました。設定の「音」からいつでも入にできます</div>
-        <div>📶 音源を配信向けに再エンコードし（38MB→16MB）、読み込みを「いま鳴る音を先に、残りは後から少しずつ」に変更。散策開始時の通信量が17MB→10MBになり、音が遅れて追いかけてくることもなくなりました</div>
+        <div>🔈 散策中の楽の音（箏・琵琶の重ね鳴らし）を既定で切にしました。虫や鳥、せせらぎが聞き取りやすくなります。設定の「音」からいつでも入にできます（表紙のメインテーマはこれまでどおり流れます）</div>
+        <div>📶 音源を配信向けに再エンコードし（38MB→18MB。表紙テーマも4.4MB→2.4MB）、読み込みを「いま鳴る音を先に、残りは後から少しずつ」に変更。表紙のテーマと、その場面で鳴る環境音を最優先で取りに行くので、音が遅れて追いかけてくることがなくなりました</div>
         <div>📱 スマホのトップバーを整理。横スクロールしないと届かなかった図鑑・設定・ヘルプ・時代移動を「⋯」メニューへ移しました。縦画面ではミッションカードも薄い帯に畳み、3Dと操作ボタンを隠さないようにしています</div>
         <div>🧭 表紙の入口を5枚にまとめ、物語は体験モードへ、オンライン対戦は図鑑と同じ常設入口の段へ。各モードに所要時間の目安と、垣間見・蹴鞠・歌合などのふりがなを添えました。「はじめての方へ」も一覧の直前へ引き上げています</div>
         <div>📚 図鑑に分類ごとの進捗（建築 3/19 など）を表示。未解放の札は分類共通の同じ文ではなく、その項目自身の説明の書き出しを手がかりに出すようにし、「未解放を隠す」切替も追加しました</div>
@@ -11003,7 +11003,7 @@ const SFX = {
   },
   beds:  { water:"spring_water_on_Mt2.mp3", nightWind:"night_wind2.mp3", summer:"summer_mountains1.mp3" },
   loops: { takibi:"takibi.mp3" },   // 近接ループ(焚火)
-  theme: null,                      // タイトル画面は無音(雅楽ループは常時鳴るとやかましいため廃止。playThemeはnullで自動的に何もしない)
+  theme: "悠久の伎楽.mp3",            // タイトル画面のメインテーマ(小音量ループ)。loadでは最優先で取りに行く
   se: { arrowShot:"弓矢を放つ.mp3", arrowHit:"弓矢が刺さる.mp3", fuda:"聖魔法.mp3", fire:"火炎魔法1.mp3", ice:"氷魔法2.mp3", thunder:"雷魔法2.mp3", heal:"回復魔法1.mp3", slash:"刀剣・斬る07.mp3", blunt:"打撃2.mp3",
        chime:"Japanese_School_Bell04-6(Far-Short).mp3", seagull:"カモメの鳴き声-効果音.mp3", chalk:"sei_ge_choku_kaku01.mp3", pencil:"sei_ge_spen_kaku02.mp3" }, // 退治モードの単発SE(+波Y: 学校チャイム/カモメ/チョーク/シャーペン)
   bossBgm: { spring:"九尾狐戦.mp3", summer:"提灯・河童戦.mp3", autumn:"人魂・大鬼戦.mp3", winter:"雪女戦.mp3" }, // ボス戦BGM(ループ)
@@ -11073,12 +11073,15 @@ const SFX = {
     if(!this.master){this.master = ctx.createGain();this.master.gain.value=1;this.master.connect(ctx.destination);}
     const season=(typeof APP!=="undefined"&&APP.season)?APP.season:"spring";
     const time=(typeof APP!=="undefined"&&APP.time)?APP.time:"day";
-    this._sceneFiles(season,time).forEach(f=>this._ensure(f,true)); // tier0: いま鳴る音だけ先に
+    // tier0: いま鳴る音だけ先に。表紙のテーマは「今まさに鳴っているBGM」なので最優先。
+    // (loadが呼ばれるのは初回操作時＝ほぼ表紙。ここを後回しにすると主題が遅れて追いかけてくる)
+    if(this.theme && (typeof APP==="undefined" || APP.mode==="title")) this._ensure(this.theme,true);
+    this._sceneFiles(season,time).forEach(f=>this._ensure(f,true));
     const rest=[];
     Object.values(this.beds).forEach(f=>rest.push(f));
     Object.values(this.loops).forEach(f=>rest.push(f));
     Object.values(this.pools).forEach(a=>a.forEach(f=>rest.push(f)));
-    if(this.theme) rest.push(this.theme);
+    if(this.theme) rest.push(this.theme); // 表紙以外から入った場合の保険(既に読んでいれば_enqueueが弾く)
     if(this.se) Object.values(this.se).forEach(f=>rest.push(f)); // tier2
     setTimeout(()=>this._enqueue(rest), 1200);
     this.updateBed();
@@ -14745,10 +14748,10 @@ function initAudio() {
 // 最初の操作で一度だけ初期化。常時リスナーにすると「音:切」の直後に再開してしまう。
 addEventListener("pointerdown",initAudio,{once:true});
 
-/* ── 表紙の音について ──
-   雅楽ループの常時再生は耳につくうえ数MBを先読みするため廃止し、表紙は無音にした(SFX.theme=null)。
-   音が出る場所(＝モードに入ってからの環境音)だけを一言で伝え、数秒で引っ込める。
-   SFX.themeに再びファイルを入れれば、従来どおりの自動再生ロジックが復活する。 */
+/* ── タイトルBGMの自動再生対策 ──
+   ブラウザはユーザー操作前の発音を禁止するため、(1)読込時に自動再生を試み、
+   (2)あらゆる初回操作で確実に開始し、(3)鳴るまでヒントを表示する。
+   SFX.theme を null にすると表紙を無音にでき、その場合はヒントも数秒で引っ込める。 */
 let _themeStarted=false;
 function hideTitleAudioHint(){const h=$("titleAudioHint");if(h)h.classList.add("hide");}
 function tryStartTheme(){

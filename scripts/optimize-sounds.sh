@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # sounds/*.mp3 を配信向けに再エンコードする(スマホ回線での初回ロードを軽くするため)。
-#   ボス戦BGM  : 96kbps ステレオ(音楽なので帯域を残す)
-#   それ以外    : 64kbps モノラル(環境音・鳴き声・SEは定位をコード側で付けるためモノラルで足りる)
+#   楽曲(表紙テーマ・ボス戦BGM) : 96kbps ステレオ(音楽なので帯域を残す)
+#   それ以外                    : 64kbps モノラル(環境音・鳴き声・SEは定位をコード側で付けるためモノラルで足りる)
 # 既に目標以下のビットレート かつ モノラルのファイルは再エンコードしない(世代劣化を避ける)。
 # ffmpeg が PATH に無い場合は imageio-ffmpeg の同梱バイナリを探す。
 set -euo pipefail
@@ -16,9 +16,10 @@ if [ -z "$FF" ]; then
   exit 1
 fi
 
-is_boss() {
+# 楽曲扱い(ステレオ・高めのビットレートを保つ)のファイル
+is_music() {
   case "$1" in
-    九尾狐戦.mp3|提灯・河童戦.mp3|人魂・大鬼戦.mp3|雪女戦.mp3) return 0 ;;
+    悠久の伎楽.mp3|九尾狐戦.mp3|提灯・河童戦.mp3|人魂・大鬼戦.mp3|雪女戦.mp3) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -32,7 +33,7 @@ for f in sounds/*.mp3; do
   [ -z "$br" ] && br=999
   before=$(stat -c%s "$f")
 
-  if is_boss "$base"; then
+  if is_music "$base"; then
     target=96; opts=(-ac 2 -b:a 96k)
     [ "$br" -le 100 ] && { total_before=$((total_before+before)); total_after=$((total_after+before)); continue; }
   else
