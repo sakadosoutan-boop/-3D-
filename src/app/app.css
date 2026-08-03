@@ -106,7 +106,17 @@ h1.t-main .shu{color:var(--shu-bright)}
 .t-mode-kicker{color:rgba(201,162,63,.64);font-size:10px;letter-spacing:.28em;text-align:left;margin:2px 2px 0}
 .mode-meta{display:inline-flex;align-items:center;min-height:17px;padding:1px 7px;border:1px solid rgba(201,162,63,.28);
   border-radius:999px;color:#d9bd70;background:rgba(0,0,0,.22);font-size:9px;letter-spacing:.13em;margin-bottom:2px}
+/* [UX]所要時間の目安。休み時間や通学中に「どれなら終わるか」で選べるようにする。
+   ジャンルの札(mode-meta)と同じ丸札で、色だけ少し沈めて主張しすぎないようにしている。 */
+.mode-tags{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.mode-time{display:inline-flex;align-items:center;min-height:17px;padding:1px 7px;border:1px solid rgba(201,162,63,.18);
+  border-radius:999px;color:#a89264;background:rgba(0,0,0,.16);font-size:9px;letter-spacing:.08em;margin-bottom:2px;white-space:nowrap}
 .mode-name{display:block;color:var(--gofun);font-weight:600;letter-spacing:.14em}
+/* [UX]読み仮名。垣間見・蹴鞠・歌合などは高校生には初見で読めないので、入口の時点でふりがなを添える */
+.mode-name ruby{ruby-position:over}
+.mode-name rt{font-size:.5em;font-weight:400;letter-spacing:.02em;color:#c3ab7c;line-height:1}
+#title .t-btn small ruby{ruby-position:over}
+#title .t-btn small rt{font-size:.72em;color:#8f8168}
 #title .t-btn.recommended{border-color:rgba(232,191,86,.9);background:linear-gradient(155deg,#654d16,#35250a)}
 #title .t-btn.combat{border-color:rgba(176,106,215,.76);background:linear-gradient(155deg,#3d1f50,#20102c)}
 /* カテゴリ(3モード)ボタン */
@@ -123,6 +133,15 @@ h1.t-main .shu{color:var(--shu-bright)}
 .t-codex-btn{width:100%;margin-top:12px;min-width:unset;
   background:linear-gradient(155deg,#172713,#0d1c0b);border-color:rgba(100,185,80,.42);color:#a8d098}
 .t-codex-btn:hover{box-shadow:0 6px 18px rgba(70,150,50,.32)}
+/* [UX]図鑑・立身伝・あゆみ・暦・時代移動・オンライン対戦の常設入口。
+   縦一列だと表紙が2画面分の長さになり、下段のデイリー任務まで誰も到達しなかったため2列に畳む。 */
+#titleSubEntries{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:12px;align-items:stretch}
+#titleSubEntries .t-codex-btn{margin-top:0;height:100%}
+#title #titleSubEntries .t-btn{min-height:56px;padding:10px 12px;justify-content:center}
+#titleSubEntries .online-entry{background:linear-gradient(155deg,#2a1b34,#150c1d);border-color:rgba(176,106,215,.5);color:#d8c2ea}
+#titleSubEntries .online-entry:hover{box-shadow:0 6px 18px rgba(140,80,200,.32)}
+.oc-entry-mark{display:inline-grid;place-items:center;width:20px;height:20px;margin-right:9px;vertical-align:-4px;
+  border:1px solid rgba(176,106,215,.6);border-radius:4px;font-size:11px;line-height:1;color:#e0c9f2;flex:0 0 auto}
 /* 更新履歴 */
 .t-changelog{margin-top:10px;border-top:1px solid rgba(201,162,63,.16);padding-top:8px;font-size:9.5px}
 .t-changelog summary{color:#7a6e5e;letter-spacing:.22em;cursor:pointer;list-style:none;padding:2px 0 5px;user-select:none}
@@ -1119,6 +1138,12 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
 .codex-filter-btn{padding:0 11px;min-height:30px;border:1px solid #b89b56;background:rgba(255,255,255,.34);color:var(--sumi);font-family:var(--sans);font-size:11px;cursor:pointer;border-radius:999px;transition:background .12s,box-shadow .12s}
 .codex-filter-btn:hover,.codex-filter-btn:focus-visible{background:rgba(255,248,232,.72);outline:none;box-shadow:0 0 0 2px rgba(184,155,86,.18)}
 .codex-filter-btn.active{background:#8a3b2a;color:#fff;border-color:#8a3b2a;box-shadow:0 2px 8px rgba(80,32,18,.16)}
+/* [UX]分類ごとの進捗(3/28)。札の中に小さく添えるので、行数は増やさない */
+.codex-filter-btn i{font-style:normal;margin-left:6px;font-size:10px;opacity:.72}
+.codex-filter-btn.done{border-color:#6f9a54;color:#3f6a2c}
+.codex-filter-btn.done.active{background:#4d7a34;border-color:#4d7a34;color:#fff}
+.codex-hide-btn{margin-left:auto}
+.codex-cat-hint{margin:2px 0 8px;font-family:var(--sans);font-size:11px;line-height:1.6;color:#7b6a4c}
 .ach-summary{font-family:var(--sans);font-size:12px;color:#67583f;margin-bottom:10px;line-height:1.7}
 .ach-current{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:10px 12px;border:1px solid rgba(184,155,86,.55);border-radius:8px;background:rgba(255,248,232,.46);font-family:var(--sans);font-size:12px;color:#5d4930}
 .ach-current b{font-family:var(--serif);font-size:17px;color:#8a3b2a;letter-spacing:.08em}
@@ -1249,10 +1274,15 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
   font-family:var(--sans);font-size:12px;padding:9px 14px;border-radius:999px;cursor:pointer;letter-spacing:.06em}
 .onboard-skip:hover{color:#3a2510;border-color:#8a3b2a}
 @media (prefers-reduced-motion:reduce){.onboard-card{animation:none}}
-.t-onboard-help{display:block;margin:6px auto 0;background:none;border:none;color:#8a7c68;
-  font-family:var(--sans);font-size:10.5px;letter-spacing:.06em;text-decoration:underline;text-underline-offset:2px;
-  cursor:pointer;padding:2px 4px;min-width:unset;min-height:unset;box-shadow:none!important;transform:none!important}
-.t-onboard-help:hover{color:var(--gofun)}
+/* [UX]「はじめての方へ」。以前は表紙の最下部・高さ22pxの小さな下線文字で、
+   スマホでは2画面ぶんスクロールしないと現れなかった。モード一覧の直前へ上げ、
+   指で押せる高さの札にする(表紙の色調は変えず、控えめな枠だけを足す)。 */
+.t-onboard-help{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin:8px 0 2px;
+  background:rgba(0,0,0,.18);border:1px solid rgba(201,162,63,.26);border-radius:999px;color:#c0ab86;
+  font-family:var(--sans);font-size:11px;letter-spacing:.08em;
+  cursor:pointer;padding:9px 14px;min-width:unset;min-height:38px;box-shadow:none!important;transform:none!important}
+.t-onboard-help:hover{color:var(--gofun);border-color:var(--kin)}
+.t-onboard-help .tci{width:16px;height:16px;color:var(--kin);flex:0 0 auto}
 
 /* 和歌収集エフェクト — 巻物・縦書き */
 #wakaReveal{position:fixed;z-index:90;inset:0;display:flex;align-items:center;justify-content:center;
@@ -1334,11 +1364,17 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
   #topbar #modeTag{min-height:38px;font-size:11.5px;flex:0 0 auto}
   #topbar #tbTitle{position:sticky;left:0;z-index:2;min-width:40px;width:40px;background:linear-gradient(180deg,rgba(78,50,28,.96),rgba(42,26,14,.96))}
   #topbar #tbCollapse{position:sticky;left:46px;z-index:1;min-width:40px;width:40px;background:linear-gradient(180deg,rgba(78,50,28,.96),rgba(42,26,14,.96))}
-  /* モバイルで不要な要素を非表示(設定・ヘルプはスマホでも使えるよう表示維持) */
+  /* モバイルで不要な要素を非表示 */
   #topbar .brand{display:none}
   #topbar .tb-sep{display:none}
   /* minimapはCSS変数で動的に位置調整(JSがtopbar高さを--topbar-hにセット) */
   #minimapWrap{left:10px;width:128px;height:128px}
+  /* [UX] 狭い画面ではバーに全部を並べない。
+     横スクロールできること自体に気づけず、右端の図鑑・設定・ヘルプへ一生たどり着けない状態だった。
+     常用しないものは「そのほかの機能(tbMore)」へ畳み、バーには現在地・視点・地図だけを残す。 */
+  #topbar #tbHome,#topbar #tbEra,#topbar #tbPause,#topbar #tbCodex,#topbar #tbGfx,#topbar #tbHelp{display:none}
+  #tbMoreMenu .tbm-item.tbm-narrow{display:flex}
+  #tbMoreMenu .tbm-sep.tbm-narrow{display:block}
   #minimap{width:128px;height:128px}
   #minimapLabel{font-size:10px;left:6px;top:5px;padding:1px 6px}
   #title{padding-top:max(8px,env(safe-area-inset-top));padding-bottom:10px}
@@ -1351,7 +1387,14 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
   .t-divider{margin:6px auto;font-size:11px;letter-spacing:.55em}
   #title .t-modes{gap:7px;margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(128px,1fr))}
   #title .t-btn{min-height:58px;padding:9px 10px;border-radius:6px}.mode-meta{font-size:8.5px;min-height:15px;padding:1px 6px}.mode-name{font-size:12px}
+  .mode-time{font-size:8.5px;min-height:15px;padding:1px 6px}.mode-tags{gap:3px}
   #title .t-btn small{font-size:9px;line-height:1.35}.t-mode-kicker{font-size:9px;margin-top:0}
+  /* 常設入口も2列に。1列だと表紙が2画面ぶんの長さになり、下のデイリー任務まで誰も届かない */
+  #titleSubEntries{grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
+  #title #titleSubEntries .t-btn{min-height:52px;padding:8px 9px;font-size:11.5px;letter-spacing:.06em}
+  #titleSubEntries .tci{width:15px;height:15px;margin-right:6px;vertical-align:-3px}
+  .oc-entry-mark{width:17px;height:17px;font-size:10px;margin-right:6px}
+  .t-onboard-help{font-size:10.5px;min-height:36px;padding:8px 10px;margin:6px 0 2px}
   .daily-quest-panel{padding:7px;margin-top:8px}.dq-head{margin-bottom:5px}.dq-list{gap:6px}.dq-item{flex-basis:min(202px,76vw);min-height:72px;padding:7px 8px}
   .dq-item .dq-title{font-size:10.5px}.dq-item .dq-desc{font-size:9.5px;line-height:1.35}.dq-start{min-height:23px}
   .first-route-panel{padding:8px 9px}.fr-steps{grid-template-columns:1fr;gap:6px}.fr-step{min-height:0}
@@ -2250,6 +2293,24 @@ body.renai-mode #topbar{display:flex!important}
   #onmyoDivinationPanel .od-fuda-name{font-size:23px}
 }
 
+/* [UX]省電力モードの自動提案。カクついている端末に一度だけ声をかける小さな帯。
+   トップバーやミッションカードと同じ漆＋金の色調に合わせ、画面下端の操作系には被せない。 */
+#lowPowerPrompt,#backupPrompt{position:fixed;z-index:70;left:50%;transform:translateX(-50%) translateY(14px);
+  bottom:calc(env(safe-area-inset-bottom) + 18px);width:min(420px,calc(100vw - 24px));
+  display:flex;flex-direction:column;gap:5px;padding:12px 14px;border-radius:10px;
+  background:linear-gradient(150deg,rgba(30,22,14,.96),rgba(52,33,17,.94));
+  border:1px solid rgba(201,162,63,.5);box-shadow:0 16px 40px rgba(0,0,0,.45);
+  font-family:var(--sans);color:#f4e8ce;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .26s ease,transform .26s ease}
+#lowPowerPrompt.show,#backupPrompt.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#lowPowerPrompt b,#backupPrompt b{font:600 13px var(--serif,serif);letter-spacing:.06em;color:#fff5d7}
+#lowPowerPrompt small,#backupPrompt small{font-size:10.5px;line-height:1.6;color:#cdbb96}
+#lowPowerPrompt .lpp-actions,#backupPrompt .lpp-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+#lowPowerPrompt .tb-btn,#backupPrompt .tb-btn{min-height:32px;font-size:11.5px;padding:5px 12px}
+#lowPowerPrompt .lpp-yes,#backupPrompt .lpp-yes{border-color:rgba(232,191,86,.8);background:linear-gradient(180deg,rgba(120,88,26,.9),rgba(70,50,14,.94))}
+@media (max-width:760px){
+  #lowPowerPrompt,#backupPrompt{bottom:calc(env(safe-area-inset-bottom) + 132px)}
+}
+
 /* ===== 非恋愛モード共通: ミッションブリーフ ===== */
 #modeBrief{position:fixed;z-index:44;top:calc(env(safe-area-inset-top) + var(--topbar-h,56px) + var(--worldbar-h,0px) + 12px);
   right:calc(env(safe-area-inset-right) + 14px);width:min(390px,calc(100vw - 28px));pointer-events:none;
@@ -2282,6 +2343,24 @@ body.renai-mode #modeBrief{display:none!important}
   #modeBrief{left:calc(env(safe-area-inset-left) + 12px);right:calc(env(safe-area-inset-right) + 12px);
     top:auto;bottom:calc(env(safe-area-inset-bottom) + 94px);width:auto}
   .mb-card{padding:12px}.mb-title{font-size:15px}.mb-lead{font-size:11.5px}.mb-goals li{font-size:11px}
+}
+/* [UX]スマホ縦: 以前はこのカードだけで画面の4割を覆い、3Dも「調べる」ボタンも隠れていた。
+   縦画面では説明文を畳んで目標と操作だけの薄い帯にし、下端の操作系に被らない高さへ収める。
+   (blocking表示=物の怪退治の開始前カードはこれまでどおり全画面のまま) */
+@media (max-width:760px) and (orientation:portrait){
+  #modeBrief:not(.blocking){bottom:calc(env(safe-area-inset-bottom) + 128px)}
+  #modeBrief:not(.blocking) .mb-card{padding:10px 11px 9px}
+  #modeBrief:not(.blocking) .mb-kicker{font-size:9px;margin-bottom:3px}
+  #modeBrief:not(.blocking) .mb-title{font-size:14px;margin-right:28px}
+  #modeBrief:not(.blocking) .mb-lead{display:none}
+  #modeBrief:not(.blocking) .mb-goals{gap:3px}
+  #modeBrief:not(.blocking) .mb-goals li{font-size:10.5px;line-height:1.45;grid-template-columns:18px 1fr;gap:6px}
+  #modeBrief:not(.blocking) .mb-goals span{width:17px;height:17px;font-size:9px}
+  #modeBrief:not(.blocking) .mb-controls{margin-top:7px;gap:4px}
+  #modeBrief:not(.blocking) .mb-controls span{font-size:9.5px;padding:2px 6px}
+  #modeBrief:not(.blocking) .mb-actions{margin-top:8px;gap:6px}
+  #modeBrief:not(.blocking) .mb-actions button{font-size:10.5px;min-height:30px;padding:4px 8px}
+  #modeBrief:not(.blocking) #modeBriefClose{width:27px;height:27px;min-height:27px;right:6px;top:6px;font-size:14px}
 }
 @media (orientation:landscape) and (max-height:520px){
   #modeBrief{left:auto;right:calc(env(safe-area-inset-right) + 10px);top:calc(env(safe-area-inset-top) + var(--topbar-h,50px) + 8px);
@@ -2688,6 +2767,10 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
 #tbMoreMenu{position:fixed;z-index:60;top:calc(var(--topbar-h,52px) + 6px);right:max(8px,env(safe-area-inset-right));width:min(268px,calc(100vw - 20px));display:none;flex-direction:column;gap:2px;padding:7px;background:linear-gradient(180deg,rgba(41,28,19,.98),rgba(28,19,12,.98));border:1px solid rgba(207,170,93,.62);border-radius:10px;box-shadow:0 14px 34px rgba(0,0,0,.46)}
 #tbMoreMenu.open{display:flex}
 .tbm-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 10px;border:0;border-radius:7px;background:transparent;color:#f4e8ce;cursor:pointer;font-family:var(--sans)}
+/* 狭い画面でだけ現れる代替入口(図鑑・設定・ヘルプ等)。広い画面ではトップバー側に本体があるので出さない。 */
+.tbm-item.tbm-narrow{display:none}
+.tbm-sep{height:1px;margin:4px 2px;background:rgba(207,170,93,.28)}
+.tbm-sep.tbm-narrow{display:none}
 .tbm-item:hover,.tbm-item:focus-visible{background:rgba(207,170,93,.16);outline:none}
 .tbm-item .wic{color:var(--kin);width:19px;height:19px}
 .tbm-item span{display:flex;flex-direction:column;gap:1px;line-height:1.3}

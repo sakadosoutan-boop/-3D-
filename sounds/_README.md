@@ -25,7 +25,10 @@ suzumushi・matumsuhi・ani_ge_kirigirisui01・koorogi
 近接ループ: takibi
 楽器試奏: biwa(琵琶)・koto(箏)・shou(笙)・ryuteki(龍笛)
 
-- **形式**: `.mp3`（Chrome/Safari/iPad対応）。差替えは同名で上書き→本編リロードのみ。
+- **形式**: `.mp3`（Chrome/Safari/iPad対応）。差替えは同名で上書き→`bash scripts/optimize-sounds.sh`→本編リロード。
+- **読み込み順**: 本編は「いま鳴る音（今の季節×時刻のベッドと鳴き声）」だけを先に取得し、
+  残りは同時2本ずつ後追いで読み込みます（`SFX.load` / `SFX._pumpQueue`）。全部を一度に取りに行かないので、
+  スマホ回線でも“音が遅れて追いかけてくる”状態になりません。
 - **楽器試奏**: 東西の対に置かれた楽器をタップすると、対応する音源を1回再生。
 - **頻度/音量の微調整**: 本編 `SOUNDSCAPE` の `prob`/`gap`/`gain` を変更。
 - 出典・ライセンスは [CREDITS.md](CREDITS.md) に記録（配布前に必ず確認）。

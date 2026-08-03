@@ -500,7 +500,7 @@
     const host=document.querySelector("#miniGameSubPanel .t-modes")||document.querySelector("#taikenSubPanel .t-modes");
     if(!host||document.getElementById(ENTRY_ID))return !!host;
     const button=create("button","t-btn gozen5-entry");button.id=ENTRY_ID;button.type="button";
-    button.append(create("span","mode-meta","五種競技 / オンライン"),create("span","cat-icon","五"),create("span","mode-name","御前五番勝負"),create("small",null,"札・貝・香・歌・鞠を通した総合戦"));
+    const tags=create("span","mode-tags");tags.append(create("span","mode-meta","五種競技 / オンライン"),create("span","mode-time","🕐 約20分"));const nm=create("span","mode-name");nm.innerHTML='<ruby>御前<rt>ごぜん</rt></ruby>五番勝負';button.append(tags,create("span","cat-icon","五"),nm,create("small",null,"札・貝・香・歌・鞠を通した総合戦"));
     button.addEventListener("click",startSolo);host.append(button);return true;
   }
   function boot(){
