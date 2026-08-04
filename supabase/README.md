@@ -14,7 +14,8 @@ browser gets only a Supabase project URL and publishable/anon key, never a
    so this is the first abuse-control layer.
 3. Run `migrations/20260723_online_competition.sql`, then
    `migrations/20260724_fix_online_ranking.sql` and
-   `migrations/20260724_gozen_five.sql` in the SQL Editor, or apply them in
+   `migrations/20260724_gozen_five.sql`, then
+   `migrations/20260803_coop_hunt.sql` in the SQL Editor, or apply them in
    order with the Supabase CLI.
 4. Put only the project URL and the publishable/anon key in the game's public
    deployment configuration. Do not commit a service-role key to this
@@ -80,6 +81,8 @@ signed-in anonymous user has that role.
 | `online_match_state` | `p_match_id` | Returns a room only to a participant, including opponent progress. Calling it also acts as a heartbeat and reconnects a stale caller. Poll every 1-2 seconds while a room is open. |
 | `online_update_match_player` | `p_match_id`, `p_score`, `p_duration_ms`, `p_progress`, `p_finished` | Updates only the caller's own active-match row. Progress must be a JSON object no larger than 4KB. When both players finish, the room is marked finished. |
 | `online_leave_match` | `p_match_id` | Marks the caller as left. A host leaving while waiting cancels the room. |
+| `coop_hunt_state` | `p_match_id` | Participant-only reconnect snapshot with shared boss HP/phase, event sequence, both contributions/down states, and the latest 20 accepted actions. |
+| `coop_hunt_submit_action` | `p_match_id`, `p_action_id`, `p_action_type`, `p_payload` | Accepts `attack`, `focus`, `guard`, or `down` during an active co-op room. Damage and cooldowns are server-owned; `p_action_id` makes retries idempotent. |
 
 `online_expire_stale_matches` is intentionally not callable by the browser.
 Every room RPC invokes it first. A player that misses heartbeats for 90 seconds
@@ -106,6 +109,13 @@ limits each bout to 1000 and the total to 5000, verifies that all five bout
 scores add up to the submitted total, and freezes a player's completed result.
 The five sub-seeds are derived in the client from the server-issued room seed
 and fixed discipline salts; players never choose the room seed.
+
+For `coop_hunt`, do not send boss HP or client-calculated damage. The server
+locks one shared run, calculates bounded damage from the accepted action class,
+and assigns a monotonically increasing event sequence. Movement, projectiles,
+and boss AI stay local; only shared HP and action results cross the network.
+One downed player may spectate while the other continues. Two `down` states
+finish the run as failed.
 
 ## Operational checks
 

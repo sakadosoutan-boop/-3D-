@@ -65,6 +65,13 @@
     "end": "/* APP_ONLINE_COMPETITION_EMBED_END */"
   },
   {
+    "name": "coop-hunt",
+    "src": "src/app/coop-hunt.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_COOP_HUNT_EMBED_BEGIN (src/app/coop-hunt.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_COOP_HUNT_EMBED_END */"
+  },
+  {
     "name": "gozen-five",
     "src": "src/app/gozen-five.js",
     "kind": "markers-exist",

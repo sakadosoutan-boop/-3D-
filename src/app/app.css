@@ -3002,3 +3002,22 @@ body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf
 .history-stats .hs-val{font-family:var(--serif);font-size:17px;color:#f7df9a}
 .history-stats .hs-lbl{font-size:10.5px;color:#c3b491;letter-spacing:.04em}
 .history-stats .hs-modes{grid-column:1/-1;font-size:11px;color:#d3c2a2;line-height:1.8;border-top:1px solid rgba(201,162,63,.2);padding-top:7px;margin-top:2px}
+
+/* 共同討伐: 共有するのはボス霊力と行動結果だけ。戦闘操作を覆わない小型HUDにする。 */
+.online-coop-settings{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:-5px 0 16px;padding:12px 0;border-top:1px solid rgba(123,92,45,.25);border-bottom:1px solid rgba(123,92,45,.25)}
+.online-coop-settings[hidden]{display:none}
+.online-coop-settings label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:700;color:#6a5940}
+.online-coop-settings select{min-height:42px;border:1px solid #9b7742;border-radius:4px;background:#fffaf0;color:#34291d;padding:8px 10px;font:inherit}
+.coop-hunt-hud{position:fixed;z-index:44;top:calc(env(safe-area-inset-top) + 112px);right:12px;width:min(270px,calc(100vw - 24px));display:none;pointer-events:none;color:#fff8df;background:rgba(17,23,22,.9);border:1px solid rgba(118,221,198,.62);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.42);padding:10px 11px;font-family:var(--sans);backdrop-filter:blur(5px)}
+.coop-hunt-hud.is-active{display:block}
+.coop-hunt-head{display:grid;grid-template-columns:34px 1fr 12px;align-items:center;gap:8px}
+.coop-hunt-sigil{display:grid;place-items:center;width:32px;height:32px;border:1px solid #e5c96f;border-radius:50%;color:#ffe79a;font-family:var(--serif);font-size:17px;background:#573a27}
+.coop-hunt-head b{display:block;font-family:var(--serif);font-size:13px;letter-spacing:0}.coop-hunt-head small{display:block;margin-top:2px;color:#acd9cf;font-size:9.5px}
+#coopHuntConnection{width:9px;height:9px;border-radius:50%;background:#d6a34b;box-shadow:0 0 8px currentColor}
+#coopHuntConnection.is-online{color:#78dfbd;background:#78dfbd}#coopHuntConnection.is-reconnecting{color:#e6a857;background:#e6a857;animation:coopPulse 1s steps(2,end) infinite}
+.coop-hunt-shared,.coop-hunt-member{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;font-size:10px}.coop-hunt-shared b,.coop-hunt-member b{font-variant-numeric:tabular-nums;color:#ffe28a}
+.coop-hunt-track{height:7px;margin-top:4px;overflow:hidden;background:#15100d;border:1px solid rgba(255,255,255,.22)}.coop-hunt-track i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#bd493b,#e9c45f,#59c8aa);transition:width .22s ease}
+.coop-hunt-member{padding-top:7px;border-top:1px solid rgba(255,255,255,.12)}.coop-hunt-hud p{min-height:14px;margin:6px 0 0;color:#d8d0b9;font-size:9.5px;line-height:1.45}.coop-hunt-hud.is-spectating{border-color:#d6a857}.coop-hunt-hud.is-spectating .coop-hunt-sigil{background:#523c2f}
+@keyframes coopPulse{50%{opacity:.32}}
+@media(max-width:600px){.online-coop-settings{grid-template-columns:1fr}.coop-hunt-hud{top:calc(env(safe-area-inset-top) + 112px);right:8px;width:min(218px,calc(100vw - 16px));padding:8px 9px}.coop-hunt-head{grid-template-columns:30px 1fr 10px}.coop-hunt-sigil{width:28px;height:28px;font-size:15px}.coop-hunt-head b{font-size:12px}.coop-hunt-hud p{font-size:9px}}
+@media(prefers-reduced-motion:reduce){#coopHuntConnection.is-reconnecting{animation:none}.coop-hunt-track i{transition:none}}

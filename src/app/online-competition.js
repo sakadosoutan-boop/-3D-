@@ -16,6 +16,7 @@
     anonKey: "sb_publishable_unPMDrLMLCxKhb95Ks8O9w_lLERwI7H",
   };
   const MODES = {
+    coop_hunt: { label: "共同討伐", unit: "功", order: "desc", challenge: true, featured: true, noRanking: true },
     gozen5: { label: "御前五番勝負", unit: "点", order: "desc", challenge: true, featured: true },
     quiz: { label: "名称当てクイズ", unit: "点", order: "desc", live: true },
     quiz_ta: { label: "名称当てタイムアタック", unit: "秒", order: "asc" },
@@ -159,8 +160,8 @@
       });
     }
     setProfile(displayName) { return this.rpc("online_set_profile", { p_display_name: displayName }); }
-    async createMatch(mode) {
-      const created = await this.rpc("online_create_match", { p_mode: mode });
+    async createMatch(mode, settings) {
+      const created = await this.rpc("online_create_match", { p_mode: mode, p_settings: settings || {} });
       return this.getMatch(created?.match_id || created?.id);
     }
     joinMatch(code) { return this.rpc("online_join_match", { p_room_code: code }); }
@@ -184,6 +185,13 @@
     }
     myRank(mode, period) {
       return this.rpc("online_my_rank", { p_mode: mode, p_period: period === "all" ? "all_time" : period });
+    }
+    coopHuntState(matchId) { return this.rpc("coop_hunt_state", { p_match_id: matchId }); }
+    coopHuntAction(data) {
+      return this.rpc("coop_hunt_submit_action", {
+        p_match_id: data.matchId, p_action_id: data.actionId,
+        p_action_type: data.actionType, p_payload: data.payload || {},
+      });
     }
   }
   const nativeTransport = new SupabaseTransport(config);
@@ -265,10 +273,10 @@
     }
     schedulePoll();
   }
-  async function createMatch(mode) {
+  async function createMatch(mode, settings) {
     await withBusy(async () => {
       await identify();
-      const match = normalizeMatch(await transport().createMatch(mode));
+      const match = normalizeMatch(await transport().createMatch(mode, settings));
       if (!match?.id) throw new Error("対戦部屋を作成できませんでした");
       state.match = match; state.screen = "waiting"; state.message = "相手を待っています";
       writeLocal(ACTIVE_KEY, { id: match.id, code: match.room_code || match.code });
@@ -376,12 +384,14 @@
     };
     close(false);
     if (mode === "gozen5") {
-      window.GOZEN_FIVE?.startOnline?.();
+      return window.GOZEN_FIVE?.startOnline?.();
+    } else if (mode === "coop_hunt") {
+      return window.COOP_HUNT?.startOnline?.();
     } else if (mode === "kemari") {
-      if (typeof enterMode === "function") enterMode("kemari");
+      if (typeof enterMode === "function") return enterMode("kemari");
     } else if (mode === "koh_awase") {
       window.KOH_AWASE?.start?.({ seed: Number(state.match?.seed || 1) });
-      window.KOH_AWASE?.open?.();
+      return window.KOH_AWASE?.open?.();
     }
   }
   async function finishChallenge(mode, score, durationMs, metadata) {
@@ -464,6 +474,8 @@
       active: match.status === "active",
       matchId: match.id,
       seed: Number(match.seed || 1),
+      settings: match.settings && typeof match.settings === "object" ? match.settings : {},
+      selfName: ownPlayer(match)?.display_name || ownPlayer(match)?.name || pref().displayName,
       opponentName: rival?.display_name || rival?.name || "対戦相手",
       opponentScore: Number(rival?.score) || 0,
       opponentStatus: rival?.status || "waiting",
@@ -482,7 +494,10 @@
     const context = challengeContext(mode);
     if (!context?.matchId) return context;
     const next = normalizeMatch(await transport().getMatch(context.matchId));
-    if (state.match?.id === context.matchId) state.match = next;
+    if (state.match?.id === context.matchId) {
+      state.match = next;
+      if (matchFinished(next)) state.screen = "result";
+    }
     return challengeContext(mode);
   }
 
@@ -499,6 +514,28 @@
     }));
     if (state.match?.id === context.matchId) state.match = next;
     return challengeContext(mode);
+  }
+
+  async function syncCoopHunt() {
+    const context = challengeContext("coop_hunt");
+    if (!context?.matchId) return null;
+    const value = transport().coopHuntState
+      ? await transport().coopHuntState(context.matchId)
+      : await transport().rpc("coop_hunt_state", { p_match_id: context.matchId });
+    return firstResult(value);
+  }
+
+  async function submitCoopHuntAction(actionType, payload, actionId) {
+    const context = challengeContext("coop_hunt");
+    if (!context?.active) throw new Error("共同討伐は終了しています");
+    const request = { matchId: context.matchId, actionId, actionType, payload: payload || {} };
+    const value = transport().coopHuntAction
+      ? await transport().coopHuntAction(request)
+      : await transport().rpc("coop_hunt_submit_action", {
+        p_match_id: request.matchId, p_action_id: request.actionId,
+        p_action_type: request.actionType, p_payload: request.payload,
+      });
+    return firstResult(value);
   }
 
   function ensureModal() {
@@ -533,13 +570,29 @@
     nameLabel.append(nameInput); identity.append(nameLabel);
     const modeLabel = create("label", null, "種目");
     const modeSelect = create("select"); modeSelect.id = "onlineMatchMode";
-    ["gozen5", "quiz", "kemari", "koh_awase"].forEach(id => {
+    ["coop_hunt", "gozen5", "quiz", "kemari", "koh_awase"].forEach(id => {
       const option = create("option", null, modeMeta(id).label); option.value = id; modeSelect.append(option);
     });
     modeLabel.append(modeSelect); identity.append(modeLabel); body.append(identity);
+    const coopSettings = create("div", "online-coop-settings");
+    const seasonLabel = create("label", null, "討伐する怪異");
+    const seasonSelect = create("select"); seasonSelect.id = "onlineCoopSeason";
+    [["spring", "春・九尾の狐"], ["summer", "夏・河童の主"], ["autumn", "秋・合体人魂"], ["winter", "冬・雪女王"]].forEach(([id, label]) => {
+      const option = create("option", null, label); option.value = id; seasonSelect.append(option);
+    });
+    seasonLabel.append(seasonSelect);
+    const difficultyLabel = create("label", null, "難易度");
+    const difficultySelect = create("select"); difficultySelect.id = "onlineCoopDifficulty";
+    [["normal", "通常"], ["hard", "修羅"]].forEach(([id, label]) => {
+      const option = create("option", null, label); option.value = id; difficultySelect.append(option);
+    });
+    difficultyLabel.append(difficultySelect); coopSettings.append(seasonLabel, difficultyLabel); body.append(coopSettings);
+    const updateCoopSettings = () => { coopSettings.hidden = modeSelect.value !== "coop_hunt"; };
+    modeSelect.addEventListener("change", updateCoopSettings); updateCoopSettings();
     const createArea = create("section", "online-block");
     createArea.append(create("h3", null, "部屋をつくる"), create("p", null, "六文字の部屋番号を相手に伝えます。二人がそろうと開始できます。"));
-    createArea.append(button("新しい対戦部屋", "online-action is-primary", () => createMatch(modeSelect.value)));
+    createArea.append(button("新しい対戦部屋", "online-action is-primary", () => createMatch(modeSelect.value,
+      modeSelect.value === "coop_hunt" ? { season: seasonSelect.value, difficulty: difficultySelect.value } : {})));
     const joinArea = create("section", "online-block");
     joinArea.append(create("h3", null, "部屋に入る"));
     const joinRow = create("div", "online-code-row");
@@ -552,6 +605,10 @@
     const match = state.match, code = match?.room_code || match?.code || "------";
     const codeBox = create("div", "online-room-code"); codeBox.append(create("span", null, "部屋番号"), create("strong", null, code));
     body.append(codeBox, create("p", "online-mode-label", modeMeta(match?.mode).label));
+    if (match?.mode === "coop_hunt") {
+      const seasonName = { spring: "春・九尾の狐", summer: "夏・河童の主", autumn: "秋・合体人魂", winter: "冬・雪女王" }[match.settings?.season] || "春・九尾の狐";
+      body.append(create("p", "online-wait", `${seasonName} / ${match.settings?.difficulty === "hard" ? "修羅" : "通常"}`));
+    }
     const players = create("div", "online-players");
     playerRows(match).forEach(player => {
       const item = create("div", "online-player");
@@ -596,8 +653,10 @@
   }
   function renderChallenge(body) {
     const match = state.match, own = ownPlayer(match), rival = opponent(match);
-    body.append(create("p", "online-mode-label", `${modeMeta(match?.mode).label} 御前勝負`));
-    body.append(create("p", "online-challenge-copy", match?.mode === "gozen5"
+    body.append(create("p", "online-mode-label", match?.mode === "coop_hunt" ? "共同討伐 出陣前" : `${modeMeta(match?.mode).label} 御前勝負`));
+    body.append(create("p", "online-challenge-copy", match?.mode === "coop_hunt"
+      ? "二人で一体の怪異を祓います。操作と敵の動きは各端末で滑らかに処理し、共有霊力と攻撃の成果だけを同期します。"
+      : match?.mode === "gozen5"
       ? "札・貝・香・歌・鞠の五局を、同じ出題と同じ鞠順で競います。相手を待たずに進められます。"
       : "同じ種目を一度ずつ遊び、記録の高い方が勝ちです。終了すると結果が自動で届きます。"));
     const players = create("div", "online-players");
@@ -616,11 +675,12 @@
       if (match?.mode === "quiz_ta") return (a.duration_ms || Infinity) - (b.duration_ms || Infinity);
       return (b.score || 0) - (a.score || 0);
     });
-    body.append(create("p", "online-result-title", "御前試合　決着"));
+    const coopFailed = match?.mode === "coop_hunt" && rows.length >= 2 && rows.every(player => player.progress?.down === true);
+    body.append(create("p", "online-result-title", match?.mode === "coop_hunt" ? (coopFailed ? "共同討伐　失敗" : "共同討伐　成就") : "御前試合　決着"));
     const board = create("div", "online-result-board");
     rows.forEach((player, index) => {
       const row = create("div", `online-result-row${player.is_self || player.self ? " is-self" : ""}`);
-      row.append(create("strong", null, `${index + 1}位`), create("span", null, player.display_name || player.name || "参加者"), create("b", null, formatValue(match?.mode, player.score, player.duration_ms)));
+      row.append(create("strong", null, match?.mode === "coop_hunt" ? (player.is_self || player.self ? "自" : "共") : `${index + 1}位`), create("span", null, player.display_name || player.name || "参加者"), create("b", null, formatValue(match?.mode, player.score, player.duration_ms)));
       board.append(row);
     });
     body.append(board, button("新しい勝負へ", "online-action is-primary", leaveMatch));
@@ -636,7 +696,7 @@
   function renderRanking(body) {
     const controls = create("div", "online-ranking-controls");
     const mode = create("select"); mode.setAttribute("aria-label", "順位表の種目");
-    Object.keys(MODES).forEach(id => { const option = create("option", null, MODES[id].label); option.value = id; option.selected = id === state.rankingMode; mode.append(option); });
+    Object.keys(MODES).filter(id => !MODES[id].noRanking).forEach(id => { const option = create("option", null, MODES[id].label); option.value = id; option.selected = id === state.rankingMode; mode.append(option); });
     const period = create("select"); period.setAttribute("aria-label", "順位表の期間");
     Object.keys(PERIODS).forEach(id => { const option = create("option", null, PERIODS[id]); option.value = id; option.selected = id === state.rankingPeriod; period.append(option); });
     const reload = () => { state.rankingMode = mode.value; state.rankingPeriod = period.value; loadRanking(); };
@@ -703,9 +763,9 @@
     const entry = create("button", sub ? "t-btn t-codex-btn online-entry" : "t-btn t-cat-btn online-entry");
     entry.id = ENTRY_ID; entry.type = "button";
     if (sub) {
-      entry.append(create("span", "oc-entry-mark", "競"), document.createTextNode("オンライン御前試合"), create("small", null, "六文字の部屋番号で二人対戦。五番勝負・クイズ・蹴鞠・香合わせ"));
+      entry.append(create("span", "oc-entry-mark", "競"), document.createTextNode("オンライン御前試合"), create("small", null, "六文字の部屋番号で二人共闘・対戦。共同討伐・五番勝負・クイズ・蹴鞠・香合わせ"));
     } else {
-      entry.append(create("span", "mode-meta", "対戦 / 共有順位"), create("div", "cat-icon", "競"), create("span", "mode-name", "オンライン御前試合"), create("small", null, "五番勝負・クイズ・蹴鞠・香合わせで競う"));
+      entry.append(create("span", "mode-meta", "共闘 / 対戦 / 共有順位"), create("div", "cat-icon", "競"), create("span", "mode-name", "オンライン御前試合"), create("small", null, "共同討伐・五番勝負・クイズ・蹴鞠・香合わせ"));
     }
     entry.addEventListener("click", open); host.append(entry); return true;
   }
@@ -733,6 +793,7 @@
     open, close, configure, createMatch, joinMatch, startMatch, leaveMatch, answerQuiz,
     submitScore, finishChallenge, loadRanking, getMyRank, getStatus, launchChallenge: openChallengeGame,
     getChallengeContext: challengeContext, consumeChallengeContext, syncChallenge, updateChallengeProgress,
+    syncCoopHunt, submitCoopHuntAction,
     setDisplayName: name => setPref({ displayName: name }),
     buildQuiz: seed => buildQuiz(seed),
     __test: {
@@ -741,6 +802,6 @@
       getState: () => state,
     },
   };
-  window.ONLINE_COMPETITION_STATUS = { ready: true, version: 3, modes: Object.keys(MODES), quizCount: QUIZ_COUNT };
+  window.ONLINE_COMPETITION_STATUS = { ready: true, version: 4, modes: Object.keys(MODES), quizCount: QUIZ_COUNT };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true }); else boot();
 })();
