@@ -16,9 +16,9 @@ const KEMARI_CFG={
   ],
   laneX:[-1,0,1],
   techniques:{
-    receive:{label:"受け",key:"Z",color:"#d9d4a4",hint:"低く来る鞠を、やわらかく受ける"},
-    high:{label:"高蹴り",key:"X",color:"#f1b96a",hint:"高い弧をつくり、仲間に時間を渡す"},
-    pass:{label:"渡し",key:"C",color:"#99cfbe",hint:"横の間を読み、次の鞠足へ渡す"}
+    receive:{label:"受け",key:"Z",mark:"受",gesture:"タップ",color:"#d9d4a4",hint:"低く来る鞠を、やわらかく受ける"},
+    high:{label:"高蹴り",key:"X",mark:"天",gesture:"上へ払う",color:"#f1b96a",hint:"高い弧をつくり、仲間に時間を渡す"},
+    pass:{label:"渡し",key:"C",mark:"声",gesture:"下へ払う",color:"#99cfbe",hint:"横の間を読み、次の鞠足へ渡す"}
   }
 };
 const KEMARI_KAKEGOE=["アリ","ヤア","オウ"];
@@ -133,7 +133,7 @@ function kmrCreateDelivery(S){
   else lane=KEMARI_CFG.laneX[Math.floor(kmrRand(S)*3)];
   if(technique==="high"&&kmrRand(S)<.62)lane=0;
   const flight=Math.max(KEMARI_CFG.minFlight,KEMARI_CFG.baseFlight-S.rally*21-S.round*105);
-  const peak=technique==="high"?238:technique==="pass"?158:132;
+  const peak=technique==="high"?262:technique==="pass"?170:118; // 弧の高さで技を見分けられるよう差を広げる
   const fromX=[-1.24,0,1.24][partner];
   const drift=(kmrRand(S)-.5)*(S.round>=2?(technique==="pass"?82:58):(technique==="pass"?36:20));
   const calls=["アリ、こちらへ。","ヤア、間を取って。","オウ、鞠を見よ。"];
@@ -209,10 +209,15 @@ function kmrInputQuality(S,now){
   if(time<=save&&position<=.86)return{kind:"save",time,position,technique};
   return{kind:"miss",time,position,technique};
 }
-function kemariAttemptKick(fromQueue){
+/* 蹴る。tech を渡すとその技で蹴り、以後の既定の技にもなる(＝「選んでから蹴る」の二手を一手にする)。
+   opt.at はジェスチャー判定のために指を離した時刻ではなく「触れた時刻」を渡すためのもの。
+   opt.fromQueue は構え済みの自動発動。 */
+function kemariAttemptKick(tech,opt){
   const S=KMR;if(!S||S.over||S.phase!=="flight")return false;
-  const now=kmrNow(),progress=(now-S.delivery.start)/S.delivery.flight;
-  if(!fromQueue&&progress<1-KEMARI_CFG.goodWindow){
+  const o=opt||{};
+  if(tech&&KEMARI_CFG.techniques[tech])S.selected=tech;
+  const now=o.at||kmrNow(),progress=(now-S.delivery.start)/S.delivery.flight;
+  if(!o.fromQueue&&progress<1-KEMARI_CFG.goodWindow){
     if(progress>=.42){
       S.kickQueued=true;S.message="蹴る構え。落下の瞬間に合わせる。";
       kmrShowJudge("蹴りを構えた","good");kmrUpdateHud(true);return true;
@@ -374,7 +379,7 @@ function kmrUpdate(dt){
   if(S.phase==="flight"&&S.delivery){
     const p=(now-S.delivery.start)/S.delivery.flight;
     if(S.kickQueued&&p>=1-(KEMARI_CFG.perfectWindow+(S.flowTurns>0?.025:0))*.72){
-      kemariAttemptKick(true);
+      kemariAttemptKick(null,{fromQueue:true});
       kmrSyncOnline(S,now);
       return;
     }
@@ -393,7 +398,10 @@ function kmrUpdateHud(force){
   kmrSetText("kmrFlow",S.message);
   kmrSetText("kmrSync",S.flowTurns>0?`舞 ${S.flowTurns}`:`${Math.round(S.teamSync)}%`);
   const syncFill=kmr$("kmrSyncFill");if(syncFill)syncFill.style.width=`${S.flowTurns>0?100:S.teamSync}%`;
-  const readout=kmr$("kmrReadout"),timingFill=kmr$("kmrTimingFill"),kick=kmr$("kmrKick");
+  const readout=kmr$("kmrReadout"),timingFill=kmr$("kmrTimingFill");
+  /* 求められている技の札だけを光らせる。どれを押せばよいかがボタン側で分かるので、
+     盤面と札のあいだで視線を往復しなくてよい。 */
+  const techBtn={receive:kmr$("kmrReceive"),high:kmr$("kmrHigh"),pass:kmr$("kmrPass")};
   if(readout){readout.classList.toggle("is-flow",S.flowTurns>0);readout.classList.toggle("is-queued",!!S.kickQueued);}
   if(S.delivery&&S.phase==="flight"){
     const d=S.delivery,p=kmrClamp((now-d.start)/d.flight,0,1.08);
@@ -404,18 +412,22 @@ function kmrUpdateHud(force){
     if(timingFill)timingFill.style.width=`${kmrClamp(p,0,1)*100}%`;
     const ready=p>=1-KEMARI_CFG.goodWindow&&p<=1+KEMARI_CFG.saveWindow;
     if(readout)readout.classList.toggle("is-ready",ready);
-    if(kick)kick.classList.toggle("is-ready",ready||S.kickQueued);
+    Object.keys(techBtn).forEach(k=>{const b=techBtn[k];if(!b)return;
+      b.classList.toggle("is-wanted",k===d.technique);
+      b.classList.toggle("is-ready",k===d.technique&&(ready||S.kickQueued));});
   }else{
     kmrSetText("kmrLaneCue","待機");kmrSetText("kmrTechniqueCue","―");kmrSetText("kmrTimingCue","次の鞠を待つ");
     if(timingFill)timingFill.style.width="0%";
     if(readout)readout.classList.remove("is-ready");
-    if(kick)kick.classList.remove("is-ready");
+    Object.keys(techBtn).forEach(k=>{const b=techBtn[k];if(b)b.classList.remove("is-wanted","is-ready");});
   }
   const controls=kmr$("kmrControls");
   if(controls){controls.dataset.phase=S.phase;controls.setAttribute("aria-label",S.phase==="flight"?"鞠を蹴る":"鞠が来るのを待つ");}
-  [["kmrReceive","receive"],["kmrHigh","high"],["kmrPass","pass"]].forEach(([id,tech])=>{
-    const el=kmr$(id);if(!el)return;const selected=S.selected===tech;
-    el.classList.toggle("selected",selected);el.setAttribute("aria-pressed",String(selected));
+  /* 札は「押すとその技で蹴る」ボタンになったので、選択状態(selected)の見た目は使わない。
+     いま求められている技は is-wanted 側で示す。aria-pressed も外す(トグルではないため)。 */
+  [["kmrReceive","receive"],["kmrHigh","high"],["kmrPass","pass"]].forEach(([id])=>{
+    const el=kmr$(id);if(!el)return;
+    el.classList.remove("selected");el.removeAttribute("aria-pressed");
   });
 }
 
@@ -657,18 +669,25 @@ function kmrDrawPlayer(ctx,S){
   kmrDrawKemariFigure(ctx,{robe:"#6f5aa2",hakama:"#3c3160",kick,scale:1.16});
   ctx.restore();
 }
+/* 求められている蹴り方を、落下輪そのものに書く。
+   以前は画面上部に「右へ 受け」と大書きし、指は画面下の札にあったため、
+   鞠・指示・札の三点を視線が往復していた。輪の中に技を出せば、鞠を見たまま判断できる。 */
 function kmrDrawPrompt(ctx,S){
   if(!S.delivery||S.phase!=="flight")return;
   const d=S.delivery,tech=KEMARI_CFG.techniques[d.technique],ball=kmrBallAt(S,kmrNow()),ts=kmrTextScale();
-  const lane=["左","中央","右"][d.lane+1];
-  ctx.save();ctx.textAlign="center";ctx.font=`bold ${17*ts}px serif`;ctx.fillStyle=tech.color;
-  ctx.shadowColor="rgba(12,16,10,.75)";ctx.shadowBlur=6;
-  ctx.fillText(`${lane}へ　${tech.label}`,KEMARI_CFG.W/2,108);
-  /* こつ(hint)は下段の一行が担当。ここでは構えの状態だけを補う */
-  if(S.kickQueued){ctx.font=`${10*ts}px sans-serif`;ctx.fillStyle="#ffe9b4";ctx.fillText("蹴る構え済み・落下に合わせて自動で蹴る",KEMARI_CFG.W/2,124);}
-  ctx.shadowBlur=0;
-  if(ball){const remain=kmrClamp(1-ball.p,0,1),r=25+remain*28;ctx.strokeStyle=tech.color;ctx.lineWidth=2;ctx.globalAlpha=.2+.7*(1-remain);ctx.beginPath();ctx.arc(KEMARI_CFG.W/2+d.landX*148,KEMARI_CFG.groundY,r,0,Math.PI*2);ctx.stroke();}
-  ctx.restore();
+  const tx=KEMARI_CFG.W/2+d.landX*148,ty=KEMARI_CFG.groundY;
+  ctx.save();ctx.textAlign="center";
+  if(ball){                                  // 残り時間を表す収縮する輪
+    const remain=kmrClamp(1-ball.p,0,1),r=25+remain*30;
+    ctx.strokeStyle=tech.color;ctx.lineWidth=2.4;ctx.globalAlpha=.22+.72*(1-remain);
+    ctx.beginPath();ctx.arc(tx,ty,r,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;
+  }
+  ctx.shadowColor="rgba(12,16,10,.8)";ctx.shadowBlur=7;
+  ctx.fillStyle=tech.color;ctx.font=`bold ${20*ts}px serif`;
+  ctx.fillText(tech.mark,tx,ty+7);           // 輪の中心に技の一字
+  ctx.font=`bold ${11.5*ts}px sans-serif`;
+  ctx.fillText(S.kickQueued?"構え済み":tech.gesture,tx,ty+26);
+  ctx.shadowBlur=0;ctx.restore();
 }
 function kemariDrawScene(ctx,S){
   if(!ctx)return;const {W,H,padTop,padBot}=KEMARI_CFG;
@@ -723,38 +742,72 @@ function kemariLoop(ts){
   kmrUpdate(dt);kmrUpdateHud(false);kemariRender();
 }
 
-/* 画面のどこを触っても「蹴る」。
-   以前は鞠から62px以内をタップした時だけ蹴りになり、外すと移動になってしまうため、
-   蹴りたいのに横へ動くという取り違えが起きていた。移動は左右ボタン(と A/D キー)が担当する。
-   ボタン・カード・ヘルプの上は本来の操作を優先するので、ここでは拾わない。 */
+/* ============================================================
+   指ひとつで完結する操作。
+   旧: ←→で寄る → 三つの札から技を選ぶ → 「蹴る」を押す ……小さなボタンを三度触る必要があり、
+       鞠を見ている暇がなかった。
+   新: 画面のどこでも
+       ・横に払う  = 左右へ寄る(大きく払えば端まで)
+       ・タップ    = 受け
+       ・上へ払う  = 高蹴り
+       ・下へ払う  = 渡し
+     つまり「技を選ぶ」と「蹴る」が一手に統合される。下段の札は同じ動作のボタン版として残す。
+   タイミングは指を離した時刻ではなく“触れた時刻”で判定するので、払っても精度は落ちない。
+============================================================ */
 function kmrIsControlTarget(t){
   // ボタン類と、下段の操作ストリップ・カード類だけは本来の操作を優先する。
-  // 上部の得点欄や盤面の外の余白は「画面のどこでも」に含めて蹴りにする(✕はbuttonなので誤爆しない)。
+  // 上部の得点欄や盤面の外の余白は「画面のどこでも」に含める(✕はbuttonなので誤爆しない)。
   return !!(t&&t.closest&&t.closest("button,a,input,select,textarea,.kmr-controls,.kmr-card,#kemariGameOver,#kemariHelp"));
 }
-function kmrHandlePointer(ev){
+const KMR_SWIPE=26,KMR_SWIPE_FAR=110;
+let _kmrGesture=null;
+function kmrPointerDown(ev){
   const S=KMR;if(!S||S.over||S.helpOpen)return;
+  if(kmrIsControlTarget(ev.target)){_kmrGesture=null;return;}
+  _kmrGesture={x:ev.clientX,y:ev.clientY,t:kmrNow()};
+}
+function kmrPointerUp(ev){
+  const g=_kmrGesture;_kmrGesture=null;
+  const S=KMR;if(!g||!S||S.over||S.helpOpen)return;
   if(kmrIsControlTarget(ev.target))return;
-  kemariAttemptKick();
+  const dx=ev.clientX-g.x,dy=ev.clientY-g.y,ax=Math.abs(dx),ay=Math.abs(dy);
+  if(ax>=KMR_SWIPE&&ax>ay){                     // 横に払う = 寄る
+    if(ax>=KMR_SWIPE_FAR)kmrMoveTo(dx>0?1:-1);  // 大きく払えば端の間まで一気に
+    else kmrMovePlayer(dx>0?1:-1);
+    kmrShowJudge(dx>0?"右の間へ":"左の間へ","good");
+    kmrUpdateHud(true);
+    return;
+  }
+  const tech=(ay>=KMR_SWIPE&&ay>ax)?(dy<0?"high":"pass"):"receive";
+  kemariAttemptKick(tech,{at:g.t});
 }
 function kmrBind(){
   if(_kmrBound)return;_kmrBound=true;
   const hud=kmr$("kemariHud");
   // 盤面だけでなくHUD全体で受ける(縦画面では盤の上下に余白が出るため)
-  if(hud){hud.addEventListener("pointerdown",ev=>{
-    if(typeof APP==="undefined"||APP.mode!=="kemari")return;
-    if(kmrIsControlTarget(ev.target))return;
-    ev.preventDefault();kmrHandlePointer(ev);
-  });}
+  if(hud){
+    hud.addEventListener("pointerdown",ev=>{
+      if(typeof APP==="undefined"||APP.mode!=="kemari")return;
+      if(kmrIsControlTarget(ev.target))return;
+      ev.preventDefault();kmrPointerDown(ev);
+    });
+    hud.addEventListener("pointerup",ev=>{
+      if(typeof APP==="undefined"||APP.mode!=="kemari")return;
+      kmrPointerUp(ev);
+    });
+    hud.addEventListener("pointercancel",()=>{_kmrGesture=null;});
+    hud.addEventListener("pointerleave",()=>{_kmrGesture=null;});
+  }
   if(hud){hud.addEventListener("contextmenu",ev=>{if(typeof APP!=="undefined"&&APP.mode==="kemari")ev.preventDefault();});}
   addEventListener("keydown",ev=>{
     if(typeof APP==="undefined"||APP.mode!=="kemari"||!KMR||KMR.helpOpen)return;
     const key=(ev.key||"").toLowerCase();
     if(key==="a"||ev.code==="ArrowLeft"){ev.preventDefault();kmrMovePlayer(-1);}
     else if(key==="d"||ev.code==="ArrowRight"){ev.preventDefault();kmrMovePlayer(1);}
-    else if(key==="z"){ev.preventDefault();kmrSetTechnique("receive");}
-    else if(key==="x"){ev.preventDefault();kmrSetTechnique("high");}
-    else if(key==="c"){ev.preventDefault();kmrSetTechnique("pass");}
+    /* Z/X/C はその技で即座に蹴る(選ぶ→蹴るの二手を廃止)。飛来前に押した場合は構えになる。 */
+    else if(key==="z"){ev.preventDefault();kemariAttemptKick("receive");}
+    else if(key==="x"){ev.preventDefault();kemariAttemptKick("high");}
+    else if(key==="c"){ev.preventDefault();kemariAttemptKick("pass");}
     else if(ev.code==="Space"||ev.key==="Enter"){ev.preventDefault();kemariAttemptKick();}
   });
   const quit=kmr$("kemariQuit"),helpStart=kmr$("kmrHelpStart"),retry=kmr$("kmrRetry"),title=kmr$("kmrToTitle"),launch=kmr$("btnKemari");
@@ -763,13 +816,14 @@ function kmrBind(){
   if(helpStart)helpStart.onclick=()=>{const help=kmr$("kemariHelp");if(help)help.classList.remove("show");kmrMarkHelpSeen();if(KMR){KMR.helpOpen=false;kmrStartRound(KMR);}if(typeof beep==="function")beep(520,.06);};
   if(retry)retry.onclick=()=>{if(typeof beep==="function")beep(600,.07);const go=kmr$("kemariGameOver");if(go)go.classList.remove("show");startKemari();};
   if(title)title.onclick=()=>location.reload();
+  /* 下段の札は「その技で蹴る」ボタン。ジェスチャーと同じ動作をボタンでも用意する
+     (PC・タッチが苦手な場合・スクリーンリーダー利用者のための同等操作)。 */
   const controlActions=[
     ["kmrLeft",()=>kmrMovePlayer(-1)],
     ["kmrRight",()=>kmrMovePlayer(1)],
-    ["kmrReceive",()=>kmrSetTechnique("receive")],
-    ["kmrHigh",()=>kmrSetTechnique("high")],
-    ["kmrPass",()=>kmrSetTechnique("pass")],
-    ["kmrKick",()=>kemariAttemptKick()]
+    ["kmrReceive",()=>kemariAttemptKick("receive")],
+    ["kmrHigh",()=>kemariAttemptKick("high")],
+    ["kmrPass",()=>kemariAttemptKick("pass")]
   ];
   controlActions.forEach(([id,action])=>{const el=kmr$(id);if(el)el.addEventListener("click",ev=>{
     if(typeof APP!=="undefined"&&APP.mode==="kemari"){ev.preventDefault();action();}
@@ -810,5 +864,5 @@ window.KEMARI_GAME={
   version:3,start:startKemari,stop:stopKemari,attempt:kemariAttemptKick,
   selectTechnique:kmrSetTechnique,move:kmrMovePlayer,moveTo:kmrMoveTo,beginFlight:kemariBeginFlight,testResolve:kmrTestResolve,
   __test:{setDelivery:kmrTestDelivery,advance:kmrTestAdvance},
-  getState:()=>{const S=KMR;if(!S)return null;return{round:S.round+1,roundHits:S.roundHits,rally:S.rally,score:S.score,combo:S.combo,stamina:S.stamina,miyabi:S.miyabi,poise:S.poise,selected:S.selected,phase:S.phase,kickQueued:S.kickQueued,quickStep:S.quickStep,flowTurns:S.flowTurns,online:!!S.online,delivery:S.delivery&&{technique:S.delivery.technique,lane:S.delivery.lane,partner:S.delivery.partner},victory:S.victory};}
+  getState:()=>{const S=KMR;if(!S)return null;return{playerX:S.playerX,targetX:S.targetX,round:S.round+1,roundHits:S.roundHits,rally:S.rally,score:S.score,combo:S.combo,stamina:S.stamina,miyabi:S.miyabi,poise:S.poise,selected:S.selected,phase:S.phase,kickQueued:S.kickQueued,quickStep:S.quickStep,flowTurns:S.flowTurns,online:!!S.online,delivery:S.delivery&&{technique:S.delivery.technique,lane:S.delivery.lane,partner:S.delivery.partner},victory:S.victory};}
 };

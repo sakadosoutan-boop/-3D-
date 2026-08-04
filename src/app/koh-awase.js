@@ -54,12 +54,38 @@
     {id:"paper-window",text:"紙を開いたあとのやわらかな空気",vector:[3,3,1,1],titles:["baika","kayo"]}
   ];
 
+  /* ============================================================
+     薫物合を「勝負」にするための定数。
+     旧版は依頼を読む→香材を選ぶ→提出、という記入式で、手ごたえも競り合いも無かった。
+       ・目標の香りの姿を最初から見せる（4軸）＝ゴールが見える
+       ・香材には上限目数がある＝配分のパズルになる
+       ・火加減は選ぶだけでなく、炭を扇いで適正帯に保つ実技にする
+       ・毎局、右方（相手）が香を出してきて勝敗がつく＝三番勝負
+  ============================================================ */
+  const AXES=[
+    {label:"温",note:"あたたかさ"},
+    {label:"花",note:"はなやかさ"},
+    {label:"青",note:"みずみずしさ"},
+    {label:"深",note:"ふかみ"}
+  ];
+  const MAX_ME=8;                 // 練り合わせられる香材の上限（目）
+  const BLEND_LIMIT=60;           // 調香の目安時間（秒）。超えても失敗にはせず、速さの加点が減るだけ
+  const HEAT_SECONDS=9;           // 炷く（火加減）の実技時間
+  const HEAT_BANDS={soft:[24,46],clear:[44,66],deep:[64,86]};
+  const HEAT_LABEL={soft:"やわらかく",clear:"澄ませる",deep:"深く攻める"};
+  const RIVALS=[
+    {name:"右方 少将",line:"香名を先に掲げ、迷いなく練り上げてきた。"},
+    {name:"右方 中納言",line:"火を澄ませ、端正な余韻でまとめてきた。"},
+    {name:"右方 内侍",line:"花の陰影を厚く重ね、華やかに攻めてきた。"}
+  ];
+
   let stored=readState();
   let session=null;
   let modal=null;
   let priorFocus=null;
   let animationFrame=0;
   let canvasState=null;
+  let heatTimer=0;
 
   function clamp(value,min,max){return Math.max(min,Math.min(max,value));}
   function text(value){return String(value==null?"":value);}
@@ -99,7 +125,26 @@
     const resonant=MEMORY_OPTIONS.find(item=>item.titles.includes(title.id));
     if(resonant&&!memoryChoices.some(item=>item.id===resonant.id))memoryChoices[0]=resonant;
     memoryChoices=shuffle(memoryChoices,Math.floor(Math.random()*0xffffffff));
-    return {scenario,title,memoryChoices,blend:defaultBlend(),selectedTitle:null,heat:null,blendResult:null,memoryBonus:0,memoryChoice:null,feedback:""};
+    const rival=RIVALS[(session?session.rounds.length:0)%RIVALS.length];
+    return {scenario,title,memoryChoices,blend:defaultBlend(),selectedTitle:null,heat:null,blendResult:null,
+      memoryBonus:0,memoryChoice:null,feedback:"",
+      startedAt:0,speedBonus:0,
+      heatPlay:null,heatScore:0,          // 炷く（実技）の結果
+      rival:{name:rival.name,line:rival.line,score:0},
+      won:null,earned:0};
+  }
+  /* いま練れている香が、目標の姿にどれだけ近いか（0〜100）。調香中はこれが刻々と動く。 */
+  function blendFit(round){
+    const vector=blendVector(round.blend),target=round.title.vector;
+    const actualScale=Math.max(1,totalTarget(vector)),targetScale=Math.max(1,totalTarget(target));
+    const distance=vector.reduce((sum,value,index)=>sum+Math.abs(value/actualScale-target[index]/targetScale),0);
+    return clamp(Math.round(100-distance*88),0,100);
+  }
+  function heatBand(round){return HEAT_BANDS[round.heat]||HEAT_BANDS.clear;}
+  /* 右方（相手）の点。局が進むほど強くなるが、こちらが上振れすれば十分に勝てる幅にする。 */
+  function rivalScore(index){
+    const base=58+index*7;
+    return clamp(Math.round(base+(Math.random()*22-9)),40,96);
   }
   function gradeFor(score){if(score>=330)return {rank:"雅匠",line:"三つの座を、景と香名で見事に結びました。"};if(score>=255)return {rank:"香の聞き手",line:"趣を見失わず、よい加減を探れています。"};if(score>=180)return {rank:"香帳見習い",line:"香材と景のつながりが、少しずつ見えてきました。"};return {rank:"炉辺の学び手",line:"講評を手がかりに、もう一度香を練ってみましょう。"};}
   function statLabel(value){if(value>=84)return "見事";if(value>=64)return "よく合う";if(value>=42)return "あと一歩";return "要調整";}
@@ -145,10 +190,10 @@
       .koh-awase-stage{display:grid;grid-template-columns:minmax(240px,.86fr) minmax(330px,1.14fr);gap:16px;align-items:start}.koh-awase-hearth{position:relative;width:100%;min-width:0;min-height:280px;overflow:hidden;border:1px solid #73572c;background:#151c1b;box-shadow:inset 0 0 0 8px #2c2920, inset 0 0 30px #000;box-sizing:border-box}.koh-awase-canvas{display:block!important;width:100%!important;height:280px}.koh-awase-hearth-label{position:absolute;left:13px;bottom:11px;color:#f6e4b1;font-size:13px;text-shadow:0 1px 2px #000}.koh-awase-panel{display:grid;min-width:0;gap:12px}.koh-awase-request{padding:14px 15px;border-left:4px solid #ad7930;background:#e9ddbf;line-height:1.55}.koh-awase-request strong{display:block;font-size:19px}.koh-awase-request-meta{margin-top:6px;color:#695527;font-size:13px}.koh-awase-note{margin:0;padding:10px 12px;border-left:4px solid #8c7651;background:#fbf5e8;font-size:14px;line-height:1.55}.koh-awase-section-title{margin:0;font-size:18px;line-height:1.35}.koh-awase-section-sub{margin:-6px 0 0;color:#70633f;font-size:13px;line-height:1.45}
       .koh-awase-brief-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.koh-awase-brief-item{padding:10px;border-top:4px solid #97713b;background:#fff8e8;text-align:center}.koh-awase-brief-item span{display:block;color:#74613a;font-size:12px}.koh-awase-brief-item b{display:block;margin-top:3px;font-size:15px}.koh-awase-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}.koh-awase-option{min-height:76px;padding:11px;border:1px solid #947946;border-radius:4px;background:#fffaf0;color:#28271f;text-align:left;font:inherit;cursor:pointer}.koh-awase-option b{display:block;font-size:17px}.koh-awase-option small{display:block;margin-top:4px;color:#71603b;font-size:12px}.koh-awase-option:hover,.koh-awase-option:focus-visible{border-color:#2f7668;background:#edf6ee;outline:2px solid #4c9b89;outline-offset:1px}.koh-awase-option.is-selected{border-color:#2f7552;background:#d7eadb;box-shadow:inset 0 0 0 2px #2f7552}.koh-awase-option:disabled{cursor:default;opacity:1}
       .koh-awase-materials{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.koh-awase-material{display:grid;grid-template-columns:12px 1fr auto;gap:9px;align-items:center;min-height:68px;padding:8px;border:1px solid #b59a64;background:#fffaf0}.koh-awase-material-dot{width:9px;height:42px;background:var(--mat);border-radius:2px}.koh-awase-material b{font-size:16px}.koh-awase-material small{display:block;margin-top:2px;color:#766844;font-size:12px;line-height:1.25}.koh-awase-stepper{display:grid;grid-template-columns:32px 27px 32px;gap:2px;align-items:center}.koh-awase-stepper button{width:32px;height:32px;border:1px solid #81682f;border-radius:3px;background:#efe1bd;color:#47391c;font:20px/1 sans-serif;cursor:pointer}.koh-awase-stepper button:hover,.koh-awase-stepper button:focus-visible{background:#d9bc76;outline:2px solid #526d52;outline-offset:1px}.koh-awase-stepper span{text-align:center;font-weight:bold}
-      .koh-awase-profile{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px;border:1px solid #c4ad78;background:#f8f0dc}.koh-awase-profile-item{display:grid;gap:4px;color:#594923;font-size:12px}.koh-awase-profile-track{height:8px;overflow:hidden;background:#d8ccb0}.koh-awase-profile-fill{display:block;height:100%;background:#2f7668}.koh-awase-title-grid,.koh-awase-heat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.koh-awase-chip{min-height:43px;border:1px solid #9d8450;border-radius:3px;background:#fff9ec;color:#342b1b;font:inherit;cursor:pointer}.koh-awase-chip:hover,.koh-awase-chip:focus-visible,.koh-awase-chip.is-selected{border-color:#276c61;background:#dceee4;outline:2px solid transparent}.koh-awase-chip.is-selected{box-shadow:inset 0 0 0 2px #276c61}.koh-awase-heat{grid-template-columns:repeat(3,1fr)}.koh-awase-risk{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;border:1px solid #c4ad78;background:#f8f0dc;color:#5d4a22;font-size:14px}.koh-awase-risk meter{width:130px;accent-color:#a06030}.koh-awase-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}.koh-awase-action{min-height:44px;padding:9px 16px;border:1px solid #70531f;border-radius:4px;background:#996b1f;color:#fffbea;font:inherit;font-weight:bold;cursor:pointer}.koh-awase-action.is-quiet{background:#e8dcc0;color:#4c3a1b}.koh-awase-action:hover,.koh-awase-action:focus-visible{filter:brightness(1.08);outline:2px solid #cbad5c;outline-offset:2px}
+      .koh-awase-profile{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px;border:1px solid #c4ad78;background:#f8f0dc}.koh-awase-profile-head{grid-column:1/-1;margin-bottom:1px;color:#5d4a22;font-size:12.5px;font-weight:bold}.koh-awase-profile-item{display:grid;gap:4px;color:#594923;font-size:12px}.koh-awase-profile-track{position:relative;height:10px;overflow:visible;background:#d8ccb0;border-radius:2px}.koh-awase-profile-fill{display:block;height:100%;background:#2f7668;border-radius:2px;transition:width .18s ease}.koh-awase-profile-goal{position:absolute;top:-3px;width:2px;height:16px;margin-left:-1px;background:#a8442e;border-radius:1px}.koh-awase-fitline{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;margin-top:2px;padding-top:6px;border-top:1px dashed #c9b78c;color:#6a5626;font-size:12.5px}.koh-awase-fitline b{font-size:19px;color:#8a5a1e}.koh-awase-fitline.is-good b{color:#25705f}.koh-awase-gauge{display:grid;grid-template-columns:1fr 1fr;gap:8px}.koh-awase-gauge-item{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:7px 11px;border:1px solid #c4ad78;background:#f8f0dc;color:#5d4a22;font-size:12px}.koh-awase-gauge-item b{font-size:17px;color:#3f6b4f}.koh-awase-gauge-item.is-full b,.koh-awase-gauge-item.is-low b{color:#a8442e}.koh-awase-heatstage{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:12px;border:1px solid #c4ad78;background:#f8f0dc}.koh-awase-heattrack{position:relative;grid-column:1/-1;height:26px;border:1px solid #9d8450;border-radius:4px;background:linear-gradient(90deg,#4a5f74,#c9a04a 55%,#a8442e)}.koh-awase-heatzone{position:absolute;top:0;bottom:0;background:rgba(255,255,255,.62);border-left:2px solid #1f5c4f;border-right:2px solid #1f5c4f}.koh-awase-heatneedle{position:absolute;top:-5px;width:4px;height:36px;margin-left:-2px;background:#241a10;border-radius:2px;box-shadow:0 0 0 1px #fff8e6}.koh-awase-heatneedle.is-in{background:#12604f;box-shadow:0 0 0 2px #b8e6d2}.koh-awase-heatread{display:flex;align-items:baseline;gap:7px;color:#5d4a22;font-size:12px}.koh-awase-heatread b{font-size:19px;color:#3f6b4f}.koh-awase-fan{width:100%;min-height:76px;margin-top:2px;border:1px solid #70531f;border-radius:6px;background:linear-gradient(180deg,#c58a2c,#8d5c17);color:#fffbea;font:bold 22px serif;letter-spacing:.2em;cursor:pointer;touch-action:manipulation}.koh-awase-fan:active{filter:brightness(1.2);transform:translateY(1px)}.koh-awase-verdict.is-win{color:#1c6b57}.koh-awase-verdict.is-lose{color:#9d3a2a}.koh-awase-verdict.is-draw{color:#6a5626}.koh-awase-duel{display:grid;grid-template-columns:1fr 1fr;gap:8px}.koh-awase-duel-side{padding:10px 12px;border:1px solid #c4ad78;background:#f8f0dc;line-height:1.5}.koh-awase-duel-side strong{display:block;font-size:15px}.koh-awase-duel-side small{display:block;margin-top:3px;color:#6a5626;font-size:11.5px}.koh-awase-duel-side.is-win{border-color:#2f7668;background:#e2f0e6;box-shadow:inset 0 0 0 2px rgba(47,118,104,.35)}.koh-awase-complete.is-win{color:#1c6b57}.koh-awase-review-item.is-win{border-left:4px solid #2f7668}.koh-awase-title-grid,.koh-awase-heat{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.koh-awase-chip{min-height:43px;border:1px solid #9d8450;border-radius:3px;background:#fff9ec;color:#342b1b;font:inherit;cursor:pointer}.koh-awase-chip:hover,.koh-awase-chip:focus-visible,.koh-awase-chip.is-selected{border-color:#276c61;background:#dceee4;outline:2px solid transparent}.koh-awase-chip.is-selected{box-shadow:inset 0 0 0 2px #276c61}.koh-awase-heat{grid-template-columns:repeat(3,1fr)}.koh-awase-risk{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;border:1px solid #c4ad78;background:#f8f0dc;color:#5d4a22;font-size:14px}.koh-awase-risk meter{width:130px;accent-color:#a06030}.koh-awase-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}.koh-awase-action{min-height:44px;padding:9px 16px;border:1px solid #70531f;border-radius:4px;background:#996b1f;color:#fffbea;font:inherit;font-weight:bold;cursor:pointer}.koh-awase-action.is-quiet{background:#e8dcc0;color:#4c3a1b}.koh-awase-action:hover,.koh-awase-action:focus-visible{filter:brightness(1.08);outline:2px solid #cbad5c;outline-offset:2px}
       .koh-awase-feedback{padding:12px;border:1px solid #b9a16d;background:#fff9eb;line-height:1.55}.koh-awase-feedback[hidden]{display:none}.koh-awase-evaluation{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.koh-awase-eval{padding:9px;border-top:4px solid #9c7b36;background:#fbf5e8;text-align:center}.koh-awase-eval b{display:block;margin-top:3px;font-size:17px}.koh-awase-review{display:grid;gap:9px}.koh-awase-review-item{padding:11px;border-left:4px solid #a37838;background:#fff9ec;line-height:1.5}.koh-awase-complete{margin:0;font-size:21px;line-height:1.45}.koh-awase-facts{margin:0;color:#66552a;font-size:14px}.koh-awase-book{margin-top:4px;padding-top:12px;border-top:1px solid #c6b17d}.koh-awase-book summary{cursor:pointer;font-weight:bold}.koh-awase-book-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:9px}.koh-awase-book-grid div{padding:8px;background:#fbf5e8;border-left:3px solid #8c7651;font-size:13px;line-height:1.45}
       @media(max-width:650px){.koh-awase-modal{padding:8px}.koh-awase-sheet{max-height:calc(100vh - 16px)}.koh-awase-head{padding:12px}.koh-awase-title{font-size:21px}.koh-awase-body{padding:12px;gap:11px}.koh-awase-stage{grid-template-columns:1fr}.koh-awase-hearth,.koh-awase-canvas{min-height:185px;height:185px}.koh-awase-materials{grid-template-columns:1fr}.koh-awase-title-grid{grid-template-columns:repeat(2,1fr)}.koh-awase-actions{display:grid;grid-template-columns:1fr}.koh-awase-action{width:100%}}
-      @media(max-width:390px){.koh-awase-body{padding:10px}.koh-awase-options{grid-template-columns:1fr}.koh-awase-hearth,.koh-awase-canvas{min-height:166px;height:166px}.koh-awase-material{min-height:60px}.koh-awase-title-grid{grid-template-columns:repeat(3,1fr)}.koh-awase-chip{font-size:13px}.koh-awase-note,.koh-awase-request{font-size:13px}}
+      @media(max-width:520px){.koh-awase-duel{grid-template-columns:1fr}.koh-awase-heatstage{grid-template-columns:1fr 1fr}}@media(max-width:390px){.koh-awase-body{padding:10px}.koh-awase-options{grid-template-columns:1fr}.koh-awase-hearth,.koh-awase-canvas{min-height:166px;height:166px}.koh-awase-material{min-height:60px}.koh-awase-title-grid{grid-template-columns:repeat(3,1fr)}.koh-awase-chip{font-size:13px}.koh-awase-note,.koh-awase-request{font-size:13px}}
       @media(prefers-reduced-motion:reduce){.koh-awase-modal,.koh-awase-sheet,*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
     `;document.head.appendChild(style);
   }
@@ -177,37 +222,288 @@
     };animationFrame=window.requestAnimationFrame(paint);
   }
   function appendBook(body){const book=create("details","koh-awase-book");book.append(create("summary",null,"香帳をひらく：六種の薫物"));const grid=create("div","koh-awase-book-grid");TITLES.forEach(title=>{const cell=create("div");cell.append(create("strong",null,`${title.name} / ${title.season}`),create("span",null,title.fact));grid.append(cell);});book.append(grid);body.append(book);}
-  function appendProfile(panel,round){
-    const profile=create("div","koh-awase-profile"),vector=blendVector(round.blend),max=Math.max(1,...vector);
-    ["温","花","青","深"].forEach((label,index)=>{const item=create("div","koh-awase-profile-item");item.append(create("span",null,label));const track=create("span","koh-awase-profile-track"),fill=create("i","koh-awase-profile-fill");fill.style.width=`${Math.round(vector[index]/max*100)}%`;track.append(fill);item.append(track);profile.append(item);});
+  /* 目標の姿と、いまの香を重ねて見せる。
+     目標＝細い枠線、いま＝塗り。ずれている軸が一目でわかるので「どの香材を足すか」を自分で考えられる。 */
+  function appendProfile(panel,round,options){
+    const opt=options||{},profile=create("div","koh-awase-profile");
+    const vector=blendVector(round.blend),target=round.title.vector;
+    const actualScale=Math.max(1,totalTarget(vector)),targetScale=Math.max(1,totalTarget(target));
+    if(opt.heading)profile.append(create("div","koh-awase-profile-head",opt.heading));
+    AXES.forEach((axis,index)=>{
+      const item=create("div","koh-awase-profile-item");
+      item.append(create("span",null,axis.label));
+      const track=create("span","koh-awase-profile-track");
+      const goal=create("b","koh-awase-profile-goal");
+      goal.style.left=`${clamp(Math.round(target[index]/targetScale*100),0,100)}%`;
+      goal.title=`目標の${axis.label}`;
+      const fill=create("i","koh-awase-profile-fill");
+      fill.style.width=`${clamp(Math.round(vector[index]/actualScale*100),0,100)}%`;
+      track.append(fill,goal);
+      item.append(track);
+      profile.append(item);
+    });
+    if(opt.fit){
+      const fit=blendFit(round),line=create("div","koh-awase-fitline");
+      line.classList.toggle("is-good",fit>=78);
+      line.append(create("span",null,"目標との重なり"),create("b",null,`${fit}%`));
+      profile.append(line);
+    }
     panel.append(profile);
+    return profile;
   }
   function renderMotif(){
-    const round=session.rounds[session.index],sheet=renderFrame(),body=create("main","koh-awase-body");appendTop(body,round);const panel=appendHearth(body,round);panel.append(create("h3","koh-awase-section-title","依頼状を読み、香の方針を立てる"),create("p","koh-awase-section-sub","正解札を当てるのではなく、相手・場・季節を手がかりに一つの薫物を仕立てます。"));const focus=create("div","koh-awase-brief-grid");[["季節",round.scenario.season],["相手",round.scenario.patron],["場",round.scenario.occasion]].forEach(([label,value])=>{const item=create("div","koh-awase-brief-item");item.append(create("span",null,label),create("b",null,value));focus.append(item);});panel.append(focus,create("p","koh-awase-note",`聞きどころ：${round.scenario.clue}`));const actions=create("div","koh-awase-actions");const nextButton=create("button","koh-awase-action","調香を始める");nextButton.type="button";nextButton.addEventListener("click",()=>{session.phase="blend";render();});actions.append(nextButton);panel.append(actions);appendBook(body);sheet.append(body);
+    const round=session.rounds[session.index],sheet=renderFrame(),body=create("main","koh-awase-body");
+    appendTop(body,round);
+    const panel=appendHearth(body,round);
+    panel.append(create("h3","koh-awase-section-title","依頼状を読み、香の方針を立てる"),
+      create("p","koh-awase-section-sub",`${round.rival.name}と一炉ずつ出し合い、判者が優劣を決めます。まず、この座が求める香の姿を確かめましょう。`));
+    const focus=create("div","koh-awase-brief-grid");
+    [["季節",round.scenario.season],["相手",round.scenario.patron],["場",round.scenario.occasion]].forEach(([label,value])=>{
+      const item=create("div","koh-awase-brief-item");item.append(create("span",null,label),create("b",null,value));focus.append(item);
+    });
+    panel.append(focus,create("p","koh-awase-note",`聞きどころ：${round.scenario.clue}`));
+    appendProfile(panel,round,{heading:`この座が求める香の姿（${round.title.name}）`});
+    panel.append(create("p","koh-awase-section-sub",`香材は合わせて ${MAX_ME} 目まで。四つの軸を目標の印へ寄せるように配分します。`));
+    const actions=create("div","koh-awase-actions");
+    const nextButton=create("button","koh-awase-action","調香を始める");nextButton.type="button";
+    nextButton.addEventListener("click",()=>{session.phase="blend";round.startedAt=Date.now();render();});
+    actions.append(nextButton);panel.append(actions);appendBook(body);sheet.append(body);
   }
   function renderBlend(){
-    const round=session.rounds[session.index],sheet=renderFrame(),body=create("main","koh-awase-body");appendTop(body,round);const panel=appendHearth(body,round);panel.append(create("h3","koh-awase-section-title","練り合わせる"),create("p","koh-awase-section-sub","香材を 4〜8 目安で選び、香名と火加減を決めます。合計を増やすほど、香は豊かにも乱れやすくもなります。"));const materials=create("div","koh-awase-materials");MATERIALS.forEach(material=>{const row=create("div","koh-awase-material");row.style.setProperty("--mat",material.color);row.append(create("span","koh-awase-material-dot"));const info=create("div");info.append(create("b",null,material.name),create("small",null,`${material.tone}：${material.note}`));const stepper=create("div","koh-awase-stepper");const minus=create("button",null,"−");minus.type="button";minus.title=`${material.name}を減らす`;minus.setAttribute("aria-label",`${material.name}を減らす`);minus.addEventListener("click",()=>setBlend(material.id,(round.blend[material.id]||0)-1));const amount=create("span",null,String(round.blend[material.id]||0));amount.setAttribute("aria-label",`${material.name} ${round.blend[material.id]||0} 目`);const plus=create("button",null,"+");plus.type="button";plus.title=`${material.name}を増やす`;plus.setAttribute("aria-label",`${material.name}を増やす`);plus.addEventListener("click",()=>setBlend(material.id,(round.blend[material.id]||0)+1));stepper.append(minus,amount,plus);row.append(info,stepper);materials.append(row);});panel.append(materials);appendProfile(panel,round);
-    panel.append(create("h4","koh-awase-section-title","香名を掲げる"));const titleGrid=create("div","koh-awase-title-grid");TITLES.forEach(title=>{const button=create("button","koh-awase-chip",title.name);button.type="button";button.classList.toggle("is-selected",round.selectedTitle===title.id);button.setAttribute("aria-pressed",String(round.selectedTitle===title.id));button.addEventListener("click",()=>setTitle(title.id));titleGrid.append(button);});panel.append(titleGrid);
-    panel.append(create("h4","koh-awase-section-title","火加減"));const heat=create("div","koh-awase-heat");[{id:"soft",name:"やわらかく"},{id:"clear",name:"澄ませる"},{id:"deep",name:"深く攻める"}].forEach(item=>{const button=create("button","koh-awase-chip",item.name);button.type="button";button.classList.toggle("is-selected",round.heat===item.id);button.setAttribute("aria-pressed",String(round.heat===item.id));button.addEventListener("click",()=>setHeat(item.id));heat.append(button);});panel.append(heat);const estimate=calculateBlend(Object.assign({},round,{blendResult:null}));const risk=create("div","koh-awase-risk");risk.append(create("span",null,`香材 ${blendTotal(round.blend)} 目 / 予想される乱れ`));const meter=create("meter");meter.min=0;meter.max=72;meter.value=estimate.risk;meter.setAttribute("aria-label",`乱れの危険 ${estimate.risk}`);risk.append(meter,create("strong",null,`${estimate.risk}%`));panel.append(risk);panel.append(create("p","koh-awase-note",round.scenario.risk));const actions=create("div","koh-awase-actions");const back=create("button","koh-awase-action is-quiet","見立てに戻る");back.type="button";back.addEventListener("click",()=>{session.phase="motif";render();});const submit=create("button","koh-awase-action","香炉にくべる");submit.type="button";submit.addEventListener("click",submitBlend);actions.append(back,submit);panel.append(actions);appendBook(body);sheet.append(body);
+    const round=session.rounds[session.index],sheet=renderFrame(),body=create("main","koh-awase-body");
+    appendTop(body,round);
+    const panel=appendHearth(body,round);
+    const used=blendTotal(round.blend),left=MAX_ME-used;
+    panel.append(create("h3","koh-awase-section-title","練り合わせる"));
+    /* 残りの目数と、経過時間。速さは加点になるだけで、切れても失敗にはしない */
+    const gauge=create("div","koh-awase-gauge");
+    const meLeft=create("div","koh-awase-gauge-item"+(left<=0?" is-full":""));
+    meLeft.append(create("span",null,"残りの目"),create("b",null,`${left} / ${MAX_ME}`));
+    const clock=create("div","koh-awase-gauge-item");
+    clock.id="kohAwaseClock";clock.append(create("span",null,"速さの加点"),create("b",null,"—"));
+    gauge.append(meLeft,clock);panel.append(gauge);
+    appendProfile(panel,round,{heading:`目標：${round.title.name}（${round.title.season}）`,fit:true});
+    const materials=create("div","koh-awase-materials");
+    MATERIALS.forEach(material=>{
+      const row=create("div","koh-awase-material");row.style.setProperty("--mat",material.color);
+      row.append(create("span","koh-awase-material-dot"));
+      const info=create("div");
+      const axisLine=material.vector.map((value,index)=>value?`${AXES[index].label}+${value}`:null).filter(Boolean).join(" ");
+      info.append(create("b",null,material.name),create("small",null,`${axisLine}　${material.note}`));
+      const stepper=create("div","koh-awase-stepper");
+      const minus=create("button",null,"−");minus.type="button";minus.setAttribute("aria-label",`${material.name}を減らす`);
+      minus.addEventListener("click",()=>setBlend(material.id,(round.blend[material.id]||0)-1));
+      const amount=create("span",null,String(round.blend[material.id]||0));
+      amount.setAttribute("aria-label",`${material.name} ${round.blend[material.id]||0} 目`);
+      const plus=create("button",null,"+");plus.type="button";plus.setAttribute("aria-label",`${material.name}を増やす`);
+      plus.disabled=left<=0;
+      plus.addEventListener("click",()=>setBlend(material.id,(round.blend[material.id]||0)+1));
+      stepper.append(minus,amount,plus);row.append(info,stepper);materials.append(row);
+    });
+    panel.append(materials);
+    panel.append(create("h4","koh-awase-section-title","香名を掲げる"));
+    const titleGrid=create("div","koh-awase-title-grid");
+    TITLES.forEach(title=>{
+      const button=create("button","koh-awase-chip");button.type="button";
+      button.append(create("b",null,title.name),create("small",null,title.season));
+      button.classList.toggle("is-selected",round.selectedTitle===title.id);
+      button.setAttribute("aria-pressed",String(round.selectedTitle===title.id));
+      button.addEventListener("click",()=>setTitle(title.id));titleGrid.append(button);
+    });
+    panel.append(titleGrid);
+    panel.append(create("h4","koh-awase-section-title","火加減の狙いを定める"));
+    const heat=create("div","koh-awase-heat");
+    ["soft","clear","deep"].forEach(id=>{
+      const button=create("button","koh-awase-chip");button.type="button";
+      const band=HEAT_BANDS[id];
+      button.append(create("b",null,HEAT_LABEL[id]),create("small",null,`炭火 ${band[0]}〜${band[1]}`));
+      button.classList.toggle("is-selected",round.heat===id);
+      button.setAttribute("aria-pressed",String(round.heat===id));
+      button.addEventListener("click",()=>setHeat(id));heat.append(button);
+    });
+    panel.append(heat,create("p","koh-awase-note",round.scenario.risk));
+    const actions=create("div","koh-awase-actions");
+    const back=create("button","koh-awase-action is-quiet","見立てに戻る");back.type="button";
+    back.addEventListener("click",()=>{session.phase="motif";render();});
+    const submit=create("button","koh-awase-action","炭をおこす");submit.type="button";
+    submit.addEventListener("click",submitBlend);
+    actions.append(back,submit);panel.append(actions);appendBook(body);sheet.append(body);
+    tickClock();
   }
+  /* 調香中の「速さの加点」表示。60秒までは満点12点、以後は0へ落ちる（切れても先へは進める）。 */
+  function tickClock(){
+    const node=modal&&modal.querySelector("#kohAwaseClock b");
+    if(!node||!session||session.phase!=="blend")return;
+    const round=session.rounds[session.index];
+    const elapsed=(Date.now()-(round.startedAt||Date.now()))/1000;
+    const bonus=clamp(Math.round((1-elapsed/BLEND_LIMIT)*12),0,12);
+    round.speedBonus=bonus;
+    node.textContent=`+${bonus} 点`;
+    node.parentNode.classList.toggle("is-low",bonus<=3);
+    window.setTimeout(tickClock,500);
+  }
+
+  /* ============================================================
+     炷く（火加減）— 唯一の実技。
+     炭は放っておくと冷める。「扇ぐ」で温度が上がるので、狙った火加減の帯に保ち続ける。
+     帯に居られた時間の割合がそのまま炷き上がりの点になる。
+  ============================================================ */
+  function renderHeat(){
+    const round=session.rounds[session.index],sheet=renderFrame(),body=create("main","koh-awase-body");
+    appendTop(body,round);
+    const panel=appendHearth(body,round);
+    const band=heatBand(round);
+    panel.append(create("h3","koh-awase-section-title",`炷く：${HEAT_LABEL[round.heat]}の帯に火を保つ`),
+      create("p","koh-awase-section-sub","炭は放っておくと冷めます。「扇ぐ」で風を送り、帯の中に居続けた時間がそのまま炷き上がりになります。"));
+    const stage=create("div","koh-awase-heatstage");
+    const track=create("div","koh-awase-heattrack");
+    const zone=create("i","koh-awase-heatzone");
+    zone.style.left=`${band[0]}%`;zone.style.width=`${band[1]-band[0]}%`;
+    const needle=create("b","koh-awase-heatneedle");needle.id="kohAwaseNeedle";
+    track.append(zone,needle);
+    const readout=create("div","koh-awase-heatread");readout.id="kohAwaseHeatRead";
+    readout.append(create("span",null,"炷き上がり"),create("b",null,"0%"));
+    const timeLeft=create("div","koh-awase-heatread");timeLeft.id="kohAwaseHeatTime";
+    timeLeft.append(create("span",null,"残り"),create("b",null,`${HEAT_SECONDS}.0 秒`));
+    stage.append(track,readout,timeLeft);
+    panel.append(stage);
+    const fan=create("button","koh-awase-fan","扇ぐ");fan.type="button";fan.id="kohAwaseFan";
+    fan.setAttribute("aria-label","炭を扇いで火を強める");
+    fan.addEventListener("pointerdown",event=>{event.preventDefault();fanHeat();});
+    panel.append(fan,create("p","koh-awase-note","強すぎれば煙が立ち、弱すぎれば香が起きません。押し続けず、下がってきたら足すのが上手な扇ぎ方です。"));
+    appendBook(body);sheet.append(body);
+    startHeatLoop();
+  }
+  function startHeatLoop(){
+    const round=session.rounds[session.index];
+    if(!round.heatPlay)round.heatPlay={temp:(heatBand(round)[0]+heatBand(round)[1])/2,hold:0,elapsed:0,last:Date.now()};
+    if(heatTimer)window.clearInterval(heatTimer);
+    heatTimer=window.setInterval(()=>{
+      if(!session||session.phase!=="heat"){window.clearInterval(heatTimer);heatTimer=0;return;}
+      const play=round.heatPlay,now=Date.now(),dt=Math.min(.2,(now-play.last)/1000);play.last=now;
+      play.elapsed+=dt;
+      play.temp=clamp(play.temp-16*dt,0,100);              // 自然に冷める
+      const band=heatBand(round);
+      if(play.temp>=band[0]&&play.temp<=band[1])play.hold+=dt;
+      const needle=modal&&modal.querySelector("#kohAwaseNeedle");
+      if(needle){needle.style.left=`${play.temp}%`;needle.classList.toggle("is-in",play.temp>=band[0]&&play.temp<=band[1]);}
+      const read=modal&&modal.querySelector("#kohAwaseHeatRead b");
+      if(read)read.textContent=`${Math.round(play.hold/HEAT_SECONDS*100)}%`;
+      const timeNode=modal&&modal.querySelector("#kohAwaseHeatTime b");
+      if(timeNode)timeNode.textContent=`${Math.max(0,HEAT_SECONDS-play.elapsed).toFixed(1)} 秒`;
+      if(play.elapsed>=HEAT_SECONDS)finishHeat();
+    },50);
+  }
+  function fanHeat(){
+    if(!session||session.phase!=="heat")return false;
+    const round=session.rounds[session.index];
+    if(!round.heatPlay)return false;
+    round.heatPlay.temp=clamp(round.heatPlay.temp+11,0,100);
+    signal("good");
+    return true;
+  }
+  function finishHeat(){
+    if(!session||session.phase!=="heat")return false;
+    if(heatTimer){window.clearInterval(heatTimer);heatTimer=0;}
+    const round=session.rounds[session.index],play=round.heatPlay||{hold:0};
+    round.heatScore=clamp(Math.round(play.hold/HEAT_SECONDS*100),0,100);
+    round.blendResult=calculateBlend(round);
+    session.phase="listen";session.answered=false;session.selectedIndex=null;session.answer=null;
+    render();
+    return true;
+  }
+
   function renderListen(){
-    const round=session.rounds[session.index],result=round.blendResult,sheet=renderFrame(),body=create("main","koh-awase-body");appendTop(body,round);const panel=appendHearth(body,round);panel.append(create("h3","koh-awase-section-title","鑑香：立ちのぼった気配を言葉にする"),create("p","koh-awase-section-sub","完成した香の輪郭に、もっとも響く聞書きを一つ残します。固定の正解ではなく、配合と香名との重なりで評価されます。"));const evaluation=create("div","koh-awase-evaluation");[["配合",result.balance],["香名",result.titleFit],["火加減",result.heatFit]].forEach(item=>{const box=create("div","koh-awase-eval");box.append(create("span",null,item[0]),create("b",null,statLabel(item[1])));evaluation.append(box);});panel.append(evaluation);const options=create("div","koh-awase-options");options.setAttribute("role","group");options.setAttribute("aria-label","残り香の聞書き");round.memoryChoices.forEach((choice,index)=>{const button=create("button","koh-awase-option",`${index+1}. ${choice.text}`);button.type="button";button.dataset.index=String(index);button.addEventListener("click",()=>answer(index));options.append(button);});panel.append(options);const feedback=create("div","koh-awase-feedback");feedback.id="kohAwaseFeedback";feedback.hidden=true;feedback.setAttribute("aria-live","polite");panel.append(feedback);const actions=create("div","koh-awase-actions");const nextButton=create("button","koh-awase-action","講評を見る");nextButton.type="button";nextButton.hidden=true;nextButton.addEventListener("click",finishRound);actions.append(nextButton);panel.append(actions);appendBook(body);sheet.append(body);
+    const round=session.rounds[session.index],result=round.blendResult,sheet=renderFrame(),body=create("main","koh-awase-body");
+    appendTop(body,round);
+    const panel=appendHearth(body,round);
+    panel.append(create("h3","koh-awase-section-title","鑑香：立ちのぼった気配を言葉にする"),
+      create("p","koh-awase-section-sub","出来上がった香に、もっとも響く聞書きを一つ残します。固定の正解ではなく、配合と香名との重なりで評価されます。"));
+    const evaluation=create("div","koh-awase-evaluation");
+    [["配合",result.balance],["香名",result.titleFit],["火加減",result.heatFit],["炷き上がり",round.heatScore]].forEach(item=>{
+      const box=create("div","koh-awase-eval");box.append(create("span",null,item[0]),create("b",null,statLabel(item[1])));evaluation.append(box);
+    });
+    panel.append(evaluation);
+    const options=create("div","koh-awase-options");options.setAttribute("role","group");options.setAttribute("aria-label","残り香の聞書き");
+    round.memoryChoices.forEach((choice,index)=>{
+      const button=create("button","koh-awase-option",`${index+1}. ${choice.text}`);button.type="button";button.dataset.index=String(index);
+      button.addEventListener("click",()=>answer(index));options.append(button);
+    });
+    panel.append(options);
+    const feedback=create("div","koh-awase-feedback");feedback.id="kohAwaseFeedback";feedback.hidden=true;feedback.setAttribute("aria-live","polite");
+    panel.append(feedback);
+    const actions=create("div","koh-awase-actions");
+    const nextButton=create("button","koh-awase-action","判定を聞く");nextButton.type="button";nextButton.hidden=true;
+    nextButton.addEventListener("click",finishRound);actions.append(nextButton);panel.append(actions);
+    appendBook(body);sheet.append(body);
   }
   function renderRoundReview(){
-    const round=session.rounds[session.index],result=round.blendResult,chosenTitle=byId(TITLES,round.selectedTitle)||round.title,earned=result.score+round.memoryBonus,sheet=renderFrame(),body=create("main","koh-awase-body");appendTop(body,round);const panel=appendHearth(body,round);panel.append(create("h3","koh-awase-section-title",`${chosenTitle.name} の講評：${earned} 点`),create("p","koh-awase-note",result.note));const feedback=create("div","koh-awase-feedback");feedback.append(create("strong",null,"学びの余白"),create("div",null,chosenTitle.fact),create("div",null,"このゲームの香材の役割や得点は、歴史上の処方を再現・断定するものではありません。家や人、時代による違いを考える入口です。"));panel.append(feedback);const actions=create("div","koh-awase-actions");const nextButton=create("button","koh-awase-action",session.index===ROUNDS-1?"薫物合の結果へ":"次の依頼へ");nextButton.type="button";nextButton.addEventListener("click",()=>{if(session.index===ROUNDS-1){session.complete=true;renderComplete();}else{session.index+=1;session.phase="motif";session.answered=false;render();}});actions.append(nextButton);panel.append(actions);appendBook(body);sheet.append(body);
+    const round=session.rounds[session.index],result=round.blendResult;
+    const chosenTitle=byId(TITLES,round.selectedTitle)||round.title;
+    const sheet=renderFrame(),body=create("main","koh-awase-body");
+    appendTop(body,round);
+    const panel=appendHearth(body,round);
+    const verdict=round.won===true?"左方の勝":round.won===false?"右方の勝":"持（引き分け）";
+    const head=create("h3","koh-awase-section-title koh-awase-verdict "+(round.won===true?"is-win":round.won===false?"is-lose":"is-draw"),`判者の詞：${verdict}`);
+    panel.append(head);
+    /* 自分と右方を並べて見せる。何で勝った/負けたかが内訳で分かる */
+    const duel=create("div","koh-awase-duel");
+    const mine=create("div","koh-awase-duel-side"+(round.won===true?" is-win":""));
+    mine.append(create("strong",null,`左方（あなた）　${round.earned} 点`),
+      create("small",null,`${chosenTitle.name}／香の出来 ${result.score}・炷き上がり ${round.heatScore}%・聞書き ${round.memoryBonus}・速さ ${round.speedBonus}`));
+    const theirs=create("div","koh-awase-duel-side"+(round.won===false?" is-win":""));
+    theirs.append(create("strong",null,`${round.rival.name}　${round.rival.score} 点`),create("small",null,round.rival.line));
+    duel.append(mine,theirs);panel.append(duel);
+    panel.append(create("p","koh-awase-note",result.note));
+    const feedback=create("div","koh-awase-feedback");
+    feedback.append(create("strong",null,"学びの余白"),create("div",null,chosenTitle.fact),
+      create("div",null,"このゲームの香材の役割や得点は、歴史上の処方を再現・断定するものではありません。家や人、時代による違いを考える入口です。"));
+    panel.append(feedback);
+    const actions=create("div","koh-awase-actions");
+    const nextButton=create("button","koh-awase-action",session.index===ROUNDS-1?"薫物合の結果へ":"次の局へ");nextButton.type="button";
+    nextButton.addEventListener("click",()=>{
+      if(session.index===ROUNDS-1){session.complete=true;renderComplete();}
+      else{session.index+=1;session.phase="motif";session.answered=false;render();}
+    });
+    actions.append(nextButton);panel.append(actions);appendBook(body);sheet.append(body);
   }
   function renderComplete(){
-    const grade=gradeFor(session.score);session.complete=true;stored.bestScore=Math.max(stored.bestScore,session.score);if(stored.bestScore===session.score)stored.bestRank=grade.rank;stored.roundsPlayed+=ROUNDS;writeState();
+    const grade=gradeFor(session.score);session.complete=true;
+    stored.bestScore=Math.max(stored.bestScore,session.score);
+    if(stored.bestScore===session.score)stored.bestRank=grade.rank;
+    stored.roundsPlayed+=ROUNDS;
+    if(session.wins>session.losses)stored.matchWins=(stored.matchWins||0)+1;
+    writeState();
     if(!session.onlineSubmitted&&window.ONLINE_COMPETITION){
       session.onlineSubmitted=true;
-      const duration=Math.max(0,Date.now()-session.startedAt),meta={grade:grade.rank,rounds:ROUNDS};
+      const duration=Math.max(0,Date.now()-session.startedAt),meta={grade:grade.rank,rounds:ROUNDS,wins:session.wins};
       window.ONLINE_COMPETITION.finishChallenge("koh_awase",session.score,duration,meta)
         .then(handled=>{if(!handled)window.ONLINE_COMPETITION.submitScore("koh_awase",session.score,duration,meta);})
         .catch(()=>window.ONLINE_COMPETITION.submitScore("koh_awase",session.score,duration,meta));
     }
-    const sheet=renderFrame(),body=create("main","koh-awase-body");body.append(create("p","koh-awase-complete",`${grade.rank}：${session.score} 点`),create("p","koh-awase-facts",grade.line),create("p","koh-awase-note",`最高記録 ${stored.bestScore} 点 ${stored.bestRank?`/ ${stored.bestRank}`:""}・香帳に残した依頼 ${stored.masteredQuestionIds.length} / ${SCENARIOS.length}`));const review=create("section","koh-awase-review");review.append(create("h3","koh-awase-section-title","三局の聞書き"));session.rounds.forEach(round=>{const score=(round.blendResult?round.blendResult.score:0)+round.memoryBonus,chosenTitle=byId(TITLES,round.selectedTitle)||round.title;const item=create("div","koh-awase-review-item");item.append(create("strong",null,`${chosenTitle.name} / ${score} 点`),create("div",null,`${round.scenario.occasion}。${round.memoryChoice?round.memoryChoice.text:chosenTitle.memory}`));review.append(item);});body.append(review);const actions=create("div","koh-awase-actions");const again=create("button","koh-awase-action","別の依頼で合せる");again.type="button";again.addEventListener("click",()=>start());actions.append(again);body.append(actions);appendBook(body);sheet.append(body);again.focus();
+    const sheet=renderFrame(),body=create("main","koh-awase-body");
+    const matchLine=session.wins>session.losses?`${session.wins}勝${session.losses}敗　左方の勝`:
+      session.wins<session.losses?`${session.wins}勝${session.losses}敗　右方の勝`:`${session.wins}勝${session.losses}敗　持`;
+    body.append(create("p","koh-awase-complete "+(session.wins>session.losses?"is-win":""),matchLine),
+      create("p","koh-awase-facts",`${grade.rank}：${session.score} 点。${grade.line}`),
+      create("p","koh-awase-note",`最高記録 ${stored.bestScore} 点 ${stored.bestRank?`/ ${stored.bestRank}`:""}・香帳に残した依頼 ${stored.masteredQuestionIds.length} / ${SCENARIOS.length}・薫物合の勝ち越し ${stored.matchWins||0} 回`));
+    const review=create("section","koh-awase-review");
+    review.append(create("h3","koh-awase-section-title","三局の聞書き"));
+    session.rounds.forEach(round=>{
+      const chosenTitle=byId(TITLES,round.selectedTitle)||round.title;
+      const mark=round.won===true?"勝":round.won===false?"負":"持";
+      const item=create("div","koh-awase-review-item"+(round.won===true?" is-win":""));
+      item.append(create("strong",null,`${mark}　${chosenTitle.name} / ${round.earned} 点 － ${round.rival.name} ${round.rival.score} 点`),
+        create("div",null,`${round.scenario.occasion}。${round.memoryChoice?round.memoryChoice.text:chosenTitle.memory}`));
+      review.append(item);
+    });
+    body.append(review);
+    const actions=create("div","koh-awase-actions");
+    const again=create("button","koh-awase-action","別の依頼で合せる");again.type="button";
+    again.addEventListener("click",()=>start());
+    actions.append(again);body.append(actions);appendBook(body);sheet.append(body);again.focus();
   }
-  function render(){if(!session)return;if(session.complete){renderComplete();return;}if(session.phase==="motif")renderMotif();else if(session.phase==="blend")renderBlend();else if(session.phase==="listen")renderListen();else if(session.phase==="review")renderRoundReview();}
+  function render(){if(!session)return;if(session.complete){renderComplete();return;}if(session.phase==="motif")renderMotif();else if(session.phase==="blend")renderBlend();else if(session.phase==="heat")renderHeat();else if(session.phase==="listen")renderListen();else if(session.phase==="review")renderRoundReview();}
   function showChoiceState(message,nextLabel){
     if(!modal)return;modal.querySelectorAll(".koh-awase-option").forEach((button,index)=>{button.disabled=true;if(index===session.selectedIndex)button.classList.add("is-selected");});const feedback=modal.querySelector("#kohAwaseFeedback");if(feedback){feedback.hidden=false;feedback.textContent=message;}const nextButton=modal.querySelector(".koh-awase-actions .koh-awase-action");if(nextButton){nextButton.hidden=false;nextButton.textContent=nextLabel;nextButton.focus();}}
   function answer(index){
@@ -217,19 +513,56 @@
     }
     return false;
   }
-  function setBlend(id,amount){if(!session||session.phase!=="blend"||!materialById[id])return false;const round=session.rounds[session.index];round.blend[id]=clamp(Math.round(Number(amount)||0),0,4);render();return true;}
+  function setBlend(id,amount){
+    if(!session||session.phase!=="blend"||!materialById[id])return false;
+    const round=session.rounds[session.index],next=clamp(Math.round(Number(amount)||0),0,4);
+    const others=blendTotal(round.blend)-(round.blend[id]||0);
+    round.blend[id]=Math.min(next,MAX_ME-others);   // 合わせて MAX_ME 目まで
+    render();return true;
+  }
   function setTitle(id){if(!session||session.phase!=="blend"||!byId(TITLES,id))return false;session.rounds[session.index].selectedTitle=id;render();return true;}
   function setHeat(id){if(!session||session.phase!=="blend"||!["soft","clear","deep"].includes(id))return false;session.rounds[session.index].heat=id;render();return true;}
-  function submitBlend(){if(!session||session.phase!=="blend")return false;const round=session.rounds[session.index],total=blendTotal(round.blend),notice=modal&&modal.querySelector(".koh-awase-note");if(total<3){if(notice)notice.textContent="香材がまだ少なすぎます。少なくとも 3 目を練り合わせて、基調をつくりましょう。";signal("bad");return false;}if(!round.selectedTitle){if(notice)notice.textContent="この薫物に掲げる香名を一つ選びましょう。";signal("bad");return false;}if(!round.heat){if(notice)notice.textContent="香炉の火加減を決めてから、香をくべましょう。";signal("bad");return false;}round.blendResult=calculateBlend(round);session.phase="listen";session.answered=false;session.selectedIndex=null;session.answer=null;render();return true;}
-  function finishRound(){if(!session||session.phase!=="listen"||!session.answered)return false;const round=session.rounds[session.index];session.phase="review";session.score+=round.blendResult.score+round.memoryBonus;if(round.blendResult.score+round.memoryBonus>=82)awardMastery(round.scenario);render();return true;}
+  function submitBlend(){
+    if(!session||session.phase!=="blend")return false;
+    const round=session.rounds[session.index],total=blendTotal(round.blend),notice=modal&&modal.querySelector(".koh-awase-note");
+    if(total<3){if(notice)notice.textContent="香材がまだ少なすぎます。少なくとも 3 目を練り合わせて、基調をつくりましょう。";signal("bad");return false;}
+    if(!round.selectedTitle){if(notice)notice.textContent="この薫物に掲げる香名を一つ選びましょう。";signal("bad");return false;}
+    if(!round.heat){if(notice)notice.textContent="香炉の火加減を決めてから、炭をおこしましょう。";signal("bad");return false;}
+    round.heatPlay=null;
+    session.phase="heat";session.answered=false;session.selectedIndex=null;session.answer=null;
+    render();return true;
+  }
+  /* 一局を締める。自分の点＝香の出来＋炷き上がり＋聞書き＋速さ。右方の点と比べて勝敗をつける。 */
+  function finishRound(){
+    if(!session||session.phase!=="listen"||!session.answered)return false;
+    const round=session.rounds[session.index];
+    const earned=Math.round(round.blendResult.score*.62+round.heatScore*.26+round.memoryBonus+round.speedBonus);
+    round.earned=earned;
+    round.rival.score=rivalScore(session.index);
+    round.won=earned>round.rival.score?true:earned<round.rival.score?false:null;
+    if(round.won===true)session.wins+=1;else if(round.won===false)session.losses+=1;else session.draws+=1;
+    session.phase="review";session.score+=earned;
+    if(earned>=82)awardMastery(round.scenario);
+    signal(round.won===true?"good":round.won===false?"bad":"risk");
+    render();return true;
+  }
   function next(){
-    if(!session)return false;if(session.phase==="motif"){session.phase="blend";session.answered=false;render();return true;}if(session.phase==="listen"&&session.answered)return finishRound();if(session.phase==="review"){if(session.index===ROUNDS-1){session.complete=true;renderComplete();}else{session.index+=1;session.phase="motif";session.answered=false;render();}return true;}return false;
+    if(!session)return false;
+    if(session.phase==="motif"){session.phase="blend";session.answered=false;session.rounds[session.index].startedAt=Date.now();render();return true;}
+    if(session.phase==="heat")return finishHeat();
+    if(session.phase==="listen"&&session.answered)return finishRound();
+    if(session.phase==="review"){
+      if(session.index===ROUNDS-1){session.complete=true;renderComplete();}
+      else{session.index+=1;session.phase="motif";session.answered=false;render();}
+      return true;
+    }
+    return false;
   }
   function start(options){
-    stored=readState();const config=options&&typeof options==="object"?options:{};let candidates=SCENARIOS.slice();if(config.scenarioId){const forced=byId(SCENARIOS,config.scenarioId);if(forced)candidates=[forced].concat(candidates.filter(item=>item.id!==forced.id));}const rounds=shuffle(candidates,config.seed).slice(0,ROUNDS).map(makeRound);session={rounds,index:0,score:0,phase:"motif",answered:false,selectedIndex:null,answer:null,complete:false,startedAt:Date.now(),onlineSubmitted:false};stored.plays+=1;writeState();if(modal&&modal.classList.contains("is-open"))render();return getState();
+    stored=readState();const config=options&&typeof options==="object"?options:{};let candidates=SCENARIOS.slice();if(config.scenarioId){const forced=byId(SCENARIOS,config.scenarioId);if(forced)candidates=[forced].concat(candidates.filter(item=>item.id!==forced.id));}const rounds=shuffle(candidates,config.seed).slice(0,ROUNDS).map(makeRound);session={rounds,index:0,score:0,wins:0,losses:0,draws:0,phase:"motif",answered:false,selectedIndex:null,answer:null,complete:false,startedAt:Date.now(),onlineSubmitted:false};stored.plays+=1;writeState();if(modal&&modal.classList.contains("is-open"))render();return getState();
   }
   function open(){priorFocus=document.activeElement;const root=ensureModal();root.classList.add("is-open");if(!session)start();else render();const focusable=root.querySelector("button:not([disabled])");if(focusable)focusable.focus();}
-  function close(){if(animationFrame)window.cancelAnimationFrame(animationFrame);animationFrame=0;if(!modal)return;modal.classList.remove("is-open");if(priorFocus&&typeof priorFocus.focus==="function")try{priorFocus.focus();}catch(error){}}
+  function close(){if(animationFrame)window.cancelAnimationFrame(animationFrame);animationFrame=0;if(heatTimer){window.clearInterval(heatTimer);heatTimer=0;}if(!modal)return;modal.classList.remove("is-open");if(priorFocus&&typeof priorFocus.focus==="function")try{priorFocus.focus();}catch(error){}}
   function handleKeydown(event){
     if(!modal||!modal.classList.contains("is-open"))return;if(event.key==="Escape"){event.preventDefault();close();return;}if(!session)return;
     if(session.phase==="listen"){const number=Number(event.key);if(number>=1&&number<=4&&!session.answered){event.preventDefault();answer(number-1);return;}}
@@ -239,13 +572,13 @@
     if(event.key==="Enter"&&session.answered){const action=modal.querySelector(".koh-awase-actions .koh-awase-action:not([hidden])");if(action&&document.activeElement===modal)action.click();}
   }
   function getState(){
-    const round=session&&!session.complete?session.rounds[session.index]:null;return {bestScore:stored.bestScore,plays:stored.plays,masteredQuestionIds:stored.masteredQuestionIds.slice(),session:session?{index:session.index,score:session.score,answered:session.answered,complete:session.complete,phase:session.phase,questionId:round?round.scenario.id:null,answer:session?session.answer:null,rounds:session.rounds.map(item=>({scenarioId:item.scenario.id,titleId:item.selectedTitle,heat:item.heat,blend:Object.assign({},item.blend),blendResult:item.blendResult&&Object.assign({},item.blendResult)}))}:null};}
+    const round=session&&!session.complete?session.rounds[session.index]:null;return {bestScore:stored.bestScore,plays:stored.plays,masteredQuestionIds:stored.masteredQuestionIds.slice(),session:session?{index:session.index,score:session.score,wins:session.wins,losses:session.losses,draws:session.draws,answered:session.answered,complete:session.complete,phase:session.phase,questionId:round?round.scenario.id:null,answer:session?session.answer:null,rounds:session.rounds.map(item=>({scenarioId:item.scenario.id,titleId:item.selectedTitle,heat:item.heat,blend:Object.assign({},item.blend),heatScore:item.heatScore,earned:item.earned,won:item.won,rivalScore:item.rival&&item.rival.score,blendResult:item.blendResult&&Object.assign({},item.blendResult)}))}:null};}
   function getTestState(){const state=getState();return {ready:true,phase:state.session&&state.session.phase,round:state.session&&state.session.index,answer:state.session&&state.session.answer,modalOpen:!!(modal&&modal.classList.contains("is-open")),scenarioCount:SCENARIOS.length,materialCount:MATERIALS.length,rounds:state.session&&state.session.rounds};}
   function reset(){stored=defaultStore();session=null;try{if(window.localStorage)window.localStorage.removeItem(STORAGE_KEY);}catch(error){}return getState();}
   function injectEntry(){const host=document.querySelector("#taikenSubPanel .t-modes");if(!host||document.getElementById(ENTRY_ID))return !!host;const button=create("button","t-btn koh-awase-entry");button.id=ENTRY_ID;button.type="button";button.title="薫物合を学ぶ";button.setAttribute("aria-label","薫物合 香合わせを開く");const tags=create("span","mode-tags");tags.append(create("span","mode-meta","香文化 / 調香"),create("span","mode-time","🕐 約10分"));const nm=create("span","mode-name");nm.innerHTML='<ruby>香合<rt>こうあ</rt></ruby>わせ';button.append(tags,create("span","cat-icon","香"),nm,create("small",null,"景を読み、香材と火加減を調える三局勝負"));button.addEventListener("click",open);host.append(button);return true;}
   function boot(){stored=readState();injectStyle();if(injectEntry())return;let attempts=0;const timer=window.setInterval(()=>{attempts+=1;if(injectEntry()||attempts>=40)window.clearInterval(timer);},250);}
 
-  window.KOH_AWASE={open,close,start,answer,next,getState,getTestState,setBlend,setTitle,setHeat,submitBlend,finishRound,questionBank:SCENARIOS.slice(),scenarioBank:SCENARIOS.slice(),materials:MATERIALS.slice(),titles:TITLES.slice(),reset};
-  window.KOH_AWASE_STATUS={ready:true,questions:SCENARIOS.length,storageKey:STORAGE_KEY,version:3,gameLoop:"brief-blend-listen-review"};
+  window.KOH_AWASE={open,close,start,answer,next,getState,getTestState,setBlend,setTitle,setHeat,submitBlend,fanHeat,finishHeat,finishRound,questionBank:SCENARIOS.slice(),scenarioBank:SCENARIOS.slice(),materials:MATERIALS.slice(),titles:TITLES.slice(),reset};
+  window.KOH_AWASE_STATUS={ready:true,questions:SCENARIOS.length,storageKey:STORAGE_KEY,version:4,gameLoop:"brief-blend-heat-listen-duel",rounds:ROUNDS,maxMe:MAX_ME,heatSeconds:HEAT_SECONDS};
   if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
 })();

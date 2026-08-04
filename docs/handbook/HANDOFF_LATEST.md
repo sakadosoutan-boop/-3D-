@@ -74,10 +74,23 @@ npm run verify:public
 - **蹴鞠**: 場面図は 720×500 の固定縮尺のまま。画面が縦長のぶんは `KEMARI_CFG.padTop/padBot`
   （`kmrSyncPad`）で空と白砂を広げて埋める——**Canvasの縦横比を画面に合わせて変えてはいけない**
   （以前 `.kmr-board` が `flex:1 1 auto` で伸び、鞠足ごと縦に引き伸ばされていた）。
-  操作は「画面のどこでも蹴る／左右ボタンで移動」。盤面タップでの移動は廃止（`kmrMoveTo` はAPIとして残置）。
+  操作の詳細は下の「蹴鞠・香合わせの遊びの作り」を参照（ジェスチャー方式に置き換え済み）。
 - **空の雲**: `cloudDome` のUVは球のままだと天頂で1点に収束して放射状の筋になる。
   生成後に水平面(XZ)へ投影し直している（`PROJ` が小さいほど雲は細かい）。
   `TEX.clouds` は縦横どちらにも繋がる512×512。ジオメトリを差し替える時はUVの再投影も忘れないこと。
+
+## 蹴鞠・香合わせの遊びの作り（2026-08-04 改修）
+
+- **蹴鞠の操作**: 「技を選ぶ」と「蹴る」は統合済み。`kemariAttemptKick(tech,opt)` に技を渡すとその技で蹴り、
+  `S.selected` にも残る。`opt.at` は**触れた時刻**（指を離した時刻ではない）＝払っても判定精度が落ちない。
+  ジェスチャーは `kmrPointerDown/kmrPointerUp`（横=移動 / タップ=受け / 上=高蹴り / 下=渡し）。
+  `#kmrKick` は廃止。札(`#kmrReceive` ほか)は押すとその技で蹴るボタンで、`.is-wanted` が要求技を示す。
+  **`#kemariHud` の `touch-action:none` を外さないこと**（上下の払いが引っぱり更新に取られる）。
+- **香合わせの局進行**: `motif → blend → heat → listen → review` の5段（`KOH_AWASE_STATUS.gameLoop`）。
+  `submitBlend()` は炷く(heat)へ進むだけで、`finishHeat()` を経ないと聞香に入らない。
+  `fanHeat()` が扇ぐ、`heatTimer` が 50ms 間隔で温度を下げる。**close() でタイマーを止めること**。
+  香材は合計 `MAX_ME`(8) 目まで（`setBlend` が上限で頭打ちにする）。
+  一局ごとに `round.rival.score` と比べて `round.won` が決まり、`session.wins/losses/draws` に積まれる。
 
 ## 衝突しやすい領域
 

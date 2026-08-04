@@ -578,7 +578,8 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
   .kai-title{font-size:13px}
 }
 /* 蹴鞠「八人の鞠庭」— 位置取り・蹴り分け・連携を読むCanvas競技 */
-#kemariHud{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;
+/* 上下の払い(高蹴り/渡し)がブラウザの引っぱり更新に取られないよう、面全体でタッチ操作を占有する */
+#kemariHud{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;touch-action:none;overscroll-behavior:contain;
   padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));
   background:linear-gradient(180deg,#172619 0%,#071009 100%);font-family:var(--sans);overflow:hidden;color:#f5ead2}
 #kemariHud.show{display:flex}
@@ -645,13 +646,19 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
 .kmr-newbest{display:none;margin:0 0 10px;padding:7px 10px;border-radius:6px;border:1px solid rgba(228,199,106,.85);
   background:#4d3b18;color:#ffe9ad;font-weight:900;letter-spacing:.12em;font-size:13px;text-align:center;text-shadow:0 2px 6px #000}
 .kmr-newbest.show{display:block;animation:ikaiNewBestPop .5s cubic-bezier(.2,.9,.25,1)}
-.kmr-controls{width:min(780px,96vw);height:54px;display:grid;grid-template-columns:62px 1fr 1fr 1fr 1.15fr 62px;gap:6px;margin-top:6px;flex:none}
-.kmr-control{min-width:0;border:1px solid rgba(218,181,95,.55);border-radius:7px;background:#251b11;color:#f3e8ce;font:700 11px var(--sans);cursor:pointer;touch-action:manipulation}
-.kmr-control strong{display:block;font-size:16px;line-height:1.1;color:#ffd17b}
+/* 操作札。押した札の技でそのまま蹴るので「蹴る」ボタンは無い。
+   移動(←→)は端に小さく置き、真ん中の三枚=三つの蹴り方を大きく取る。 */
+.kmr-controls{width:min(780px,96vw);height:62px;display:grid;grid-template-columns:52px 1fr 1fr 1fr 52px;gap:6px;margin-top:6px;flex:none}
+.kmr-control{min-width:0;padding:4px 2px;border:1px solid rgba(218,181,95,.55);border-radius:8px;background:#251b11;color:#f3e8ce;font:700 11px var(--sans);cursor:pointer;touch-action:manipulation}
+.kmr-control strong{display:block;font-size:19px;line-height:1.1;color:#ffd17b}
+.kmr-control i{display:block;margin-top:1px;font-style:normal;font-weight:400;font-size:9px;letter-spacing:.02em;color:#c0b18f}
+.kmr-control.kmr-move{font-size:9.5px}.kmr-control.kmr-move strong{font-size:16px}
 .kmr-control[data-action="receive"]{background:#254938;border-color:#70a98d}.kmr-control[data-action="high"]{background:#643426;border-color:#c47c58}
 .kmr-control[data-action="pass"]{background:#4a3b20;border-color:#b79a4d}
-.kmr-control[data-action="kick"]{background:#8a3b28;border-color:#e09a62;color:#fff2d6}
-.kmr-control[data-action="kick"].is-ready{background:#a94b2f;border-color:#ffd17b;box-shadow:0 0 0 2px rgba(255,209,123,.24),0 0 16px rgba(219,116,58,.38)}
+/* いま求められている技の札。どれを押せばよいかを札側で示し、盤面との視線の往復をなくす */
+.kmr-control.is-wanted{box-shadow:inset 0 0 0 2px rgba(255,224,150,.75);filter:brightness(1.16)}
+.kmr-control.is-wanted i{color:#ffe9b4}
+.kmr-control.is-ready{border-color:#ffd17b;box-shadow:inset 0 0 0 2px #ffd17b,0 0 16px rgba(219,116,58,.42);filter:brightness(1.3)}
 .kmr-control.selected{box-shadow:inset 0 0 0 2px #f4d078;filter:brightness(1.18)}
 .kmr-control:active,.kmr-control.pressed{filter:brightness(1.28);transform:translateY(1px)}
 .kmr-control:focus-visible{outline:2px solid #ffd57a;outline-offset:2px}
@@ -664,14 +671,14 @@ body.taiji-lowhp #tjHpFill{box-shadow:0 0 12px rgba(255,40,40,.9)}
   .kmr-readout{left:5px;right:5px;bottom:5px;grid-template-columns:52px 62px minmax(96px,1fr);gap:4px;padding:5px}
   .kmr-readout .kmr-sync{grid-column:1/-1;display:grid;grid-template-columns:30px 34px 1fr;align-items:center;gap:4px}.kmr-sync>div{margin-top:0}
   .kmr-cue b{font-size:13px}.kmr-timing>span{font-size:8px}.kmr-versus{font-size:9px}
-  .kmr-controls{height:58px;grid-template-columns:42px 1fr 1fr 1fr 1.1fr 42px;gap:3px}
-  .kmr-control{font-size:9px}.kmr-control strong{font-size:15px}.kmr-help-grid{grid-template-columns:1fr}
+  .kmr-controls{height:64px;grid-template-columns:40px 1fr 1fr 1fr 40px;gap:4px}
+  .kmr-control{font-size:10px}.kmr-control strong{font-size:18px}.kmr-control i{font-size:8.5px}.kmr-help-grid{grid-template-columns:1fr}
   .kmr-card{padding:14px}.kmr-card-title{font-size:18px}.kmr-judge{font-size:14px}
 }
 @media (orientation:landscape) and (max-height:560px){
   #kemariHud{padding:4px 8px}.kmr-top{min-height:34px}.kmr-mission{min-height:24px;margin:2px 0}
-  .kmr-board{--kmr-reserve:124px}.kmr-controls{position:absolute;right:9px;bottom:7px;width:52%;height:44px;z-index:4;opacity:.94}
-  .kmr-control{font-size:8px}.kmr-control strong{font-size:13px}
+  .kmr-board{--kmr-reserve:124px}.kmr-controls{position:absolute;right:9px;bottom:7px;width:56%;height:48px;z-index:4;opacity:.94}
+  .kmr-control{font-size:8px}.kmr-control strong{font-size:14px}.kmr-control i{display:none}
 }
 /* 季節選択(退治) */
 #taijiSeason{display:none;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}

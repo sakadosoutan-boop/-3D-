@@ -167,21 +167,35 @@ async function launchBrowser() {
           roundsOk = window.KOH_AWASE.setTitle(scenario.title) === true && roundsOk;
           roundsOk = window.KOH_AWASE.setHeat(scenario.heat) === true && roundsOk;
           roundsOk = window.KOH_AWASE.submitBlend() === true && roundsOk;
+          // 炷く(火加減の実技): 帯へ火を入れてから切り上げる。扇いだぶん炷き上がりが伸びること自体も確かめる
+          roundsOk = window.KOH_AWASE.getState().session.phase === 'heat' && roundsOk;
+          roundsOk = !!document.getElementById('kohAwaseFan') && roundsOk;
+          roundsOk = window.KOH_AWASE.fanHeat() === true && roundsOk;
+          await new Promise((resolve) => setTimeout(resolve, 260));
+          roundsOk = window.KOH_AWASE.finishHeat() === true && roundsOk;
+          const heated = window.KOH_AWASE.getState().session.rounds[state.session.index];
+          roundsOk = Number.isFinite(heated.heatScore) && heated.heatScore > 0 && roundsOk;
           roundsOk = document.querySelectorAll('#kohAwaseModal .koh-awase-option').length === 4 && roundsOk;
           const listenScore = window.KOH_AWASE.answer(0);
           roundsOk = Number.isFinite(listenScore) && listenScore >= 4 && roundsOk;
           roundsOk = window.KOH_AWASE.finishRound() === true && roundsOk;
+          // 一局ごとに右方と勝敗がつく
+          const judged = window.KOH_AWASE.getState().session.rounds[state.session.index];
+          roundsOk = Number.isFinite(judged.earned) && Number.isFinite(judged.rivalScore) && roundsOk;
+          roundsOk = (judged.won === true || judged.won === false || judged.won === null) && roundsOk;
           roundsOk = window.KOH_AWASE.next() === true && roundsOk;
         }
         const completed = window.KOH_AWASE.getState();
         kohAwaseOk = window.KOH_AWASE_STATUS?.ready === true
           && window.KOH_AWASE_STATUS?.questions >= 12
-          && window.KOH_AWASE_STATUS?.gameLoop === 'brief-blend-listen-review'
+          && window.KOH_AWASE_STATUS?.gameLoop === 'brief-blend-heat-listen-duel'
+          && window.KOH_AWASE_STATUS?.maxMe === 8
           && !!document.getElementById('kohAwaseEntry')
           && briefOk
           && roundsOk
           && completed.session.complete === true
           && completed.session.score > 0
+          && (completed.session.wins + completed.session.losses + completed.session.draws) === 3
           && document.querySelectorAll('#kohAwaseModal .koh-awase-review-item').length === 3;
         window.KOH_AWASE.close();
       } catch (_) {}
@@ -223,6 +237,8 @@ async function launchBrowser() {
           && completed?.victory === true
           && window.KEMARI_GAME?.version === 3
           && !!document.getElementById('kmrReadout')
+          && !document.getElementById('kmrKick')
+          && !!document.getElementById('kmrReceive')
           && document.getElementById('kemariGameOver')?.classList.contains('show')
           && (document.getElementById('kmrGoTitle')?.textContent || '').includes('四懸');
         if (typeof enterMode === 'function') enterMode('walk');
