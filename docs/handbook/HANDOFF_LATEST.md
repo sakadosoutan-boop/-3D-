@@ -50,6 +50,36 @@ npm run verify:public
 
 実装済み一覧とブランチ棚卸しは [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) が正本。
 
+## 高校生目線のUX改修（claude/game-improvement-points-rj8pmd）
+
+初見の高校生が最初の5分で詰まる箇所を、実機計測（Playwright）で確認してから直した回。
+
+- **音**: 表紙のメインテーマ（`悠久の伎楽.mp3`）は残す。既定で切にしたのは
+  「散策中の楽の音レイヤー」だけ（設定「音」の〈楽の音〉／`?music=on` で入）。
+  環境音・章BGM・ボスBGMは変更なし。
+- **音源**: `scripts/optimize-sounds.sh` で再エンコード（38MB→18MB）。音源を差し替えたら必ず再実行する。
+  楽曲扱い（96kbpsステレオ）にするファイルは同スクリプトの `is_music` に追記する。
+- **先読み**: `SFX.load` を3段に分割。全部を一度に `preload="auto"` しない。
+  **表紙のテーマは tier0（即時）に置くこと**——ここを待ち行列に入れると主題が遅れて追いかけてくる。
+  新しい音を足したら `pools`/`beds`/`loops`/`se` のどれかに載せるだけでよい（tier分けは自動）。
+- **表紙**: モードは5カテゴリ。物語は `#taikenSubPanel .t-modes` の先頭へ `stGate()` が差し込み、
+  オンライン対戦は `#titleSubEntries` へ `injectEntry()` が差し込む。**どちらもDOM構造に依存する**ので、
+  表紙のHTMLを触る時は `story/story_runtime.js` と `src/app/online-competition.js` の挿入先を必ず確認する。
+- **ふりがな**: モード名に `<ruby>` が入るため、`textContent` でのラベル一致判定は壊れる
+  （smokeの `storyButtonOk` は `rt` を除去してから比較している）。同様の判定を足す時は注意。
+- **クイズ**: `src/app/quiz-pool.js` に全70項目＋難易度別プール。`QUIZ_POOL` は必ずファイル先頭に置く
+  （verify-html が最初の `const QUIZ_POOL` を全体プールとして拾い、下位プールの部分集合検査に使う）。
+  プールに足してよいのは「春夏秋冬×朝昼夕夜の全16通りで邸内に存在する」項目だけ。
+- **図鑑**: 分類別進捗・未解放札の個別ヒント・「未解放を隠す」。ヒント文は `ITEMS[id].d` の書き出しを流用。
+- **省電力**: `src/app/low-power.js` に実測fpsによる自動提案（生涯1回）。
+- **蹴鞠**: 場面図は 720×500 の固定縮尺のまま。画面が縦長のぶんは `KEMARI_CFG.padTop/padBot`
+  （`kmrSyncPad`）で空と白砂を広げて埋める——**Canvasの縦横比を画面に合わせて変えてはいけない**
+  （以前 `.kmr-board` が `flex:1 1 auto` で伸び、鞠足ごと縦に引き伸ばされていた）。
+  操作は「画面のどこでも蹴る／左右ボタンで移動」。盤面タップでの移動は廃止（`kmrMoveTo` はAPIとして残置）。
+- **空の雲**: `cloudDome` のUVは球のままだと天頂で1点に収束して放射状の筋になる。
+  生成後に水平面(XZ)へ投影し直している（`PROJ` が小さいほど雲は細かい）。
+  `TEX.clouds` は縦横どちらにも繋がる512×512。ジオメトリを差し替える時はUVの再投影も忘れないこと。
+
 ## 衝突しやすい領域
 
 - `寝殿造り3D探訪_統合版.html` は単一HTMLで巨大。行番号ではなく検索アンカーで位置を探す。

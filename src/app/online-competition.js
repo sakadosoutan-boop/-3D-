@@ -755,11 +755,18 @@
     state.open = false; modal?.classList.remove("is-open"); if (stop) stopPolling();
   }
   function injectEntry() {
-    const host = document.querySelector("#mainModes .t-modes");
+    // 表紙の「遊び方を選ぶ」は5枚に絞ったので、対戦は図鑑などと同じ常設入口の段へ置く。
+    // 旧構成(#titleSubEntriesが無いHTML)へ戻された場合はメインのモード欄へフォールバックする。
+    const host = document.getElementById("titleSubEntries") || document.querySelector("#mainModes .t-modes");
     if (!host || document.getElementById(ENTRY_ID)) return !!host;
-    const entry = create("button", "t-btn t-cat-btn online-entry");
+    const sub = host.id === "titleSubEntries";
+    const entry = create("button", sub ? "t-btn t-codex-btn online-entry" : "t-btn t-cat-btn online-entry");
     entry.id = ENTRY_ID; entry.type = "button";
-    entry.append(create("span", "mode-meta", "共闘 / 対戦 / 共有順位"), create("div", "cat-icon", "競"), create("span", "mode-name", "オンライン御前試合"), create("small", null, "共同討伐・五番勝負・クイズ・蹴鞠・香合わせ"));
+    if (sub) {
+      entry.append(create("span", "oc-entry-mark", "競"), document.createTextNode("オンライン御前試合"), create("small", null, "六文字の部屋番号で二人共闘・対戦。共同討伐・五番勝負・クイズ・蹴鞠・香合わせ"));
+    } else {
+      entry.append(create("span", "mode-meta", "共闘 / 対戦 / 共有順位"), create("div", "cat-icon", "競"), create("span", "mode-name", "オンライン御前試合"), create("small", null, "共同討伐・五番勝負・クイズ・蹴鞠・香合わせ"));
+    }
     entry.addEventListener("click", open); host.append(entry); return true;
   }
   function boot() {

@@ -75,10 +75,61 @@ function apply(on,{persist=true,silent=false}={}){
   return active;
 }
 function update(){
+  autoSample();
   if(!active)return;
   if(APP_FPSCAP!==30)setFps(30);
   if(renderer&&renderer.shadowMap&&renderer.shadowMap.enabled)renderer.shadowMap.enabled=false;
   particleGroups().forEach(group=>{if(group.visible)group.visible=false;});
+}
+
+/* ============================================================
+   端末性能の自動判定。
+   これまで省電力モードは設定を自分で開いて入にするしかなく、古い端末では
+   カクついたまま遊び続けて離脱する導線になっていた。
+   実際に描けているフレーム間隔だけを見て(端末名やUAは見ない)、遅ければ一度だけ提案する。
+   ・計測は最初のモードに入ってから。開幕2秒は読み込み直後で重いので捨てる
+   ・6秒ぶんの中央値が既定値(22fps)を下回った時だけ声をかける
+   ・提案は生涯1回。断られたら二度と出さない(勝手に画質は下げない)
+   ?eco=ask で判定済みフラグを無視して再テスト、?eco=off で自動判定そのものを止める
+============================================================ */
+const AUTO_KEY="lowPowerAsked";
+const AUTO_MIN_FPS=22, AUTO_WARMUP_MS=2000, AUTO_WINDOW_MS=6000;
+const autoParam=/[?&]eco=(ask|off)/.exec(location.search);
+let autoState=null;
+function autoAsked(){return prefGet(AUTO_KEY,"0")==="1";}
+function autoSample(){
+  if(autoParam&&autoParam[1]==="off")return;
+  if(active||autoAsked()&&!(autoParam&&autoParam[1]==="ask"))return;
+  if(typeof APP==="undefined"||!APP.mode||APP.mode==="title")return;
+  const now=(typeof performance!=="undefined"?performance.now():Date.now());
+  if(!autoState){autoState={start:now,last:now,samples:[]};return;}
+  const dt=now-autoState.last;autoState.last=now;
+  if(now-autoState.start<AUTO_WARMUP_MS)return;
+  if(dt>0&&dt<2000)autoState.samples.push(dt);
+  if(now-autoState.start<AUTO_WARMUP_MS+AUTO_WINDOW_MS)return;
+  const s=autoState.samples.slice().sort((a,b)=>a-b);
+  autoState={start:now,last:now,samples:[]};       // 次の判定用に窓をリセット
+  if(s.length<30)return;
+  const median=s[s.length>>1];
+  const fps=1000/median;
+  // 上限30fpsに絞っている端末で「30fps出ている」のは正常。閾値を下回った時だけ提案する
+  if(fps>=AUTO_MIN_FPS)return;
+  prefSet(AUTO_KEY,"1");
+  autoState=null;
+  showPrompt(Math.round(fps));
+}
+function showPrompt(fps){
+  const box=document.getElementById("lowPowerPrompt");
+  if(!box||box.classList.contains("show"))return;
+  box.innerHTML='<b>動きが重いようです（約'+fps+'fps）</b>'+
+    '<small>影と発光、季節の花びらを止めて30fpsに固定すると、なめらかに動きます。設定からいつでも戻せます。</small>'+
+    '<span class="lpp-actions"><button class="tb-btn" id="lppNo" type="button">このまま遊ぶ</button>'+
+    '<button class="tb-btn lpp-yes" id="lppYes" type="button">軽くする</button></span>';
+  requestAnimationFrame(()=>box.classList.add("show"));
+  const close=()=>{box.classList.remove("show");setTimeout(()=>{if(!box.classList.contains("show"))box.innerHTML="";},320);};
+  document.getElementById("lppNo").onclick=()=>{close();if(typeof beep==="function")beep(420,.04);};
+  document.getElementById("lppYes").onclick=()=>{close();apply(true);};
+  setTimeout(close,16000);
 }
 function installUi(){
   if(document.getElementById("gfxEco_on"))return;
@@ -97,6 +148,7 @@ function installUi(){
 installUi();
 const saved=prefGet(STORAGE_KEY,"0")==="1";
 if(saved)apply(true,{persist:false,silent:true});else syncUi();
-window.LOW_POWER={version:1,get active(){return active;},enable:()=>apply(true),disable:()=>apply(false),set:apply,update,getStatus:()=>({active,fps:APP_FPSCAP,quality:QUALITY.forced,bloom:BLOOM.mode,shadows:renderer.shadowMap.enabled})};
-window.LOW_POWER_STATUS={ready:true,storageKey:STORAGE_KEY,stops:["shadows","bloom","seasonal-particles"],fps:30};
+window.LOW_POWER={version:1,get active(){return active;},enable:()=>apply(true),disable:()=>apply(false),set:apply,update,getStatus:()=>({active,fps:APP_FPSCAP,quality:QUALITY.forced,bloom:BLOOM.mode,shadows:renderer.shadowMap.enabled}),
+  autoAsk:fps=>showPrompt(fps==null?18:fps)};
+window.LOW_POWER_STATUS={ready:true,storageKey:STORAGE_KEY,stops:["shadows","bloom","seasonal-particles"],fps:30,autoDetect:{minFps:AUTO_MIN_FPS,warmupMs:AUTO_WARMUP_MS,windowMs:AUTO_WINDOW_MS,askedKey:AUTO_KEY}};
 })();

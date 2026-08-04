@@ -146,6 +146,19 @@ if (!itemExpr) {
       if (Array.isArray(quiz)) {
         const missingQuiz = quiz.filter((id) => typeof id === 'string' && !(id in items));
         if (missingQuiz.length) fail(`QUIZ_POOL ids not defined in ITEMS: ${missingQuiz.join(', ')}`);
+        const duplicateQuiz = countDuplicates(quiz);
+        if (duplicateQuiz.length) fail(`duplicate QUIZ_POOL ids: ${duplicateQuiz.join(', ')}`);
+        // 難易度別プール(初級/中級)が全体プールの部分集合か。ここから外れた id は
+        // 「季節・時刻によっては邸内に居ない品」を出題してしまう危険がある。
+        const full = new Set(quiz);
+        for (const name of ['const QUIZ_POOL_EASY', 'const QUIZ_POOL_NORMAL']) {
+          const expr = extractBalanced(mainScript, name, '[', ']');
+          if (!expr) continue;
+          const sub = evaluateExpression(expr, name);
+          if (!Array.isArray(sub)) continue;
+          const stray = sub.filter((id) => typeof id === 'string' && !full.has(id));
+          if (stray.length) fail(`${name.replace('const ', '')} ids not in QUIZ_POOL: ${stray.join(', ')}`);
+        }
       }
     }
   }

@@ -2169,14 +2169,16 @@ function storyUpdate(dt){
 window.startStory=startStory;
 window.storyUpdate=storyUpdate;
 window.stExitToTitle=stExitToTitle;
-/* ---- タイトル入口: メインメニュー最上段に常設(デモ版表記) ---- */
+/* ---- タイトル入口: 「物語・体験モード」の先頭に常設(デモ版表記)。
+   以前はメインメニュー最上段に独立カードとして置いていたが、表紙の入口が7枚に増えて
+   最初の一歩が選びにくくなったため、物語系をまとめた体験サブパネルの筆頭へ移した。 ---- */
 function stGate(){
-  const host=document.querySelector("#mainModes .t-modes");if(!host)return;
+  const host=document.querySelector("#taikenSubPanel .t-modes")||document.querySelector("#mainModes .t-modes");if(!host)return;
   const b=document.createElement("button");
-  b.className="t-btn t-cat-btn gold recommended";b.id="btnStory";
+  b.className="t-btn gold recommended";b.id="btnStory";
   b.style.borderColor="rgba(185,165,230,.9)";
-  b.innerHTML='<span class="mode-meta">物語 / 新機能</span>'
-    +'<div class="cat-icon"><svg class="wic ci"><use href="#ic-scroll"/></svg></div><span class="mode-name">御簾の向こうへ（デモ版）</span>'
+  b.innerHTML='<span class="mode-tags"><span class="mode-meta">物語 / 新機能</span><span class="mode-time">🕐 15分〜</span></span>'
+    +'<span class="mode-name">📖 <ruby>御簾<rt>みす</rt></ruby>の向こうへ（デモ版）</span>'
     +'<small>平安と現代をつなぐ、隠された物語を読む</small>';
   b.onclick=()=>{beep(700,.08);if(typeof initAudio==="function")initAudio();enterMode("story");};
   host.insertBefore(b,host.firstChild);

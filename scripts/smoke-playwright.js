@@ -569,7 +569,16 @@ async function launchBrowser() {
       ];
       storyKeys.forEach((key) => localStorage.removeItem(key));
       localStorage.setItem('shinden3d-story-textspeed-v1', '0');
-      const storyButtonOk = !!document.getElementById('btnStory') && document.getElementById('btnStory').textContent.includes('御簾の向こうへ');
+      // タイトルのモード名にはふりがな(<ruby>)が入るため、textContent には rt("みす")が挟まる。
+      // ルビを除いた本文で判定する。
+      const storyButtonEl = document.getElementById('btnStory');
+      const storyButtonLabel = (() => {
+        if (!storyButtonEl) return '';
+        const clone = storyButtonEl.cloneNode(true);
+        clone.querySelectorAll('rt').forEach((rt) => rt.remove());
+        return clone.textContent || '';
+      })();
+      const storyButtonOk = !!storyButtonEl && storyButtonLabel.includes('御簾の向こうへ');
       if (typeof enterMode === 'function') enterMode('story');
       await new Promise((resolve) => setTimeout(resolve, 700));
       const storyModeOk = APP.mode === 'story' && document.body.classList.contains('story-mode');
