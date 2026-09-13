@@ -813,7 +813,8 @@ body.font-xl #info,body.font-xl #codex,body.font-xl #toast{zoom:1.38}
   margin:0;padding:12px 14px;border:1px solid rgba(225,183,79,.72);border-radius:7px;
   background:linear-gradient(180deg,rgba(25,17,12,.92),rgba(12,8,6,.9));box-shadow:0 10px 28px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08);backdrop-filter:blur(5px)}
 /* 画面四隅を落とすビネット(常時・控えめ)。危険時は赤いビネットを重ねる(垣間見) */
-#vignette{position:fixed;inset:0;z-index:36;pointer-events:none;box-shadow:inset 0 0 150px 24px rgba(0,0,0,.34)}
+#vignette{position:fixed;inset:0;z-index:36;pointer-events:none;box-shadow:inset 0 0 150px 24px rgba(0,0,0,.18)}
+body.taiji-mode #vignette{box-shadow:inset 0 0 150px 24px rgba(0,0,0,.34)}
 #dangerVignette{position:fixed;inset:0;z-index:37;pointer-events:none;box-shadow:inset 0 0 130px 55px rgba(200,25,18,.9);opacity:0;transition:opacity .12s linear}
 /* 雨・曇り空オーバーレイ */
 #cloudOverlay{position:fixed;inset:0;z-index:5;pointer-events:none;background:linear-gradient(180deg,rgba(72,82,98,.72) 0%,rgba(55,68,84,.48) 45%,rgba(38,52,68,.18) 100%);opacity:0}

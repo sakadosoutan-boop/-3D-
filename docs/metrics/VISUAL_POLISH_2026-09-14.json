@@ -1,0 +1,486 @@
+{
+  "baseline": "e2a6695",
+  "method": "separate Chrome process per run; 3 runs per version; one game context at a time",
+  "profiles": [
+    {
+      "name": "high",
+      "scenes": [
+        {
+          "name": "front",
+          "before": {
+            "medianMs": 15.3,
+            "runsMs": [
+              15.5,
+              15.1,
+              15.3
+            ],
+            "calls": 1955,
+            "triangles": 251572,
+            "geometries": 761,
+            "textures": 136,
+            "geometryBytes": 5366826,
+            "instanceBytes": 449664,
+            "texturePixels": 15618080,
+            "programs": 21,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "shadows": true,
+            "touch": false,
+            "normal": true,
+            "ao": true
+          },
+          "after": {
+            "medianMs": 14.8,
+            "runsMs": [
+              14.4,
+              14.8,
+              15.4
+            ],
+            "calls": 1926,
+            "triangles": 251580,
+            "geometries": 733,
+            "textures": 136,
+            "geometryBytes": 5329816,
+            "instanceBytes": 463744,
+            "texturePixels": 15618080,
+            "programs": 22,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "shadows": true,
+            "touch": false,
+            "normal": true,
+            "ao": true
+          }
+        },
+        {
+          "name": "overview",
+          "before": {
+            "medianMs": 27,
+            "runsMs": [
+              26.9,
+              27.2,
+              27
+            ],
+            "calls": 3948,
+            "triangles": 293384,
+            "geometries": 2445,
+            "textures": 158,
+            "geometryBytes": 5366826,
+            "instanceBytes": 449664,
+            "texturePixels": 15618080,
+            "programs": 24,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "shadows": true,
+            "touch": false,
+            "normal": true,
+            "ao": true
+          },
+          "after": {
+            "medianMs": 26.3,
+            "runsMs": [
+              26.3,
+              26.3,
+              26.4
+            ],
+            "calls": 3837,
+            "triangles": 292813,
+            "geometries": 2334,
+            "textures": 158,
+            "geometryBytes": 5329816,
+            "instanceBytes": 463744,
+            "texturePixels": 15618080,
+            "programs": 25,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "shadows": true,
+            "touch": false,
+            "normal": true,
+            "ao": true
+          }
+        },
+        {
+          "name": "interior",
+          "before": {
+            "medianMs": 14.1,
+            "runsMs": [
+              14.1,
+              14.3,
+              14.1
+            ],
+            "calls": 1435,
+            "triangles": 160785,
+            "geometries": 2445,
+            "textures": 158,
+            "geometryBytes": 5366826,
+            "instanceBytes": 449664,
+            "texturePixels": 15618080,
+            "programs": 24,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "shadows": true,
+            "touch": false,
+            "normal": true,
+            "ao": true
+          },
+          "after": {
+            "medianMs": 14,
+            "runsMs": [
+              13.8,
+              15.7,
+              14
+            ],
+            "calls": 1424,
+            "triangles": 160914,
+            "geometries": 2334,
+            "textures": 158,
+            "geometryBytes": 5329816,
+            "instanceBytes": 463744,
+            "texturePixels": 15618080,
+            "programs": 25,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "shadows": true,
+            "touch": false,
+            "normal": true,
+            "ao": true
+          }
+        },
+        {
+          "name": "garden",
+          "before": {
+            "medianMs": 8.7,
+            "runsMs": [
+              8.5,
+              8.7,
+              8.7
+            ],
+            "calls": 586,
+            "triangles": 117733,
+            "geometries": 2631,
+            "textures": 160,
+            "geometryBytes": 5366826,
+            "instanceBytes": 449664,
+            "texturePixels": 15618080,
+            "programs": 24,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "shadows": true,
+            "touch": false,
+            "normal": true,
+            "ao": true
+          },
+          "after": {
+            "medianMs": 8.4,
+            "runsMs": [
+              8.2,
+              9.3,
+              8.4
+            ],
+            "calls": 586,
+            "triangles": 117733,
+            "geometries": 2520,
+            "textures": 160,
+            "geometryBytes": 5329816,
+            "instanceBytes": 463744,
+            "texturePixels": 15618080,
+            "programs": 25,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "shadows": true,
+            "touch": false,
+            "normal": true,
+            "ao": true
+          }
+        },
+        {
+          "name": "night",
+          "before": {
+            "medianMs": 14.1,
+            "runsMs": [
+              14.2,
+              14.1,
+              14.1
+            ],
+            "calls": 1738,
+            "triangles": 220971,
+            "geometries": 2933,
+            "textures": 161,
+            "geometryBytes": 5366826,
+            "instanceBytes": 449664,
+            "texturePixels": 15618080,
+            "programs": 39,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "shadows": true,
+            "touch": false,
+            "normal": true,
+            "ao": true
+          },
+          "after": {
+            "medianMs": 14.3,
+            "runsMs": [
+              14.3,
+              14.8,
+              14.2
+            ],
+            "calls": 1738,
+            "triangles": 220971,
+            "geometries": 2822,
+            "textures": 161,
+            "geometryBytes": 5329816,
+            "instanceBytes": 463744,
+            "texturePixels": 15618080,
+            "programs": 40,
+            "pixelRatio": 1,
+            "shadowSize": 1024,
+            "shadows": true,
+            "touch": false,
+            "normal": true,
+            "ao": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "eco",
+      "scenes": [
+        {
+          "name": "front",
+          "before": {
+            "medianMs": 15.3,
+            "runsMs": [
+              14.7,
+              15.6,
+              15.3
+            ],
+            "calls": 1923,
+            "triangles": 249638,
+            "geometries": 759,
+            "textures": 123,
+            "geometryBytes": 5366826,
+            "instanceBytes": 449664,
+            "texturePixels": 14929952,
+            "programs": 16,
+            "pixelRatio": 0.56,
+            "shadowSize": 512,
+            "shadows": false,
+            "touch": true,
+            "normal": false,
+            "ao": false
+          },
+          "after": {
+            "medianMs": 15.3,
+            "runsMs": [
+              15.3,
+              15.6,
+              14.9
+            ],
+            "calls": 1895,
+            "triangles": 249648,
+            "geometries": 731,
+            "textures": 123,
+            "geometryBytes": 5329816,
+            "instanceBytes": 463744,
+            "texturePixels": 14929952,
+            "programs": 17,
+            "pixelRatio": 0.56,
+            "shadowSize": 512,
+            "shadows": false,
+            "touch": true,
+            "normal": false,
+            "ao": false
+          }
+        },
+        {
+          "name": "overview",
+          "before": {
+            "medianMs": 26.6,
+            "runsMs": [
+              26.6,
+              26,
+              26.8
+            ],
+            "calls": 3867,
+            "triangles": 291352,
+            "geometries": 2443,
+            "textures": 144,
+            "geometryBytes": 5366826,
+            "instanceBytes": 449664,
+            "texturePixels": 14929952,
+            "programs": 17,
+            "pixelRatio": 0.56,
+            "shadowSize": 512,
+            "shadows": false,
+            "touch": true,
+            "normal": false,
+            "ao": false
+          },
+          "after": {
+            "medianMs": 25.6,
+            "runsMs": [
+              25.5,
+              25.6,
+              25.9
+            ],
+            "calls": 3756,
+            "triangles": 290781,
+            "geometries": 2332,
+            "textures": 144,
+            "geometryBytes": 5329816,
+            "instanceBytes": 463744,
+            "texturePixels": 14929952,
+            "programs": 18,
+            "pixelRatio": 0.56,
+            "shadowSize": 512,
+            "shadows": false,
+            "touch": true,
+            "normal": false,
+            "ao": false
+          }
+        },
+        {
+          "name": "interior",
+          "before": {
+            "medianMs": 13.5,
+            "runsMs": [
+              13.5,
+              13.4,
+              13.5
+            ],
+            "calls": 1423,
+            "triangles": 158891,
+            "geometries": 2443,
+            "textures": 144,
+            "geometryBytes": 5366826,
+            "instanceBytes": 449664,
+            "texturePixels": 14929952,
+            "programs": 17,
+            "pixelRatio": 0.56,
+            "shadowSize": 512,
+            "shadows": false,
+            "touch": true,
+            "normal": false,
+            "ao": false
+          },
+          "after": {
+            "medianMs": 13.4,
+            "runsMs": [
+              13,
+              13.4,
+              13.5
+            ],
+            "calls": 1412,
+            "triangles": 159020,
+            "geometries": 2332,
+            "textures": 144,
+            "geometryBytes": 5329816,
+            "instanceBytes": 463744,
+            "texturePixels": 14929952,
+            "programs": 18,
+            "pixelRatio": 0.56,
+            "shadowSize": 512,
+            "shadows": false,
+            "touch": true,
+            "normal": false,
+            "ao": false
+          }
+        },
+        {
+          "name": "garden",
+          "before": {
+            "medianMs": 8.6,
+            "runsMs": [
+              8.6,
+              9.2,
+              8.4
+            ],
+            "calls": 585,
+            "triangles": 115861,
+            "geometries": 2627,
+            "textures": 146,
+            "geometryBytes": 5366826,
+            "instanceBytes": 449664,
+            "texturePixels": 14929952,
+            "programs": 18,
+            "pixelRatio": 0.56,
+            "shadowSize": 512,
+            "shadows": false,
+            "touch": true,
+            "normal": false,
+            "ao": false
+          },
+          "after": {
+            "medianMs": 8.7,
+            "runsMs": [
+              8.6,
+              8.7,
+              8.7
+            ],
+            "calls": 585,
+            "triangles": 115861,
+            "geometries": 2516,
+            "textures": 146,
+            "geometryBytes": 5329816,
+            "instanceBytes": 463744,
+            "texturePixels": 14929952,
+            "programs": 19,
+            "pixelRatio": 0.56,
+            "shadowSize": 512,
+            "shadows": false,
+            "touch": true,
+            "normal": false,
+            "ao": false
+          }
+        },
+        {
+          "name": "night",
+          "before": {
+            "medianMs": 14.4,
+            "runsMs": [
+              14.4,
+              14.4,
+              20.2
+            ],
+            "calls": 1737,
+            "triangles": 219099,
+            "geometries": 2905,
+            "textures": 146,
+            "geometryBytes": 5366826,
+            "instanceBytes": 449664,
+            "texturePixels": 14929952,
+            "programs": 29,
+            "pixelRatio": 0.56,
+            "shadowSize": 512,
+            "shadows": false,
+            "touch": true,
+            "normal": false,
+            "ao": false
+          },
+          "after": {
+            "medianMs": 14.2,
+            "runsMs": [
+              14.2,
+              14.2,
+              14.1
+            ],
+            "calls": 1737,
+            "triangles": 219099,
+            "geometries": 2794,
+            "textures": 146,
+            "geometryBytes": 5329816,
+            "instanceBytes": 463744,
+            "texturePixels": 14929952,
+            "programs": 30,
+            "pixelRatio": 0.56,
+            "shadowSize": 512,
+            "shadows": false,
+            "touch": true,
+            "normal": false,
+            "ao": false
+          }
+        }
+      ]
+    }
+  ]
+}

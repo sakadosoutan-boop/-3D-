@@ -40,13 +40,14 @@ const scenes=[
    const start=Date.now();await page.goto(`http://127.0.0.1:${server.address().port}/?adaptive=0&eco=off`,{waitUntil:'load'});
    await page.waitForFunction(()=>typeof GFX!=='undefined'&&typeof LOW_POWER!=='undefined');
    await page.evaluate(eco=>{GFX.setPreset('high');GFX.setBloom('off');if(eco)LOW_POWER.set(true,{persist:false,silent:true});enterMode('walk');APP_FPSCAP=0;AUTO_TIME._paused=true;APP.labelMode=0;},eco);
-   if(!eco)await page.waitForFunction(()=>!IS_TOUCH&&!!MAT.sand.aoMap,{timeout:25000});
+   if(!eco)await page.waitForFunction(()=>!IS_TOUCH&&!!MAT.tatami.aoMap&&!!MAT.tatami.normalMap,{timeout:25000});
    await page.waitForTimeout(1000);
    const profile={name:eco?'eco':'high',readyMs:Date.now()-start,scenes:[]};
    for(const shot of scenes){
     await page.evaluate(s=>{
      hideModeBrief(true);document.getElementById('toast').style.display='none';document.getElementById('loadingScreen').classList.remove('show');
      APP.view=s.view;applySeason(s.season);setTime(s.time);AUTO_TIME._paused=true;APP_FPSCAP=0;
+     document.getElementById('toast').style.display='none';
      const tg=TIMES[s.time];['sky','fog','sunC','ambC'].forEach(k=>cur[k].set(tg[k]));
      ['sunI','hemi','amb','moon','exp','int'].forEach(k=>cur[k]=tg[k]);cur.sunP.set(...tg.sunP);
      cur.cloudC.set(CLOUD_PAL[s.time].c);cur.cloudOp=CLOUD_PAL[s.time].op;
@@ -63,17 +64,17 @@ const scenes=[
      const gl=renderer.getContext(),samples=[];
      for(let i=0;i<32;i++){const t=performance.now();renderer.render(scene,camera);gl.finish();if(i>=8)samples.push(performance.now()-t);}
      samples.sort((a,b)=>a-b);
-     const geos=new Set(),buffers=new Set(),textures=new Set();
-     scene.traverse(o=>{if(o.geometry)geos.add(o.geometry);for(const m of [].concat(o.material||[])){Object.values(m).forEach(v=>{if(v&&v.isTexture)textures.add(v);});}});
+     const geos=new Set(),buffers=new Set(),textures=new Set(),instances=new Set();
+     scene.traverse(o=>{if(o.geometry)geos.add(o.geometry);if(o.instanceMatrix)instances.add(o.instanceMatrix.array);if(o.instanceColor)instances.add(o.instanceColor.array);for(const m of [].concat(o.material||[])){Object.values(m).forEach(v=>{if(v&&v.isTexture)textures.add(v);});}});
      geos.forEach(g=>{Object.values(g.attributes).forEach(a=>buffers.add(a.array));if(g.index)buffers.add(g.index.array);});
      const pixels=[...textures].reduce((sum,t)=>sum+(t.image&&t.image.width&&t.image.height?t.image.width*t.image.height:0),0);
      return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,
-      geometryBytes:[...buffers].reduce((sum,b)=>sum+b.byteLength,0),texturePixels:pixels,programs:renderer.info.programs.length,
-      pixelRatio:renderer.getPixelRatio(),shadowSize:sun.shadow.mapSize.width,touch:IS_TOUCH,normal:!!MAT.sand.normalMap,ao:!!MAT.sand.aoMap,
+      geometryBytes:[...buffers].reduce((sum,b)=>sum+b.byteLength,0),instanceBytes:[...instances].reduce((sum,b)=>sum+b.byteLength,0),texturePixels:pixels,programs:renderer.info.programs.length,
+      pixelRatio:renderer.getPixelRatio(),shadows:renderer.shadowMap.enabled,shadowSize:sun.shadow.mapSize.width,touch:IS_TOUCH,normal:!!MAT.sand.normalMap,ao:!!MAT.sand.aoMap,
       medianMs:+samples[Math.floor(samples.length*.5)].toFixed(2),p95Ms:+samples[Math.floor(samples.length*.95)].toFixed(2),fog:scene.fog.density};
     });
     profile.scenes.push({name:shot.name,...measurement});
-    if(!eco)await page.screenshot({path:path.join(out,`visual-${label}-${shot.name}.png`)});
+    if(!eco&&!process.env.VISUAL_NO_SCREENSHOTS)await page.screenshot({path:path.join(out,`visual-${label}-${shot.name}.png`)});
     console.log(`${label}/${profile.name}/${shot.name}: ${measurement.calls} calls; ${measurement.medianMs} ms`);
    }
    report.profiles.push(profile);await context.close();
