@@ -2,6 +2,7 @@ const { chromium } = require('playwright');
 const { pathToFileURL } = require('url');
 const path = require('path');
 const fs = require('fs');
+const assert = require('node:assert/strict');
 (async () => {
   const out = path.resolve('artifacts/review'); fs.mkdirSync(out, {recursive:true});
   const browser = await chromium.launch({headless:true, channel:'chrome'});
@@ -33,5 +34,9 @@ const fs = require('fs');
   await page.waitForFunction(()=>typeof APP!=='undefined'&&!document.getElementById('loadingScreen').classList.contains('show'));
   await page.waitForTimeout(600);
   await page.screenshot({path:path.join(out,'landscape-title.png')});
+  const modesFit=await page.locator('#mainModes .t-cat-btn').evaluateAll(buttons=>buttons.every(button=>{
+    const r=button.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight&&r.left>=0&&r.right<=innerWidth;
+  }));
+  assert.ok(modesFit,'all five mode buttons must fit on the landscape title');
   console.log(JSON.stringify({errors,out})); await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});

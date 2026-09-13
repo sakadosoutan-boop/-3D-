@@ -3049,4 +3049,18 @@ body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf
   #title #titleSubEntries .t-btn{padding:10px;min-height:82px}
   #title .t-btn{padding:12px}
   #title .mode-name{letter-spacing:.07em}
+  body:has(#info.open) #toast{bottom:calc(38vh + 28px)}
+}
+@media(orientation:landscape) and (max-height:520px){
+  #title .t-frame{padding:10px 16px}
+  #title .t-kamon,#title .t-eyebrow,#title .t-divider,#title .t-sub{display:none}
+  #title h1.t-main{font-size:26px;line-height:1.15}
+  #title .title-badge{margin-top:4px;padding:2px 9px;font-size:10px}
+  #title .title-badge b{font-size:11px}
+  #title .t-mode-kicker{margin-top:6px}
+  #title #mainModes .t-modes{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-top:8px}
+  #title #mainModes #btnWalk{grid-column:auto;min-height:100px}
+  #title #mainModes #btnWalk .cat-icon{position:static;font-size:21px;opacity:1}
+  #title #mainModes #btnWalk small{padding-right:0}
+  #title #mainModes .t-btn{padding:9px}
 }
