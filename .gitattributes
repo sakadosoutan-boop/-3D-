@@ -1,0 +1,5 @@
+# Generated embeds and their sources must use identical line endings on Windows and CI.
+*.html text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.json text eol=lf

@@ -3988,7 +3988,7 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
 .era-close:active,#eraPanel .era-opt:active{transform:translateY(1px)}
 
 /* 小さすぎるタップ領域を、見た目(サイズ・見え方)を変えずに疑似要素で44px相当まで拡張 */
-#infoClose{position:relative}
+#infoClose{position:absolute}
 #infoClose::before{content:"";position:absolute;inset:-6px}
 #questMin{position:relative}
 #questMin::before{content:"";position:absolute;inset:-9px}
@@ -4074,6 +4074,35 @@ body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf
 @keyframes coopPulse{50%{opacity:.32}}
 @media(max-width:600px){.online-coop-settings{grid-template-columns:1fr}.coop-hunt-hud{top:calc(env(safe-area-inset-top) + 112px);right:8px;width:min(218px,calc(100vw - 16px));padding:8px 9px}.coop-hunt-head{grid-template-columns:30px 1fr 10px}.coop-hunt-sigil{width:28px;height:28px;font-size:15px}.coop-hunt-head b{font-size:12px}.coop-hunt-hud p{font-size:9px}}
 @media(prefers-reduced-motion:reduce){#coopHuntConnection.is-reconnecting{animation:none}.coop-hunt-track i{transition:none}}
+
+/* 読みやすさと入口の整理。五つの遊びを同じ階層で比較できるようにする。 */
+#title .t-frame{width:min(94vw,1060px);max-width:1060px;background:rgba(22,15,9,.88)}
+#title #mainModes .t-modes{grid-template-columns:repeat(5,minmax(0,1fr))}
+#title .t-btn small{font-family:var(--sans);font-size:11px;line-height:1.65;color:#d2c2a0;letter-spacing:.03em}
+#title .mode-time{color:#d2bd8d;font-size:10px}
+#title .mode-meta{font-size:10px}
+#title .t-sub,#title .t-note,#title .t-changelog summary{color:#c3b292}
+#title .t-note{font-size:11px}
+#title .cl-list{color:#c3b292;font-size:11px}
+#title .t-back-btn{color:#d8c6a1;min-height:44px;font-size:12px}
+#title .t-btn:focus-visible,.tb-btn:focus-visible{outline:2px solid #ffe2a0;outline-offset:3px}
+#titleAudioHint{bottom:4px;font-size:10px;padding:3px 10px}
+.info-body{touch-action:pan-y}
+.info-name{padding-right:30px}
+.info-desc{font-size:14px;line-height:1.95}
+@media(max-width:900px){
+  #title #mainModes .t-modes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #title #mainModes #btnWalk{grid-column:1/-1;min-height:100px;border-color:#dfbc64;
+    background:linear-gradient(115deg,#604918,#33240e)}
+  #title #mainModes #btnWalk .cat-icon{position:absolute;right:24px;font-size:34px;opacity:.75}
+  #title #mainModes #btnWalk small{padding-right:38px}
+}
+@media(max-width:520px){
+  #title #titleSubEntries{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #title #titleSubEntries .t-btn{padding:10px;min-height:82px}
+  #title .t-btn{padding:12px}
+  #title .mode-name{letter-spacing:.07em}
+}
 /* APP_CSS_EMBED_END */
 </style>
 </head>
@@ -4571,7 +4600,7 @@ body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf
 </div>
 
 <div id="info">
-  <button id="infoClose">✕</button>
+  <button id="infoClose" aria-label="解説を閉じる" title="解説を閉じる（Esc）">✕</button>
   <div class="info-body">
     <span class="info-cat" id="infoCat">調度品</span>
     <div class="info-name" id="infoName"></div>
@@ -12062,7 +12091,11 @@ const START_POS=new THREE.Vector3(0,1.62,26);
 const player={pos:START_POS.clone(),yaw:0,pitch:-.02};
 const orbit={yaw:.7,pitch:.95,r:120};
 const keys={};
-addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;});
+addEventListener("keydown",e=>{
+  if(e.target&&e.target.closest&&e.target.closest('input,textarea,select,[contenteditable="true"]'))return;
+  if(gameplayInputBlocked())return;
+  keys[e.key.toLowerCase()]=true;
+});
 addEventListener("keyup",e=>{keys[e.key.toLowerCase()]=false;});
 /* 波10: 散策(通常移動)の移動キー再割り当て。退治モード(TAIJI_CONTROLS_PC)は対象外＝一切触れない。
    KEYBIND={action:[key,...]} をlocalStorage(shinden3d-keybind-v1)へ保存。keyActive(action)で判定する。 */
@@ -12118,6 +12151,7 @@ function gamepadPoll(){
     else if(pauseAllowed())openPauseMenu();
   }
   GAMEPAD.prevA=a;GAMEPAD.prevB=b;
+  if(gameplayInputBlocked())GAMEPAD.mx=GAMEPAD.mz=GAMEPAD.lookX=GAMEPAD.lookY=0;
 }
 function joyHandle(e){
   const r=joyEl.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;
@@ -12150,7 +12184,25 @@ function resetInputState(){
   if(APP.taiji){APP.taiji.guarding=false;APP.taiji.rollDir=null;APP.taiji.rollUntil=0;APP.taiji.dodgeUntil=0;if(typeof updateTaijiControlsUi==="function")updateTaijiControlsUi();}
 }
 addEventListener("blur",resetInputState);
-document.addEventListener("visibilitychange",()=>{if(document.hidden)resetInputState();});
+document.addEventListener("visibilitychange",()=>{resetInputState();clock.oldTime=performance.now();});
+joyEl.addEventListener("touchcancel",resetInputState,{passive:true});
+cv.addEventListener("touchcancel",resetInputState,{passive:true});
+function gameplayInputBlocked(){
+  return document.hidden||APP.mode==="title"||APP.codexOpen||PAUSE_STATE.active||pauseBlockingOverlayOpen()||
+    ["result","quizDiffPicker"].some(id=>{const el=$(id);return el&&(el.style.display==="flex"||el.style.display==="block");});
+}
+/* Mode-owned delays advance with the active game clock, never through a pause or into another session. */
+const modeTasks=[];
+function scheduleModeTask(kind,owner,callback,delay){modeTasks.push({kind,owner,mode:APP.mode,callback,left:delay});}
+function updateModeTasks(ms){
+  const ready=[];
+  for(let i=modeTasks.length-1;i>=0;i--){
+    const task=modeTasks[i];
+    if(APP.mode!==task.mode||APP[task.kind]!==task.owner){modeTasks.splice(i,1);continue;}
+    task.left-=ms;if(task.left<=0){modeTasks.splice(i,1);ready.unshift(task);}
+  }
+  ready.forEach(task=>{if(APP.mode===task.mode&&APP[task.kind]===task.owner)task.callback();});
+}
 /* 俯瞰モード長押しワープ */
 function ovWarp(sx,sy){
   const rect=cv.getBoundingClientRect();
@@ -12166,6 +12218,7 @@ function ovWarp(sx,sy){
   beep(880,.12);
 }
 function pdown(x,y,id){
+  if(gameplayInputBlocked())return;
   drag.on=true;drag.id=id;drag.x=x;drag.y=y;drag.sx=x;drag.sy=y;drag.moved=0;drag.t0=performance.now();drag._lpFired=false;
   if(APP.view==="ov"){drag._lp=setTimeout(()=>{if(drag.moved<14){ovWarp(x,y);drag._lpFired=true;}},650);}
   else if(APP.mode==="taiji"&&APP.taiji){drag._lp=setTimeout(()=>{if(drag.moved<14){taijiToggleLockAtScreen(x,y);drag._lpFired=true;}},560);}
@@ -12748,6 +12801,7 @@ function playInstrument(id){
   else if(id==="ryuteki"){beep(784,.55,"sine",.055);setTimeout(()=>beep(988,.42,"sine",.045),170);}
 }
 function pick(sx,sy){
+  if(gameplayInputBlocked())return;
   if(APP.mode==="title")return;
   if(APP.tour&&APP.tour.active)return; // 波6-C4: 自動ガイドツアー中は画面タップでの調べる/ギミック操作を止める(専用オーバーレイのボタンで操作)
   if(APP.mode==="taiji"){taijiShoot(sx,sy);return;}
@@ -13871,6 +13925,7 @@ function renderDiscoverPage(){
   });
 }
 function openCodex(tab){
+  resetInputState();
   APP.codexOpen=true;closeInfo();
   $("codexDetail").className="";$("codexDetail").textContent="";
   $("codex").classList.add("open");
@@ -13897,7 +13952,7 @@ function showInfo(id){
   const panel=$("info");panel.classList.remove("open","revisit");void panel.offsetWidth;
   if(isRevisit)panel.classList.add("revisit");
   requestAnimationFrame(()=>panel.classList.add("open"));
-  clearTimeout(_infoTimer);_infoTimer=setTimeout(()=>panel.classList.remove("open"),isRevisit?2200:8000);
+  clearTimeout(_infoTimer); // 解説は読み終えるまで保持。閉じるボタン／Esc／次の対象で切り替える。
 }
 /* 「もっと詳しく」: 古文の窓を展開し、読み切れるよう自動クローズを止める */
 $("infoMore").onclick=()=>{
@@ -13952,6 +14007,7 @@ function pauseShiftTimestamps(heldMs){
 }
 function openPauseMenu(){
   if(!pauseAllowed())return;
+  resetInputState();
   PAUSE_STATE.active=true;PAUSE_STATE.heldStart=performance.now();
   document.body.classList.add("paused");
   $("pauseMenu").classList.add("open");
@@ -13970,6 +14026,8 @@ function closePauseMenu(){
   $("pauseMenu").classList.remove("open");
   const pb=$("tbPause");if(pb)pb.classList.remove("on");
   pauseShiftTimestamps(heldMs);
+  clock.oldTime=performance.now(); // 停止時間をelapsedTimeや再開直後のdtに加算しない。
+  resetInputState();
   if(typeof __lastFrameMs!=="undefined")__lastFrameMs=performance.now();
   if(typeof SFX!=="undefined"){
     if(SFX.ctx&&SFX.ctx.state==="suspended")SFX.ctx.resume().catch(()=>{});
@@ -15048,6 +15106,12 @@ if($("modeBriefClose"))$("modeBriefClose").onclick=()=>hideModeBrief();
 if($("modeBriefOk"))$("modeBriefOk").onclick=()=>hideModeBrief();
 if($("modeBriefMute"))$("modeBriefMute").onclick=()=>{if(modeBriefCurrent){try{localStorage.setItem("shinden3d-modebrief-v1-"+modeBriefCurrent,"hide");}catch(e){}}hideModeBrief();beep(420,.04);};
 function enterMode(m){
+  modeTasks.length=0;
+  APP.quiz=null;APP.quest=null;
+  beacon.visible=false;questHideModeProps();
+  clearTimeout(dialogueTimer);$("dialogueBubble").classList.remove("show");
+  $("quizFeedback").style.display="none";
+  $("quizDiffPicker").style.display="none";
   showLoading(); // 起動直後の重い描画(影マップ・テクスチャ転送)をロード画面で覆う
   // 恋文ショート3D導入(approach)から離れる場合は、行き先がrenaiShort/renaiSimのいずれでも
   // 導入用の女房figure/マーカーを必ずsceneから除去する(再初期化でAPP.renai参照を失いリークするのを防ぐ)
@@ -15408,6 +15472,7 @@ const TAIJI_CONTROLS_PC={
   pause:new Set(["escape","esc","p"])
 };
 function taijiPcKey(e){
+  if(gameplayInputBlocked()||(e.target&&e.target.closest&&e.target.closest('input,textarea,select,[contenteditable="true"]')))return false;
   const key=(e.key||"").toLowerCase();
   const code=(e.code||"").toLowerCase();
   if(APP.taiji&&APP.taiji.kotodama&&APP.taiji.kotodama.active){
@@ -15701,7 +15766,7 @@ function quizUpdate(){
   }
 }
 function quizAnswer(id){
-  const q=APP.quiz;if(!q||q.lock)return;
+  const q=APP.quiz;if(!q||q.lock||APP.mode!=="quiz"||PAUSE_STATE.active)return;
   const want=q.qs[q.i];
   if(id===want){
     q.lock=true;const pen=q.missCur||0;
@@ -15712,7 +15777,7 @@ function quizAnswer(id){
       if(q.combo>=2)q.score+=Math.min(6,(q.combo-1)*2); // 波B: コンボボーナス(+2〜+6)
     }else if(q.combo>=3&&q.combo%3===0){
       q.comboBonus=(q.comboBonus||0)+2; // 波B: TAは3連ごとに2秒短縮
-      setTimeout(()=>toast("⏱ コンボ短縮 -2秒！",1400),350);
+      scheduleModeTask("quiz",q,()=>toast("⏱ コンボ短縮 -2秒！",1400),350);
     }
     if(q.combo>=2){juiceComboTone(q.combo);juiceComboPop(juiceComboLabel(q.combo));}
     seOK();stamp(true);
@@ -15721,7 +15786,7 @@ function quizAnswer(id){
        波AB: 物語内クイズ(小萩の試験)では、説明パネルの代わりに小萩自身が語る吹き出しで提示する */
     if(!q.ta&&ITEMS[want]&&ITEMS[want].t){
       const tv=ITEMS[want].t.replace(/<[^>]+>/g,"");
-      setTimeout(()=>{
+      scheduleModeTask("quiz",q,()=>{
         if(APP.storyQuiz){
           const dn=document.getElementById("dialogueName"),dt=document.getElementById("dialogueText"),bb=document.getElementById("dialogueBubble");
           if(dn&&dt&&bb){
@@ -15732,7 +15797,7 @@ function quizAnswer(id){
         }else toast("📜 "+tv,5200);
       },1000);
     }
-    setTimeout(()=>{q.i++;q.lock=false;
+    scheduleModeTask("quiz",q,()=>{q.i++;q.lock=false;
       if(q.i>=q.qs.length)endQuiz();else showQuizQ();},950);
   }else{
     q.miss++;q.missCur=(q.missCur||0)+1;q.combo=0;seNG();stamp(false); // 波B: コンボ途切れ
@@ -15987,7 +16052,7 @@ function startQuest(){
   questAdvance(0);
 }
 function questAdvance(i){
-  const q=APP.quest;q.i=i;
+  const q=APP.quest;if(!q||APP.mode!=="quest")return;q.i=i;q.pending=false;
   if(i>=q.steps.length){questFinish();return;}
   const s=q.steps[i];
   $("questTitle").textContent=s.ph;
@@ -16002,21 +16067,21 @@ function questAdvance(i){
     if(s.act==="court"){
       questCourt.visible=true;player.pos.set(54,groundH(54,-20)+1.62,-20);player.yaw=0;player.pitch=-.04;
       $("questText").textContent=s.txt+" 公卿の前で文書を受け取り、簡略な政務に列席している。";
-      setTimeout(()=>{if(APP.mode==="quest"&&APP.quest&&APP.quest.i===i){questCourt.visible=false;player.pos.set(45,groundH(45,17)+1.62,17);player.yaw=Math.PI/2;questAdvance(i+1);}},4300);
-    }else setTimeout(()=>{if(APP.mode==="quest"&&APP.quest&&APP.quest.i===i)questAdvance(i+1);},2400);
+      scheduleModeTask("quest",q,()=>{if(q.i===i){questCourt.visible=false;player.pos.set(45,groundH(45,17)+1.62,17);player.yaw=Math.PI/2;questAdvance(i+1);}},4300);
+    }else scheduleModeTask("quest",q,()=>{if(q.i===i)questAdvance(i+1);},2400);
   }else if(s.type==="dialogue"){
     beacon.visible=false;let line=0;
-    const speak=()=>{if(APP.mode!=="quest"||!APP.quest||APP.quest.i!==i)return;
+    const speak=()=>{if(APP.mode!=="quest"||APP.quest!==q||q.i!==i)return;
       if(line>=s.lines.length){$("dialogueBubble").classList.remove("show");questAdvance(i+1);return;}
       const l=s.lines[line++],bubble=$("dialogueBubble");
       $("dialogueName").textContent=l[0];$("dialogueText").textContent=`「${l[1]}」`;
-      bubble.classList.add("show");seOK();setTimeout(speak,4500);
+      bubble.classList.add("show");seOK();scheduleModeTask("quest",q,speak,4500);
     };speak();
   }
 }
 function questNotifyClick(id){
-  const q=APP.quest;if(!q)return;const s=q.steps[q.i];
-  if(s.type==="click"&&id===s.target){seOK();setTimeout(()=>questAdvance(q.i+1),400);}
+  const q=APP.quest;if(!q||q.pending||APP.mode!=="quest")return;const i=q.i,s=q.steps[i];
+  if(s&&s.type==="click"&&id===s.target){q.pending=true;seOK();scheduleModeTask("quest",q,()=>{if(q.i===i)questAdvance(i+1);},400);}
 }
 function questUpdate(){
   const q=APP.quest;if(!q)return;const s=q.steps[q.i];if(!s)return;
@@ -26226,10 +26291,8 @@ function animate(now){
   requestAnimationFrame(animate);
   if(now===undefined)now=performance.now();
   /* [発熱対策] タブが非表示の間は描画を完全に休止。ブラウザのrAF間引きに上乗せしGPUを遊ばせる(復帰時のdt跳ねは時計を空回しして防ぐ) */
-  if(document.hidden){__lastFrameMs=now;clock.getDelta();return;}
-  /* 波AF: 一時停止中は3D/時計/音を完全に凍結する。clock.getDelta()をあえて呼ばない(=経過時間を進めない)。
-     再開時はclose側でclockに触らず、次フレームのgetDelta()が実時間の差分をまとめて1回で吸収する
-     (dtは直後でMath.min(...,.08)へ必ずクランプされるため、体感上のワープは起きない)。 */
+  if(document.hidden){__lastFrameMs=now;clock.oldTime=performance.now();return;}
+  /* 一時停止中は更新しない。再開時にoldTimeだけを合わせ、停止時間をelapsedTimeへ加算しない。 */
   if(typeof PAUSE_STATE!=="undefined"&&PAUSE_STATE.active){__lastFrameMs=now;return;}
   /* フレームレート上限: スマホの発熱・電池消費を抑える(既定モバイル30fps)。
      描画前に間引くことで GPU/CPU 稼働を大幅削減。clock は描画フレームのみ進む。 */
@@ -26245,6 +26308,7 @@ function animate(now){
   }
   if(glLost){clock.getDelta();return;}  /* 喪失中は描画を休止。復帰後にdtが飛ばないよう時計だけ進める */
   const __rawDt=clock.getDelta();
+  updateModeTasks(__rawDt*1000);
   let dt=Math.min(__rawDt,.08);
   /* 波AF: ヒットストップ。強い一撃の瞬間だけdtを大きく減速し、打撃の重みを出す(完全停止ではなく縮小)。
      REDUCED_MOTIONでは無効。時計(clock)自体はそのまま進めるため一時停止とは競合しない。 */
@@ -26826,7 +26890,7 @@ function animate(now){
       const renaiNoMove=(APP.mode==="renaiSim"&&(!APP.renai||APP.renai.phase!=="hub"))||(APP.mode==="renaiShort"&&(!APP.renai||APP.renai.phase!=="approach"));
       const gisshaCarryNoMove=!!(APP.gisshaCarry&&APP.gisshaCarry.active);
       const tourActive=!!(APP.tour&&APP.tour.active); // 波6-C4: 自動ガイドツアー中はプレイヤー操作を止め、カメラはツアー側が制御する
-      if(!APP.codexOpen&&APP.mode!=="utakai"&&APP.mode!=="saigen"&&!renaiNoMove&&!gisshaCarryNoMove&&!tourActive){ // 歌合・再現中は座に着いたまま(見回しのみ可)
+      if(!gameplayInputBlocked()&&APP.mode!=="utakai"&&APP.mode!=="saigen"&&!renaiNoMove&&!gisshaCarryNoMove&&!tourActive){ // 歌合・再現中は座に着いたまま(見回しのみ可)
         if(keyActive("forward"))mz-=1;if(keyActive("back"))mz+=1;
         if(keyActive("left"))mx-=1;if(keyActive("right"))mx+=1;
         mx+=joy.vx;mz+=joy.vy;

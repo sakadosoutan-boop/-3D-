@@ -19,6 +19,8 @@ node_modules/
 test-results/
 playwright-report/
 debug.log
+*-test.log
+artifacts/review/
 
 # 参照資料・並行ツール設定（コード本体ではない・PDF等で重い）
 素材/

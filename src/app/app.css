@@ -2935,7 +2935,7 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
 .era-close:active,#eraPanel .era-opt:active{transform:translateY(1px)}
 
 /* 小さすぎるタップ領域を、見た目(サイズ・見え方)を変えずに疑似要素で44px相当まで拡張 */
-#infoClose{position:relative}
+#infoClose{position:absolute}
 #infoClose::before{content:"";position:absolute;inset:-6px}
 #questMin{position:relative}
 #questMin::before{content:"";position:absolute;inset:-9px}
@@ -3021,3 +3021,32 @@ body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf
 @keyframes coopPulse{50%{opacity:.32}}
 @media(max-width:600px){.online-coop-settings{grid-template-columns:1fr}.coop-hunt-hud{top:calc(env(safe-area-inset-top) + 112px);right:8px;width:min(218px,calc(100vw - 16px));padding:8px 9px}.coop-hunt-head{grid-template-columns:30px 1fr 10px}.coop-hunt-sigil{width:28px;height:28px;font-size:15px}.coop-hunt-head b{font-size:12px}.coop-hunt-hud p{font-size:9px}}
 @media(prefers-reduced-motion:reduce){#coopHuntConnection.is-reconnecting{animation:none}.coop-hunt-track i{transition:none}}
+
+/* 読みやすさと入口の整理。五つの遊びを同じ階層で比較できるようにする。 */
+#title .t-frame{width:min(94vw,1060px);max-width:1060px;background:rgba(22,15,9,.88)}
+#title #mainModes .t-modes{grid-template-columns:repeat(5,minmax(0,1fr))}
+#title .t-btn small{font-family:var(--sans);font-size:11px;line-height:1.65;color:#d2c2a0;letter-spacing:.03em}
+#title .mode-time{color:#d2bd8d;font-size:10px}
+#title .mode-meta{font-size:10px}
+#title .t-sub,#title .t-note,#title .t-changelog summary{color:#c3b292}
+#title .t-note{font-size:11px}
+#title .cl-list{color:#c3b292;font-size:11px}
+#title .t-back-btn{color:#d8c6a1;min-height:44px;font-size:12px}
+#title .t-btn:focus-visible,.tb-btn:focus-visible{outline:2px solid #ffe2a0;outline-offset:3px}
+#titleAudioHint{bottom:4px;font-size:10px;padding:3px 10px}
+.info-body{touch-action:pan-y}
+.info-name{padding-right:30px}
+.info-desc{font-size:14px;line-height:1.95}
+@media(max-width:900px){
+  #title #mainModes .t-modes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #title #mainModes #btnWalk{grid-column:1/-1;min-height:100px;border-color:#dfbc64;
+    background:linear-gradient(115deg,#604918,#33240e)}
+  #title #mainModes #btnWalk .cat-icon{position:absolute;right:24px;font-size:34px;opacity:.75}
+  #title #mainModes #btnWalk small{padding-right:38px}
+}
+@media(max-width:520px){
+  #title #titleSubEntries{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #title #titleSubEntries .t-btn{padding:10px;min-height:82px}
+  #title .t-btn{padding:12px}
+  #title .mode-name{letter-spacing:.07em}
+}
