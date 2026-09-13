@@ -1,0 +1,296 @@
+{
+  "baseline": "c97434f",
+  "runsPerVersion": 3,
+  "profiles": [
+    {
+      "name": "high",
+      "scenes": [
+        {
+          "name": "front",
+          "beforeMedianMs": 15.4,
+          "afterMedianMs": 15.4,
+          "changePercent": 0.0,
+          "beforeRunsMs": [
+            15.5,
+            15.2,
+            15.4
+          ],
+          "afterRunsMs": [
+            16.3,
+            14.9,
+            15.4
+          ],
+          "calls": 1955,
+          "triangles": 251572,
+          "geometries": 761,
+          "textures": 136,
+          "geometryBytes": 5366826,
+          "texturePixels": 15618080,
+          "programs": 21,
+          "pixelRatio": 1,
+          "shadowSize": 1024,
+          "touch": false,
+          "normal": true,
+          "ao": true
+        },
+        {
+          "name": "overview",
+          "beforeMedianMs": 29.9,
+          "afterMedianMs": 29.2,
+          "changePercent": -2.3,
+          "beforeRunsMs": [
+            30.2,
+            29.7,
+            29.9
+          ],
+          "afterRunsMs": [
+            29.7,
+            29.2,
+            28.7
+          ],
+          "calls": 3948,
+          "triangles": 293384,
+          "geometries": 2445,
+          "textures": 158,
+          "geometryBytes": 5366826,
+          "texturePixels": 15618080,
+          "programs": 24,
+          "pixelRatio": 1,
+          "shadowSize": 1024,
+          "touch": false,
+          "normal": true,
+          "ao": true
+        },
+        {
+          "name": "interior",
+          "beforeMedianMs": 15.9,
+          "afterMedianMs": 15.8,
+          "changePercent": -0.6,
+          "beforeRunsMs": [
+            15.9,
+            15.2,
+            16.7
+          ],
+          "afterRunsMs": [
+            16.1,
+            15.5,
+            15.8
+          ],
+          "calls": 1435,
+          "triangles": 160785,
+          "geometries": 2445,
+          "textures": 158,
+          "geometryBytes": 5366826,
+          "texturePixels": 15618080,
+          "programs": 24,
+          "pixelRatio": 1,
+          "shadowSize": 1024,
+          "touch": false,
+          "normal": true,
+          "ao": true
+        },
+        {
+          "name": "garden",
+          "beforeMedianMs": 10.7,
+          "afterMedianMs": 10,
+          "changePercent": -6.5,
+          "beforeRunsMs": [
+            10.7,
+            11.2,
+            9.8
+          ],
+          "afterRunsMs": [
+            10,
+            9.9,
+            10.4
+          ],
+          "calls": 586,
+          "triangles": 117733,
+          "geometries": 2631,
+          "textures": 160,
+          "geometryBytes": 5366826,
+          "texturePixels": 15618080,
+          "programs": 24,
+          "pixelRatio": 1,
+          "shadowSize": 1024,
+          "touch": false,
+          "normal": true,
+          "ao": true
+        },
+        {
+          "name": "night",
+          "beforeMedianMs": 15.2,
+          "afterMedianMs": 14.7,
+          "changePercent": -3.3,
+          "beforeRunsMs": [
+            15.2,
+            14.9,
+            15.2
+          ],
+          "afterRunsMs": [
+            14.8,
+            14.3,
+            14.7
+          ],
+          "calls": 1738,
+          "triangles": 220971,
+          "geometries": 2933,
+          "textures": 161,
+          "geometryBytes": 5366826,
+          "texturePixels": 15618080,
+          "programs": 39,
+          "pixelRatio": 1,
+          "shadowSize": 1024,
+          "touch": false,
+          "normal": true,
+          "ao": true
+        }
+      ]
+    },
+    {
+      "name": "eco",
+      "scenes": [
+        {
+          "name": "front",
+          "beforeMedianMs": 21.6,
+          "afterMedianMs": 16.7,
+          "changePercent": -22.7,
+          "beforeRunsMs": [
+            17.4,
+            21.6,
+            22
+          ],
+          "afterRunsMs": [
+            16.7,
+            16.7,
+            15.6
+          ],
+          "calls": 1923,
+          "triangles": 249638,
+          "geometries": 759,
+          "textures": 123,
+          "geometryBytes": 5366826,
+          "texturePixels": 14929952,
+          "programs": 16,
+          "pixelRatio": 0.56,
+          "shadowSize": 512,
+          "touch": true,
+          "normal": false,
+          "ao": false
+        },
+        {
+          "name": "overview",
+          "beforeMedianMs": 26.8,
+          "afterMedianMs": 27,
+          "changePercent": 0.7,
+          "beforeRunsMs": [
+            27,
+            26.2,
+            26.8
+          ],
+          "afterRunsMs": [
+            27,
+            26.6,
+            27.2
+          ],
+          "calls": 3867,
+          "triangles": 291352,
+          "geometries": 2443,
+          "textures": 144,
+          "geometryBytes": 5366826,
+          "texturePixels": 14929952,
+          "programs": 17,
+          "pixelRatio": 0.56,
+          "shadowSize": 512,
+          "touch": true,
+          "normal": false,
+          "ao": false
+        },
+        {
+          "name": "interior",
+          "beforeMedianMs": 13.9,
+          "afterMedianMs": 14,
+          "changePercent": 0.7,
+          "beforeRunsMs": [
+            13.5,
+            16.6,
+            13.9
+          ],
+          "afterRunsMs": [
+            14,
+            14.3,
+            13.9
+          ],
+          "calls": 1423,
+          "triangles": 158891,
+          "geometries": 2443,
+          "textures": 144,
+          "geometryBytes": 5366826,
+          "texturePixels": 14929952,
+          "programs": 17,
+          "pixelRatio": 0.56,
+          "shadowSize": 512,
+          "touch": true,
+          "normal": false,
+          "ao": false
+        },
+        {
+          "name": "garden",
+          "beforeMedianMs": 9.1,
+          "afterMedianMs": 9.1,
+          "changePercent": 0.0,
+          "beforeRunsMs": [
+            8.7,
+            10.6,
+            9.1
+          ],
+          "afterRunsMs": [
+            9.4,
+            9.1,
+            8.7
+          ],
+          "calls": 585,
+          "triangles": 115861,
+          "geometries": 2627,
+          "textures": 146,
+          "geometryBytes": 5366826,
+          "texturePixels": 14929952,
+          "programs": 18,
+          "pixelRatio": 0.56,
+          "shadowSize": 512,
+          "touch": true,
+          "normal": false,
+          "ao": false
+        },
+        {
+          "name": "night",
+          "beforeMedianMs": 16.4,
+          "afterMedianMs": 15.6,
+          "changePercent": -4.9,
+          "beforeRunsMs": [
+            21.4,
+            16.4,
+            14.6
+          ],
+          "afterRunsMs": [
+            18,
+            14.1,
+            15.6
+          ],
+          "calls": 1737,
+          "triangles": 219099,
+          "geometries": 2905,
+          "textures": 146,
+          "geometryBytes": 5366826,
+          "texturePixels": 14929952,
+          "programs": 29,
+          "pixelRatio": 0.56,
+          "shadowSize": 512,
+          "touch": true,
+          "normal": false,
+          "ao": false
+        }
+      ]
+    }
+  ]
+}

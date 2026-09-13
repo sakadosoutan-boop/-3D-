@@ -5759,10 +5759,10 @@ const TEX={};
 /* [視覚強化] 雲とリムライトの時刻別パレット。TIMES本体は既存コードが厳密に参照するので構造を変えず、別テーブルとして持つ。
    雲ドーム/リムライトの生成(この少し下)より前に定義しておく必要がある */
 const CLOUD_PAL={
- day:  {c:0xffffff,op:.50},
- dawn: {c:0xffd9b0,op:.46},
- dusk: {c:0xff9a5c,op:.56},
- night:{c:0x2a3350,op:.26}
+ day:  {c:0xffffff,op:.36},
+ dawn: {c:0xffe0c2,op:.32},
+ dusk: {c:0xffd4ac,op:.34},
+ night:{c:0x6c7996,op:.12}
 };
 const RIM_PAL={
  day:  {c:0xcfe3ff,i:.16},
@@ -5788,14 +5788,17 @@ TEX.tsuiji=canv(256,256,(x,w,h)=>{x.fillStyle="#d9cdb4";x.fillRect(0,0,w,h);
   x.strokeStyle="rgba(110,95,70,.5)";x.lineWidth=2;for(let y=20;y<h;y+=42){x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke();}});
 /* 木材(柱・床) */
 function woodTex(base,grain){return canv(256,256,(x,w,h)=>{x.fillStyle=base;x.fillRect(0,0,w,h);
-  for(let i=0;i<60;i++){x.strokeStyle=`rgba(${grain},${rnd(.10,.30)})`;x.lineWidth=rnd(.6,2.4);x.beginPath();
-    const y0=rnd(0,h);x.moveTo(0,y0);x.bezierCurveTo(w*.3,y0+rnd(-9,9),w*.6,y0+rnd(-9,9),w,y0+rnd(-7,7));x.stroke();}});}
+  for(let i=0;i<60;i++){x.strokeStyle=`rgba(${grain},${rnd(.07,.18)})`;x.lineWidth=rnd(.5,1.4);x.beginPath();
+    const y0=rnd(0,h);x.moveTo(0,y0);x.bezierCurveTo(w*.3,y0+rnd(-4,4),w*.6,y0+rnd(-4,4),w,y0+rnd(-3,3));x.stroke();}});}
 TEX.woodDark=woodTex("#5a4030","40,24,14");
 TEX.woodMid=woodTex("#8a6a48","60,40,22");
+// 既存画像の繰り返しだけで木目を細かくする。画像・材質・形状は追加しない。
+TEX.woodMid.repeat.set(2,3);TEX.woodDark.repeat.set(2,3);
 TEX.woodFloor=canv(512,512,(x,w,h)=>{x.fillStyle="#9c7a52";x.fillRect(0,0,w,h);
-  for(let y=0;y<h;y+=64){x.fillStyle=`rgba(${rnd(120,165)|0},${rnd(92,128)|0},${rnd(58,84)|0},.55)`;x.fillRect(0,y,w,62);
-    x.strokeStyle="rgba(50,32,18,.7)";x.lineWidth=2;x.beginPath();x.moveTo(0,y+63);x.lineTo(w,y+63);x.stroke();
-    for(let i=0;i<26;i++){x.strokeStyle="rgba(70,46,26,.28)";x.lineWidth=1;x.beginPath();const yy=y+rnd(4,58);x.moveTo(0,yy);x.lineTo(w,yy+rnd(-4,4));x.stroke();}}});
+  for(let y=0;y<h;y+=64){x.fillStyle=`rgba(${rnd(120,165)|0},${rnd(92,128)|0},${rnd(58,84)|0},.32)`;x.fillRect(0,y,w,62);
+    x.strokeStyle="rgba(50,32,18,.38)";x.lineWidth=1.2;x.beginPath();x.moveTo(0,y+63);x.lineTo(w,y+63);x.stroke();
+    for(let i=0;i<26;i++){x.strokeStyle="rgba(70,46,26,.13)";x.lineWidth=.7;x.beginPath();const yy=y+rnd(4,58);x.moveTo(0,yy);x.lineTo(w,yy+rnd(-4,4));x.stroke();}}});
+TEX.woodFloor.repeat.set(3,3);
 /* 簀子(すき間板) */
 TEX.sunoko=canv(512,512,(x,w,h)=>{x.fillStyle="#1a120c";x.fillRect(0,0,w,h);
   for(let y=0;y<h;y+=26){x.fillStyle=`rgb(${rnd(150,180)|0},${rnd(118,142)|0},${rnd(82,100)|0})`;x.fillRect(0,y,w,21);
@@ -5804,23 +5807,23 @@ TEX.sunoko=canv(512,512,(x,w,h)=>{x.fillStyle="#1a120c";x.fillRect(0,0,w,h);
 /* 白砂(枯山水): 淡いアイボリー地＋高密度の細粒＋箒目(砂紋)。溝の影と盛りのハイライトで立体感を出す。上下左右ともシームレス。 */
 TEX.sand=canv(1024,1024,(x,w,h)=>{
   // 地色は白飛びを避けるため、やや沈んだ温かい灰白(白川砂の色)。強い陽の下で「白砂」に見える明度に置く
-  x.fillStyle="#cdc5b0";x.fillRect(0,0,w,h);
+  x.fillStyle="#cfc8b8";x.fillRect(0,0,w,h);
   // 広いトーンむら(端は反対側にも描き継ぎ目をなくす)。掃き寄せの濃淡を作り単調さを消す
   for(let i=0;i<26;i++){const px=rnd(0,w),py=rnd(0,h),r=rnd(150,420),dark=rnd(0,1)<.5;
     for(let ox=-1;ox<=1;ox++)for(let oy=-1;oy<=1;oy++){
       const cx0=px+ox*w,cy0=py+oy*h;if(cx0+r<0||cx0-r>w||cy0+r<0||cy0-r>h)continue;
       const g=x.createRadialGradient(cx0,cy0,0,cx0,cy0,r);
-      g.addColorStop(0,dark?"rgba(104,94,72,.12)":"rgba(255,252,244,.13)");g.addColorStop(1,"rgba(0,0,0,0)");
+      g.addColorStop(0,dark?"rgba(104,94,72,.055)":"rgba(255,252,244,.065)");g.addColorStop(1,"rgba(0,0,0,0)");
       x.fillStyle=g;x.fillRect(0,0,w,h);
     }}
   // 箒目(砂紋): 掻き寄せた溝と盛り。先に敷いてから粒子を載せ、砂粒が紋の上に乗って見えるようにする
-  const lines=40,dy=h/lines,amp=h*0.012;
+  const lines=40,dy=h/lines,amp=h*0.002;
   for(let i=0;i<lines;i++){
     const baseY=i*dy+dy*.5,ph=rnd(0,6.283),waves=2;
     const draw=(off,col,lw)=>{x.beginPath();for(let sx=0;sx<=w;sx+=4){const yy=baseY+off+Math.sin(sx/w*6.283*waves+ph)*amp;sx===0?x.moveTo(sx,yy):x.lineTo(sx,yy);}x.strokeStyle=col;x.lineWidth=lw;x.stroke();};
-    draw( 3.2,"rgba(96,86,64,.30)",5.0);   // 溝の谷(広く柔らかい影)
-    draw( 2.2,"rgba(88,78,58,.30)",2.2);   // 溝の芯
-    draw(-1.6,"rgba(255,253,247,.52)",3.0);// 盛りの稜(陽の当たる面)
+    draw( 1.4,"rgba(96,86,64,.035)",2.2);   // 溝の谷(広く柔らかい影)
+    draw( 0.8,"rgba(88,78,58,.045)",1.0);   // 溝の芯
+    draw(-0.8,"rgba(255,253,247,.07)",1.4);// 盛りの稜(陽の当たる面)
   }
   // 砂粒: 明暗2種の粒を高密度で散らし、近景でも「粒の集合」に見えるようにする
   for(let i=0;i<130000;i++){const v=rnd(-30,26)|0,a=rnd(.05,.22);
@@ -5830,7 +5833,7 @@ TEX.sand=canv(1024,1024,(x,w,h)=>{
     x.fillStyle=rnd(0,1)<.55?`rgba(252,250,242,${rnd(.16,.4)})`:`rgba(118,106,84,${rnd(.10,.26)})`;
     x.fillRect(rnd(0,w),rnd(0,h),s,s);}
 });
-TEX.sand.repeat.set(5,5);
+TEX.sand.repeat.set(10,10);
 /* 白砂: Canva生成の砂質感をPILでシームレス化し枯山水の掻き紋(砂紋)を合成した
    タイルを埋め込み。読み込み失敗時は上の手続き生成画にフォールバックする。 */
 (function(){return;/* [白砂刷新] Canva画像の上書きを停止し、高品質な手続き生成の白砂(箒目付き)を使用する */
@@ -6366,12 +6369,14 @@ const cloudDome=new THREE.Mesh(
   new THREE.SphereGeometry(340,48,20,0,Math.PI*2,0,Math.PI*0.5),
   new THREE.MeshBasicMaterial({map:TEX.clouds,color:CLOUD_PAL.day.c,opacity:CLOUD_PAL.day.op,transparent:true,depthWrite:false,side:THREE.BackSide,fog:false})
 );
-/* [空]球のUVは天頂で1点に収束するため、真上を向くと雲が放射状の筋になり、
-   「空に変な点が散っている」ように見えていた。UVを水平面(XZ)へ投影し直すと、
-   実際の雲の層を下から見上げた形になる——真上では雲の形のまま、地平へ向かうほど自然に詰まる。 */
+/* 平射図法で既存UVだけを更新。XZ投影が地平線で潰れて作っていた縦筋と、
+   球面UVの天頂の集中を避ける。頂点数・描画回数・画像解像度は同じ。 */
 {
-  const g=cloudDome.geometry,pos=g.attributes.position,uv=g.attributes.uv,PROJ=118; // PROJが小さいほど雲は細かく・数多く見える
-  for(let i=0;i<pos.count;i++)uv.setXY(i,pos.getX(i)/PROJ,pos.getZ(i)/PROJ);
+  const g=cloudDome.geometry,pos=g.attributes.position,uv=g.attributes.uv;
+  for(let i=0;i<pos.count;i++){
+    const scale=2.2/(340+pos.getY(i));
+    uv.setXY(i,pos.getX(i)*scale,pos.getZ(i)*scale);
+  }
   uv.needsUpdate=true;
 }
 cloudDome.renderOrder=-1;        // 他の半透明物より先に描き、雲を最も奥として扱う
@@ -6597,7 +6602,10 @@ function inBuildingEntrance(x,z,skipSouth){
 ============================================================ */
 const world=new THREE.Group();scene.add(world);
 {
-  const g1=new THREE.Mesh(new THREE.PlaneGeometry(400,400),MAT.grass);
+  const g1=new THREE.Mesh(new THREE.PlaneGeometry(1200,1200),MAT.grass);
+  // 俯瞰で地面の端が空に切り抜かれないよう延長。頂点数と草の模様の尺度は維持する。
+  const grassUV=g1.geometry.attributes.uv;
+  for(let i=0;i<grassUV.count;i++)grassUV.setXY(i,grassUV.getX(i)*3,grassUV.getY(i)*3);
   g1.rotation.x=-Math.PI/2;g1.position.y=-.06;g1.receiveShadow=true;world.add(g1);
   const court=new THREE.Mesh(new THREE.PlaneGeometry(118,118),MAT.sand);
   court.geometry.setAttribute("uv2",court.geometry.attributes.uv); // [AO] 白砂のaoMap用uv2
@@ -26371,6 +26379,8 @@ function animate(now){
       scene.fog.density = (APP.mode==="taiji")?(IS_TOUCH?0.020:0.012):(APP.time==="day")?0.012:(APP.time==="dawn")?0.020:(APP.time==="dusk")?0.014:0.013; /* 退治:禍々しい霧(波AO: タッチ端末は一段濃く遠景の塗りを沈める) / 昼:霞 / 朝:朝靄 / 夜:遠景を青黒に沈める薄霧(灯火の暖色を引き立てる) */
     }
   }
+  // 遠くから見る俯瞰だけ霞を薄くする。戦闘の視界は維持する。
+  if(scene.fog&&APP.view==="ov"&&APP.mode!=="taiji")scene.fog.density*=.34;
   scene.background=cur.sky;
   
   sun.color.copy(cur.sunC);sun.intensity=cur.sunI;
@@ -32317,11 +32327,11 @@ if(APP.map==="kamakura"){
   }
   const normalMapTasks=[
     ()=>applyNormalMap(MAT.roof,TEX.roof,256,0.55),      // 檜皮葺の葺き足段差
-    ()=>applyNormalMap(MAT.floor,TEX.woodFloor,256,0.35),// 板張りの目地
+    ()=>applyNormalMap(MAT.floor,TEX.woodFloor,256,0.18),// 板張りの目地
     ()=>applyNormalMap(MAT.sunoko,TEX.sunoko,256,0.4),   // 簀子の板目
     ()=>applyNormalMap(MAT.plaster,TEX.plaster,128,0.22),// 白漆喰壁の粒立ち
     ()=>applyNormalMap(MAT.tatami,TEX.tatami,256,0.28),  // 畳表の織り目(表示はCanva写真に差し替わるが凹凸方向は概ね揃う)
-    ()=>applyNormalMap(MAT.sand,TEX.sand,256,0.5),       // 白砂の箒目
+    ()=>applyNormalMap(MAT.sand,TEX.sand,256,0.14),       // 白砂の箒目
   ];
   let normalMapTaskIdx=0;
   function normalMapStep(){
@@ -32394,9 +32404,9 @@ if(APP.map==="kamakura"){
     }catch(e){console.warn("[AOマップ] 生成に失敗:",e);}
   }
   const aoMapTasks=[
-    ()=>applyAOMap(MAT.sand,TEX.sand,256,2.6),       // 白砂の箒目の溝
+    ()=>applyAOMap(MAT.sand,TEX.sand,256,0.9),       // 白砂の箒目の溝
     ()=>applyAOMap(MAT.roof,TEX.roof,256,2.2),       // 檜皮葺の葺き足の重なり
-    ()=>applyAOMap(MAT.floor,TEX.woodFloor,256,2.0), // 板張りの目地
+    ()=>applyAOMap(MAT.floor,TEX.woodFloor,256,1.2), // 板張りの目地
     ()=>applyAOMap(MAT.sunoko,TEX.sunoko,256,2.0),   // 簀子の板目
     ()=>applyAOMap(MAT.plaster,TEX.plaster,128,1.6), // 白漆喰壁の粒立ち
     ()=>applyAOMap(MAT.tatami,TEX.tatami,256,1.6),   // 畳表の織り目
