@@ -23,6 +23,27 @@ const {chromium} = require('playwright');
   try {
     await page.goto(pathToFileURL(path.resolve('寝殿造り3D探訪_統合版.html')).href+'?adaptive=0&eco=off');
     await page.waitForFunction(()=>typeof GARDEN_POLISH!=='undefined' && !!GARDEN_POLISH);
+    const surfaces=await page.evaluate(()=>{
+      const plain=box(.42,3.8,.36,MAT.plaster).geometry;
+      const original=Array.from(plain.attributes.uv.array);
+      const wood=box(.42,3.8,.36,MAT.wood).geometry;
+      const again=box(.42,3.8,.36,MAT.woodDark).geometry;
+      const floor=box(8,.2,4,MAT.floor).geometry;
+      const longFloor=box(16,.2,8,MAT.floor).geometry;
+      const side=[];for(let i=0;i<wood.attributes.position.count;i++)if(wood.attributes.normal.getX(i)>.5)side.push(i);
+      const atHeight=new Map();let vertical=true;
+      for(const i of side){const y=wood.attributes.position.getY(i),u=wood.attributes.uv.getX(i);if(atHeight.has(y)&&atHeight.get(y)!==u)vertical=false;atHeight.set(y,u);}
+      const maxV=g=>Math.max(...Array.from({length:g.attributes.uv.count},(_,i)=>g.attributes.normal.getY(i)>.5?g.attributes.uv.getY(i):0));
+      return {
+        isolated:plain!==wood && original.every((v,i)=>v===plain.attributes.uv.array[i]),
+        shared:wood===again,
+        vertical:vertical&&new Set(atHeight.values()).size===2,
+        consistentPlankWidth:Math.abs(maxV(longFloor)/maxV(floor)-2)<.00001,
+        aoAligned:floor.attributes.uv2===floor.attributes.uv
+      };
+    });
+    assert.ok(Object.values(surfaces).every(Boolean),JSON.stringify(surfaces));
+    passed.push('wood follows the post, floor scale is consistent, and shared UVs preserve other materials');
     await page.evaluate(()=>{
       GFX.setPreset('high');GFX.setBloom('off');enterMode('walk');hideModeBrief(true);
       AUTO_TIME._paused=true;APP.labelMode=0;

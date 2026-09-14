@@ -8,6 +8,7 @@ const scenes=[
  {name:'front',time:'day',season:'spring',view:'fp',pos:[0,1.62,26],yaw:0},
  {name:'overview',time:'day',season:'spring',view:'ov',pos:[80,105,92]},
  {name:'interior',time:'day',season:'spring',view:'fp',pos:[0,2.8,-3],yaw:1.3},
+ {name:'veranda',time:'day',season:'spring',view:'fp',pos:[-5,3.2,7],target:[4,1.6,4],yaw:1.3},
  {name:'garden',time:'dusk',season:'summer',view:'fp',pos:[8,1.62,19],yaw:3.1},
  {name:'pond',time:'day',season:'summer',view:'fp',pos:[2,3.2,23],target:[2,.02,34],yaw:Math.PI},
  {name:'night',time:'night',season:'summer',view:'fp',pos:[0,1.62,26],yaw:0}
