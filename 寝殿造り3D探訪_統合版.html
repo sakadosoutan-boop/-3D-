@@ -6086,13 +6086,13 @@ const MAT={
  water:new THREE.MeshPhysicalMaterial({map:TEX.water,roughness:.18,metalness:0,transparent:true,opacity:.9,envMapIntensity:1.0,clearcoat:.5,clearcoatRoughness:.12,side:THREE.DoubleSide}), /* [Phase1] 空を映す水面 */
  trunk:M({map:TEX.bark,roughness:.95}),
  leaf:M({map:TEX.leaves,color:0x4e6e3a,roughness:.95}),
- leaf2:M({map:TEX.leaves,color:0x6d8a46,roughness:.95}),
+ leaf2:M({map:TEX.leaves,color:0x536d3d,roughness:.95}),
  pine:M({map:TEX.leaves,color:0x3c5a34,roughness:.95}),
  pineDark:M({map:TEX.leaves,color:0x2c4526,roughness:.96}),
  momijiGreen:M({map:TEX.leaves,color:0x6d8a46,roughness:.95}),
  momijiRed:M({map:TEX.leaves,color:0xb5402a,roughness:.9}),
- sakura:M({color:0xf6d3de,roughness:.9}),
- ume:M({color:0xf3e7ee,roughness:.9}),
+ sakura:M({map:TEX.leaves,color:0xf6d3de,roughness:.9}),
+ ume:M({map:TEX.leaves,color:0xf3e7ee,roughness:.9}),
  hasuLeaf:M({color:0x3f6b48,roughness:.95,side:THREE.DoubleSide}),
  hasuFlower:M({color:0xf0a8c0,roughness:.9}),
  tsubaki:M({color:0xc0352f,roughness:.85}),
@@ -6602,6 +6602,7 @@ function inBuildingEntrance(x,z,skipSouth){
 /* ============================================================
    地面・築地・門
 ============================================================ */
+const FOLIAGE_DETAIL=new Map();
 const world=new THREE.Group();scene.add(world);
 {
   const g1=new THREE.Mesh(new THREE.PlaneGeometry(1200,1200),MAT.grass);
@@ -6616,9 +6617,12 @@ const world=new THREE.Group();scene.add(world);
   const stones=[[0,8,1.15,.72],[0,13,1.0,.62],[0,18,1.25,.7],[0,23,1.05,.66],[0,28,1.2,.72],
     [-8,18,.9,.58],[8,18,.9,.58],[-18,24,1.05,.64],[18,25,1.05,.64],[-27,31,1.2,.75],[28,32,1.2,.75]];
   stones.forEach((p,i)=>{
-    const s=new THREE.Mesh(new THREE.CircleGeometry(p[2],18),MAT.stonePaving);
-    s.rotation.x=-Math.PI/2;s.rotation.z=(i*.73)%3.14;s.scale.set(1,p[3],1);
-    s.position.set(p[0]+Math.sin(i)*.22,.025,p[1]+Math.cos(i*.7)*.22);
+    const s=new THREE.Mesh(new THREE.CylinderGeometry(p[2]*.975,p[2],.065,18,1),MAT.stonePaving);
+    const edge=s.geometry.attributes.position;
+    for(let j=0;j<edge.count;j++){const x=edge.getX(j),z=edge.getZ(j),a=Math.atan2(z,x),f=1+.035*Math.sin(a*3+i*.7)+.018*Math.cos(a*5+i);edge.setXYZ(j,x*f,edge.getY(j),z*f);}
+    s.geometry.computeVertexNormals();
+    s.rotation.y=(i*.73)%3.14;s.scale.set(1,1,p[3]);
+    s.position.set(p[0]+Math.sin(i)*.22,.03,p[1]+Math.cos(i*.7)*.22);
     s.receiveShadow=true;stepping.add(s);
   });
   world.add(stepping);register(stepping,"niwa",new THREE.Vector3(0,.45,18));
@@ -6852,6 +6856,32 @@ const SHISHIN_DATA={
 }
 /* 樹木 — 日本庭園の松(黒松):曲がった幹+段づくりの葉叢 */
 var PINE_PAD_GEO,PINE_TOP_GEO,TSUBAKI_BLOOM_GEO,SUSUKI_BLADE_GEO;
+var GARDEN_POLISH;
+// 輪郭の揺れを連続した面にする。格子の継ぎ目と極で形状が割れない周期補間。
+function gardenFoliageGeo(cols,rows,field,variant=0){
+  const geo=new THREE.SphereGeometry(1,cols,rows),p=geo.attributes.position;
+  const colors=new Float32Array(p.count*3),smooth=t=>t*t*(3-2*t);
+  for(let i=0;i<p.count;i++){
+    const x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+    let u=Math.atan2(z,-x)/(Math.PI*2);if(u<0)u+=1;
+    const v=Math.acos(Math.max(-1,Math.min(1,y)))/Math.PI;
+    let noise=0;
+    if(field){
+      const gx=u*7,gy=v*6,ix=Math.floor(gx)%7,iy=Math.min(5,Math.floor(gy));
+      const fx=smooth(gx-Math.floor(gx)),fy=smooth(gy-iy);
+      const at=(xx,yy)=>field[yy*8+(xx%7)];
+      noise=(at(ix,iy)*(1-fx)+at(ix+1,iy)*fx)*(1-fy)+(at(ix,iy+1)*(1-fx)+at(ix+1,iy+1)*fx)*fy;
+    }else noise=Math.sin(u*Math.PI*10+variant)*.6+Math.cos(u*Math.PI*6)*.25;
+    const edge=Math.sin(v*Math.PI),f=1+noise*.28*edge;
+    p.setXYZ(i,x*f,y*(1+noise*.05*edge),z*f);
+    const tone=.60+.40*(y+1)*.5+noise*.025;
+    colors[i*3]=tone;colors[i*3+1]=tone;colors[i*3+2]=tone*.98;
+  }
+  geo.setAttribute("color",new THREE.BufferAttribute(colors,3));geo.computeVertexNormals();
+  return geo;
+}
+["leaf","leaf2","pine","pineDark","momijiGreen","momijiRed","sakura","ume"].forEach(k=>MAT[k].vertexColors=true);
+TEX.leaves.repeat.set(2,2);
 function markFoliageNoShadow(o){
   o.userData.noAutoShadow=true;
   o.castShadow=false;
@@ -6905,7 +6935,8 @@ function tree(s,variant){
   }
   const addPinePads=(items,mat)=>{
     if(!items.length)return;
-    const padGeo=PINE_PAD_GEO||(PINE_PAD_GEO=new THREE.SphereGeometry(1,8,6));
+    const padGeo=PINE_PAD_GEO||(PINE_PAD_GEO=gardenFoliageGeo(12,8,null));
+    if(!FOLIAGE_DETAIL.has(padGeo))FOLIAGE_DETAIL.set(padGeo,{makeLow:()=>gardenFoliageGeo(8,6,null),low:null});
     const inst=new THREE.InstancedMesh(padGeo,mat,items.length);
     const dummy=new THREE.Object3D();
     items.forEach((it,idx)=>{
@@ -6929,10 +6960,10 @@ function tree(s,variant){
 const LEAF_CLUMP_GEOS=(()=>{
   const out=[];
   for(let v=0;v<3;v++){
-    const geo=new THREE.SphereGeometry(1,7,6);
-    const p=geo.attributes.position;
-    for(let i=0;i<p.count;i++){const f=1+(Math.random()-.5)*.55;p.setXYZ(i,p.getX(i)*f,p.getY(i)*f,p.getZ(i)*f);}
-    geo.computeVertexNormals();out.push(geo);
+    // 従来と同じ56個の乱数を制御点に使い、配置の乱数列も保つ。
+    const field=Array.from({length:56},()=>Math.random()-.5);
+    const geo=gardenFoliageGeo(12,8,field,v);
+    FOLIAGE_DETAIL.set(geo,{makeLow:()=>gardenFoliageGeo(7,6,field,v),low:null});out.push(geo);
   }
   return out;
 })();
@@ -6947,7 +6978,7 @@ function broadleaf(s,leafMat){
     buckets[i%3].push({
       pos:[Math.cos(a)*rad,s*rnd(1.35,2.05),Math.sin(a)*rad],
       scale:[r*rnd(.9,1.25),r*rnd(.8,1.1),r*rnd(.9,1.25)],
-      rot:[rnd(0,6.2),rnd(0,6.2),rnd(0,6.2)]
+      rot:[rnd(-.25,.25),rnd(0,6.2),rnd(-.25,.25)]
     });
   }
   buckets.forEach((items,geoIdx)=>{
@@ -7033,7 +7064,8 @@ function broadleaf(s,leafMat){
       const r=rnd(.45,.72);
       b.position.set(p[0]+rnd(-.35,.35),.42+rnd(0,.34),p[1]+rnd(-.35,.35));
       b.scale.set(r*rnd(.9,1.2),r*.8,r*rnd(.9,1.2));
-      b.rotation.set(rnd(0,6),rnd(0,6),rnd(0,6));
+      b.position.y=b.scale.y*.60; // 白砂へ少し埋め、植え込みが浮かないようにする。
+      b.rotation.set(rnd(-.25,.25),rnd(0,6),rnd(-.25,.25));
       markFoliageNoShadow(b);senzai.add(b);
     }
   });
@@ -10877,7 +10909,7 @@ function setSnowCover(on){
   else  { MAT.grass.map=TEX.grass; MAT.grass.color.setHex(SEASONS[APP.season]?SEASONS[APP.season].grass:0x8aa04a); }
   MAT.grass.needsUpdate=true;
   // [fix] 前栽(せんざい)の植え込みも冬は雪化粧。MAT.leaf2は前栽専用なので直接切替
-  MAT.leaf2.color.setHex(on?0xe6ebef:0x6d8a46);
+  MAT.leaf2.color.setHex(on?0xe6ebef:0x536d3d);
 }
 
 /* ============================================================
@@ -27071,6 +27103,7 @@ function animate(now){
   // 見えない3Dシーンの描画(ミニマップ・ブルーム合成・renderer本体)を丸ごと休止して軽量化する
   if(APP.mode!=="ikaiSuika"&&APP.mode!=="kaiawase"&&APP.mode!=="kemari"){
     if(window.LOW_POWER)window.LOW_POWER.update();
+    if(GARDEN_POLISH)GARDEN_POLISH.update(t);
     /* [発熱対策] 自由散策では影マップの更新を2フレームに1回へ間引く。太陽はほぼ静止しキャスターも大半が静的なので体感差はなく、影パスのGPU負荷を約半減できる。他モード(退治戦など動きの速い影)は毎フレーム更新へ戻す */
     if(APP.mode==="walk"){
       if(renderer.shadowMap.autoUpdate){renderer.shadowMap.autoUpdate=false;renderer.shadowMap.__throttle=true;}
@@ -32438,6 +32471,100 @@ if(APP.map==="kamakura"){
     const sched=window.requestIdleCallback?(cb)=>requestIdleCallback(cb,{timeout:800}):(cb)=>setTimeout(cb,50);
     sched(aoMapStep);
   },7000);
+})();
+
+
+/* 庭の立体感: 小さな接地影と、水面だけの波法線。低画質・省電力で自動的に簡略化。 */
+GARDEN_POLISH=(()=>{
+  const off=/[?&]polish=0/.test(location.search);
+  const foliage=[];scene.traverse(o=>{
+    if(o.geometry&&FOLIAGE_DETAIL.has(o.geometry))foliage.push({mesh:o,high:o.geometry,detail:FOLIAGE_DETAIL.get(o.geometry)});
+    // 同じ葉材質を使う松の頂芽などにも中立色を用意し、未定義の頂点色で黒くならないようにする。
+    if(o.geometry&&!o.geometry.attributes.color&&[].concat(o.material||[]).some(m=>m.vertexColors)){
+      o.geometry.setAttribute("color",new THREE.BufferAttribute(new Float32Array(o.geometry.attributes.position.count*3).fill(1),3));
+    }
+  });
+  const time={value:0},strength={value:0};
+  MAT.water.onBeforeCompile=shader=>{
+    shader.uniforms.uGardenWaterTime=time;shader.uniforms.uGardenWaterStrength=strength;
+    shader.vertexShader="varying vec3 vGardenWorld;\n"+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace("#include <worldpos_vertex>",
+      "#include <worldpos_vertex>\nvGardenWorld=(modelMatrix*vec4(transformed,1.0)).xyz;");
+    shader.fragmentShader="varying vec3 vGardenWorld;\nuniform float uGardenWaterTime;\nuniform float uGardenWaterStrength;\n"+shader.fragmentShader;
+    shader.fragmentShader=shader.fragmentShader.replace("#include <normal_fragment_maps>",`#include <normal_fragment_maps>
+      if(uGardenWaterStrength>0.0){
+        vec2 p=vGardenWorld.xz;
+        float a=cos(dot(p,vec2(.72,.46))+uGardenWaterTime*.65);
+        float b=cos(dot(p,vec2(-1.15,.83))-uGardenWaterTime*.92);
+        float c=cos(dot(p,vec2(2.7,1.8))+uGardenWaterTime*1.3);
+        vec2 slope=vec2(.026,.017)*a+vec2(-.014,.010)*b+vec2(.009,.006)*c;
+        normal=normalize(normal+mat3(viewMatrix)*vec3(-slope.x,0.0,-slope.y)*uGardenWaterStrength);
+      }`);
+    shader.fragmentShader=shader.fragmentShader.replace("gl_FragColor = vec4( outgoingLight, diffuseColor.a );",
+      "outgoingLight*=vec3(.70,.92,1.0);\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );");
+  };
+  MAT.water.customProgramCacheKey=()=>"garden-water-v1";MAT.water.needsUpdate=true;
+  MAT.water.roughness=.22;MAT.water.envMapIntensity=.72;MAT.water.color.setHex(0x9cc8ce);
+  // 既存の雲ドームの描画内で空の勾配も合成する。空用のメッシュや描画パスは追加しない。
+  const skyTop={value:new THREE.Color()},skyHorizon={value:new THREE.Color()},cloudMix={value:.6};
+  cloudDome.material.onBeforeCompile=shader=>{
+    shader.uniforms.uGardenSkyTop=skyTop;shader.uniforms.uGardenSkyHorizon=skyHorizon;shader.uniforms.uGardenCloudMix=cloudMix;
+    shader.vertexShader="varying float vGardenSkyHeight;\n"+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace("#include <begin_vertex>","#include <begin_vertex>\nvGardenSkyHeight=position.y/340.0;");
+    shader.fragmentShader="varying float vGardenSkyHeight;\nuniform vec3 uGardenSkyTop;\nuniform vec3 uGardenSkyHorizon;\nuniform float uGardenCloudMix;\n"+shader.fragmentShader;
+    shader.fragmentShader=shader.fragmentShader.replace("gl_FragColor = vec4( outgoingLight, diffuseColor.a );",`
+      vec3 sky=mix(uGardenSkyHorizon,uGardenSkyTop,smoothstep(0.0,.72,vGardenSkyHeight));
+      gl_FragColor=vec4(mix(sky,outgoingLight,clamp(diffuseColor.a*uGardenCloudMix,0.0,1.0)),1.0);`);
+  };
+  cloudDome.material.customProgramCacheKey=()=>"garden-sky-v1";
+  cloudDome.material.transparent=false;cloudDome.material.toneMapped=false;cloudDome.material.needsUpdate=true;
+  const shadowGeo=new THREE.PlaneGeometry(1,1),pose=new THREE.Object3D();
+  function shadowTexture(square){
+    return canv(128,128,(ctx,w,h)=>{
+      const pixels=ctx.createImageData(w,h);
+      for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+        const u=Math.abs((x+.5)/w*2-1),v=Math.abs((y+.5)/h*2-1);
+        const r=square?Math.pow(Math.pow(u,6)+Math.pow(v,6),1/6):Math.hypot(u,v);
+        const q=Math.max(0,1-r),a=square?Math.min(1,q*4):q*q*(3-2*q);
+        const i=(y*w+x)*4;pixels.data[i]=pixels.data[i+1]=pixels.data[i+2]=255;pixels.data[i+3]=Math.round(a*255);
+      }
+      ctx.putImageData(pixels,0,0);
+    });
+  }
+  const soft=shadowTexture(false),rect=shadowTexture(true),shadowBatches=[];
+  function batch(items,texture,opacity){
+    const mat=new THREE.MeshBasicMaterial({map:texture,color:0x292b22,transparent:true,opacity,depthWrite:false,fog:true});
+    const mesh=new THREE.InstancedMesh(shadowGeo,mat,items.length);
+    items.forEach((p,i)=>{pose.position.set(p[0],.009,p[1]);pose.rotation.set(-Math.PI/2,0,0);pose.scale.set(p[2],p[3],1);pose.updateMatrix();mesh.setMatrixAt(i,pose.matrix);});
+    mesh.instanceMatrix.needsUpdate=true;mesh.frustumCulled=false;mesh.renderOrder=-2;mesh.userData.noAutoShadow=true;
+    world.add(mesh);shadowBatches.push(mesh);return mesh;
+  }
+  const plantItems=[],springItems=[];
+  const box3=new THREE.Box3(),size=new THREE.Vector3();
+  function plant(root,items){
+    box3.setFromObject(root);box3.getSize(size);
+    items.push([root.position.x,root.position.z,Math.max(1.2,Math.min(8,size.x*.85)),Math.max(1.2,Math.min(8,size.z*.85))]);
+  }
+  [...SEASONAL.miscTrees,...SEASONAL.maples].forEach(r=>plant(r,plantItems));
+  [...SEASONAL.sakura,...SEASONAL.ume].forEach(r=>plant(r,springItems));
+  [[-8,13],[-5.5,14.5],[8,13],[5,15],[11,14]].forEach(p=>plantItems.push([p[0],p[1],2.7,2.2]));
+  const plants=batch(plantItems,soft,.28),spring=batch(springItems,soft,.22);
+  const buildings=batch([[SH.cx,SH.cz,SH.sw*1.08,SH.sd*1.15],[TAI.e.x,TAI.e.z,20.6,15],[TAI.w.x,TAI.w.z,20.6,15],[TAI.n.x,TAI.n.z,22.7,14]],rect,.30);
+  let active=null;
+  function update(t){
+    const on=!off&&!(window.LOW_POWER&&window.LOW_POWER.active)&&QUALITY.level<=1;
+    if(on!==active){
+      active=on;strength.value=on?1:0;
+      foliage.forEach(f=>{if(!on&&!f.detail.low)f.detail.low=f.detail.makeLow();f.mesh.geometry=on?f.high:f.detail.low;});
+      plants.visible=buildings.visible=on;
+    }
+    spring.visible=on&&APP.season==="spring";time.value=t;
+    cloudMix.value=APP.time==="night"?.20:APP.time==="day"?.60:.50;
+    skyHorizon.value.copy(cur.sky).convertSRGBToLinear();
+    skyTop.value.copy(skyHorizon.value).multiplyScalar(.60);skyTop.value.r*=.80;skyTop.value.g*=.92;
+  }
+  update(0);
+  return {update,get active(){return active;},get waterTime(){return time.value;},get waterStrength(){return strength.value;}};
 })();
 
 animate();

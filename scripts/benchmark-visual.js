@@ -9,6 +9,7 @@ const scenes=[
  {name:'overview',time:'day',season:'spring',view:'ov',pos:[80,105,92]},
  {name:'interior',time:'day',season:'spring',view:'fp',pos:[0,2.8,-3],yaw:1.3},
  {name:'garden',time:'dusk',season:'summer',view:'fp',pos:[8,1.62,19],yaw:3.1},
+ {name:'pond',time:'day',season:'summer',view:'fp',pos:[2,3.2,23],target:[2,.02,34],yaw:Math.PI},
  {name:'night',time:'night',season:'summer',view:'fp',pos:[0,1.62,26],yaw:0}
 ];
 (async()=>{
@@ -28,6 +29,7 @@ const scenes=[
   for(const eco of [false,true]){
    const context=await browser.newContext({viewport:{width:1280,height:800},deviceScaleFactor:1,hasTouch:eco});
    const page=await context.newPage();page.on('pageerror',e=>report.errors.push(e.message));
+   page.on('console',m=>{if(m.type()==='error'&&/THREE.WebGLProgram|VALIDATE_STATUS|ERROR: 0:/.test(m.text()))report.errors.push(m.text());});
    await page.addInitScript(eco=>{
     window.__SHINDEN_BENCH_PAUSE=true;window.SHINDEN_ONLINE_CONFIG={enabled:false};
     let seed=0x5eed1234;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
@@ -37,6 +39,7 @@ const scenes=[
     }
     localStorage.setItem('shinden3d-onboard-v1','1');
    },eco);
+   if(process.env.VISUAL_IBL==='1'&&!eco)await page.addInitScript(()=>Object.defineProperty(navigator,'webdriver',{get:()=>false}));
    const start=Date.now();await page.goto(`http://127.0.0.1:${server.address().port}/?adaptive=0&eco=off`,{waitUntil:'load'});
    await page.waitForFunction(()=>typeof GFX!=='undefined'&&typeof LOW_POWER!=='undefined');
    await page.evaluate(eco=>{GFX.setPreset('high');GFX.setBloom('off');if(eco)LOW_POWER.set(true,{persist:false,silent:true});enterMode('walk');APP_FPSCAP=0;AUTO_TIME._paused=true;APP.labelMode=0;},eco);
@@ -55,7 +58,7 @@ const scenes=[
      clock.running=true;clock.elapsedTime=12;clock.oldTime=performance.now()-16;
      window.__SHINDEN_BENCH_PAUSE=false;animate(performance.now());window.__SHINDEN_BENCH_PAUSE=true;
      camera.position.set(...s.pos);camera.rotation.order='YXZ';
-     if(s.view==='ov')camera.lookAt(0,0,0);else camera.rotation.set(-.05,s.yaw||0,0,'YXZ');
+     if(s.target)camera.lookAt(...s.target);else if(s.view==='ov')camera.lookAt(0,0,0);else camera.rotation.set(-.05,s.yaw||0,0,'YXZ');
      TEX.clouds.offset.set(.1,0);cloudDome.position.copy(camera.position);scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
      updateControlUI();renderer.render(scene,camera);
     },shot);
@@ -70,11 +73,14 @@ const scenes=[
      const pixels=[...textures].reduce((sum,t)=>sum+(t.image&&t.image.width&&t.image.height?t.image.width*t.image.height:0),0);
      return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,
       geometryBytes:[...buffers].reduce((sum,b)=>sum+b.byteLength,0),instanceBytes:[...instances].reduce((sum,b)=>sum+b.byteLength,0),texturePixels:pixels,programs:renderer.info.programs.length,
-      pixelRatio:renderer.getPixelRatio(),shadows:renderer.shadowMap.enabled,shadowSize:sun.shadow.mapSize.width,touch:IS_TOUCH,normal:!!MAT.sand.normalMap,ao:!!MAT.sand.aoMap,
+      pixelRatio:renderer.getPixelRatio(),shadows:renderer.shadowMap.enabled,shadowSize:sun.shadow.mapSize.width,touch:IS_TOUCH,ibl:!!scene.environment,normal:!!MAT.sand.normalMap,ao:!!MAT.sand.aoMap,
       medianMs:+samples[Math.floor(samples.length*.5)].toFixed(2),p95Ms:+samples[Math.floor(samples.length*.95)].toFixed(2),fog:scene.fog.density};
     });
     profile.scenes.push({name:shot.name,...measurement});
-    if(!eco&&!process.env.VISUAL_NO_SCREENSHOTS)await page.screenshot({path:path.join(out,`visual-${label}-${shot.name}.png`)});
+    if(!eco&&!process.env.VISUAL_NO_SCREENSHOTS){
+     await page.evaluate(()=>document.getElementById('toast').style.display='none');
+     await page.screenshot({path:path.join(out,`visual-${label}-${shot.name}.png`)});
+    }
     console.log(`${label}/${profile.name}/${shot.name}: ${measurement.calls} calls; ${measurement.medianMs} ms`);
    }
    report.profiles.push(profile);await context.close();

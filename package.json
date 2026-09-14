@@ -19,7 +19,8 @@
     "benchmark:visual": "node scripts/benchmark-visual.js",
     "smoke": "node scripts/smoke-playwright.js",
     "test:quality": "node scripts/quality-playwright.js",
-    "test": "npm run build:app:check && npm run build:story:check && npm run verify:html && npm run verify:story && npm run verify:routes && npm run smoke && npm run test:quality"
+    "test:graphics": "node scripts/graphics-quality-playwright.js",
+    "test": "npm run build:app:check && npm run build:story:check && npm run verify:html && npm run verify:story && npm run verify:routes && npm run smoke && npm run test:quality && npm run test:graphics"
   },
   "devDependencies": {
     "playwright": "1.61.1"
