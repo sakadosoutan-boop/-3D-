@@ -6006,7 +6006,7 @@ TEX.ash=canv(128,128,(x,w,h)=>{x.fillStyle="#8f8a7e";x.fillRect(0,0,w,h);
 TEX.water=canv(256,256,(x,w,h)=>{x.fillStyle="#3c6468";x.fillRect(0,0,w,h);
   for(let i=0;i<360;i++){x.strokeStyle=`rgba(${rnd(120,200)|0},${rnd(190,235)|0},${rnd(210,245)|0},.07)`;x.lineWidth=rnd(.4,1.1);
     x.beginPath();const y0=rnd(0,h);x.moveTo(rnd(0,w),y0);x.bezierCurveTo(rnd(0,w),y0+rnd(-4,4),rnd(0,w),y0+rnd(-4,4),rnd(0,w),y0);x.stroke();}});
-TEX.water.repeat.set(11,11);
+TEX.water.repeat.set(1,1); // 水面シェーダーでワールド座標に揃えて貼る。
 
 /* --- 新規粒子（桜、紅葉、雪）のプロシージャル・テクスチャ形状 --- */
 TEX.sakuraPetal = canv(64, 64, (x, w, h) => {
@@ -9852,22 +9852,75 @@ function makePetCat(colors){
 /* ============================================================
    蓮(夏)・蛍(夏)・桜花びら(春)など季節パーティクル
 ============================================================ */
-// 蓮の葉と花(夏)
+// 小さな草花の共有曲面。花弁の色・折れ目を頂点に持たせ、画像を増やさない。
+const GARDEN_BOTANY=(()=>{
+  const bloom=M({color:0xffffff,vertexColors:true,roughness:.86,side:THREE.DoubleSide});
+  const green=M({color:0xffffff,vertexColors:true,roughness:.94,side:THREE.DoubleSide});
+  const stem=M({color:0x3b602c,roughness:.94});
+  const stemGeo=new THREE.CylinderGeometry(.009,.012,1,5);
+  function petal(length,width,rise,base,tip,mark,fringe=false){
+    const pos=[],colors=[],indices=[],rows=6,cols=4;
+    const root=new THREE.Color(base).convertSRGBToLinear(),edge=new THREE.Color(tip).convertSRGBToLinear();
+    const guide=mark?new THREE.Color(mark).convertSRGBToLinear():null,c=new THREE.Color();
+    for(let j=0;j<=rows;j++)for(let i=0;i<=cols;i++){
+      const t=j/rows,u=i/cols*2-1,profile=Math.pow(Math.sin(Math.PI*t*.93),.7);
+      const tooth=fringe&&j===rows?.065*(1+Math.cos(u*Math.PI*2)):0;
+      pos.push(u*width*profile,rise*t*t+.018*u*u*Math.sin(Math.PI*t),length*(t-.12*u*u*t*t*t*t-tooth));
+      c.copy(root).lerp(edge,t*.8).multiplyScalar(1-.10*Math.abs(u));
+      if(guide&&i===2&&t>.1&&t<.67)c.lerp(guide,Math.sin(t/.67*Math.PI)*.95);
+      colors.push(c.r,c.g,c.b);
+      if(j<rows&&i<cols){const a=j*(cols+1)+i,b=a+cols+1;indices.push(a,b,a+1,a+1,b,b+1);}
+    }
+    const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+    g.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));g.setIndex(indices);g.computeVertexNormals();return g;
+  }
+  function blade(){
+    const pos=[],colors=[],indices=[],c=new THREE.Color();
+    for(let j=0;j<=6;j++)for(let i=0;i<3;i++){
+      const t=j/6,u=i-1,w=.034*Math.pow(Math.sin(Math.PI*t),.65);
+      pos.push(u*w,t,.11*t*t+(i===1?.012:0)*Math.sin(Math.PI*t));
+      c.setHex(i===1?0x68924b:0x365c2c).convertSRGBToLinear().multiplyScalar(.72+.28*t);colors.push(c.r,c.g,c.b);
+      if(j<6&&i<2){const a=j*3+i,b=a+3;indices.push(a,b,a+1,a+1,b,b+1);}
+    }
+    const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));g.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));g.setIndex(indices);g.computeVertexNormals();return g;
+  }
+  function batch(parent,geo,mat,items){
+    if(!items.length)return;
+    const mesh=new THREE.InstancedMesh(geo,mat,items.length),pose=new THREE.Object3D();
+    items.forEach((v,i)=>{pose.position.set(...(v.p||[0,0,0]));pose.rotation.set(...(v.r||[0,0,0]));pose.scale.set(...(v.s||[1,1,1]));pose.updateMatrix();mesh.setMatrixAt(i,pose.matrix);});
+    // r128のカリングは形状の球を参照する。株内の全配置と元の形状を覆う共有の保守的な球。
+    // このヘルパーでは原点から1.2m以内の草花だけを束ねる。
+    geo.boundingSphere=new THREE.Sphere(new THREE.Vector3(0,.5,0),1.5);mesh.frustumCulled=true;
+    mesh.instanceMatrix.needsUpdate=true;mesh.userData.botanicalBatch=true;markFoliageNoShadow(mesh);mesh.receiveShadow=true;parent.add(mesh);return mesh;
+  }
+  return {petal,blade,batch,bloom,green,stem,stemGeo};
+})();
+
+// 蓮の葉と花(夏)。浅い皿状の葉と、二重に開く椀状の花弁。
 (function buildLotus(){
+  const B=GARDEN_BOTANY,pos=[0,0,0],colors=[],indices=[],c=new THREE.Color(0x567e4d).convertSRGBToLinear();colors.push(c.r,c.g,c.b);
+  const rings=3,segments=48;
+  for(let r=1;r<=rings;r++)for(let k=0;k<segments;k++){
+    const t=r/rings,a=k/segments*Math.PI*2,rr=t*(1+.026*Math.cos(a*5));
+    pos.push(Math.cos(a)*rr,.042*t*t,Math.sin(a)*rr);
+    c.setHex(k%6===0?0x587c48:0x4b7143).convertSRGBToLinear().multiplyScalar(1-.12*t);colors.push(c.r,c.g,c.b);
+    const curr=1+(r-1)*segments+k,next=1+(r-1)*segments+(k+1)%segments;
+    if(r===1)indices.push(0,next,curr);
+    else{const prev=curr-segments,prevNext=next-segments;indices.push(prev,prevNext,curr,prevNext,next,curr);}
+  }
+  const leafGeo=new THREE.BufferGeometry();leafGeo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));leafGeo.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));leafGeo.setIndex(indices);leafGeo.computeVertexNormals();
+  const outer=B.petal(.34,.105,.13,0xf6dbe6,0xd783ae),inner=B.petal(.22,.075,.24,0xf9e8ee,0xda89b1);
+  const heartGeo=new THREE.SphereGeometry(.065,8,5),heartMat=M({color:0xd5ab3d,roughness:.9});
   const spots=[[-26,42],[-30,36],[8,48],[12,44],[-2,50]];
   spots.forEach(p=>{
     if(!inPond(p[0],p[1]))return;
-    const leaf=new THREE.Mesh(new THREE.CircleGeometry(rnd(0.9,1.5),16),MAT.hasuLeaf);
-    leaf.rotation.x=-Math.PI/2;leaf.position.set(p[0],0.12,p[1]);
-    SEASONAL.hasu.add(leaf);
-    if(Math.random()<0.6){
-      const flower=new THREE.Group();
-      for(let k=0;k<6;k++){
-        const petal=new THREE.Mesh(new THREE.ConeGeometry(0.12,0.4,5),MAT.hasuFlower);
-        petal.position.set(Math.cos(k)*0.1,0.35,Math.sin(k)*0.1);
-        petal.rotation.set(0.5,k,0);flower.add(petal);
-      }
-      flower.position.set(p[0]+rnd(-0.5,0.5),0.2,p[1]+rnd(-0.5,0.5));
+    const radius=rnd(.9,1.5),leaf=new THREE.Mesh(leafGeo,B.green);leaf.scale.set(radius,1,radius);leaf.position.set(p[0],.12,p[1]);markFoliageNoShadow(leaf);leaf.receiveShadow=true;SEASONAL.hasu.add(leaf);
+    if(Math.random()<.6){
+      const flower=new THREE.Group();flower.position.set(p[0]+rnd(-.5,.5),.36,p[1]+rnd(-.5,.5));
+      B.batch(flower,outer,B.bloom,Array.from({length:8},(_,k)=>({r:[0,k/8*Math.PI*2,0]})));
+      B.batch(flower,inner,B.bloom,Array.from({length:6},(_,k)=>({p:[0,.025,0],r:[0,(k+.5)/6*Math.PI*2,0]})));
+      const heart=new THREE.Mesh(heartGeo,heartMat);heart.position.y=.06;heart.scale.y=.48;markFoliageNoShadow(heart);flower.add(heart);
+      B.batch(flower,B.stemGeo,B.stem,[{p:[0,-.11,0],s:[1,.22,1]}]);
       SEASONAL.hasu.add(flower);
     }
   });
@@ -10447,7 +10500,7 @@ const KOI2_TEX={kohaku:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAAHoCA
     // 水紋(広がって消えるループ)
     const rip=new THREE.Mesh(new THREE.PlaneGeometry(1,1),
       new THREE.MeshBasicMaterial({map:rippleTex,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
-    rip.rotation.x=-Math.PI/2;rip.position.y=-0.055;rip.renderOrder=2;g.add(rip);g.userData.ripple=rip;
+    rip.rotation.x=-Math.PI/2;rip.position.y=-0.035;rip.renderOrder=2;g.add(rip);g.userData.ripple=rip;
     // 鯉本体(上面視テクスチャの平面。頭=+z, 水面の少し上に水平=透明ソートによる明滅を防ぐため不透明カットアウト)
     const tex=new THREE.TextureLoader().load(uri);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=8;
     const L=0.92,W=L*224/547;
@@ -10702,54 +10755,51 @@ SEASONAL.fuji=[];
   register(g,"fuji",new THREE.Vector3(-49,2.3,4));
 })();
 
-// 撫子(前栽の花壇 — 夏・秋)
+// 撫子(前栽の花壇 — 夏・秋)。五弁の先に切れ込みを付け、花と茎を株ごとに束ねる。
 SEASONAL.nadesiko=[];
 (function buildNadesiko(){
+  const B=GARDEN_BOTANY,petalGeo=B.petal(.081,.040,.013,0x9b2e67,0xea83b8,null,true),leafGeo=B.blade();
   [[8,17],[-4,18],[16,20],[3,16],[-12,19],[22,17],[12,14.5],[-8,15],[20,22],[0,20.5],[-16,16],[6,21]].forEach((p,i)=>{
-    const g=new THREE.Group();g.position.set(p[0],0,p[1]);
-    const stm=M({color:0x4a6528,roughness:.9}),ptl=M({color:0xe060a0,roughness:.85,side:THREE.DoubleSide});
+    const g=new THREE.Group();g.position.set(p[0],0,p[1]);const blooms=[],stems=[],leaves=[];
     for(let k=0;k<8;k++){
       const sh=rnd(.3,.45),ox=rnd(-.2,.2),oz=rnd(-.2,.2);
-      g.add(cyl(.01,.015,sh,stm,ox,sh/2,oz,5));
-      const fl=new THREE.Group();fl.position.set(ox,sh+.04,oz);
-      for(let j=0;j<5;j++){
-        const petal=new THREE.Mesh(new THREE.CircleGeometry(.046,5),ptl);
-        petal.position.set(Math.cos(j/5*Math.PI*2)*.036,.02,Math.sin(j/5*Math.PI*2)*.036);
-        petal.rotation.x=.65;fl.add(petal);
-      }
-      g.add(fl);
+      stems.push({p:[ox,sh/2,oz],s:[1,sh,1]});
+      [-1,1].forEach(side=>leaves.push({p:[ox,sh*.42,oz],r:[0,k*2.4,side*1.05],s:[.6,.12,.6]}));
+      for(let j=0;j<5;j++)blooms.push({p:[ox,sh+.015,oz],r:[0,j/5*Math.PI*2+k*.17,0]});
     }
+    B.batch(g,B.stemGeo,B.stem,stems);B.batch(g,leafGeo,B.green,leaves);B.batch(g,petalGeo,B.bloom,blooms);
     world.add(g);SEASONAL.nadesiko.push(g);
     if(i===0)register(g,"nadesiko",new THREE.Vector3(p[0],.55,p[1]));
   });
 })();
 
-// 杜若(かきつばた) — 池南の汀に群れ咲く紫の花(春・夏)
+// 杜若(かきつばた) — 先細りの剣状葉、白い筋のある外花被と立つ内花被。
 SEASONAL.kakitsubata=[];
 (function buildKakitsubata(){
-  const leafM=M({color:0x3f6b2e,roughness:.9,side:THREE.DoubleSide});
-  const pet=M({color:0x6a3fae,roughness:.7,side:THREE.DoubleSide});
-  const petHi=M({color:0x8b5fd0,roughness:.7,side:THREE.DoubleSide});
+  const B=GARDEN_BOTANY,leafGeo=B.blade();
+  const fall=B.petal(.17,.055,-.075,0x624093,0x8254b0,0xf6f0cf),standard=B.petal(.11,.030,.125,0x624091,0xa278ce);
   [[-13,24],[-9,25.5],[5,26],[12,29],[-3,27],[-17,28],[9,24],[16,32],[-20,33],[2,23],[-7,30.5],[14,26],[-11,22]].forEach((p,i)=>{
-    const g=new THREE.Group();g.position.set(p[0],0,p[1]);
+    const g=new THREE.Group();g.position.set(p[0],0,p[1]);const blades=[],stems=[],falls=[],standards=[];
     for(let k=0;k<6;k++){
-      const H=rnd(.7,1.05);const lf=new THREE.Mesh(new THREE.PlaneGeometry(.05,H),leafM);
-      const a=rnd(0,Math.PI*2),rr=rnd(0,.12);lf.position.set(Math.cos(a)*rr,H/2,Math.sin(a)*rr);
-      lf.rotation.set(rnd(-.12,.12),a,rnd(-.12,.12));g.add(lf);
+      const H=rnd(.7,1.05),a=rnd(0,Math.PI*2),rr=rnd(0,.12);
+      blades.push({p:[Math.cos(a)*rr,0,Math.sin(a)*rr],r:[rnd(-.12,.12),a,rnd(-.12,.12)],s:[1,H,1]});
     }
     const nf=2+Math.floor(rnd(0,3));
     for(let f=0;f<nf;f++){
-      const fl=new THREE.Group();fl.position.set(rnd(-.12,.12),rnd(.55,.85),rnd(-.12,.12));
-      for(let j=0;j<3;j++){const petal=new THREE.Mesh(new THREE.CircleGeometry(.08,5),f%2?petHi:pet);
-        petal.position.set(Math.cos(j/3*Math.PI*2)*.06,-.02,Math.sin(j/3*Math.PI*2)*.06);petal.rotation.set(1.15,j/3*Math.PI*2,0);fl.add(petal);}
-      for(let j=0;j<3;j++){const petal=new THREE.Mesh(new THREE.CircleGeometry(.05,5),petHi);
-        petal.position.set(Math.cos((j/3+.16)*Math.PI*2)*.03,.05,Math.sin((j/3+.16)*Math.PI*2)*.03);petal.rotation.set(.2,j/3*Math.PI*2,0);fl.add(petal);}
-      g.add(fl);
+      const x=rnd(-.12,.12),y=rnd(.55,.85),z=rnd(-.12,.12);
+      stems.push({p:[x,y/2,z],s:[.65,y,.65]});
+      for(let j=0;j<3;j++){
+        falls.push({p:[x,y,z],r:[0,j/3*Math.PI*2+f*.3,0]});
+        standards.push({p:[x,y+.01,z],r:[0,(j+.5)/3*Math.PI*2+f*.3,0]});
+      }
     }
+    B.batch(g,leafGeo,B.green,blades);B.batch(g,B.stemGeo,B.stem,stems);
+    B.batch(g,fall,B.bloom,falls);B.batch(g,standard,B.bloom,standards);
     world.add(g);SEASONAL.kakitsubata.push(g);
     if(i===0)register(g,"kakitsubata",new THREE.Vector3(p[0],.9,p[1]));
   });
 })();
+
 // 亀 — 池の汀の石で甲羅干し(冬以外)
 SEASONAL.kame=[];
 (function buildKame(){
@@ -32519,6 +32569,7 @@ if(APP.map==="kamakura"){
 GARDEN_POLISH=(()=>{
   const off=/[?&]polish=0/.test(location.search);
   const foliage=[];scene.traverse(o=>{
+    if(o.material===MAT.water){o.userData.noAutoShadow=true;o.castShadow=false;}
     if(o.geometry&&FOLIAGE_DETAIL.has(o.geometry))foliage.push({mesh:o,high:o.geometry,detail:FOLIAGE_DETAIL.get(o.geometry)});
     // 同じ葉材質を使う松の頂芽などにも中立色を用意し、未定義の頂点色で黒くならないようにする。
     if(o.geometry&&!o.geometry.attributes.color&&[].concat(o.material||[]).some(m=>m.vertexColors)){
@@ -32532,6 +32583,9 @@ GARDEN_POLISH=(()=>{
     shader.vertexShader=shader.vertexShader.replace("#include <worldpos_vertex>",
       "#include <worldpos_vertex>\nvGardenWorld=(modelMatrix*vec4(transformed,1.0)).xyz;");
     shader.fragmentShader="varying vec3 vGardenWorld;\nuniform float uGardenWaterTime;\nuniform float uGardenWaterStrength;\n"+shader.fragmentShader;
+    // ShapeGeometryの実寸UVと円形水面の0〜1 UVを統一し、継ぎ目と細かすぎる縞を防ぐ。
+    shader.fragmentShader=shader.fragmentShader.replace("#include <map_fragment>",
+      THREE.ShaderChunk.map_fragment.replace(/\bvUv\b/g,"(vGardenWorld.xz * .08)"));
     shader.fragmentShader=shader.fragmentShader.replace("#include <normal_fragment_maps>",`#include <normal_fragment_maps>
       if(uGardenWaterStrength>0.0){
         vec2 p=vGardenWorld.xz;
@@ -32544,7 +32598,9 @@ GARDEN_POLISH=(()=>{
     shader.fragmentShader=shader.fragmentShader.replace("gl_FragColor = vec4( outgoingLight, diffuseColor.a );",
       "outgoingLight*=vec3(.70,.92,1.0);\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );");
   };
-  MAT.water.customProgramCacheKey=()=>"garden-water-v1";MAT.water.needsUpdate=true;
+  MAT.water.customProgramCacheKey=()=>"garden-water-v2";
+  // 重なる池面を二重に半透明合成しない。鯉・葉・水紋は水面の上で描く。
+  MAT.water.transparent=false;MAT.water.opacity=1;MAT.water.depthWrite=true;MAT.water.needsUpdate=true;
   MAT.water.roughness=.22;MAT.water.envMapIntensity=.72;MAT.water.color.setHex(0x9cc8ce);
   // 既存の雲ドームの描画内で空の勾配も合成する。空用のメッシュや描画パスは追加しない。
   const skyTop={value:new THREE.Color()},skyHorizon={value:new THREE.Color()},cloudMix={value:.6};

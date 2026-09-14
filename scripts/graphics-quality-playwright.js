@@ -15,6 +15,7 @@ const {chromium} = require('playwright');
   await page.addInitScript(() => {
     window.__SHINDEN_BENCH_PAUSE=true;
     window.SHINDEN_ONLINE_CONFIG={enabled:false};
+    let seed=0x5eed1234;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
     Object.defineProperty(navigator,'maxTouchPoints',{get:()=>0});
     Object.defineProperty(navigator,'webdriver',{get:()=>false});
     for(let p=window;p;p=Object.getPrototypeOf(p)){try{delete p.ontouchstart;}catch{}}
@@ -44,9 +45,53 @@ const {chromium} = require('playwright');
     });
     assert.ok(Object.values(surfaces).every(Boolean),JSON.stringify(surfaces));
     passed.push('wood follows the post, floor scale is consistent, and shared UVs preserve other materials');
+    const botany=await page.evaluate(()=>{
+      const matrix=new THREE.Matrix4(),point=new THREE.Vector3();let bounded=true,batches=0;
+      scene.traverse(mesh=>{
+        if(!mesh.userData.botanicalBatch)return;batches++;
+        const geo=mesh.geometry,positions=geo.attributes.position,sphere=geo.boundingSphere;
+        for(let i=0;i<mesh.count;i++){
+          mesh.getMatrixAt(i,matrix);
+          for(let j=0;j<positions.count;j++){
+            point.fromBufferAttribute(positions,j).applyMatrix4(matrix);
+            if(point.distanceTo(sphere.center)>sphere.radius+1e-5)bounded=false;
+          }
+        }
+      });
+      applySeason('summer');scene.updateMatrixWorld(true);
+      const discoverable=['kakitsubata','nadesiko'].every(id=>{
+        const mesh=rayTargets.find(m=>m.userData.iid===id&&m.userData.botanicalBatch&&m.material===GARDEN_BOTANY.bloom);
+        if(!mesh)return false;
+        mesh.getMatrixAt(0,matrix);matrix.premultiply(mesh.matrixWorld);
+        const geo=mesh.geometry,offset=geo.index.count/2;
+        const vertices=[0,1,2].map(i=>new THREE.Vector3().fromBufferAttribute(geo.attributes.position,geo.index.getX(offset+i)).applyMatrix4(matrix));
+        const center=vertices[0].clone().add(vertices[1]).add(vertices[2]).multiplyScalar(1/3);
+        const normal=vertices[1].clone().sub(vertices[0]).cross(vertices[2].clone().sub(vertices[0])).normalize();
+        const ray=new THREE.Raycaster(center.clone().addScaledVector(normal,.2),normal.negate());
+        return ray.intersectObject(mesh).some(hit=>hit.object.userData.iid===id&&hit.instanceId===0);
+      });
+      const seasons={spring:[true,false,false],summer:[true,true,true],autumn:[false,true,false],winter:[false,false,false]};
+      const seasonal=Object.entries(seasons).every(([season,expected])=>{
+        applySeason(season);
+        return [SEASONAL.kakitsubata.every(g=>g.visible),SEASONAL.nadesiko.every(g=>g.visible),SEASONAL.hasu.visible].every((v,i)=>v===expected[i]);
+      });
+      applySeason('spring');
+      return {bounded,batches,discoverable,seasonal};
+    });
+    assert.ok(botany.batches>0&&botany.bounded&&botany.discoverable&&botany.seasonal,JSON.stringify(botany));
+    passed.push('flower batches stay within culling bounds, can be discovered, and follow the seasons');
     await page.evaluate(()=>{
       GFX.setPreset('high');GFX.setBloom('off');enterMode('walk');hideModeBrief(true);
       AUTO_TIME._paused=true;APP.labelMode=0;
+      window.graphicsResources=()=>{
+        const geometries=new Set(),textures=new Set();
+        scene.traverse(o=>{
+          if(o.geometry)geometries.add(o.geometry.id);
+          for(const mat of [].concat(o.material||[]))for(const value of Object.values(mat))if(value&&value.isTexture)textures.add(value.id);
+        });
+        FOLIAGE_DETAIL.forEach((detail,high)=>{geometries.add(high.id);if(detail.low)geometries.add(detail.low.id);});
+        return {geometries:[...geometries].sort((a,b)=>a-b),textures:[...textures].sort((a,b)=>a-b)};
+      };
       window.graphicsDraw=()=>{
         APP_FPSCAP=0;clock.running=true;clock.oldTime=performance.now()-16;
         window.__SHINDEN_BENCH_PAUSE=false;animate(performance.now());window.__SHINDEN_BENCH_PAUSE=true;
@@ -84,18 +129,39 @@ const {chromium} = require('playwright');
     assert.equal(frozen[0],frozen[1],'eco rendering must not animate the extra water effect');
     passed.push('water motion affects pixels and is disabled in eco mode');
 
+    const waterContinuity=await page.evaluate(()=>{
+      const testScene=new THREE.Scene(),testCamera=new THREE.OrthographicCamera(-4,4,4,-4,.1,20);
+      testCamera.position.set(0,10,0);testCamera.up.set(0,0,-1);testCamera.lookAt(0,0,0);
+      testScene.add(new THREE.AmbientLight(0xffffff,1));
+      const shape=new THREE.Shape();shape.moveTo(-4,-4);shape.lineTo(4,-4);shape.lineTo(4,4);shape.lineTo(-4,4);shape.closePath();
+      const plane=new THREE.Mesh(new THREE.PlaneGeometry(8,8),MAT.water),patch=new THREE.Mesh(new THREE.ShapeGeometry(shape),MAT.water);
+      plane.rotation.x=patch.rotation.x=-Math.PI/2;testScene.add(plane,patch);
+      const read=()=>{
+        renderer.render(testScene,testCamera);const gl=renderer.getContext(),pixels=new Uint8Array(32*32*4);
+        gl.readPixels(Math.floor(gl.drawingBufferWidth/2)-16,Math.floor(gl.drawingBufferHeight/2)-16,32,32,gl.RGBA,gl.UNSIGNED_BYTE,pixels);return pixels;
+      };
+      patch.visible=false;const a=read();plane.visible=false;patch.visible=true;const b=read();plane.visible=true;const both=read();
+      const maxDiff=p=>Math.max(...a.map((value,i)=>Math.abs(value-p[i])));
+      const result={uvDifference:maxDiff(b),overlapDifference:maxDiff(both),rendered:a.some((v,i)=>i%4!==3&&v>0),ripplesAboveWater:waterBirds.filter(b=>b.kind==='koi').every(b=>.11+b.g.userData.ripple.position.y>.06)};
+      plane.geometry.dispose();patch.geometry.dispose();graphicsDraw();return result;
+    });
+    assert.ok(waterContinuity.rendered&&waterContinuity.uvDifference<=2&&waterContinuity.overlapDifference<=2&&waterContinuity.ripplesAboveWater,JSON.stringify(waterContinuity));
+    passed.push('water patches share their texture scale and overlapping surfaces keep the same color');
+
     const cycles=[];
     for(let cycle=0;cycle<3;cycle++){
       for(const season of ['spring','summer','autumn','winter']){
         cycles.push(await page.evaluate(season=>{
           LOW_POWER.set(false,{persist:false,silent:true});GFX.setPreset('high');applySeason(season);graphicsDraw();
           LOW_POWER.set(true,{persist:false,silent:true});graphicsDraw();
-          LOW_POWER.set(false,{persist:false,silent:true});return graphicsDraw();
+          LOW_POWER.set(false,{persist:false,silent:true});graphicsDraw();return graphicsResources();
         },season));
       }
     }
-    for(let i=0;i<4;i++)for(const key of ['geometries','textures'])assert.equal(cycles[8+i][key],cycles[4+i][key]);
-    passed.push('season and eco round trips reuse rendering resources');
+    // GPU upload counts can grow when an existing animated prop first becomes visible.
+    // Compare actual resource identities, including the cached low-detail foliage.
+    for(let i=0;i<4;i++)assert.deepEqual(cycles[8+i],cycles[4+i]);
+    passed.push('season and eco round trips reuse scene geometries and textures');
 
     await page.evaluate(()=>{applySeason('summer');graphicsDraw();window.__SHINDEN_BENCH_PAUSE=false;});
     await page.waitForTimeout(150);

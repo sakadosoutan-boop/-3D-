@@ -11,8 +11,14 @@ const scenes=[
  {name:'veranda',time:'day',season:'spring',view:'fp',pos:[-5,3.2,7],target:[4,1.6,4],yaw:1.3},
  {name:'garden',time:'dusk',season:'summer',view:'fp',pos:[8,1.62,19],yaw:3.1},
  {name:'pond',time:'day',season:'summer',view:'fp',pos:[2,3.2,23],target:[2,.02,34],yaw:Math.PI},
+ {name:'iris',time:'day',season:'summer',view:'fp',pos:[-13,1.22,22.25],target:[-13,.55,24],yaw:Math.PI},
+ {name:'lotus',time:'day',season:'summer',view:'fp',pos:[-25,1.5,39.4],target:[-26,.3,42],yaw:Math.PI},
+ {name:'pink',time:'day',season:'summer',view:'fp',pos:[8,.9,15.8],target:[8,.30,17],yaw:Math.PI},
  {name:'night',time:'night',season:'summer',view:'fp',pos:[0,1.62,26],yaw:0}
 ];
+const requested=process.env.VISUAL_SCENES&&process.env.VISUAL_SCENES.split(',');
+if(requested&&requested.some(name=>!scenes.some(scene=>scene.name===name)))throw Error('Unknown VISUAL_SCENES entry');
+const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.name)):scenes;
 (async()=>{
  fs.mkdirSync(out,{recursive:true});
  const server=http.createServer((req,res)=>{
@@ -47,7 +53,7 @@ const scenes=[
    if(!eco)await page.waitForFunction(()=>!IS_TOUCH&&!!MAT.tatami.aoMap&&!!MAT.tatami.normalMap,{timeout:25000});
    await page.waitForTimeout(1000);
    const profile={name:eco?'eco':'high',readyMs:Date.now()-start,scenes:[]};
-   for(const shot of scenes){
+   for(const shot of selectedScenes){
     await page.evaluate(s=>{
      hideModeBrief(true);document.getElementById('toast').style.display='none';document.getElementById('loadingScreen').classList.remove('show');
      APP.view=s.view;applySeason(s.season);setTime(s.time);AUTO_TIME._paused=true;APP_FPSCAP=0;
