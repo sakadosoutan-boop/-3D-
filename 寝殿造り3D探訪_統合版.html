@@ -5885,11 +5885,35 @@ TEX.misu=canv(256,512,(x,w,h)=>{x.fillStyle="#c9b87a";x.fillRect(0,0,w,h);
   for(let y=0;y<h;y+=4){x.strokeStyle=`rgba(${rnd(120,150)|0},${rnd(100,128)|0},${rnd(50,70)|0},.9)`;x.lineWidth=2.2;x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke();}
   x.strokeStyle="rgba(60,46,20,.5)";x.lineWidth=3;[.18,.5,.82].forEach(u=>{x.beginPath();x.moveTo(w*u,0);x.lineTo(w*u,h);x.stroke();});
   x.fillStyle="#2c5234";x.fillRect(0,0,w,26);x.fillRect(0,h-44,w,44);x.fillStyle="#b3402a";x.fillRect(0,h-44,w,8);});
+// 竹の丸みと編み紐の節。元の256×512画像の中だけで仕上げる。
+{const x=TEX.misu.image.getContext("2d"),w=256,h=512;
+  x.fillStyle="rgba(248,229,159,.22)";for(let y=28;y<h-44;y+=4)x.fillRect(0,y,w,.8);
+  [.18,.5,.82].forEach(u=>{for(let y=30;y<h-44;y+=12){
+    x.fillStyle="#76613d";x.fillRect(w*u-2.4,y,4.8,2.5);
+    x.fillStyle="rgba(227,208,150,.65)";x.fillRect(w*u-1.5,y,3,1);
+  }});
+  x.strokeStyle="rgba(183,168,100,.34)";x.lineWidth=1;
+  for(let y of [6,19,h-29,h-8]){x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke();}
+}
 /* 格子(蔀戸) */
-TEX.koushi=canv(256,256,(x,w,h)=>{x.fillStyle="#d8d2c0";x.fillRect(0,0,w,h);
-  x.fillStyle="#2a2018";const s=32;
-  for(let i=0;i<=w;i+=s){x.fillRect(i-4,0,8,h);x.fillRect(0,i-4,w,8);}
-  x.strokeStyle="rgba(0,0,0,.35)";x.strokeRect(0,0,w,h);});
+TEX.koushi=canv(256,256,(x,w,h)=>{
+  // 板の落ち込みと格子材の面取りを同じ画像に描く。追加の描画・テクスチャ参照は不要。
+  x.fillStyle="#b9b098";x.fillRect(0,0,w,h);const step=32;
+  for(let y=0;y<h;y+=step)for(let xx=0;xx<w;xx+=step){
+    const shade=x.createLinearGradient(xx,y+4,xx,y+step-4);
+    shade.addColorStop(0,"#817963");shade.addColorStop(.23,"#aaa18a");shade.addColorStop(1,"#c1b79d");
+    x.fillStyle=shade;x.fillRect(xx+4,y+4,step-8,step-8);
+    x.fillStyle="rgba(52,43,29,.10)";x.fillRect(xx+4,y+4,2,step-8);
+    x.strokeStyle="rgba(87,73,48,.10)";x.lineWidth=.6;
+    for(let k=0;k<3;k++){x.beginPath();x.moveTo(xx+9+k*6,y+5);x.lineTo(xx+10+k*6,y+27);x.stroke();}
+  }
+  for(let i=0;i<=w;i+=step){
+    x.fillStyle="#382b20";x.fillRect(i-4,0,8,h);x.fillRect(0,i-4,w,8);
+    x.fillStyle="#67513a";x.fillRect(i-3,0,1,h);x.fillRect(0,i-3,w,1);
+    x.fillStyle="#211b16";x.fillRect(i+3,0,1,h);x.fillRect(0,i+3,w,1);
+    x.fillStyle="rgba(167,132,84,.18)";x.fillRect(i-.5,0,.7,h);
+  }
+});
 /* 几帳の帷子(白地に朱の紋) */
 TEX.kichou=canv(512,448,(x,w,h)=>{x.fillStyle="#f2ead6";x.fillRect(0,0,w,h);
   x.fillStyle="rgba(179,64,42,.85)";
@@ -7130,6 +7154,29 @@ function broadleaf(s,leafMat){
 /* ============================================================
    汎用建物(対屋・渡殿・廊・釣殿)
 ============================================================ */
+// 静的な建具・布の形状。寸法が同じものは共有し、開閉時に作り直さない。
+const ARCH_DETAIL=(()=>{
+  const clothCache=new Map();
+  function lattice(w,h,bottom=0){
+    const geo=new THREE.PlaneGeometry(w,h),uv=geo.attributes.uv;
+    // 画像には8×8の格子。上下の半蔀を閉じた時にも横桟の高さを揃える。
+    for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*w/(8*.24),(uv.getY(i)*h+bottom)/(8*.18));
+    geo.userData.latticePitch=[.24,.18];return geo;
+  }
+  function cloth(w,h,folds=3){
+    const key=[w,h,folds].join(":");if(clothCache.has(key))return clothCache.get(key);
+    const geo=new THREE.PlaneGeometry(w,h,folds*12,8),pos=geo.attributes.position,uv=geo.attributes.uv;
+    for(let i=0;i<pos.count;i++){
+      const u=uv.getX(i),down=1-uv.getY(i),wave=Math.sin(u*Math.PI*2*folds);
+      pos.setZ(i,.055*wave*(.35+.65*down));
+      pos.setY(i,pos.getY(i)-.035*Math.pow(Math.sin(u*Math.PI*folds),2)*down);
+    }
+    geo.computeVertexNormals();geo.computeBoundingBox();geo.computeBoundingSphere();
+    geo.userData.drapedCloth=true;clothCache.set(key,geo);return geo;
+  }
+  return {lattice,cloth};
+})();
+
 /* 可動建具の状態(妻戸/半蔀/御簾/灯台) — 対屋でも使うため早期に宣言 */
 const gimmicks={shitomi:[],misu:[],tsumado:[],lamps:[],kagaribi:[],braziers:[],karabitsu:[]};
 const kichouGroups=[];
@@ -7169,7 +7216,7 @@ function building(opts){
       if(len<0.6)return;
       const wg=new THREE.Group();wg.position.set(cx,0,cz);wg.rotation.y=rotY;
       wg.add(box(len,.5,.14,MAT.plaster,0,fh+.27,0));                    // 腰壁
-      const k=new THREE.Mesh(new THREE.PlaneGeometry(len-.15,koshiH),MAT.koushi);
+      const k=new THREE.Mesh(ARCH_DETAIL.lattice(len-.15,koshiH),MAT.koushi);
       k.position.set(0,fh+.55+koshiH/2,0);k.castShadow=true;wg.add(k);
       g.add(wg);
     }
@@ -7747,11 +7794,11 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     const g=new THREE.Group();g.position.set(cx,0,cz);g.rotation.y=rotY;
     const sillY=S.f2+.62,lintelY=S.f2+2.3;
     g.add(box(bw,.5,.12,MAT.plaster,0,S.f2+.31,0));        // 腰壁
-    const lower=new THREE.Mesh(new THREE.PlaneGeometry(bw-.14,lintelY-sillY-1.0),MAT.koushi);
+    const lower=new THREE.Mesh(ARCH_DETAIL.lattice(bw-.14,lintelY-sillY-1.0),MAT.koushi);
     lower.position.set(0,sillY+(lintelY-sillY-1.0)/2,.02);lower.castShadow=true;g.add(lower);
     /* 跳ね上げ部(ピボット=上端) */
     const pivot=new THREE.Group();pivot.position.set(0,lintelY,0);
-    const up=new THREE.Mesh(new THREE.PlaneGeometry(bw-.14,1.02),MAT.koushi);
+    const up=new THREE.Mesh(ARCH_DETAIL.lattice(bw-.14,1.02,lintelY-1.02-sillY),MAT.koushi);
     up.position.y=-.51;up.castShadow=true;pivot.add(up);
     g.add(pivot);
     /* 吊り金具(開いた時に見える) */
@@ -7837,9 +7884,9 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     /* 帳(4面・前は少し開く) */
     const cw=2.78,ch=2.25;
     [[0,-1.4,0],[ -1.4,0,Math.PI/2],[1.4,0,Math.PI/2]].forEach(p=>{
-      const c=new THREE.Mesh(new THREE.PlaneGeometry(cw,ch),MAT.tobari);
+      const c=new THREE.Mesh(ARCH_DETAIL.cloth(cw,ch,4),MAT.tobari);
       c.position.set(p[0],1.42,p[1]);c.rotation.y=p[2];g.add(c);});
-    [[-.85],[.85]].forEach(s=>{const c=new THREE.Mesh(new THREE.PlaneGeometry(1.05,ch),MAT.tobari);
+    [[-.85],[.85]].forEach(s=>{const c=new THREE.Mesh(ARCH_DETAIL.cloth(1.05,ch,2),MAT.tobari);
       c.position.set(s[0],1.42,1.4);c.rotation.y=s[0]*-.45;g.add(c);});
     [[-1.18,1.43],[1.18,1.43],[-1.18,-1.38],[1.18,-1.38]].forEach(p=>{const ts=tassel(0xb3402a);ts.position.set(p[0],2.55,p[1]);g.add(ts);});
     shinden.add(g);register(g,"michoudai",new THREE.Vector3(S.cx+3.2,F+3.3,S.cz-.2));
@@ -7871,7 +7918,7 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     g.add(box(1.5,.09,.4,MAT.black,0,.05,0));
     g.add(cyl(.05,.05,1.75,MAT.black,0,.95,0,8));
     g.add(box(1.9,.06,.06,MAT.black,0,1.8,0));
-    const cloth=new THREE.Mesh(new THREE.PlaneGeometry(1.86,1.55),KICHOU_MATS[(_kichouPatN++)%KICHOU_MATS.length]);
+    const cloth=new THREE.Mesh(ARCH_DETAIL.cloth(1.86,1.55),KICHOU_MATS[(_kichouPatN++)%KICHOU_MATS.length]);
     cloth.position.y=1.0;cloth.castShadow=true;g.add(cloth);
     [-.62,0,.62].forEach(xx=>g.add(box(.025,1.44,.018,M({color:0xd8c6a0,roughness:.9}),xx,.98,.012,false)));
     [-.85,.85].forEach(xx=>{const ts=tassel(0x2c5234);ts.position.set(xx,1.76,.04);g.add(ts);});

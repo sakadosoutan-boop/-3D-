@@ -45,6 +45,31 @@ const {chromium} = require('playwright');
     });
     assert.ok(Object.values(surfaces).every(Boolean),JSON.stringify(surfaces));
     passed.push('wood follows the post, floor scale is consistent, and shared UVs preserve other materials');
+    const fittings=await page.evaluate(()=>{
+      const cloths=[],lattices=[];
+      scene.traverse(o=>{if(o.geometry?.userData.drapedCloth)cloths.push(o);if(o.geometry?.userData.latticePitch)lattices.push(o);});
+      const finiteAndBounded=cloths.every(o=>{
+        const g=o.geometry,p=g.attributes.position,b=g.boundingBox;
+        return [...p.array,...g.attributes.normal.array].every(Number.isFinite)&&b.min.z>=-.056&&b.max.z<=.056&&b.max.z-b.min.z>.03;
+      });
+      const pitch=lattices.every(o=>{
+        const g=o.geometry,p=g.attributes.position,uv=g.attributes.uv;
+        return Math.abs((p.getX(1)-p.getX(0))/(uv.getX(1)-uv.getX(0))-1.92)<1e-5
+          &&Math.abs((p.getY(0)-p.getY(2))/(uv.getY(0)-uv.getY(2))-1.44)<1e-5;
+      });
+      const geo=cloths.find(o=>o.material===MAT.kichou).geometry;
+      const shared=geo===ARCH_DETAIL.cloth(1.86,1.55);
+      scene.updateMatrixWorld(true);
+      const mesh=rayTargets.find(o=>o.userData.iid==='kichou'&&o.geometry?.userData.drapedCloth);
+      let discoverable=false;
+      if(mesh){const center=mesh.localToWorld(new THREE.Vector3(0,0,0)),normal=new THREE.Vector3(0,0,1).transformDirection(mesh.matrixWorld);
+        const ray=new THREE.Raycaster(center.clone().addScaledVector(normal,.3),normal.negate());
+        discoverable=ray.intersectObject(mesh).length>0;
+      }
+      return {count:cloths.length,latticeCount:lattices.length,finiteAndBounded,pitch,shared,discoverable};
+    });
+    assert.ok(fittings.count>5&&fittings.latticeCount>10&&fittings.finiteAndBounded&&fittings.pitch&&fittings.shared&&fittings.discoverable,JSON.stringify(fittings));
+    passed.push('curtain folds have finite bounded geometry, retain discovery, share meshes, and lattice spacing is consistent');
     const botany=await page.evaluate(()=>{
       const matrix=new THREE.Matrix4(),point=new THREE.Vector3();let bounded=true,batches=0;
       scene.traverse(mesh=>{
