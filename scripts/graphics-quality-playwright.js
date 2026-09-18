@@ -70,6 +70,22 @@ const {chromium} = require('playwright');
     });
     assert.ok(fittings.count>5&&fittings.latticeCount>10&&fittings.finiteAndBounded&&fittings.pitch&&fittings.shared&&fittings.discoverable,JSON.stringify(fittings));
     passed.push('curtain folds have finite bounded geometry, retain discovery, share meshes, and lattice spacing is consistent');
+    const treeStructure=await page.evaluate(()=>{
+      const trees=[];scene.traverse(o=>{if(o.geometry?.userData.connectedTree)trees.push(o);});
+      const valid=trees.every(mesh=>{
+        const g=mesh.geometry,p=g.attributes.position,n=g.attributes.normal,b=g.boundingBox;
+        const con=mesh.userData.crownConnections,targets=mesh.userData.crownTargets;
+        const reaches=targets.every(t=>con.some(c=>c.end.every((v,i)=>Math.abs(v-t[i])<1e-6)));
+        const finite=[...p.array,...n.array,...g.attributes.uv.array].every(Number.isFinite);
+        const indexed=Array.from(g.index.array).every(i=>i<p.count);
+        return reaches&&finite&&indexed&&b.min.y<0&&b.min.y>-.12&&mesh.material===MAT.trunk;
+      });
+      const identity=trees.map(t=>t.geometry.id);
+      for(const season of ['summer','autumn','winter','spring'])applySeason(season);
+      return {count:trees.length,valid,reused:trees.every((t,i)=>t.geometry.id===identity[i])};
+    });
+    assert.ok(treeStructure.count>5&&treeStructure.valid&&treeStructure.reused,JSON.stringify(treeStructure));
+    passed.push('tree branches reach foliage centers, root tips meet the ground, and seasons reuse the same finite geometry');
     const botany=await page.evaluate(()=>{
       const matrix=new THREE.Matrix4(),point=new THREE.Vector3();let bounded=true,batches=0;
       scene.traverse(mesh=>{

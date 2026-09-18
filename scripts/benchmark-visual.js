@@ -13,6 +13,8 @@ const scenes=[
  {name:'veranda',time:'day',season:'spring',view:'fp',pos:[-5,3.2,7],target:[4,1.6,4],yaw:1.3},
  {name:'garden',time:'dusk',season:'summer',view:'fp',pos:[8,1.62,19],yaw:3.1},
  {name:'pond',time:'day',season:'summer',view:'fp',pos:[2,3.2,23],target:[2,.02,34],yaw:Math.PI},
+ {name:'tree',time:'day',season:'summer',view:'fp',pos:[0,2.2,0],subject:'maple'},
+ {name:'tree-autumn',time:'day',season:'autumn',view:'fp',pos:[0,2.2,0],subject:'maple'},
  {name:'iris',time:'day',season:'summer',view:'fp',pos:[-13,1.22,22.25],target:[-13,.55,24],yaw:Math.PI},
  {name:'lotus',time:'day',season:'summer',view:'fp',pos:[-25,1.5,39.4],target:[-26,.3,42],yaw:Math.PI},
  {name:'pink',time:'day',season:'summer',view:'fp',pos:[8,.9,15.8],target:[8,.30,17],yaw:Math.PI},
@@ -57,6 +59,7 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
    const profile={name:eco?'eco':'high',readyMs:Date.now()-start,scenes:[]};
    for(const shot of selectedScenes){
     await page.evaluate(s=>{
+     if(s.subject==='maple'){const root=SEASONAL.maples[0];s.pos=[root.position.x+3.8,2.1,root.position.z+5.5];s.target=[root.position.x,2.9,root.position.z];}
      hideModeBrief(true);document.getElementById('toast').style.display='none';document.getElementById('loadingScreen').classList.remove('show');
      APP.view=s.view;applySeason(s.season);setTime(s.time);AUTO_TIME._paused=true;APP_FPSCAP=0;
      document.getElementById('toast').style.display='none';
