@@ -6,6 +6,8 @@ const label=process.argv[2]||'after';
 const html=fs.readFileSync(path.resolve(root,process.argv[3]||'寝殿造り3D探訪_統合版.html'));
 const scenes=[
  {name:'front',time:'day',season:'spring',view:'fp',pos:[0,1.62,26],yaw:0},
+ {name:'roof',time:'day',season:'spring',view:'fp',pos:[23,12,20],target:[0,6,-2]},
+ {name:'roof-winter',time:'day',season:'winter',view:'fp',pos:[23,12,20],target:[0,6,-2]},
  {name:'overview',time:'day',season:'spring',view:'ov',pos:[80,105,92]},
  {name:'interior',time:'day',season:'spring',view:'fp',pos:[0,2.8,-3],yaw:1.3},
  {name:'textile',time:'day',season:'spring',view:'fp',pos:[1.1,2.5,3.5],target:[1.1,2.25,.9]},

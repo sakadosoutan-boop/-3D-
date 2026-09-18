@@ -45,6 +45,26 @@ const {chromium} = require('playwright');
     });
     assert.ok(Object.values(surfaces).every(Boolean),JSON.stringify(surfaces));
     passed.push('wood follows the post, floor scale is consistent, and shared UVs preserve other materials');
+    const roofStructure=await page.evaluate(()=>{
+      const roofs=[];scene.traverse(o=>{if(o.geometry?.userData.roofProfile)roofs.push(o);});
+      const valid=roofs.every(mesh=>{
+        const geo=mesh.geometry,p=geo.attributes.position,n=geo.attributes.normal,profile=geo.userData.roofProfile;
+        if(![...p.array,...n.array,...geo.attributes.uv.array].every(Number.isFinite))return false;
+        if(geo.boundingBox.min.y < -profile.thickness-.0001||Math.abs(geo.boundingBox.max.y-profile.h)>.0001)return false;
+        const key=i=>[p.getX(i),p.getY(i),p.getZ(i)].map(v=>Math.round(v*10000)).join(',');
+        const edges=new Map();
+        for(let i=0;i<geo.index.count;i+=3){
+          const a=geo.index.getX(i),b=geo.index.getX(i+1),c=geo.index.getX(i+2),keys=[key(a),key(b),key(c)];
+          if(new Set(keys).size!==3)return false;
+          for(let j=0;j<3;j++){const pair=[keys[j],keys[(j+1)%3]].sort().join('/');edges.set(pair,(edges.get(pair)||0)+1);}
+        }
+        return [...edges.values()].every(count=>count===2)&&geo.attributes.uv===geo.attributes.uv2;
+      });
+      const identities=roofs.map(m=>m.geometry.id);applySeason('winter');const snow=MAT.roof.map===null;
+      applySeason('spring');return {count:roofs.length,valid,snow,restored:MAT.roof.map===TEX.roof&&roofs.every((m,i)=>m.geometry.id===identities[i])};
+    });
+    assert.ok(roofStructure.count>10&&roofStructure.valid&&roofStructure.snow&&roofStructure.restored,JSON.stringify(roofStructure));
+    passed.push('curved roofs form closed finite shells, keep ridge height, and reuse geometry through snow changes');
     const fittings=await page.evaluate(()=>{
       const cloths=[],lattices=[];
       scene.traverse(o=>{if(o.geometry?.userData.drapedCloth)cloths.push(o);if(o.geometry?.userData.latticePitch)lattices.push(o);});
