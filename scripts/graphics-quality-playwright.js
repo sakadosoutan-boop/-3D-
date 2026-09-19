@@ -150,7 +150,7 @@ const {chromium} = require('playwright');
           if(o.geometry)geometries.add(o.geometry.id);
           for(const mat of [].concat(o.material||[]))for(const value of Object.values(mat))if(value&&value.isTexture)textures.add(value.id);
         });
-        FOLIAGE_DETAIL.forEach((detail,high)=>{geometries.add(high.id);if(detail.low)geometries.add(detail.low.id);});
+        [FOLIAGE_DETAIL,ROOF_DETAIL].forEach(cache=>cache.forEach((detail,high)=>{geometries.add(high.id);if(detail.low)geometries.add(detail.low.id);}));
         return {geometries:[...geometries].sort((a,b)=>a-b),textures:[...textures].sort((a,b)=>a-b)};
       };
       window.graphicsDraw=()=>{
@@ -208,6 +208,33 @@ const {chromium} = require('playwright');
     });
     assert.ok(waterContinuity.rendered&&waterContinuity.uvDifference<=2&&waterContinuity.overlapDifference<=2&&waterContinuity.ripplesAboveWater,JSON.stringify(waterContinuity));
     passed.push('water patches share their texture scale and overlapping surfaces keep the same color');
+
+    const finish=await page.evaluate(()=>{
+      LOW_POWER.set(false,{persist:false,silent:true});GFX.setPreset('high');applySeason('autumn');graphicsDraw();
+      const groups=[petals,leavesFall,snowFall,rainFall],counts=[80,40,100,220];
+      const batches=groups.every((g,i)=>g.children.length===1&&g.children[0].isInstancedMesh&&g.children[0].count===counts[i]&&g.userData.particles.length===counts[i]);
+      const p=leavesFall.userData.particles[0],saved={pos:p.position.clone(),rot:p.rotation.clone()};
+      p.position.set(0,20,0);updateFalling(leavesFall,.2,5);const whole=p.position.clone();
+      p.position.set(0,20,0);updateFalling(leavesFall,.1,5);updateFalling(leavesFall,.1,5);
+      const independent=whole.distanceTo(p.position)<1e-6;
+      p.position.copy(saved.pos);p.rotation.copy(saved.rot);uploadWeatherBatch(leavesFall);
+      const matrix=new THREE.Matrix4();leavesFall.userData.batch.getMatrixAt(0,matrix);
+      const aligned=new THREE.Vector3().setFromMatrixPosition(matrix).distanceTo(p.position)<1e-5;
+      const highRoof=[...ROOF_DETAIL.keys()][0];let roofMesh;scene.traverse(o=>{if(o.geometry===highRoof)roofMesh=o;});
+      LOW_POWER.set(true,{persist:false,silent:true});GARDEN_POLISH.update(1);LOW_POWER.update();
+      const before=p.position.clone();updateFalling(leavesFall,.2,5);
+      const stopped=groups.every(g=>!g.visible)&&before.equals(p.position);
+      const simpler=roofMesh.geometry!==highRoof&&roofMesh.geometry.index.count<highRoof.index.count;
+      LOW_POWER.set(false,{persist:false,silent:true});GARDEN_POLISH.update(2);
+      const restored=roofMesh.geometry===highRoof;
+      const lanterns=tourouGroup.userData.lanterns;
+      const boundedLights=lanterns.length===8&&lanterns.filter(l=>l.light?.isPointLight).length===2;
+      const glow=gimmicks.kagaribi.every(s=>s.halo.isSprite&&s.halo.material.depthTest&&s.halo.userData.baseSize>0);
+      applySeason('spring');graphicsDraw();
+      return {batches,independent,aligned,stopped,simpler,restored,boundedLights,glow};
+    });
+    assert.ok(Object.values(finish).every(Boolean),JSON.stringify(finish));
+    passed.push('weather batches preserve movement, eco stops all seasonal particles and simplifies roofs, lantern lights stay bounded');
 
     const cycles=[];
     for(let cycle=0;cycle<3;cycle++){

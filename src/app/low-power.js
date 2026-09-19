@@ -16,6 +16,7 @@ function setFps(value){APP_FPSCAP=value;fpsButtons(value);}
 function particleGroups(){
   const groups=[];
   if(typeof petals!=="undefined"&&petals)groups.push(petals);
+  if(typeof leavesFall!=="undefined"&&leavesFall)groups.push(leavesFall);
   if(typeof autumnLeaves!=="undefined"&&autumnLeaves)groups.push(autumnLeaves);
   if(typeof leaves!=="undefined"&&leaves&&leaves.isObject3D)groups.push(leaves);
   if(typeof snowFall!=="undefined"&&snowFall)groups.push(snowFall);

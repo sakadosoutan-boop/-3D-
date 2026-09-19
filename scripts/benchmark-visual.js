@@ -20,6 +20,8 @@ const scenes=[
  {name:'iris',time:'day',season:'summer',view:'fp',pos:[-13,1.22,22.25],target:[-13,.55,24],yaw:Math.PI},
  {name:'lotus',time:'day',season:'summer',view:'fp',pos:[-25,1.5,39.4],target:[-26,.3,42],yaw:Math.PI},
  {name:'pink',time:'day',season:'summer',view:'fp',pos:[8,.9,15.8],target:[8,.30,17],yaw:Math.PI},
+ {name:'rain',time:'day',season:'autumn',view:'fp',pos:[0,1.62,26],yaw:0,rain:true},
+ {name:'lantern',time:'night',season:'summer',view:'fp',pos:[3,.85,46],subject:'lantern'},
  {name:'night',time:'night',season:'summer',view:'fp',pos:[0,1.62,26],yaw:0}
 ];
 const requested=process.env.VISUAL_SCENES&&process.env.VISUAL_SCENES.split(',');
@@ -70,7 +72,9 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
      cur.cloudC.set(CLOUD_PAL[s.time].c);cur.cloudOp=CLOUD_PAL[s.time].op;
      const p=s.view==='ov'?[0,1.62,26]:s.pos;player.pos.set(...p);player.yaw=s.yaw||0;player.pitch=-.05;
      clock.running=true;clock.elapsedTime=12;clock.oldTime=performance.now()-16;
+     rainFall.userData.rainOn=!!s.rain;rainFall.userData.rainTimer=999;rainFall.visible=!!s.rain;if(s.rain)rainFall.userData.rainSeason=true;
      window.__SHINDEN_BENCH_PAUSE=false;animate(performance.now());window.__SHINDEN_BENCH_PAUSE=true;
+     if(s.subject==='lantern'){const p=tourouGroup.userData.lanterns[0].lg.position;s.pos=[p.x+1.1,.85,p.z+1.9];s.target=[p.x,.2,p.z];}
      camera.position.set(...s.pos);camera.rotation.order='YXZ';
      if(s.target)camera.lookAt(...s.target);else if(s.view==='ov')camera.lookAt(0,0,0);else camera.rotation.set(-.05,s.yaw||0,0,'YXZ');
      TEX.clouds.offset.set(.1,0);cloudDome.position.copy(camera.position);scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
@@ -84,8 +88,9 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
      const geos=new Set(),buffers=new Set(),textures=new Set(),instances=new Set();
      scene.traverse(o=>{if(o.geometry)geos.add(o.geometry);if(o.instanceMatrix)instances.add(o.instanceMatrix.array);if(o.instanceColor)instances.add(o.instanceColor.array);for(const m of [].concat(o.material||[])){Object.values(m).forEach(v=>{if(v&&v.isTexture)textures.add(v);});}});
      geos.forEach(g=>{Object.values(g.attributes).forEach(a=>buffers.add(a.array));if(g.index)buffers.add(g.index.array);});
+     let pointLights=0;scene.traverseVisible(o=>{if(o.isPointLight)pointLights++;});
      const pixels=[...textures].reduce((sum,t)=>sum+(t.image&&t.image.width&&t.image.height?t.image.width*t.image.height:0),0);
-     return {calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,
+     return {pointLights,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,
       geometryBytes:[...buffers].reduce((sum,b)=>sum+b.byteLength,0),instanceBytes:[...instances].reduce((sum,b)=>sum+b.byteLength,0),texturePixels:pixels,programs:renderer.info.programs.length,
       pixelRatio:renderer.getPixelRatio(),shadows:renderer.shadowMap.enabled,shadowSize:sun.shadow.mapSize.width,touch:IS_TOUCH,ibl:!!scene.environment,normal:!!MAT.sand.normalMap,ao:!!MAT.sand.aoMap,
       medianMs:+samples[Math.floor(samples.length*.5)].toFixed(2),p95Ms:+samples[Math.floor(samples.length*.95)].toFixed(2),fog:scene.fog.density};

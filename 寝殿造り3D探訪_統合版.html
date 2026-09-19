@@ -5878,8 +5878,17 @@ TEX.tatami=canv(512,512,(x,w,h)=>{x.fillStyle="#c8bd7e";x.fillRect(0,0,w,h);
   for(let xx=0;xx<w;xx+=6){x.strokeStyle="rgba(120,110,68,.16)";x.lineWidth=1;x.beginPath();x.moveTo(xx,0);x.lineTo(xx,h);x.stroke();}
   x.fillStyle="rgba(255,250,225,.06)";for(let y=0;y<h;y+=8)for(let xx=(y%16?0:6);xx<w;xx+=12)x.fillRect(xx,y,4,3);});
 /* 繧繝縁(うんげんべり=高貴な畳縁) */
-TEX.ungen=canv(64,64,(x,w,h)=>{const cols=["#3a7a4e","#e8e2d0","#b3402a","#e8e2d0","#3d5d9e","#e8e2d0"];
-  for(let i=0;i<h;i+=6){x.fillStyle=cols[(i/6|0)%cols.length];x.fillRect(0,i,w,6);}});
+TEX.ungen=canv(64,64,(x,w,h)=>{
+  x.fillStyle="#263d32";x.fillRect(0,0,w,h);
+  const bands=["#b09a58","#8e4335","#d3bd80","#364f6d","#cbb37c","#9b4e39","#bca36d","#294638"];
+  bands.forEach((c,i)=>{x.fillStyle=c;x.fillRect(0,i*8,w,8);});
+  for(let row=0;row<4;row++)for(let col=-1;col<5;col++){
+    const cx=col*16+(row%2)*8,cy=row*16+8;
+    x.fillStyle="#e0cc99";x.beginPath();x.moveTo(cx,cy-6);x.lineTo(cx+6,cy);x.lineTo(cx,cy+6);x.lineTo(cx-6,cy);x.closePath();x.fill();
+    x.fillStyle=row%2?"#395873":"#754238";x.fillRect(cx-2,cy-2,4,4);
+  }
+  x.fillStyle="rgba(35,27,18,.15)";for(let y=1;y<h;y+=2)x.fillRect(0,y,w,.5);
+});
 /* 御簾(竹すだれ+縁) */
 TEX.misu=canv(256,512,(x,w,h)=>{x.fillStyle="#c9b87a";x.fillRect(0,0,w,h);
   for(let y=0;y<h;y+=4){x.strokeStyle=`rgba(${rnd(120,150)|0},${rnd(100,128)|0},${rnd(50,70)|0},.9)`;x.lineWidth=2.2;x.beginPath();x.moveTo(0,y);x.lineTo(w,y);x.stroke();}
@@ -6147,7 +6156,7 @@ const MAT={
  hasuFlower:M({color:0xf0a8c0,roughness:.9}),
  tsubaki:M({color:0xc0352f,roughness:.85}),
  snowMat:M({map:TEX.snowSurf,roughness:.9}),
- stone:M({map:TEX.stonePaving,color:0x9a9486,roughness:.92}),
+ stone:M({map:TEX.stonePaving,color:0x9a9486,roughness:.92,vertexColors:true}),
  ash:M({map:TEX.ash,roughness:1}),
  ox:M({map:TEX.hide,roughness:.9}),
  flame:new THREE.MeshBasicMaterial({color:0xffb84d}),
@@ -6503,8 +6512,33 @@ function tassel(color=0xb3402a){
   return g;
 }
 
+// 炎の光芒。球の輪郭を描かず、深度判定付きの柔らかな共有画像を使う。
+let FIRE_HALO_TEX;
+function makeFireHalo(size,color){
+  if(!FIRE_HALO_TEX)FIRE_HALO_TEX=canv(64,64,(x,w,h)=>{
+    const g=x.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);
+    g.addColorStop(0,"rgba(255,255,255,.75)");g.addColorStop(.25,"rgba(255,244,208,.38)");g.addColorStop(1,"rgba(255,210,135,0)");
+    x.fillStyle=g;x.fillRect(0,0,w,h);
+  });
+  const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:FIRE_HALO_TEX,color,transparent:true,opacity:0,depthWrite:false,depthTest:true,blending:THREE.AdditiveBlending}));
+  halo.scale.setScalar(size);halo.userData.baseSize=size;halo.userData.noAutoShadow=true;return halo;
+}
+// 水際の石。底を平らにして接地させ、色のむらと低い苔を頂点に持たせる。
+function gardenRockGeo(radius,variant=0){
+  const geo=new THREE.IcosahedronGeometry(radius,1),p=geo.attributes.position,colors=[];
+  for(let i=0;i<p.count;i++){
+    const x=p.getX(i)/radius,y=p.getY(i)/radius,z=p.getZ(i)/radius;
+    const n=Math.sin(x*4.1+z*3.7+variant)*Math.cos(y*3.3-x*2.1)*.12;
+    p.setXYZ(i,x*radius*(1+n),Math.max(-.55*radius,y*radius*(.82+n)),z*radius*(.92+n));
+    const tone=.80+.16*(y+1)*.5,moss=Math.max(0,Math.sin(x*4+z*5+variant))*.20*Math.max(0,.65-y);
+    colors.push(tone*(1-moss*.65),tone*(1-moss*.18),tone*(1-moss));
+  }
+  geo.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));geo.computeVertexNormals();
+  geo.computeBoundingBox();geo.computeBoundingSphere();geo.userData.gardenRock=true;return geo;
+}
 /* 寄棟屋根: 緩い反り・隅の持ち上がり・厚みを一つの形状にまとめる。 */
-function hipRoofGeo(w,d,h,ridge=0.42){
+const ROOF_DETAIL=new Map();
+function hipRoofGeo(w,d,h,ridge=0.42,detail=6){
   const hw=w/2,hd=d/2,r=Math.max(w*ridge/2,.01),span=Math.min(w,d);
   const sag=Math.min(.32,h*.12,span*.022),lift=Math.min(.12,h*.06,span*.015),thickness=Math.min(.16,Math.max(.065,span*.028));
   const sides=[
@@ -6516,7 +6550,7 @@ function hipRoofGeo(w,d,h,ridge=0.42){
   const pos=[],uv=[],colors=[],indices=[];
   const add=(x,y,z,u,v,tone)=>{pos.push(x,y,z);uv.push(u,v);colors.push(tone,tone,tone);return pos.length/3-1;};
   sides.forEach(([a,b,c,e])=>{
-    const width=Math.hypot(b[0]-a[0],b[1]-a[1]),cols=width>8?6:4,rows=6;
+    const width=Math.hypot(b[0]-a[0],b[1]-a[1]),cols=detail<6?3:(width>8?6:4),rows=detail;
     const run=Math.hypot((a[0]+b[0]-c[0]-e[0])*.5,(a[1]+b[1]-c[1]-e[1])*.5);
     const slope=Math.hypot(run,h),base=pos.length/3;
     for(let j=0;j<=rows;j++)for(let i=0;i<=cols;i++){
@@ -6550,7 +6584,8 @@ function hipRoofGeo(w,d,h,ridge=0.42){
   g.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));g.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));
   g.setAttribute("uv2",g.attributes.uv);g.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));g.setIndex(indices);
   g.computeVertexNormals();g.computeBoundingBox();g.computeBoundingSphere();
-  g.userData.roofProfile={w,d,h,thickness,sag,lift};return g;
+  g.userData.roofProfile={w,d,h,thickness,sag,lift,detail};
+  if(detail===6)ROOF_DETAIL.set(g,{makeLow:()=>hipRoofGeo(w,d,h,ridge,3),low:null});return g;
 }
 function hipRoof(w,d,h,ridge,y){
   const g=new THREE.Group();
@@ -6569,7 +6604,9 @@ function railing(L){
   g.add(box(L,.06,.08,MAT.shu,0,.45,0));
   const n=Math.max(2,Math.round(L/1.8));
   const postGeo=RAIL_POST_GEO||(RAIL_POST_GEO=new THREE.BoxGeometry(.09,.82,.09));
-  const capGeo=RAIL_CAP_GEO||(RAIL_CAP_GEO=new THREE.CylinderGeometry(.075,.075,.1,8));
+  const capGeo=RAIL_CAP_GEO||(RAIL_CAP_GEO=new THREE.LatheGeometry([
+    [.075,-.05],[.075,-.032],[.044,-.014],[.060,.035],[.035,.074],[0,.105]
+  ].map(p=>new THREE.Vector2(...p)),8));
   const posts=new THREE.InstancedMesh(postGeo,MAT.shuDark,n+1);
   const caps=new THREE.InstancedMesh(capGeo,MAT.kin,n+1);
   const mat4=new THREE.Matrix4();
@@ -6880,19 +6917,19 @@ const SHISHIN_DATA={
   /* 汀(みぎわ)の石 */
   const bridgeClear=[[-20,22.5],[-20,29.6],[-15.8,35],[-7,39],[-4,36.8],[-4,28.5]];
   for(let i=0;i<N;i+=1){const p=ring[i];
-    const s=new THREE.Mesh(new THREE.DodecahedronGeometry(rnd(.4,1.0)),MAT.stone);
+    const radius=rnd(.4,1.0),s=new THREE.Mesh(gardenRockGeo(radius,i),MAT.stone);
     const sx=p[0]+rnd(-.5,.5),sz=p[1]+rnd(-.5,.5);
     if(bridgeClear.some(q=>Math.hypot(sx-q[0],sz-q[1])<3.0))continue;
-    s.position.set(sx,rnd(0,.25),sz);s.castShadow=true;s.receiveShadow=true;
-    s.rotation.set(rnd(0,3),rnd(0,3),rnd(0,3));pond.add(s);}
+    s.position.set(sx,radius*.5-.025,sz);s.castShadow=true;s.receiveShadow=true;
+    s.rotation.y=rnd(0,Math.PI*2);pond.add(s);}
   /* 中島 */
   function island(x,z,r){
     // [fix] 中島の地面は共有MAT.grassを使用(複製だと冬の雪化粧=grass色変更が効かず緑のまま残る)
     const i1=new THREE.Mesh(new THREE.CylinderGeometry(r,r*1.25,1.2,18),MAT.grass);
     i1.position.set(x,.5,z);i1.receiveShadow=true;i1.castShadow=true;pond.add(i1);
     const t=tree(rnd(2.4,3.2),"normal");t.position.set(x+rnd(-1,1),1.1,z+rnd(-1,1));pond.add(t);
-    [[r*.5,0],[-r*.4,r*.3]].forEach(o=>{const s=new THREE.Mesh(new THREE.DodecahedronGeometry(rnd(.5,.9)),MAT.stone);
-      s.position.set(x+o[0],1.1,z+o[1]);s.castShadow=true;pond.add(s);});
+    [[r*.5,0],[-r*.4,r*.3]].forEach((o,k)=>{const radius=rnd(.5,.9),s=new THREE.Mesh(gardenRockGeo(radius,k+3),MAT.stone);
+      s.position.set(x+o[0],1.1+radius*.5-.025,z+o[1]);s.castShadow=true;s.receiveShadow=true;pond.add(s);});
     return {x,z,r};
   }
   const isA=island(-20,34,4.6),isB=island(-4,40,3.4);  // 南庭寄りに配置(橋を短く美しく)
@@ -8058,7 +8095,7 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
     dish.position.y=1.56;dish.rotation.x=Math.PI/2;g.add(dish);
     const flame=new THREE.Mesh(new THREE.ConeGeometry(.07,.24,8),MAT.flame);
     flame.position.y=1.68;flame.visible=false;g.add(flame);
-    const halo=new THREE.Mesh(new THREE.SphereGeometry(.38,12,8),new THREE.MeshBasicMaterial({color:0xffb85a,transparent:true,opacity:.0,depthWrite:false}));
+    const halo=makeFireHalo(.95,0xffb85a);
     halo.position.y=1.68;halo.visible=false;halo.userData.noAutoShadow=true;g.add(halo);
     const light=new THREE.PointLight(0xffaa55,0,9,2);light.position.y=1.8;light.visible=true;g.add(light); // [perf]常時visible+intensityのみ変動=光源数不変で夜切替時のシェーダ再コンパイルを回避
     shinden.add(g);register(g,"toudai");
@@ -8314,7 +8351,7 @@ function kagaribi(x,z){
   // 炎(夜のみ)
   const flame=new THREE.Mesh(new THREE.ConeGeometry(.23,.72,10),MAT.flame);flame.position.y=by+.46;flame.visible=false;g.add(flame);
   const flame2=new THREE.Mesh(new THREE.ConeGeometry(.13,.46,8),new THREE.MeshBasicMaterial({color:0xffe27a}));flame2.position.y=by+.56;flame2.visible=false;g.add(flame2);
-  const halo=new THREE.Mesh(new THREE.SphereGeometry(.95,12,8),new THREE.MeshBasicMaterial({color:0xffa84a,transparent:true,opacity:0,depthWrite:false}));halo.position.y=by+.4;halo.visible=false;halo.userData.noAutoShadow=true;g.add(halo);
+  const halo=makeFireHalo(2.2,0xffa84a);halo.position.y=by+.4;halo.visible=false;halo.userData.noAutoShadow=true;g.add(halo);
   const light=new THREE.PointLight(0xffa050,0,17,2);light.position.y=by+.5;light.visible=true;g.add(light); // [perf]常時visible=光源数不変で夜切替の再コンパイル回避
   world.add(g);register(g,"kagaribi",new THREE.Vector3(x,2.5,z));
   gimmicks.kagaribi.push({flame,flame2,halo,light,phase:x*.7+z*.41});
@@ -10099,7 +10136,12 @@ function updateWakaVisibility(){
     autumn:canv(64,192,(x,w,h)=>{const g=x.createLinearGradient(0,0,w,h);g.addColorStop(0,"#fce8c8");g.addColorStop(1,"#f0c890");x.fillStyle=g;x.fillRect(0,0,w,h);for(let i=1;i<4;i++){x.strokeStyle="rgba(180,110,40,.2)";x.lineWidth=1;x.beginPath();x.moveTo(w*i/4,0);x.lineTo(w*i/4,h);x.stroke();}x.strokeStyle="rgba(160,80,20,.5)";x.lineWidth=2;x.strokeRect(1,1,w-2,h-2);x.fillStyle="rgba(180,60,20,.35)";x.fillRect(0,h*.82,w,h*.18);}),
     winter:canv(64,192,(x,w,h)=>{const g=x.createLinearGradient(0,0,w,h);g.addColorStop(0,"#f4f4f8");g.addColorStop(1,"#e0e0f0");x.fillStyle=g;x.fillRect(0,0,w,h);for(let i=1;i<4;i++){x.strokeStyle="rgba(120,120,180,.2)";x.lineWidth=1;x.beginPath();x.moveTo(w*i/4,0);x.lineTo(w*i/4,h);x.stroke();}x.strokeStyle="rgba(80,80,160,.5)";x.lineWidth=2;x.strokeRect(1,1,w-2,h-2);x.fillStyle="rgba(60,60,140,.3)";x.fillRect(0,h*.82,w,h*.18);}),
   };
-  Object.values(seasonTex).forEach(t=>t.encoding=THREE.sRGBEncoding);
+  Object.values(seasonTex).forEach(t=>{
+    const x=t.image.getContext("2d");x.fillStyle="#594939";x.textAlign="center";x.textBaseline="middle";
+    x.font='27px "Yu Mincho", "Noto Serif JP", serif';x.fillText("和",32,65);x.fillText("歌",32,103);
+    x.strokeStyle="rgba(90,65,37,.45)";x.lineWidth=1;x.beginPath();x.arc(32,23,6,0,Math.PI*2);x.stroke();
+    t.encoding=THREE.sRGBEncoding;t.needsUpdate=true;
+  });
   const mats={};
   Object.entries(seasonTex).forEach(([s,t])=>mats[s]=new THREE.MeshBasicMaterial({map:t,side:THREE.DoubleSide,transparent:true}));
   const geo=new THREE.PlaneGeometry(0.14,0.42); // 前より小さく
@@ -10123,79 +10165,77 @@ function updateWakaVisibility(){
   WAKA_MESHES.forEach(m=>m.visible=false);
 })();
 
-// 花びら（春）や落ち葉（秋）を本当の形に改良した降下パーティクル生成
-function makeFalling(count,texture,size){
-  const g=new THREE.Group();
-  const mat=new THREE.MeshBasicMaterial({
-    map:texture,
-    transparent:true,
-    opacity:0.9,
-    side:THREE.DoubleSide,
-    depthWrite:false,
-    alphaTest:0.02 // 透明縁を柔らかくし、黒い輪郭が出にくいようにする
-  });
-  const geo=new THREE.PlaneGeometry(size,size); // 1ジオメトリを全粒子で共有（プール化）
-  for(let i=0; i<count; i++){
-    const m=new THREE.Mesh(geo,mat);
-    m.position.set(rnd(-60,60),rnd(0,40),rnd(-60,60));
-    m.userData={vy:rnd(0.02,0.06),sway:Math.random()*6,sx:rnd(0.3,0.8)};
-    m.rotation.set(rnd(0,3),rnd(0,3),rnd(0,3));
-    g.add(m);
-  }
-  g.userData.mat=mat;g.userData.geo=geo;g.visible=false;scene.add(g);return g;
+// 季節粒子は種類ごとに1回で描く。状態は保持し、更新時は既存の配置行列だけを書き換える。
+function makeWeatherBatch(count,geo,mat,init){
+  const g=new THREE.Group(),batch=new THREE.InstancedMesh(geo,mat,count),particles=[];
+  for(let i=0;i<count;i++){const p=new THREE.Object3D();init(p);p.updateMatrix();batch.setMatrixAt(i,p.matrix);particles.push(p);}
+  batch.instanceMatrix.setUsage(THREE.DynamicDrawUsage);batch.instanceMatrix.needsUpdate=true;
+  batch.frustumCulled=false;batch.userData.noAutoShadow=true;batch.castShadow=false;
+  g.add(batch);g.userData={particles,batch,mat,geo,noAutoShadow:true};g.visible=false;scene.add(g);return g;
 }
-const petals=makeFalling(80,TEX.sakuraPetal,0.28);   // 桜の花びら
-const leavesFall=makeFalling(40,TEX.mapleLeaf,0.52); // 紅葉の落ち葉
-const snowFall=makeFalling(100,TEX.snow,0.26);       // 雪
-/* 雨エフェクト: 夏の夕方/夜・秋に降る */
-const rainMat=new THREE.MeshBasicMaterial({color:0xaac8ee,transparent:true,opacity:0.28,depthWrite:false,side:THREE.DoubleSide});
+function uploadWeatherBatch(g){
+  const {particles,batch}=g.userData;
+  for(let i=0;i<particles.length;i++){particles[i].updateMatrix();batch.setMatrixAt(i,particles[i].matrix);}
+  batch.instanceMatrix.needsUpdate=true;
+}
+function makeFalling(count,texture,size){
+  const mat=new THREE.MeshBasicMaterial({map:texture,transparent:true,opacity:.9,side:THREE.DoubleSide,depthWrite:false,alphaTest:.02});
+  return makeWeatherBatch(count,new THREE.PlaneGeometry(size,size),mat,p=>{
+    p.position.set(rnd(-60,60),rnd(0,40),rnd(-60,60));
+    p.userData={vy:rnd(.02,.06),sway:Math.random()*6,sx:rnd(.3,.8)};
+    p.rotation.set(rnd(0,3),rnd(0,3),rnd(0,3));
+  });
+}
+const petals=makeFalling(80,TEX.sakuraPetal,.28);
+const leavesFall=makeFalling(40,TEX.mapleLeaf,.52);
+const snowFall=makeFalling(100,TEX.snow,.26);
+const rainMat=new THREE.MeshBasicMaterial({color:0xaac8ee,transparent:true,opacity:.28,depthWrite:false,side:THREE.DoubleSide});
 function makeRain(){
-  const g=new THREE.Group();
-  const rainGeo=new THREE.PlaneGeometry(0.04,0.65); // 雨粒も1ジオメトリ共有
-  for(let i=0;i<220;i++){
-    const m=new THREE.Mesh(rainGeo,rainMat);
-    m.position.set(rnd(-55,55),rnd(0,38),rnd(-55,55));
-    m.userData={vy:rnd(0.60,0.95),sway:Math.random()*1.5,sx:rnd(0.04,0.10)};
-    m.rotation.y=Math.random()*Math.PI;
-    g.add(m);
-  }
-  g.userData={noAutoShadow:true,rainSeason:false,rainOn:false,rainTimer:rnd(15,45)};
-  g.visible=false;scene.add(g);return g;
+  const g=makeWeatherBatch(220,new THREE.PlaneGeometry(.04,.65),rainMat,p=>{
+    p.position.set(rnd(-55,55),rnd(0,38),rnd(-55,55));
+    p.userData={vy:rnd(.60,.95),sway:Math.random()*1.5,sx:rnd(.04,.10)};p.rotation.y=Math.random()*Math.PI;
+  });
+  Object.assign(g.userData,{rainSeason:false,rainOn:false,rainTimer:rnd(15,45)});return g;
 }
 const rainFall=makeRain();
 function updateRain(g,dt,t,windPush){
-  const wp=windPush||0; // 波4: 強風時の横流れ追加分(既定0=既存の降り方のまま)
-  g.children.forEach(m=>{
-    const u=m.userData;
-    m.position.y-=u.vy*60*dt;
-    m.position.x+=Math.sin(t*u.sx+u.sway)*0.015+wp*dt;
-    if(m.position.y<0){m.position.y=38;m.position.x=rnd(-55,55);m.position.z=rnd(-55,55);}
-  });
+  if(window.LOW_POWER&&LOW_POWER.active)return;
+  const wp=windPush||0;
+  g.userData.particles.forEach(p=>{
+    const u=p.userData;p.position.y-=u.vy*60*dt;
+    p.position.x+=Math.sin(t*u.sx+u.sway)*.015*dt*60+wp*dt;
+    if(p.position.y<0){p.position.y=38;p.position.x=rnd(-55,55);p.position.z=rnd(-55,55);}
+  });uploadWeatherBatch(g);
 }
 /* 灯籠流し: 夏の夜に池に浮かぶ灯籠8基。小島(-20,34)(-4,40)を避けた安全な南側開水面に配置 */
 const tourouGroup=(()=>{
   const g=new THREE.Group();g.visible=false;g.userData.noAutoShadow=true;scene.add(g);
   const lanterns=[];
-  const rippleTex=(()=>{const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d");
-    [30,48,66].forEach((r,i)=>{x.strokeStyle=`rgba(255,240,180,${0.44-i*.11})`;x.lineWidth=3;x.beginPath();x.arc(64,64,r,0,Math.PI*2);x.stroke();});
-    const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return t;})();
+  const rippleTex=canv(128,128,(x,w,h)=>{
+    const glow=x.createRadialGradient(64,64,0,64,64,64);glow.addColorStop(0,"rgba(255,179,77,.7)");glow.addColorStop(.22,"rgba(255,191,99,.35)");glow.addColorStop(1,"rgba(255,188,89,0)");
+    x.fillStyle=glow;x.fillRect(0,0,w,h);
+    for(let y=24;y<110;y+=9){const half=42*Math.sin(y/128*Math.PI);x.strokeStyle="rgba(255,226,153,.15)";x.lineWidth=1.6;x.beginPath();x.moveTo(64-half,y);x.lineTo(64+half,y);x.stroke();}
+  });
+  const paper=canv(64,128,(x,w,h)=>{
+    const glow=x.createLinearGradient(0,0,w,0);glow.addColorStop(0,"#b77a36");glow.addColorStop(.5,"#fff0bd");glow.addColorStop(1,"#b77a36");x.fillStyle=glow;x.fillRect(0,0,w,h);
+    x.fillStyle="#74502c";x.fillRect(0,0,3,h);x.fillRect(w-3,0,3,h);x.fillRect(0,0,w,5);x.fillRect(0,h-5,w,5);
+    x.strokeStyle="rgba(116,73,37,.12)";x.lineWidth=.6;for(let y=9;y<h;y+=5){x.beginPath();x.moveTo(3,y);x.lineTo(w-3,y);x.stroke();}
+  });
+  const bodyGeo=new THREE.BoxGeometry(.25,.27,.25),capGeo=new THREE.BoxGeometry(.30,.025,.30),flameGeo=new THREE.ConeGeometry(.025,.08,6);
+  const paperMat=new THREE.MeshBasicMaterial({map:paper,color:0xffe4a5}),woodMat=new THREE.MeshBasicMaterial({color:0x61442b}),flameMat=new THREE.MeshBasicMaterial({color:0xffcc63});
   // 小島との衝突を避けるため中心位置と軌道半径を事前に計算済み
   const SAFE=[{cx:2,cz:50,r:4.5},{cx:8,cz:48,r:3.5},{cx:-2,cz:53,r:5.0},
               {cx:5,cz:46,r:3.0},{cx:10,cz:50,r:4.0},{cx:-6,cz:53,r:4.0},
               {cx:3,cz:56,r:5.5},{cx:-3,cz:47,r:3.0}];
-  SAFE.forEach(({cx,cz,r})=>{
+  SAFE.forEach(({cx,cz,r},index)=>{
     const lg=new THREE.Group();
-    const body=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.11,0.24,10),
-      new THREE.MeshBasicMaterial({color:0xfff8e0,transparent:true,opacity:0.82}));
-    body.position.y=0.13;lg.add(body);
-    const cap=new THREE.Mesh(new THREE.ConeGeometry(0.16,0.08,10),
-      new THREE.MeshBasicMaterial({color:0xe8d890}));
-    cap.position.y=0.28;lg.add(cap);
-    const flame=new THREE.Mesh(new THREE.ConeGeometry(0.04,0.10,6),
-      new THREE.MeshBasicMaterial({color:0xffaa33}));
-    flame.position.y=0.32;lg.add(flame);
-    const light=new THREE.PointLight(0xffaa44,0.85,4.0);
-    light.position.y=0.28;light.userData.noAutoShadow=true;lg.add(light);
+    const body=new THREE.Mesh(bodyGeo,paperMat);body.position.y=.16;lg.add(body);
+    const cap=new THREE.Mesh(capGeo,woodMat);cap.position.y=.305;lg.add(cap);
+    const base=new THREE.Mesh(capGeo,woodMat);base.position.y=.016;lg.add(base);
+    const flame=new THREE.Mesh(flameGeo,flameMat);flame.position.y=.11;lg.add(flame);
+    // 紙の明るさと水面の光で8基を見せ、実際の点光源は2灯に限定する。
+    const light=index%4===0?new THREE.PointLight(0xffaa44,.85,4):null;
+    if(light){light.position.y=.28;light.userData.noAutoShadow=true;lg.add(light);}
     const ripple=new THREE.Mesh(new THREE.PlaneGeometry(1,1),
       new THREE.MeshBasicMaterial({map:rippleTex,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
     ripple.rotation.x=-Math.PI/2;ripple.position.y=0.012;ripple.renderOrder=3;lg.add(ripple);
@@ -10212,18 +10252,15 @@ function sakuraGust(t){
   return Math.min(1,0.26+Math.max(0,(slow-0.8)/0.8)); // 底上げ→常に花びらが舞い、突風でさらに増える
 }
 function updateFalling(g,dt,t,gust,windPush){
-  const hasG=(gust!==undefined);
-  const spd=hasG?(0.5+gust*1.7):1, swayMul=hasG?(0.6+gust*2.6):1;
-  if(hasG&&g.userData.mat)g.userData.mat.opacity=0.22+gust*0.68; // 平常は淡く、突風で濃く=間欠的な桜吹雪
-  const wp=windPush||0; // 波4: 強風イベント中の横流れ追加分(既定0=既存の動きのまま)
-  g.children.forEach(m=>{
-    const u=m.userData;
-    m.position.y-=u.vy*60*dt*spd;
-    m.position.x+=Math.sin(t*u.sx+u.sway)*0.02*swayMul+wp*dt;
-    m.rotation.x+=dt*1.5;m.rotation.z+=dt*1.2;
-    if(m.position.y<0.1){m.position.y=rnd(28,40);
-      m.position.x=rnd(-60,60);m.position.z=rnd(-60,60);}
-  });
+  if(window.LOW_POWER&&LOW_POWER.active)return;
+  const hasG=gust!==undefined,spd=hasG ? .5+gust*1.7 : 1,swayMul=hasG ? .6+gust*2.6 : 1,wp=windPush||0;
+  if(hasG)g.userData.mat.opacity=.22+gust*.68;
+  g.userData.particles.forEach(p=>{
+    const u=p.userData;p.position.y-=u.vy*60*dt*spd;
+    p.position.x+=Math.sin(t*u.sx+u.sway)*.02*swayMul*dt*60+wp*dt;
+    p.rotation.x+=dt*1.5;p.rotation.z+=dt*1.2;
+    if(p.position.y<.1){p.position.y=rnd(28,40);p.position.x=rnd(-60,60);p.position.z=rnd(-60,60);}
+  });uploadWeatherBatch(g);
 }
 
 /* ============================================================
@@ -15123,7 +15160,7 @@ const TIMES={
  day:{sky:0xbcdbec,fog:0xccdfea,sunI:1.28,sunC:0xfff4e2,sunP:[54,90,52],hemi:.55,amb:.18,ambC:0xf1edff,moon:0,exp:1.06,int:.35}, /* 昼:わずかに暖色の陽と冷色の空色フィル */
  dawn:{sky:0xc6c2d4,fog:0xdcd9e6,sunI:.82,sunC:0xffcf9a,sunP:[98,26,18],hemi:.44,amb:.15,ambC:0x9aa2c2,moon:.06,exp:1.0,int:.42}, /* 朝:低い暖色の陽＋冷たい朝影(ゴールデンアワー) */
  dusk:{sky:0xe89a5c,fog:0xd88e58,sunI:.74,sunC:0xff8b42,sunP:[-88,16,26],hemi:.3,amb:.13,ambC:0x8f96be,moon:0,exp:.97,int:.5}, /* 夕:西へ長く差す黄金色の斜光＋青紫の陰(逢魔が時) */
- night:{sky:0x0b1322,fog:0x0e1728,sunI:0,sunC:0xffffff,sunP:[60,95,45],hemi:.085,amb:.035,ambC:0x8496bc,moon:.36,exp:.94,int:.10} /* 夜:冷たい月あかりの陰(篝火の暖色を引き立てる) */
+ night:{sky:0x0b1322,fog:0x0e1728,sunI:0,sunC:0xffffff,sunP:[60,95,45],hemi:.10,amb:.045,ambC:0x8496bc,moon:.36,exp:.94,int:.32} /* 夜:冷たい月あかりの陰(篝火の暖色を引き立てる) */
 };
 const ambient=new THREE.AmbientLight(0xfff0dd,0.18);scene.add(ambient);
 const cur={sky:new THREE.Color(TIMES.day.sky),fog:new THREE.Color(TIMES.day.fog),sunC:new THREE.Color(TIMES.day.sunC),
@@ -22213,6 +22250,7 @@ function setFps(value){APP_FPSCAP=value;fpsButtons(value);}
 function particleGroups(){
   const groups=[];
   if(typeof petals!=="undefined"&&petals)groups.push(petals);
+  if(typeof leavesFall!=="undefined"&&leavesFall)groups.push(leavesFall);
   if(typeof autumnLeaves!=="undefined"&&autumnLeaves)groups.push(autumnLeaves);
   if(typeof leaves!=="undefined"&&leaves&&leaves.isObject3D)groups.push(leaves);
   if(typeof snowFall!=="undefined"&&snowFall)groups.push(snowFall);
@@ -26742,7 +26780,7 @@ function animate(now){
       st.light.intensity += ((want * flicker) - st.light.intensity) * Math.min(1, dt * 10);
       st.flame.visible = true;
       st.flame.scale.setScalar(flicker * (1 + Math.sin(t * 14 + st.phase) * 0.12));
-      if(st.halo){st.halo.visible=true;st.halo.material.opacity=.16*flicker;st.halo.scale.setScalar(1+Math.sin(t*7+st.phase)*.08);}
+      if(st.halo){st.halo.visible=true;st.halo.material.opacity=.16*flicker;st.halo.scale.setScalar(st.halo.userData.baseSize*(1+Math.sin(t*7+st.phase)*.08));}
     } else {
       st.light.intensity += (0 - st.light.intensity) * Math.min(1, dt * 5);
       st.flame.visible = false;
@@ -26773,7 +26811,7 @@ function animate(now){
       st.flame.scale.setScalar(flicker*(1+Math.sin(t*12+st.phase)*0.14));
       st.flame2.scale.setScalar(flicker*(1+Math.sin(t*16+st.phase+1)*0.18));
       st.flame.rotation.y=Math.sin(t*5+st.phase)*.12;
-      st.halo.visible=true;st.halo.material.opacity=.20*flicker;st.halo.scale.setScalar(1+Math.sin(t*6+st.phase)*.10);
+      st.halo.visible=true;st.halo.material.opacity=.20*flicker;st.halo.scale.setScalar(st.halo.userData.baseSize*(1+Math.sin(t*6+st.phase)*.10));
     }else{
       st.light.intensity+=(0-st.light.intensity)*Math.min(1,dt*5);
       st.flame.visible=false;st.flame2.visible=false;
@@ -27107,17 +27145,18 @@ function animate(now){
      /* 水面のさざ波で映りが伸び縮みする揺らぎ(波9: 着座HUDモードは3f毎に間引き) */
      moonRefl.scale.set(1+Math.sin(t*1.7)*0.07,1+Math.sin(t*1.1+1.3)*0.13,1);}}
   // 灯籠流し: 夏の夜
-  {const tOn=(APP.season==="summer"&&APP.time==="night");
+  {const tOn=(APP.season==="summer"&&APP.time==="night"&&!(window.LOW_POWER&&LOW_POWER.active));
    if(tourouGroup.visible!==tOn)tourouGroup.visible=tOn;
    if(tOn){tourouGroup.userData.lanterns.forEach(l=>{
      const ud=l.lg.userData,a=t*ud.spd+ud.phase,flow=Math.sin(t*ud.flow+ud.phase);
      l.lg.position.x=ud.cx+Math.cos(a)*ud.r*0.65+flow*.22;
      l.lg.position.z=ud.cz+Math.sin(a)*ud.r+flow*.58;
      l.lg.rotation.y=-a+Math.sin(t*.7+ud.phase)*.10;
-     l.light.intensity=0.7+Math.sin(t*3.1+ud.phase)*0.25;
+     if(l.light)l.light.intensity=.7+Math.sin(t*3.1+ud.phase)*.18;
      l.flame.scale.y=0.88+Math.sin(t*4.3+ud.phase)*0.16;
-     const rp=(t*.32+ud.phase)%1,sc=1.0+rp*1.9;
-     l.ripple.scale.set(sc,sc,sc);l.ripple.material.opacity=(1-rp)*0.20;
+     const sc=1.35+Math.sin(t*1.1+ud.phase)*.12;
+     l.ripple.scale.set(sc,sc*1.45,1);l.ripple.material.opacity=.32+Math.sin(t*2.1+ud.phase)*.035;
+     l.lg.position.y=.07+Math.sin(t*.8+ud.phase)*.006;
    });}}
   if(!decoThrottleSkip)updateFlyingLife(dt,t);  /* 波9: 着座HUDモードは3f毎に間引き(表示自体は消さない) */
   if(!decoThrottleSkip)updateSparrowChase(t);   /* 波9: 同上 */
@@ -32707,7 +32746,7 @@ GARDEN_POLISH=(()=>{
   const off=/[?&]polish=0/.test(location.search);
   const foliage=[];scene.traverse(o=>{
     if(o.material===MAT.water){o.userData.noAutoShadow=true;o.castShadow=false;}
-    if(o.geometry&&FOLIAGE_DETAIL.has(o.geometry))foliage.push({mesh:o,high:o.geometry,detail:FOLIAGE_DETAIL.get(o.geometry)});
+    if(o.geometry&&(FOLIAGE_DETAIL.has(o.geometry)||ROOF_DETAIL.has(o.geometry)))foliage.push({mesh:o,high:o.geometry,detail:FOLIAGE_DETAIL.get(o.geometry)||ROOF_DETAIL.get(o.geometry)});
     // 同じ葉材質を使う松の頂芽などにも中立色を用意し、未定義の頂点色で黒くならないようにする。
     if(o.geometry&&!o.geometry.attributes.color&&[].concat(o.material||[]).some(m=>m.vertexColors)){
       o.geometry.setAttribute("color",new THREE.BufferAttribute(new Float32Array(o.geometry.attributes.position.count*3).fill(1),3));
