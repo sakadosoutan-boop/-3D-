@@ -6499,6 +6499,40 @@ function box(w,h,d,mat,x=0,y=0,z=0,shadow=true){const m=new THREE.Mesh(sharedBox
   m.position.set(x,y,z);if(shadow){m.castShadow=true;m.receiveShadow=true;}return m;}
 function cyl(rt,rb,h,mat,x=0,y=0,z=0,seg=10){const m=new THREE.Mesh(sharedCylGeo(rt,rb,h,seg,surfaceUVStyle(mat)==="wood"?"wood":""),mat);
   m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;return m;}
+// 同じ登録対象内の静止部材だけを材質別にまとめる。可動建具には使わない。
+function mergeStaticDetail(root,tag){
+  const groups=new Map();
+  for(const mesh of [...root.children]){
+    if(!mesh.isMesh||mesh.isInstancedMesh||Array.isArray(mesh.material))continue;
+    const key=mesh.material.uuid+":"+mesh.castShadow+":"+mesh.receiveShadow;
+    if(!groups.has(key))groups.set(key,{mat:mesh.material,cast:mesh.castShadow,receive:mesh.receiveShadow,parts:[]});
+    mesh.updateMatrix();
+    const geo=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry.clone();geo.applyMatrix4(mesh.matrix);
+    groups.get(key).parts.push(geo);root.remove(mesh);
+  }
+  for(const entry of groups.values()){
+    const geo=new THREE.BufferGeometry(),count=entry.parts.reduce((n,g)=>n+g.attributes.position.count,0);
+    for(const [name,size] of [["position",3],["normal",3],["uv",2],["color",3]]){
+      const data=new Float32Array(count*size);let offset=0;
+      for(const part of entry.parts){const attr=part.attributes[name],length=part.attributes.position.count*size;
+        if(attr)data.set(attr.array,offset);else if(name==="color")data.fill(1,offset,offset+length);offset+=length;}
+      geo.setAttribute(name,new THREE.BufferAttribute(data,size));
+    }
+    geo.setAttribute("uv2",geo.attributes.uv);geo.computeBoundingBox();geo.computeBoundingSphere();
+    const mesh=new THREE.Mesh(geo,entry.mat);mesh.castShadow=entry.cast;mesh.receiveShadow=entry.receive;
+    mesh.userData.staticDetail=tag;mesh.userData.sourceParts=entry.parts.length;root.add(mesh);
+    entry.parts.forEach(g=>g.dispose());
+  }
+  return root;
+}
+// Three r128はInstancedMeshの個別配置を自動で包まない。専用形状に全配置の境界を保存する。
+function fitDetailInstances(mesh){
+  const geo=mesh.geometry;geo.computeBoundingBox();const base=geo.boundingBox.clone(),all=base.clone(),part=new THREE.Box3(),matrix=new THREE.Matrix4();
+  for(let i=0;i<mesh.count;i++){mesh.getMatrixAt(i,matrix);all.union(part.copy(base).applyMatrix4(matrix));}
+  // 元形状も含め、r128のインスタンス単位のraycastの早期棄却にも安全な球にする。
+  geo.boundingSphere=all.getBoundingSphere(new THREE.Sphere());mesh.frustumCulled=true;
+  mesh.instanceMatrix.needsUpdate=true;return mesh;
+}
 function goldStud(x,y,z,r=.055){return cyl(r,r*.9,.05,MAT.kin,x,y,z,10);}
 function addCornerCaps(g,w,d,y){
   [[-w/2,-d/2],[w/2,-d/2],[-w/2,d/2],[w/2,d/2]].forEach(p=>{
@@ -6587,9 +6621,38 @@ function hipRoofGeo(w,d,h,ridge=0.42,detail=6){
   g.userData.roofProfile={w,d,h,thickness,sag,lift,detail};
   if(detail===6)ROOF_DETAIL.set(g,{makeLow:()=>hipRoofGeo(w,d,h,ridge,3),low:null});return g;
 }
+function roofRafters(w,d,h,ridge,profile){
+  const poses=[],pose=new THREE.Object3D(),forward=new THREE.Vector3(0,0,1),dir=new THREE.Vector3();
+  const hw=w/2,hd=d/2,r=Math.max(w*ridge/2,.01);
+  const sides=[[[ -hw,hd],[hw,hd],[-r,0],[r,0]],[[hw,-hd],[-hw,-hd],[r,0],[-r,0]],
+    [[-hw,-hd],[-hw,hd],[-r,0],[-r,0]],[[hw,hd],[hw,-hd],[r,0],[r,0]]];
+  sides.forEach(([a,b,c,e])=>{
+    const width=Math.hypot(b[0]-a[0],b[1]-a[1]),count=Math.floor(width/.56);
+    const run=Math.hypot((a[0]+b[0]-c[0]-e[0])*.5,(a[1]+b[1]-c[1]-e[1])*.5),end=Math.min(.34,1.65/run);
+    for(let i=1;i<count;i++){
+      const u=i/count;
+      const point=t=>new THREE.Vector3(
+        (a[0]+(b[0]-a[0])*u)*(1-t)+(c[0]+(e[0]-c[0])*u)*t,
+        h*t-profile.sag*Math.sin(Math.PI*t)+profile.lift*Math.pow(1-t,4)*Math.pow(2*u-1,6)-profile.thickness-.047,
+        (a[1]+(b[1]-a[1])*u)*(1-t)+(c[1]+(e[1]-c[1])*u)*t);
+      // 二分して屋根の緩い反りに追従し、小口を軒先から突き出さない。
+      for(let j=0;j<2;j++){
+        const a=point(.008+(end-.008)*j/2),b=point(.008+(end-.008)*(j+1)/2);
+        dir.subVectors(b,a);pose.position.copy(a).add(b).multiplyScalar(.5);pose.quaternion.setFromUnitVectors(forward,dir.clone().normalize());
+        pose.scale.set(1,1,dir.length()+.012);pose.updateMatrix();poses.push(pose.matrix.clone());
+      }
+    }
+  });
+  const geo=new THREE.BoxGeometry(.085,.085,1);boxSurfaceUV(geo,.085,.085,1,"wood");geo.setAttribute("uv2",geo.attributes.uv);
+  const mesh=new THREE.InstancedMesh(geo,MAT.wood,poses.length);
+  poses.forEach((m,i)=>mesh.setMatrixAt(i,m));fitDetailInstances(mesh);
+  mesh.receiveShadow=true;mesh.castShadow=false;mesh.userData.noAutoShadow=true;mesh.userData.architecturalDetail=true;
+  mesh.userData.staticDetail="rafters";return mesh;
+}
 function hipRoof(w,d,h,ridge,y){
   const g=new THREE.Group();
   const m=new THREE.Mesh(hipRoofGeo(w,d,h,ridge),MAT.roof);m.castShadow=true;m.receiveShadow=true;g.add(m);
+  if(Math.min(w,d)>=3.8)g.add(roofRafters(w,d,h,ridge,m.geometry.userData.roofProfile));
   const rl=Math.max(w*ridge,1.2);
   g.add(box(rl+.7,.42,.85,MAT.woodDark,0,h+.1,0));          // 大棟
   g.add(box(.55,.85,1.0,MAT.woodDark,-rl/2-.35,h+.28,0));    // 鬼端
@@ -6598,15 +6661,16 @@ function hipRoof(w,d,h,ridge,y){
 }
 /* 高欄(手すり) — 長さLのX軸方向、原点中心 */
 var RAIL_POST_GEO,RAIL_CAP_GEO;
+function railCapGeo(){return RAIL_CAP_GEO||(RAIL_CAP_GEO=new THREE.LatheGeometry([
+  [.075,-.05],[.075,-.032],[.044,-.014],[.060,.035],[.035,.074],[0,.105]
+].map(p=>new THREE.Vector2(...p)),8));}
 function railing(L){
   const g=new THREE.Group();
   g.add(box(L,.07,.1,MAT.shu,0,.78,0));
   g.add(box(L,.06,.08,MAT.shu,0,.45,0));
   const n=Math.max(2,Math.round(L/1.8));
   const postGeo=RAIL_POST_GEO||(RAIL_POST_GEO=new THREE.BoxGeometry(.09,.82,.09));
-  const capGeo=RAIL_CAP_GEO||(RAIL_CAP_GEO=new THREE.LatheGeometry([
-    [.075,-.05],[.075,-.032],[.044,-.014],[.060,.035],[.035,.074],[0,.105]
-  ].map(p=>new THREE.Vector2(...p)),8));
+  const capGeo=railCapGeo();
   const posts=new THREE.InstancedMesh(postGeo,MAT.shuDark,n+1);
   const caps=new THREE.InstancedMesh(capGeo,MAT.kin,n+1);
   const mat4=new THREE.Matrix4();
@@ -6982,13 +7046,14 @@ const SHISHIN_DATA={
       for(let i=0;i<=posts;i++){
         const t=i/posts,x=-L/2+L*t,y=arch(t);
         g.add(box(0.09,0.62,0.09,MAT.shuDark,x,y+0.31,zz));
-        const gp=cyl(0.075,0.075,0.12,MAT.kin,x,y+0.66,zz,8);g.add(gp); // 擬宝珠
+        const gp=new THREE.Mesh(railCapGeo(),MAT.kin);gp.position.set(x,y+.68,zz);gp.castShadow=gp.receiveShadow=true;g.add(gp);
       }
       // 手すり(笠木)は各区間の両端を結び、反りの接線に沿わせる
       for(let i=0;i<posts;i++){
         g.add(archBeam(i/posts,(i+1)/posts,.6,.07,.09,MAT.shu,zz));
       }
     });
+    mergeStaticDetail(g,"arched-bridge");
     g.position.set((x1+x2)/2,0,(z1+z2)/2);
     g.rotation.y=-Math.atan2(z2-z1,x2-x1);
     world.add(g);register(g,"niwa");
@@ -7901,6 +7966,17 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
   shinden.add(hipRoof(S.sw+4.6,S.sd+4.6,1.7,.62,S.f2+S.ph+.26));
   const upperWall=box(S.mw+1.2,1.5,S.md+1.2,MAT.plaster,0,S.f2+S.ph+1.9,0);shinden.add(upperWall);
   shinden.add(hipRoof(S.mw+5.2,S.md+5.2,3.4,.5,S.f2+S.ph+2.6));
+  // 上部の白壁を細い木枠で区切り、軒の下に材の重なりを作る。
+  const upperFrame=new THREE.Group(),uw=S.mw+1.2,ud=S.md+1.2,uy=S.f2+S.ph+1.9;
+  for(const z of [-ud/2-.035,ud/2+.035]){
+    for(const y of [uy-.70,uy+.64])upperFrame.add(box(uw+.16,.11,.12,MAT.woodDark,0,y,z));
+    for(let i=0;i<=6;i++)upperFrame.add(box(.13,1.34,.12,MAT.woodDark,-uw/2+uw*i/6,uy-.03,z));
+  }
+  for(const x of [-uw/2-.035,uw/2+.035]){
+    for(const y of [uy-.70,uy+.64])upperFrame.add(box(.12,.11,ud+.16,MAT.woodDark,x,y,0));
+    for(let i=1;i<3;i++)upperFrame.add(box(.12,1.34,.13,MAT.woodDark,x,uy-.03,-ud/2+ud*i/3));
+  }
+  shinden.add(mergeStaticDetail(upperFrame,"upper-wall-frame"));
 
   /* --- 塗籠(母屋西側の壁の部屋) --- */
   const nuri=new THREE.Group();
@@ -10769,11 +10845,12 @@ SEASONAL.tonbo=[];
 // 竹(北の対そば・左奥の竹藪)
 (function buildBamboo(){
   const bambooStats={clusters:0,culms:0,thin:0,thick:0,takenoko:0};
+  const bc=M({color:0x557542,roughness:.82}),bn=M({color:0x6f8451,roughness:.9});
+  const lm=GARDEN_BOTANY.green;
+  const bambooBlade=GARDEN_BOTANY.blade();
   function makeBambooClump(cx,cz,count,spread=1.4){
     const g=new THREE.Group();g.position.set(cx,0,cz);
-    const bc=M({color:0x4a7a3a,roughness:.8}),bn=M({color:0x3a6028,roughness:.85});
-    const lm=M({color:0x4a7535,roughness:.9,side:THREE.DoubleSide});
-    const stemGeo=new THREE.CylinderGeometry(1,1,1,7),nodeGeo=new THREE.CylinderGeometry(1,1,1,7),leafGeo=new THREE.PlaneGeometry(1,1);
+    const stemGeo=new THREE.CylinderGeometry(1,1,1,7),nodeGeo=new THREE.CylinderGeometry(1,1,1,7),leafGeo=bambooBlade.clone();
     const stems=[],nodes=[],leaves=[];
     const q=new THREE.Quaternion(),m4=new THREE.Matrix4(),v=new THREE.Vector3();
     for(let i=0;i<count;i++){
@@ -10785,10 +10862,16 @@ SEASONAL.tonbo=[];
         stems.push({p:[ox,y,oz],s:[r,.56,r],r:[0,0,0]});
         if(k%2===0)nodes.push({p:[ox,y+.27,oz],s:[r+.012,.04,r+.012],r:[0,0,0]});
       }
-      for(let k=Math.floor(nn*.55);k<nn;k++){
-        for(let j=0;j<4;j++){
-          const ang=rnd(0,Math.PI*2);
-          leaves.push({p:[ox+Math.cos(ang)*.08,k*.58+.28,oz+Math.sin(ang)*.08],s:[.055,rnd(.30,.62),1],r:[0,ang,rnd(-.52,-.24)]});
+      for(let k=Math.floor(nn*.55);k<nn;k+=2){
+        for(let j=0;j<3;j++){
+          const ang=i*.73+k*1.2+j*Math.PI*2/3,reach=.30+.14*(1-k/nn),yy=k*.58+.28;
+          const from=new THREE.Vector3(ox,yy,oz),to=new THREE.Vector3(ox+Math.sin(ang)*reach,yy+.15,oz+Math.cos(ang)*reach),delta=to.clone().sub(from);
+          const rotation=new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),delta.clone().normalize()));
+          stems.push({p:from.clone().add(to).multiplyScalar(.5).toArray(),s:[.014,delta.length(),.014],r:[rotation.x,rotation.y,rotation.z]});
+          for(let leaf=0;leaf<2;leaf++){
+            const t=.55+leaf*.45,base=from.clone().lerp(to,t),length=rnd(.32,.55);
+            leaves.push({p:base.toArray(),s:[1.3,length,1.3],r:[.85,ang+(leaf?-.32:.32),.14]});
+          }
         }
       }
     }
@@ -10799,7 +10882,8 @@ SEASONAL.tonbo=[];
         m4.compose(v.set(it.p[0],it.p[1],it.p[2]),q,new THREE.Vector3(it.s[0],it.s[1],it.s[2]));
         mesh.setMatrixAt(i,m4);
       });
-      mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=true;mesh.receiveShadow=true;g.add(mesh);
+      fitDetailInstances(mesh);mesh.userData.staticDetail="bamboo";
+      mesh.castShadow=mat!==lm;mesh.receiveShadow=true;if(mat===lm)markFoliageNoShadow(mesh);g.add(mesh);
       return mesh;
     };
     addInstances(stemGeo,bc,stems);
@@ -10894,7 +10978,7 @@ SEASONAL.fuji=[];
   const g=new THREE.Group();g.position.set(-49,0,4);world.add(g);
   const wm=M({color:0x5a3820,roughness:.85});
   [[-2.0,0],[0,0],[2.0,0],[-2.0,3.4],[0,3.4],[2.0,3.4]].forEach(p=>g.add(cyl(.065,.065,2.75,wm,p[0],1.37,p[1],6)));
-  [[0],[1.1],[2.25],[3.4]].forEach(zz=>{
+  [0,1.1,2.25,3.4].forEach(zz=>{
     const bar=new THREE.Mesh(new THREE.CylinderGeometry(.042,.042,4.35,6),wm);
     bar.rotation.z=Math.PI/2;bar.position.set(0,2.58,zz);g.add(bar);
   });
@@ -10902,30 +10986,60 @@ SEASONAL.fuji=[];
     const bar=new THREE.Mesh(new THREE.CylinderGeometry(.038,.038,3.65,6),wm);
     bar.rotation.x=Math.PI/2;bar.position.set(x,2.62,1.7);g.add(bar);
   });
-  // 花房(房は下ほど淡く先細り。長く垂らして藤らしく)
-  const purples=[0x7a44b8,0x8f5fd0,0xa97fe0,0xc6a8ee];
-  [[-1.7,0.25],[-1.2,.8],[-.55,1.35],[0,1.9],[.65,2.45],[1.4,3.0],[1.8,3.35],[-1.5,2.85],[-.8,2.55],[.35,.55],[1.25,1.1],[-.15,3.25],[.95,2.05],[-1.9,1.8],[1.8,.45],[-.2,.95]].forEach(([xi,zi])=>{
-    const cl=new THREE.Group();cl.position.set(xi,2.5,zi);g.add(cl);
-    const len=8+Math.floor(rnd(0,5));
-    for(let k=0;k<len;k++){
-      const tcol=purples[Math.min(purples.length-1,Math.floor(k/len*purples.length))];
-      const fr=rnd(.05,.082)*(1-k/len*0.45);
-      for(let m2=0;m2<3;m2++){
-        const fl=new THREE.Mesh(new THREE.SphereGeometry(fr,5,4),M({color:tcol,roughness:.85}));
-        fl.position.set(rnd(-.07,.07),-k*.105,rnd(-.07,.07));cl.add(fl);
-      }
-    }
-    SEASONAL.fuji.push(cl);
-  });
-  // 葉(羽状複葉=数枚の小葉を一本の柄に並べる)
-  for(let i=0;i<22;i++){
-    const st=new THREE.Group();st.position.set(rnd(-1.95,1.95),rnd(2.0,2.55),rnd(.05,3.35));st.rotation.y=rnd(0,6);g.add(st);
-    for(let j=0;j<5;j++){
-      const lf=new THREE.Mesh(new THREE.CircleGeometry(rnd(.05,.08),5),
-        M({color:0x3a6828,roughness:.9,side:THREE.DoubleSide}));
-      lf.position.set((j-2)*.09,0,0);lf.rotation.set(-1.2,rnd(-.2,.2),0);st.add(lf);
-    }
+  mergeStaticDetail(g,"wisteria-trellis");
+  // 房の芯、蝶形の花、羽状複葉を各一括描画。花の先端ほど小さく淡くする。
+  const flowerGeo=new THREE.BufferGeometry();
+  flowerGeo.setAttribute("position",new THREE.Float32BufferAttribute([
+    0,0,0, -.055,.015,.018, -.070,.060,-.004, 0,.085,-.012, .070,.060,-.004, .055,.015,.018,
+    -.037,-.030,.033, 0,-.050,.047, .037,-.030,.033, 0,.024,.032
+  ],3));
+  flowerGeo.setIndex([0,1,2,0,2,3,0,3,4,0,4,5,0,6,7,0,7,8,0,9,6,0,8,9]);
+  flowerGeo.computeVertexNormals();
+  const flowers=[],stalks=[],leaves=[],leafStems=[],colors=[];
+  const clusters=[[-1.7,.25],[-1.2,.8],[-.55,1.35],[0,1.9],[.65,2.45],[1.4,3],
+    [1.8,3.35],[-1.5,2.85],[-.8,2.55],[.35,.55],[1.25,1.1],[-.15,3.25],[.95,2.05],[-1.9,1.8],[1.8,.45],[-.2,.95]];
+  // 花房の芯と葉柄を棚の桟まで細い蔓でつなぐ。
+  function vineToRail(x,z){
+    const rail=[-2,-.65,.65,2].reduce((a,b)=>Math.abs(a-x)<Math.abs(b-x)?a:b);
+    if(Math.abs(rail-x)>.01)leafStems.push({p:[(x+rail)/2,2.65,z],s:[1.6,Math.abs(rail-x),1.6],r:[0,0,Math.PI/2]});
   }
+  const light=new THREE.Color(0xd3b6ee).convertSRGBToLinear(),dark=new THREE.Color(0x814db0).convertSRGBToLinear();
+  clusters.forEach(([x,z],index)=>{
+    const length=.84+(index%5)*.08,levels=10;vineToRail(x,z);
+    stalks.push({p:[x,2.585-length/2,z],s:[1,length+.13,1]});
+    for(let k=0;k<levels;k++)for(let j=0;j<3;j++){
+      const t=k/(levels-1),angle=k*1.05+j*Math.PI*2/3+index*.7,spread=.075*(1-t*.65),scale=1.05-t*.65;
+      flowers.push({p:[x+Math.sin(angle)*spread,2.46-t*length,z+Math.cos(angle)*spread],r:[.16,angle,.10*Math.sin(angle)],s:[scale,scale,scale]});
+      colors.push(dark.clone().lerp(light,t*.85));
+    }
+  });
+  const pose=new THREE.Object3D();
+  function instances(parent,geo,mat,items,tag){
+    const mesh=new THREE.InstancedMesh(geo,mat,items.length);
+    items.forEach((it,i)=>{pose.position.set(...it.p);pose.rotation.set(...(it.r||[0,0,0]));pose.scale.set(...it.s);pose.updateMatrix();mesh.setMatrixAt(i,pose.matrix);});
+    fitDetailInstances(mesh);mesh.userData.staticDetail=tag;markFoliageNoShadow(mesh);mesh.receiveShadow=true;parent.add(mesh);return mesh;
+  }
+  const bloomRoot=new THREE.Group();g.add(bloomRoot);SEASONAL.fuji.push(bloomRoot);
+  instances(bloomRoot,new THREE.CylinderGeometry(.006,.008,1,5),GARDEN_BOTANY.stem,stalks,"wisteria-stalk");
+  const flowerMat=M({color:0xffffff,roughness:.9,side:THREE.DoubleSide});
+  const blooms=instances(bloomRoot,flowerGeo,flowerMat,flowers,"wisteria-flower");
+  colors.forEach((color,i)=>blooms.setColorAt(i,color));blooms.instanceColor.needsUpdate=true;
+  // 一枝に対生の小葉三対と頂葉。葉の根元を茎から離さない。
+  const leafGeo=GARDEN_BOTANY.blade();
+  for(let i=0;i<28;i++){
+    const x=-1.85+(i%7)*.61,z=.10+Math.floor(i/7)*1.02,y=2.62,angle=i*2.399;
+    vineToRail(x,z);
+    const direction=new THREE.Vector3(Math.sin(angle),-.24,Math.cos(angle)).normalize(),origin=new THREE.Vector3(x,y,z),length=.58;
+    const euler=new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),direction));
+    leafStems.push({p:origin.clone().addScaledVector(direction,length/2).toArray(),s:[1,length,1],r:[euler.x,euler.y,euler.z]});
+    for(let j=1;j<=3;j++)for(const side of [-1,1]){
+      const at=origin.clone().addScaledVector(direction,j*.15);
+      leaves.push({p:at.toArray(),r:[1.4,angle+side*.9,0],s:[2.7,.23-j*.018,1]});
+    }
+    leaves.push({p:origin.clone().addScaledVector(direction,length).toArray(),r:[1.6,angle,0],s:[2.6,.21,1]});
+  }
+  instances(g,new THREE.CylinderGeometry(.006,.007,1,5),GARDEN_BOTANY.stem,leafStems,"wisteria-leaf-stalk");
+  instances(g,leafGeo,GARDEN_BOTANY.green,leaves,"wisteria-leaf");
   register(g,"fuji",new THREE.Vector3(-49,2.3,4));
 })();
 
@@ -32744,7 +32858,8 @@ if(APP.map==="kamakura"){
 /* 庭の立体感: 小さな接地影と、水面だけの波法線。低画質・省電力で自動的に簡略化。 */
 GARDEN_POLISH=(()=>{
   const off=/[?&]polish=0/.test(location.search);
-  const foliage=[];scene.traverse(o=>{
+  const architectural=[],foliage=[];scene.traverse(o=>{
+    if(o.userData.architecturalDetail)architectural.push(o);
     if(o.material===MAT.water){o.userData.noAutoShadow=true;o.castShadow=false;}
     if(o.geometry&&(FOLIAGE_DETAIL.has(o.geometry)||ROOF_DETAIL.has(o.geometry)))foliage.push({mesh:o,high:o.geometry,detail:FOLIAGE_DETAIL.get(o.geometry)||ROOF_DETAIL.get(o.geometry)});
     // 同じ葉材質を使う松の頂芽などにも中立色を用意し、未定義の頂点色で黒くならないようにする。
@@ -32829,7 +32944,7 @@ GARDEN_POLISH=(()=>{
     if(on!==active){
       active=on;strength.value=on?1:0;
       foliage.forEach(f=>{if(!on&&!f.detail.low)f.detail.low=f.detail.makeLow();f.mesh.geometry=on?f.high:f.detail.low;});
-      plants.visible=buildings.visible=on;
+      plants.visible=buildings.visible=on;architectural.forEach(m=>m.visible=on);
     }
     spring.visible=on&&APP.season==="spring";time.value=t;
     cloudMix.value=APP.time==="night"?.20:APP.time==="day"?.60:.50;

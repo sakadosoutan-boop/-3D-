@@ -236,6 +236,44 @@ const {chromium} = require('playwright');
     assert.ok(Object.values(finish).every(Boolean),JSON.stringify(finish));
     passed.push('weather batches preserve movement, eco stops all seasonal particles and simplifies roofs, lantern lights stay bounded');
 
+    const gardenDetail=await page.evaluate(()=>{
+      const details=[],rafters=[],bridges=[];
+      scene.traverse(o=>{if(o.userData.staticDetail)details.push(o);if(o.userData.architecturalDetail)rafters.push(o);if(o.userData.staticDetail==='arched-bridge')bridges.push(o);});
+      const instances=details.filter(o=>o.isInstancedMesh),matrix=new THREE.Matrix4(),point=new THREE.Vector3();
+      const bounds=instances.every(mesh=>{
+        const geo=mesh.geometry,b=geo.boundingBox,s=geo.boundingSphere;
+        if(!b||!s||!Number.isFinite(s.radius))return false;
+        for(let i=0;i<mesh.count;i++){
+          mesh.getMatrixAt(i,matrix);if(!matrix.elements.every(Number.isFinite))return false;
+          for(const x of [b.min.x,b.max.x])for(const y of [b.min.y,b.max.y])for(const z of [b.min.z,b.max.z]){
+            point.set(x,y,z).applyMatrix4(matrix);if(point.distanceTo(s.center)>s.radius+.0001)return false;
+          }
+        }
+        return true;
+      });
+      applySeason('spring');scene.updateMatrixWorld(true);
+      const bloom=details.find(o=>o.userData.staticDetail==='wisteria-flower'),g=bloom.geometry;
+      bloom.getMatrixAt(0,matrix);matrix.premultiply(bloom.matrixWorld);
+      const vertices=[0,1,2].map(i=>new THREE.Vector3().fromBufferAttribute(g.attributes.position,g.index.getX(i)).applyMatrix4(matrix));
+      const center=vertices[0].clone().add(vertices[1]).add(vertices[2]).multiplyScalar(1/3);
+      const normal=vertices[1].clone().sub(vertices[0]).cross(vertices[2].clone().sub(vertices[0])).normalize();
+      const ray=new THREE.Raycaster(center.clone().addScaledVector(normal,.04),normal.negate(),0,.1);
+      const flowerPick=ray.intersectObject(bloom).some(hit=>hit.instanceId===0)&&rayTargets.includes(bloom)&&bloom.userData.iid==='fuji';
+      const bridgePick=BRIDGES.every(b=>{
+        const r=new THREE.Raycaster(new THREE.Vector3(b.cx,6,b.cz),new THREE.Vector3(0,-1,0),0,10);
+        return r.intersectObjects(bridges).some(hit=>hit.object.userData.iid==='niwa');
+      });
+      const seasonal=SEASONAL.fuji.every(g=>g.visible);applySeason('winter');
+      const hidden=SEASONAL.fuji.every(g=>!g.visible);applySeason('spring');
+      LOW_POWER.set(true,{persist:false,silent:true});GARDEN_POLISH.update(1);const simplified=rafters.every(m=>!m.visible);
+      LOW_POWER.set(false,{persist:false,silent:true});GARDEN_POLISH.update(2);const restored=rafters.every(m=>m.visible);
+      return {bounds,flowerPick,bridgePick,seasonal,hidden,simplified,restored,
+        bounded:bridges.length===9&&bridges.reduce((n,o)=>n+o.userData.sourceParts,0)>450,
+        rafters:rafters.length>10,flowerBatch:bloom.count===480&&bloom.instanceColor.count===480};
+    });
+    assert.ok(Object.values(gardenDetail).every(Boolean),JSON.stringify(gardenDetail));
+    passed.push('garden instance bounds contain every part, batched flowers and bridges remain clickable, seasons and eco preserve details');
+
     const cycles=[];
     for(let cycle=0;cycle<3;cycle++){
       for(const season of ['spring','summer','autumn','winter']){

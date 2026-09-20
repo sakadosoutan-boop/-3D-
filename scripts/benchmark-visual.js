@@ -22,6 +22,10 @@ const scenes=[
  {name:'pink',time:'day',season:'summer',view:'fp',pos:[8,.9,15.8],target:[8,.30,17],yaw:Math.PI},
  {name:'rain',time:'day',season:'autumn',view:'fp',pos:[0,1.62,26],yaw:0,rain:true},
  {name:'lantern',time:'night',season:'summer',view:'fp',pos:[3,.85,46],subject:'lantern'},
+ {name:'eaves',time:'day',season:'spring',view:'fp',pos:[6,3.4,13],target:[0,4.5,0]},
+ {name:'bridge',time:'day',season:'summer',view:'fp',pos:[-15.8,2.3,24],target:[-20,1.05,26]},
+ {name:'wisteria',time:'day',season:'spring',view:'fp',pos:[-45.4,2.1,9],target:[-49,2.0,5.6]},
+ {name:'bamboo',time:'day',season:'summer',view:'fp',pos:[-45,2.1,-20],target:[-48,3.2,-28]},
  {name:'night',time:'night',season:'summer',view:'fp',pos:[0,1.62,26],yaw:0}
 ];
 const requested=process.env.VISUAL_SCENES&&process.env.VISUAL_SCENES.split(',');
