@@ -274,6 +274,44 @@ const {chromium} = require('playwright');
     assert.ok(Object.values(gardenDetail).every(Boolean),JSON.stringify(gardenDetail));
     passed.push('garden instance bounds contain every part, batched flowers and bridges remain clickable, seasons and eco preserve details');
 
+    const nightDetail=await page.evaluate(()=>{
+      const canvas=document.createElement('canvas');canvas.width=canvas.height=160;const ctx=canvas.getContext('2d');
+      let phaseAccuracy=true,outsideClear=true,mirrored=true;
+      for(const frac of [0,.1,.25,.5,.75,.9,1]){
+        const masks=[];
+        for(const waxing of [true,false]){
+          paintMoonPhaseShadow(ctx,160,160,frac,waxing);const data=ctx.getImageData(0,0,160,160).data;masks.push(data);
+          let lit=0,total=0;
+          for(let y=0;y<160;y++)for(let x=0;x<160;x++){
+            const radius=Math.hypot(x+.5-80,y+.5-80),a=data[(y*160+x)*4+3];
+            if(radius>160*.478)outsideClear&&=a===0;
+            if(radius<160*.478-1){total++;lit+=1-a/237;}
+          }
+          phaseAccuracy&&=Math.abs(lit/total-frac)<.018;
+        }
+        for(let y=0;y<160;y++)for(let x=0;x<160;x++)mirrored&&=Math.abs(masks[0][(y*160+x)*4+3]-masks[1][(y*160+159-x)*4+3])<=1;
+      }
+      LOW_POWER.set(false,{persist:false,silent:true});rainFall.userData.rainOn=false;rainFall.userData.rainTimer=999;rainFall.visible=false;
+      setTime('night');__setMoonAgeForTest(0);graphicsDraw();const newMoon=!moonRefl.visible;
+      __setMoonAgeForTest(MOON_SYNODIC_DAYS/2);graphicsDraw();const fullMoon=moonRefl.visible&&moonRefl.material.opacity>.25;
+      const painted=MOON_PHASE.paintCount,texture=TEX_moonPhaseShadow.id;graphicsDraw();graphicsDraw();
+      const reused=MOON_PHASE.paintCount===painted&&TEX_moonPhaseShadow.id===texture;
+      LOW_POWER.set(true,{persist:false,silent:true});graphicsDraw();const eco=!moonRefl.visible;
+      LOW_POWER.set(false,{persist:false,silent:true});rainFall.userData.rainOn=true;rainFall.userData.rainTimer=999;rainFall.visible=true;graphicsDraw();
+      const rain=!moonMesh.visible&&!moonHalo.visible&&!moonRefl.visible;
+      rainFall.userData.rainOn=false;rainFall.visible=false;setTime('day');graphicsDraw();const day=!moonMesh.visible&&!moonRefl.visible;
+      const flames=[];scene.traverse(o=>{if(o.geometry?.userData.fireTongue)flames.push(o);});
+      const finiteFlames=flames.length>4&&flames.every(o=>{
+        const g=o.geometry,p=g.userData.fireTongue;
+        return [...g.attributes.position.array,...g.attributes.normal.array].every(Number.isFinite)&&Math.abs(g.boundingBox.min.y+p.height/2)<1e-6&&Math.abs(g.boundingBox.max.y-p.height/2)<1e-6;
+      });
+      return {phaseAccuracy,outsideClear,mirrored,newMoon,fullMoon,reused,eco,rain,day,finiteFlames,
+        halo:moonHalo.isSprite&&moonHalo.material.depthTest&&!moonHalo.material.depthWrite&&!moonHalo.material.fog,
+        sharedFlame:fireTongueGeo(.07,.24,8)===fireTongueGeo(.07,.24,8)};
+    });
+    assert.ok(Object.values(nightDetail).every(Boolean),JSON.stringify(nightDetail));
+    passed.push('lunar masks match illumination and mirror without corner artifacts; rain, new moon and eco hide reflections; flames stay finite and shared');
+
     const cycles=[];
     for(let cycle=0;cycle<3;cycle++){
       for(const season of ['spring','summer','autumn','winter']){

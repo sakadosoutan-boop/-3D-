@@ -26,6 +26,10 @@ const scenes=[
  {name:'bridge',time:'day',season:'summer',view:'fp',pos:[-15.8,2.3,24],target:[-20,1.05,26]},
  {name:'wisteria',time:'day',season:'spring',view:'fp',pos:[-45.4,2.1,9],target:[-49,2.0,5.6]},
  {name:'bamboo',time:'day',season:'summer',view:'fp',pos:[-45,2.1,-20],target:[-48,3.2,-28]},
+ {name:'moon-full',time:'night',season:'autumn',view:'fp',pos:[0,1.62,26],subject:'moon',moonAge:14.765294},
+ {name:'moon-crescent',time:'night',season:'autumn',view:'fp',pos:[0,1.62,26],subject:'moon',moonAge:3},
+ {name:'moon-pond',time:'night',season:'autumn',view:'fp',pos:[-8,3.4,25],target:[-8,.09,39],moonAge:14.765294},
+ {name:'fire',time:'night',season:'autumn',view:'fp',pos:[-7.6,2.2,20.5],target:[-9,1.8,18],moonAge:14.765294},
  {name:'night',time:'night',season:'summer',view:'fp',pos:[0,1.62,26],yaw:0}
 ];
 const requested=process.env.VISUAL_SCENES&&process.env.VISUAL_SCENES.split(',');
@@ -68,6 +72,7 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
    for(const shot of selectedScenes){
     await page.evaluate(s=>{
      if(s.subject==='maple'){const root=SEASONAL.maples[0];s.pos=[root.position.x+3.8,2.1,root.position.z+5.5];s.target=[root.position.x,2.9,root.position.z];}
+     if(Number.isFinite(s.moonAge))__setMoonAgeForTest(s.moonAge);
      hideModeBrief(true);document.getElementById('toast').style.display='none';document.getElementById('loadingScreen').classList.remove('show');
      APP.view=s.view;applySeason(s.season);setTime(s.time);AUTO_TIME._paused=true;APP_FPSCAP=0;
      document.getElementById('toast').style.display='none';
@@ -79,8 +84,10 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
      rainFall.userData.rainOn=!!s.rain;rainFall.userData.rainTimer=999;rainFall.visible=!!s.rain;if(s.rain)rainFall.userData.rainSeason=true;
      window.__SHINDEN_BENCH_PAUSE=false;animate(performance.now());window.__SHINDEN_BENCH_PAUSE=true;
      if(s.subject==='lantern'){const p=tourouGroup.userData.lanterns[0].lg.position;s.pos=[p.x+1.1,.85,p.z+1.9];s.target=[p.x,.2,p.z];}
+     if(s.subject==='moon')s.target=moonMesh.position.toArray();
      camera.position.set(...s.pos);camera.rotation.order='YXZ';
      if(s.target)camera.lookAt(...s.target);else if(s.view==='ov')camera.lookAt(0,0,0);else camera.rotation.set(-.05,s.yaw||0,0,'YXZ');
+     if(s.subject==='moon'){moonPhaseShadow.lookAt(camera.position);}
      TEX.clouds.offset.set(.1,0);cloudDome.position.copy(camera.position);scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
      updateControlUI();renderer.render(scene,camera);
     },shot);
