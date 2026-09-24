@@ -7766,6 +7766,14 @@ const GISSHA_YARD={root:null,shed:null,sheds:[],cart:null,parkedCarts:[],guide:n
   const g=new THREE.Group();
   const cab=box(2.2,2.0,3.0,MAT.black,0,2.0,0);g.add(cab);
   const rf=hipRoof(2.9,3.7,.7,.7,3.0);g.add(rf);
+  const cabinDetail=new THREE.Group();
+  [-1,1].forEach(side=>{
+    cabinDetail.add(box(.035,.98,1.46,MAT.misu,side*1.128,2.13,0,false));
+    [1.62,2.64].forEach(y=>cabinDetail.add(box(.055,.045,1.63,MAT.kin,side*1.16,y,0,false)));
+    [-.82,.82].forEach(z=>cabinDetail.add(box(.055,1.06,.045,MAT.kin,side*1.16,2.13,z,false)));
+    [-1.13,1.13].forEach(z=>cabinDetail.add(box(.04,1.53,.065,MAT.woodDark,side*1.135,2.08,z,false)));
+  });
+  mergeStaticDetail(cabinDetail,"gissha-cabin");g.add(cabinDetail);
   g.add(box(2.0,1.7,.06,M({map:TEX.misu,side:THREE.DoubleSide}),0,1.95,1.52));
   const drive={wheels:[],legs:[],distance:0};
   [-1.25,1.25].forEach(x=>{
@@ -7774,6 +7782,7 @@ const GISSHA_YARD={root:null,shed:null,sheds:[],cart:null,parkedCarts:[],guide:n
     wreath.rotation.y=Math.PI/2;wreath.castShadow=wreath.receiveShadow=true;wheel.add(wreath);
     for(let i=0;i<8;i++){const sp=box(.07,1.9,.07,MAT.wood);sp.rotation.x=i*Math.PI/8;wheel.add(sp);}
     const hub=cyl(.16,.16,.24,MAT.woodDark);hub.rotation.z=Math.PI/2;wheel.add(hub);
+    const pin=cyl(.075,.075,.04,MAT.kin,x>0?.15:-.15,0,0,10);pin.rotation.z=Math.PI/2;wheel.add(pin);
     mergeStaticDetail(wheel,"gissha-wheel");g.add(wheel);drive.wheels.push(wheel);
   });
   const axle=cyl(.10,.10,2.7,MAT.woodDark,0,1.05,0,8);axle.rotation.z=Math.PI/2;g.add(axle);
