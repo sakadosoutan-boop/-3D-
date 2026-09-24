@@ -2142,6 +2142,7 @@ body.renai-mode #topbar{display:flex!important}
 }
 
 /* ===== 牛車運びミニゲーム ===== */
+body.gissha-carry-active #joy,body.gissha-carry-active #interactBtn,body.gissha-carry-active #crosshair{display:none!important}
 #gisshaCarryHud{position:fixed;left:calc(env(safe-area-inset-left) + 14px);
   bottom:calc(env(safe-area-inset-bottom) + 16px);z-index:45;width:min(360px,calc(100vw - 28px));
   display:none;pointer-events:auto;color:#f7edd8;font-family:var(--sans);
@@ -2152,24 +2153,56 @@ body.renai-mode #topbar{display:flex!important}
   color:#ffe9a0;font-size:15px;letter-spacing:.08em;margin-bottom:7px}
 #gisshaCarryHud .gc-title small{margin-left:auto;font-family:var(--sans);font-size:11px;color:#c9a23f;letter-spacing:.04em}
 #gisshaCarryHud .gc-text{font-size:11.5px;line-height:1.55;color:#e9dbc0;margin-bottom:9px}
-#gisshaCarryHud .gc-row{display:grid;grid-template-columns:58px 1fr 42px;align-items:center;gap:7px;margin:6px 0}
+#gisshaCarryHud .gc-row{display:grid;grid-template-columns:58px 1fr 48px;align-items:center;gap:7px;margin:6px 0}
 #gisshaCarryHud .gc-row span{font-size:10.5px;color:#bca56d}
 #gisshaCarryHud .gc-meter{height:8px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;
   border:1px solid rgba(201,162,63,.22)}
 #gisshaCarryHud .gc-fill{height:100%;width:0%;background:linear-gradient(90deg,#b8862b,#ead17a);border-radius:999px}
+#gisshaCarryHud .gc-speed{position:relative;height:11px}
+#gisshaCarryHud .gc-safe{position:absolute;left:39%;width:38%;top:0;bottom:0;background:#679a68;opacity:.6}
+#gisshaCarryHud .gc-speed .gc-fill{position:relative;height:5px;margin-top:2px}
+#gisshaCarryHud .gc-hint{font-size:11px;line-height:1.55;min-height:34px;color:#e3d3af;margin-top:8px}
+#gisshaCarryHud[data-warning="true"] #gcState{color:#ffb098}
+#gisshaCarryHud[data-warning="true"] .gc-speed .gc-fill{background:#e9a56c}
 #gisshaCarryHud .gc-center{position:relative;height:11px;border-radius:999px;background:rgba(255,255,255,.10);
   border:1px solid rgba(201,162,63,.22);overflow:hidden}
 #gisshaCarryHud .gc-center::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:rgba(255,240,180,.55)}
 #gisshaCarryHud .gc-dot{position:absolute;top:1px;left:50%;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;
   background:#ffe9a0;box-shadow:0 0 8px rgba(255,233,160,.7)}
 #gisshaCarryHud .gc-controls{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
-#gisshaCarryHud button{min-height:36px;border-radius:6px;border:1px solid rgba(201,162,63,.48);
+#gisshaCarryHud button{min-height:44px;touch-action:none;user-select:none;border-radius:6px;border:1px solid rgba(201,162,63,.48);
   background:rgba(80,50,18,.68);color:#f7edd8;font-family:var(--sans);font-size:12px;cursor:pointer}
-#gisshaCarryHud button:active{filter:brightness(1.35)}
+#gisshaCarryHud button:active,#gisshaCarryHud button[data-held]{background:#927333;color:#fff8e5}
+#gisshaCarryHud button:focus-visible,#gisshaCarryResult button:focus-visible{outline:2px solid #f7dea0;outline-offset:3px}
+#gisshaCarryHud kbd{display:block;font:9px var(--sans);opacity:.7;margin-top:3px}
+#gisshaCarryHud .gc-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+#gisshaCarryHud .gc-actions button{min-height:36px;background:#261d13;font-size:11px}
+#gisshaCarryResult{position:fixed;inset:0;z-index:62;display:none;align-items:center;justify-content:center;padding:20px;
+  background:rgba(10,9,7,.74);color:#f7edd8;font-family:var(--sans)}
+#gisshaCarryResult .gc-result-inner{width:min(430px,100%);max-height:85dvh;overflow:auto;padding:25px;background:linear-gradient(145deg,#302619,#18130e);
+  border:1px solid #a18751;border-radius:12px;box-shadow:0 20px 60px #0008;text-align:center}
+#gisshaCarryResult .gc-result-kicker{font-size:11px;letter-spacing:.18em;color:#cdb777}
+#gisshaCarryResult h2{font:20px var(--serif);margin:15px 0 10px;color:#ffe8ae}
+#gisshaCarryResult .gc-score{color:#f7dc91;margin:10px 0}
+#gisshaCarryResult .gc-score b{font:64px var(--serif);margin-right:7px}
+#gisshaCarryResult p{font-size:13px;line-height:1.8}
+#gisshaCarryResult #gcResultStats{font-size:11px;color:#c7b78d}
+#gisshaCarryResult .gc-result-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+#gisshaCarryResult button{min-height:46px;background:#765728;color:#fff1c9;border:1px solid #c3a269;border-radius:6px;cursor:pointer;font:13px var(--sans)}
+#gisshaCarryResult #gcReturn{background:#211b12}
 #gisshaCarryHud .gc-cancel{margin-top:7px;width:100%;background:rgba(36,24,14,.82);color:#cdbb86}
 @media (max-width:520px){
-  #gisshaCarryHud{left:10px;right:10px;bottom:10px;width:auto}
-  #gisshaCarryHud .gc-controls{grid-template-columns:repeat(2,1fr)}
+  #gisshaCarryHud{left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 10px);width:auto}
+  #gisshaCarryHud .gc-controls{grid-template-columns:repeat(4,1fr)}
+  #gisshaCarryHud kbd{display:none}
+}
+@media (max-height:520px) and (orientation:landscape){
+  #gisshaCarryHud{width:300px;left:10px;bottom:8px;padding:9px 11px}
+  #gisshaCarryHud .gc-text,#gisshaCarryHud kbd{display:none}
+  #gisshaCarryHud .gc-title{margin-bottom:5px}
+  #gisshaCarryHud .gc-hint{margin-top:5px;min-height:30px}
+  #gisshaCarryHud .gc-actions{margin-top:5px}
+  #gisshaCarryResult .gc-result-inner{padding:15px}
 }
 
 /* ===== 太極六壬式盤 占いパネル ===== */
