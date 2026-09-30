@@ -7832,6 +7832,17 @@ const GISSHA_YARD={root:null,shed:null,sheds:[],cart:null,parkedCarts:[],guide:n
     [1.62,2.64].forEach(y=>cabinDetail.add(box(.055,.045,1.63,MAT.kin,side*1.16,y,0,false)));
     [-.82,.82].forEach(z=>cabinDetail.add(box(.055,1.06,.045,MAT.kin,side*1.16,2.13,z,false)));
     [-1.13,1.13].forEach(z=>cabinDetail.add(box(.04,1.53,.065,MAT.woodDark,side*1.135,2.08,z,false)));
+    const crest=new THREE.Mesh(new THREE.TorusGeometry(.16,.023,7,18),MAT.kin);
+    crest.rotation.y=Math.PI/2;crest.position.set(side*1.18,2.18,0);cabinDetail.add(crest);
+    for(let i=0;i<4;i++){
+      const petal=box(.025,.13,.035,MAT.kin,side*1.19,2.18,0,false);
+      petal.rotation.x=i*Math.PI/4;cabinDetail.add(petal);
+    }
+  });
+  [-1.72,1.72].forEach(z=>cabinDetail.add(box(2.92,.055,.065,MAT.kin,0,2.77,z,false)));
+  [-1.42,1.42].forEach(x=>cabinDetail.add(box(.065,.055,3.36,MAT.kin,x,2.77,0,false)));
+  [-.85,-.43,0,.43,.85].forEach(x=>{
+    const bead=new THREE.Mesh(new THREE.SphereGeometry(.045,7,5),MAT.kin);bead.position.set(x,1.20,1.57);cabinDetail.add(bead);
   });
   mergeStaticDetail(cabinDetail,"gissha-cabin");g.add(cabinDetail);
   g.add(box(2.0,1.7,.06,M({map:TEX.misu,side:THREE.DoubleSide}),0,1.95,1.52));
@@ -7840,6 +7851,8 @@ const GISSHA_YARD={root:null,shed:null,sheds:[],cart:null,parkedCarts:[],guide:n
     const wheel=new THREE.Group();wheel.position.set(x,1.05,0);
     const wreath=new THREE.Mesh(new THREE.TorusGeometry(1.05,.16,10,22),MAT.woodDark);
     wreath.rotation.y=Math.PI/2;wreath.castShadow=wreath.receiveShadow=true;wheel.add(wreath);
+    const inlay=new THREE.Mesh(new THREE.TorusGeometry(.89,.035,7,22),MAT.kin);
+    inlay.rotation.y=Math.PI/2;inlay.position.x=x>0?.045:-.045;wheel.add(inlay);
     for(let i=0;i<8;i++){const sp=box(.07,1.9,.07,MAT.wood);sp.rotation.x=i*Math.PI/8;wheel.add(sp);}
     const hub=cyl(.16,.16,.24,MAT.woodDark);hub.rotation.z=Math.PI/2;wheel.add(hub);
     const pin=cyl(.075,.075,.04,MAT.kin,x>0?.15:-.15,0,0,10);pin.rotation.z=Math.PI/2;wheel.add(pin);
@@ -7872,6 +7885,11 @@ const GISSHA_YARD={root:null,shed:null,sheds:[],cart:null,parkedCarts:[],guide:n
   const tail=cyl(.035,.055,.72,oxHide,0,1.15,.98,7);tail.rotation.x=-.55;ox.add(tail);
   const tuft=new THREE.Mesh(new THREE.SphereGeometry(.10,9,6),hoof);tuft.scale.set(.8,1.5,.8);tuft.position.set(0,.78,1.18);ox.add(tuft);
   const yoke=box(1.45,.12,.12,MAT.woodDark,0,1.53,-1.00);ox.add(yoke);
+  [-1,1].forEach(s=>{
+    const bell=new THREE.Mesh(new THREE.SphereGeometry(.075,9,7),MAT.kin);
+    bell.position.set(s*.57,1.38,-1.02);ox.add(bell);
+    ox.add(box(.035,.27,.035,MAT.woodDark,s*.58,1.65,-1.02));
+  });
   [-1,1].forEach(s=>{const strap=new THREE.Mesh(new THREE.TorusGeometry(.42,.035,7,22,Math.PI),M({color:0x6c3f24,roughness:.8}));strap.position.set(s*.32,1.40,-1.08);strap.rotation.y=Math.PI/2;strap.rotation.z=Math.PI/2;ox.add(strap);});
   ox.position.set(0,0,-3.6);g.add(ox);drive.ox=ox;g.userData.drive=drive;
   g.position.set(-53.2,0,20.6);g.rotation.y=-Math.PI/2;   // 牛(牛車の前)は邸内側=東(+x)を向く。西築地を背にして駐める
@@ -7999,13 +8017,17 @@ function gisshaCarryBuildGuide(){
   if(GISSHA_YARD.guide)return GISSHA_YARD.guide;
   gisshaCarryPath(0);
   const g=new THREE.Group();g.name="gissha_carry_guide";g.visible=false;
-  const count=240,positions=[],indices=[];
+  const count=240,positions=[],roadPositions=[],indices=[];
   for(let i=0;i<=count;i++){
-    const p=gisshaCarryPath(i/count),w=.075;
+    const p=gisshaCarryPath(i/count),w=.075,r=1.55;
     positions.push(p.pos.x+p.normal.x*w,p.pos.y+.055,p.pos.z+p.normal.z*w,
       p.pos.x-p.normal.x*w,p.pos.y+.055,p.pos.z-p.normal.z*w);
+    roadPositions.push(p.pos.x+p.normal.x*r,p.pos.y+.027,p.pos.z+p.normal.z*r,
+      p.pos.x-p.normal.x*r,p.pos.y+.027,p.pos.z-p.normal.z*r);
     if(i<count){const k=i*2;indices.push(k,k+1,k+2,k+1,k+3,k+2);}
   }
+  const roadGeom=new THREE.BufferGeometry();roadGeom.setAttribute("position",new THREE.Float32BufferAttribute(roadPositions,3));roadGeom.setIndex(indices);roadGeom.computeVertexNormals();
+  const road=new THREE.Mesh(roadGeom,new THREE.MeshBasicMaterial({color:0xcbb982,transparent:true,opacity:.14,side:THREE.DoubleSide,depthWrite:false}));road.userData.noAutoShadow=true;g.add(road);
   const geom=new THREE.BufferGeometry();geom.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));geom.setIndex(indices);geom.computeVertexNormals();
   const line=new THREE.Mesh(geom,new THREE.MeshBasicMaterial({color:0xe0bd62,transparent:true,opacity:.62,side:THREE.DoubleSide,depthWrite:false}));line.userData.noAutoShadow=true;g.add(line);
   const edgeCount=Math.floor(GISSHA_CARRY.length/7),matrix=new THREE.Matrix4();
@@ -8089,7 +8111,7 @@ function gisshaCarryUpdateHud(st){
   set("gcProgTxt",Math.ceil((1-st.progress)*GISSHA_CARRY.length)+"m");
   set("gcSpeedTxt",Math.abs(st.speed)<.18?"停止":st.speed<0?"後退":st.speed>3.8?"速い":"進行");
   set("gcBumps",st.bumps+"回");set("gcClock",Math.floor(st.elapsed/60)+":"+String(Math.floor(st.elapsed%60)).padStart(2,"0"));set("gcState",st.message);
-  const stage=st.progress<.25?"東門から北へ":st.progress<.49?"北の通路を西へ":st.progress<.75?"北の通路を西へ":st.progress<.91?"西の路を南へ":"車宿の空き間口へ";
+  const stage=st.progress<.25?"東門から北へ":st.progress<.49?"北の通路・東側":st.progress<.75?"北の通路・西側":st.progress<.91?"西の路を南へ":"車宿の空き間口へ";
   set("gcStage",stage);
   const hint=st.progress>.965?"空き間口の緑の輪へ。正面を向け、S / ↓ で静かに停車。":
     st.progress>.88?"車宿が近い。曲がり角で速度を落とそう。":"W / ↑ で進む。曲がり角は自動で補助。A・Dで進路を調整。";
@@ -8105,8 +8127,10 @@ function gisshaCarryImpact(st,edge){
 function updateGisshaCarry(dt,t){
   const st=APP.gisshaCarry;if(!st?.active||st.done||gameplayInputBlocked())return;
   const held=key=>!!keys[key]||[...st.touches.values()].includes(key);
-  const forward=held("w")||keys.arrowup,brake=held("s")||keys.arrowdown;
+  const forward=held("w")||keys.arrowup||(GAMEPAD.active&&GAMEPAD.mz<-.25);
+  const brake=held("s")||keys.arrowdown||(GAMEPAD.active&&GAMEPAD.mz>.25);
   const manual=Number(!!(held("a")||keys.arrowleft))-Number(!!(held("d")||keys.arrowright));
+  const analog=GAMEPAD.active?-GAMEPAD.mx:0;
   st.accumulator+=Math.min(.3,Math.max(0,dt));let signedDistance=0;
   while(st.accumulator+1e-9>=GISSHA_CARRY.step){
     const h=GISSHA_CARRY.step;st.accumulator-=h;st.elapsed+=h;
@@ -8119,7 +8143,7 @@ function updateGisshaCarry(dt,t){
     const desiredYaw=Math.atan2(-preview.tangent.x,-preview.tangent.z);
     const diff=Math.atan2(Math.sin(desiredYaw-st.heading),Math.cos(desiredYaw-st.heading));
     const assist=Math.max(-1,Math.min(1,diff*2.0+st.lateral*.26));
-    const targetSteer=manual||assist;
+    const targetSteer=manual||analog||assist;
     st.steer+=(targetSteer-st.steer)*Math.min(1,8*h);
     st.heading+=Math.max(-.82,Math.min(.82,st.speed*.27*st.steer))*h;
     const dx=-Math.sin(st.heading)*st.speed*h,dz=-Math.cos(st.heading)*st.speed*h;
@@ -8152,6 +8176,7 @@ function updateGisshaCarry(dt,t){
   st.message=st.impactTime>0?(st.lastImpact==="edge"?"道端に接触":"揺れに注意"):
     Math.abs(st.lateral)>1.9?"道の端に注意":st.progress>.965?"車宿に停車":st.speed<-.15?"後退中":Math.abs(st.speed)<.18?"停止中":"搬入中";
   gisshaCarryAnimate(signedDistance,st.speed);
+  const cartPos=GISSHA_YARD.cart.position;player.pos.set(cartPos.x,cartPos.y+1.62,cartPos.z);player.yaw=st.heading;
   st.hudTime+=dt;if(st.hudTime>=.10){st.hudTime=0;gisshaCarryUpdateHud(st);}
   if(st.settled>=.45){st.done=true;gisshaCarryShowResult(st);}
 }
@@ -27727,7 +27752,7 @@ function animate(now){
     const lerpFactor=APP.gisshaCarry?.active?1-Math.exp(-5*dt):(APP.view==="fp"?.22:.08);
     camera.position.lerp(window.dummyCam.position, lerpFactor);
     camera.quaternion.slerp(window.dummyCam.quaternion, lerpFactor);
-    if(APP.view==="fp")camera.position.y+=Math.sin(bobPhase)*bobAmp;  // ヘッドボブ(補間後の最終位置に付与=くっきり)
+    if(APP.view==="fp"&&!APP.gisshaCarry?.active)camera.position.y+=Math.sin(bobPhase)*bobAmp;  // ヘッドボブ(補間後の最終位置に付与=くっきり)
 
     /* --- ラベル --- */
     let focusPos=null,focusD=999;

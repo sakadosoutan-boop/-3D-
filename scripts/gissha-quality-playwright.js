@@ -99,7 +99,7 @@ const {chromium}=require('playwright');
       GISSHA_YARD.guide.visible=false;renderer.info.reset();renderer.render(scene,camera);const withoutGuide=renderer.info.render.calls;
       endGisshaCarry(false,true);return withGuide-withoutGuide;
     });
-    assert.ok(guideDraws>0&&guideDraws<=7,`guide costs ${guideDraws} draw calls`);
+    assert.ok(guideDraws>0&&guideDraws<=8,`guide costs ${guideDraws} draw calls`);
     passed.push(`route guide costs ${guideDraws} draw calls`);
     for(const [name,width,height] of [['desktop',1280,800],['portrait',390,844],['landscape',844,390]]){
       await page.setViewportSize({width,height});
