@@ -8029,9 +8029,10 @@ function gisshaCarryCamera(rig){
   const st=APP.gisshaCarry;if(!st?.active)return;
   const cart=GISSHA_YARD.cart,pos=cart.position,dir=new THREE.Vector3(-Math.sin(st.heading),0,-Math.cos(st.heading));
   const portrait=innerHeight>innerWidth;
-  const target=GISSHA_CARRY.cameraTarget.copy(pos).addScaledVector(dir,st.cameraMode==="wide"?6:4);
+  const target=GISSHA_CARRY.cameraTarget.copy(pos).addScaledVector(dir,st.cameraMode==="wide"?6:portrait?-2:4);
   target.y+=st.cameraMode==="wide"?1.1:1.9;
   rig.position.copy(pos).addScaledVector(dir,st.cameraMode==="wide"?-19:portrait?-14:-11);
+  if(st.cameraMode!=="wide")rig.position.addScaledVector(new THREE.Vector3(-dir.z,0,dir.x),5.5);
   rig.position.y+=st.cameraMode==="wide"?19:portrait?10:7.4;
   GISSHA_CARRY.cameraMatrix.lookAt(rig.position,target,GISSHA_CARRY.up);rig.quaternion.setFromRotationMatrix(GISSHA_CARRY.cameraMatrix);
 }
@@ -8135,10 +8136,13 @@ function gisshaCarryUpdateHud(st){
   set("gcBumps",st.bumps+"回");set("gcClock",Math.floor(st.elapsed/60)+":"+String(Math.floor(st.elapsed%60)).padStart(2,"0"));set("gcState",st.message);
   const stage=st.progress<.25?"東門から北へ":st.progress<.49?"北の通路・東側":st.progress<.75?"北の通路・西側":st.progress<.91?"西の路を南へ":"車宿の空き間口へ";
   set("gcStage",stage);
+  const ahead=gisshaCarryPath(Math.min(1,st.progress+6/GISSHA_CARRY.length));
+  const now=gisshaCarryPath(st.progress),upcomingTurn=Math.acos(Math.max(-1,Math.min(1,now.tangent.dot(ahead.tangent))));
   const hint=st.progress>.965?"空き間口の緑の輪へ。正面を向け、S / ↓ で静かに停車。":
+    upcomingTurn>.28&&st.speed>3?"曲がり角が近い。S / ↓ で減速すると荷が揺れません。":
     st.progress>.88?"車宿が近い。曲がり角で速度を落とそう。":"W / ↑ で進む。曲がり角は自動で補助。A・Dで進路を調整。";
   set("gcHint",st.impactTime>0?(st.lastImpact==="edge"?"道端に触れました。中央へ戻してゆっくり進もう。":"急がせると車体が揺れます。少し減速しよう。"):hint);
-  const hud=document.getElementById("gisshaCarryHud");hud.dataset.warning=String(Math.abs(st.lateral)>1.9||st.speed>4.35);hud.dataset.impact=String(st.impactTime>0);
+  const hud=document.getElementById("gisshaCarryHud");hud.dataset.warning=String(Math.abs(st.lateral)>1.9||(st.speed>3.55&&upcomingTurn>.28));hud.dataset.impact=String(st.impactTime>0);
 }
 function gisshaCarryImpact(st,edge){
   st.bumps++;st[edge?"contacts":"rushes"]++;if(edge)st.edgeCooldown=1.0;else st.bumpCooldown=1.4;
@@ -8161,7 +8165,9 @@ function updateGisshaCarry(dt,t){
     else{const drag=.48+Math.abs(st.speed)*.30;st.speed=Math.abs(st.speed)<=drag*h?0:st.speed-Math.sign(st.speed)*drag*h;}
     const remaining=(1-st.progress)*GISSHA_CARRY.length;
     if(st.speed>0&&remaining<20){const safe=Math.max(1.7,Math.min(GISSHA_CARRY.maxSpeed,1.5+remaining*.16));if(st.speed>safe)st.speed=Math.max(safe,st.speed-2.4*h);}
+    const here=gisshaCarryPath(st.progress);
     const preview=gisshaCarryPath(Math.min(1,st.progress+Math.max(3,Math.abs(st.speed)*1.2)/GISSHA_CARRY.length));
+    const turnAngle=Math.acos(Math.max(-1,Math.min(1,here.tangent.dot(preview.tangent))));
     const desiredYaw=Math.atan2(-preview.tangent.x,-preview.tangent.z);
     const diff=Math.atan2(Math.sin(desiredYaw-st.heading),Math.cos(desiredYaw-st.heading));
     const assist=Math.max(-1,Math.min(1,diff*2.0+st.lateral*.26));
@@ -8185,10 +8191,17 @@ function updateGisshaCarry(dt,t){
     signedDistance+=st.speed*h;
     st.bumpCooldown=Math.max(0,st.bumpCooldown-h);st.edgeCooldown=Math.max(0,st.edgeCooldown-h);
     st.impactTime=Math.max(0,st.impactTime-h);
-    if(Math.abs(st.speed)>4.35&&Math.abs(st.steer)>.6&&st.bumpCooldown<=0)gisshaCarryImpact(st,false);
+    if(st.speed>3.55&&turnAngle>.28&&st.bumpCooldown<=0)gisshaCarryImpact(st,false);
     const goal=GISSHA_YARD.carryRoute[GISSHA_YARD.carryRoute.length-1];
     const endYaw=Math.atan2(-gisshaCarryPath(1).tangent.x,-gisshaCarryPath(1).tangent.z);
-    const yawError=Math.abs(Math.atan2(Math.sin(st.heading-endYaw),Math.cos(st.heading-endYaw)));
+    let yawError=Math.abs(Math.atan2(Math.sin(st.heading-endYaw),Math.cos(st.heading-endYaw)));
+    if(brake&&st.progress>.97&&Math.abs(st.speed)<.4&&Math.hypot(next.x-goal.x,next.z-goal.z)<1.85&&yawError<.75){
+      const settle=Math.min(1,3*h),turn=Math.atan2(Math.sin(endYaw-st.heading),Math.cos(endYaw-st.heading));
+      next.x+=(goal.x-next.x)*settle;next.z+=(goal.z-next.z)*settle;next.y=groundH(next.x,next.z);
+      st.heading+=turn*settle;st.speed=0;GISSHA_YARD.cart.position.copy(next);GISSHA_YARD.cart.rotation.y=st.heading;
+      const aligned=gisshaCarryClosest(next,st.progress);st.progress=aligned.progress;st.lateral=aligned.lateral;
+      yawError=Math.abs(Math.atan2(Math.sin(st.heading-endYaw),Math.cos(st.heading-endYaw)));
+    }
     const parked=Math.hypot(next.x-goal.x,next.z-goal.z)<1.18&&yawError<.42&&Math.abs(st.speed)<.24&&(brake||!forward);
     st.settled=parked?st.settled+h:0;
   }

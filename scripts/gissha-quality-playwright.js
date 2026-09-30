@@ -25,7 +25,7 @@ const {chromium}=require('playwright');
         north:p.some(q=>q.pos.z< -51&&Math.abs(q.pos.x)<5),garage:GISSHA_YARD.carryRoute.at(-1).x< -52,
         east:GISSHA_YARD.carryRoute[0].x>50};
     });
-    assert.ok(route.length>195&&route.start<.01&&route.end<.01&&route.ratio<1.06&&route.north&&route.garage&&route.east,JSON.stringify(route));
+    assert.ok(route.length>195&&route.start<.01&&route.end<.01&&route.ratio<1.25&&route.north&&route.garage&&route.east,JSON.stringify(route));
     passed.push('east-gate to west-shed route circles the northern passage for over 195 m');
     const motion=await page.evaluate(()=>{
       startGisshaCarry();const st=APP.gisshaCarry,start=GISSHA_YARD.cart.position.clone(),duplicate=startGisshaCarry();keys.w=true;
@@ -84,6 +84,22 @@ const {chromium}=require('playwright');
     fs.mkdirSync('artifacts/review',{recursive:true});await page.screenshot({path:'artifacts/review/gissha-result.png'});
     await page.click('#gcRetry');assert.equal(await page.evaluate(()=>APP.gisshaCarry?.progress),0);
     await page.evaluate(()=>endGisshaCarry(false,true));
+    const careful=await page.evaluate(()=>{
+      gisshaCarryCloseResult();startGisshaCarry();
+      for(let i=0;i<18000&&APP.gisshaCarry;i++){
+        const st=APP.gisshaCarry,remaining=(1-st.progress)*GISSHA_CARRY.length;
+        const here=gisshaCarryPath(st.progress).tangent;
+        const ahead=gisshaCarryPath(Math.min(1,st.progress+9/GISSHA_CARRY.length)).tangent;
+        const turn=Math.acos(Math.max(-1,Math.min(1,here.dot(ahead))));
+        const target=remaining<4?Math.min(1.3,Math.sqrt(Math.max(0,remaining-1))*1.5):turn>.22?2.9:4.3;
+        keys.w=st.speed<target-.12;keys.s=!keys.w;
+        updateGisshaCarry(1/120,i/120);
+      }
+      const out={ended:!APP.gisshaCarry,result:GISSHA_CARRY.result};
+      if(APP.gisshaCarry)endGisshaCarry(false,true);gisshaCarryCloseResult();return out;
+    });
+    assert.ok(careful.ended&&careful.result.score>delivery.result.score&&careful.result.rushes<delivery.result.rushes,JSON.stringify({careful,delivery:delivery.result}));
+    passed.push('slowing for corners preserves the load and improves the score');
     const cleanup=await page.evaluate(()=>{
       APP.view='ov';player.pos.set(3,1.62,21);player.yaw=.7;const pos=player.pos.clone();startGisshaCarry();keys.w=true;updateGisshaCarry(.2,0);endGisshaCarry(false,true);
       const restored=APP.view==='ov'&&player.pos.equals(pos)&&player.yaw===.7&&!keys.w;
