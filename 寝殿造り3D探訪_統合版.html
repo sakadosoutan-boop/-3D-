@@ -7429,18 +7429,40 @@ function broadleaf(s,leafMat){
   });
   /* 前栽(せんざい):寝殿の南の植え込み */
   const senzai=new THREE.Group();
-  [[-8,13],[-5.5,14.5],[8,13],[5,15],[11,14]].forEach(p=>{
-    for(let k=0;k<3;k++){                                  // 1株を複数の小塊で茂みらしく(球体感を解消)
-      const b=new THREE.Mesh(LEAF_CLUMP_GEOS[k%3],MAT.leaf2);
-      const r=rnd(.45,.72);
-      b.position.set(p[0]+rnd(-.35,.35),.42+rnd(0,.34),p[1]+rnd(-.35,.35));
-      b.scale.set(r*rnd(.9,1.2),r*.8,r*rnd(.9,1.2));
-      b.position.y=b.scale.y*.60; // 白砂へ少し埋め、植え込みが浮かないようにする。
-      b.rotation.set(rnd(-.25,.25),rnd(0,6),rnd(-.25,.25));
-      markFoliageNoShadow(b);senzai.add(b);
+  const flowerBeds=[[-8,13],[-5.5,14.5],[8,13],[5,15],[11,14]];
+  // 一株を低い六つの葉叢に分けて、石のような丸い一塊を避ける。
+  const shrubBuckets=[[],[],[]],shrubPose=new THREE.Object3D();
+  flowerBeds.forEach((p,i)=>{
+    for(let k=0;k<6;k++){
+      const a=k*2.399+i*.34,spread=k===0?.10:.31+.16*(k%3),radius=.32+.08*((i*3+k)%4);
+      shrubPose.position.set(p[0]+Math.cos(a)*spread,.25+.035*(k%3),p[1]+Math.sin(a)*spread);
+      shrubPose.rotation.set(Math.sin(a)*.11,a,.08*Math.cos(a));
+      shrubPose.scale.set(radius*(1+.14*(k%2)),radius*.87,radius*(.9+.08*(i%3)));
+      shrubPose.updateMatrix();shrubBuckets[k%3].push(shrubPose.matrix.clone());
     }
   });
+  shrubBuckets.forEach((poses,v)=>{
+    const batch=new THREE.InstancedMesh(LEAF_CLUMP_GEOS[v].clone(),MAT.leaf2,poses.length);
+    poses.forEach((matrix,i)=>batch.setMatrixAt(i,matrix));
+    fitDetailInstances(batch);markFoliageNoShadow(batch);senzai.add(batch);
+  });
   world.add(senzai);
+  // 春だけ前栽の葉の間に低い草花を添える。一つの描画にまとめる。
+  const bedPose=new THREE.Object3D();
+  const bloomCount=flowerBeds.length*7;
+  const bloomMat=new THREE.MeshStandardMaterial({map:TEX.sakuraPetal,transparent:true,alphaTest:.25,
+    side:THREE.DoubleSide,roughness:1,depthWrite:false});
+  const blooms=new THREE.InstancedMesh(new THREE.PlaneGeometry(.24,.24),bloomMat,bloomCount);
+  flowerBeds.forEach((p,i)=>{
+    for(let j=0;j<7;j++){
+      const n=i*7+j,a=j*2.399+i*.49,r=.14+.43*((j*7+i*3)%11)/10;
+      bedPose.position.set(p[0]+Math.cos(a)*r,.49+.21*Math.sin(i*1.7+j*2.3),p[1]+Math.sin(a)*r);
+      bedPose.rotation.set(-.18+Math.sin(a)*.35,a*.4,.10+Math.cos(a)*.25);
+      const size=.8+.25*((i+j)%3);bedPose.scale.setScalar(size);bedPose.updateMatrix();blooms.setMatrixAt(n,bedPose.matrix);
+    }
+  });
+  fitDetailInstances(blooms);blooms.userData.noAutoShadow=true;blooms.castShadow=false;
+  senzai.add(blooms);SEASONAL.senzaiFlowers=blooms;
   // 薄(すすき)— 秋に表示。複数株
   const susukiMat=M({color:0xc9b884,roughness:.95});
   const susukiBladeGeo=SUSUKI_BLADE_GEO||(SUSUKI_BLADE_GEO=new THREE.ConeGeometry(0.1,1,5));
@@ -10841,6 +10863,8 @@ function makePlover(scale=.8){
   for(let i=0;i<12;i++){
     const bl=new THREE.Mesh(new THREE.PlaneGeometry(.18,.18),new THREE.MeshBasicMaterial({map:TEX.sakuraPetal,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false,alphaTest:.015}));
     bl.userData={kind:"springBreeze",noAutoShadow:true,phase:rnd(0,10),sx:rnd(-48,-22),sz:rnd(-10,38),amp:rnd(.3,.9)};
+    // 揺れる花びらが視界の端で一瞬だけ消えないよう、移動幅を境界球に含める。
+    bl.geometry.computeBoundingSphere();bl.geometry.boundingSphere.radius=1.4;
     flyingLife.spring.add(bl);
   }
   for(let i=0;i<26;i++){
@@ -11514,6 +11538,7 @@ function applySeason(key){
   SEASONAL.ume.forEach(t=>t.visible=!!(s.show&&s.show.ume));
   // 蓮
   SEASONAL.hasu.visible=!!(s.show&&s.show.hasu);
+  if(SEASONAL.senzaiFlowers)SEASONAL.senzaiFlowers.visible=(key==="spring");
   // 薄
   SEASONAL.susuki.visible=!!(s.show&&s.show.susuki);
   // 椿の花
@@ -20224,7 +20249,7 @@ function taijiSetLightScene(on){
   if(on){
     SEASONAL._taijiHidden=[
       ...SEASONAL.maples,...(SEASONAL.miscTrees||[]),...SEASONAL.sakura,...SEASONAL.ume,...(SEASONAL.tsubaki||[]).map(o=>o.tree),
-      SEASONAL.hasu,SEASONAL.susuki,SEASONAL.fallenLeaves,SEASONAL.snow,SEASONAL.petalDrift,
+      SEASONAL.hasu,SEASONAL.susuki,SEASONAL.senzaiFlowers,SEASONAL.fallenLeaves,SEASONAL.snow,SEASONAL.petalDrift,
       ...(SEASONAL.chou||[]),...(SEASONAL.tonbo||[]),...(SEASONAL.fuji||[]),...(SEASONAL.nadesiko||[]),...(SEASONAL.kakitsubata||[]),...(SEASONAL.kame||[]),
       ...Object.values(flyingLife||{}),petals,leavesFall,snowFall,rainFall,fireflies,tourouGroup
     ].filter(Boolean).map(g=>({g,visible:g.visible}));
