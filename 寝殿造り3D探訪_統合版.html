@@ -3206,6 +3206,7 @@ body.gissha-carry-active #joy,body.gissha-carry-active #interactBtn,body.gissha-
 #gisshaCarryHud .gc-title{display:flex;align-items:center;gap:8px;font-family:var(--serif);
   color:#ffe9a0;font-size:15px;letter-spacing:.08em;margin-bottom:7px}
 #gisshaCarryHud .gc-title small{margin-left:auto;font-family:var(--sans);font-size:11px;color:#c9a23f;letter-spacing:.04em}
+#gisshaCarryHud .gc-clock{font:12px var(--sans);color:#e7d6a6;letter-spacing:.03em}
 #gisshaCarryHud .gc-text{font-size:11.5px;line-height:1.55;color:#e9dbc0;margin-bottom:9px}
 #gisshaCarryHud .gc-route{padding:5px 8px;margin-bottom:8px;border-left:2px solid #d6bd73;background:rgba(202,166,86,.11);color:#f6e6b9;font-size:11px;letter-spacing:.06em}
 #gisshaCarryHud .gc-row{display:grid;grid-template-columns:58px 1fr 48px;align-items:center;gap:7px;margin:6px 0}
@@ -7901,7 +7902,7 @@ function updateGisshaYardVisibility(mode){
   if(window.GISSHA_YARD_STATUS)window.GISSHA_YARD_STATUS.visible=visible;
 }
 const GISSHA_CARRY={curve:null,length:0,samples:null,result:null,step:1/120,laneHalf:2.35,maxSpeed:4.8,
-  cameraTarget:new THREE.Vector3(),cameraMatrix:new THREE.Matrix4(),up:new THREE.Vector3(0,1,0)};
+  checkpoints:[.25,.5,.75,.92],cameraTarget:new THREE.Vector3(),cameraMatrix:new THREE.Matrix4(),up:new THREE.Vector3(0,1,0)};
 function gisshaCarryCloseResult(){
   const el=document.getElementById("gisshaCarryResult");if(el)el.style.display="none";
 }
@@ -7914,7 +7915,7 @@ function gisshaCarryEnsureHud(){
   let hud=document.getElementById("gisshaCarryHud");
   if(!hud){hud=document.createElement("div");hud.id="gisshaCarryHud";document.body.appendChild(hud);}
   if(hud.dataset.ready==="3")return hud;
-  hud.innerHTML='<div class="gc-title">牛車運び <small id="gcState" role="status">東門を出発</small></div>'
+  hud.innerHTML='<div class="gc-title">牛車運び <span class="gc-clock" id="gcClock">0:00</span><small id="gcState" role="status">東門を出発</small></div>'
     +'<div class="gc-text">東の四脚門 → 北の通路 → 西の車宿。牛車を空いた間口まで運ぼう。</div>'
     +'<div class="gc-route" id="gcStage">東門から北へ</div>'
     +'<div class="gc-row"><span>残り</span><div class="gc-meter"><div class="gc-fill" id="gcProg"></div></div><span id="gcProgTxt">—</span></div>'
@@ -8035,7 +8036,7 @@ function startGisshaCarry(){
   const saved={pos:player.pos.clone(),yaw:player.yaw,pitch:player.pitch,view:APP.view};
   const hud=gisshaCarryEnsureHud();hud.style.display="block";
   gisshaCarryPath(0);
-  APP.gisshaCarry={active:true,progress:0,lateral:0,speed:0,steer:0,heading:0,bumps:0,contacts:0,rushes:0,bumpCooldown:0,edgeCooldown:0,impactTime:0,lastImpact:"",done:false,message:"東門を出発",elapsed:0,accumulator:0,hudTime:0,settled:0,touches:new Map(),cameraMode:"follow",saved};
+  APP.gisshaCarry={active:true,progress:0,lateral:0,speed:0,steer:0,heading:0,checkpoint:0,bumps:0,contacts:0,rushes:0,bumpCooldown:0,edgeCooldown:0,impactTime:0,lastImpact:"",done:false,message:"東門を出発",elapsed:0,accumulator:0,hudTime:0,settled:0,touches:new Map(),cameraMode:"follow",saved};
   resetInputState();document.body.classList.add("gissha-carry-active");APP.view="fp";updateControlUI();
   gisshaCarrySetCart(0,0);const st=APP.gisshaCarry;st.heading=GISSHA_YARD.cart.rotation.y;
   const drive=GISSHA_YARD.cart.userData.drive;drive.distance=0;gisshaCarryAnimate(0,0);
@@ -8087,7 +8088,7 @@ function gisshaCarryUpdateHud(st){
   document.getElementById("gcDot").style.left=(50+Math.max(-1,Math.min(1,st.lateral/GISSHA_CARRY.laneHalf))*44)+"%";
   set("gcProgTxt",Math.ceil((1-st.progress)*GISSHA_CARRY.length)+"m");
   set("gcSpeedTxt",Math.abs(st.speed)<.18?"停止":st.speed<0?"後退":st.speed>3.8?"速い":"進行");
-  set("gcBumps",st.bumps+"回");set("gcState",st.message);
+  set("gcBumps",st.bumps+"回");set("gcClock",Math.floor(st.elapsed/60)+":"+String(Math.floor(st.elapsed%60)).padStart(2,"0"));set("gcState",st.message);
   const stage=st.progress<.25?"東門から北へ":st.progress<.49?"北の通路を西へ":st.progress<.75?"北の通路を西へ":st.progress<.91?"西の路を南へ":"車宿の空き間口へ";
   set("gcStage",stage);
   const hint=st.progress>.965?"空き間口の緑の輪へ。正面を向け、S / ↓ で静かに停車。":
@@ -8105,13 +8106,15 @@ function updateGisshaCarry(dt,t){
   const st=APP.gisshaCarry;if(!st?.active||st.done||gameplayInputBlocked())return;
   const held=key=>!!keys[key]||[...st.touches.values()].includes(key);
   const forward=held("w")||keys.arrowup,brake=held("s")||keys.arrowdown;
-  const manual=Number(!!(held("d")||keys.arrowright))-Number(!!(held("a")||keys.arrowleft));
+  const manual=Number(!!(held("a")||keys.arrowleft))-Number(!!(held("d")||keys.arrowright));
   st.accumulator+=Math.min(.3,Math.max(0,dt));let signedDistance=0;
   while(st.accumulator+1e-9>=GISSHA_CARRY.step){
     const h=GISSHA_CARRY.step;st.accumulator-=h;st.elapsed+=h;
     if(brake){st.speed=Math.max(-1.35,st.speed-(st.speed>0?3.3:1.0)*h);}
     else if(forward){st.speed=Math.min(GISSHA_CARRY.maxSpeed,st.speed+1.65*h);}
     else{const drag=.48+Math.abs(st.speed)*.30;st.speed=Math.abs(st.speed)<=drag*h?0:st.speed-Math.sign(st.speed)*drag*h;}
+    const remaining=(1-st.progress)*GISSHA_CARRY.length;
+    if(st.speed>0&&remaining<20){const safe=Math.max(1.7,Math.min(GISSHA_CARRY.maxSpeed,1.5+remaining*.16));if(st.speed>safe)st.speed=Math.max(safe,st.speed-2.4*h);}
     const preview=gisshaCarryPath(Math.min(1,st.progress+Math.max(3,Math.abs(st.speed)*1.2)/GISSHA_CARRY.length));
     const desiredYaw=Math.atan2(-preview.tangent.x,-preview.tangent.z);
     const diff=Math.atan2(Math.sin(desiredYaw-st.heading),Math.cos(desiredYaw-st.heading));
@@ -8127,6 +8130,11 @@ function updateGisshaCarry(dt,t){
       if(st.edgeCooldown<=0)gisshaCarryImpact(st,true);
     }
     st.progress=nearby.progress;st.lateral=Math.max(-limit,Math.min(limit,nearby.lateral));
+    if(st.progress>.995){
+      const end=GISSHA_YARD.carryRoute.at(-1),dir=gisshaCarryPath(1).tangent;
+      const beyond=(next.x-end.x)*dir.x+(next.z-end.z)*dir.z;
+      if(beyond>.42){next.addScaledVector(dir,.42-beyond);st.speed=Math.min(st.speed,.12);}
+    }
     next.y=groundH(next.x,next.z);GISSHA_YARD.cart.position.copy(next);GISSHA_YARD.cart.rotation.y=st.heading;
     signedDistance+=st.speed*h;
     st.bumpCooldown=Math.max(0,st.bumpCooldown-h);st.edgeCooldown=Math.max(0,st.edgeCooldown-h);
@@ -8135,8 +8143,11 @@ function updateGisshaCarry(dt,t){
     const goal=GISSHA_YARD.carryRoute[GISSHA_YARD.carryRoute.length-1];
     const endYaw=Math.atan2(-gisshaCarryPath(1).tangent.x,-gisshaCarryPath(1).tangent.z);
     const yawError=Math.abs(Math.atan2(Math.sin(st.heading-endYaw),Math.cos(st.heading-endYaw)));
-    const parked=Math.hypot(next.x-goal.x,next.z-goal.z)<1.18&&yawError<.42&&Math.abs(st.speed)<.24;
+    const parked=Math.hypot(next.x-goal.x,next.z-goal.z)<1.18&&yawError<.42&&Math.abs(st.speed)<.24&&(brake||!forward);
     st.settled=parked?st.settled+h:0;
+  }
+  while(st.checkpoint<GISSHA_CARRY.checkpoints.length&&st.progress>=GISSHA_CARRY.checkpoints[st.checkpoint]){
+    st.checkpoint++;beep(520+st.checkpoint*75,.055,"triangle",.032);
   }
   st.message=st.impactTime>0?(st.lastImpact==="edge"?"道端に接触":"揺れに注意"):
     Math.abs(st.lateral)>1.9?"道の端に注意":st.progress>.965?"車宿に停車":st.speed<-.15?"後退中":Math.abs(st.speed)<.18?"停止中":"搬入中";
