@@ -2149,6 +2149,7 @@ body.gissha-carry-active #joy,body.gissha-carry-active #interactBtn,body.gissha-
   background:linear-gradient(155deg,rgba(48,30,14,.92),rgba(20,13,8,.94));
   border:1px solid rgba(201,162,63,.55);border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.36);
   padding:12px 13px 13px}
+#gisshaCarryHud[data-impact="true"]{border-color:#e2a275;box-shadow:0 10px 28px rgba(0,0,0,.36),0 0 0 2px rgba(214,106,65,.36)}
 #gisshaCarryHud .gc-title{display:flex;align-items:center;gap:8px;font-family:var(--serif);
   color:#ffe9a0;font-size:15px;letter-spacing:.08em;margin-bottom:7px}
 #gisshaCarryHud .gc-title small{margin-left:auto;font-family:var(--sans);font-size:11px;color:#c9a23f;letter-spacing:.04em}
@@ -2176,7 +2177,7 @@ body.gissha-carry-active #joy,body.gissha-carry-active #interactBtn,body.gissha-
 #gisshaCarryHud button:focus-visible,#gisshaCarryResult button:focus-visible{outline:2px solid #f7dea0;outline-offset:3px}
 #gisshaCarryHud kbd{display:block;font:9px var(--sans);opacity:.7;margin-top:3px}
 #gisshaCarryHud .gc-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
-#gisshaCarryHud .gc-actions button{min-height:36px;background:#261d13;font-size:11px}
+#gisshaCarryHud .gc-actions button{min-height:44px;background:#261d13;font-size:11px}
 #gisshaCarryResult{position:fixed;inset:0;z-index:62;display:none;align-items:center;justify-content:center;padding:20px;
   background:rgba(10,9,7,.74);color:#f7edd8;font-family:var(--sans)}
 #gisshaCarryResult .gc-result-inner{width:min(430px,100%);max-height:85dvh;overflow:auto;padding:25px;background:linear-gradient(145deg,#302619,#18130e);
@@ -2190,7 +2191,6 @@ body.gissha-carry-active #joy,body.gissha-carry-active #interactBtn,body.gissha-
 #gisshaCarryResult .gc-result-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
 #gisshaCarryResult button{min-height:46px;background:#765728;color:#fff1c9;border:1px solid #c3a269;border-radius:6px;cursor:pointer;font:13px var(--sans)}
 #gisshaCarryResult #gcReturn{background:#211b12}
-#gisshaCarryHud .gc-cancel{margin-top:7px;width:100%;background:rgba(36,24,14,.82);color:#cdbb86}
 @media (max-width:520px){
   #gisshaCarryHud{left:10px;right:10px;bottom:calc(env(safe-area-inset-bottom) + 10px);width:auto}
   #gisshaCarryHud .gc-controls{grid-template-columns:repeat(4,1fr)}

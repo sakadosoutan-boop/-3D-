@@ -46,6 +46,28 @@ const {chromium}=require('playwright');
   }));
   for(const r of frameRates.slice(1)){assert.ok(Math.abs(r.progress-frameRates[0].progress)<1e-8);assert.equal(r.bumps,frameRates[0].bumps);assert.ok(Math.abs(r.elapsed-frameRates[0].elapsed)<1e-8);}
   passed.push('the same six-second input gives the same movement at 30, 60 and 120 fps');
+  const contact=await page.evaluate(()=>{
+    const runs=[];
+    for(const direction of ['a','d']){
+      startGisshaCarry();keys.w=true;keys[direction]=true;
+      const st=APP.gisshaCarry,drive=GISSHA_YARD.cart.userData.drive;
+      let slowed=false,maxBodyBob=0;
+      for(let i=0;i<720&&!st.contacts;i++){
+        const previousSpeed=st.speed;updateGisshaCarry(1/120,i/120);
+        maxBodyBob=Math.max(maxBodyBob,Math.abs(drive.ox.position.y));
+        if(st.contacts)slowed=st.speed<previousSpeed*.7;
+      }
+      gisshaCarryUpdateHud(st);
+      runs.push({contact:st.contacts===1,withinLane:Math.abs(st.lateral)<=GISSHA_CARRY.laneHalf+1e-8,
+        slowed,bob:maxBodyBob>.005,warning:document.getElementById('gisshaCarryHud').dataset.impact==='true'});
+      endGisshaCarry(false,true);
+      runs.at(-1).reset=drive.ox.position.y===0&&drive.ox.rotation.x===0;
+    }
+    return {runs,guide:GISSHA_YARD.guide.children.filter(o=>o.isInstancedMesh).map(o=>o.count)};
+  });
+  assert.ok(contact.runs.every(run=>Object.values(run).every(Boolean)),JSON.stringify(contact));
+  assert.deepEqual(contact.guide,[15,30]);
+  passed.push('both road edges stop the cart, slow it on contact and signal the impact; ox bob and lane guides remain reusable');
   await page.evaluate(()=>{startGisshaCarry();});
   await page.dispatchEvent('#gcForward','pointerdown',{pointerId:4,pointerType:'touch',button:0,bubbles:true});
   const touching=await page.evaluate(()=>{updateGisshaCarry(.2,0);return APP.gisshaCarry.speed>0&&APP.gisshaCarry.touches.size===1;});assert.ok(touching);
@@ -73,6 +95,7 @@ const {chromium}=require('playwright');
   assert.equal(finish.rewards.filter(([key,value])=>key==='miyabi'&&value===1).length,1);
   assert.equal(finish.rewards.filter(([key,value])=>key==='knowledge'&&value===2).length,1);
   assert.equal(finish.result.score,100);
+  assert.equal(finish.result.contacts,0);assert.equal(finish.result.rushes,0);
   await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>document.activeElement.id),'gcRetry');
   await page.evaluate(()=>{
     camera.position.set(-52,15,32);camera.lookAt(-49.4,1.3,18.5);
@@ -92,6 +115,15 @@ const {chromium}=require('playwright');
   });
   assert.ok(Object.values(cleanup).every(Boolean),JSON.stringify(cleanup));
   passed.push('cancel restores the walking view, mode changes clean up and repeated starts reuse geometry');
+  const guideDraws=await page.evaluate(()=>{
+    startGisshaCarry();scene.updateMatrixWorld(true);
+    renderer.info.reset();renderer.render(scene,camera);const withGuide=renderer.info.render.calls;
+    GISSHA_YARD.guide.visible=false;
+    renderer.info.reset();renderer.render(scene,camera);const withoutGuide=renderer.info.render.calls;
+    endGisshaCarry(false,true);return withGuide-withoutGuide;
+  });
+  assert.ok(guideDraws>0&&guideDraws<=3,`route guide must cost at most three draw calls: ${guideDraws}`);
+  passed.push(`route guide adds only ${guideDraws} draw calls`);
   for(const [name,width,height] of [['desktop',1280,800],['portrait',390,844],['landscape',844,390]]){
     await page.setViewportSize({width,height});
     const fits=await page.evaluate(()=>{
@@ -100,7 +132,7 @@ const {chromium}=require('playwright');
       camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();gisshaCarryCamera(camera);scene.updateMatrixWorld(true);renderer.render(scene,camera);
       document.getElementById('toast').style.display='none';
       const r=document.getElementById('gisshaCarryHud').getBoundingClientRect();
-      return r.left>=0&&r.right<=innerWidth&&r.top>=50&&r.bottom<=innerHeight&&['gcLeft','gcForward','gcBrake','gcRight'].every(id=>document.getElementById(id).getBoundingClientRect().height>=44);
+      return r.left>=0&&r.right<=innerWidth&&r.top>=50&&r.bottom<=innerHeight&&['gcLeft','gcForward','gcBrake','gcRight','gcCamera','gcCancel'].every(id=>document.getElementById(id).getBoundingClientRect().height>=44);
     });assert.ok(fits,`${name} HUD must fit with 44px controls`);
     await page.screenshot({path:`artifacts/review/gissha-${name}.png`});await page.evaluate(()=>endGisshaCarry(false,true));
     if(name==='desktop'){
