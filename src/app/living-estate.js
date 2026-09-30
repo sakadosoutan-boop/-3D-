@@ -325,7 +325,8 @@
       if(walkMode()&&state.nextArrival&&state.autoArrivalAt&&now>=state.autoArrivalAt)triggerArrival(state.nextArrival);
       return;
     }
-    if(!walkMode()||(APP&&APP.gisshaCarry&&APP.gisshaCarry.active)){finishArrival(true);return;}
+    if(APP&&APP.gisshaCarry&&APP.gisshaCarry.active){event.cart=null;finishArrival(true);return;}
+    if(!walkMode()){finishArrival(true);return;}
     const elapsed=now-event.started;
     if(event.type==="visitor"&&event.visitor){
       const u=Math.min(1,elapsed/Math.max(1,event.duration*.42)),smooth=u*u*(3-2*u);
