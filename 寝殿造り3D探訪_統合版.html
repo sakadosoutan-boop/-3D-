@@ -3231,7 +3231,7 @@ body.gissha-carry-active #joy,body.gissha-carry-active #interactBtn,body.gissha-
 #gisshaCarryHud button:active,#gisshaCarryHud button[data-held]{background:#927333;color:#fff8e5}
 #gisshaCarryHud button:focus-visible,#gisshaCarryResult button:focus-visible{outline:2px solid #f7dea0;outline-offset:3px}
 #gisshaCarryHud kbd{display:block;font:9px var(--sans);opacity:.7;margin-top:3px}
-#gisshaCarryHud .gc-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+#gisshaCarryHud .gc-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
 #gisshaCarryHud .gc-actions button{min-height:44px;background:#261d13;font-size:11px}
 #gisshaCarryResult{position:fixed;inset:0;z-index:62;display:none;align-items:center;justify-content:center;padding:20px;
   background:rgba(10,9,7,.74);color:#f7edd8;font-family:var(--sans)}
@@ -7963,7 +7963,7 @@ function gisshaCarryEnsureHud(){
     +'<div class="gc-row"><span>道の中央</span><div class="gc-center"><div class="gc-dot" id="gcDot"></div></div><span id="gcBumps">0回</span></div>'
     +'<div class="gc-hint" id="gcHint">W / ↑ で進む。曲がり角は自動で補助します。A・Dで進路を調整。</div>'
     +'<div class="gc-controls"><button id="gcLeft" aria-label="左に曲がる、Aまたは左矢印">左へ <kbd>A / ←</kbd></button><button id="gcForward" aria-label="進む、Wまたは上矢印">進む <kbd>W / ↑</kbd></button><button id="gcBrake" aria-label="減速、停止後は後退、Sまたは下矢印">減速 <kbd>S / ↓</kbd></button><button id="gcRight" aria-label="右に曲がる、Dまたは右矢印">右へ <kbd>D / →</kbd></button></div>'
-    +'<div class="gc-actions"><button id="gcCamera" aria-pressed="false">視点：追従</button><button id="gcRestart">やり直す</button><button id="gcCancel">散策へ戻る</button></div>';
+    +'<div class="gc-actions"><button id="gcCamera" aria-pressed="false">視点：追従</button><button id="gcAssist" aria-pressed="true">操舵補助：入</button><button id="gcRestart">やり直す</button><button id="gcCancel">散策へ戻る</button></div>';
   hud.dataset.ready="3";
   const hold=(id,key)=>{
     const el=document.getElementById(id);
@@ -7980,6 +7980,11 @@ function gisshaCarryEnsureHud(){
   hold("gcLeft","a");hold("gcForward","w");hold("gcBrake","s");hold("gcRight","d");
   document.getElementById("gcCancel").onclick=()=>endGisshaCarry(false,false);
   document.getElementById("gcRestart").onclick=()=>{endGisshaCarry(false,true);startGisshaCarry();};
+  document.getElementById("gcAssist").onclick=()=>{
+    const st=APP.gisshaCarry;if(!st)return;st.assist=!st.assist;
+    const button=document.getElementById("gcAssist");button.textContent=st.assist?"操舵補助：入":"操舵補助：切";
+    button.setAttribute("aria-pressed",String(st.assist));gisshaCarryUpdateHud(st);
+  };
   document.getElementById("gcCamera").onclick=()=>{
     const st=APP.gisshaCarry;if(!st)return;st.cameraMode=st.cameraMode==="follow"?"wide":"follow";
     const b=document.getElementById("gcCamera");b.textContent="視点："+(st.cameraMode==="follow"?"追従":"俯瞰");b.setAttribute("aria-pressed",String(st.cameraMode==="wide"));
@@ -8034,6 +8039,17 @@ function gisshaCarryCamera(rig){
   rig.position.copy(pos).addScaledVector(dir,st.cameraMode==="wide"?-19:portrait?-14:-11);
   if(st.cameraMode!=="wide")rig.position.addScaledVector(new THREE.Vector3(-dir.z,0,dir.x),5.5);
   rig.position.y+=st.cameraMode==="wide"?19:portrait?10:7.4;
+  const overflow=Math.max(0,Math.abs(rig.position.x)-57,Math.abs(rig.position.z)-57);
+  rig.position.x=Math.max(-57,Math.min(57,rig.position.x));
+  rig.position.z=Math.max(-57,Math.min(57,rig.position.z));
+  rig.position.y+=Math.min(5,overflow*.8);
+  if(st.cameraMode==="follow"){
+    const f=Math.max(0,Math.min(1,(st.progress*GISSHA_CARRY.length-1.5)/8)),mix=f*f*(3-2*f);
+    if(mix<1){
+      rig.position.multiplyScalar(mix).addScaledVector(portrait?new THREE.Vector3(56,12,34):new THREE.Vector3(56,9,25),1-mix);
+      target.multiplyScalar(mix).addScaledVector(new THREE.Vector3(pos.x,pos.y+(portrait?1.2:1.8),pos.z+(portrait?3:0)),1-mix);
+    }
+  }
   GISSHA_CARRY.cameraMatrix.lookAt(rig.position,target,GISSHA_CARRY.up);rig.quaternion.setFromRotationMatrix(GISSHA_CARRY.cameraMatrix);
 }
 function gisshaCarryBuildGuide(){
@@ -8081,7 +8097,7 @@ function startGisshaCarry(){
   const saved={pos:player.pos.clone(),yaw:player.yaw,pitch:player.pitch,view:APP.view};
   const hud=gisshaCarryEnsureHud();hud.style.display="block";
   gisshaCarryPath(0);
-  APP.gisshaCarry={active:true,progress:0,lateral:0,speed:0,steer:0,heading:0,checkpoint:0,bumps:0,contacts:0,rushes:0,bumpCooldown:0,edgeCooldown:0,impactTime:0,lastImpact:"",done:false,message:"東門を出発",elapsed:0,accumulator:0,hudTime:0,settled:0,touches:new Map(),cameraMode:"follow",saved};
+  APP.gisshaCarry={active:true,progress:0,lateral:0,speed:0,steer:0,heading:0,checkpoint:0,assist:true,bumps:0,contacts:0,rushes:0,bumpCooldown:0,edgeCooldown:0,impactTime:0,lastImpact:"",done:false,message:"東門を出発",elapsed:0,accumulator:0,hudTime:0,settled:0,touches:new Map(),cameraMode:"follow",saved};
   resetInputState();document.body.classList.add("gissha-carry-active");APP.view="fp";updateControlUI();
   gisshaCarrySetCart(0,0);const st=APP.gisshaCarry;st.heading=GISSHA_YARD.cart.rotation.y;
   const drive=GISSHA_YARD.cart.userData.drive;drive.distance=0;gisshaCarryAnimate(0,0);
@@ -8089,6 +8105,7 @@ function startGisshaCarry(){
   const start=GISSHA_YARD.carryRoute[0];player.pos.set(start.x,groundH(start.x,start.z)+1.62,start.z);player.yaw=st.heading;player.pitch=-.12;
   const rig=new THREE.Object3D();gisshaCarryCamera(rig);camera.position.copy(rig.position);camera.quaternion.copy(rig.quaternion);window.dummyCam=null;
   document.getElementById("gcCamera").textContent="視点：追従";document.getElementById("gcCamera").setAttribute("aria-pressed","false");
+  document.getElementById("gcAssist").textContent="操舵補助：入";document.getElementById("gcAssist").setAttribute("aria-pressed","true");
   gisshaCarryUpdateHud(st);
   if(window.GISSHA_YARD_STATUS){window.GISSHA_YARD_STATUS.carryReady=true;window.GISSHA_YARD_STATUS.carryActive=true;}
   beep(520,.08,"triangle",.055);return true;
@@ -8140,7 +8157,7 @@ function gisshaCarryUpdateHud(st){
   const now=gisshaCarryPath(st.progress),upcomingTurn=Math.acos(Math.max(-1,Math.min(1,now.tangent.dot(ahead.tangent))));
   const hint=st.progress>.965?"空き間口の緑の輪へ。正面を向け、S / ↓ で静かに停車。":
     upcomingTurn>.28&&st.speed>3?"曲がり角が近い。S / ↓ で減速すると荷が揺れません。":
-    st.progress>.88?"車宿が近い。曲がり角で速度を落とそう。":"W / ↑ で進む。曲がり角は自動で補助。A・Dで進路を調整。";
+    st.progress>.88?"車宿が近い。曲がり角で速度を落とそう。":st.assist?"W / ↑ で進む。曲がり角は自動で補助。A・Dで進路を調整。":"手動操舵中。A・D / ←→ で道を曲がり、S / ↓ で減速。";
   set("gcHint",st.impactTime>0?(st.lastImpact==="edge"?"道端に触れました。中央へ戻してゆっくり進もう。":"急がせると車体が揺れます。少し減速しよう。"):hint);
   const hud=document.getElementById("gisshaCarryHud");hud.dataset.warning=String(Math.abs(st.lateral)>1.9||(st.speed>3.55&&upcomingTurn>.28));hud.dataset.impact=String(st.impactTime>0);
 }
@@ -8171,7 +8188,7 @@ function updateGisshaCarry(dt,t){
     const desiredYaw=Math.atan2(-preview.tangent.x,-preview.tangent.z);
     const diff=Math.atan2(Math.sin(desiredYaw-st.heading),Math.cos(desiredYaw-st.heading));
     const assist=Math.max(-1,Math.min(1,diff*2.0+st.lateral*.26));
-    const targetSteer=manual||analog||assist;
+    const targetSteer=manual||analog||(st.assist?assist:0);
     st.steer+=(targetSteer-st.steer)*Math.min(1,8*h);
     st.heading+=Math.max(-.82,Math.min(.82,st.speed*.27*st.steer))*h;
     const dx=-Math.sin(st.heading)*st.speed*h,dz=-Math.cos(st.heading)*st.speed*h;

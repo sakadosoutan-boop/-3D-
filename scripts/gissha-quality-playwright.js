@@ -27,6 +27,20 @@ const {chromium}=require('playwright');
     });
     assert.ok(route.length>195&&route.start<.01&&route.end<.01&&route.ratio<1.25&&route.north&&route.garage&&route.east,JSON.stringify(route));
     passed.push('east-gate to west-shed route circles the northern passage for over 195 m');
+    for(const [name,width,height] of [['desktop',1280,800],['portrait',390,844]]){
+      await page.setViewportSize({width,height});
+      const intro=await page.evaluate(()=>{
+        startGisshaCarry();camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+        gisshaCarryCamera(camera);scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
+        const cabin=GISSHA_YARD.cart.localToWorld(new THREE.Vector3(0,2,0)).project(camera);
+        const ox=GISSHA_YARD.cart.localToWorld(new THREE.Vector3(0,1.2,-4.7)).project(camera);
+        const out={cabin:[cabin.x,cabin.y],ox:[ox.x,ox.y],camera:[camera.position.x,camera.position.z]};
+        renderer.render(scene,camera);endGisshaCarry(false,true);return out;
+      });
+      assert.ok(Math.abs(intro.cabin[0])<.8&&intro.cabin[1]>-.16&&Math.abs(intro.ox[0])<.95&&Math.abs(intro.camera[0])<60,JSON.stringify({name,intro}));
+    }
+    await page.setViewportSize({width:1280,height:800});
+    passed.push('the east-gate opening view keeps the cart and ox on screen on desktop and phone');
     const motion=await page.evaluate(()=>{
       startGisshaCarry();const st=APP.gisshaCarry,start=GISSHA_YARD.cart.position.clone(),duplicate=startGisshaCarry();keys.w=true;
       let legSwing=0;for(let i=0;i<360;i++){updateGisshaCarry(1/60,i/60);legSwing=Math.max(legSwing,...GISSHA_YARD.cart.userData.drive.legs.map(l=>Math.abs(l.pivot.rotation.x)));}
@@ -39,6 +53,25 @@ const {chromium}=require('playwright');
     });
     assert.ok(motion.distance>10&&motion.progress>.04&&motion.wheels&&motion.legs&&motion.behind&&!motion.duplicate,JSON.stringify(motion));
     passed.push('the cart travels, animates and uses a rear chase camera');
+    const manualMode=await page.evaluate(()=>{
+      startGisshaCarry();const st=APP.gisshaCarry,startYaw=st.heading;
+      document.getElementById('gcAssist').click();keys.w=true;keys.d=true;
+      for(let i=0;i<120;i++)updateGisshaCarry(1/120,i/120);
+      const out={manual:!st.assist,button:document.getElementById('gcAssist').getAttribute('aria-pressed'),
+        turnedRight:st.heading<startYaw-.03};
+      endGisshaCarry(false,true);return out;
+    });
+    assert.ok(manualMode.manual&&manualMode.button==='false'&&manualMode.turnedRight,JSON.stringify(manualMode));
+    passed.push('manual mode gives direct, correctly oriented steering');
+    const gamepad=await page.evaluate(()=>{
+      startGisshaCarry();const st=APP.gisshaCarry,yaw=st.heading;
+      GAMEPAD.active=true;GAMEPAD.mz=-1;GAMEPAD.mx=.7;
+      for(let i=0;i<120;i++)updateGisshaCarry(1/120,i/120);
+      const out={speed:st.speed,right:st.heading<yaw-.03};
+      GAMEPAD.active=false;GAMEPAD.mz=GAMEPAD.mx=0;endGisshaCarry(false,true);return out;
+    });
+    assert.ok(gamepad.speed>.4&&gamepad.right,JSON.stringify(gamepad));
+    passed.push('gamepad stick controls throttle and steering');
     const frameRates=await page.evaluate(()=>[30,60,120].map(fps=>{
       startGisshaCarry();for(let i=0;i<8*fps;i++){keys.w=i<5*fps;keys.s=i>=5*fps;updateGisshaCarry(1/fps,i/fps);}
       const s=APP.gisshaCarry,result={progress:s.progress,x:GISSHA_YARD.cart.position.x,z:GISSHA_YARD.cart.position.z,elapsed:s.elapsed};
@@ -125,7 +158,7 @@ const {chromium}=require('playwright');
         camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();gisshaCarryCamera(camera);scene.updateMatrixWorld(true);renderer.render(scene,camera);
         document.getElementById('toast').style.display='none';
         const r=document.getElementById('gisshaCarryHud').getBoundingClientRect();
-        return r.left>=0&&r.right<=innerWidth&&r.top>=40&&r.bottom<=innerHeight&&['gcLeft','gcForward','gcBrake','gcRight','gcCamera','gcRestart','gcCancel'].every(id=>document.getElementById(id).getBoundingClientRect().height>=44);
+        return r.left>=0&&r.right<=innerWidth&&r.top>=40&&r.bottom<=innerHeight&&['gcLeft','gcForward','gcBrake','gcRight','gcCamera','gcAssist','gcRestart','gcCancel'].every(id=>document.getElementById(id).getBoundingClientRect().height>=44);
       });
       assert.ok(fits,`${name} HUD fit`);
       await page.screenshot({path:`artifacts/review/gissha-${name}.png`});await page.evaluate(()=>endGisshaCarry(false,true));
