@@ -6900,6 +6900,9 @@ const world=new THREE.Group();scene.add(world);
   function wallSeg(len,x,z,rotY){
     const s=new THREE.Group();
     s.add(box(len,H,1.1,MAT.tsuiji,0,H/2,0));
+    // 土壁の下端を地面へ繋ぎ、軒下に通る木の影を作る。
+    s.add(box(len,.16,1.30,MAT.stonePaving,0,.07,0));
+    s.add(box(len,.09,1.28,MAT.woodDark,0,H-.03,0));
     const cap=hipRoof(len+1.2,2.1,.8,.97,H);s.add(cap);
     s.position.set(x,0,z);s.rotation.y=rotY;T.add(s);return s;
   }
@@ -6938,18 +6941,31 @@ const SHISHIN_DATA={
 };
 {
   const W=60.5;
-  /* 簡素な棟門(西・北) */
-  function munamon(x,z,rotY){
+  /* 通行できる棟門(西・北・東)。蝶番を柱側に置き、扉を開いた姿で固定する。 */
+  function munamon(x,z,rotY,openDir){
     const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rotY;
-    [-1.9,1.9].forEach(zz=>g.add(cyl(.26,.30,4.2,MAT.woodDark,0,2.1,zz,10)));
+    [-1.9,1.9].forEach(zz=>{
+      g.add(cyl(.26,.30,4.2,MAT.woodDark,0,2.1,zz,10));
+      g.add(box(.52,.16,.55,MAT.woodDark,0,.12,zz));
+    });
+    g.add(box(1.8,.13,4.15,MAT.stonePaving,0,.06,0));
     g.add(box(.5,.5,5.2,MAT.woodDark,0,4.2,0));
+    g.add(box(.27,.12,4.5,MAT.wood,0,3.38,0));
     g.add(hipRoof(2.4,6.2,1.4,.5,4.45));
-    [-1,1].forEach(s=>g.add(box(.16,3.4,1.75,MAT.wood,0,1.75,s*0.95)));   // 扉(閉)
+    [-1,1].forEach(side=>{
+      const leaf=new THREE.Group();leaf.position.set(0,0,side*1.76);
+      leaf.rotation.y=-side*openDir*1.12;
+      leaf.add(box(.16,3.1,1.53,MAT.wood,0,1.63,-side*.765));
+      [1.1,2.35].forEach(y=>leaf.add(box(.21,.12,1.52,MAT.woodDark,0,y,-side*.765)));
+      for(let i=0;i<3;i++)leaf.add(box(.22,2.8,.055,MAT.woodDark,.025,1.63,-side*(.34+i*.39)));
+      leaf.add(box(.10,.18,.10,MAT.kin,.13,1.65,-side*1.30));
+      mergeStaticDetail(leaf,"open-gate-leaf");g.add(leaf);
+    });
     world.add(g);return g;
   }
-  munamon(-W,0,0);           // 西門(築地と平行に=Z方向に揃える)
-  munamon(0,-W,Math.PI/2);   // 北門(築地と平行に=X方向に揃える)
-  munamon(W,0,0);            // 東門(中門正面・崩れていた築地に棟門を設置。築地と平行に)
+  munamon(-W,0,0,1);           // 西門は邸内へ開く
+  munamon(0,-W,Math.PI/2,-1);  // 北門は邸内へ開く
+  munamon(W,0,0,-1);           // 東門は邸内へ開く
 
   const spiritGlowTex=canv(128,128,(x,w,h)=>{
     const g=x.createRadialGradient(w/2,h/2,2,w/2,h/2,w*.5);
@@ -7031,6 +7047,30 @@ const SHISHIN_DATA={
   shape.moveTo(ring[0][0],-ring[0][1]);
   for(let i=1;i<N;i++)shape.lineTo(ring[i][0],-ring[i][1]);
   shape.closePath();
+  // 水面と白砂の境界を二段の汀にする。頂点色だけで湿った砂から乾いた砂へ移し、追加は一描画。
+  const shorePositions=[],shoreColors=[],shoreIndices=[];
+  const wet=new THREE.Color(0x666f5f),middle=new THREE.Color(0x978f72),dry=new THREE.Color(0xc5baa0);
+  const shoreColor=new THREE.Color();
+  for(let i=0;i<N;i++){
+    const [x,z]=ring[i],dx=x-center[0],dz=z-center[1],length=Math.hypot(dx,dz)||1;
+    const nx=dx/length,nz=dz/length,variation=.12*Math.sin(i*1.73)+.07*Math.sin(i*4.31);
+    for(let row=0;row<3;row++){
+      const distance=[-.16,.33,1.22+variation][row];
+      shorePositions.push(x+nx*distance,.019+row*.002,z+nz*distance);
+      shoreColor.copy(row===0?wet:row===1?middle:dry);
+      shoreColors.push(shoreColor.r,shoreColor.g,shoreColor.b);
+    }
+    for(let row=0;row<2;row++){
+      const a=i*3+row,b=((i+1)%N)*3+row;
+      shoreIndices.push(a,b,a+1,b,b+1,a+1);
+    }
+  }
+  const shoreGeo=new THREE.BufferGeometry();
+  shoreGeo.setAttribute("position",new THREE.Float32BufferAttribute(shorePositions,3));
+  shoreGeo.setAttribute("color",new THREE.Float32BufferAttribute(shoreColors,3));
+  shoreGeo.setIndex(shoreIndices);shoreGeo.computeVertexNormals();
+  const shore=new THREE.Mesh(shoreGeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,side:THREE.DoubleSide}));
+  shore.receiveShadow=true;shore.userData.noAutoShadow=true;pond.add(shore);
   const wmesh=new THREE.Mesh(new THREE.ShapeGeometry(shape,24),MAT.water);
   wmesh.rotation.x=-Math.PI/2;wmesh.position.y=.06;wmesh.receiveShadow=true;pond.add(wmesh);
   /* 汀(みぎわ)の石 */
@@ -7041,6 +7081,24 @@ const SHISHIN_DATA={
     if(bridgeClear.some(q=>Math.hypot(sx-q[0],sz-q[1])<3.0))continue;
     s.position.set(sx,radius*.5-.025,sz);s.castShadow=true;s.receiveShadow=true;
     s.rotation.y=rnd(0,Math.PI*2);pond.add(s);}
+  // 岸の間隙に低い草をまとめて配置。橋の足元と歩行線は空けておく。
+  const reedPlaces=[];
+  for(let i=0;i<N;i++){
+    if(i%3===1)continue;
+    const [x,z]=ring[i],dx=x-center[0],dz=z-center[1],length=Math.hypot(dx,dz)||1;
+    const bx=x+dx/length*.68,bz=z+dz/length*.68;
+    if(bridgeClear.some(q=>Math.hypot(bx-q[0],bz-q[1])<3.4))continue;
+    for(let k=0;k<3;k++)reedPlaces.push([bx+Math.sin(i*2.7+k)*.24,bz+Math.cos(i*1.9+k)*.22,i,k]);
+  }
+  const reedGeo=new THREE.ConeGeometry(.052,1,4),reedMat=M({color:0x73805c,roughness:1,side:THREE.DoubleSide});
+  const reeds=new THREE.InstancedMesh(reedGeo,reedMat,reedPlaces.length),reedPose=new THREE.Object3D();
+  reedPlaces.forEach(([x,z,i,k],n)=>{
+    const h=.58+.21*(1+Math.sin(i*1.7+k*2.9));
+    reedPose.position.set(x,.03+h*.46,z);reedPose.rotation.set(Math.sin(i+k)*.13,i*1.31+k,Math.cos(i*1.5+k)*.17);
+    reedPose.scale.set(1,h,1);reedPose.updateMatrix();reeds.setMatrixAt(n,reedPose.matrix);
+  });
+  fitDetailInstances(reeds);reeds.userData.noAutoShadow=true;
+  pond.add(reeds);window.POND_REED_MATERIAL=reedMat;
   /* 中島 */
   function island(x,z,r){
     // [fix] 中島の地面は共有MAT.grassを使用(複製だと冬の雪化粧=grass色変更が効かず緑のまま残る)
@@ -11406,6 +11464,7 @@ function applySeason(key){
    const _sll=$("tbSeasonLbl");if(_sll&&_sl)_sll.textContent=_sl;}
   // 地面の草色
   MAT.grass.color.setHex(s.grass);
+  if(window.POND_REED_MATERIAL)window.POND_REED_MATERIAL.color.setHex({spring:0x74865d,summer:0x5f8050,autumn:0x9b8660,winter:0xaba99a}[key]);
   // 松・常緑樹も季節色に(秋=紅葉色 / 冬=雪化粧の白み)
   if(s.pine!=null){MAT.pine.color.setHex(s.pine);MAT.pineDark.color.setHex(s.pineDark);}
   // モミジの葉色
