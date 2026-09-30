@@ -813,8 +813,9 @@ async function launchBrowser() {
           await new Promise((resolve) => setTimeout(resolve, 120));
           const started = startGisshaCarry() === true;
           const before = GISSHA_YARD.cart?.position.clone();
-          if (APP.gisshaCarry) APP.gisshaCarry.speed = 0.12;
+          keys.w = true;
           updateGisshaCarry(0.5, 1.0);
+          keys.w = false;
           const after = GISSHA_YARD.cart?.position.clone();
           const hudVisible = getComputedStyle(document.getElementById('gisshaCarryHud')).display !== 'none';
           const active = APP.gisshaCarry?.active === true && window.GISSHA_YARD_STATUS?.carryActive === true;

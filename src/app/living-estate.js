@@ -310,7 +310,7 @@
     const event={type,def,started:performance.now(),duration:def.duration,actorState:[],notified:false,minimized:false,cart:null,visitor:null};
     saveArrivalActors(event);applyArrivalActors(event);rememberCart(event);
     createVisitor(event);
-    if(type==="oxCart")gisshaCarrySetCart(.88,0);
+    if(type==="oxCart")gisshaCarrySetCart(0,0);
     state.arrival=event;state.lastArrival=type;state.nextArrival=null;notify(def.label+"。"+def.hint,3100);sound(600);refreshPanel();refreshStatus();return true;
   }
   function finishArrival(silent){
@@ -334,7 +334,7 @@
     }
     if(event.type==="oxCart"&&typeof gisshaCarrySetCart==="function"){
       const u=Math.min(1,elapsed/event.duration),smooth=u*u*(3-2*u);
-      gisshaCarrySetCart(.88-.68*smooth,0);
+      gisshaCarrySetCart(.065*smooth,0);
     }
     if(!event.notified&&near(event.def.anchor,9)){event.notified=true;notify(event.def.hint,2500);}
     if(elapsed>=event.duration)finishArrival(false);
