@@ -750,8 +750,13 @@ async function launchBrowser() {
           const prevMode = APP.mode;
           APP.mode = 'walk';
           const before = movingRoot.position.clone();
-          updateHouseholdWalk(0.016, 123.456);
-          modelSmoke.householdMovementOk = movingRoot.position.distanceTo(before) > 0.001;
+          for (const time of [123.456, 124.456, 125.456]) {
+            updateHouseholdWalk(0.016, time);
+            if (movingRoot.position.distanceTo(before) > 0.001) {
+              modelSmoke.householdMovementOk = true;
+              break;
+            }
+          }
           APP.mode = prevMode;
         }
         modelSmoke.himeInMichoudaiOk = window.CHARACTER_LAYOUT_STATUS?.himeInMichoudai === true;

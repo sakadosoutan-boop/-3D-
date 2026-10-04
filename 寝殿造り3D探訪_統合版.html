@@ -7098,7 +7098,7 @@ const SHISHIN_DATA={
   for(let i=1;i<N;i++)shape.lineTo(ring[i][0],-ring[i][1]);
   shape.closePath();
   // 水面と白砂の境界を二段の汀にする。頂点色だけで湿った砂から乾いた砂へ移し、追加は一描画。
-  const shorePositions=[],shoreColors=[],shoreIndices=[];
+  const shorePositions=[],shoreColors=[],shoreUV=[],shoreIndices=[];
   const wet=new THREE.Color(0x666f5f),middle=new THREE.Color(0x978f72),dry=new THREE.Color(0xc5baa0);
   const shoreColor=new THREE.Color();
   for(let i=0;i<N;i++){
@@ -7107,6 +7107,7 @@ const SHISHIN_DATA={
     for(let row=0;row<3;row++){
       const distance=[-.16,.33,1.22+variation][row];
       shorePositions.push(x+nx*distance,.019+row*.002,z+nz*distance);
+      shoreUV.push((x+nx*distance+59)/118,(z+nz*distance+60)/118);
       shoreColor.copy(row===0?wet:row===1?middle:dry);
       shoreColors.push(shoreColor.r,shoreColor.g,shoreColor.b);
     }
@@ -7118,15 +7119,34 @@ const SHISHIN_DATA={
   const shoreGeo=new THREE.BufferGeometry();
   shoreGeo.setAttribute("position",new THREE.Float32BufferAttribute(shorePositions,3));
   shoreGeo.setAttribute("color",new THREE.Float32BufferAttribute(shoreColors,3));
+  shoreGeo.setAttribute("uv",new THREE.Float32BufferAttribute(shoreUV,2));
   shoreGeo.setIndex(shoreIndices);shoreGeo.computeVertexNormals();
-  const shore=new THREE.Mesh(shoreGeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,side:THREE.DoubleSide}));
+  const shore=new THREE.Mesh(shoreGeo,new THREE.MeshStandardMaterial({map:TEX.sand,vertexColors:true,roughness:1,side:THREE.DoubleSide}));
   shore.receiveShadow=true;shore.userData.noAutoShadow=true;pond.add(shore);
   const wmesh=new THREE.Mesh(new THREE.ShapeGeometry(shape,24),MAT.water);
   wmesh.rotation.x=-Math.PI/2;wmesh.position.y=.06;wmesh.receiveShadow=true;pond.add(wmesh);
+  // 水際の一段浅い色。岸の曲線に沿う帯を一つのメッシュにまとめる。
+  const shallows=[],shallowColors=[],shallowFaces=[];
+  const shallowOuter=new THREE.Color(0xb4d7bd),shallowInner=new THREE.Color(0x7eaab1);
+  for(let i=0;i<N;i++){
+    const [x,z]=ring[i],dx=x-center[0],dz=z-center[1],length=Math.hypot(dx,dz)||1;
+    for(let row=0;row<2;row++){
+      const inward=row?1.35:.14,px=x-dx/length*inward,pz=z-dz/length*inward;
+      shallows.push(px,.068+row*.001,pz);
+      const c=row?shallowInner:shallowOuter;shallowColors.push(c.r,c.g,c.b);
+    }
+    const p=i*2,n=((i+1)%N)*2;shallowFaces.push(p,n,p+1,n,n+1,p+1);
+  }
+  const shallowGeo=new THREE.BufferGeometry();shallowGeo.setAttribute("position",new THREE.Float32BufferAttribute(shallows,3));
+  shallowGeo.setAttribute("color",new THREE.Float32BufferAttribute(shallowColors,3));shallowGeo.setIndex(shallowFaces);shallowGeo.computeVertexNormals();
+  const shallow=new THREE.Mesh(shallowGeo,new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:.20,depthWrite:false,side:THREE.DoubleSide}));
+  shallow.userData.noAutoShadow=true;pond.add(shallow);
   /* 汀(みぎわ)の石 */
   const bridgeClear=[[-20,22.5],[-20,29.6],[-15.8,35],[-7,39],[-4,36.8],[-4,28.5]];
-  for(let i=0;i<N;i+=1){const p=ring[i];
-    const radius=rnd(.4,1.0),s=new THREE.Mesh(gardenRockGeo(radius,i),MAT.stone);
+  for(let i=0;i<N;i+=1){
+    if(i%5===1||i%7===3)continue;
+    const p=ring[i],radius=i%9===0?rnd(.72,.96):rnd(.30,.70);
+    const s=new THREE.Mesh(gardenRockGeo(radius,i),MAT.stone);
     const sx=p[0]+rnd(-.5,.5),sz=p[1]+rnd(-.5,.5);
     if(bridgeClear.some(q=>Math.hypot(sx-q[0],sz-q[1])<3.0))continue;
     s.position.set(sx,radius*.5-.025,sz);s.castShadow=true;s.receiveShadow=true;
@@ -7149,11 +7169,39 @@ const SHISHIN_DATA={
   });
   fitDetailInstances(reeds);reeds.userData.noAutoShadow=true;
   pond.add(reeds);window.POND_REED_MATERIAL=reedMat;
+  // 大石の間に低い小石を一括配置し、岸線の規則的な間隔を和らげる。
+  const pebbles=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),M({color:0xa69e8a,roughness:1,flatShading:true}),N*2);
+  const pebblePose=new THREE.Object3D();let pebbleCount=0;
+  for(let i=0;i<N;i++){
+    const [x,z]=ring[i],dx=x-center[0],dz=z-center[1],length=Math.hypot(dx,dz)||1;
+    for(let k=0;k<2;k++){
+      const offset=.72+k*.51+.23*Math.sin(i*2.13+k*3.7),px=x+dx/length*offset+.28*Math.sin(i*4.7+k),pz=z+dz/length*offset+.27*Math.cos(i*3.1+k);
+      if(bridgeClear.some(q=>Math.hypot(px-q[0],pz-q[1])<3.4))continue;
+      const radius=.11+.09*(1+Math.sin(i*1.73+k*4.1));
+      pebblePose.position.set(px,.025+radius*.37,pz);pebblePose.rotation.set(.13*Math.sin(i),i*2.31+k,.12*Math.cos(i));
+      pebblePose.scale.set(radius*1.32,radius*.55,radius);pebblePose.updateMatrix();pebbles.setMatrixAt(pebbleCount,pebblePose.matrix);
+      pebbles.setColorAt(pebbleCount,new THREE.Color().setHSL(.12,.08,.47+.10*Math.sin(i*1.49+k)));
+      pebbleCount++;
+    }
+  }
+  pebbles.count=pebbleCount;pebbles.instanceMatrix.needsUpdate=true;pebbles.instanceColor.needsUpdate=true;
+  fitDetailInstances(pebbles);pebbles.userData.noAutoShadow=true;pebbles.castShadow=false;pebbles.receiveShadow=true;pond.add(pebbles);
   /* 中島 */
+  MAT.islandEarth=M({map:TEX.sand,color:0xa3977d,roughness:1});
   function island(x,z,r){
-    // [fix] 中島の地面は共有MAT.grassを使用(複製だと冬の雪化粧=grass色変更が効かず緑のまま残る)
-    const i1=new THREE.Mesh(new THREE.CylinderGeometry(r,r*1.25,1.2,18),MAT.grass);
-    i1.position.set(x,.5,z);i1.receiveShadow=true;i1.castShadow=true;pond.add(i1);
+    // 輪郭を揺らした緩い斜面。共有の草材を使うため季節の色替えもそのまま反映される。
+    const segments=32,rows=[[0,1.13],[.55,1.09],[.82,.72],[1.16,-.08]],positions=[],uv=[],faces=[];
+    for(let row=0;row<rows.length;row++)for(let i=0;i<segments;i++){
+      const a=i/segments*Math.PI*2,edge=1+.055*Math.sin(a*3+r)+.035*Math.sin(a*7-r*1.3);
+      const radius=r*rows[row][0]*edge,xx=Math.cos(a)*radius,zz=Math.sin(a)*radius;
+      positions.push(xx,rows[row][1]+.025*Math.sin(a*4+r)*rows[row][0],zz);uv.push(.5+xx/(r*2.6),.5+zz/(r*2.6));
+      if(row<rows.length-1){const p=row*segments+i,n=row*segments+(i+1)%segments;faces.push(p,n,p+segments,n,n+segments,p+segments);}
+    }
+    const islandGeo=new THREE.BufferGeometry();islandGeo.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
+    islandGeo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));islandGeo.setIndex(faces);islandGeo.computeVertexNormals();
+    islandGeo.addGroup(0,segments*12,0);islandGeo.addGroup(segments*12,segments*6,1);
+    const i1=new THREE.Mesh(islandGeo,[MAT.grass,MAT.islandEarth]);
+    i1.position.set(x,0,z);i1.receiveShadow=true;i1.castShadow=true;pond.add(i1);
     const t=tree(rnd(2.4,3.2),"normal");t.position.set(x+rnd(-1,1),1.1,z+rnd(-1,1));pond.add(t);
     [[r*.5,0],[-r*.4,r*.3]].forEach((o,k)=>{const radius=rnd(.5,.9),s=new THREE.Mesh(gardenRockGeo(radius,k+3),MAT.stone);
       s.position.set(x+o[0],1.1+radius*.5-.025,z+o[1]);s.castShadow=true;s.receiveShadow=true;pond.add(s);});
@@ -7161,6 +7209,8 @@ const SHISHIN_DATA={
   }
   const isA=island(-20,34,4.6),isB=island(-4,40,3.4);  // 南庭寄りに配置(橋を短く美しく)
   /* 反り橋(朱塗りの太鼓橋) — 反りに沿った床板・桁・束・高欄 */
+  const bridgeMat=M({map:TEX.shu,color:0xdfbba6,roughness:.59});
+  const bridgeDarkMat=M({map:TEX.shu,color:0xb99c8c,roughness:.64});
   function bridge(x1,z1,x2,z2,W,y1,y2){
     W=W||2.2;
     y1=y1==null?1.05:y1;y2=y2==null?1.05:y2;
@@ -7179,28 +7229,28 @@ const SHISHIN_DATA={
     // 床板(連続したスラブを勾配なりに)
     for(let i=0;i<seg;i++){
       const t0=i/seg,t1=(i+1)/seg;
-      g.add(archBeam(t0,t1,0,.14,W,MAT.shuDark,0));
+      g.add(archBeam(t0,t1,0,.14,W,bridgeDarkMat,0));
       // 床の朱の踏み板(上面)
-      g.add(archBeam(t0,t1,.09,.04,W-.2,MAT.shu,0));
+      g.add(archBeam(t0,t1,.09,.04,W-.2,bridgeMat,0));
     }
     // 横桟を踏み板として重ね、太鼓橋らしい段のリズムを強調する
     const treadCount=14;
     for(let i=1;i<treadCount;i++){
       const t=i/treadCount,ta=Math.max(0,t-.012),tb=Math.min(1,t+.012);
-      const tread=box(.16,.075,W-.08,MAT.shuDark,-L/2+L*t,arch(t)+.145,0);
+      const tread=box(.16,.075,W-.08,bridgeDarkMat,-L/2+L*t,arch(t)+.145,0);
       tread.rotation.z=Math.atan2(arch(tb)-arch(ta),L*(tb-ta));g.add(tread);
     }
     // 桁(side stringers)
     [-W/2+0.12,W/2-0.12].forEach(zz=>{
       for(let i=0;i<seg;i++){
-        g.add(archBeam(i/seg,(i+1)/seg,-.16,.2,.16,MAT.shu,zz));
+        g.add(archBeam(i/seg,(i+1)/seg,-.16,.2,.16,bridgeMat,zz));
       }
     });
     // 橋脚(束柱)を水中に
     [-L*0.3,0,L*0.3].forEach(px=>{
       const tt=(px+L/2)/L,topY=arch(tt)-0.2;
       [-W/2+0.2,W/2-0.2].forEach(zz=>{
-        g.add(cyl(0.11,0.13,topY+0.8,MAT.shuDark,px,topY/2-0.4,zz,8));
+        g.add(cyl(0.11,0.13,topY+0.8,bridgeDarkMat,px,topY/2-0.4,zz,8));
       });
     });
     // 高欄(擬宝珠付き)
@@ -7208,12 +7258,12 @@ const SHISHIN_DATA={
       const posts=12;
       for(let i=0;i<=posts;i++){
         const t=i/posts,x=-L/2+L*t,y=arch(t);
-        g.add(box(0.09,0.62,0.09,MAT.shuDark,x,y+0.31,zz));
+        g.add(box(0.09,0.62,0.09,bridgeDarkMat,x,y+0.31,zz));
         const gp=new THREE.Mesh(railCapGeo(),MAT.kin);gp.position.set(x,y+.68,zz);gp.castShadow=gp.receiveShadow=true;g.add(gp);
       }
       // 手すり(笠木)は各区間の両端を結び、反りの接線に沿わせる
       for(let i=0;i<posts;i++){
-        g.add(archBeam(i/posts,(i+1)/posts,.6,.07,.09,MAT.shu,zz));
+        g.add(archBeam(i/posts,(i+1)/posts,.6,.07,.09,bridgeMat,zz));
       }
     });
     mergeStaticDetail(g,"arched-bridge");
@@ -7935,15 +7985,19 @@ const GISSHA_YARD={root:null,shed:null,sheds:[],cart:null,parkedCarts:[],guide:n
   /* 牛 */
   const ox=new THREE.Group();
   const oxHide=M({color:0x302622,roughness:.94}),oxMuzzle=M({color:0x756154,roughness:.9}),hoof=M({color:0x181515,roughness:.72});
-  const body=new THREE.Mesh(new THREE.SphereGeometry(1,18,13),oxHide);body.scale.set(.68,.62,1.18);body.position.set(0,1.12,0);body.castShadow=true;ox.add(body);
-  const chest=new THREE.Mesh(new THREE.SphereGeometry(.55,16,11),oxHide);chest.scale.set(1,.95,.78);chest.position.set(0,1.24,-.72);ox.add(chest);
+  const oxHorn=M({color:0xb9ad91,roughness:.82});
+  const body=new THREE.Mesh(new THREE.SphereGeometry(1,18,13),oxHide);body.scale.set(.65,.58,1.22);body.position.set(0,1.17,0);body.castShadow=true;ox.add(body);
+  const chest=new THREE.Mesh(new THREE.SphereGeometry(.55,16,11),oxHide);chest.scale.set(1.06,1.03,.82);chest.position.set(0,1.27,-.72);ox.add(chest);
+  const hump=new THREE.Mesh(new THREE.SphereGeometry(.38,14,10),oxHide);hump.scale.set(1.25,.95,1.12);hump.position.set(0,1.62,-.65);hump.castShadow=true;ox.add(hump);
+  const dewlap=new THREE.Mesh(new THREE.SphereGeometry(.27,12,9),oxHide);dewlap.scale.set(.83,1.13,.85);dewlap.position.set(0,.96,-1.08);ox.add(dewlap);
   const neck=cyl(.34,.43,.72,oxHide,0,1.33,-1.02,12);neck.rotation.x=-.48;ox.add(neck);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.42,16,12),oxHide);head.scale.set(.82,.78,1.05);head.position.set(0,1.53,-1.42);ox.add(head);
   const muzzle=new THREE.Mesh(new THREE.SphereGeometry(.28,14,10),oxMuzzle);muzzle.scale.set(1.05,.62,.72);muzzle.position.set(0,1.39,-1.75);ox.add(muzzle);
   [-1,1].forEach(s=>{
     const ear=new THREE.Mesh(new THREE.SphereGeometry(.16,10,7),oxHide);ear.scale.set(1.25,.48,.72);ear.position.set(s*.34,1.70,-1.43);ear.rotation.z=s*.25;ox.add(ear);
     const eye=new THREE.Mesh(new THREE.SphereGeometry(.035,8,6),new THREE.MeshBasicMaterial({color:0x090807}));eye.position.set(s*.25,1.61,-1.76);ox.add(eye);
-    const horn=cyl(.025,.075,.48,MAT.stone,s*.28,1.94,-1.42,9);horn.rotation.z=s*.70;horn.rotation.x=-.18;ox.add(horn);
+    const hornRoot=cyl(.055,.09,.28,oxHorn,s*.32,1.89,-1.42,9);hornRoot.rotation.z=-s*.62;hornRoot.rotation.x=-.16;ox.add(hornRoot);
+    const hornTip=cyl(.012,.052,.27,oxHorn,s*.46,2.06,-1.45,8);hornTip.rotation.z=-s*.24;hornTip.rotation.x=-.3;ox.add(hornTip);
     const nostril=new THREE.Mesh(new THREE.SphereGeometry(.022,7,5),hoof);nostril.position.set(s*.10,1.42,-1.99);ox.add(nostril);
   });
   [[-.40,-.58],[.40,-.58],[-.40,.62],[.40,.62]].forEach((p,i)=>{
@@ -11616,6 +11670,7 @@ function applySeason(key){
    const _sll=$("tbSeasonLbl");if(_sll&&_sl)_sll.textContent=_sl;}
   // 地面の草色。白砂は冬だけ少し青みのある雪明かりへ寄せる。
   MAT.grass.color.setHex(s.grass);
+  if(MAT.islandEarth)MAT.islandEarth.color.setHex(key==="winter"?0xd0d5d2:0xa3977d);
   MAT.sand.color.setHex(key==="winter"?0xdce1e5:0xd6cfbe);
   paintCourtSurface(key);
   if(COURT_EDGE_TUFT_MAT)COURT_EDGE_TUFT_MAT.color.setHex({spring:0x71834c,summer:0x526d38,autumn:0x958354,winter:0xb6bdba}[key]);
