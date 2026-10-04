@@ -5862,9 +5862,9 @@ TEX.sand=canv(1024,1024,(x,w,h)=>{
   for(let i=0;i<lines;i++){
     const baseY=i*dy+dy*.5,ph=rnd(0,6.283),waves=2;
     const draw=(off,col,lw)=>{x.beginPath();for(let sx=0;sx<=w;sx+=4){const yy=baseY+off+Math.sin(sx/w*6.283*waves+ph)*amp;sx===0?x.moveTo(sx,yy):x.lineTo(sx,yy);}x.strokeStyle=col;x.lineWidth=lw;x.stroke();};
-    draw( 1.4,"rgba(96,86,64,.035)",2.2);   // 溝の谷(広く柔らかい影)
-    draw( 0.8,"rgba(88,78,58,.045)",1.0);   // 溝の芯
-    draw(-0.8,"rgba(255,253,247,.07)",1.4);// 盛りの稜(陽の当たる面)
+    draw( 1.4,"rgba(96,86,64,.085)",2.2);   // 溝の谷(広く柔らかい影)
+    draw( 0.8,"rgba(88,78,58,.11)",1.0);    // 溝の芯
+    draw(-0.8,"rgba(255,253,247,.13)",1.4);// 盛りの稜(陽の当たる面)
   }
   // 砂粒: 明暗2種の粒を高密度で散らし、近景でも「粒の集合」に見えるようにする
   for(let i=0;i<130000;i++){const v=rnd(-30,26)|0,a=rnd(.05,.22);
@@ -6872,15 +6872,63 @@ function inBuildingEntrance(x,z,skipSouth){
 ============================================================ */
 const FOLIAGE_DETAIL=new Map();
 const world=new THREE.Group();scene.add(world);
+let COURT_SURFACE;
+let COURT_EDGE_TUFT_MAT;
+// 頂点色の広い濃淡は白砂の細粒テクスチャと独立。季節切替時だけ再計算し、描画パスは増やさない。
+function paintCourtSurface(season){
+  if(!COURT_SURFACE)return;
+  const pos=COURT_SURFACE.geometry.attributes.position,color=COURT_SURFACE.geometry.attributes.color;
+  const winter=season==="winter",smooth=(v,a,b)=>THREE.MathUtils.smoothstep(v,a,b);
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i),z=COURT_SURFACE.position.z-pos.getY(i);
+    if(winter){color.setXYZ(i,1.06,1.09,1.13);continue;}
+    const edge=Math.max(smooth(Math.abs(x),30,47),smooth(-z,24,46));
+    const east=smooth(z,-49,-40)*(1-smooth(z,11,20))*Math.exp(-Math.pow((x-51.5)/6.5,2));
+    const west=smooth(z,-50,-40)*(1-smooth(z,12,22))*Math.exp(-Math.pow((x+50)/6.5,2));
+    const north=Math.exp(-Math.pow((z+53)/6.5,2))*smooth(x,-56,-45)*(1-smooth(x,45,57));
+    const worn=Math.max(east,west,north);
+    const broad=.035*Math.sin(x*.16+Math.sin(z*.12))*Math.cos(z*.21)+.020*Math.sin(x*.37+z*.11);
+    const tone=1-edge*.24+worn*.25+broad;
+    color.setXYZ(i,tone*(1+.045*edge),tone*(1-.035*edge),tone*(1-.10*edge));
+  }
+  color.needsUpdate=true;
+}
 {
   const g1=new THREE.Mesh(new THREE.PlaneGeometry(1200,1200),MAT.grass);
   // 俯瞰で地面の端が空に切り抜かれないよう延長。頂点数と草の模様の尺度は維持する。
   const grassUV=g1.geometry.attributes.uv;
   for(let i=0;i<grassUV.count;i++)grassUV.setXY(i,grassUV.getX(i)*3,grassUV.getY(i)*3);
   g1.rotation.x=-Math.PI/2;g1.position.y=-.06;g1.receiveShadow=true;world.add(g1);
-  const court=new THREE.Mesh(new THREE.PlaneGeometry(118,118),MAT.sand);
+  const court=new THREE.Mesh(new THREE.PlaneGeometry(118,118,32,32),MAT.sand);
   court.geometry.setAttribute("uv2",court.geometry.attributes.uv); // [AO] 白砂のaoMap用uv2
+  court.geometry.setAttribute("color",new THREE.BufferAttribute(new Float32Array(court.geometry.attributes.position.count*3),3));
+  MAT.sand.vertexColors=true;MAT.sand.needsUpdate=true;
   court.rotation.x=-Math.PI/2;court.position.set(0,0,-1);court.receiveShadow=true;world.add(court);
+  COURT_SURFACE=court;paintCourtSurface("spring");
+  // 築地際の苔草。牛車の外周路から6m以上離し、衝突対象には登録しない。
+  {
+    const geo=new THREE.IcosahedronGeometry(1,0);
+    COURT_EDGE_TUFT_MAT=new THREE.MeshStandardMaterial({color:0x71834c,roughness:1,flatShading:true});
+    const sites=[];
+    for(let n=0;n<13;n++){
+      const z=-43+n*7.3;
+      if(z<4||z>19)for(const d of [-.55,0,.43])sites.push([58.6,z+d]);
+      if(z<-7||z>7)for(const d of [-.55,0,.43])sites.push([-58.6,z+d]);
+    }
+    for(let n=0;n<13;n++){
+      const x=-43+n*7.3;
+      if(x<-7||x>7)for(const d of [-.55,0,.43])sites.push([x+d,-58.6]);
+    }
+    const tufts=new THREE.InstancedMesh(geo,COURT_EDGE_TUFT_MAT,sites.length),pose=new THREE.Object3D();
+    sites.forEach(([x,z],i)=>{
+      const phase=Math.sin(i*12.9898)*43758.5453,jitter=phase-Math.floor(phase);
+      pose.position.set(x+(jitter-.5)*.55,.055,z+Math.sin(i*2.53)*.18);
+      pose.rotation.y=i*2.39996;pose.scale.set(.20+jitter*.15,.10+jitter*.07,.22+jitter*.12);
+      pose.updateMatrix();tufts.setMatrixAt(i,pose.matrix);
+    });
+    tufts.instanceMatrix.needsUpdate=true;tufts.frustumCulled=false;tufts.castShadow=false;tufts.receiveShadow=true;
+    tufts.userData.noAutoShadow=true;world.add(tufts);
+  }
   const stepping=new THREE.Group();
   const stones=[[0,8,1.15,.72],[0,13,1.0,.62],[0,18,1.25,.7],[0,23,1.05,.66],[0,28,1.2,.72],
     [-8,18,.9,.58],[8,18,.9,.58],[-18,24,1.05,.64],[18,25,1.05,.64],[-27,31,1.2,.75],[28,32,1.2,.75]];
@@ -11553,8 +11601,11 @@ function applySeason(key){
    const _sl={spring:"春",summer:"夏",autumn:"秋",winter:"冬"}[key];
    const _su=document.querySelector("#tbSeasonIc use");if(_su&&_si)_su.setAttribute("href","#"+_si);
    const _sll=$("tbSeasonLbl");if(_sll&&_sl)_sll.textContent=_sl;}
-  // 地面の草色
+  // 地面の草色。白砂は冬だけ少し青みのある雪明かりへ寄せる。
   MAT.grass.color.setHex(s.grass);
+  MAT.sand.color.setHex(key==="winter"?0xdce1e5:0xd6cfbe);
+  paintCourtSurface(key);
+  if(COURT_EDGE_TUFT_MAT)COURT_EDGE_TUFT_MAT.color.setHex({spring:0x71834c,summer:0x526d38,autumn:0x958354,winter:0xb6bdba}[key]);
   if(window.POND_REED_MATERIAL)window.POND_REED_MATERIAL.color.setHex({spring:0x74865d,summer:0x5f8050,autumn:0x9b8660,winter:0xaba99a}[key]);
   // 松・常緑樹も季節色に(秋=紅葉色 / 冬=雪化粧の白み)
   if(s.pine!=null){MAT.pine.color.setHex(s.pine);MAT.pineDark.color.setHex(s.pineDark);}
