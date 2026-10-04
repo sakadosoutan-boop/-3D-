@@ -20,13 +20,19 @@ const {chromium}=require('playwright');
     const route=await page.evaluate(()=>{
       const p=Array.from({length:201},(_,i)=>gisshaCarryPath(i/200));
       const ds=p.slice(1).map((v,i)=>v.pos.distanceTo(p[i].pos));
+      const bambooClearance=Math.min(...interactables.take.roots.map(root=>Math.min(...GISSHA_CARRY.samples.map(point=>Math.hypot(point.x-root.position.x,point.z-root.position.z)))));
       return {length:GISSHA_CARRY.length,start:p[0].pos.distanceTo(GISSHA_YARD.carryRoute[0]),
         end:p.at(-1).pos.distanceTo(GISSHA_YARD.carryRoute.at(-1)),ratio:Math.max(...ds)/Math.min(...ds),
         north:p.some(q=>q.pos.z< -51&&Math.abs(q.pos.x)<5),garage:GISSHA_YARD.carryRoute.at(-1).x< -52,
-        east:GISSHA_YARD.carryRoute[0].x>50};
+        east:GISSHA_YARD.carryRoute[0].x>50,bambooClearance};
     });
-    assert.ok(route.length>195&&route.start<.01&&route.end<.01&&route.ratio<1.25&&route.north&&route.garage&&route.east,JSON.stringify(route));
-    passed.push('east-gate to west-shed route circles the northern passage for over 195 m');
+    assert.ok(route.length>195&&route.start<.01&&route.end<.01&&route.ratio<1.25&&route.north&&route.garage&&route.east&&route.bambooClearance>5,JSON.stringify(route));
+    passed.push('east-gate to west-shed route circles the northern passage with a clear bamboo lane');
+    await page.evaluate(()=>{startGisshaCarry();scheduleModeBrief('walk');});
+    await page.waitForTimeout(650);
+    assert.equal(await page.evaluate(()=>document.getElementById('modeBrief').classList.contains('show')),false);
+    await page.evaluate(()=>endGisshaCarry(false,true));
+    passed.push('the walking-mode introduction stays closed during a cart trip');
     for(const [name,width,height] of [['desktop',1280,800],['portrait',390,844]]){
       await page.setViewportSize({width,height});
       const intro=await page.evaluate(()=>{
@@ -150,6 +156,13 @@ const {chromium}=require('playwright');
     });
     assert.ok(guideDraws>0&&guideDraws<=8,`guide costs ${guideDraws} draw calls`);
     passed.push(`route guide costs ${guideDraws} draw calls`);
+    await page.evaluate(()=>{window.__SHINDEN_BENCH_PAUSE=false;animate(performance.now());});
+    await page.evaluate(()=>startGisshaCarry());
+    await page.waitForTimeout(450);
+    assert.equal(await page.evaluate(()=>SHISHIN.some(s=>s.g.visible)),false);
+    await page.screenshot({path:'artifacts/review/gissha-start.png'});
+    await page.evaluate(()=>endGisshaCarry(false,true));
+    passed.push('the driving view hides nearby guardian spirits');
     for(const [name,width,height] of [['desktop',1280,800],['portrait',390,844],['landscape',844,390]]){
       await page.setViewportSize({width,height});
       const fits=await page.evaluate(()=>{

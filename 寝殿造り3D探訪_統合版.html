@@ -8104,19 +8104,28 @@ function gisshaCarryBuildGuide(){
   if(GISSHA_YARD.guide)return GISSHA_YARD.guide;
   gisshaCarryPath(0);
   const g=new THREE.Group();g.name="gissha_carry_guide";g.visible=false;
-  const count=240,positions=[],roadPositions=[],indices=[];
+  const count=240,positions=[],roadPositions=[],rutPositions=[],indices=[],rutIndices=[];
   for(let i=0;i<=count;i++){
     const p=gisshaCarryPath(i/count),w=.075,r=1.55;
     positions.push(p.pos.x+p.normal.x*w,p.pos.y+.055,p.pos.z+p.normal.z*w,
       p.pos.x-p.normal.x*w,p.pos.y+.055,p.pos.z-p.normal.z*w);
     roadPositions.push(p.pos.x+p.normal.x*r,p.pos.y+.027,p.pos.z+p.normal.z*r,
       p.pos.x-p.normal.x*r,p.pos.y+.027,p.pos.z-p.normal.z*r);
-    if(i<count){const k=i*2;indices.push(k,k+1,k+2,k+1,k+3,k+2);}
+    for(const side of [-1,1]){
+      const offset=side*.83;
+      for(const edge of [-.085,.085])rutPositions.push(p.pos.x+p.normal.x*(offset+edge),p.pos.y+.041,p.pos.z+p.normal.z*(offset+edge));
+    }
+    if(i<count){
+      const k=i*2,j=i*4;indices.push(k,k+1,k+2,k+1,k+3,k+2);
+      for(const side of [0,2])rutIndices.push(j+side,j+side+1,j+side+4,j+side+1,j+side+5,j+side+4);
+    }
   }
   const roadGeom=new THREE.BufferGeometry();roadGeom.setAttribute("position",new THREE.Float32BufferAttribute(roadPositions,3));roadGeom.setIndex(indices);roadGeom.computeVertexNormals();
-  const road=new THREE.Mesh(roadGeom,new THREE.MeshBasicMaterial({color:0xcbb982,transparent:true,opacity:.14,side:THREE.DoubleSide,depthWrite:false}));road.userData.noAutoShadow=true;g.add(road);
+  const road=new THREE.Mesh(roadGeom,new THREE.MeshBasicMaterial({color:0xb79657,transparent:true,opacity:.23,side:THREE.DoubleSide,depthWrite:false}));road.userData.noAutoShadow=true;g.add(road);
+  const rutGeom=new THREE.BufferGeometry();rutGeom.setAttribute('position',new THREE.Float32BufferAttribute(rutPositions,3));rutGeom.setIndex(rutIndices);rutGeom.computeVertexNormals();
+  const ruts=new THREE.Mesh(rutGeom,new THREE.MeshBasicMaterial({color:0x715b40,transparent:true,opacity:.18,side:THREE.DoubleSide,depthWrite:false}));ruts.userData.noAutoShadow=true;g.add(ruts);
   const geom=new THREE.BufferGeometry();geom.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));geom.setIndex(indices);geom.computeVertexNormals();
-  const line=new THREE.Mesh(geom,new THREE.MeshBasicMaterial({color:0xe0bd62,transparent:true,opacity:.62,side:THREE.DoubleSide,depthWrite:false}));line.userData.noAutoShadow=true;g.add(line);
+  const line=new THREE.Mesh(geom,new THREE.MeshBasicMaterial({color:0xe0bd62,transparent:true,opacity:.78,side:THREE.DoubleSide,depthWrite:false}));line.userData.noAutoShadow=true;g.add(line);
   const edgeCount=Math.floor(GISSHA_CARRY.length/7),matrix=new THREE.Matrix4();
   const edges=new THREE.InstancedMesh(new THREE.CylinderGeometry(.09,.09,.025,8),new THREE.MeshBasicMaterial({color:0xc6aa6d,transparent:true,opacity:.62,depthWrite:false}),edgeCount*2);
   for(let i=0;i<edgeCount;i++)for(const side of [-1,1]){
@@ -8131,11 +8140,14 @@ function gisshaCarryBuildGuide(){
   }
   const ag=new THREE.BufferGeometry();ag.setAttribute("position",new THREE.Float32BufferAttribute(arrowPositions,3));ag.computeVertexNormals();
   const arrows=new THREE.Mesh(ag,new THREE.MeshBasicMaterial({color:0xf2d47c,transparent:true,opacity:.73,side:THREE.DoubleSide,depthWrite:false}));arrows.userData.noAutoShadow=true;g.add(arrows);
-  for(const fraction of [.22,.52,.79,1]){
-    const end=gisshaCarryPath(fraction).pos,r=fraction===1?1.05:.52;
-    const ring=new THREE.Mesh(new THREE.RingGeometry(r,r+.13,32),new THREE.MeshBasicMaterial({color:fraction===1?0xa8df96:0xf2d47c,transparent:true,opacity:fraction===1?.82:.55,side:THREE.DoubleSide,depthWrite:false}));
-    ring.rotation.x=-Math.PI/2;ring.position.set(end.x,end.y+.09,end.z);ring.userData.noAutoShadow=true;g.add(ring);
-  }
+  const marks=[.22,.52,.79,1],marker=new THREE.Object3D();
+  const rings=new THREE.InstancedMesh(new THREE.RingGeometry(.52,.65,32),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.68,side:THREE.DoubleSide,depthWrite:false}),marks.length);
+  marks.forEach((fraction,i)=>{
+    const p=gisshaCarryPath(fraction).pos;
+    marker.position.set(p.x,p.y+.09,p.z);marker.rotation.set(-Math.PI/2,0,0);marker.scale.setScalar(fraction===1?2:1);marker.updateMatrix();
+    rings.setMatrixAt(i,marker.matrix);rings.setColorAt(i,new THREE.Color(fraction===1?0xa8df96:0xf2d47c));
+  });
+  rings.instanceMatrix.needsUpdate=true;rings.instanceColor.needsUpdate=true;fitDetailInstances(rings);rings.userData.noAutoShadow=true;g.add(rings);
   world.add(g);GISSHA_YARD.guide=g;return g;
 }
 function startGisshaCarry(){
@@ -11360,18 +11372,18 @@ SEASONAL.tonbo=[];
     world.add(g);
     bambooStats.takenoko+=count;
   }
-  makeBambooClump(-49,-42,18,2.6);
-  makeBambooClump(-56,-39,17,2.5);
-  makeBambooClump(-43,-39,16,2.4);
-  makeBambooClump(-59,-34,15,2.2);
-  makeBambooClump(-49,-34,18,2.6);
-  makeBambooClump(-41,-32,14,2.1);
-  makeBambooClump(-55,-29,14,2.0);
-  makeBambooClump(-47,-27,13,2.0);
-  makeBambooClump(-38,-36,11,1.8);
-  makeBambooClump(-53,-45,12,2.0);
-  makeTakenokoPatch(-50,-38,18,4.6);
-  makeTakenokoPatch(-57,-34,10,3.2);
+  makeBambooClump(-41,-45,18,2.6);
+  makeBambooClump(-37,-43,17,2.5);
+  makeBambooClump(-42,-40,16,2.4);
+  makeBambooClump(-36,-39,15,2.2);
+  makeBambooClump(-42,-35,18,2.6);
+  makeBambooClump(-38,-32,14,2.1);
+  makeBambooClump(-43,-29,14,2.0);
+  makeBambooClump(-37,-27,13,2.0);
+  makeBambooClump(-35,-35,11,1.8);
+  makeBambooClump(-35,-48,12,2.0);
+  makeTakenokoPatch(-40,-38,18,3.4);
+  makeTakenokoPatch(-37,-34,10,2.8);
   makeTakenokoPatch(-43,-32,12,3.5);
   window.BAMBOO_GROVE_STATUS={built:true,clusters:bambooStats.clusters,culms:bambooStats.culms,takenoko:bambooStats.takenoko,takenokoLayers:5,sheathsPerLayer:2,mixedRadius:bambooStats.thin>0&&bambooStats.thick>0,futureScene:"taketori"};
 })();
@@ -15958,7 +15970,7 @@ function showModeBrief(m,opt={}){
   if(!blocking)modeBriefTimer=setTimeout(()=>hideModeBrief(),opt.ms||7600);
 }
 function scheduleModeBrief(m){
-  if(m==="walk"||m==="quest"||m==="kaimami")setTimeout(()=>{if(APP.mode===m)showModeBrief(m);},520);
+  if(m==="walk"||m==="quest"||m==="kaimami")setTimeout(()=>{if(APP.mode===m&&!APP.gisshaCarry?.active)showModeBrief(m);},520);
 }
 if($("modeBriefClose"))$("modeBriefClose").onclick=()=>hideModeBrief();
 if($("modeBriefOk"))$("modeBriefOk").onclick=()=>hideModeBrief();
@@ -27350,9 +27362,9 @@ function animate(now){
   // 四神: 四方の門/池に近づくとうっすら出現し図鑑に登録
   if(typeof SHISHIN!=="undefined")SHISHIN.forEach(s=>{
     const d=Math.hypot(player.pos.x-s.px, player.pos.z-s.pz);
-    const seiryuBlocked=s.id==="seiryu"&&(APP.mode==="quiz"||APP.mode==="quest"||APP.mode==="kaimami");
-    const target=s.ready&&!seiryuBlocked?Math.max(0,Math.min(1,(s.R-d)/(s.R-5)))*0.76:0;
-    if(seiryuBlocked)s.base=0;else s.base+=(target-s.base)*Math.min(1,dt*3);
+    const spiritBlocked=!!APP.gisshaCarry?.active||(s.id==="seiryu"&&(APP.mode==="quiz"||APP.mode==="quest"||APP.mode==="kaimami"));
+    const target=s.ready&&!spiritBlocked?Math.max(0,Math.min(1,(s.R-d)/(s.R-5)))*0.76:0;
+    if(spiritBlocked)s.base=0;else s.base+=(target-s.base)*Math.min(1,dt*3);
     const vis=s.base>0.012;s.g.visible=vis;
     if(s.shadow)s.shadow.visible=vis;
     if(vis){
@@ -27372,7 +27384,7 @@ function animate(now){
     }else{
       s.light.intensity=0;
     }
-    if(!seiryuBlocked&&!s.revealed && d<s.R*0.6){                  // 十分近づいたら登録
+    if(!spiritBlocked&&!s.revealed && d<s.R*0.6){                  // 十分近づいたら登録
       s.revealed=true;unlockCodex(s.id);
       toast("四神『"+ITEMS[s.id].n+"』がうっすらと姿を現した…",3400);
       if(typeof beep==="function")beep(528,.2,"sine",.05);
@@ -27856,9 +27868,15 @@ function animate(now){
 
     if(APP.gisshaCarry?.active)gisshaCarryCamera(window.dummyCam);
     // 牛車の追従は経過時間で補間し、低fpsでも同じ速さで追う。
-    const lerpFactor=APP.gisshaCarry?.active?1-Math.exp(-5*dt):(APP.view==="fp"?.22:.08);
-    camera.position.lerp(window.dummyCam.position, lerpFactor);
-    camera.quaternion.slerp(window.dummyCam.quaternion, lerpFactor);
+    const carrying=!!APP.gisshaCarry?.active;
+    const lerpFactor=carrying?1-Math.exp(-9*dt):(APP.view==="fp"?.22:.08);
+    // A frame stall or viewport change must not leave the vehicle outside the camera view.
+    if(carrying&&camera.position.distanceToSquared(window.dummyCam.position)>100){
+      camera.position.sub(window.dummyCam.position).setLength(6).add(window.dummyCam.position);
+      camera.quaternion.copy(window.dummyCam.quaternion);
+    }
+    camera.position.lerp(window.dummyCam.position,lerpFactor);
+    camera.quaternion.slerp(window.dummyCam.quaternion,lerpFactor);
     if(APP.view==="fp"&&!APP.gisshaCarry?.active)camera.position.y+=Math.sin(bobPhase)*bobAmp;  // ヘッドボブ(補間後の最終位置に付与=くっきり)
 
     /* --- ラベル --- */
