@@ -4449,6 +4449,7 @@ body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf
 <div id="tbMoreMenu" role="menu" aria-label="そのほかの機能">
   <button class="tbm-item" id="tbmPause" type="button" role="menuitem"><svg class="wic"><use href="#ic-pause"/></svg><span><b>一時停止</b><small>操作を止めて授業の中断に(Escキーでも可)</small></span></button>
   <button class="tbm-item" id="tbmTour" type="button" role="menuitem"><svg class="wic"><use href="#ic-lantern"/></svg><span><b>家司の案内をたのむ</b><small>家司が邸内を巡って解説してくれる</small></span></button>
+<button class="tbm-item" id="tbmGissha" type="button" role="menuitem"><svg class="wic"><use href="#ic-compass"/></svg><span><b>牛車を運ぶ</b><small>東の四脚門から西の車宿へ届ける</small></span></button>
   <button class="tbm-item" id="tbmEstate" type="button" role="menuitem"><svg class="wic"><use href="#ic-book"/></svg><span><b>屋敷の日課</b><small>時刻ごとの家人のつとめ・来訪の気配</small></span></button>
   <button class="tbm-item" id="tbmCollapse" type="button" role="menuitem"><svg class="wic"><use href="#ic-eye"/></svg><span><b>ツールバーを畳む</b><small>画面を広く使う</small></span></button>
   <!-- 以下は狭い画面(スマホ)専用の代替入口。広い画面ではトップバーに同じボタンが並ぶのでCSSで隠す。 -->
@@ -16151,6 +16152,7 @@ function tbMoreToggle(){
 }
 if($("tbMore"))$("tbMore").onclick=e=>{e.stopPropagation();tbMoreToggle();};
 if($("tbmTour"))$("tbmTour").onclick=()=>{tbMoreClose();if(typeof startTour==="function")startTour();};
+if($("tbmGissha"))$("tbmGissha").onclick=()=>{tbMoreClose();if(APP.gisshaCarry?.active){toast("運搬中です",1500);return;}startGisshaCarry();};
 if($("tbmEstate"))$("tbmEstate").onclick=()=>{tbMoreClose();if(window.LIVING_ESTATE&&window.LIVING_ESTATE.openSchedule)window.LIVING_ESTATE.openSchedule();else toast("屋敷の日課は散策中にひらけます",2000);};
 if($("tbmCollapse"))$("tbmCollapse").onclick=()=>{tbMoreClose();toggleTopbarCollapsed();};
 /* [UX]狭い画面ではトップバーから隠した図鑑・設定・ヘルプ等を、この「⋯」メニューから開く。
