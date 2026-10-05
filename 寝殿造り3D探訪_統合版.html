@@ -6083,9 +6083,31 @@ TEX.ash=canv(128,128,(x,w,h)=>{x.fillStyle="#8f8a7e";x.fillRect(0,0,w,h);
   for(let i=0;i<1200;i++){const v=rnd(55,180)|0;x.fillStyle=`rgba(${v},${v},${Math.max(45,v-12)},${rnd(.22,.72)})`;x.fillRect(rnd(0,w),rnd(0,h),rnd(1,3),rnd(1,3));}
   for(let i=0;i<18;i++){x.fillStyle="rgba(48,42,36,.8)";x.beginPath();x.ellipse(rnd(0,w),rnd(0,h),rnd(3,10),rnd(2,6),rnd(0,3.14),0,7);x.fill();}});
 /* 水面 */
-TEX.water=canv(256,256,(x,w,h)=>{x.fillStyle="#3c6468";x.fillRect(0,0,w,h);
-  for(let i=0;i<360;i++){x.strokeStyle=`rgba(${rnd(120,200)|0},${rnd(190,235)|0},${rnd(210,245)|0},.07)`;x.lineWidth=rnd(.4,1.1);
-    x.beginPath();const y0=rnd(0,h);x.moveTo(rnd(0,w),y0);x.bezierCurveTo(rnd(0,w),y0+rnd(-4,4),rnd(0,w),y0+rnd(-4,4),rnd(0,w),y0);x.stroke();}});
+TEX.water=canv(256,256,(x,w,h)=>{
+  x.fillStyle="#3b646a";x.fillRect(0,0,w,h);
+  // Soft, periodic color pools break up the tiled surface without another texture or draw pass.
+  for(let i=0;i<18;i++){
+    const cx=(i*97.37)%w,cy=(i*71.19)%h,r=26+(i%5)*7;
+    for(let ox=-1;ox<=1;ox++)for(let oy=-1;oy<=1;oy++){
+      const px=cx+ox*w,py=cy+oy*h;
+      const g=x.createRadialGradient(px,py,0,px,py,r);
+      g.addColorStop(0,i%3===0?"rgba(17,44,51,.15)":"rgba(166,192,177,.07)");
+      g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.fillRect(px-r,py-r,r*2,r*2);
+    }
+  }
+  // Retain the same random stream as the old texture so later garden placement stays stable.
+  for(let i=0;i<360;i++){
+    const red=rnd(120,200)|0,green=rnd(190,235)|0,blue=rnd(210,245)|0;
+    const width=rnd(.4,1.1),y0=rnd(0,h),x0=rnd(0,w),lengthSeed=rnd(0,w);
+    const bendA=rnd(-4,4),bendSeed=rnd(0,w),bendB=rnd(-4,4),endSeed=rnd(0,w);
+    if(i%3===0)continue;
+    const length=6+lengthSeed/w*19+endSeed/w*5,bend=(bendSeed/w-.5)*3;
+    x.strokeStyle=`rgba(${red},${green},${blue},.085)`;x.lineWidth=width;
+    x.beginPath();x.moveTo(x0,y0);
+    x.bezierCurveTo(x0+length*.33,y0+bendA*.3+bend,x0+length*.7,y0+bendB*.3-bend,x0+length,y0+(bendA+bendB)*.15);
+    x.stroke();
+  }
+});
 TEX.water.repeat.set(1,1); // 水面シェーダーでワールド座標に揃えて貼る。
 
 /* --- 新規粒子（桜、紅葉、雪）のプロシージャル・テクスチャ形状 --- */
@@ -10760,25 +10782,39 @@ const GARDEN_BOTANY=(()=>{
 
 // 蓮の葉と花(夏)。浅い皿状の葉と、二重に開く椀状の花弁。
 (function buildLotus(){
-  const B=GARDEN_BOTANY,pos=[0,0,0],colors=[],indices=[],c=new THREE.Color(0x567e4d).convertSRGBToLinear();colors.push(c.r,c.g,c.b);
-  const rings=3,segments=48;
+  const B=GARDEN_BOTANY,pos=[0,-.028,0],colors=[],indices=[];
+  const center=new THREE.Color(0x577f55).convertSRGBToLinear();
+  const edge=new THREE.Color(0x355f3e).convertSRGBToLinear();
+  const c=center.clone();colors.push(c.r,c.g,c.b);
+  const rings=4,segments=64;
   for(let r=1;r<=rings;r++)for(let k=0;k<segments;k++){
-    const t=r/rings,a=k/segments*Math.PI*2,rr=t*(1+.026*Math.cos(a*5));
-    pos.push(Math.cos(a)*rr,.042*t*t,Math.sin(a)*rr);
-    c.setHex(k%6===0?0x587c48:0x4b7143).convertSRGBToLinear().multiplyScalar(1-.12*t);colors.push(c.r,c.g,c.b);
+    const t=r/rings,a=k/segments*Math.PI*2;
+    const rr=t*(1+.028*Math.sin(a*7)+.014*Math.sin(a*13+1));
+    const y=-.028+.068*t*t+.018*Math.sin(a*8+.4)*Math.pow(t,5);
+    pos.push(Math.cos(a)*rr,y,Math.sin(a)*rr);
+    c.copy(center).lerp(edge,t*.82).multiplyScalar(k%8===0?1.12:k%8===1?1.035:1);
+    colors.push(c.r,c.g,c.b);
     const curr=1+(r-1)*segments+k,next=1+(r-1)*segments+(k+1)%segments;
     if(r===1)indices.push(0,next,curr);
     else{const prev=curr-segments,prevNext=next-segments;indices.push(prev,prevNext,curr,prevNext,next,curr);}
   }
-  const leafGeo=new THREE.BufferGeometry();leafGeo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));leafGeo.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));leafGeo.setIndex(indices);leafGeo.computeVertexNormals();
+  const leafGeo=new THREE.BufferGeometry();
+  leafGeo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+  leafGeo.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
+  leafGeo.setIndex(indices);leafGeo.computeVertexNormals();
   const outer=B.petal(.34,.105,.13,0xf6dbe6,0xd783ae),inner=B.petal(.22,.075,.24,0xf9e8ee,0xda89b1);
   const heartGeo=new THREE.SphereGeometry(.065,8,5),heartMat=M({color:0xd5ab3d,roughness:.9});
-  const spots=[[-26,42],[-30,36],[8,48],[12,44],[-2,50]];
-  spots.forEach(p=>{
+  const spots=[[-26,42],[-30,36],[8,48],[12,44],[-2,50]],leaves=[];
+  const offsets=[[-.36,-.20,.83],[.42,.12,.68],[-.05,.48,.56]];
+  spots.forEach((p,i)=>{
     if(!inPond(p[0],p[1]))return;
-    const radius=rnd(.9,1.5),leaf=new THREE.Mesh(leafGeo,B.green);leaf.scale.set(radius,1,radius);leaf.position.set(p[0],.12,p[1]);markFoliageNoShadow(leaf);leaf.receiveShadow=true;SEASONAL.hasu.add(leaf);
-    if(Math.random()<.6){
-      const flower=new THREE.Group();flower.position.set(p[0]+rnd(-.5,.5),.36,p[1]+rnd(-.5,.5));
+    offsets.forEach(([dx,dz,radius],j)=>{
+      const x=p[0]+dx,z=p[1]+dz;
+      if(!inPond(x,z))return;
+      leaves.push({x,z,radius:radius*(.94+.04*((i+j)%3)),angle:i*1.2+j*2.1,j});
+    });
+    if(i%3!==1){
+      const flower=new THREE.Group();flower.position.set(p[0]+.12,.36,p[1]+.23);
       B.batch(flower,outer,B.bloom,Array.from({length:8},(_,k)=>({r:[0,k/8*Math.PI*2,0]})));
       B.batch(flower,inner,B.bloom,Array.from({length:6},(_,k)=>({p:[0,.025,0],r:[0,(k+.5)/6*Math.PI*2,0]})));
       const heart=new THREE.Mesh(heartGeo,heartMat);heart.position.y=.06;heart.scale.y=.48;markFoliageNoShadow(heart);flower.add(heart);
@@ -10786,6 +10822,16 @@ const GARDEN_BOTANY=(()=>{
       SEASONAL.hasu.add(flower);
     }
   });
+  if(leaves.length){
+    const leafBatch=new THREE.InstancedMesh(leafGeo,B.green,leaves.length),pose=new THREE.Object3D();
+    leaves.forEach((leaf,i)=>{
+      pose.position.set(leaf.x,.13+.025*leaf.j,leaf.z);
+      pose.rotation.set(.025*Math.sin(leaf.angle),leaf.angle,.028*Math.cos(leaf.angle));
+      pose.scale.set(leaf.radius,1,leaf.radius);pose.updateMatrix();leafBatch.setMatrixAt(i,pose.matrix);
+    });
+    fitDetailInstances(leafBatch);
+    markFoliageNoShadow(leafBatch);leafBatch.receiveShadow=true;SEASONAL.hasu.add(leafBatch);
+  }
   SEASONAL.hasu.visible=false;
 })();
 
