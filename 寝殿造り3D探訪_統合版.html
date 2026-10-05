@@ -6631,11 +6631,13 @@ function addCornerCaps(g,w,d,y){
     const c=goldStud(p[0],y,p[1],.07);c.rotation.x=Math.PI/2;g.add(c);
   });
 }
+const TASSEL_MATS=new Map();
 function tassel(color=0xb3402a){
-  const g=new THREE.Group(),mat=M({color,roughness:.85});
-  g.add(cyl(.018,.018,.38,mat,0,-.18,0,6));
+  let mat=TASSEL_MATS.get(color);if(!mat){mat=M({color,roughness:.85});TASSEL_MATS.set(color,mat);}
+  const g=new THREE.Group(),stem=cyl(.018,.018,.38,mat,0,-.18,0,6);
+  stem.castShadow=stem.receiveShadow=false;g.add(stem);
   for(let i=0;i<5;i++){const s=box(.018,.24,.018,mat,(i-2)*.028,-.48,0,false);s.rotation.z=(i-2)*.08;g.add(s);}
-  return g;
+  return mergeStaticDetail(g,"tassel");
 }
 
 // 炎の光芒。球の輪郭を描かず、深度判定付きの柔らかな共有画像を使う。
@@ -6938,10 +6940,18 @@ function paintCourtSurface(season){
   color.needsUpdate=true;
 }
 {
-  const g1=new THREE.Mesh(new THREE.PlaneGeometry(1200,1200),MAT.grass);
-  // 俯瞰で地面の端が空に切り抜かれないよう延長。頂点数と草の模様の尺度は維持する。
-  const grassUV=g1.geometry.attributes.uv;
-  for(let i=0;i<grassUV.count;i++)grassUV.setXY(i,grassUV.getX(i)*3,grassUV.getY(i)*3);
+  // 広い草地の色を緩やかに揺らし、俯瞰でも同じ緑一色に見えないようにする。
+  const grassGeo=new THREE.PlaneGeometry(1200,1200,40,40),grassUV=grassGeo.attributes.uv;
+  const grassPosition=grassGeo.attributes.position,grassColor=new Float32Array(grassPosition.count*3);
+  for(let i=0;i<grassPosition.count;i++){
+    const x=grassPosition.getX(i),z=grassPosition.getY(i);
+    const tone=.91+.065*Math.sin(x*.018+Math.sin(z*.007)*2)+.05*Math.cos(z*.024-x*.008)+.025*Math.sin((x+z)*.058);
+    grassColor[i*3]=tone*.94;grassColor[i*3+1]=tone*1.03;grassColor[i*3+2]=tone*.91;
+    grassUV.setXY(i,grassUV.getX(i)*3,grassUV.getY(i)*3);
+  }
+  grassGeo.setAttribute("color",new THREE.BufferAttribute(grassColor,3));
+  MAT.grassGround=MAT.grass.clone();MAT.grassGround.vertexColors=true;MAT.grassGround.needsUpdate=true;
+  const g1=new THREE.Mesh(grassGeo,MAT.grassGround);
   g1.rotation.x=-Math.PI/2;g1.position.y=-.06;g1.receiveShadow=true;world.add(g1);
   const court=new THREE.Mesh(new THREE.PlaneGeometry(118,118,32,32),MAT.sand);
   court.geometry.setAttribute("uv2",court.geometry.attributes.uv); // [AO] 白砂のaoMap用uv2
@@ -11747,6 +11757,7 @@ function applySeason(key){
    const _sll=$("tbSeasonLbl");if(_sll&&_sl)_sll.textContent=_sl;}
   // 地面の草色。白砂は冬だけ少し青みのある雪明かりへ寄せる。
   MAT.grass.color.setHex(s.grass);
+  if(MAT.grassGround)MAT.grassGround.color.setHex(s.grass);
   if(MAT.islandEarth)MAT.islandEarth.color.setHex(key==="winter"?0xd0d5d2:0xa3977d);
   MAT.sand.color.setHex(key==="winter"?0xdce1e5:0xd6cfbe);
   paintCourtSurface(key);
