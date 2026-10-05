@@ -7000,10 +7000,22 @@ function paintCourtSurface(season){
 }
 /* 築地 + 屋根 + 四脚門(東) */
 {
-  const T=new THREE.Group();const H=2.6,W=60.5;
+  const T=new THREE.Group();const H=2.6,W=60.5,wallPostMatrices=[],wallPostPose=new THREE.Object3D();
   function wallSeg(len,x,z,rotY){
     const s=new THREE.Group();
     s.add(box(len,H,1.1,MAT.tsuiji,0,H/2,0));
+    // Narrow exposed posts on both faces give the long rammed-earth wall a readable rhythm.
+    const bays=Math.max(2,Math.round(len/6.5));
+    for(let i=0;i<=bays;i++){
+      const lx=-len/2+len*i/bays;
+      for(const face of [-1,1]){
+        const lz=face*.60;
+        wallPostPose.position.set(x+lx*Math.cos(rotY)+lz*Math.sin(rotY),H/2,
+          z-lx*Math.sin(rotY)+lz*Math.cos(rotY));
+        wallPostPose.rotation.set(0,rotY,0);wallPostPose.scale.set(1,1,1);
+        wallPostPose.updateMatrix();wallPostMatrices.push(wallPostPose.matrix.clone());
+      }
+    }
     // 土壁の下端を地面へ繋ぎ、軒下に通る木の影を作る。
     s.add(box(len,.16,1.30,MAT.stonePaving,0,.07,0));
     s.add(box(len,.09,1.28,MAT.woodDark,0,H-.03,0));
@@ -7022,6 +7034,10 @@ function paintCourtSurface(season){
   // 東壁中央の開口を塞ぐ。棟門(z=0)と四脚門(z=12)の分だけ開口を残す
   wallSeg(10.3,W,-7.35,Math.PI/2);  // 東(棟門の北側 z=-12.5〜-2.2)
   wallSeg(6.3,W,5.35,Math.PI/2);    // 東(棟門と四脚門の間 z=2.2〜8.5)
+  const wallPosts=new THREE.InstancedMesh(new THREE.BoxGeometry(.14,H-.20,.12),MAT.wood,wallPostMatrices.length);
+  wallPostMatrices.forEach((matrix,i)=>wallPosts.setMatrixAt(i,matrix));
+  fitDetailInstances(wallPosts);wallPosts.userData.noAutoShadow=true;wallPosts.castShadow=false;
+  wallPosts.receiveShadow=true;T.add(wallPosts);
   world.add(T);register(T,"tsuiji",new THREE.Vector3(0,4.6,W));
   /* 四脚門 */
   const gate=new THREE.Group();
@@ -7583,22 +7599,60 @@ function broadleaf(s,leafMat){
   /* 前栽(せんざい):寝殿の南の植え込み */
   const senzai=new THREE.Group();
   const flowerBeds=[[-8,13],[-5.5,14.5],[8,13],[5,15],[11,14]];
-  // 一株を低い六つの葉叢に分けて、石のような丸い一塊を避ける。
+  // Each planting layers low leaf clusters around a taller, uneven center.
   const shrubBuckets=[[],[],[]],shrubPose=new THREE.Object3D();
   flowerBeds.forEach((p,i)=>{
-    for(let k=0;k<6;k++){
-      const a=k*2.399+i*.34,spread=k===0?.10:.31+.16*(k%3),radius=.32+.08*((i*3+k)%4);
-      shrubPose.position.set(p[0]+Math.cos(a)*spread,.25+.035*(k%3),p[1]+Math.sin(a)*spread);
-      shrubPose.rotation.set(Math.sin(a)*.11,a,.08*Math.cos(a));
-      shrubPose.scale.set(radius*(1+.14*(k%2)),radius*.87,radius*(.9+.08*(i%3)));
-      shrubPose.updateMatrix();shrubBuckets[k%3].push(shrubPose.matrix.clone());
+    for(let k=0;k<11;k++){
+      const a=k*2.399+i*.34,spread=k===0?.06:.18+.13*(k%5);
+      const radius=.25+.045*((i*3+k)%4),height=k<3?.27+.025*k:.16+.025*((i+k)%3);
+      shrubPose.position.set(p[0]+Math.cos(a)*spread,.13+height*.62,p[1]+Math.sin(a)*spread);
+      shrubPose.rotation.set(Math.sin(a)*.13,a,.10*Math.cos(a));
+      shrubPose.scale.set(radius*(1+.13*(k%2)),height,radius*(.88+.08*(i%3)));
+      shrubPose.updateMatrix();
+      const tint=new THREE.Color().setRGB(.88+.055*((i+k)%4),.91+.035*((i*2+k)%4),.83+.055*((i+k*3)%4));
+      shrubBuckets[k%3].push({matrix:shrubPose.matrix.clone(),tint});
     }
   });
-  shrubBuckets.forEach((poses,v)=>{
-    const batch=new THREE.InstancedMesh(LEAF_CLUMP_GEOS[v].clone(),MAT.leaf2,poses.length);
-    poses.forEach((matrix,i)=>batch.setMatrixAt(i,matrix));
+  shrubBuckets.forEach((items,v)=>{
+    const batch=new THREE.InstancedMesh(LEAF_CLUMP_GEOS[v].clone(),MAT.leaf2,items.length);
+    items.forEach((item,i)=>{batch.setMatrixAt(i,item.matrix);batch.setColorAt(i,item.tint);});
+    batch.instanceColor.needsUpdate=true;
     fitDetailInstances(batch);markFoliageNoShadow(batch);senzai.add(batch);
   });
+  // A few upright leaves break the smooth outline without adding separate meshes per plant.
+  const sprigPos=[],sprigUv=[],sprigColors=[],sprigNormals=[],sprigIndices=[];
+  for(let leaf=0;leaf<3;leaf++){
+    const angle=leaf*Math.PI*2/3,dx=Math.cos(angle),dz=Math.sin(angle),sideX=-dz,sideZ=dx;
+    const verts=[[0,0,0],[-.085,.12,0],[0,.30,.06],[.085,.12,0],[0,.16,.045]];
+    const base=sprigPos.length/3;
+    verts.forEach(([x,y,z],i)=>{
+      sprigPos.push(dx*z+sideX*x,y,dz*z+sideZ*x);
+      sprigUv.push(i===1?0:i===3?1:.5,i===0?0:i===2?1:.5);
+      sprigColors.push(1,1,1);sprigNormals.push(dx*.55,.83,dz*.55);
+    });
+    const faces=[0,1,4,1,2,4,2,3,4,3,0,4];
+    for(let f=0;f<faces.length;f+=3){
+      sprigIndices.push(base+faces[f],base+faces[f+1],base+faces[f+2]);
+      sprigIndices.push(base+faces[f+2],base+faces[f+1],base+faces[f]);
+    }
+  }
+  const sprigGeo=new THREE.BufferGeometry();
+  sprigGeo.setAttribute("position",new THREE.Float32BufferAttribute(sprigPos,3));
+  sprigGeo.setAttribute("uv",new THREE.Float32BufferAttribute(sprigUv,2));
+  sprigGeo.setAttribute("color",new THREE.Float32BufferAttribute(sprigColors,3));
+  sprigGeo.setAttribute("normal",new THREE.Float32BufferAttribute(sprigNormals,3));
+  sprigGeo.setIndex(sprigIndices);
+  const sprigs=new THREE.InstancedMesh(sprigGeo,MAT.leaf2,flowerBeds.length*6);
+  flowerBeds.forEach((p,i)=>{
+    for(let k=0;k<6;k++){
+      const n=i*6+k,a=k*2.399+i*.46,r=.12+.11*(k%4);
+      shrubPose.position.set(p[0]+Math.cos(a)*r,.29+.04*((k+i)%3),p[1]+Math.sin(a)*r);
+      shrubPose.rotation.set(0,a,0);shrubPose.scale.setScalar(.73+.13*((i+k)%3));shrubPose.updateMatrix();
+      sprigs.setMatrixAt(n,shrubPose.matrix);
+      sprigs.setColorAt(n,new THREE.Color().setRGB(.83+.035*(k%3),.90+.03*(i%3),.78+.04*((i+k)%3)));
+    }
+  });
+  sprigs.instanceColor.needsUpdate=true;fitDetailInstances(sprigs);markFoliageNoShadow(sprigs);senzai.add(sprigs);
   world.add(senzai);
   // 春だけ前栽の葉の間に低い草花を添える。一つの描画にまとめる。
   const bedPose=new THREE.Object3D();
@@ -7608,10 +7662,10 @@ function broadleaf(s,leafMat){
   const blooms=new THREE.InstancedMesh(new THREE.PlaneGeometry(.24,.24),bloomMat,bloomCount);
   flowerBeds.forEach((p,i)=>{
     for(let j=0;j<7;j++){
-      const n=i*7+j,a=j*2.399+i*.49,r=.14+.43*((j*7+i*3)%11)/10;
-      bedPose.position.set(p[0]+Math.cos(a)*r,.49+.21*Math.sin(i*1.7+j*2.3),p[1]+Math.sin(a)*r);
+      const n=i*7+j,a=j*2.399+i*.49,r=.16+.50*((j*7+i*3)%11)/10;
+      bedPose.position.set(p[0]+Math.cos(a)*r,.27+.11*Math.sin(i*1.7+j*2.3),p[1]+Math.sin(a)*r);
       bedPose.rotation.set(-.18+Math.sin(a)*.35,a*.4,.10+Math.cos(a)*.25);
-      const size=.8+.25*((i+j)%3);bedPose.scale.setScalar(size);bedPose.updateMatrix();blooms.setMatrixAt(n,bedPose.matrix);
+      const size=.68+.14*((i+j)%3);bedPose.scale.setScalar(size);bedPose.updateMatrix();blooms.setMatrixAt(n,bedPose.matrix);
     }
   });
   fitDetailInstances(blooms);blooms.userData.noAutoShadow=true;blooms.castShadow=false;
