@@ -6574,6 +6574,49 @@ function mergeStaticDetail(root,tag){
   }
   return root;
 }
+// 人物は同じ基本形状を多数使う。indexを残して結合し、通常の静止部材結合より頂点メモリを抑える。
+function mergeIndexedCharacterDetail(root,tag){
+  const groups=new Map();
+  for(const mesh of [...root.children]){
+    if(!mesh.isMesh||mesh.isInstancedMesh||Array.isArray(mesh.material))continue;
+    const key=mesh.material.uuid+":"+mesh.castShadow+":"+mesh.receiveShadow;
+    if(!groups.has(key))groups.set(key,{mat:mesh.material,cast:mesh.castShadow,receive:mesh.receiveShadow,meshes:[]});
+    groups.get(key).meshes.push(mesh);
+  }
+  for(const entry of groups.values()){
+    if(entry.meshes.length<2)continue; // 単独の部材は共有形状のまま残す。
+    const parts=[];
+    for(const mesh of entry.meshes){
+      mesh.updateMatrix();const part=mesh.geometry.clone();part.applyMatrix4(mesh.matrix);
+      parts.push(part);root.remove(mesh);
+    }
+    const geo=new THREE.BufferGeometry(),count=parts.reduce((n,g)=>n+g.attributes.position.count,0);
+    const attributes=[["position",3],["normal",3],["uv",2]];
+    if(entry.mat.vertexColors||parts.some(g=>g.attributes.color))attributes.push(["color",3]);
+    for(const [name,size] of attributes){
+      const data=new Float32Array(count*size);let offset=0;
+      for(const part of parts){const attr=part.attributes[name],length=part.attributes.position.count*size;
+        if(attr)data.set(attr.array,offset);else if(name==="color")data.fill(1,offset,offset+length);offset+=length;}
+      geo.setAttribute(name,new THREE.BufferAttribute(data,size));
+    }
+    const indexCount=parts.reduce((n,g)=>n+(g.index?g.index.count:g.attributes.position.count),0);
+    const indices=count<=65535?new Uint16Array(indexCount):new Uint32Array(indexCount);
+    let vertexOffset=0,indexOffset=0;
+    for(const part of parts){
+      if(part.index){const source=part.index.array;for(let i=0;i<source.length;i++)indices[indexOffset++]=source[i]+vertexOffset;}
+      else for(let i=0;i<part.attributes.position.count;i++)indices[indexOffset++]=i+vertexOffset;
+      vertexOffset+=part.attributes.position.count;
+    }
+    geo.setIndex(new THREE.BufferAttribute(indices,1));
+    if(entry.mat.aoMap)geo.setAttribute("uv2",geo.attributes.uv);
+    geo.computeBoundingBox();geo.computeBoundingSphere();
+    const mesh=new THREE.Mesh(geo,entry.mat);mesh.castShadow=entry.cast;mesh.receiveShadow=entry.receive;
+    mesh.userData.staticDetail=tag;mesh.userData.sourceParts=parts.length;root.add(mesh);
+    parts.forEach(g=>g.dispose());
+  }
+  return root;
+}
+
 // Three r128はInstancedMeshの個別配置を自動で包まない。専用形状に全配置の境界を保存する。
 function fitDetailInstances(mesh){
   const geo=mesh.geometry;geo.computeBoundingBox();const base=geo.boundingBox.clone(),all=base.clone(),part=new THREE.Box3(),matrix=new THREE.Matrix4();
@@ -9098,14 +9141,19 @@ function makeHeianStandingFigure({role,palette,scale=1,prop}){
     const fan=new THREE.Group(),span=Math.PI*.62,a0=Math.PI/2-span/2;
     const leaf=new THREE.Mesh(new THREE.CircleGeometry(.26,28,a0,span),heianTextile(0xeadfc6));fan.add(leaf);
     for(let i=0;i<10;i++){const a=a0+span*(i/9),rib=box(.008,.26,.006,MAT.kin,Math.cos(a)*.13,Math.sin(a)*.13,.006,false);rib.rotation.z=a-Math.PI/2;fan.add(rib);}
+    mergeIndexedCharacterDetail(fan,"heian-standing-fan");
     fan.position.set(0,.91,.43);fan.rotation.x=-.10;fan.traverse(noTinyShadow);g.add(fan);
   }else if(prop==="scroll"){
     const scroll=new THREE.Group(),paper=box(.34,.20,.010,M({color:0xeee4c8,roughness:.92,side:THREE.DoubleSide}),0,0,0,false);scroll.add(paper);
     [-1,1].forEach(side=>scroll.add(cyl(.020,.020,.23,M({color:0xd8c69e,roughness:.85}),side*.185,0,0,8)));
+    mergeIndexedCharacterDetail(scroll,"heian-standing-scroll");
     scroll.position.set(0,.93,.43);scroll.rotation.x=-.18;scroll.traverse(noTinyShadow);g.add(scroll);
   }else if(prop==="shaku"){
     const shaku=box(.075,.47,.035,M({color:0x9b7146,roughness:.7}),-.12,.98,.43,false);shaku.rotation.z=-.08;noTinyShadow(shaku);g.add(shaku);
   }
+  const shell=new THREE.Group();
+  g.children.slice(1).filter(o=>o.isMesh).forEach(o=>shell.add(o));
+  g.add(mergeIndexedCharacterDetail(shell,"heian-standing-shell"));
   g.add(detail);g.userData.detail=detail;g.userData.pose="standing";g.userData.standing=true;g.scale.setScalar(scale);return g;
 }
 function makeHeianFigure({role,palette,scale=1,prop,pose="seated"}){
@@ -9231,6 +9279,7 @@ function makeHeianFigure({role,palette,scale=1,prop,pose="seated"}){
     for(let i=0;i<10;i++){const a=a0+span*(i/9);
       const rib=box(.009,.30,.006,MAT.kin,Math.cos(a)*.15,Math.sin(a)*.15,.006,false);rib.rotation.z=a-Math.PI/2;fan.add(rib);}
     const kaname=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.02,10),MAT.kin);kaname.rotation.x=Math.PI/2;fan.add(kaname);
+    mergeIndexedCharacterDetail(fan,"heian-seated-fan");
     fan.position.set(0,.60,.40);fan.rotation.x=-.08;fan.scale.setScalar(scale);fan.traverse(noTinyShadow);g.add(fan);
   }else if(prop==="scroll"){
     const scroll=new THREE.Group(),paperMat=M({color:0xeee4c8,roughness:.92,side:THREE.DoubleSide});
@@ -9240,12 +9289,17 @@ function makeHeianFigure({role,palette,scale=1,prop,pose="seated"}){
     [.10,.035,-.035,-.10].forEach((x,j)=>[0,1,2,3].forEach(i=>{
       const mark=box(.010,.025+(i+j)%2*.010,.004,HEIAN_FACE,x,.065-i*.043,-.008,false);scroll.add(mark);
     }));
+    mergeIndexedCharacterDetail(scroll,"heian-seated-scroll");
     scroll.position.set(0,.62,.445);scroll.rotation.x=-.22;scroll.rotation.z=.025;scroll.traverse(noTinyShadow);g.add(scroll);
   }else if(prop==="shaku"){
     const shaku=box(.075,.45,.035,M({color:0x9b7146,roughness:.7}),-.12,.67,.43,false);shaku.rotation.z=-.08;noTinyShadow(shaku);g.add(shaku);
   }
   const detail=new THREE.Group();
   g.children.filter(o=>o.userData.heianDetail).forEach(o=>detail.add(o));
+  // 座具は物語演出が個別に隠すため先頭に残し、静止した装束だけ材質別に結合する。
+  const shell=new THREE.Group();
+  g.children.slice(1).filter(o=>o.isMesh).forEach(o=>shell.add(o));
+  g.add(mergeIndexedCharacterDetail(shell,"heian-seated-shell"));
   g.add(detail);g.userData.detail=detail;g.scale.setScalar(scale);return g;
 }
 
@@ -9388,7 +9442,9 @@ function makeLowRankPerson({female=false,color=0x6f5438,under=0xc8a96a,tool="non
   }
   limbs.waist=waist; // 裾の揺れ用(腰ピボット)
   g.userData.limbs=limbs;
-  g.scale.setScalar(scale);g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});return g;
+  g.scale.setScalar(scale);g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+  mergeIndexedCharacterDetail(g,"household-static"); // 腰・袖・脚の可動グループは個別に残す。
+  return g;
 }
 function makeKeishiObject(){
   const g=makeLowRankPerson({female:false,color:0x3d4c3b,under:0x8b7350,scale:1.02});
