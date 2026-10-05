@@ -7301,8 +7301,8 @@ const SHISHIN_DATA={
   }
   const isA=island(-20,34,4.6),isB=island(-4,40,3.4);  // 南庭寄りに配置(橋を短く美しく)
   /* 反り橋(朱塗りの太鼓橋) — 反りに沿った床板・桁・束・高欄 */
-  const bridgeMat=M({map:TEX.shu,color:0xdfbba6,roughness:.59});
-  const bridgeDarkMat=M({map:TEX.shu,color:0xb99c8c,roughness:.64});
+  const bridgeMat=M({map:TEX.shu,color:0xc7b5aa,roughness:.72});
+  const bridgeDarkMat=M({map:TEX.shu,color:0x8d8179,roughness:.82});
   function bridge(x1,z1,x2,z2,W,y1,y2){
     W=W||2.2;
     y1=y1==null?1.05:y1;y2=y2==null?1.05:y2;
@@ -7529,18 +7529,45 @@ function connectTreeCrown(trunk,items,s){
   trunk.userData.crownConnections=connections;trunk.userData.crownTargets=items.map(it=>it.pos.slice());
 }
 /* 落葉樹(紅葉用):小さな葉叢の塊を寄せ集めて球体感を抑える。マテリアルは季節で差し替える */
+// Three small blades on one shared sprig soften the spherical crown silhouette.
+const BROADLEAF_SPRIG_GEO=(()=>{
+  const pos=[],uv=[],color=[],indices=[];
+  for(let k=0;k<3;k++){
+    const a=(k-1)*.75,dx=Math.sin(a),dz=Math.cos(a),sx=dz,sz=-dx;
+    const verts=[[0,0,0],[-.17,.14,.05],[-.23,.27,.12],[0,.45,.23],[.23,.27,.12],[.17,.14,.05]],base=pos.length/3;
+    verts.forEach(([x,y,z],i)=>{
+      pos.push(dx*z+sx*x,y,dz*z+sz*x);uv.push(i===1||i===2?0:i===4||i===5?1:.5,i===0?0:i===3?1:i===2||i===4?.6:.3);
+      color.push(1,1,1);
+    });
+    indices.push(base,base+1,base+2,base,base+2,base+3,base,base+3,base+4,base,base+4,base+5);
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+  geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));
+  geo.setAttribute("color",new THREE.Float32BufferAttribute(color,3));
+  geo.setIndex(indices);geo.computeVertexNormals();return geo;
+})();
 function broadleaf(s,leafMat){
   const g=new THREE.Group();
   const t=cyl(.12*s,.2*s,1.4*s,MAT.trunk,0,0.7*s,0,8);t.rotation.z=rnd(-.08,.08);g.add(t);
-  const foliage=[];
+  const foliage=[],branchTips=[];
   const buckets=[[],[],[]];
   for(let i=0;i<8;i++){
-    const a=rnd(0,Math.PI*2),rad=rnd(0,.72)*s,r=s*rnd(.4,.62);
-    buckets[i%3].push({
-      pos:[Math.cos(a)*rad,s*rnd(1.35,2.05),Math.sin(a)*rad],
-      scale:[r*rnd(.9,1.25),r*rnd(.8,1.1),r*rnd(.9,1.25)],
-      rot:[rnd(-.25,.25),rnd(0,6.2),rnd(-.25,.25)]
-    });
+    // Keep the per-branch random call count while adding deterministic leaflets.
+    const a=i*2.399+rnd(-.25,.25),rad=rnd(.33,.76)*s,r=s*rnd(.25,.35);
+    const y=s*rnd(1.50,2.12),sx=rnd(.9,1.25),sy=rnd(.8,1.1),sz=rnd(.9,1.25);
+    const rx=rnd(-.25,.25),ry=rnd(0,6.2),rz=rnd(-.25,.25);
+    const tip=[Math.cos(a)*rad,y,Math.sin(a)*rad];
+    branchTips.push({pos:tip});
+    for(let j=0;j<3;j++){
+      const angle=a+(j===1?.88:-1.08),reach=j===0?0:r*(j===1?.72:.62);
+      const size=j===0?1:j===1?.73:.79;
+      buckets[(i+j)%3].push({
+        pos:[tip[0]+Math.cos(angle)*reach,y+(j===1?.13:j===2?-.14:0)*r,tip[2]+Math.sin(angle)*reach],
+        scale:[r*sx*size,r*sy*(j===0?.72:.61),r*sz*size],
+        rot:[rx+(j-1)*.08,ry+j*.67,rz-(j-1)*.08]
+      });
+    }
   }
   buckets.forEach((items,geoIdx)=>{
     if(!items.length)return;
@@ -7556,7 +7583,22 @@ function broadleaf(s,leafMat){
     c.instanceMatrix.needsUpdate=true;
     markFoliageNoShadow(c);g.add(c);foliage.push(c);
   });
-  connectTreeCrown(t,buckets.flat(),s);
+  const sprigMat=leafMat.clone();sprigMat.side=THREE.DoubleSide;sprigMat.needsUpdate=true;
+  const sprigs=new THREE.InstancedMesh(BROADLEAF_SPRIG_GEO.clone(),sprigMat,branchTips.length*3);
+  const sprigPose=new THREE.Object3D();
+  branchTips.forEach((tip,i)=>{
+    const a=Math.atan2(tip.pos[2],tip.pos[0]);
+    for(let j=0;j<3;j++){
+      const reach=s*(.20+.035*j),n=i*3+j;
+      sprigPose.position.set(tip.pos[0]+Math.cos(a)*reach,
+        tip.pos[1]+s*(j===0?.16:j===1?-.03:.04),tip.pos[2]+Math.sin(a)*reach);
+      sprigPose.rotation.set(.08*(j-1),Math.PI/2-a+j*.42,.08*(i%3-1));
+      sprigPose.scale.setScalar(s*(.27+.025*((i+j)%3)));
+      sprigPose.updateMatrix();sprigs.setMatrixAt(n,sprigPose.matrix);
+    }
+  });
+  fitDetailInstances(sprigs);markFoliageNoShadow(sprigs);g.add(sprigs);foliage.push(sprigs);
+  connectTreeCrown(t,branchTips,s);
   g.userData.foliage=foliage;
   return g;
 }
