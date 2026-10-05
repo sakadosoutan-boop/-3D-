@@ -5859,13 +5859,13 @@ TEX.sand=canv(1024,1024,(x,w,h)=>{
       x.fillStyle=g;x.fillRect(0,0,w,h);
     }}
   // 箒目(砂紋): 掻き寄せた溝と盛り。先に敷いてから粒子を載せ、砂粒が紋の上に乗って見えるようにする
-  const lines=40,dy=h/lines,amp=h*0.002;
+  const lines=68,dy=h/lines,amp=h*.0035;
   for(let i=0;i<lines;i++){
     const baseY=i*dy+dy*.5,ph=rnd(0,6.283),waves=2;
     const draw=(off,col,lw)=>{x.beginPath();for(let sx=0;sx<=w;sx+=4){const yy=baseY+off+Math.sin(sx/w*6.283*waves+ph)*amp;sx===0?x.moveTo(sx,yy):x.lineTo(sx,yy);}x.strokeStyle=col;x.lineWidth=lw;x.stroke();};
-    draw( 1.4,"rgba(96,86,64,.085)",2.2);   // 溝の谷(広く柔らかい影)
-    draw( 0.8,"rgba(88,78,58,.11)",1.0);    // 溝の芯
-    draw(-0.8,"rgba(255,253,247,.13)",1.4);// 盛りの稜(陽の当たる面)
+    draw( 1.2,"rgba(96,86,64,.045)",1.8);   // 溝の谷(広く柔らかい影)
+    draw( 0.6,"rgba(88,78,58,.065)",.85);    // 溝の芯
+    draw(-0.7,"rgba(255,253,247,.075)",1.2);// 盛りの稜(陽の当たる面)
   }
   // 砂粒: 明暗2種の粒を高密度で散らし、近景でも「粒の集合」に見えるようにする
   for(let i=0;i<130000;i++){const v=rnd(-30,26)|0,a=rnd(.05,.22);
@@ -6473,26 +6473,30 @@ window.__setMoonAgeForTest=function(age){
    scene.background(単色グラデ)の手前に薄く重なるだけなので、既存の空描画を壊さない。
    texture.offset.x を毎フレーム微増させてゆっくり流す。色/濃さは時刻(cur.cloudC/cloudOp)に追従。
 ============================================================ */
-/* 雲。真上から見下ろした「雲の層」として描き、ドーム側で水平面に投影して使う(下記)。
-   縦横どちらにも繋がるよう、一つの塊を9方向へ複製して描く。
-   丸い粒を一つ置くだけでは綿にならないので、中核のまわりへ小さな粒を寄せて塊を作る。 */
+/* 雲は水平面へ投影する。細長い楕円の濃淡を重ね、上下左右をつないだ薄い雲帯にする。 */
 TEX.clouds=canv(512,512,(x,w,h)=>{
-  const puff=(cx,cy,r,a)=>{
+  // A local seed keeps changes to the sky from moving trees and garden objects.
+  let seed=0x59c10d;const cloudRnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+  const puff=(cx,cy,rx,ry,a,tilt)=>{
     for(let ox=-w;ox<=w;ox+=w)for(let oy=-h;oy<=h;oy+=h){
-      const g=x.createRadialGradient(cx+ox,cy+oy,0,cx+ox,cy+oy,r);
+      x.save();x.translate(cx+ox,cy+oy);x.rotate(tilt);x.scale(rx,ry);
+      const g=x.createRadialGradient(0,0,0,0,0,1);
       g.addColorStop(0,`rgba(255,255,255,${a})`);
-      g.addColorStop(.5,`rgba(255,255,255,${a*0.44})`);
+      g.addColorStop(.48,`rgba(255,255,255,${a*.43})`);
       g.addColorStop(1,"rgba(255,255,255,0)");
-      x.fillStyle=g;x.beginPath();x.arc(cx+ox,cy+oy,r,0,Math.PI*2);x.fill();
+      x.fillStyle=g;x.beginPath();x.arc(0,0,1,0,Math.PI*2);x.fill();x.restore();
     }
   };
-  for(let i=0;i<9;i++){
-    const cx=rnd(0,w),cy=rnd(0,h),base=rnd(26,46),a=rnd(.52,.86),n=7+((rnd(0,5))|0);
+  // Soft, uneven horizontal wisps replace isolated circular cloud spots.
+  for(let i=0;i<10;i++){
+    const cx=cloudRnd()*w,cy=cloudRnd()*h,base=23+cloudRnd()*34;
+    const tilt=(cloudRnd()-.5)*.24,alpha=.13+cloudRnd()*.12,n=5+(cloudRnd()*4|0);
     for(let j=0;j<n;j++){
-      const t=j/n*Math.PI*2;
-      puff(cx+Math.cos(t)*base*rnd(.25,1.1),cy+Math.sin(t)*base*rnd(.15,.55),base*rnd(.4,.78),a);
+      const t=j/(n-1)*2-1,drift=(cloudRnd()-.5)*base*.20;
+      puff(cx+t*base*1.24+drift,cy+Math.sin(t*2+i)*base*.10,
+        base*(.55+cloudRnd()*.50),base*(.14+cloudRnd()*.15),alpha,tilt);
     }
-    puff(cx,cy,base*.95,a*1.15);   // 中核をひとつ重ねて厚みを出す
+    puff(cx+base*.88,cy-base*.30,base*.38,base*.10,alpha*.52,tilt);
   }
 });
 TEX.clouds.wrapS=TEX.clouds.wrapT=THREE.RepeatWrapping;TEX.clouds.repeat.set(1,1);
@@ -6956,7 +6960,8 @@ function paintCourtSurface(season){
     const north=Math.exp(-Math.pow((z+53)/6.5,2))*smooth(x,-56,-45)*(1-smooth(x,45,57));
     const worn=Math.max(east,west,north);
     const broad=.035*Math.sin(x*.16+Math.sin(z*.12))*Math.cos(z*.21)+.020*Math.sin(x*.37+z*.11);
-    const tone=1-edge*.24+worn*.25+broad;
+    const path=smooth(z,4,9)*(1-smooth(z,28,35))*Math.exp(-Math.pow((x-.36*Math.sin(z*.18))/3.1,2));
+    const tone=1-edge*.24+worn*.25+broad+path*.065;
     color.setXYZ(i,tone*(1+.045*edge),tone*(1-.035*edge),tone*(1-.10*edge));
   }
   color.needsUpdate=true;
@@ -6975,7 +6980,7 @@ function paintCourtSurface(season){
   MAT.grassGround=MAT.grass.clone();MAT.grassGround.vertexColors=true;MAT.grassGround.needsUpdate=true;
   const g1=new THREE.Mesh(grassGeo,MAT.grassGround);
   g1.rotation.x=-Math.PI/2;g1.position.y=-.06;g1.receiveShadow=true;world.add(g1);
-  const court=new THREE.Mesh(new THREE.PlaneGeometry(118,118,32,32),MAT.sand);
+  const court=new THREE.Mesh(new THREE.PlaneGeometry(118,118,64,64),MAT.sand);
   court.geometry.setAttribute("uv2",court.geometry.attributes.uv); // [AO] 白砂のaoMap用uv2
   court.geometry.setAttribute("color",new THREE.BufferAttribute(new Float32Array(court.geometry.attributes.position.count*3),3));
   MAT.sand.vertexColors=true;MAT.sand.needsUpdate=true;
@@ -7018,6 +7023,22 @@ function paintCourtSurface(season){
     s.position.set(p[0]+Math.sin(i)*.22,.019,p[1]+Math.cos(i*.7)*.22);
     s.receiveShadow=true;stepping.add(s);
   });
+  // 飛石の縁に埋もれた小石を一つの描画に束ね、白砂の広い面に縮尺感を出す。
+  const grit=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0),
+    new THREE.MeshStandardMaterial({color:0xb1a996,roughness:1,flatShading:true}),stones.length*14);
+  const gritPose=new THREE.Object3D(),gritColor=new THREE.Color();
+  stones.forEach((p,i)=>{
+    for(let j=0;j<14;j++){
+      const n=i*14+j,a=j*2.39996+i*.91,r=p[2]*(.84+1.10*((j*5+i*3)%13)/12);
+      const size=.025+.008*((i+j*3)%5),x=p[0]+Math.cos(a)*r,z=p[1]+Math.sin(a)*r*p[3];
+      gritPose.position.set(x,.015+size*.36,z);gritPose.rotation.y=a;
+      gritPose.scale.set(size*(1+.20*(j%3)),size*.28,size*(.8+.08*(i%3)));
+      gritPose.updateMatrix();grit.setMatrixAt(n,gritPose.matrix);
+      gritColor.setHSL(.10,.055,.45+.06*Math.sin(i*2.1+j*3.7));grit.setColorAt(n,gritColor);
+    }
+  });
+  grit.instanceColor.needsUpdate=true;fitDetailInstances(grit);grit.castShadow=false;grit.receiveShadow=true;
+  grit.userData.noAutoShadow=true;stepping.add(grit);
   world.add(stepping);register(stepping,"niwa",new THREE.Vector3(0,.45,18));
 }
 /* 築地 + 屋根 + 四脚門(東) */
