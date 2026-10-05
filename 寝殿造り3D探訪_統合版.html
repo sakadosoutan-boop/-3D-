@@ -5806,7 +5806,7 @@ const RIM_PAL={
  day:  {c:0xcfe3ff,i:.16},
  dawn: {c:0xffd7a8,i:.24},
  dusk: {c:0xff9a4d,i:.30},
- night:{c:0x8fb0ff,i:.22}
+ night:{c:0x8fb0ff,i:.45}
 };
 function canv(w,h,fn){const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");fn(x,w,h);
   const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t;}
@@ -6156,7 +6156,7 @@ TEX.snow = canv(32, 32, (x, w, h) => {
 function M(o){return new THREE.MeshStandardMaterial(o);}
 const MAT={
  roof:M({map:TEX.roof,roughness:.92,side:THREE.FrontSide,vertexColors:true}),
- plaster:M({map:TEX.plaster,roughness:.95}),
+ plaster:M({map:TEX.plaster,color:0xe3ddd1,roughness:.95}),
  tsuiji:M({map:TEX.tsuiji,roughness:.97}),
  wood:M({map:TEX.woodMid,roughness:.8}),
  woodDark:M({map:TEX.woodDark,roughness:.75}),
@@ -6934,12 +6934,13 @@ function paintCourtSurface(season){
   const stones=[[0,8,1.15,.72],[0,13,1.0,.62],[0,18,1.25,.7],[0,23,1.05,.66],[0,28,1.2,.72],
     [-8,18,.9,.58],[8,18,.9,.58],[-18,24,1.05,.64],[18,25,1.05,.64],[-27,31,1.2,.75],[28,32,1.2,.75]];
   stones.forEach((p,i)=>{
-    const s=new THREE.Mesh(new THREE.CylinderGeometry(p[2]*.975,p[2],.065,18,1),MAT.stonePaving);
+    const stoneRadius=p[2]*.68;
+    const s=new THREE.Mesh(new THREE.CylinderGeometry(stoneRadius*.975,stoneRadius,.055,18,1),MAT.stonePaving);
     const edge=s.geometry.attributes.position;
     for(let j=0;j<edge.count;j++){const x=edge.getX(j),z=edge.getZ(j),a=Math.atan2(z,x),f=1+.035*Math.sin(a*3+i*.7)+.018*Math.cos(a*5+i);edge.setXYZ(j,x*f,edge.getY(j),z*f);}
     s.geometry.computeVertexNormals();
     s.rotation.y=(i*.73)%3.14;s.scale.set(1,1,p[3]);
-    s.position.set(p[0]+Math.sin(i)*.22,.03,p[1]+Math.cos(i*.7)*.22);
+    s.position.set(p[0]+Math.sin(i)*.22,.019,p[1]+Math.cos(i*.7)*.22);
     s.receiveShadow=true;stepping.add(s);
   });
   world.add(stepping);register(stepping,"niwa",new THREE.Vector3(0,.45,18));
@@ -8458,6 +8459,16 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
   nuri.add(box(.18,S.ph,ND/2-0.7,MAT.plaster,nx0+NW/2-.1,S.f3+S.ph/2,-ND/4-.35));
   nuri.add(box(.18,S.ph,ND/2-0.7,MAT.plaster,nx0+NW/2-.1,S.f3+S.ph/2, ND/4+.35));
   nuri.add(box(.18,S.ph-1.9,1.4,MAT.plaster,nx0+NW/2-.1,S.f3+1.9+(S.ph-1.9)/2,0));
+  // 塗籠入口の漆喰壁に細い長押と戸口の枠を重ねる。静止部材は一描画に結合する。
+  {
+    const nuriFrame=new THREE.Group(),frontX=nx0+NW/2+.035;
+    nuriFrame.add(box(.075,.11,ND-.2,MAT.woodDark,frontX,S.f3+S.ph-.16,0,false));
+    for(const z of [-ND/2+.12,ND/2-.12,-.73,.73])
+      nuriFrame.add(box(.075,S.ph-.24,.065,MAT.woodDark,frontX,S.f3+S.ph/2,z,false));
+    for(const z of [-2.25,2.25])
+      nuriFrame.add(box(.07,.055,3.04,MAT.woodDark,frontX,S.f3+.38,z,false));
+    nuri.add(mergeStaticDetail(nuriFrame,"nurigome-wall-frame"));
+  }
   const ndoor=box(.1,1.9,1.3,MAT.wood,0,0,0);
   ndoor.position.set(nx0+NW/2-.1,S.f3+.95,-.68);ndoor.rotation.y=.9;nuri.add(ndoor);
   shinden.add(nuri);register(nuri,"nurigome",new THREE.Vector3(S.cx+nx0,S.f3+3.4,S.cz));
@@ -8511,8 +8522,18 @@ const shinden=new THREE.Group();shinden.position.set(SH.cx,0,SH.cz);world.add(sh
   /* [handoff-fix] 西面も妻戸の開口だけ空け、東面と対称に半蔀を戻す。 */
   makeShitomi(shinden,-S.hw/2,-2.05,-Math.PI/2,3.7);
   makeShitomi(shinden,-S.hw/2,-S.hd/2+bayE*1.5,-Math.PI/2,bayE-.4);
-  /* 北面は壁を維持する。 */
+  /* 北面は壁を維持する。室内側の長押と間柱を一括描画し、漆喰面の尺度を示す。 */
   shinden.add(box(S.hw-.3,S.ph-.5,.16,MAT.plaster,0,S.f2+(S.ph-.5)/2,-S.hd/2+.05));
+  {
+    const northFrame=new THREE.Group(),wallZ=-S.hd/2+.155,frameW=S.hw-.46;
+    northFrame.add(box(frameW,.085,.075,MAT.woodDark,0,S.f2+.39,wallZ,false));
+    northFrame.add(box(frameW,.11,.085,MAT.woodDark,0,S.f2+2.18,wallZ,false));
+    for(let bay=1;bay<HX;bay++){
+      const x=-S.hw/2+S.hw*bay/HX;
+      northFrame.add(box(.055,1.75,.075,MAT.woodDark,x,S.f2+1.28,wallZ,false));
+    }
+    shinden.add(mergeStaticDetail(northFrame,"north-plaster-frame"));
+  }
 
   /* --- 妻戸(東南・西南の隅) --- */
   function makeTsumado(cx,cz,rotY,openDir=1){
@@ -12390,7 +12411,7 @@ const SFX = {
     }
     if(this._backgroundPaused || this._muted) return Promise.resolve(false);
     const p = this._themeMedia.play();
-    return (p && p.then) ? p.then(()=>true) : Promise.resolve(true);
+    return (p && p.then) ? p.then(()=>true,()=>false) : Promise.resolve(true);
   },
   stopTheme(){
     if(this._themeMedia){ try{this._themeMedia.pause();this._themeMedia.currentTime=0;}catch(e){} this._themeMedia=null; }
@@ -27295,7 +27316,8 @@ function animate(now){
   renderer.toneMappingExposure=cur.exp;
 
   /* [視覚強化] リムライト: 主光源(sun)の対角・やや上から。影は作らない(castShadow=false)ので負荷は増えない */
-  rim.position.set(-cur.sunP.x*0.55,Math.max(40,cur.sunP.y*0.65+25),-cur.sunP.z*0.55);
+  if(APP.time==="night")rim.position.set(28,62,65); // Moonlit sky bounce keeps the south-facing facade legible without another light.
+  else rim.position.set(-cur.sunP.x*0.55,Math.max(40,cur.sunP.y*0.65+25),-cur.sunP.z*0.55);
   rim.color.copy(cur.rimC);rim.intensity=cur.rimI;
 
   /* [視覚強化] 雲: カメラに追従させ、色/濃さを時刻へ、offset.xでゆっくり流す。LOW_POWERでは非表示(発熱対策)、REDUCED_MOTIONでは位置/色は追従するが流れを止める */
