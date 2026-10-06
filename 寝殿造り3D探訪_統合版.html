@@ -7427,6 +7427,30 @@ function markFoliageNoShadow(o){
   o.receiveShadow=true;
   return o;
 }
+// Keep green needles beneath snow on the same shared pad geometry; season changes add no meshes.
+function paintPinePadGeometry(geo,season){
+  const attr=geo.attributes.color,pos=geo.attributes.position;
+  if(!geo.userData.pineBaseColors)geo.userData.pineBaseColors=attr.array.slice();
+  const base=geo.userData.pineBaseColors;
+  for(let i=0;i<pos.count;i++){
+    if(season!=="winter"){
+      attr.setXYZ(i,base[i*3],base[i*3+1],base[i*3+2]);continue;
+    }
+    const snow=THREE.MathUtils.smoothstep(pos.getY(i),.12,.52),shade=base[i*3];
+    attr.setXYZ(i,
+      shade*(.25*(1-snow)+.95*snow),
+      shade*(.42*(1-snow)+.97*snow),
+      shade*(.24*(1-snow)+.99*snow));
+  }
+  attr.needsUpdate=true;
+}
+function paintPinePads(season){
+  if(!PINE_PAD_GEO)return;
+  paintPinePadGeometry(PINE_PAD_GEO,season);
+  if(PINE_TOP_GEO)paintPinePadGeometry(PINE_TOP_GEO,season);
+  const detail=FOLIAGE_DETAIL.get(PINE_PAD_GEO);
+  if(detail&&detail.low)paintPinePadGeometry(detail.low,season);
+}
 function tree(s,variant){
   const g=new THREE.Group();
   // 曲がった幹を数節で
@@ -7458,14 +7482,15 @@ function tree(s,variant){
     const bx=baseNode[0]+Math.cos(ang)*reach*0.5;
     const by=baseNode[1]+rnd(-0.1,0.35)*s + i*0.04*s;
     const bz=baseNode[2]+Math.sin(ang)*reach*0.5;
-    // 枝
-    const br=cyl(0.05*s,0.07*s,reach,MAT.trunk,
-      baseNode[0]+Math.cos(ang)*reach*0.25, by-0.05, baseNode[2]+Math.sin(ang)*reach*0.25,6);
-    const axis2=new THREE.Vector3(Math.cos(ang),0.18,Math.sin(ang)).normalize();
-    br.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),axis2);g.add(br);
+    // The branch ends inside its own foliage pad instead of stopping short of it.
+    const tip=[baseNode[0]+Math.cos(ang)*reach, by, baseNode[2]+Math.sin(ang)*reach];
+    const origin=new THREE.Vector3(...baseNode),end=new THREE.Vector3(...tip);
+    const axis2=end.clone().sub(origin),branchLength=axis2.length();
+    const br=cyl(0.043*s,0.074*s,branchLength,MAT.trunk,
+      (origin.x+end.x)*.5,(origin.y+end.y)*.5,(origin.z+end.z)*.5,6);
+    br.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),axis2.normalize());g.add(br);
     // 葉叢:平たい緑の円盤を重ねる
     const padR=s*rnd(0.55,0.85);
-    const tip=[baseNode[0]+Math.cos(ang)*reach, by, baseNode[2]+Math.sin(ang)*reach];
     for(let k=0;k<3;k++){
       const r=padR*(1-k*0.18);
       const item={pos:[tip[0]+rnd(-0.2,0.2),by+k*0.18*s+0.1*s,tip[2]+rnd(-0.2,0.2)],scale:[r,r*0.4,r]};
@@ -7475,7 +7500,8 @@ function tree(s,variant){
   const addPinePads=(items,mat)=>{
     if(!items.length)return;
     const padGeo=PINE_PAD_GEO||(PINE_PAD_GEO=gardenFoliageGeo(12,8,null));
-    if(!FOLIAGE_DETAIL.has(padGeo))FOLIAGE_DETAIL.set(padGeo,{makeLow:()=>gardenFoliageGeo(8,6,null),low:null});
+    if(!FOLIAGE_DETAIL.has(padGeo))FOLIAGE_DETAIL.set(padGeo,{
+      makeLow:()=>{const low=gardenFoliageGeo(8,6,null);paintPinePadGeometry(low,APP.season);return low;},low:null});
     const inst=new THREE.InstancedMesh(padGeo,mat,items.length);
     const dummy=new THREE.Object3D();
     items.forEach((it,idx)=>{
@@ -7489,10 +7515,10 @@ function tree(s,variant){
     markFoliageNoShadow(inst);g.add(inst);
   };
   addPinePads(pineDarkPads,MAT.pineDark);addPinePads(pinePads,MAT.pine);
-  // 頂部の芽
-  const topGeo=PINE_TOP_GEO||(PINE_TOP_GEO=new THREE.ConeGeometry(1,1,8));
+  // The terminal foliage is a small pad; a snow-white cone looked detached from the crown.
+  const topGeo=PINE_TOP_GEO||(PINE_TOP_GEO=gardenFoliageGeo(10,6,null));
   const top=new THREE.Mesh(topGeo,MAT.pine);
-  top.position.set(px,py+0.2*s,pz);top.scale.set(s*0.4,s*0.42,s*0.4);markFoliageNoShadow(top);g.add(top);
+  top.position.set(px,py+.15*s,pz);top.scale.set(s*.38,s*.17,s*.38);markFoliageNoShadow(top);g.add(top);
   return g;
 }
 /* 葉叢用の不規則ジオメトリ(共有3種)。頂点を乱し「ただの球」に見えないようにする。共有なので軽量。 */
@@ -7579,7 +7605,7 @@ function broadleaf(s,leafMat){
     const y=s*rnd(1.50,2.12),sx=rnd(.9,1.25),sy=rnd(.8,1.1),sz=rnd(.9,1.25);
     const rx=rnd(-.25,.25),ry=rnd(0,6.2),rz=rnd(-.25,.25);
     const tip=[Math.cos(a)*rad,y,Math.sin(a)*rad];
-    branchTips.push({pos:tip});
+    branchTips.push({pos:tip,radius:r});
     for(let j=0;j<3;j++){
       const angle=a+(j===1?.88:-1.08),reach=j===0?0:r*(j===1?.72:.62);
       const size=j===0?1:j===1?.73:.79;
@@ -7621,7 +7647,35 @@ function broadleaf(s,leafMat){
   fitDetailInstances(sprigs);markFoliageNoShadow(sprigs);g.add(sprigs);foliage.push(sprigs);
   connectTreeCrown(t,branchTips,s);
   g.userData.foliage=foliage;
+  g.userData.crownTips=branchTips;
   return g;
+}
+// A shallow, two-layer camellia corolla and stamens share one vertex-colored mesh.
+function camelliaFlowerGeo(){
+  const pos=[],color=[],uv=[],indices=[];
+  const add=(x,y,z,r,g,b)=>{pos.push(x,y,z);color.push(r,g,b);uv.push(x*.5+.5,y*.5+.5);};
+  for(let layer=0;layer<2;layer++)for(let petal=0;petal<5;petal++){
+    const a=(petal+(layer?.5:0))*Math.PI*2/5,co=Math.cos(a),si=Math.sin(a);
+    const scale=layer?.69:1,base=pos.length/3;
+    const verts=[[.015,0,.07],[.11,-.09,.055],[.21,-.095,.018],[.25,0,.005],[.21,.095,.018],[.11,.09,.055]];
+    verts.forEach(([r,w,z],i)=>{
+      const inner=i===0||i===1||i===5;
+      add((r*co-w*si)*scale,(r*si+w*co)*scale,z+(layer?.045:0),
+        layer?(inner?.49:.79):(inner?.35:.65),layer?(inner?.045:.16):(inner?.018:.065),
+        layer?(inner?.05:.17):(inner?.025:.07));
+    });
+    for(let k=1;k<5;k++)indices.push(base,base+k,base+k+1);
+  }
+  const center=pos.length/3;add(0,0,.13,.97,.78,.24);
+  for(let k=0;k<=8;k++){
+    const a=k*Math.PI/4;add(Math.cos(a)*.052,Math.sin(a)*.052,.115,.86,.59,.11);
+    if(k)indices.push(center,center+k,center+k+1);
+  }
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));
+  geo.setAttribute("color",new THREE.Float32BufferAttribute(color,3));
+  geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));geo.setIndex(indices);
+  geo.computeVertexNormals();geo.computeBoundingBox();geo.computeBoundingSphere();return geo;
 }
 { /* 庭の植栽配置(池の南・周縁) — 建物と重ならないよう間隔を調整 */
   // 建物エリア回避: 東対(x:26-44,z:-18-6) / 西対(x:-44--26,z:-18-6) / 北対(x:-10-10,z:-45--33)
@@ -7668,19 +7722,37 @@ function broadleaf(s,leafMat){
     u.position.set(p[0],0,p[1]);u.visible=false;world.add(u);SEASONAL.ume.push(u);
   });
   // 椿(冬の花) — 建物・池から十分離す
-  [[48,14],[-52,-8],[14,12]].forEach(p=>{
+  const camelliaSites=[[48,14],[-52,-8],[14,12]],flowersPerTree=15,camelliaPose=new THREE.Object3D();
+  const camelliaBlooms=new THREE.InstancedMesh(
+    TSUBAKI_BLOOM_GEO||(TSUBAKI_BLOOM_GEO=camelliaFlowerGeo()),
+    new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:.88}),
+    camelliaSites.length*flowersPerTree);
+  const flowerForward=new THREE.Vector3(0,0,1),flowerNormal=new THREE.Vector3();
+  camelliaSites.forEach((p,i)=>{
     const t=broadleaf(rnd(1.6,2.0),MAT.leaf.clone());
     t.position.set(p[0],0,p[1]);world.add(t);
-    const blooms=[];
-    for(let k=0;k<10;k++){
-      const bloomGeo=TSUBAKI_BLOOM_GEO||(TSUBAKI_BLOOM_GEO=new THREE.SphereGeometry(0.16,7,6));
-      const f=new THREE.Mesh(bloomGeo,MAT.tsubaki);
-      f.position.set(p[0]+rnd(-1.4,1.4),rnd(2.6,4.2),p[1]+rnd(-1.4,1.4));
-      markFoliageNoShadow(f);
-      f.visible=false;world.add(f);blooms.push(f);
+    // Reuse the former flower-placement draws so later procedural objects keep their positions.
+    const flowerOffsets=[];
+    for(let k=0;k<10;k++)flowerOffsets.push([rnd(-1.4,1.4),rnd(2.6,4.2),rnd(-1.4,1.4)]);
+    const tips=t.userData.crownTips;
+    for(let k=0;k<flowersPerTree;k++){
+      const tip=tips[(k*3+1)%tips.length],a=Math.atan2(tip.pos[2],tip.pos[0]);
+      const outward=new THREE.Vector3(Math.cos(a),0,Math.sin(a));
+      const tangent=new THREE.Vector3(-outward.z,0,outward.x);
+      const seedOffset=flowerOffsets[k%flowerOffsets.length];
+      const off=tip.radius*(1.15+.11*(k%3)),side=tip.radius*.24*Math.sin(k*2.47+i)+seedOffset[0]*.035;
+      camelliaPose.position.set(p[0]+tip.pos[0]+outward.x*off+tangent.x*side,
+        tip.pos[1]+tip.radius*(.20+.19*Math.sin(k*1.79+i))+(seedOffset[1]-3.4)*.02,
+        p[1]+tip.pos[2]+outward.z*off+tangent.z*side);
+      flowerNormal.copy(outward).add(new THREE.Vector3(0,.28+.13*(k%3),0)).normalize();
+      camelliaPose.quaternion.setFromUnitVectors(flowerForward,flowerNormal);
+      camelliaPose.rotateZ(k*2.39996+seedOffset[2]*.08);camelliaPose.scale.setScalar(.66+.07*((k+i)%4));
+      camelliaPose.updateMatrix();camelliaBlooms.setMatrixAt(i*flowersPerTree+k,camelliaPose.matrix);
     }
-    SEASONAL.tsubaki.push({tree:t,blooms});
+    SEASONAL.tsubaki.push({tree:t});
   });
+  fitDetailInstances(camelliaBlooms);markFoliageNoShadow(camelliaBlooms);
+  camelliaBlooms.visible=false;world.add(camelliaBlooms);SEASONAL.tsubakiFlowers=camelliaBlooms;
   /* 前栽(せんざい):寝殿の南の植え込み */
   const senzai=new THREE.Group();
   const flowerBeds=[[-8,13],[-5.5,14.5],[8,13],[5,15],[11,14]];
@@ -11927,7 +11999,12 @@ function applySeason(key){
   if(COURT_EDGE_TUFT_MAT)COURT_EDGE_TUFT_MAT.color.setHex({spring:0x71834c,summer:0x526d38,autumn:0x958354,winter:0xb6bdba}[key]);
   if(window.POND_REED_MATERIAL)window.POND_REED_MATERIAL.color.setHex({spring:0x74865d,summer:0x5f8050,autumn:0x9b8660,winter:0xaba99a}[key]);
   // 松・常緑樹も季節色に(秋=紅葉色 / 冬=雪化粧の白み)
-  if(s.pine!=null){MAT.pine.color.setHex(s.pine);MAT.pineDark.color.setHex(s.pineDark);}
+  if(s.pine!=null){
+    MAT.pine.color.setHex(s.pine);MAT.pineDark.color.setHex(s.pineDark);
+    const pineMap=key==="winter"?TEX.snowSurf:TEX.leaves;
+    MAT.pine.map=pineMap;MAT.pineDark.map=pineMap;
+    paintPinePads(key);
+  }
   // モミジの葉色
   SEASONAL.maples.forEach(mp=>{
     const col=s.maple||s.leaf;
@@ -11942,7 +12019,7 @@ function applySeason(key){
   // 薄
   SEASONAL.susuki.visible=!!(s.show&&s.show.susuki);
   // 椿の花
-  SEASONAL.tsubaki.forEach(o=>o.blooms.forEach(b=>b.visible=!!(s.show&&s.show.tsubaki)));
+  if(SEASONAL.tsubakiFlowers)SEASONAL.tsubakiFlowers.visible=!!(s.show&&s.show.tsubaki);
   // 鶴(冬)
   waterBirds.forEach(b=>{if(b.winterOnly)b.g.visible=(key==="winter");});
   // 蝶(春・夏のみ)
