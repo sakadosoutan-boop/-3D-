@@ -103,6 +103,7 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
      if(s.target)camera.lookAt(...s.target);else if(s.view==='ov')camera.lookAt(0,0,0);else camera.rotation.set(-.05,s.yaw||0,0,'YXZ');
      // The close-up camera is assigned after the paused frame; refresh the character's normal distance LOD.
      if(s.subject==='hime')for(const p of people)if(p.detail)p.detail.visible=camera.position.distanceTo(p.g.position)<15;
+     if(typeof VISUAL_EXPERIENCE!=='undefined'&&VISUAL_EXPERIENCE)VISUAL_EXPERIENCE.update(clock.elapsedTime);
      if(s.subject==='moon'){moonPhaseShadow.lookAt(camera.position);}
      TEX.clouds.offset.set(.1,0);cloudDome.position.copy(camera.position);scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
      updateControlUI();renderer.render(scene,camera);

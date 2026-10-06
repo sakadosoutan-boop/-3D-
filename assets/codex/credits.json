@@ -1,0 +1,212 @@
+[
+  {
+    "id": "junihitoe",
+    "items": [
+      "himegimi",
+      "nyobo"
+    ],
+    "src": "assets/codex/junihitoe.jpg",
+    "caption": "衣装の復元例",
+    "note": "十二単を着用した現代の実演。平安時代の人物を撮影した写真ではありません。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Junihitoe.jpg",
+    "author": "Shealah Craighead (White House)",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Junihitoe.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/5/53/Junihitoe.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "width": 900,
+    "height": 1349,
+    "changes": "Wikimedia Commonsの縮小表示用JPEGを同梱。色・内容・トリミングの変更なし。",
+    "bytes": 140468
+  },
+  {
+    "id": "kichou",
+    "items": [
+      "kichou"
+    ],
+    "src": "assets/codex/kichou.jpg",
+    "caption": "几帳の展示例",
+    "note": "布を垂らした可動の間仕切り。ゲームでは布の動きを簡略化しています。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Kicho_,%E5%87%A0%E5%B8%B3.jpg",
+    "author": "Wikiwikiyarou",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Kicho_,%E5%87%A0%E5%B8%B3.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/d/d7/Kicho_%2C%E5%87%A0%E5%B8%B3.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "width": 900,
+    "height": 675,
+    "changes": "Wikimedia Commonsの縮小表示用JPEGを同梱。色・内容・トリミングの変更なし。",
+    "bytes": 111067
+  },
+  {
+    "id": "shishinden",
+    "items": [
+      "shinden"
+    ],
+    "src": "assets/codex/shishinden.jpg",
+    "caption": "京都御所・紫宸殿",
+    "note": "現存する宮殿建築の比較例。貴族の寝殿と同一の建物ではなく、現在の建物は後世の再建です。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Kyoto,_palazzo_imperiale,_padiglione_shishinden,_03.jpg",
+    "author": "Sailko",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/5/59/Kyoto%2C_palazzo_imperiale%2C_padiglione_shishinden%2C_03.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "width": 900,
+    "height": 620,
+    "changes": "Wikimedia Commonsの縮小表示用JPEGを同梱。色・内容・トリミングの変更なし。",
+    "bytes": 140758
+  },
+  {
+    "id": "koto",
+    "items": [
+      "koto"
+    ],
+    "src": "assets/codex/koto.jpg",
+    "caption": "箏の実物資料",
+    "note": "The Metropolitan Museum of Art所蔵の箏。平安期そのものの個体としては扱わず、弦と柱の構造を比べる参考資料です。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Koto_MET_DP148476.jpg",
+    "author": "Gotō Teijō / Gotō Yūjō",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Koto_MET_DP148476.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "width": 900,
+    "height": 571,
+    "changes": "Wikimedia Commonsの縮小表示用JPEGを同梱。色・内容・トリミングの変更なし。",
+    "bytes": 123402
+  },
+  {
+    "id": "biwa",
+    "items": [
+      "biwa"
+    ],
+    "src": "assets/codex/biwa.jpg",
+    "caption": "平家琵琶の実物資料",
+    "note": "The Metropolitan Museum of Art所蔵。ゲームの楽琵琶と種類が異なる比較例です。形や奏法の違いに注目してください。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Heike_Biwa_MET_MUS283B.jpg",
+    "author": "The Metropolitan Museum of Art",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/d/dc/Heike_Biwa_MET_MUS283B.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "width": 900,
+    "height": 1642,
+    "changes": "Wikimedia Commonsの縮小表示用JPEGを同梱。色・内容・トリミングの変更なし。",
+    "bytes": 115675
+  },
+  {
+    "id": "gissha",
+    "items": [
+      "gissha"
+    ],
+    "src": "assets/codex/gissha.jpg",
+    "caption": "時代祭の牛車",
+    "note": "京都の時代祭で使われる復元の牛車。車体・車輪・轅と、牽く牛の配置を比べる現代の写真です。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Jidai_matsuri.JPG",
+    "author": "Peter 111 at French Wikipedia",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Jidai_matsuri.JPG",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/e/ed/Jidai_matsuri.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "width": 900,
+    "height": 675,
+    "changes": "Wikimedia Commonsの縮小表示用JPEGを同梱。色・内容・トリミングの変更なし。",
+    "bytes": 265868
+  },
+  {
+    "id": "pine",
+    "items": [
+      "matsu"
+    ],
+    "src": "assets/codex/pine.jpg",
+    "caption": "クロマツの針葉",
+    "note": "Pinus thunbergii。細長い針葉が束になる形の参考写真です。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Starr-110331-4559-Pinus_thunbergii-needles-Shibuya_Farm_Kula-Maui_(24786298230).jpg",
+    "author": "Forest and Kim Starr",
+    "license": "CC BY 3.0 us",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0/us/deed.en",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/5/50/Starr-110331-4559-Pinus_thunbergii-needles-Shibuya_Farm_Kula-Maui_%2824786298230%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "width": 900,
+    "height": 675,
+    "changes": "Wikimedia Commonsの縮小表示用JPEGを同梱。色・内容・トリミングの変更なし。",
+    "bytes": 209436
+  },
+  {
+    "id": "maple",
+    "items": [
+      "kaede"
+    ],
+    "src": "assets/codex/maple.jpg",
+    "caption": "イロハモミジの園芸品種",
+    "note": "Acer palmatum Dissectum Group。葉が細く裂ける園芸品種の比較例で、ゲームの掌状葉と形に違いがあります。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Acer_palmatum_005.JPG",
+    "author": "H. Zell",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/a/ac/Acer_palmatum_005.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "width": 900,
+    "height": 675,
+    "changes": "Wikimedia Commonsの縮小表示用JPEGを同梱。色・内容・トリミングの変更なし。",
+    "bytes": 203467
+  },
+  {
+    "id": "camellia",
+    "items": [
+      "tsubaki"
+    ],
+    "src": "assets/codex/camellia.jpg",
+    "caption": "ヤブツバキの花の比較例",
+    "note": "Camellia japonica。植物園で撮影された花。園芸品種の花弁数とゲーム内の単純化した花を比較できます。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Camellia_japonica_NBG.jpg",
+    "author": "PumpkinSky",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/e/e9/Camellia_japonica_NBG.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "width": 900,
+    "height": 597,
+    "changes": "Wikimedia Commonsの縮小表示用JPEGを同梱。色・内容・トリミングの変更なし。",
+    "bytes": 170142
+  },
+  {
+    "id": "mandarin-duck",
+    "items": [
+      "oshidori"
+    ],
+    "src": "assets/codex/mandarin-duck.jpg",
+    "caption": "オシドリの雄",
+    "note": "橙色の飾り羽と顔の白い縁取り。野鳥園で撮影され、片翼がクリッピングされた個体です。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Mandarin.duck.arp.jpg",
+    "author": "Adrian Pingstone",
+    "license": "Public domain",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Mandarin.duck.arp.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/5/51/Mandarin.duck.arp.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "width": 900,
+    "height": 643,
+    "changes": "Wikimedia Commonsの縮小表示用JPEGを同梱。色・内容・トリミングの変更なし。",
+    "bytes": 170494
+  },
+  {
+    "id": "crane",
+    "items": [
+      "tsuru"
+    ],
+    "src": "assets/codex/crane.jpg",
+    "caption": "北海道のタンチョウ",
+    "note": "黒い首と風切羽、白い体、頭頂の赤。ゲームの鶴はこの特徴をもとにした学習用の表現です。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Grus_japonensis_-Hokkaido,_Japan_-several-8_(1).jpg",
+    "author": "Alastair Rae from London, United Kingdom",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Grus_japonensis_-Hokkaido%2C_Japan_-several-8_%281%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+    "width": 900,
+    "height": 600,
+    "changes": "Wikimedia Commonsの縮小表示用JPEGを同梱。色・内容・トリミングの変更なし。",
+    "bytes": 102950
+  }
+]

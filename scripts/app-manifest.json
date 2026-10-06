@@ -30,6 +30,13 @@
     "end": "/* APP_QUIZ_EMBED_END */"
   },
   {
+    "name": "heian-expression",
+    "src": "src/app/heian-expression.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_HEIAN_EXPRESSION_EMBED_BEGIN (src/app/heian-expression.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_HEIAN_EXPRESSION_EMBED_END */"
+  },
+  {
     "name": "kamakura",
     "src": "src/app/map-kamakura.js",
     "kind": "markers-exist",
@@ -91,5 +98,33 @@
     "kind": "markers-exist",
     "begin": "/* APP_LIVING_ESTATE_EMBED_BEGIN (src/app/living-estate.js から自動生成。ここを直接編集しない) */",
     "end": "/* APP_LIVING_ESTATE_EMBED_END */"
+  },
+  {
+    "name": "visual-experience",
+    "src": "src/app/visual-experience.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_VISUAL_EXPERIENCE_EMBED_BEGIN (src/app/visual-experience.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_VISUAL_EXPERIENCE_EMBED_END */"
+  },
+  {
+    "name": "photo-tools",
+    "src": "src/app/photo-tools.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_PHOTO_TOOLS_EMBED_BEGIN (src/app/photo-tools.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_PHOTO_TOOLS_EMBED_END */"
+  },
+  {
+    "name": "codex-media",
+    "src": "src/app/codex-media.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_CODEX_MEDIA_EMBED_BEGIN (src/app/codex-media.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_CODEX_MEDIA_EMBED_END */"
+  },
+  {
+    "name": "codex-viewer",
+    "src": "src/app/codex-viewer.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_CODEX_VIEWER_EMBED_BEGIN (src/app/codex-viewer.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_CODEX_VIEWER_EMBED_END */"
   }
 ]

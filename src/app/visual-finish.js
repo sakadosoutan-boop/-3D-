@@ -206,6 +206,6 @@ VISUAL_FINISH=(()=>{
     }
   }
   season(APP.season);update(0);
-  return {update,season,detailRoot,batches,winterBatches,lampBatches,grassItems,rockItems,placeClear,
+  return {update,season,setSnowAmount(v){snow.value=THREE.MathUtils.clamp(v,0,1);},detailRoot,batches,winterBatches,lampBatches,grassItems,rockItems,placeClear,
     get active(){return active;},get snowStrength(){return snow.value;}};
 })();

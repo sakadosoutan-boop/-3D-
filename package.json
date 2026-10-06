@@ -20,9 +20,10 @@
     "smoke": "node scripts/smoke-playwright.js",
     "test:quality": "node scripts/quality-playwright.js",
     "test:graphics": "node scripts/graphics-quality-playwright.js",
-    "test": "npm run build:app:check && npm run build:story:check && npm run verify:html && npm run verify:story && npm run verify:routes && npm run smoke && npm run test:quality && npm run test:graphics && npm run test:gissha && npm run test:visual-backlog",
+    "test": "npm run build:app:check && npm run build:story:check && npm run verify:html && npm run verify:story && npm run verify:routes && npm run smoke && npm run test:quality && npm run test:graphics && npm run test:gissha && npm run test:visual-backlog && npm run test:visual-experience",
     "test:gissha": "node scripts/gissha-quality-playwright.js",
-    "test:visual-backlog": "node scripts/visual-backlog-playwright.js"
+    "test:visual-backlog": "node scripts/visual-backlog-playwright.js",
+    "test:visual-experience": "node scripts/visual-experience-playwright.js"
   },
   "devDependencies": {
     "playwright": "1.61.1"

@@ -60,7 +60,9 @@ const {chromium} = require('playwright');
         }
         return [...edges.values()].every(count=>count===2)&&geo.attributes.uv===geo.attributes.uv2;
       });
-      const identities=roofs.map(m=>m.geometry.id);applySeason('winter');const snow=MAT.roof.map===null;
+      const identities=roofs.map(m=>m.geometry.id);applySeason('winter');
+      const snow=typeof VISUAL_EXPERIENCE!=='undefined'&&VISUAL_EXPERIENCE?
+        VISUAL_EXPERIENCE.snowAmount>.8&&MAT.roof.map===TEX.roof:MAT.roof.map===null;
       applySeason('spring');return {count:roofs.length,valid,snow,restored:MAT.roof.map===TEX.roof&&roofs.every((m,i)=>m.geometry.id===identities[i])};
     });
     assert.ok(roofStructure.count>10&&roofStructure.valid&&roofStructure.snow&&roofStructure.restored,JSON.stringify(roofStructure));
