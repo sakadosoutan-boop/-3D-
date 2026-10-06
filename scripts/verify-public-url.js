@@ -4,6 +4,8 @@ const http = require('http');
 const baseUrl = process.argv[2] || 'https://sakadosoutan-boop.github.io/-3D-/';
 const version = process.argv[3] || Date.now().toString();
 const appPath = encodeURIComponent('寝殿造り3D探訪_統合版.html');
+// The standalone bundle includes licensed photograph copies (currently about 8.4 MB).
+const MAX_RESPONSE_BYTES = 12 * 1024 * 1024;
 const targets = [
   new URL(`index.html?v=${encodeURIComponent(version)}`, baseUrl).toString(),
   new URL(`${appPath}?v=${encodeURIComponent(version)}`, baseUrl).toString(),
@@ -19,12 +21,14 @@ function fetchText(url, redirects = 0) {
         resolve(fetchText(new URL(res.headers.location, url).toString(), redirects + 1));
         return;
       }
-      let body = '';
+      let body = '', bytes = 0;
       res.setEncoding('utf8');
       res.on('data', (chunk) => {
         body += chunk;
-        if (body.length > 8_000_000) req.destroy(new Error('response too large'));
+        bytes += Buffer.byteLength(chunk);
+        if (bytes > MAX_RESPONSE_BYTES) req.destroy(new Error('response too large'));
       });
+      res.on('error', reject);
       res.on('end', () => resolve({ url, status, body }));
     });
     req.setTimeout(30_000, () => req.destroy(new Error(`timeout: ${url}`)));
