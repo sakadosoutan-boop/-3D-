@@ -79,6 +79,13 @@
     "end": "/* APP_GOZEN_FIVE_EMBED_END */"
   },
   {
+    "name": "visual-finish",
+    "src": "src/app/visual-finish.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_VISUAL_FINISH_EMBED_BEGIN (src/app/visual-finish.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_VISUAL_FINISH_EMBED_END */"
+  },
+  {
     "name": "living-estate",
     "src": "src/app/living-estate.js",
     "kind": "markers-exist",

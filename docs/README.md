@@ -2,6 +2,9 @@
 
 ゲーム本体の実行に不要な資料は、この `docs/` 配下へ分類しています。
 
+- [ビジュアル残件の対応状況](visual-quality-backlog.md)
+- [ビジュアルとそれ以外の追加改善案](game-improvement-opportunities.md)
+
 ## handbook
 
 - `handbook/HANDOFF_LATEST.md`: 最新の作業引き継ぎ。

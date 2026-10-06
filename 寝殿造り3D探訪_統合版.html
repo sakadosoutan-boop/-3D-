@@ -6953,7 +6953,11 @@ function paintCourtSurface(season){
   const winter=season==="winter",smooth=(v,a,b)=>THREE.MathUtils.smoothstep(v,a,b);
   for(let i=0;i<pos.count;i++){
     const x=pos.getX(i),z=COURT_SURFACE.position.z-pos.getY(i);
-    if(winter){color.setXYZ(i,1.06,1.09,1.13);continue;}
+    if(winter){
+      const path=Math.exp(-Math.pow((x-.36*Math.sin(z*.18))/3.1,2))*(1-smooth(z,26,34))*smooth(z,4,9);
+      const wind=.026*Math.sin(x*.37+z*.19)+.019*Math.cos(z*.41-x*.13);
+      color.setXYZ(i,1.03+wind-path*.17,1.06+wind-path*.14,1.10+wind-path*.09);continue;
+    }
     const edge=Math.max(smooth(Math.abs(x),30,47),smooth(-z,24,46));
     const east=smooth(z,-49,-40)*(1-smooth(z,11,20))*Math.exp(-Math.pow((x-51.5)/6.5,2));
     const west=smooth(z,-50,-40)*(1-smooth(z,12,22))*Math.exp(-Math.pow((x+50)/6.5,2));
@@ -7191,7 +7195,7 @@ const SHISHIN_DATA={
 {
   const pond=new THREE.Group();
   const shape=new THREE.Shape();
-  const pts=[];const N=44;
+  const pts=[];const N=160;
   for(let i=0;i<N;i++){const a=i/N*Math.PI*2;
     let best=0,bx=0,bz=0;
     pondCircles.forEach(c=>{const x=c[0]+Math.cos(a)*c[2],z=c[1]+Math.sin(a)*c[2];
@@ -7206,6 +7210,8 @@ const SHISHIN_DATA={
       const perp2=dx*dx+dz*dz-proj*proj;
       if(perp2<c[2]*c[2]){const rr=proj+Math.sqrt(c[2]*c[2]-perp2);if(rr>r)r=rr;}
     });
+    // Fine, inward undulation keeps the visible edge inside the walk collision boundary.
+    r-=.10+.10*(1+Math.sin(a*11+.6))+.07*(1+Math.sin(a*23));
     ring.push([center[0]+Math.cos(a)*r,center[1]+Math.sin(a)*r]);}
   shape.moveTo(ring[0][0],-ring[0][1]);
   for(let i=1;i<N;i++)shape.lineTo(ring[i][0],-ring[i][1]);
@@ -7234,6 +7240,7 @@ const SHISHIN_DATA={
   shoreGeo.setAttribute("color",new THREE.Float32BufferAttribute(shoreColors,3));
   shoreGeo.setAttribute("uv",new THREE.Float32BufferAttribute(shoreUV,2));
   shoreGeo.setIndex(shoreIndices);shoreGeo.computeVertexNormals();
+  shoreGeo.userData.pondShore=true;
   const shore=new THREE.Mesh(shoreGeo,new THREE.MeshStandardMaterial({map:TEX.sand,vertexColors:true,roughness:1,side:THREE.DoubleSide}));
   shore.receiveShadow=true;shore.userData.noAutoShadow=true;pond.add(shore);
   const wmesh=new THREE.Mesh(new THREE.ShapeGeometry(shape,24),MAT.water);
@@ -7244,7 +7251,7 @@ const SHISHIN_DATA={
   for(let i=0;i<N;i++){
     const [x,z]=ring[i],dx=x-center[0],dz=z-center[1],length=Math.hypot(dx,dz)||1;
     for(let row=0;row<2;row++){
-      const inward=row?1.35:.14,px=x-dx/length*inward,pz=z-dz/length*inward;
+      const inward=row?2.1+.38*Math.sin(i*.47):.04,px=x-dx/length*inward,pz=z-dz/length*inward;
       shallows.push(px,.068+row*.001,pz);
       const c=row?shallowInner:shallowOuter;shallowColors.push(c.r,c.g,c.b);
     }
@@ -7252,11 +7259,12 @@ const SHISHIN_DATA={
   }
   const shallowGeo=new THREE.BufferGeometry();shallowGeo.setAttribute("position",new THREE.Float32BufferAttribute(shallows,3));
   shallowGeo.setAttribute("color",new THREE.Float32BufferAttribute(shallowColors,3));shallowGeo.setIndex(shallowFaces);shallowGeo.computeVertexNormals();
+  shallowGeo.userData.pondShallows=true;
   const shallow=new THREE.Mesh(shallowGeo,new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:.20,depthWrite:false,side:THREE.DoubleSide}));
   shallow.userData.noAutoShadow=true;pond.add(shallow);
   /* 汀(みぎわ)の石 */
   const bridgeClear=[[-20,22.5],[-20,29.6],[-15.8,35],[-7,39],[-4,36.8],[-4,28.5]];
-  for(let i=0;i<N;i+=1){
+  for(let i=0;i<N;i+=4){
     if(i%5===1||i%7===3)continue;
     const p=ring[i],radius=i%9===0?rnd(.72,.96):rnd(.30,.70);
     const s=new THREE.Mesh(gardenRockGeo(radius,i),MAT.stone);
@@ -7266,7 +7274,7 @@ const SHISHIN_DATA={
     s.rotation.y=rnd(0,Math.PI*2);pond.add(s);}
   // 岸の間隙に低い草をまとめて配置。橋の足元と歩行線は空けておく。
   const reedPlaces=[];
-  for(let i=0;i<N;i++){
+  for(let i=0;i<N;i+=4){
     if(i%3===1)continue;
     const [x,z]=ring[i],dx=x-center[0],dz=z-center[1],length=Math.hypot(dx,dz)||1;
     const bx=x+dx/length*.68,bz=z+dz/length*.68;
@@ -7322,7 +7330,7 @@ const SHISHIN_DATA={
   }
   const isA=island(-20,34,4.6),isB=island(-4,40,3.4);  // 南庭寄りに配置(橋を短く美しく)
   /* 反り橋(朱塗りの太鼓橋) — 反りに沿った床板・桁・束・高欄 */
-  const bridgeMat=M({map:TEX.shu,color:0xc7b5aa,roughness:.72});
+  const bridgeMat=M({map:TEX.shu,color:0xadaeaa,roughness:.80});
   const bridgeDarkMat=M({map:TEX.shu,color:0x8d8179,roughness:.82});
   function bridge(x1,z1,x2,z2,W,y1,y2){
     W=W||2.2;
@@ -7395,7 +7403,7 @@ const SHISHIN_DATA={
 }
 /* 樹木 — 日本庭園の松(黒松):曲がった幹+段づくりの葉叢 */
 var PINE_PAD_GEO,PINE_TOP_GEO,TSUBAKI_BLOOM_GEO,SUSUKI_BLADE_GEO;
-var GARDEN_POLISH;
+var GARDEN_POLISH, VISUAL_FINISH;
 // 輪郭の揺れを連続した面にする。格子の継ぎ目と極で形状が割れない周期補間。
 function gardenFoliageGeo(cols,rows,field,variant=0){
   const geo=new THREE.SphereGeometry(1,cols,rows),p=geo.attributes.position;
@@ -7451,6 +7459,19 @@ function paintPinePads(season){
   const detail=FOLIAGE_DETAIL.get(PINE_PAD_GEO);
   if(detail&&detail.low)paintPinePadGeometry(detail.low,season);
 }
+var PINE_NEEDLE_GEO;
+function pineNeedleGeo(){
+  if(PINE_NEEDLE_GEO)return PINE_NEEDLE_GEO;
+  const p=[],uv=[],colors=[],indices=[];
+  for(let k=0;k<7;k++){
+    const a=k*2.399,length=.18+.055*(k%3),x=Math.cos(a),z=Math.sin(a),base=p.length/3;
+    p.push(-z*.008,0,x*.008,z*.008,0,-x*.008,x*length,.075+(k%2)*.055,z*length);
+    uv.push(0,0,.12,0,.06,.20);colors.push(.74,.83,.70,.80,.89,.76,1,1,1);indices.push(base,base+1,base+2);
+  }
+  const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(p,3));
+  geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));geo.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
+  geo.setIndex(indices);geo.computeVertexNormals();return PINE_NEEDLE_GEO=geo;
+}
 function tree(s,variant){
   const g=new THREE.Group();
   // 曲がった幹を数節で
@@ -7475,7 +7496,7 @@ function tree(s,variant){
   }
   // 横に伸びる枝+葉叢(段づくり)
   const pads=variant==="old"?5:4;
-  const pineDarkPads=[],pinePads=[];
+  const pineDarkPads=[],pinePads=[],needleItems=[];
   for(let i=0;i<pads;i++){
     const baseNode=nodes[Math.min(nodes.length-1,1+(i%(nodes.length-1)))];
     const ang=rnd(0,Math.PI*2), reach=s*rnd(0.6,1.15);
@@ -7491,10 +7512,19 @@ function tree(s,variant){
     br.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),axis2.normalize());g.add(br);
     // 葉叢:平たい緑の円盤を重ねる
     const padR=s*rnd(0.55,0.85);
-    for(let k=0;k<3;k++){
-      const r=padR*(1-k*0.18);
-      const item={pos:[tip[0]+rnd(-0.2,0.2),by+k*0.18*s+0.1*s,tip[2]+rnd(-0.2,0.2)],scale:[r,r*0.4,r]};
-      (k===0?pineDarkPads:pinePads).push(item);
+    // Consume the same random samples, then divide the crown into uneven overlapping shoots.
+    const shifts=Array.from({length:3},()=>[rnd(-.2,.2),rnd(-.2,.2)]);
+    for(let k=0;k<7;k++){
+      const a=ang+k*2.399,reach=k===0?0:padR*(.33+.075*(k%3));
+      const r=padR*(k===0?.57:.33+.045*(k%3));
+      const item={pos:[tip[0]+Math.cos(a)*reach+shifts[k%3][0]*.2,
+        by+s*(.10+.085*Math.sin(k*2.1+i)),tip[2]+Math.sin(a)*reach+shifts[k%3][1]*.2],
+        scale:[r*(1+.13*Math.sin(k)),r*(.55+.10*(k%3)),r*(.78+.12*(k%2))],rot:a};
+      (k===0||k===4?pineDarkPads:pinePads).push(item);
+      for(let j=0;j<3;j++){
+        const a=ang+k*2.399+j*2.1;
+        needleItems.push({p:[item.pos[0]+Math.cos(a)*r*.79,item.pos[1]+r*.12,item.pos[2]+Math.sin(a)*r*.79],a});
+      }
     }
   }
   const addPinePads=(items,mat)=>{
@@ -7506,7 +7536,7 @@ function tree(s,variant){
     const dummy=new THREE.Object3D();
     items.forEach((it,idx)=>{
       dummy.position.set(it.pos[0],it.pos[1],it.pos[2]);
-      dummy.rotation.set(0,0,0);
+      dummy.rotation.set(.08*Math.sin(idx*2.1),it.rot||0,.07*Math.cos(idx));
       dummy.scale.set(it.scale[0],it.scale[1],it.scale[2]);
       dummy.updateMatrix();
       inst.setMatrixAt(idx,dummy.matrix);
@@ -7515,10 +7545,18 @@ function tree(s,variant){
     markFoliageNoShadow(inst);g.add(inst);
   };
   addPinePads(pineDarkPads,MAT.pineDark);addPinePads(pinePads,MAT.pine);
+  const needles=new THREE.InstancedMesh(pineNeedleGeo(),MAT.pine,needleItems.length),needlePose=new THREE.Object3D();
+  needleItems.forEach((item,i)=>{
+    needlePose.position.set(...item.p);needlePose.rotation.set(.20*Math.sin(i),item.a,.18*Math.cos(i));needlePose.scale.setScalar(s*.68);
+    needlePose.updateMatrix();needles.setMatrixAt(i,needlePose.matrix);
+  });
+  needles.instanceMatrix.needsUpdate=true;needles.frustumCulled=false;markFoliageNoShadow(needles);
+  needles.userData.architecturalDetail=true;needles.userData.pineNeedles=true;g.add(needles);
   // The terminal foliage is a small pad; a snow-white cone looked detached from the crown.
   const topGeo=PINE_TOP_GEO||(PINE_TOP_GEO=gardenFoliageGeo(10,6,null));
   const top=new THREE.Mesh(topGeo,MAT.pine);
-  top.position.set(px,py+.15*s,pz);top.scale.set(s*.38,s*.17,s*.38);markFoliageNoShadow(top);g.add(top);
+  top.position.set(px,py+.15*s,pz);top.scale.set(s*.32,s*.21,s*.28);markFoliageNoShadow(top);g.add(top);
+  mergeIndexedCharacterDetail(g,"pine-branches");g.userData.treeSpecies="pine";
   return g;
 }
 /* 葉叢用の不規則ジオメトリ(共有3種)。頂点を乱し「ただの球」に見えないようにする。共有なので軽量。 */
@@ -7601,7 +7639,7 @@ function broadleaf(s,leafMat){
   const buckets=[[],[],[]];
   for(let i=0;i<8;i++){
     // Keep the per-branch random call count while adding deterministic leaflets.
-    const a=i*2.399+rnd(-.25,.25),rad=rnd(.33,.76)*s,r=s*rnd(.25,.35);
+    const a=i*2.399+rnd(-.25,.25),rad=rnd(.38,.88)*s,r=s*rnd(.22,.32);
     const y=s*rnd(1.50,2.12),sx=rnd(.9,1.25),sy=rnd(.8,1.1),sz=rnd(.9,1.25);
     const rx=rnd(-.25,.25),ry=rnd(0,6.2),rz=rnd(-.25,.25);
     const tip=[Math.cos(a)*rad,y,Math.sin(a)*rad];
@@ -7611,7 +7649,7 @@ function broadleaf(s,leafMat){
       const size=j===0?1:j===1?.73:.79;
       buckets[(i+j)%3].push({
         pos:[tip[0]+Math.cos(angle)*reach,y+(j===1?.13:j===2?-.14:0)*r,tip[2]+Math.sin(angle)*reach],
-        scale:[r*sx*size,r*sy*(j===0?.72:.61),r*sz*size],
+        scale:[r*sx*size,r*sy*(j===0?.85:.69),r*sz*size],
         rot:[rx+(j-1)*.08,ry+j*.67,rz-(j-1)*.08]
       });
     }
@@ -7647,7 +7685,7 @@ function broadleaf(s,leafMat){
   fitDetailInstances(sprigs);markFoliageNoShadow(sprigs);g.add(sprigs);foliage.push(sprigs);
   connectTreeCrown(t,branchTips,s);
   g.userData.foliage=foliage;
-  g.userData.crownTips=branchTips;
+  g.userData.crownTips=branchTips;g.userData.treeSpecies="broadleaf";
   return g;
 }
 // A shallow, two-layer camellia corolla and stamens share one vertex-colored mesh.
@@ -8232,7 +8270,8 @@ const GISSHA_YARD={root:null,shed:null,sheds:[],cart:null,parkedCarts:[],guide:n
   });
   mergeStaticDetail(cabinDetail,"gissha-cabin");g.add(cabinDetail);
   g.add(box(2.0,1.7,.06,M({map:TEX.misu,side:THREE.DoubleSide}),0,1.95,1.52));
-  const drive={wheels:[],legs:[],distance:0};
+  const cabin=new THREE.Group();[...g.children].forEach(o=>cabin.add(o));g.add(cabin);
+  const drive={wheels:[],legs:[],distance:0,cabin};
   [-1.25,1.25].forEach(x=>{
     const wheel=new THREE.Group();wheel.position.set(x,1.05,0);
     const wreath=new THREE.Mesh(new THREE.TorusGeometry(1.05,.16,10,22),MAT.woodDark);
@@ -8396,6 +8435,8 @@ function gisshaCarryAnimate(distance,speed){
   drive.legs.forEach(({pivot,phase:offset})=>{
     const swing=Math.sin(phase+offset);pivot.rotation.x=swing*.17*amount;pivot.position.y=.98+Math.max(0,swing)*.045*amount;
   });
+  // Move only the cabin; the wheels and axle keep their existing ground contact.
+  if(drive.cabin){drive.cabin.position.y=Math.sin(phase*2)*.026*amount;drive.cabin.rotation.z=Math.sin(phase)*.008*amount;}
   if(drive.ox){drive.ox.position.y=Math.sin(phase*2)*.025*amount;drive.ox.rotation.x=Math.sin(phase)*.012*amount;}
 }
 function gisshaCarryCamera(rig){
@@ -9211,13 +9252,26 @@ function makeHairTrainGeometry(){
   geo.computeVertexNormals();return geo;
 }
 const HEIAN_GEO={
-  sphere:new THREE.SphereGeometry(1,16,12),head:new THREE.SphereGeometry(1,20,16),
+  sphere:new THREE.SphereGeometry(1,16,12),head:(()=>{
+    const g=new THREE.SphereGeometry(1,20,16),p=g.attributes.position;
+    for(let i=0;i<p.count;i++){const y=p.getY(i),jaw=1-.18*Math.max(0,-y);p.setX(i,p.getX(i)*jaw);}
+    g.computeVertexNormals();return g;
+  })(),
   hairCap:new THREE.SphereGeometry(1,20,12,0,Math.PI*2,0,Math.PI*.62),
   body:new THREE.CylinderGeometry(.66,1,1,16),sleeve:new THREE.SphereGeometry(1,14,10),
   drapeSleeve:new THREE.CylinderGeometry(.62,1,1,16),
   armSleeve:new THREE.CylinderGeometry(.82,1,1,16),
   hair:new THREE.BoxGeometry(1,1,1),collar:new THREE.BoxGeometry(1,1,1),
-  cushion:new THREE.BoxGeometry(1,1,1),robe:new THREE.SphereGeometry(1,18,10),
+  cushion:new THREE.BoxGeometry(1,1,1),robe:(()=>{
+    const g=new THREE.SphereGeometry(1,36,14),p=g.attributes.position;
+    for(let i=0;i<p.count;i++){
+      const x=p.getX(i),z=p.getZ(i),y=p.getY(i),r=Math.hypot(x,z),a=Math.atan2(z,x);
+      const fold=1+.055*Math.sin(a*11+.35)*r*r;
+      // Flatten the lower cloth while retaining its original lowest point for floor/cushion contact.
+      const clothY=y<0?Math.max(-1,y-.22*Math.min(1,-y/.3)):y;
+      p.setXYZ(i,x*fold,clothY+.045*Math.cos(a*11)*r*r,z*fold);
+    }g.computeVertexNormals();return g;
+  })(),
   straightHair:makeStraightHairGeometry(),hairTrain:makeHairTrainGeometry()
 };
 const HEIAN_MATS=new Map();
@@ -9242,9 +9296,9 @@ function heianTextile(color,gold=false,motif=0){
     }
     x.globalAlpha=1;
   });tex.repeat.set(2.0,2.0);
-  const mat=M({map:tex,roughness:.78,metalness:gold?.05:0,side:THREE.DoubleSide});HEIAN_MATS.set(key,mat);return mat;
+  const mat=M({map:tex,roughness:.64,metalness:gold?.05:0,side:THREE.DoubleSide});HEIAN_MATS.set(key,mat);return mat;
 }
-const HEIAN_SKIN=M({color:0xf0d5bd,roughness:.72}),HEIAN_HAIR=M({color:0x08080a,roughness:.46,metalness:.04}),
+const HEIAN_SKIN=M({color:0xf0d5bd,roughness:.72}),HEIAN_HAIR=M({color:0x101019,roughness:.31,metalness:.07}),
   HEIAN_HAIRLIT=M({color:0x2b2733,roughness:.18,metalness:.15}), /* [idea4] 濡れ羽色の艶ハイライト */
   HEIAN_FACE=new THREE.MeshBasicMaterial({color:0x251914}),HEIAN_EYE=new THREE.MeshBasicMaterial({color:0xf7f2e8}),
   HEIAN_CHEEK=new THREE.MeshBasicMaterial({color:0xd89291,transparent:true,opacity:.48});
@@ -9375,7 +9429,8 @@ function makeHeianStandingFigure({role,palette,scale=1,prop}){
   const shell=new THREE.Group();
   g.children.slice(1).filter(o=>o.isMesh).forEach(o=>shell.add(o));
   g.add(mergeIndexedCharacterDetail(shell,"heian-standing-shell"));
-  g.add(detail);g.userData.detail=detail;g.userData.pose="standing";g.userData.standing=true;g.scale.setScalar(scale);return g;
+  mergeIndexedCharacterDetail(detail,"heian-standing-face-and-cuffs");detail.traverse(noTinyShadow);
+  g.add(detail);g.userData.detail=detail;g.userData.heianFigure=true;g.userData.pose="standing";g.userData.standing=true;g.scale.setScalar(scale);return g;
 }
 function makeHeianFigure({role,palette,scale=1,prop,pose="seated"}){
   if(pose==="standing")return makeHeianStandingFigure({role,palette,scale,prop});
@@ -9521,7 +9576,8 @@ function makeHeianFigure({role,palette,scale=1,prop,pose="seated"}){
   const shell=new THREE.Group();
   g.children.slice(1).filter(o=>o.isMesh).forEach(o=>shell.add(o));
   g.add(mergeIndexedCharacterDetail(shell,"heian-seated-shell"));
-  g.add(detail);g.userData.detail=detail;g.scale.setScalar(scale);return g;
+  mergeIndexedCharacterDetail(detail,"heian-face-and-cuffs");detail.traverse(noTinyShadow);
+  g.add(detail);g.userData.detail=detail;g.userData.heianFigure=true;g.scale.setScalar(scale);return g;
 }
 
 function addCharacterSlot({id,figure,position,yaw,labelPos}){
@@ -10731,6 +10787,12 @@ function makeShikigami(){
    水鳥(鴛鴦)・鶴 — 池を泳ぐ/汀に佇む
 ============================================================ */
 const waterBirds=[];
+const DUCK_SAIL_GEO=(()=>{
+  const shape=new THREE.Shape();shape.moveTo(-.09,-.09);shape.quadraticCurveTo(-.17,.04,-.06,.18);
+  shape.quadraticCurveTo(.13,.15,.15,-.02);shape.quadraticCurveTo(.05,-.08,-.09,-.09);
+  const g=new THREE.ShapeGeometry(shape,8),p=g.attributes.position;
+  for(let i=0;i<p.count;i++)p.setZ(i,.045*Math.sin((p.getX(i)+.17)*8));g.computeVertexNormals();return g;
+})();
 function makeMandarinDuck(){
   const g=new THREE.Group();
   // 胴(栗色)
@@ -10767,23 +10829,33 @@ function makeMandarinDuck(){
   beak.position.set(0,0.41,0.52);beak.rotation.x=Math.PI/2;g.add(beak);
   // 帆(銀杏羽=橙の帆を左右に立てる)
   [-1,1].forEach(s=>{
-    const sail=new THREE.Mesh(new THREE.CircleGeometry(0.14,3),M({color:0xe07820,roughness:.7,side:THREE.DoubleSide}));
+    const sail=new THREE.Mesh(DUCK_SAIL_GEO,M({color:0xe07820,roughness:.7,side:THREE.DoubleSide}));
     sail.position.set(s*0.13,0.34,-0.1);sail.rotation.set(0,s*0.5,s*0.4);g.add(sail);
   });
   // 尾
   const tail=new THREE.Mesh(new THREE.ConeGeometry(0.1,0.22,6),M({color:0x5a3020,roughness:.8}));
   tail.rotation.x=-Math.PI/2.4;tail.position.set(0,0.2,-0.34);g.add(tail);
-  return g;
+  mergeIndexedCharacterDetail(g,"mandarin-duck");return g;
 }
 function makeCrane(){
   const g=new THREE.Group();
   const body=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,10),M({color:0xf4f4f0,roughness:.85}));
   body.scale.set(1,0.9,1.6);body.position.y=1.0;body.castShadow=true;g.add(body);
   // 長い首
-  const neck=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.1,1.1,8),M({color:0xf0f0ec,roughness:.85}));
-  neck.position.set(0,1.6,0.3);neck.rotation.x=-0.2;g.add(neck);
+  const neckCurve=new THREE.CatmullRomCurve3([new THREE.Vector3(0,1.04,.23),new THREE.Vector3(0,1.42,.24),new THREE.Vector3(0,1.83,.31),new THREE.Vector3(0,2.12,.42)]);
+  const neck=new THREE.Mesh(new THREE.TubeGeometry(neckCurve,12,.074,8,false),M({color:0xf0f0ec,roughness:.85}));g.add(neck);
   const head=new THREE.Mesh(new THREE.SphereGeometry(0.13,10,8),M({color:0xf0f0ec,roughness:.85}));
   head.position.set(0,2.15,0.42);g.add(head);
+  const cheekMat=M({color:0x242624,roughness:.83}),eyeMat=M({color:0x090a09,roughness:.24});
+  [-1,1].forEach(side=>{
+    const cheek=new THREE.Mesh(new THREE.SphereGeometry(1,10,7),cheekMat);
+    cheek.position.set(side*.096,2.115,.405);cheek.scale.set(.042,.077,.073);g.add(cheek);
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(.019,7,6),eyeMat);eye.position.set(side*.097,2.17,.485);g.add(eye);
+    const stripe=new THREE.Mesh(new THREE.SphereGeometry(1,10,8),cheekMat);
+    stripe.position.set(side*.067,1.975,.355);stripe.scale.set(.024,.19,.066);stripe.rotation.x=-.13;g.add(stripe);
+    const wing=new THREE.Mesh(new THREE.SphereGeometry(.32,12,9),M({color:0xe1e2dd,roughness:.94}));
+    wing.position.set(side*.28,1.06,-.05);wing.scale.set(.49,.68,1.60);g.add(wing);
+  });
   // 頭頂の赤
   const cap=new THREE.Mesh(new THREE.SphereGeometry(0.08,8,6),M({color:0xc0302a,roughness:.7}));
   cap.position.set(0,2.22,0.42);g.add(cap);
@@ -10791,13 +10863,18 @@ function makeCrane(){
   const beak=new THREE.Mesh(new THREE.ConeGeometry(0.04,0.22,6),M({color:0x404038,roughness:.7}));
   beak.position.set(0,2.14,0.58);beak.rotation.x=Math.PI/2;g.add(beak);
   // 黒い風切羽(尾)
-  const tail=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.18,0.3),M({color:0x2a2a2a,roughness:.8}));
-  tail.position.set(0,1.0,-0.5);g.add(tail);
+  const featherMat=M({color:0x2a2a2a,roughness:.8});
+  for(let i=0;i<5;i++){
+    const tail=new THREE.Mesh(new THREE.SphereGeometry(.13,8,6),featherMat);
+    tail.scale.set(.52,.56,2.6);tail.rotation.x=-.19-i*.026;tail.rotation.y=(i-2)*.12;
+    tail.position.set((i-2)*.065,1.0,-.49);g.add(tail);
+  }
   // 脚
   [-1,1].forEach(s=>{
     const leg=cyl(0.03,0.03,1.0,M({color:0x33332e,roughness:.8}),s*0.12,0.5,0,6);g.add(leg);
+    for(let i=0;i<3;i++){const toe=cyl(.012,.012,.16,leg.material,s*.12,.023,.05,5);toe.rotation.x=Math.PI/2;toe.rotation.z=(i-1)*.42;g.add(toe);}
   });
-  return g;
+  mergeIndexedCharacterDetail(g,"crane-feathers");return g;
 }
 (function placeWaterBirds(){
   // 鴛鴦:釣殿の下あたり(東西)の池面を泳ぐ
@@ -11209,6 +11286,13 @@ const flyingLife={spring:new THREE.Group(),summer:new THREE.Group(),autumn:new T
 Object.keys(flyingLife).forEach(k=>{flyingLife[k].visible=false;scene.add(flyingLife[k]);});
 function noShadow(o){o.traverse(n=>{if(n.isMesh)n.userData.noAutoShadow=true;});return o;}
 function basicMat(color,opacity=1){return new THREE.MeshBasicMaterial({color,transparent:opacity<1,opacity,side:THREE.DoubleSide,depthWrite:false});}
+const BIRD_WING_GEO=(()=>{
+  const shape=new THREE.Shape();shape.moveTo(-.21,-.02);shape.quadraticCurveTo(-.10,.075,.07,.06);
+  shape.lineTo(.21,.016);shape.lineTo(.16,-.02);shape.lineTo(.12,-.012);shape.lineTo(.09,-.046);
+  shape.lineTo(.04,-.037);shape.lineTo(0,-.067);shape.quadraticCurveTo(-.12,-.075,-.21,-.02);
+  const g=new THREE.ShapeGeometry(shape,8),p=g.attributes.position;
+  for(let i=0;i<p.count;i++)p.setZ(i,.035*Math.cos(p.getX(i)*7));g.computeVertexNormals();return g;
+})();
 function makeSmallBird(color,wingColor,scale=1){
   const g=new THREE.Group();
   const body=new THREE.Mesh(new THREE.SphereGeometry(.16*scale,10,8),basicMat(color));
@@ -11220,7 +11304,7 @@ function makeSmallBird(color,wingColor,scale=1){
   const beak=new THREE.Mesh(new THREE.ConeGeometry(.026*scale,.12*scale,6),basicMat(0xd6a02c));
   beak.position.set(0,.04*scale,.33*scale);beak.rotation.x=Math.PI/2;g.add(beak);
   [-1,1].forEach(s=>{
-    const wing=new THREE.Mesh(new THREE.PlaneGeometry(.42*scale,.16*scale),basicMat(wingColor,.92));
+    const wing=new THREE.Mesh(BIRD_WING_GEO,basicMat(wingColor,.92));wing.scale.setScalar(scale);
     wing.position.set(s*.18*scale,0,0);wing.rotation.y=s*.28;wing.userData.wingSide=s;g.add(wing);
     const eye=new THREE.Mesh(new THREE.SphereGeometry(.012*scale,5,4),basicMat(0x16100c));
     eye.position.set(s*.050*scale,.067*scale,.295*scale);g.add(eye);
@@ -12053,6 +12137,7 @@ function applySeason(key){
   setSnowCover(!!s.snow);
   // 季節の空色をTIMES.dayに反映(昼の空)
   TIMES.day.sky=s.sky;TIMES.day.fog=s.sky;
+  if(VISUAL_FINISH)VISUAL_FINISH.season(key);
   toast(SEASONS[key].name+"の庭になりました",2200);
   if(typeof updateWakaVisibility==="function")updateWakaVisibility();
 }
@@ -16083,7 +16168,7 @@ const TIMES={
  day:{sky:0xbcdbec,fog:0xccdfea,sunI:1.28,sunC:0xfff4e2,sunP:[54,90,52],hemi:.55,amb:.18,ambC:0xf1edff,moon:0,exp:1.06,int:.35}, /* 昼:わずかに暖色の陽と冷色の空色フィル */
  dawn:{sky:0xc6c2d4,fog:0xdcd9e6,sunI:.82,sunC:0xffcf9a,sunP:[98,26,18],hemi:.44,amb:.15,ambC:0x9aa2c2,moon:.06,exp:1.0,int:.42}, /* 朝:低い暖色の陽＋冷たい朝影(ゴールデンアワー) */
  dusk:{sky:0xe89a5c,fog:0xd88e58,sunI:.74,sunC:0xff8b42,sunP:[-88,16,26],hemi:.3,amb:.13,ambC:0x8f96be,moon:0,exp:.97,int:.5}, /* 夕:西へ長く差す黄金色の斜光＋青紫の陰(逢魔が時) */
- night:{sky:0x0b1322,fog:0x0e1728,sunI:0,sunC:0xffffff,sunP:[60,95,45],hemi:.10,amb:.045,ambC:0x8496bc,moon:.36,exp:.94,int:.32} /* 夜:冷たい月あかりの陰(篝火の暖色を引き立てる) */
+ night:{sky:0x0b1322,fog:0x0e1728,sunI:0,sunC:0xffffff,sunP:[60,95,45],hemi:.14,amb:.062,ambC:0x8496bc,moon:.40,exp:.97,int:.34} /* 夜:冷たい月あかりの陰(篝火の暖色を引き立てる) */
 };
 const ambient=new THREE.AmbientLight(0xfff0dd,0.18);scene.add(ambient);
 const cur={sky:new THREE.Color(TIMES.day.sky),fog:new THREE.Color(TIMES.day.fog),sunC:new THREE.Color(TIMES.day.sunC),
@@ -28306,6 +28391,7 @@ function animate(now){
   if(APP.mode!=="ikaiSuika"&&APP.mode!=="kaiawase"&&APP.mode!=="kemari"){
     if(window.LOW_POWER)window.LOW_POWER.update();
     if(GARDEN_POLISH)GARDEN_POLISH.update(t);
+    if(VISUAL_FINISH)VISUAL_FINISH.update(t);
     /* [発熱対策] 自由散策では影マップの更新を2フレームに1回へ間引く。太陽はほぼ静止しキャスターも大半が静的なので体感差はなく、影パスのGPU負荷を約半減できる。他モード(退治戦など動きの速い影)は毎フレーム更新へ戻す */
     if(APP.mode==="walk"){
       if(renderer.shadowMap.autoUpdate){renderer.shadowMap.autoUpdate=false;renderer.shadowMap.__throttle=true;}
@@ -33708,9 +33794,9 @@ GARDEN_POLISH=(()=>{
         normal=normalize(normal+mat3(viewMatrix)*vec3(-slope.x,0.0,-slope.y)*uGardenWaterStrength);
       }`);
     shader.fragmentShader=shader.fragmentShader.replace("gl_FragColor = vec4( outgoingLight, diffuseColor.a );",
-      "outgoingLight*=vec3(.70,.92,1.0);\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );");
+      "float basin=.5+.5*sin(vGardenWorld.x*.043+sin(vGardenWorld.z*.065));\nvec3 waterTone=mix(vec3(.62,.84,.79),vec3(.59,.79,.90),basin);\noutgoingLight*=waterTone;\ngl_FragColor = vec4( outgoingLight, diffuseColor.a );");
   };
-  MAT.water.customProgramCacheKey=()=>"garden-water-v2";
+  MAT.water.customProgramCacheKey=()=>"garden-water-v3";
   // 重なる池面を二重に半透明合成しない。鯉・葉・水紋は水面の上で描く。
   MAT.water.transparent=false;MAT.water.opacity=1;MAT.water.depthWrite=true;MAT.water.needsUpdate=true;
   MAT.water.roughness=.22;MAT.water.envMapIntensity=.72;MAT.water.color.setHex(0x9cc8ce);
@@ -33775,6 +33861,220 @@ GARDEN_POLISH=(()=>{
   update(0);
   return {update,get active(){return active;},get waterTime(){return time.value;},get waterStrength(){return strength.value;}};
 })();
+
+/* APP_VISUAL_FINISH_EMBED_BEGIN (src/app/visual-finish.js から自動生成。ここを直接編集しない) */
+/* 残件一覧の仕上げ。外部素材・追加レンダーパスを使わず、季節変更では資源を作り直さない。 */
+VISUAL_FINISH=(()=>{
+  if(APP.map==="kamakura")return {update(){},season(){},active:false};
+  const detailRoot=new THREE.Group();detailRoot.name="estate-visual-finish";world.add(detailRoot);
+  const batches=[],winterBatches=[],lampBatches=[],distantMaterials=[];
+  const pose=new THREE.Object3D(),matrix=new THREE.Matrix4(),point=new THREE.Vector3();
+  const snow={value:0};let active=null,lastSeason=null,lastTime=null;
+  let seed=0x4f637406;
+  const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+  const range=(a,b)=>a+(b-a)*random();
+  // Feathered mask is shared by moss and settled snow, avoiding hard circular ground decals.
+  const edgeMask=canv(64,64,(ctx,w,h)=>{
+    const g=ctx.createRadialGradient(w/2,h/2,w*.15,w/2,h/2,w*.5);
+    g.addColorStop(0,"#fff");g.addColorStop(.65,"#ccc");g.addColorStop(1,"#000");
+    ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  });
+
+  function batch(geo,mat,items,tag,parent=detailRoot){
+    if(!items.length){geo.dispose();return null;}
+    const mesh=new THREE.InstancedMesh(geo,mat,items.length);
+    items.forEach((item,i)=>{
+      pose.position.set(...item.p);pose.rotation.set(...(item.r||[0,0,0]));pose.scale.set(...(item.s||[1,1,1]));pose.updateMatrix();
+      mesh.setMatrixAt(i,item.matrix||pose.matrix);
+      if(item.color)mesh.setColorAt(i,item.color);
+    });
+    mesh.instanceMatrix.needsUpdate=true;if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+    fitDetailInstances(mesh);mesh.receiveShadow=true;mesh.castShadow=false;
+    mesh.userData.noAutoShadow=true;mesh.userData.finishBatch=tag;parent.add(mesh);batches.push(mesh);return mesh;
+  }
+
+  // Snow follows the world-space upward normal. Undersides, vertical bark and rock faces retain their material.
+  function snowy(mat){
+    if(!mat||mat.userData.finishSnow)return;
+    const previous=mat.onBeforeCompile,previousKey=mat.customProgramCacheKey();
+    mat.onBeforeCompile=shader=>{
+      previous.call(mat,shader);shader.uniforms.uFinishSnow=snow;
+      shader.fragmentShader="uniform float uFinishSnow;\n"+shader.fragmentShader;
+      shader.fragmentShader=shader.fragmentShader.replace("#include <normal_fragment_maps>",`#include <normal_fragment_maps>
+        float facingSnow=smoothstep(.34,.82,dot(normalize(normal),normalize(mat3(viewMatrix)*vec3(0.0,1.0,0.0))));
+        diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.85,.89,.94),facingSnow*uFinishSnow*.94);`);
+    };
+    mat.customProgramCacheKey=()=>previousKey+"-finish-snow-v1";
+    mat.userData.finishSnow=true;mat.needsUpdate=true;
+  }
+  [MAT.trunk,MAT.stone,MAT.pine,MAT.pineDark,MAT.leaf,MAT.leaf2,MAT.momijiGreen,MAT.momijiRed].forEach(snowy);
+
+  // Preserve the original matrix values so all four seasons round-trip exactly.
+  const winterFoliage=[];
+  SEASONAL.maples.forEach(root=>(root.userData.foliage||[]).forEach(mesh=>{
+    if(!mesh.isInstancedMesh)return;
+    const original=mesh.instanceMatrix.array.slice();winterFoliage.push({mesh,original,sprigs:mesh.geometry.index?.count===36});
+  }));
+
+  // A single batch for all hip seams, fitted to the same curved roof profile as the roof shell.
+  scene.updateMatrixWorld(true);
+  const hipItems=[];
+  scene.traverse(mesh=>{
+    const p=mesh.geometry?.userData.roofProfile;if(!p||mesh.material!==MAT.roof)return;
+    const {w,d,h,sag,lift}=p,hw=w/2,hd=d/2;
+    // The actual ridge endpoints are read from the geometry, retaining narrow-roof proportions.
+    const positions=mesh.geometry.attributes.position;let ridge=0;
+    for(let i=0;i<positions.count;i++)if(Math.abs(positions.getY(i)-h)<.0001)ridge=Math.max(ridge,Math.abs(positions.getX(i)));
+    for(const sx of [-1,1])for(const sz of [-1,1])for(let part=0;part<4;part++){
+      const at=t=>new THREE.Vector3(sx*(hw*(1-t)+ridge*t),h*t-sag*Math.sin(Math.PI*t)+lift*Math.pow(1-t,4)+.035,sz*hd*(1-t));
+      const a=at(part/4),b=at((part+1)/4),dir=b.clone().sub(a);
+      pose.position.copy(a).add(b).multiplyScalar(.5);pose.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),dir.clone().normalize());
+      pose.scale.set(Math.min(.15,w*.018),.045,dir.length()+.025);pose.updateMatrix();
+      hipItems.push({p:[0,0,0],matrix:mesh.matrixWorld.clone().multiply(pose.matrix)});
+    }
+  });
+  const seamMat=M({map:TEX.roof,color:0x655040,roughness:.94});snowy(seamMat);
+  batch(new THREE.BoxGeometry(1,1,1),seamMat,hipItems,"roof-hip-seams");
+
+  // Broken-up planting pockets. The ritual white-sand court, carriage lane and bridge approaches stay open.
+  const pockets=[[-22,16,3.3,2.2],[22,17,3.8,2.0],[-28,23,2.7,1.8],[27,25,3.0,1.8],
+    [-46,-23,2.0,3.4],[47,-23,1.8,3.0],[-44,43,3.1,2.2],[26,43,2.4,2.0],[-15,-49,3.0,1.4],[17,-49,2.8,1.5]];
+  function laneDistance(x,z){
+    let distance=Infinity;
+    const route=GISSHA_YARD.carryRoute||[];
+    for(let i=1;i<route.length;i++){
+      const a=route[i-1],b=route[i],dx=b.x-a.x,dz=b.z-a.z,den=dx*dx+dz*dz;
+      const t=den?THREE.MathUtils.clamp(((x-a.x)*dx+(z-a.z)*dz)/den,0,1):0;
+      distance=Math.min(distance,Math.hypot(x-a.x-dx*t,z-a.z-dz*t));
+    }return distance;
+  }
+  function placeClear(x,z){
+    if(Math.abs(x)>56||Math.abs(z)>56||inPond(x,z)||groundH(x,z)>.15||laneDistance(x,z)<3.55)return false;
+    if(Math.abs(x)<7&&z>6&&z<30)return false;
+    return !BRIDGES.some(b=>Math.min(Math.hypot(x-b.x1,z-b.z1),Math.hypot(x-b.x2,z-b.z2))<3.3);
+  }
+  const grassItems=[],rockItems=[],mossItems=[],snowItems=[];
+  pockets.forEach(([cx,cz,rx,rz],index)=>{
+    for(let i=0;i<32;i++){
+      const a=range(0,Math.PI*2),r=Math.sqrt(random()),x=cx+Math.cos(a)*rx*r,z=cz+Math.sin(a)*rz*r;
+      if(!placeClear(x,z))continue;
+      const h=range(.12,.42);
+      grassItems.push({p:[x,.018,z],r:[0,range(0,6.28),range(-.13,.13)],s:[h*.50,h,h*.50]});
+      if(i%8===0){const size=range(.18,.38);rockItems.push({p:[x,.019+size*.20,z],r:[0,range(0,6.28),0],s:[size,size*.36,size*.77]});}
+      if(i%6===0)mossItems.push({p:[x,.014,z],r:[-Math.PI/2,0,range(0,6.28)],s:[range(.25,.59),range(.21,.48),1]});
+    }
+  });
+  const grassMat=M({color:0x607349,roughness:.94,side:THREE.DoubleSide});snowy(grassMat);
+  const grass=batch(BROADLEAF_SPRIG_GEO.clone(),grassMat,grassItems,"ground-sprigs");
+  batch(gardenRockGeo(1,3),MAT.stone,rockItems,"ground-rocks");
+  const mossMat=M({map:TEX.grass,alphaMap:edgeMask,color:0x6d7852,roughness:1,transparent:true,depthWrite:false,alphaTest:.04});snowy(mossMat);
+  batch(new THREE.CircleGeometry(1,9),mossMat,mossItems,"moss-pockets");
+  const roots=[...SEASONAL.miscTrees,...SEASONAL.maples,...SEASONAL.tsubaki.map(t=>t.tree)];
+  roots.forEach((root,index)=>{
+    const x=root.position.x,z=root.position.z;
+    for(let i=0;i<3;i++){
+      const px=x+Math.sin(index*1.7+i*2.1)*.52,pz=z+Math.cos(index*2.3+i*1.7)*.47;
+      if(inPond(px,pz)||groundH(px,pz)>.15)continue;
+      snowItems.push({p:[px,.027,pz],r:[-Math.PI/2,0,index+i],s:[.48+i*.13,.40+i*.09,1]});
+    }
+  });
+  const snowMat=M({map:TEX.snowSurf,alphaMap:edgeMask,color:0xe5e9ee,roughness:1,transparent:true,depthWrite:false,alphaTest:.04});
+  const rootSnow=batch(new THREE.CircleGeometry(1,11),snowMat,snowItems,"root-snow");if(rootSnow)winterBatches.push(rootSnow);
+
+  // Texture and gentle bottom shading give plaster depth without extra geometry or lights.
+  MAT.plaster.color.setHex(0xeae1cf);
+  const plasterCompile=MAT.plaster.onBeforeCompile,plasterKey=MAT.plaster.customProgramCacheKey();
+  MAT.plaster.onBeforeCompile=shader=>{
+    plasterCompile.call(MAT.plaster,shader);
+    shader.vertexShader="varying vec3 vFinishWallWorld;\n"+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace("#include <worldpos_vertex>",`#include <worldpos_vertex>
+      vec4 finishWallPos=vec4(transformed,1.0);
+      #ifdef USE_INSTANCING
+      finishWallPos=instanceMatrix*finishWallPos;
+      #endif
+      vFinishWallWorld=(modelMatrix*finishWallPos).xyz;`);
+    shader.fragmentShader="varying vec3 vFinishWallWorld;\n"+shader.fragmentShader;
+    shader.fragmentShader=shader.fragmentShader.replace("#include <color_fragment>",`#include <color_fragment>
+      float wallShade=.87+.13*smoothstep(.9,3.5,vFinishWallWorld.y);
+      diffuseColor.rgb*=vec3(wallShade,wallShade*.99,wallShade*.96);`);
+  };
+  MAT.plaster.customProgramCacheKey=()=>plasterKey+"-finish-wall-v1";MAT.plaster.needsUpdate=true;
+
+  const poolTex=canv(96,96,(ctx,w,h)=>{
+    const g=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);
+    g.addColorStop(0,"rgba(255,255,255,.65)");g.addColorStop(.35,"rgba(255,255,255,.25)");g.addColorStop(1,"rgba(255,255,255,0)");
+    ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  });
+  const lampItems=[];gimmicks.lamps.forEach(l=>{
+    const root=l.g||l.group||l.mesh;if(!root)return;
+    root.getWorldPosition(point);lampItems.push({p:[point.x,groundH(point.x,point.z)+.016,point.z],r:[-Math.PI/2,0,0],s:[2.8,2.8,1],lamp:l});
+  });
+  const lampMat=new THREE.MeshBasicMaterial({map:poolTex,color:0xe6a34f,transparent:true,opacity:.24,depthWrite:false,blending:THREE.AdditiveBlending});
+  const lampPool=batch(new THREE.PlaneGeometry(1,1),lampMat,lampItems,"lamp-floor-spill");if(lampPool)lampBatches.push(lampPool);
+  const contactItems=[];
+  [...people].forEach(({g})=>{g.getWorldPosition(point);contactItems.push({p:[point.x,point.y+.009,point.z-.12],r:[-Math.PI/2,0,0],s:[1.4,1.25,1]});});
+  const contactMat=new THREE.MeshBasicMaterial({map:poolTex,color:0x312719,transparent:true,opacity:.37,depthWrite:false});
+  batch(new THREE.PlaneGeometry(1,1),contactMat,contactItems,"seated-contact-shadows");
+  const wheelContacts=GISSHA_YARD.cart.userData.drive.wheels.map(w=>({p:[w.position.x,.012,w.position.z],r:[-Math.PI/2,0,0],s:[.9,1.3,1]}));
+  batch(new THREE.PlaneGeometry(1,1),contactMat,wheelContacts,"carriage-wheel-contact",GISSHA_YARD.cart);
+
+  // Layered hills sit outside the boundary, with their own silhouettes and time-dependent haze colors.
+  for(let layer=0;layer<3;layer++){
+    const pos=[],indices=[],N=100,radius=104+layer*38;
+    for(let i=0;i<=N;i++){
+      const a=i/N*Math.PI*2,x=Math.cos(a)*radius,z=Math.sin(a)*radius;
+      const peak=8+layer*5+7*Math.sin(a*3+layer*1.5)+3.1*Math.sin(a*7+layer*.8)+1.2*Math.sin(a*17+layer);
+      pos.push(x,-4,z,x,Math.max(3,peak),z);
+      if(i<N){const k=i*2;indices.push(k,k+1,k+2,k+2,k+1,k+3);}
+    }
+    const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));geo.setIndex(indices);geo.computeVertexNormals();geo.computeBoundingSphere();
+    const mat=new THREE.MeshBasicMaterial({color:0x9daeb3,side:THREE.DoubleSide,fog:true});distantMaterials.push(mat);
+    const mesh=new THREE.Mesh(geo,mat);mesh.userData.noAutoShadow=true;mesh.userData.finishBatch="distant-hills";detailRoot.add(mesh);batches.push(mesh);
+  }
+
+  function season(key){
+    const winter=key==="winter";snow.value=winter?1:0;lastSeason=key;
+    // Keep living green needles beneath upward-facing snow rather than whitening every face.
+    const pinePalette=key==="winter"||key==="autumn"?SEASONS.summer:SEASONS[key];
+    MAT.pine.color.setHex(pinePalette.pine);MAT.pineDark.color.setHex(pinePalette.pineDark);
+    MAT.pine.map=MAT.pineDark.map=TEX.leaves;paintPinePads("summer");
+    MAT.leaf2.color.setHex(winter?0x536345:0x536d3d);
+    winterFoliage.forEach(({mesh,original,sprigs})=>{
+      mesh.instanceMatrix.array.set(original);mesh.visible=!winter||!sprigs;
+      if(winter&&!sprigs){
+        for(let i=0;i<mesh.count;i++){
+          matrix.fromArray(original,i*16);matrix.scale(new THREE.Vector3(.24,.24,.24));mesh.setMatrixAt(i,matrix);
+        }
+      }mesh.instanceMatrix.needsUpdate=true;
+    });
+    grassMat.color.setHex({spring:0x6e8051,summer:0x526c3e,autumn:0x9b8459,winter:0x8e917f}[key]);
+    winterBatches.forEach(m=>m.visible=active&&winter);
+  }
+  const hillColor=new THREE.Color(),fogColor=new THREE.Color();let lampState="";
+  function update(t){
+    const on=GARDEN_POLISH.active;
+    if(on!==active){active=on;batches.forEach(m=>m.visible=on);lastTime=null;}
+    if(APP.season!==lastSeason)season(APP.season);
+    winterBatches.forEach(m=>m.visible=on&&APP.season==="winter");
+    const night=APP.time==="night"||APP.time==="dusk";
+    lampBatches.forEach(m=>m.visible=on&&night);
+    const lit=lampItems.map(item=>item.lamp.lit?"1":"0").join("");
+    if(lampPool&&lit!==lampState){
+      lampState=lit;lampItems.forEach((item,i)=>{
+        pose.position.set(...item.p);pose.rotation.set(...item.r);pose.scale.setScalar(item.lamp.lit?2.8:0);pose.updateMatrix();lampPool.setMatrixAt(i,pose.matrix);
+      });lampPool.instanceMatrix.needsUpdate=true;
+    }
+    if(APP.time!==lastTime){
+      const color={day:0x738878,dawn:0x9991a6,dusk:0x978177,night:0x243146}[APP.time]||0x738878;
+      distantMaterials.forEach((mat,i)=>{hillColor.setHex(color);fogColor.setHex(TIMES[APP.time].fog);mat.color.copy(hillColor).lerp(fogColor,.30+i*.20);});
+      lastTime=APP.time;
+    }
+  }
+  season(APP.season);update(0);
+  return {update,season,detailRoot,batches,winterBatches,lampBatches,grassItems,rockItems,placeClear,
+    get active(){return active;},get snowStrength(){return snow.value;}};
+})();
+/* APP_VISUAL_FINISH_EMBED_END */
 
 animate();
 

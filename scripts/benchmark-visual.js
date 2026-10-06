@@ -32,7 +32,13 @@ const scenes=[
  {name:'moon-crescent',time:'night',season:'autumn',view:'fp',pos:[0,1.62,26],subject:'moon',moonAge:3},
  {name:'moon-pond',time:'night',season:'autumn',view:'fp',pos:[-8,3.4,25],target:[-8,.09,39],moonAge:14.765294},
  {name:'fire',time:'night',season:'autumn',view:'fp',pos:[-7.6,2.2,20.5],target:[-9,1.8,18],moonAge:14.765294},
- {name:'night',time:'night',season:'summer',view:'fp',pos:[0,1.62,26],yaw:0}
+ {name:'night',time:'night',season:'summer',view:'fp',pos:[0,1.62,26],yaw:0},
+ {name:'pine-summer',time:'day',season:'summer',view:'fp',pos:[0,3.2,0],subject:'pine'},
+ {name:'maple-winter',time:'day',season:'winter',view:'fp',pos:[0,2.2,0],subject:'maple'},
+ {name:'hime',time:'day',season:'spring',view:'fp',pos:[0,2.2,0],subject:'hime'},
+ {name:'duck',time:'day',season:'summer',view:'fp',pos:[0,2.2,0],subject:'duck'},
+ {name:'crane',time:'day',season:'winter',view:'fp',pos:[0,2.2,0],subject:'crane'},
+ {name:'gissha',time:'day',season:'spring',view:'fp',pos:[0,2.2,0],subject:'gissha'}
 ];
 const requested=process.env.VISUAL_SCENES&&process.env.VISUAL_SCENES.split(',');
 if(requested&&requested.some(name=>!scenes.some(scene=>scene.name===name)))throw Error('Unknown VISUAL_SCENES entry');
@@ -88,9 +94,15 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
      rainFall.userData.rainOn=!!s.rain;rainFall.userData.rainTimer=999;rainFall.visible=!!s.rain;if(s.rain)rainFall.userData.rainSeason=true;
      window.__SHINDEN_BENCH_PAUSE=false;animate(performance.now());window.__SHINDEN_BENCH_PAUSE=true;
      if(s.subject==='lantern'){const p=tourouGroup.userData.lanterns[0].lg.position;s.pos=[p.x+1.1,.85,p.z+1.9];s.target=[p.x,.2,p.z];}
+     if(s.subject==='hime'){const p=people[0].g.position;s.pos=[p.x+.7,p.y+1.05,p.z+1.75];s.target=[p.x,p.y+.90,p.z];}
+     if(s.subject==='duck'||s.subject==='crane'){const p=waterBirds.find(b=>b.kind===s.subject).g.position;
+       s.pos=[p.x+1.1,p.y+(s.subject==='duck'?.7:1.5),p.z+(s.subject==='duck'?1.9:2.8)];s.target=[p.x,p.y+(s.subject==='duck'?.3:1.2),p.z];}
+     if(s.subject==='gissha'){const p=GISSHA_YARD.cart.position;s.pos=[p.x+8,2.8,p.z+5];s.target=[p.x+1,1.8,p.z];}
      if(s.subject==='moon')s.target=moonMesh.position.toArray();
      camera.position.set(...s.pos);camera.rotation.order='YXZ';
      if(s.target)camera.lookAt(...s.target);else if(s.view==='ov')camera.lookAt(0,0,0);else camera.rotation.set(-.05,s.yaw||0,0,'YXZ');
+     // The close-up camera is assigned after the paused frame; refresh the character's normal distance LOD.
+     if(s.subject==='hime')for(const p of people)if(p.detail)p.detail.visible=camera.position.distanceTo(p.g.position)<15;
      if(s.subject==='moon'){moonPhaseShadow.lookAt(camera.position);}
      TEX.clouds.offset.set(.1,0);cloudDome.position.copy(camera.position);scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
      updateControlUI();renderer.render(scene,camera);

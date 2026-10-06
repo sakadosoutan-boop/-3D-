@@ -46,9 +46,13 @@ const { chromium } = require('playwright');
     await page.waitForTimeout(1400);
     assert.equal(await page.evaluate(()=>APP.quiz.i),paused.i);
     assert.equal(await page.evaluate(()=>clock.elapsedTime),paused.t);
-    await page.evaluate(()=>closePauseMenu());
+    const resumed=await page.evaluate(()=>{closePauseMenu();return {t:clock.elapsedTime,at:performance.now()};});
+    assert.equal(resumed.t,paused.t);
     await page.waitForFunction(()=>APP.quiz.i===1);
-    assert.ok((await page.evaluate(()=>clock.elapsedTime))-paused.t<1.4,'pause must not be included in the animation clock');
+    const advanced=await page.evaluate(()=>({t:clock.elapsedTime,at:performance.now()}));
+    // Compare clocks in the browser. Shader compilation or a slow host can delay the test driver after resume.
+    assert.ok(advanced.t-resumed.t<=(advanced.at-resumed.at)/1000+.10,
+      'the animation clock must not include time held in the pause menu');
     passed.push('pause freezes quiz progression and animation clock; resume advances once');
 
     await page.evaluate(()=>{enterMode('quest');questAdvance(APP.quest.steps.findIndex(s=>s.type==='auto'));openPauseMenu();});

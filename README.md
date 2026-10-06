@@ -67,6 +67,8 @@ npm test
 
 `npm test` は、アプリ/物語ビルド同期、HTML静的検証、ストーリー整合、EDルート、Playwrightスモークをまとめて確認します。スモークでは香合わせ三局、蹴鞠四懸、御前五番勝負、共同討伐の出陣/共有ダメージ/決着、固定シード、共有順位、Canvas描画、390px幅も検査します。公開後のGitHub Pages確認は `npm run verify:public` で行います。
 
+描画・牛車・季節切替の回帰検査も `npm test` に含みます。`npm run test:visual-backlog` は積雪の上下面、追加植栽の通行線、灯台との連動、省電力復元、資源再利用を単独確認します。改修記録は [ビジュアル残件の対応状況](docs/visual-quality-backlog.md)、今後の候補は [追加改善案](docs/game-improvement-opportunities.md) を参照してください。
+
 ## ファイル構成
 
 ```text

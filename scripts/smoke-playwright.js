@@ -714,7 +714,16 @@ async function launchBrowser() {
           prop: 'fan',
           pose: 'standing',
         });
-        modelSmoke.standingOk = standing?.userData?.standing === true && countMeshes(standing) >= 34;
+        // Count retained parts rather than draw calls: material batching reduces meshes without removing detail.
+        let standingParts=0,standingFinite=true;
+        standing.traverse(node=>{
+          if(!node.isMesh)return;
+          standingParts+=node.userData.sourceParts||1;
+          standingFinite&&=Array.from(node.geometry.attributes.position.array).every(Number.isFinite);
+        });
+        const standingBounds=new THREE.Box3().setFromObject(standing),standingHeight=standingBounds.max.y-standingBounds.min.y;
+        modelSmoke.standingOk = standing?.userData?.standing === true && standingParts >= 34
+          && standingFinite && standingHeight>1.7 && standingHeight<2.5;
         if (typeof scene !== 'undefined') scene.remove(standing);
         const goose = makeGooseMark(1);
         let gooseWingTags = 0;
