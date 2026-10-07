@@ -126,5 +126,12 @@
     "kind": "markers-exist",
     "begin": "/* APP_CODEX_VIEWER_EMBED_BEGIN (src/app/codex-viewer.js から自動生成。ここを直接編集しない) */",
     "end": "/* APP_CODEX_VIEWER_EMBED_END */"
+  },
+  {
+    "name": "saigen-tsurezure",
+    "src": "src/app/saigen-tsurezure.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_SAIGEN_TSUREZURE_EMBED_BEGIN (src/app/saigen-tsurezure.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_SAIGEN_TSUREZURE_EMBED_END */"
   }
 ]

@@ -1524,6 +1524,10 @@ body.saigen-mode #topbar{display:none!important}
   background:var(--urushi);color:var(--gofun);border:1px solid var(--kin);width:30px;height:30px;border-radius:50%;font-size:14px;line-height:1}
 #saigenHud .sg-stage-cap{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 8px);transform:translateX(-50%);
   width:min(820px,97vw);pointer-events:none}
+/* 「絵を見る」: 本文パネルを下へ退かせて場面の映像だけを見せる(もう一度押すと戻る) */
+#saigenHud .sg-stage-cap{transition:opacity .35s ease,transform .35s ease,visibility 0s linear 0s}
+#saigenHud.sg-view .sg-stage-cap{opacity:0;visibility:hidden;transform:translateX(-50%) translateY(18px);transition:opacity .35s ease,transform .35s ease,visibility 0s linear .35s}
+#saigenHud.sg-view .sg-panel{pointer-events:none}
 #saigenHud .sg-panel{pointer-events:auto;background:linear-gradient(180deg,rgba(24,16,9,.94),rgba(13,9,5,.96));
   border:1px solid var(--kin);border-radius:11px;box-shadow:0 8px 30px rgba(0,0,0,.55);padding:9px 11px 10px}
 #saigenHud .sg-speaker{font-size:10.5px;color:var(--kin);letter-spacing:.1em;margin-bottom:5px;min-height:13px}
