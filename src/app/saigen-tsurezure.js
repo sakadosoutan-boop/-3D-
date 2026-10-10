@@ -63,7 +63,8 @@ const SAIGEN_TSUREZURE=(()=>{
   function fbBox(w,h,d,color){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),fbMat(color));m.castShadow=true;m.receiveShadow=true;return m;}
   function fbGroup(label){const g=new THREE.Group();g.name="tsure-fallback-"+label;g.userData.dispose=()=>{g.traverse(o=>{if(o.geometry)o.geometry.dispose();});};return g;}
   function safeMake(label,fn,fallback){
-    try{const g=fn();if(g)return g;}catch(e){console.error("[tsurezure] "+label+" build failed:",e);}
+    const t0=performance.now();
+    try{const g=fn();if(g){const ms=performance.now()-t0;if(S.timing)S.timing[label]=(S.timing[label]||0)+ms;return g;}}catch(e){console.error("[tsurezure] "+label+" build failed:",e);}
     try{return fallback?fallback():fbGroup(label);}catch(e){return fbGroup(label);}
   }
   function fbFigure(color,h){const g=fbGroup("figure");const b=fbBox(.5,h*.55,.4,color);b.position.y=h*.28;g.add(b);
@@ -80,89 +81,77 @@ const SAIGEN_TSUREZURE=(()=>{
   };
 
   /* ============================================================
-     光の状態(場ごと)。TSURE_NATURE.SKY_PRESETS を基本にし、無ければ内蔵表を使う。
-     state = {sky:{...空シェーダーの状態}, sun:{color,intensity,dir:[x,y,z]}, hemi:{sky,ground,intensity},
-              ambient:{color,intensity}, fog:{color,density}, exposure, rim:{color,intensity}}
+     光の状態(場ごと)。形は TSURE_NATURE.SKY_PRESETS に合わせる:
+       空シェーダーの値(zenith/horizon/hazeColor/ground=線形RGB配列, sunDir=[x,y,z] ほか)
+       + sunLight{color,intensity,dir} hemi{sky,ground,intensity} ambient{color,intensity}
+       + fog{color,density} exposure rim{color,intensity,dir} + hills/mist/smoke/water(各素材の色合い)
+     自然モジュールが無い時だけ内蔵表(BUILTIN_LIGHT)から同じ形を作る。
   ============================================================ */
   const BUILTIN_LIGHT={
-    autumnDawnMist:{sun:{color:0xffc896,intensity:1.05,dir:[.82,.16,.3]},hemi:{sky:0xc9c6d8,ground:0x6a5c48,intensity:.5},ambient:{color:0xb6b4cc,intensity:.16},fog:{color:0xe7d6c8,density:.010},exposure:1.0,
-      sky:{zenith:0x7f97bd,horizon:0xf2cdb0,haze:0xf6dcc4,sunColor:0xffd6a0,stars:0,cloudCover:.35}},
-    autumnDuskToribe:{sun:{color:0xff9a52,intensity:.9,dir:[-.95,.1,.12]},hemi:{sky:0x9a8fb8,ground:0x4a3a2e,intensity:.42},ambient:{color:0x8f88b8,intensity:.14},fog:{color:0xb59aa4,density:.0026},exposure:1.0,
-      sky:{zenith:0x40507f,horizon:0xe7a989,haze:0xd9a7a0,sunColor:0xff9a52,stars:0,cloudCover:.3}},
-    autumnDay:{sun:{color:0xfff0d8,intensity:1.25,dir:[.5,.62,.6]},hemi:{sky:0xbfd2e6,ground:0x7a6a4e,intensity:.55},ambient:{color:0xf2ede4,intensity:.17},fog:{color:0xd8dfe4,density:.006},exposure:1.04,
-      sky:{zenith:0x5f8fc8,horizon:0xdbe6ec,haze:0xe9eef0,sunColor:0xfff4dc,stars:0,cloudCover:.35}},
-    earlySummerDay:{sun:{color:0xfff6e4,intensity:1.3,dir:[.4,.75,.5]},hemi:{sky:0xbcd9ee,ground:0x60704a,intensity:.58},ambient:{color:0xf1f2ea,intensity:.17},fog:{color:0xd4e2ea,density:.006},exposure:1.05,
-      sky:{zenith:0x4f88cc,horizon:0xd7e7f0,haze:0xe4eef3,sunColor:0xfff8e8,stars:0,cloudCover:.4}},
-    earlySummerDusk:{sun:{color:0xffa04a,intensity:1.0,dir:[-.9,.12,.4]},hemi:{sky:0xd9a68a,ground:0x4c4030,intensity:.38},ambient:{color:0xc49478,intensity:.14},fog:{color:0xe0a878,density:.008},exposure:1.0,
-      sky:{zenith:0x5d6f9e,horizon:0xf3b06e,haze:0xf6c38c,sunColor:0xffb060,stars:0,cloudCover:.35}},
-    summerNoon:{sun:{color:0xfff8ee,intensity:1.4,dir:[.25,.9,.35]},hemi:{sky:0xb8d8f2,ground:0x5a6a3e,intensity:.6},ambient:{color:0xf4f4ee,intensity:.18},fog:{color:0xd6e6f0,density:.005},exposure:1.05,
-      sky:{zenith:0x3f7fd0,horizon:0xd2e6f2,haze:0xe0eef6,sunColor:0xffffff,stars:0,cloudCover:.45}},
-    nightMoon:{sun:{color:0x9fb4e8,intensity:.32,dir:[-.35,.62,.55]},hemi:{sky:0x3a4a78,ground:0x141820,intensity:.16},ambient:{color:0x7f90c0,intensity:.07},fog:{color:0x111a2e,density:.008},exposure:1.0,
-      sky:{zenith:0x05091a,horizon:0x1d2a4a,haze:0x24345a,sunColor:0x9fb4e8,stars:1,cloudCover:.2,moonVisible:true}},
-    predawnBlue:{sun:{color:0xc8b4d8,intensity:.45,dir:[.85,.08,.3]},hemi:{sky:0x8f9fc8,ground:0x2e2c34,intensity:.3},ambient:{color:0x9aa2c8,intensity:.1},fog:{color:0x9aa4c4,density:.008},exposure:1.0,
-      sky:{zenith:0x1e2d5a,horizon:0xd8b4b0,haze:0xc6b0c0,sunColor:0xffc8a0,stars:.25,cloudCover:.25}},
-    winterDay:{sun:{color:0xf4f2f0,intensity:1.0,dir:[.5,.45,.6]},hemi:{sky:0xcfd8e6,ground:0x8a8a8a,intensity:.6},ambient:{color:0xe6eaf2,intensity:.2},fog:{color:0xdfe4ea,density:.010},exposure:1.04,
-      sky:{zenith:0x7f9cc4,horizon:0xe4e8ee,haze:0xeef0f4,sunColor:0xffffff,stars:0,cloudCover:.6}},
-    springDay:{sun:{color:0xfff2e0,intensity:1.2,dir:[.45,.6,.6]},hemi:{sky:0xc8dcef,ground:0x6f7550,intensity:.56},ambient:{color:0xf6efe8,intensity:.18},fog:{color:0xe2e6ec,density:.007},exposure:1.05,
-      sky:{zenith:0x6a96cc,horizon:0xe6e8ee,haze:0xf0eaea,sunColor:0xfff6e6,stars:0,cloudCover:.4}}
+    autumnDawnMist:{sun:{color:0xffc896,intensity:1.05,dir:[.82,.16,.3]},hemi:{sky:0xc9c6d8,ground:0x6a5c48,intensity:.5},ambient:{color:0xb6b4cc,intensity:.16},fog:{color:0xe7d6c8,density:.010},exposure:1.0,horizon:0xf2cdb0},
+    autumnDuskToribe:{sun:{color:0xff9a52,intensity:.9,dir:[-.95,.1,.12]},hemi:{sky:0x9a8fb8,ground:0x4a3a2e,intensity:.42},ambient:{color:0x8f88b8,intensity:.14},fog:{color:0xb59aa4,density:.0026},exposure:1.0,horizon:0xe7a989},
+    autumnDay:{sun:{color:0xfff0d8,intensity:1.25,dir:[.5,.62,.6]},hemi:{sky:0xbfd2e6,ground:0x7a6a4e,intensity:.55},ambient:{color:0xf2ede4,intensity:.17},fog:{color:0xd8dfe4,density:.006},exposure:1.04,horizon:0xdbe6ec},
+    earlySummerDay:{sun:{color:0xfff6e4,intensity:1.3,dir:[.4,.75,.5]},hemi:{sky:0xbcd9ee,ground:0x60704a,intensity:.58},ambient:{color:0xf1f2ea,intensity:.17},fog:{color:0xd4e2ea,density:.006},exposure:1.05,horizon:0xd7e7f0},
+    earlySummerDusk:{sun:{color:0xffa04a,intensity:1.0,dir:[-.9,.12,.4]},hemi:{sky:0xd9a68a,ground:0x4c4030,intensity:.38},ambient:{color:0xc49478,intensity:.14},fog:{color:0xe0a878,density:.008},exposure:1.0,horizon:0xf3b06e},
+    summerNoon:{sun:{color:0xfff8ee,intensity:1.4,dir:[.25,.9,.35]},hemi:{sky:0xb8d8f2,ground:0x5a6a3e,intensity:.6},ambient:{color:0xf4f4ee,intensity:.18},fog:{color:0xd6e6f0,density:.005},exposure:1.05,horizon:0xd2e6f2},
+    nightMoon:{sun:{color:0x9fb4e8,intensity:.32,dir:[-.35,.62,.55]},hemi:{sky:0x3a4a78,ground:0x141820,intensity:.16},ambient:{color:0x7f90c0,intensity:.07},fog:{color:0x111a2e,density:.008},exposure:1.0,horizon:0x1d2a4a},
+    predawnBlue:{sun:{color:0xc8b4d8,intensity:.45,dir:[.85,.08,.3]},hemi:{sky:0x8f9fc8,ground:0x2e2c34,intensity:.3},ambient:{color:0x9aa2c8,intensity:.1},fog:{color:0x9aa4c4,density:.008},exposure:1.0,horizon:0xd8b4b0},
+    winterDay:{sun:{color:0xf4f2f0,intensity:1.0,dir:[.5,.45,.6]},hemi:{sky:0xcfd8e6,ground:0x8a8a8a,intensity:.6},ambient:{color:0xe6eaf2,intensity:.2},fog:{color:0xdfe4ea,density:.010},exposure:1.04,horizon:0xe4e8ee},
+    springDay:{sun:{color:0xfff2e0,intensity:1.2,dir:[.45,.6,.6]},hemi:{sky:0xc8dcef,ground:0x6f7550,intensity:.56},ambient:{color:0xf6efe8,intensity:.18},fog:{color:0xe2e6ec,density:.007},exposure:1.05,horizon:0xe6e8ee}
   };
+  function cloneDeep(o){
+    if(Array.isArray(o))return o.map(cloneDeep);
+    if(o&&typeof o==="object"){if(o.isVector3||o.isColor)return o.clone();const r={};Object.keys(o).forEach(k=>{r[k]=cloneDeep(o[k]);});return r;}
+    return o;
+  }
+  const arr3=(d)=>Array.isArray(d)?d.slice(0,3):(d&&d.isVector3?[d.x,d.y,d.z]:[0,1,0]);
   function presetState(name,over){
     const NAT=MODS().NAT;
-    let p=null;
-    if(NAT&&NAT.SKY_PRESETS&&NAT.SKY_PRESETS[name])p=NAT.SKY_PRESETS[name];
-    const b=BUILTIN_LIGHT[name]||BUILTIN_LIGHT.autumnDay;
-    const st={sky:{},sun:{color:b.sun.color,intensity:b.sun.intensity,dir:b.sun.dir.slice()},
-      hemi:{sky:b.hemi.sky,ground:b.hemi.ground,intensity:b.hemi.intensity},ambient:{color:b.ambient.color,intensity:b.ambient.intensity},
-      fog:{color:b.fog.color,density:b.fog.density},exposure:b.exposure,rim:{color:0xd8e4ff,intensity:.12}};
-    if(p){
-      Object.keys(p).forEach(k=>{if(!/^(sunLight|hemi|ambient|fog|exposure|rim)$/.test(k))st.sky[k]=p[k];});
-      if(p.sunLight){if(p.sunLight.color!=null)st.sun.color=p.sunLight.color;if(p.sunLight.intensity!=null)st.sun.intensity=p.sunLight.intensity;
-        if(p.sunLight.dir){const d=p.sunLight.dir;st.sun.dir=Array.isArray(d)?d.slice():[d.x,d.y,d.z];}}
-      if(p.hemi)Object.assign(st.hemi,p.hemi);
-      if(p.ambient)Object.assign(st.ambient,p.ambient);
-      if(p.fog)Object.assign(st.fog,p.fog);
-      if(p.exposure!=null)st.exposure=p.exposure;
-      if(p.rim)Object.assign(st.rim,p.rim);
-    }else Object.assign(st.sky,b.sky);
-    if(st.sky.sunDir==null)st.sky.sunDir=V(st.sun.dir).normalize();
+    let st;
+    if(NAT&&NAT.SKY_PRESETS&&NAT.SKY_PRESETS[name])st=cloneDeep(NAT.SKY_PRESETS[name]);
+    else{
+      const b=BUILTIN_LIGHT[name]||BUILTIN_LIGHT.autumnDay;
+      st={horizon:b.horizon,sunDir:b.sun.dir.slice(),sunLight:{color:b.sun.color,intensity:b.sun.intensity,dir:b.sun.dir.slice()},
+        hemi:Object.assign({},b.hemi),ambient:Object.assign({},b.ambient),fog:Object.assign({},b.fog),exposure:b.exposure,rim:{color:0xd8e4ff,intensity:.12}};
+    }
+    if(!st.sunLight)st.sunLight={color:0xffffff,intensity:1,dir:arr3(st.sunDir)};
+    if(!st.sunDir)st.sunDir=arr3(st.sunLight.dir);
     if(over){
-      if(over.sun)Object.assign(st.sun,over.sun);
-      if(over.hemi)Object.assign(st.hemi,over.hemi);
-      if(over.ambient)Object.assign(st.ambient,over.ambient);
-      if(over.fog)Object.assign(st.fog,over.fog);
+      if(over.sun){
+        if(over.sun.color!=null)st.sunLight.color=over.sun.color;
+        if(over.sun.intensity!=null)st.sunLight.intensity=over.sun.intensity;
+        if(over.sun.dir){const d=V(arr3(over.sun.dir)).normalize();st.sunLight.dir=[d.x,d.y,d.z];st.sunDir=[d.x,d.y,d.z];}
+      }
+      ["hemi","ambient","fog","rim"].forEach(k=>{if(over[k])st[k]=Object.assign({},st[k]||{},over[k]);});
       if(over.exposure!=null)st.exposure=over.exposure;
-      if(over.sky)Object.assign(st.sky,over.sky);
-      if(over.rim)Object.assign(st.rim,over.rim);
-      if(over.sun&&over.sun.dir)st.sky.sunDir=V(over.sun.dir).normalize();
+      if(over.sky)Object.keys(over.sky).forEach(k=>{st[k]=cloneDeep(over.sky[k]);});
     }
     return st;
   }
-  // 色・数値・ベクトルを混ぜた状態の補間(空の状態も同じ規則で)。色かどうかはキー名で判定する
-  const COLOR_KEY=/(color|Color|zenith|horizon|haze|ground|^sky$|shade|Shade|tint|Tint)$/;
+  // 内蔵表どうしの補間(自然モジュールがある時は NAT.blendPresets を使う)
+  const COLOR_KEY=/^(color|sky|ground|near|far|light|glow|horizon|zenith)$/;
   const _mc1=new THREE.Color(),_mc2=new THREE.Color();
-  function mixVal(key,a,b,u){
+  function mixState(a,b,u,key){
     if(typeof a==="number"&&typeof b==="number"){
-      if(COLOR_KEY.test(key))return _mc1.setHex(a).lerp(_mc2.setHex(b),u).getHex();
+      if(key&&COLOR_KEY.test(key))return _mc1.setHex(a).lerp(_mc2.setHex(b),u).getHex();
       return lerp(a,b,u);
     }
-    if(a&&b&&a.isVector3&&b.isVector3)return a.clone().lerp(b,u).normalize();
-    if(a&&b&&a.isColor&&b.isColor)return a.clone().lerp(b,u);
-    if(Array.isArray(a)&&Array.isArray(b)&&a.length===b.length)return a.map((v,i)=>lerp(v,b[i],u));
-    if(typeof a==="boolean"||typeof b==="boolean")return u<.5?a:b;
+    if(Array.isArray(a)&&Array.isArray(b))return a.map((v,i)=>lerp(v,b[i]!==undefined?b[i]:v,u));
+    if(a&&b&&typeof a==="object"&&typeof b==="object"){const o={};new Set([...Object.keys(a),...Object.keys(b)]).forEach(k=>{o[k]=(k in a&&k in b)?mixState(a[k],b[k],u,k):(k in a?a[k]:b[k]);});return o;}
     return u<.5?a:b;
   }
-  function mixState(a,b,u){
-    if(!a)return b;if(!b)return a;
-    const out={};
-    Object.keys(b).forEach(k=>{
-      const av=a[k],bv=b[k];
-      if(av&&bv&&typeof av==="object"&&!Array.isArray(av)&&!av.isVector3&&!av.isColor)out[k]=mixState(av,bv,u);
-      else if(av===undefined)out[k]=bv;
-      else out[k]=mixVal(k,av,bv,u);
-    });
-    return out;
+  function blendState(a,b,u){
+    const NAT=MODS().NAT;
+    if(NAT&&typeof NAT.blendPresets==="function"){try{const o=NAT.blendPresets(a,b,u);
+      // 補間後の方向ベクトルは正規化(sunLight.dir/rim.dir も)
+      ["sunLight","rim"].forEach(k=>{if(o[k]&&o[k].dir){const d=V(o[k].dir).normalize();o[k].dir=[d.x,d.y,d.z];}});
+      return o;}catch(e){}}
+    const o=mixState(a,b,u);
+    if(o.sunDir){const d=V(o.sunDir).normalize();o.sunDir=[d.x,d.y,d.z];}
+    return o;
   }
   function setLight(state,dur){
+    S.lightDirty=true;
     if(!dur||!S.light){S.light=state;S.lightFrom=null;S.lightTo=null;S.lightU=1;return;}
     S.lightFrom=S.light;S.lightTo=state;S.lightU=0;S.lightDur=dur;
   }
@@ -185,7 +174,18 @@ const SAIGEN_TSUREZURE=(()=>{
     for(let i=0;i<AN_STREAM.length-1;i++){const a=AN_STREAM[i],b=AN_STREAM[i+1];if(x>=a[0]&&x<=b[0]){const u=(x-a[0])/(b[0]-a[0]);return lerp(a[2],b[2],ease(u));}}
     return x<AN_STREAM[0][0]?AN_STREAM[0][2]:AN_STREAM[AN_STREAM.length-1][2];
   }
+  // 草庵の敷地は平らに均す(床下・縁・沓脱石が地面に正しく接するように)
+  const AN_PAD_Y=0.05;
+  function anPadWeight(x,z){
+    const dx=Math.max(0,Math.abs(x-.25)-2.9),dz=Math.max(0,Math.abs(z-.35)-2.9);
+    const d=Math.hypot(dx,dz);return d<=0?1:Math.max(0,1-d/2.2);
+  }
   function hAn(x,z){
+    const w=anPadWeight(x,z);
+    const raw=hAnRaw(x,z);
+    return raw+(AN_PAD_Y-raw)*(w*w*(3-2*w));
+  }
+  function hAnRaw(x,z){
     let h=0;
     if(z<-6)h+=Math.pow((-z-6)*.11,1.35);           // 北(背後)は双ヶ岡の斜面
     h+=.18*Math.sin(x*.21)*Math.cos(z*.17)+.12*Math.sin(x*.07+z*.05);
@@ -200,7 +200,7 @@ const SAIGEN_TSUREZURE=(()=>{
     const NAT=MODS().NAT;
     S.sky=safeMake("sky",()=>NAT&&NAT.makeSky?NAT.makeSky({radius:700,quality:S.quality}):null,()=>{
       const m=new THREE.Mesh(new THREE.SphereGeometry(700,32,16),new THREE.MeshBasicMaterial({color:0x9fb8d8,side:THREE.BackSide,fog:false,depthWrite:false}));
-      m.renderOrder=-10;m.frustumCulled=false;m.userData.setState=(st)=>{if(st&&st.horizon!=null)m.material.color.setHex(st.horizon);};
+      m.renderOrder=-10;m.frustumCulled=false;m.userData.setState=(st)=>{if(st&&typeof st.horizon==="number")m.material.color.setHex(st.horizon);else if(st&&st.fog)m.material.color.setHex(st.fog.color);};
       m.userData.update=(dt,t,cam)=>{if(cam)m.position.copy(cam.position);};m.userData.dispose=()=>{m.geometry.dispose();m.material.dispose();};return m;});
     S.sky.name="tsure-sky";S.sky.visible=false;S.stage.add(S.sky);own(S.sky);
   }
@@ -225,7 +225,7 @@ const SAIGEN_TSUREZURE=(()=>{
     ];
     graves.forEach(gr=>{
       const [kind,x,zz,h,age,seed]=gr;let o=null;
-      if(kind==="sotoba")o=safeMake("sotoba",()=>M.NAT&&M.NAT.makeSotoba?M.NAT.makeSotoba({height:h,age,seed}):null,()=>{const g=fbGroup("sotoba");const b=fbBox(.12,h,.02,0x8a7a62);b.position.y=h/2;g.add(b);return g;});
+      if(kind==="sotoba")o=safeMake("sotoba",()=>M.NAT&&M.NAT.makeSotoba?M.NAT.makeSotoba({height:h,age,seed,quality:"low"}):null,()=>{const g=fbGroup("sotoba");const b=fbBox(.12,h,.02,0x8a7a62);b.position.y=h/2;g.add(b);return g;});
       else if(kind==="gorin")o=safeMake("gorin",()=>M.NAT&&M.NAT.makeGorintou?M.NAT.makeGorintou({height:h,moss:age,seed}):null,()=>{const g=fbGroup("gorin");const b=fbBox(.35,h,.35,0x8a8a84);b.position.y=h/2;g.add(b);return g;});
       else o=safeMake("pile",()=>M.NAT&&M.NAT.makeStonePile?M.NAT.makeStonePile({seed}):null,()=>fbGroup("pile"));
       o.position.set(x,hAdashi(x,zz)-.02,zz);o.rotation.y=(seed*1.37)%(Math.PI*2)*.25-.4;
@@ -241,7 +241,7 @@ const SAIGEN_TSUREZURE=(()=>{
     z.add(own(track("adashi",hills)));S.assets.adashiHills=hills;
     // 野の松(点景)
     const pines=[[-26,-44,7.5,.2,31],[31,-58,9,.1,32],[-48,-70,8,.15,33]];
-    pines.forEach(p=>{const t=safeMake("adashi-pine",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:p[2],lean:p[3],seed:p[4],quality:q==="high"?"medium":"low"}):null,()=>fbGroup("pine"));
+    pines.forEach((p,pi)=>{const t=safeMake("adashi-pine",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:p[2],lean:p[3],seed:p[4],quality:(q==="high"&&pi===0)?"medium":"low"}):null,()=>fbGroup("pine"));
       t.position.set(p[0],hAdashi(p[0],p[1]),p[1]);if(t.userData&&t.userData.setSeason)t.userData.setSeason("autumn");z.add(own(track("adashi",t)));});
   }
 
@@ -254,7 +254,7 @@ const SAIGEN_TSUREZURE=(()=>{
     const grass=safeMake("toribe-grass",()=>M.FLO&&M.FLO.makeGrassField?M.FLO.makeGrassField({width:70,depth:60,center:[-6,0],heightAt:hToribe,season:"autumn",dew:false,quality:q==="high"?"medium":"low"}):null,()=>fbGroup("grass"));
     z.add(own(track("toribe",grass)));
     [[3,-2,1.6,.5,41],[4.1,-1.3,1.35,.7,42],[2.2,-3.1,1.8,.3,43]].forEach(s=>{
-      const o=safeMake("sotoba",()=>M.NAT&&M.NAT.makeSotoba?M.NAT.makeSotoba({height:s[2],age:s[3],seed:s[4]}):null,()=>{const g=fbGroup("sotoba");const b=fbBox(.12,s[2],.02,0x6a5a48);b.position.y=s[2]/2;g.add(b);return g;});
+      const o=safeMake("sotoba",()=>M.NAT&&M.NAT.makeSotoba?M.NAT.makeSotoba({height:s[2],age:s[3],seed:s[4],quality:"medium"}):null,()=>{const g=fbGroup("sotoba");const b=fbBox(.12,s[2],.02,0x6a5a48);b.position.y=s[2]/2;g.add(b);return g;});
       o.position.set(s[0],hToribe(s[0],s[1]),s[1]);o.rotation.y=.4+s[4]*.1;o.rotation.z=(s[4]%3-1)*.04;z.add(own(o));});
     // 東山(鳥部山)の稜線: カメラは西から東(+x)を望む
     const hills=safeMake("toribe-hills",()=>M.NAT&&M.NAT.makeHills?M.NAT.makeHills({center:[0,0],quality:q,ridges:[
@@ -264,20 +264,21 @@ const SAIGEN_TSUREZURE=(()=>{
     hills.rotation.y=-Math.PI/2; // 弧の中心(-z)を +x(東)へ向ける
     z.add(own(track("toribe",hills)));S.assets.toribeHills=hills;
     const smoke=safeMake("toribe-smoke",()=>M.NAT&&M.NAT.makeSmokePlume?M.NAT.makeSmokePlume({height:52,wind:[-.15,.55],color:0xb8b0b4,quality:q}):null,()=>fbGroup("smoke"));
-    smoke.position.set(232,26,-14); // 稜線の手前の斜面から立つ
+    smoke.position.set(224,15,-10); // 稜線(x≈230 の山影)の手前の斜面から立ち、稜線を越えて空へなびく
     z.add(own(track("toribe",smoke)));S.assets.smoke=smoke;
     const crows=safeMake("toribe-crows",()=>M.NAT&&M.NAT.makeCrows?M.NAT.makeCrows({count:q==="low"?5:8,center:[70,34,-30],dir:[.92,.38],spread:22,speed:9,quality:q}):null,()=>fbGroup("crows"));
     z.add(own(track("toribe",crows)));S.assets.crows=crows;
-    const tree=safeMake("toribe-pine",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:8.5,lean:.32,seed:51,quality:q==="high"?"medium":"low"}):null,()=>fbGroup("pine"));
-    tree.position.set(-2,hToribe(-2,6),6);z.add(own(track("toribe",tree)));
+    // 野中の一本松(中景の点景。遠景の稜線との距離感を出す。望遠の画角には入らない位置)
+    const tree=safeMake("toribe-pine",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:8.5,lean:.32,seed:51,quality:"low"}):null,()=>fbGroup("pine"));
+    tree.position.set(58,hToribe(58,20),20);tree.rotation.y=2.2;if(tree.userData&&tree.userData.setSeason)tree.userData.setSeason("autumn");z.add(own(track("toribe",tree)));
   }
 
   function buildAn(){
     const z=zoneGroup("an"),M=MODS(),q=S.quality;
-    const terrain=safeMake("an-terrain",()=>M.NAT&&M.NAT.makeTerrain?M.NAT.makeTerrain({size:260,segments:q==="low"?110:q==="medium"?180:240,heightAt:hAn,quality:q}):null,
+    const terrain=safeMake("an-terrain",()=>M.NAT&&M.NAT.makeTerrain?M.NAT.makeTerrain({size:260,segments:q==="low"?100:q==="medium"?150:190,heightAt:hAn,quality:q}):null,
       ()=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(260,260),fbMat(0x5f6a40));m.rotation.x=-Math.PI/2;const g=fbGroup("terrain");g.add(m);return g;});
     z.add(own(terrain));S.assets.anTerrain=terrain;
-    const hutY=hAn(0,0)+.02;
+    const hutY=AN_PAD_Y;
     const hut=safeMake("an-hut",()=>M.AN&&M.AN.makeAn?M.AN.makeAn({quality:q}):null,()=>{const g=fbGroup("hut");const f=fbBox(3.2,.5,3.4,0x7a6a52);f.position.y=.25;g.add(f);const r=fbBox(4.6,.3,4.6,0x5a4e40);r.position.y=2.8;g.add(r);
       g.userData.anchors={};return g;});
     hut.position.set(0,hutY,0);z.add(own(track("an",hut)));S.assets.hut=hut;
@@ -287,7 +288,7 @@ const SAIGEN_TSUREZURE=(()=>{
       lamp:anc("lamp",[-.95,.5,-.1]),armrest:anc("armrest",[.08,.5,-.2]),stepFront:anc("stepFront",[0,0,2.4]),basin:anc("basin",[1.4,.5,1.9])};
     // 遣水と水鏡
     const pts=AN_STREAM.map(p=>[p[0],STREAM_Y,anStreamZ(p[0])]);
-    const stream=safeMake("an-stream",()=>M.NAT&&M.NAT.makeStream?M.NAT.makeStream({points:pts,width:1.7,quality:q}):null,()=>{const g=fbGroup("stream");return g;});
+    const stream=safeMake("an-stream",()=>M.NAT&&M.NAT.makeStream?M.NAT.makeStream({points:pts,width:1.7,quality:q==="high"?"medium":"low"}):null,()=>{const g=fbGroup("stream");return g;});
     z.add(own(track("an",stream)));S.assets.stream=stream;
     const pool=safeMake("an-mirror",()=>M.NAT&&M.NAT.makeMirrorWater?M.NAT.makeMirrorWater({width:2.6,depth:1.8,resolution:q==="low"?256:512,quality:q}):null,()=>fbGroup("mirror"));
     const poolX=7.5,poolZ=anStreamZ(7.5)-.2;
@@ -301,15 +302,15 @@ const SAIGEN_TSUREZURE=(()=>{
     const T=(label,fn,x,zz,season)=>{const t=safeMake(label,fn,()=>fbGroup(label));t.position.set(x,hAn(x,zz),zz);if(t.userData&&t.userData.setSeason)t.userData.setSeason(season||"autumn");z.add(own(track("an",t)));(S.assets.trees||(S.assets.trees=[])).push(t);return t;};
     S.assets.pine=T("an-pine",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:7.5,lean:.32,seed:61,quality:q}):null,3.6,-1.2);
     if(S.assets.pine)S.assets.pine.rotation.y=-2.3;
-    T("an-maple1",()=>M.TRE&&M.TRE.makeMaple?M.TRE.makeMaple({height:4.6,seed:62,quality:q}):null,-6.2,6.4);
-    T("an-maple2",()=>M.TRE&&M.TRE.makeMaple?M.TRE.makeMaple({height:3.8,seed:63,quality:q}):null,9.6,6.0);
-    T("an-maple3",()=>M.TRE&&M.TRE.makeMaple?M.TRE.makeMaple({height:5.2,seed:64,quality:q==="high"?"medium":"low"}):null,-15,12.5);
-    T("an-cherry",()=>M.TRE&&M.TRE.makeCherry?M.TRE.makeCherry({height:6.4,seed:65,quality:q}):null,-10.5,-3.5);
-    T("an-bamboo",()=>M.TRE&&M.TRE.makeBambooGrove?M.TRE.makeBambooGrove({width:22,depth:6,height:9.5,seed:66,quality:q==="high"?"medium":"low"}):null,1,-11.5);
+    T("an-maple1",()=>M.TRE&&M.TRE.makeMaple?M.TRE.makeMaple({height:4.6,seed:62,quality:q==="high"?"medium":"low"}):null,-6.2,6.4);
+    T("an-maple2",()=>M.TRE&&M.TRE.makeMaple?M.TRE.makeMaple({height:3.8,seed:63,quality:q==="high"?"medium":"low"}):null,9.6,6.0);
+    T("an-maple3",()=>M.TRE&&M.TRE.makeMaple?M.TRE.makeMaple({height:5.2,seed:64,quality:"low"}):null,-15,12.5);
+    T("an-cherry",()=>M.TRE&&M.TRE.makeCherry?M.TRE.makeCherry({height:6.4,seed:65,quality:q==="high"?"medium":"low"}):null,-10.5,-3.5);
+    T("an-bamboo",()=>M.TRE&&M.TRE.makeBambooGrove?M.TRE.makeBambooGrove({width:18,depth:4.5,height:9.5,seed:66,quality:"low"}):null,1,-11.5);
     T("an-hagi1",()=>M.TRE&&M.TRE.makeHagi?M.TRE.makeHagi({seed:67,quality:q}):null,-3.4,3.6);
     T("an-hagi2",()=>M.TRE&&M.TRE.makeHagi?M.TRE.makeHagi({seed:68,quality:q}):null,4.6,4.4);
     // 遠景の木立(双ヶ岡の森)
-    [[-24,-14,7],[18,-16,8],[28,-6,6.5],[-32,2,7.5],[36,10,7]].forEach((p,i)=>T("an-bgpine"+i,()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:p[2],lean:.12,seed:70+i,quality:"low"}):null,p[0],p[1]));
+    [[-24,-14,7],[18,-16,8],[-32,2,7.5],[36,10,7]].forEach((p,i)=>T("an-bgpine"+i,()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:p[2],lean:.12,seed:70+i,quality:"low"}):null,p[0],p[1]));
     // 柴垣
     const fence=safeMake("an-fence",()=>M.AN&&M.AN.makeShibagaki?M.AN.makeShibagaki({length:6,height:1.1}):null,()=>fbGroup("fence"));
     fence.position.set(-7.2,hAn(-7.2,-1),-1);fence.rotation.y=Math.PI/2;z.add(own(fence));
@@ -332,47 +333,45 @@ const SAIGEN_TSUREZURE=(()=>{
     const P=(kind)=>{const p=safeMake("an-"+kind,()=>M.TRE&&M.TRE.makeFallingParticles?M.TRE.makeFallingParticles({kind,width:26,height:12,depth:22,quality:q}):null,()=>fbGroup(kind));
       p.position.set(0,hAn(0,3),3);p.visible=false;if(p.userData&&p.userData.setActive)p.userData.setActive(false);z.add(own(track("an",p)));return p;};
     S.assets.leaves=P("maple");S.assets.petals=P("petals");S.assets.snow=P("snow");
-    // 兼好(姿勢ごとに用意し、場ごとに一体だけ見せる)
-    const mk=(pose)=>{const f=safeMake("kenko-"+pose,()=>M.FIG&&M.FIG.makeKenko?M.FIG.makeKenko({pose,seatY:.06,quality:q}):null,()=>fbFigure(0x2c2a28,.95));
-      f.visible=false;f.userData.saigenCustom=true;f.userData.cname="兼好法師";f.userData.label="兼好法師";f.userData.labelY=(pose==="kneel")?1.25:1.35;f.userData.bubbleY=1.1;f.userData.hideLabel=true;
-      track("an",f);return own(f);};
-    S.assets.kenko={gaze:mk("gaze"),read:mk("read"),write:mk("write"),kneel:mk("kneel")};
-    Object.values(S.assets.kenko).forEach(f=>z.add(f));
-    S.actors.kenko=S.assets.kenko.gaze; // 名札・話者用(場ごとに差し替え)
+    S.assets.kenko={}; // 兼好の姿勢は場で必要になった時に作る(buildKenko)
+  }
+  // 兼好(姿勢ごとに用意し、場ごとに一体だけ見せる)
+  function buildKenko(pose){
+    const M=MODS(),q=S.quality,z=S.zones.an;if(!z)return;
+    const f=safeMake("kenko-"+pose,()=>M.FIG&&M.FIG.makeKenko?M.FIG.makeKenko({pose,seatY:.06,quality:q}):null,()=>fbFigure(0x2c2a28,.95));
+    f.visible=false;f.userData.saigenCustom=true;f.userData.cname="兼好法師";f.userData.label="兼好法師";f.userData.labelY=(pose==="kneel")?1.25:1.35;f.userData.bubbleY=1.1;f.userData.hideLabel=true;
+    track("an",f);own(f);z.add(f);S.assets.kenko[pose]=f;
   }
 
-  function buildMacro(){
-    const M=MODS(),q=S.quality;
-    const mk=(zone,label,fn)=>{const z=zoneGroup(zone);const set=safeMake(label,fn,()=>{const g=fbGroup(label);const b=fbBox(.1,.01,.02,0x5a7a3a);g.add(b);return g;});
-      set.scale.setScalar(MACRO_SCALE);z.add(own(track(zone,set)));return set;};
-    S.assets.dewSet=mk("dew","dew-set",()=>M.FLO&&M.FLO.makeDewMacroSet?M.FLO.makeDewMacroSet({style:"dawn",quality:q}):null);
-    S.assets.barkSet=mk("semi","bark-set",()=>M.FLO&&M.FLO.makeBarkMacroSet?M.FLO.makeBarkMacroSet({species:"sakura",quality:q}):null);
-    S.assets.leafSet=mk("leaf","leaf-set",()=>M.FLO&&M.FLO.makeLeafMacroSet?M.FLO.makeLeafMacroSet({style:"dusk",quality:q}):null);
-    S.assets.waterSet=mk("water","water-set",()=>M.FLO&&M.FLO.makeWaterMacroSet?M.FLO.makeWaterMacroSet({quality:q}):null);
-    // 虫を止まり場所に置く(止まり場所: +Y=面の法線, +Z=幹の上方向/葉先方向)
-    const perchOn=(set,obj)=>{const p=set.userData&&set.userData.perch;(p||set).add(obj);return obj;};
-    S.assets.cicada=perchOn(S.assets.barkSet,own(track("semi",safeMake("cicada",()=>M.INS&&M.INS.makeMinminZemi?M.INS.makeMinminZemi({quality:q}):null,()=>{const g=fbGroup("cicada");const b=fbBox(.012,.012,.035,0x1a2a20);b.position.y=.008;g.add(b);return g;}))));
-    S.assets.mayflyRest=perchOn(S.assets.leafSet,own(track("leaf",safeMake("mayfly-rest",()=>M.INS&&M.INS.makeMonKagerou?M.INS.makeMonKagerou({pose:"rest",quality:q}):null,()=>{const g=fbGroup("mayfly");const b=fbBox(.003,.003,.018,0xa08050);b.position.y=.004;g.add(b);return g;}))));
+  // 接写セット(実寸で作って MACRO_SCALE 倍)。虫は止まり場所(perch: +Y=面の法線, +Z=幹の上/葉先/頭の向き)に載せる
+  function macroSet(zone,label,fn){const z=zoneGroup(zone);const set=safeMake(label,fn,()=>{const g=fbGroup(label);const b=fbBox(.1,.01,.02,0x5a7a3a);g.add(b);return g;});
+    set.scale.setScalar(MACRO_SCALE);z.add(own(track(zone,set)));return set;}
+  const perchOn=(set,obj)=>{const p=set.userData&&set.userData.perch;(p||set).add(obj);return obj;};
+  function buildDewSet(){const M=MODS();S.assets.dewSet=macroSet("dew","dew-set",()=>M.FLO&&M.FLO.makeDewMacroSet?M.FLO.makeDewMacroSet({style:"dawn",quality:S.quality}):null);}
+  function buildSemiSet(){const M=MODS(),q=S.quality;
+    S.assets.barkSet=macroSet("semi","bark-set",()=>M.FLO&&M.FLO.makeBarkMacroSet?M.FLO.makeBarkMacroSet({species:"sakura",quality:q}):null);
+    S.assets.cicada=perchOn(S.assets.barkSet,own(track("semi",safeMake("cicada",()=>M.INS&&M.INS.makeMinminZemi?M.INS.makeMinminZemi({quality:q==="high"?"medium":q}):null,
+      ()=>{const g=fbGroup("cicada");const b=fbBox(.012,.012,.035,0x1a2a20);b.position.y=.008;g.add(b);return g;}))));}
+  function buildLeafSet(){const M=MODS(),q=S.quality;
+    S.assets.leafSet=macroSet("leaf","leaf-set",()=>M.FLO&&M.FLO.makeLeafMacroSet?M.FLO.makeLeafMacroSet({style:"dusk",quality:q}):null);
+    S.assets.mayflyRest=perchOn(S.assets.leafSet,own(track("leaf",safeMake("mayfly-rest",()=>M.INS&&M.INS.makeMonKagerou?M.INS.makeMonKagerou({pose:"rest",quality:q}):null,
+      ()=>{const g=fbGroup("mayfly");const b=fbBox(.003,.003,.018,0xa08050);b.position.y=.004;g.add(b);return g;}))));}
+  function buildWaterSet(){const M=MODS(),q=S.quality;
+    S.assets.waterSet=macroSet("water","water-set",()=>M.FLO&&M.FLO.makeWaterMacroSet?M.FLO.makeWaterMacroSet({quality:q}):null);
     S.assets.mayflySpent=perchOn(S.assets.waterSet,own(track("water",safeMake("mayfly-spent",()=>M.INS&&M.INS.makeMonKagerou?M.INS.makeMonKagerou({pose:"spent",quality:q}):null,()=>fbGroup("mayfly")))));
-    // 夕暮れの流れの上で群れ舞うカゲロウ(草庵の遣水)
+    // 奥の水面にも力尽きたカゲロウ(ぼけて見える)
+    ((S.assets.waterSet.userData&&S.assets.waterSet.userData.perches)||[]).slice(1).forEach((p,i)=>{
+      const m=safeMake("mayfly-far",()=>M.INS&&M.INS.makeMonKagerou?M.INS.makeMonKagerou({pose:"spent",quality:"low",seed:31+i}):null,()=>fbGroup("mayfly"));p.add(own(track("water",m)));});}
+  // 夕暮れの流れの上で群れ舞うカゲロウ(草庵の遣水)
+  function buildSwarm(){const M=MODS(),q=S.quality;if(!S.zones.an)return;
     const sw=safeMake("mayfly-swarm",()=>M.INS&&M.INS.makeMayflySwarm?M.INS.makeMayflySwarm({count:q==="low"?24:q==="medium"?40:60,radius:2.2,height:2.6,quality:q}):null,()=>fbGroup("swarm"));
-    sw.position.set(-3.6,STREAM_Y+.35,anStreamZ(-3.6));S.zones.an.add(own(track("an",sw)));S.assets.swarm=sw;sw.visible=false;
-  }
+    sw.position.set(-3.6,STREAM_Y+.35,anStreamZ(-3.6));S.zones.an.add(own(track("an",sw)));S.assets.swarm=sw;sw.visible=false;}
 
-  function buildEstate(){
+  function buildEstateBase(){
     const z=zoneGroup("estate"),M=MODS(),q=S.quality;
     z.visible=true; // 原点の屋敷そのもの。自前の人物と灯だけを置く
     const gy=(x,zz)=>(typeof groundH==="function")?groundH(x,zz):0;
-    const R=(pose)=>{const f=safeMake("roujin-"+pose,()=>M.FIG&&M.FIG.makeRoujin?M.FIG.makeRoujin({pose,quality:q}):null,()=>fbFigure(0x5a3a6a,pose==="walk"?1.6:1.0));
-      f.visible=false;f.userData.saigenCustom=true;f.userData.cname="老人";f.userData.label="老いた貴族";f.userData.labelY=(pose==="walk")?2.05:1.45;f.userData.bubbleY=1.6;f.userData.hideLabel=true;
-      z.add(own(track("estate",f)));return f;};
-    S.assets.roujin={walk:R("walk"),hold:R("hold"),count:R("count")};
-    const G=(pose,sex,age,label)=>{const f=safeMake("mago-"+pose,()=>M.FIG&&M.FIG.makeMago?M.FIG.makeMago({pose,sex,age,quality:q}):null,()=>fbFigure(0xa04040,.8));
-      f.visible=false;f.userData.saigenCustom=true;f.userData.cname="孫";f.userData.label=label||"孫";f.userData.labelY=(pose==="play"||pose==="stand")?1.25:.95;f.userData.hideLabel=true;track("estate",f);return own(f);};
-    S.assets.magoHeld=G("held","girl",3,"孫");
-    const lap=S.assets.roujin.hold.userData&&S.assets.roujin.hold.userData.lapAnchor;
-    (lap||S.assets.roujin.hold).add(S.assets.magoHeld);S.assets.magoHeld.visible=true;
-    S.assets.magoPlay=G("play","boy",6,"孫");z.add(S.assets.magoPlay);
+    S.assets.roujin={};
     // 外出を待つ従者(既存の平安人物モデル。遠景の点景として)
     S.assets.attendants=[];
     if(typeof makeHeianFigure==="function"){
@@ -390,7 +389,61 @@ const SAIGEN_TSUREZURE=(()=>{
       hold:[2.6,gy(2.6,5.2),5.2],play:[3.5,gy(3.5,5.7),5.7],
       count:[-1.2,gy(-1.2,0.6),0.6],lamp:[-0.35,gy(-0.35,0.2),0.2]
     };
-    S.actors.roujin=S.assets.roujin.walk;S.actors.mago=S.assets.magoPlay;
+  }
+  function buildRoujin(pose){
+    const M=MODS(),q=S.quality,z=S.zones.estate;if(!z)return;
+    const f=safeMake("roujin-"+pose,()=>M.FIG&&M.FIG.makeRoujin?M.FIG.makeRoujin({pose,quality:q}):null,()=>fbFigure(0x5a3a6a,pose==="walk"?1.6:1.0));
+    f.visible=false;f.userData.saigenCustom=true;f.userData.cname="老人";f.userData.label="老いた貴族";f.userData.labelY=(pose==="walk")?2.05:1.45;f.userData.bubbleY=1.6;f.userData.hideLabel=true;
+    z.add(own(track("estate",f)));S.assets.roujin[pose]=f;
+    if(pose==="hold"){ // 膝に抱かれた孫娘
+      const c=makeMagoFig("held","girl",3,"孫");const lap=f.userData&&f.userData.lapAnchor;(lap||f).add(c);c.visible=true;S.assets.magoHeld=c;
+      c.position.set(.075,-.035,.03);c.rotation.y=-.18; // 祖父の左膝寄りに座らせ、祖父の顔が見えるように
+    }
+  }
+  function makeMagoFig(pose,sex,age,label){const M=MODS(),q=S.quality;
+    const f=safeMake("mago-"+pose,()=>M.FIG&&M.FIG.makeMago?M.FIG.makeMago({pose,sex,age,quality:q}):null,()=>fbFigure(0xa04040,.8));
+    f.visible=false;f.userData.saigenCustom=true;f.userData.cname="孫";f.userData.label=label||"孫";f.userData.labelY=(pose==="play"||pose==="stand")?1.25:.95;f.userData.hideLabel=true;
+    track("estate",f);return own(f);}
+  function buildMagoPlay(){const z=S.zones.estate;if(!z)return;S.assets.magoPlay=makeMagoFig("play","boy",6,"孫");z.add(S.assets.magoPlay);}
+
+  /* ============================================================
+     段階的な組み立て: 重い素材(人物・樹木・接写セット)は、いま見る場に要るものだけを先に作り、
+     残りは場面の順に少しずつ作る(見ている間に一件ずつ)。場を飛ばした時は、その場で作る。
+  ============================================================ */
+  const JOB_DEFS={
+    sky:buildSky,adashi:buildAdashi,dew:buildDewSet,toribe:buildToribe,an:buildAn,
+    "kenko-gaze":()=>buildKenko("gaze"),"kenko-read":()=>buildKenko("read"),"kenko-write":()=>buildKenko("write"),"kenko-kneel":()=>buildKenko("kneel"),
+    swarm:buildSwarm,leaf:buildLeafSet,water:buildWaterSet,semi:buildSemiSet,
+    estate:buildEstateBase,"roujin-walk":()=>buildRoujin("walk"),"roujin-hold":()=>buildRoujin("hold"),"mago-play":buildMagoPlay,"roujin-count":()=>buildRoujin("count")
+  };
+  const JOB_ORDER=["sky","adashi","dew","toribe","an","kenko-gaze","kenko-read","swarm","leaf","water","semi","kenko-write","kenko-kneel","estate","roujin-walk","roujin-hold","mago-play","roujin-count"];
+  const BEAT_JOBS=[["sky","adashi","dew"],["sky","toribe"],["sky","an","kenko-gaze"],["sky","an","kenko-read"],["sky","an","swarm","leaf","water"],["sky","an","semi"],
+    ["sky","an","kenko-write"],["sky","an","kenko-read"],["sky","an","kenko-kneel"],["sky","an","kenko-write"],["estate","roujin-walk"],["estate","roujin-hold","mago-play"],
+    ["estate","roujin-count","sky","an","kenko-gaze"]];
+  function runJob(name){
+    if(!S.active||S.done[name])return;S.done[name]=true;
+    const before=new Set(Object.keys(S.zones));const t0=performance.now();
+    try{JOB_DEFS[name]();}catch(e){console.error("[tsurezure] job "+name+":",e);}
+    // 新しく出来たゾーン(または既存ゾーンへ足した物)のシェーダーを先に用意する
+    try{const zs=Object.keys(S.zones).filter(k=>!before.has(k)||name.indexOf("kenko")===0||name==="swarm");
+      const vis={};Object.keys(S.zones).forEach(k=>{vis[k]=S.zones[k].visible;S.zones[k].visible=zs.indexOf(k)>=0||vis[k];});
+      const sv=S.sky?S.sky.visible:false;if(S.sky)S.sky.visible=true;
+      const added=S.stage&&!S.stage.parent;if(added)scene.add(S.stage);
+      if(S.stage)S.stage.visible=true;
+      if(renderer&&renderer.compile)renderer.compile(scene,camera);
+      if(added)scene.remove(S.stage);
+      Object.keys(S.zones).forEach(k=>{S.zones[k].visible=vis[k];});if(S.sky)S.sky.visible=sv;
+    }catch(e){}
+    S.jobMs[name]=Math.round(performance.now()-t0);
+  }
+  function ensureBeat(i){(BEAT_JOBS[i]||[]).forEach(runJob);}
+  // 見ている間に、次に要る素材を一件ずつ作る(ショットが落ち着いてから)
+  function pumpJobs(){
+    if(!S.active||S.pumpTimer)return;
+    S.pumpTimer=setTimeout(()=>{S.pumpTimer=null;if(!S.active)return;
+      const next=JOB_ORDER.find(n=>!S.done[n]);if(!next)return;
+      if(S.shotT<1.5||document.hidden){pumpJobs();return;}
+      runJob(next);pumpJobs();},700);
   }
 
   /* ============================================================
@@ -417,11 +470,13 @@ const SAIGEN_TSUREZURE=(()=>{
       f.position.copy(a.pos);f.position.y=a.pos.y-(anchorKey==="seat"||anchorKey==="seatInside"?.06:0);f.rotation.y=rotY!=null?rotY:a.rotY;
     }
     if(extra&&extra.writing!=null)f.userData.writing=extra.writing;
-    S.actors.kenko=f;if(S.stage&&S.stage.userData.actors)S.stage.userData.actors.kenko=f;
+    S.labelFig.kenko=f;
     return f;
   }
   function placeDesk(anchorKey,rotY){const d=S.assets.desk,a=S.assets.anc&&S.assets.anc[anchorKey];if(!d||!a)return;d.visible=true;d.position.copy(a.pos);d.position.y=a.pos.y;d.rotation.y=rotY!=null?rotY:a.rotY;}
   function placeOn(obj,anchorKey,dy,rotY){const a=S.assets.anc&&S.assets.anc[anchorKey];if(!obj||!a)return;obj.visible=true;obj.position.copy(a.pos);obj.position.y=a.pos.y+(dy||0);obj.rotation.y=rotY!=null?rotY:a.rotY;}
+  function placeBeside(obj,anchorKey,dx,dz,rotY){const a=S.assets.anc&&S.assets.anc[anchorKey];if(!obj||!a)return;obj.visible=true;
+    const c=Math.cos(a.rotY),sn=Math.sin(a.rotY);obj.position.set(a.pos.x+dx*c+dz*sn,a.pos.y-(anchorKey==="seat"||anchorKey==="seatInside"?.06:0),a.pos.z-dx*sn+dz*c);obj.rotation.y=a.rotY+(rotY||0);}
   function hideAnProps(){["desk","lamp","enza","enza2","armrest"].forEach(k=>{if(S.assets[k])S.assets[k].visible=false;});}
   function anSeason(key){
     S.seasonAn=key;
@@ -439,16 +494,17 @@ const SAIGEN_TSUREZURE=(()=>{
      {zone:"dew",macro:true,light:"autumnDawnMist",sunRel:[.35,.22,1],fade:"white",fov:30,useHint:true,drift:[.004,-.002,-.006],dur:9,shadow:{center:[0,0,0],half:4},
       enter(){S._dewFell=false;},tick(ctx,u,t){if(!S._dewFell&&t>3.2){S._dewFell=true;const d=S.assets.dewSet;if(d&&d.userData.triggerFall)d.userData.triggerFall();}}}],
     /* 2 鳥部山の煙立ち去らでのみ… */
-    [{zone:"toribe",light:"autumnDuskToribe",fov:44,cam:{pos:[-8,2.0,4],look:[230,34,-14]},to:{pos:[-6,2.1,2.5],look:[230,40,-12]},dur:7,shadow:{center:[0,0,0],half:30},
+    [{zone:"toribe",light:"autumnDuskToribe",fov:44,cam:{pos:[-8,2.0,4],look:[224,30,-8]},to:{pos:[-6,2.1,2.5],look:[224,36,-6]},dur:7,shadow:{center:[0,0,0],half:30},
       enter(){playOnce("kane_bonsho.mp3",.5,1.2);}},
-     {zone:"toribe",light:"autumnDuskToribe",fade:"black",fov:16,fovTo:13,cam:{pos:[-6,2.2,2.5],look:[232,46,-14]},to:{pos:[-6,2.2,2.5],look:[232,58,-15]},dur:12,shadow:{center:[0,0,0],half:30}}],
+     {zone:"toribe",light:"autumnDuskToribe",fade:"black",fov:16,fovTo:12.5,cam:{pos:[-6,2.2,2.5],look:[222,30,-5]},to:{pos:[-6,2.2,2.5],look:[221,44,-1]},dur:12,shadow:{center:[0,0,0],half:30}}],
     /* 3 世は定めなきこそいみじけれ */
     [{zone:"an",light:{preset:"autumnDay",over:{sun:{dir:[-.55,.42,.72],color:0xffe2b8,intensity:1.15},exposure:1.02}},fov:40,cam:{pos:[3.6,1.45,8.4],look:[0,1.1,1.0]},to:{pos:[2.8,1.35,6.6],look:[0,1.05,1.1]},dur:10,shadow:{center:[0,0,2],half:14},
       enter(){anSeason("autumn");hideAnProps();showKenko("gaze","seat",0);placeOn(S.assets.enza,"seat",-.06);placeDesk("desk");S.assets.kenko.gaze.userData.hideLabel=false;}}],
     /* 4 命あるものを見るに、人ばかり久しきはなし */
     [{zone:"an",light:"earlySummerDay",fov:50,cam:{pos:[-.9,1.5,-.3],look:[2,.6,9]},to:{pos:[-1.2,1.55,-.6],look:[3.5,.7,9.5]},dur:11,shadow:{center:[0,0,4],half:16},
-      enter(){anSeason("summer");hideAnProps();showKenko("read","seat",0);placeOn(S.assets.enza,"seat",-.06);placeOn(S.assets.armrest,"seat",0,0);
-        if(S.assets.armrest){S.assets.armrest.position.x+=.42;}S.assets.kenko.read.userData.hideLabel=true;playOnce("hototogisu.mp3",.32,2.5);}}],
+      enter(){anSeason("summer");hideAnProps();showKenko("read","seat",0);placeOn(S.assets.enza,"seat",-.06);
+        placeBeside(S.assets.armrest,"seat",-.35,.05,Math.PI/2);
+        S.assets.kenko.read.userData.hideLabel=true;playOnce("hototogisu.mp3",.32,2.5);}}],
     /* 5 かげろふの夕べを待ち */
     [{zone:"an",light:"earlySummerDusk",fov:42,cam:{pos:[-7.4,.55,anStreamZ(-7.4)+2.6],look:[-3.6,1.4,anStreamZ(-3.6)]},to:{pos:[-6.6,.5,anStreamZ(-6.6)+2.2],look:[-3.4,1.5,anStreamZ(-3.4)]},dur:6.5,shadow:{center:[-4,0,8],half:14},
       enter(){anSeason("summer");hideAnProps();KENKO_POSES.forEach(p=>{if(S.assets.kenko[p])S.assets.kenko[p].visible=false;});if(S.assets.swarm)S.assets.swarm.visible=true;}},
@@ -465,8 +521,8 @@ const SAIGEN_TSUREZURE=(()=>{
       enter(){hideAnProps();showKenko("write","seat",0,{writing:true});placeOn(S.assets.enza,"seat",-.06);placeDesk("desk");S.timelapse={t:0,seq:["spring","summer","autumn","winter"],step:2.6,idx:-1};},
       tick(ctx,u,t){const L=S.timelapse;if(!L)return;const i=Math.min(L.seq.length-1,Math.floor(t/L.step));if(i!==L.idx){L.idx=i;const k=L.seq[i];anSeason(k);setLight(presetState(ANSEASON_LIGHT[k]),i===0?0:1.1);}}}],
     /* 8 飽かず、惜しと思はば、千年を過ぐすとも、一夜の夢の心地こそせめ */
-    [{zone:"an",light:"nightMoon",fov:38,cam:{pos:[1.15,1.15,1.95],look:[-.45,.82,-.2]},to:{pos:[.95,1.1,1.6],look:[-.45,.8,-.2]},dur:8,shadow:{center:[0,0,0],half:8},lamp:{on:true,intensity:1.35},
-      enter(){anSeason("autumn");hideAnProps();showKenko("read","seatInside");placeOn(S.assets.enza2,"seatInside",-.06);placeOn(S.assets.armrest,"armrest");placeOn(S.assets.lamp,"lamp");
+    [{zone:"an",light:"nightMoon",fov:38,cam:{pos:[1.12,1.3,1.62],look:[-.14,1.08,-.04]},to:{pos:[.92,1.26,1.42],look:[-.16,1.06,-.06]},dur:8,shadow:{center:[0,.6,0],half:4},lamp:{on:true,intensity:1.35},
+      enter(){anSeason("autumn");hideAnProps();showKenko("read","seatInside");placeOn(S.assets.enza2,"seatInside",-.06);placeBeside(S.assets.armrest,"seatInside",-.35,.05,Math.PI/2);placeBeside(S.assets.lamp,"seatInside",.42,.38,0);
         if(S.assets.hut&&S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(1);if(S.assets.hut&&S.assets.hut.userData.setShutters)S.assets.hut.userData.setShutters(1);}},
      {zone:"an",light:"nightMoon",lightTo:{preset:"predawnBlue",dur:7,delay:1.5},fov:44,cam:{pos:[4.8,1.6,7.2],look:[0,1.0,0]},to:{pos:[4.2,1.5,6.2],look:[0,1.0,0]},dur:12,shadow:{center:[0,0,1],half:12},lamp:{on:true,intensity:1.2,fadeTo:.25,fadeDur:8},
       tick(ctx,u,t){if(S.assets.hut&&S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(Math.max(.25,1-t/9));}}],
@@ -476,7 +532,7 @@ const SAIGEN_TSUREZURE=(()=>{
      {zone:"an",light:{preset:"autumnDay",over:{sun:{dir:[-.3,.55,-.75],intensity:1.0},exposure:1.0}},fade:"black",fov:34,cam:{pos:[7.4,1.0,poolCamZ(.55)],look:[7.35,-.4,poolCamZ(-.35)]},to:{pos:[7.4,.95,poolCamZ(.45)],look:[7.35,-.4,poolCamZ(-.35)]},dur:10,shadow:{center:[7,0,8],half:6},
       tick(ctx,u,t){const p=S.assets.pool;if(p&&p.userData.setRipple)p.userData.setRipple(t>4.5&&t<7?.85:.18);}}],
     /* 10 長くとも、四十に足らぬほどにて死なんこそ、めやすかるべけれ */
-    [{zone:"an",light:{preset:"autumnDay",over:{sun:{dir:[-.4,.5,.75],intensity:1.1}}},fov:30,cam:{pos:[.55,1.15,2.25],look:[0,.6,1.55]},to:{pos:[.5,1.05,2.1],look:[0,.58,1.55]},dur:7,shadow:{center:[0,0,1.5],half:4},
+    [{zone:"an",light:{preset:"autumnDay",over:{sun:{dir:[-.4,.5,.75],intensity:1.1}}},fov:30,frameUp:.15,cam:{pos:[.06,1.46,1.98],look:[-.27,.93,1.48]},to:{pos:[.02,1.40,1.92],look:[-.27,.93,1.48]},dur:7,shadow:{center:[-.25,.9,1.4],half:1.5},
       enter(){anSeason("autumn");hideAnProps();showKenko("write","seat",0,{writing:true});placeOn(S.assets.enza,"seat",-.06);placeDesk("desk");
         const d=S.assets.desk;if(d&&d.userData.setWritten)d.userData.setWritten(.15);S._writeT=0;},
       tick(ctx,u,t){const d=S.assets.desk;if(d&&d.userData.setWritten)d.userData.setWritten(Math.min(1,.15+t*.11));}},
@@ -489,7 +545,7 @@ const SAIGEN_TSUREZURE=(()=>{
     /* 12 夕べの日に子孫を愛して、栄ゆく末を見んまでの命をあらまし */
     [{zone:"estate",fov:40,estateCam:true,cam:{pos:[6.8,1.9,11.2],look:[2.8,1.6,5.3]},to:{pos:[6.2,1.85,10.4],look:[2.8,1.6,5.3]},dur:12,
       enter(){showRoujin("hold");const P=S.assets.estatePos,r=S.assets.roujin.hold;r.position.set(...P.hold);r.rotation.y=.25;r.userData.hideLabel=true;
-        const m=S.assets.magoPlay;m.visible=true;m.position.set(...P.play);m.rotation.y=-.9;m.userData.hideLabel=false;S.actors.mago=m;}}],
+        const m=S.assets.magoPlay;if(m){m.visible=true;m.position.set(...P.play);m.rotation.y=-.9;m.userData.hideLabel=false;S.labelFig.mago=m;}}}],
     /* 13 ひたすら世をむさぼる心のみ深く、もののあはれも知らずなりゆくなん、あさましき */
     [{zone:"estate",fov:40,estateCam:true,cam:{pos:[1.6,2.0,4.4],look:[-1.2,1.55,0.7]},to:{pos:[1.3,1.95,3.8],look:[-1.2,1.5,0.7]},dur:9,lamp:{on:true,intensity:1.1,estate:true},
       enter(){showRoujin("count");const P=S.assets.estatePos,r=S.assets.roujin.count;r.position.set(...P.count);r.rotation.y=.35;r.userData.hideLabel=true;S.assets.magoPlay.visible=false;
@@ -502,7 +558,7 @@ const SAIGEN_TSUREZURE=(()=>{
   function showRoujin(pose){
     const R=S.assets.roujin;if(!R)return;
     Object.keys(R).forEach(k=>{if(R[k])R[k].visible=(k===pose);});
-    S.actors.roujin=R[pose];if(S.stage&&S.stage.userData.actors)S.stage.userData.actors.roujin=R[pose];
+    S.labelFig.roujin=R[pose];
   }
 
   /* ============================================================
@@ -623,7 +679,8 @@ const SAIGEN_TSUREZURE=(()=>{
       // sunRel=[右,上,奥]: カメラから見た太陽の向き(接写で逆光・横光を確実に作る)。奥>0 は被写体の向こう側=逆光
       if(sh.sunRel){const f=c.from.look.clone().sub(c.from.pos).normalize(),up=new THREE.Vector3(0,1,0),r=new THREE.Vector3().crossVectors(f,up).normalize(),u=new THREE.Vector3().crossVectors(r,f).normalize();
         const d=r.multiplyScalar(sh.sunRel[0]).add(u.multiplyScalar(sh.sunRel[1])).add(f.multiplyScalar(sh.sunRel[2])).normalize();
-        L.sun.dir=[d.x,d.y,d.z];L.sky.sunDir=d.clone();}
+        L.sunLight.dir=[d.x,Math.max(d.y,.06),d.z];L.sunDir=[d.x,d.y,d.z];
+        if(L.rim)L.rim.dir=[-d.x,Math.abs(d.y)*.6+.35,-d.z];}
       setLight(L,0);}
     S.lightTo2=sh.lightTo||null;
     if(sh.shadow){S.shadowHalf=sh.shadow.half||20;S.shadowCenter.copy(zoneWorld(sh.zone,sh.shadow.center||[0,0,0],sh.macro));}
@@ -655,6 +712,8 @@ const SAIGEN_TSUREZURE=(()=>{
     if(!S.active)return;
     const i=(APP.saigen&&APP.saigen.i!=null)?APP.saigen.i:0;
     S.beat=i;S.shots=BEAT_SHOTS[i]||[];S.timelapse=null;
+    const tb=performance.now();ensureBeat(i);
+    if(performance.now()-tb>50&&typeof console!=="undefined")console.log("[tsurezure] beat "+(i+1)+" assets ready in "+Math.round(performance.now()-tb)+"ms (quality "+S.quality+")");
     // 前の場の残り(群舞・虫の声・老人の歩み)をリセット
     if(S.assets.swarm)S.assets.swarm.visible=false;
     const c=S.assets.cicada;if(c&&c.userData.setSinging)c.userData.setSinging(0);
@@ -663,12 +722,14 @@ const SAIGEN_TSUREZURE=(()=>{
     if(S.assets.estateLamp)S.assets.estateLamp.visible=false;
     (S.assets.attendants||[]).forEach(f=>{f.visible=false;});
     // 名札は場ごとに明示したものだけ
-    Object.values(st&&st.userData.actors||{}).forEach(f=>{if(f&&f.userData&&f.userData.saigenCustom)f.userData.hideLabel=true;});
+    S.labelFig={};
+    Object.values(S.assets.kenko||{}).concat(Object.values(S.assets.roujin||{}),[S.assets.magoPlay,S.assets.magoHeld]).forEach(f=>{if(f&&f.userData)f.userData.hideLabel=true;});
     // 本体は場の頭で全人物を visible=true にするので、いったん兼好も隠し、各ショットの enter で必要な姿だけ出す
     KENKO_POSES.forEach(p=>{const f=S.assets.kenko&&S.assets.kenko[p];if(f)f.visible=false;});
     if(S.zones.estate){const sh0=S.shots[0];if(sh0&&sh0.zone==="estate")snapEstateTime(b.time);}
     startShot(0,true);
     setLoops(BEAT_AUDIO[i]||{});
+    pumpJobs();
   }
   // 屋敷の場へのハードカットでは、時刻の補間(約1秒)を待たずに光を目標値へ合わせる
   function snapEstateTime(t){
@@ -683,15 +744,40 @@ const SAIGEN_TSUREZURE=(()=>{
     _lastT=t;
     tickShot(dt);
     // 光の補間
-    if(S.lightTo){S.lightU=Math.min(1,S.lightU+dt/Math.max(.1,S.lightDur));S.light=mixState(S.lightFrom,S.lightTo,ease(S.lightU));if(S.lightU>=1){S.light=S.lightTo;S.lightTo=null;S.lightFrom=null;}}
-    // 空
-    if(S.sky&&S.sky.visible&&S.light){if(S.sky.userData.setState)S.sky.userData.setState(S.light.sky);if(S.sky.userData.update)S.sky.userData.update(dt,t,camera);}
+    if(S.lightTo){S.lightU=Math.min(1,S.lightU+dt/Math.max(.1,S.lightDur));S.light=blendState(S.lightFrom,S.lightTo,ease(S.lightU));S.lightDirty=true;
+      if(S.lightU>=1){S.light=S.lightTo;S.lightTo=null;S.lightFrom=null;}}
+    const L=S.light;
+    // 空(カメラに追従)と、場の色合いを受ける素材(山・水・煙・霧)
+    if(S.sky&&S.sky.visible&&L){
+      if(S.lightDirty&&S.sky.userData.setState)S.sky.userData.setState(L);
+      if(S.sky.userData.update)S.sky.userData.update(dt,t,camera);
+    }
+    if(L&&S.lightDirty){applyTints(L);S.lightDirty=false;}
     // 素材のアニメ(今のゾーンだけ)
     const ups=S.zoneUpdaters[S.curZone]||[];
-    const sunDir=S.light&&S.light.sun?V(S.light.sun.dir).normalize():null;
+    const sunDir=L&&L.sunDir?V(L.sunDir).normalize():null;
+    const sunC=L&&L.sunLight?L.sunLight.color:0xffffff,sunI=L&&L.sunLight?L.sunLight.intensity:1;
     for(let k=0;k<ups.length;k++){const o=ups[k];if(!o.visible&&o!==S.assets.leaves&&o!==S.assets.petals&&o!==S.assets.snow)continue;
-      try{if(sunDir&&o.userData.setSun)o.userData.setSun(sunDir,S.light.sun.color,S.light.sun.intensity);o.userData.update(dt,t,camera);}catch(e){if(!o.userData._warned){o.userData._warned=true;console.error("[tsurezure] asset update:",e);}}}
+      try{if(sunDir&&o.userData.setSun)o.userData.setSun(sunDir,sunC,sunI);o.userData.update(dt,t,camera);}catch(e){if(!o.userData._warned){o.userData._warned=true;console.error("[tsurezure] asset update:",e);}}}
+    syncLabelProxies();
     updateAudio(dt);
+  }
+  // 名札・吹き出しの代理点を、いま見えている人物の頭上へ
+  function syncLabelProxies(){
+    if(!S.proxy)return;
+    Object.keys(S.proxy).forEach(k=>{const o=S.proxy[k],f=S.labelFig&&S.labelFig[k];
+      let vis=!!f;for(let p=f;vis&&p;p=p.parent){if(p.visible===false)vis=false;if(p===S.stage)break;}
+      o.visible=vis;if(!vis){o.userData.hideLabel=true;return;}
+      f.getWorldPosition(o.position);o.userData.labelY=f.userData.labelY||1.3;o.userData.bubbleY=f.userData.bubbleY||1.1;o.userData.hideLabel=!!f.userData.hideLabel;});
+  }
+  // 山・遣水・煙・霧へ、場の光の色合いを渡す(自然モジュールの applyPreset と同じ受け渡し)
+  function applyTints(L){
+    const sd=L.sunDir;
+    const each=(list,fn)=>list.forEach(o=>{if(o&&o.userData)try{fn(o.userData);}catch(e){}});
+    if(L.hills)each([S.assets.adashiHills,S.assets.toribeHills,S.assets.anHills],u=>{if(u.setTint)u.setTint(Object.assign({sunDir:sd},L.hills));});
+    if(L.water)each([S.assets.stream,S.assets.pool],u=>{if(u.setSky)u.setSky(Object.assign({},L.water,{sunDir:sd}));});
+    if(L.smoke)each([S.assets.smoke],u=>{if(u.setLight)u.setLight({dir:sd,color:L.smoke.light,ambient:L.smoke.ambient});});
+    if(L.mist)each([S.assets.adashiMist],u=>{if(u.setColor)u.setColor(L.mist.color);if(u.setLight)u.setLight({dir:sd,color:L.mist.glow});});
   }
   // 灯(燈台)の位置と揺らぎ → interiorLight
   function lampWorldPos(){
@@ -724,10 +810,11 @@ const SAIGEN_TSUREZURE=(()=>{
     if(typeof moonHalo!=="undefined"&&moonHalo)moonHalo.visible=false;
     if(typeof moonPhaseShadow!=="undefined"&&moonPhaseShadow)moonPhaseShadow.visible=false;
     if(!S.bg)S.bg=new THREE.Color();
-    S.bg.setHex(L.sky&&L.sky.horizon!=null?L.sky.horizon:L.fog.color);scene.background=S.bg;
+    S.bg.setHex(L.fog.color);scene.background=S.bg;
     if(scene.fog){scene.fog.color.setHex(L.fog.color);scene.fog.density=(S.shots[S.shotIdx]&&S.shots[S.shotIdx].macro)?0:L.fog.density;}
-    sun.color.setHex(L.sun.color);sun.intensity=L.sun.intensity;
-    const d=V(L.sun.dir).normalize();
+    const SL=L.sunLight||{color:0xffffff,intensity:1,dir:[0,1,0]};
+    sun.color.setHex(SL.color);sun.intensity=SL.intensity;
+    const d=V(arr3(SL.dir)).normalize();
     sun.target.position.copy(S.shadowCenter);sun.target.updateMatrixWorld();
     sun.position.copy(S.shadowCenter).addScaledVector(d,Math.max(40,S.shadowHalf*2.2));
     const scm=sun.shadow.camera,hh=S.shadowHalf;
@@ -736,7 +823,8 @@ const SAIGEN_TSUREZURE=(()=>{
     ambient.color.setHex(L.ambient.color);ambient.intensity=L.ambient.intensity;
     moon.intensity=0;
     rim.color.setHex(L.rim?L.rim.color:0xd8e4ff);rim.intensity=L.rim?L.rim.intensity:.12;
-    rim.position.copy(S.shadowCenter).addScaledVector(d.clone().multiplyScalar(-1).setY(.6).normalize(),60);rim.target&&rim.target.position.copy(S.shadowCenter);rim.target&&rim.target.updateMatrixWorld();
+    const rd=(L.rim&&L.rim.dir)?V(arr3(L.rim.dir)).normalize():d.clone().multiplyScalar(-1).setY(.6).normalize();
+    rim.position.copy(S.shadowCenter).addScaledVector(rd,60);if(rim.target){rim.target.position.copy(S.shadowCenter);rim.target.updateMatrixWorld();}
     renderer.toneMappingExposure=L.exposure;
     // 雨は止める(場の情景を守る)
     if(typeof rainFall!=="undefined"&&rainFall&&rainFall.userData){rainFall.userData.rainSeason=false;rainFall.userData.rainOn=false;rainFall.visible=false;}
@@ -768,6 +856,8 @@ const SAIGEN_TSUREZURE=(()=>{
   function dispose(){
     if(!S.active&&!S.stage)return;
     S.active=false;
+    if(S.pumpTimer){clearTimeout(S.pumpTimer);S.pumpTimer=null;}
+    S.done={};S.proxy=null;S.labelFig={};
     stopAudio();
     restoreGlobals();
     (S.assets.list||[]).forEach(o=>{try{if(o&&o.userData&&typeof o.userData.dispose==="function")o.userData.dispose();}catch(e){console.error("[tsurezure] dispose:",e);}});
@@ -779,23 +869,16 @@ const SAIGEN_TSUREZURE=(()=>{
   /* ---------- 舞台の組み立て(本体の buildSaigenStage から) ---------- */
   function build(stage){
     dispose();
-    S.stage=stage;S.active=true;S.quality=qualityKey();S.assets={};S.actors={};
+    S.stage=stage;S.active=true;S.quality=qualityKey();S.assets={};S.actors={};S.done={};S.jobMs={};S.timing=S.timing||null;
     saveGlobals();
-    const t0=performance.now();
-    buildSky();buildAdashi();buildToribe();buildAn();buildMacro();buildEstate();
-    // 最初に見る場の光を仮置き
+    // 名札・吹き出しの代理点(本体の名札は figure.position をワールド座標として扱うため、ゾーンや庵の子になった人物の
+    // 頭上位置を毎フレームここへ写す)
+    S.proxy={};S.labelFig={};
+    [["kenko","兼好法師"],["roujin","老いた貴族"],["mago","孫"]].forEach(([k,name])=>{const o=new THREE.Object3D();o.name="tsure-label-"+k;
+      o.userData={saigenCustom:true,label:name,cname:name,labelY:0,bubbleY:0,hideLabel:true};o.visible=false;stage.add(o);S.proxy[k]=o;S.actors[k]=o;});
+    // 最初に見る場の光を仮置き(素材は onBeat で場ごとに作る)
     setLight(presetState("autumnDawnMist"),0);
     window.SAIGEN_ENV_HOOK=envHook;
-    // シェーダーを先に用意(タイトルのカットインの間に済ませ、場面転換のつかえを減らす)
-    try{
-      const vis={};Object.keys(S.zones).forEach(k=>{vis[k]=S.zones[k].visible;S.zones[k].visible=true;});
-      const added=!stage.parent;if(added)scene.add(stage);
-      stage.visible=true;
-      if(renderer&&renderer.compile)renderer.compile(scene,camera);
-      if(added)scene.remove(stage);
-      Object.keys(S.zones).forEach(k=>{S.zones[k].visible=vis[k];});
-    }catch(e){console.warn("[tsurezure] precompile skipped:",e);}
-    if(typeof console!=="undefined")console.log("[tsurezure] stage built in "+Math.round(performance.now()-t0)+"ms (quality "+S.quality+")");
     return {actors:S.actors,onBeat,update,dispose,tsurezure:true};
   }
   SAIGEN_PROP_BUILDERS.tsurezure=build;

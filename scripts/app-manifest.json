@@ -128,6 +128,48 @@
     "end": "/* APP_CODEX_VIEWER_EMBED_END */"
   },
   {
+    "name": "tsurezure-insects",
+    "src": "src/app/tsurezure-insects.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_TSUREZURE_INSECTS_EMBED_BEGIN (src/app/tsurezure-insects.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_TSUREZURE_INSECTS_EMBED_END */"
+  },
+  {
+    "name": "tsurezure-figures",
+    "src": "src/app/tsurezure-figures.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_TSUREZURE_FIGURES_EMBED_BEGIN (src/app/tsurezure-figures.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_TSUREZURE_FIGURES_EMBED_END */"
+  },
+  {
+    "name": "tsurezure-an",
+    "src": "src/app/tsurezure-an.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_TSUREZURE_AN_EMBED_BEGIN (src/app/tsurezure-an.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_TSUREZURE_AN_EMBED_END */"
+  },
+  {
+    "name": "tsurezure-nature",
+    "src": "src/app/tsurezure-nature.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_TSUREZURE_NATURE_EMBED_BEGIN (src/app/tsurezure-nature.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_TSUREZURE_NATURE_EMBED_END */"
+  },
+  {
+    "name": "tsurezure-flora",
+    "src": "src/app/tsurezure-flora.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_TSUREZURE_FLORA_EMBED_BEGIN (src/app/tsurezure-flora.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_TSUREZURE_FLORA_EMBED_END */"
+  },
+  {
+    "name": "tsurezure-trees",
+    "src": "src/app/tsurezure-trees.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_TSUREZURE_TREES_EMBED_BEGIN (src/app/tsurezure-trees.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_TSUREZURE_TREES_EMBED_END */"
+  },
+  {
     "name": "saigen-tsurezure",
     "src": "src/app/saigen-tsurezure.js",
     "kind": "markers-exist",
