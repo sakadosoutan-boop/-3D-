@@ -78,7 +78,11 @@ const domRefs = [
   ...mainScript.matchAll(/\$\(["']([^"']+)["']\)/g),
   ...mainScript.matchAll(/document\.getElementById\(["']([^"']+)["']\)/g),
 ].map((match) => match[1]);
-const missingDomRefs = [...new Set(domRefs.filter((id) => !ids.includes(id)))];
+// Include literal IDs assigned to created elements; generated dialogs are not HTML literals.
+const assignedIds = [...mainScript.matchAll(/\.id\s*=\s*["']([^"']+)["']/g),
+  ...mainScript.matchAll(/\.setAttribute\(\s*["']id["']\s*,\s*["']([^"']+)["']/g)].map(m=>m[1]);
+const knownIds = new Set([...ids, ...assignedIds]);
+const missingDomRefs = [...new Set(domRefs.filter((id) => !knownIds.has(id)))];
 if (missingDomRefs.length) fail(`missing DOM ids referenced by script: ${missingDomRefs.join(', ')}`);
 
 const forbiddenR128Apis = ['SRGBColorSpace', '.colorSpace'];

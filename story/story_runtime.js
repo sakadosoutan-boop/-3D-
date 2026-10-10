@@ -220,7 +220,7 @@ function stInject(){
     '<button id="stMenuBtn" title="中断して章メニューへ(進行は自動保存)" style="position:fixed;top:calc(env(safe-area-inset-top) + 6px);right:46px;pointer-events:auto;background:var(--urushi);color:var(--gofun);border:1px solid var(--kin);width:30px;height:30px;border-radius:50%;font-size:13px;line-height:1;cursor:pointer">📑</button>'+
     '<button id="stQuit" title="物語を閉じる">✕</button>'+
     '<div class="st-box" id="stBox"><img id="stFace" alt="">'+
-    '<div class="st-vn"><button id="stAuto">オート</button><button id="stSkip">スキップ</button><button id="stSpeed" title="文字送りの速さ">普</button><button id="stLog">ログ</button></div>'+
+    '<div class="st-vn"><button id="stAuto">オート</button><button id="stSkip">スキップ</button><button id="stSpeed" title="文字送りの速さ">普</button><button id="stLog">ログ</button><button id="stThreads">伏線帳</button></div>'+
     '<div class="st-spk" id="stSpk"></div><div class="st-text" id="stText"></div>'+
     '<div class="st-next" id="stNextWrap"><button id="stNext">つぎへ ▶</button></div><div class="st-opts" id="stOpts"></div></div>'+
     '<div class="st-panel" id="stPanel"><div class="st-card"><h3 id="stPanelTitle"></h3><div class="st-body" id="stPanelBody"></div><div class="st-btns" id="stPanelBtns"></div></div></div>';
@@ -235,6 +235,7 @@ function stInject(){
   stEl("stSkip").onclick=()=>{const v=APP.story&&APP.story.vn;if(!v)return;v.skip=!v.skip;v.auto=false;stVnButtons();
     if(v.skip&&v.curEv){clearTimeout(window._stAutoT);window._stAutoT=setTimeout(()=>stVnAdvance(),90);}beep(620,.04);};
   stEl("stLog").onclick=()=>{stVnShowLog();beep(560,.04);};
+  stEl("stThreads").onclick=()=>stShowThreads();
   stEl("stSpeed").onclick=()=>{ // 波AG: 文字送り速度を4段階でサイクル(永続化)
     stSpeedIdx=(stSpeedIdx+1)%ST_SPEEDS.length;
     try{localStorage.setItem(ST_SPEED_KEY,String(stSpeedIdx));}catch(e){}
@@ -255,7 +256,13 @@ function stVnStop(){ // 選択肢・試練・パネルではスキップを解�
 function stVnAdvance(){
   const v=APP.story&&APP.story.vn;if(!v||!v.curEv)return;
   if(APP.mode!=="story"||stEl("stPanel").style.display==="flex")return;
-  const ev=v.curEv;v.curEv=null;SM.goNext(ev.next);
+  const ev=v.curEv;v.curEv=null;if(window.StoryFollowthrough)window.StoryFollowthrough.completed(SM.state.chapterId,ev);SM.goNext(ev.next);
+}
+function stShowThreads(back){
+  const v=APP.story&&APP.story.vn,cur=v&&v.curEv;
+  const entries=window.StoryFollowthrough?window.StoryFollowthrough.journal():[];
+  const body=entries.length?entries.map(e=>'<div class="st-follow-entry"><strong>'+stEsc(e.title)+' · '+(e.resolved?'回収':'気づき')+'</strong>'+stEsc(e.text)+'</div>').join(''):'読み終えた場面に手がかりがあれば、ここに記します。';
+  stPanel('伏線回収帳',body,[["物語へ戻る",()=>{if(v)v.curEv=cur;if(back)back();}]]);
 }
 function stVnSchedule(ev){
   const v=APP.story&&APP.story.vn;if(!v)return;
@@ -832,7 +839,7 @@ function stShowDialogue(spk,text,ev){
   const glitchWord=ev&&ev.glitchWord;
   const voice=ST_VOICE[spk]||[1400,"square",.008]; // 波AG: 話者ごとの声色(文字送り音)
   let revealed=false;
-  const advanceNode=()=>{if(v)v.curEv=null;clearTimeout(window._stAutoT);clearInterval(window._stType);SM.goNext(ev.next);};
+  const advanceNode=()=>{if(v)v.curEv=null;clearTimeout(window._stAutoT);clearInterval(window._stType);if(window.StoryFollowthrough)window.StoryFollowthrough.completed(SM.state.chapterId,ev);SM.goNext(ev.next);};
   const nextPage=()=>{pageIdx++;showPage();};
   const onRevealDone=()=>{
     revealed=true;te.classList.add("tapadv");
@@ -1082,8 +1089,15 @@ function stSpawnCollectibles(info){
   document.body.classList.remove("st-haze-focus");
   toast(placing?"札を拾い、青い光の正しい場所へ戻そう("+items.length+"枚)":"光る札を集めよう("+items.length+"枚)。近づけば手に入る",3600);
   stEl("stBox").style.display="none"; // 収集中は会話箱を畳み、歩かせる
+  const follow=window.StoryFollowthrough;
+  if(follow&&follow.canRecall(info.groupId,(info.positions||[]).map(p=>p.id))){
+    const recall=document.createElement("button");recall.id="stRecall";recall.className="st-opt";recall.textContent="既習の札集め・配置をまとめる";
+    recall.onclick=()=>{recall.remove();const ids=(info.positions||[]).filter(p=>!got[p.id]).map(p=>p.id);stClearCollectibles();ids.forEach(id=>info.onCollect(id));};
+    stEl("storyHud").appendChild(recall);
+  }
 }
 function stClearCollectibles(){
+  const recall=stEl("stRecall");if(recall)recall.remove();
   const S=APP.story;if(!S||!S.collect)return;
   S.collect.items.forEach(it=>{
     if(window.StoryObjects)window.StoryObjects.disposeGroup(it.api.group);
@@ -1600,9 +1614,11 @@ function stEndingResultHint(endingId){
 }
 /* ---- エンディング/章クリア ---- */
 function stEnding(endingId){
+  const owner=APP.story;clearTimeout(owner?.endingPanelTimer);
   stClearCollectibles();stVnStop();
   if(typeof ST_BGM!=="undefined")ST_BGM.stop(); // 結末では章BGMを畳む(結末カードは静かに見せる)
   stSaveEnding(endingId); // 到達を永続化(回想の間のネタバレ防止に使う)
+  if(window.StoryFollowthrough)window.StoryFollowthrough.recordEnding(endingId,SM.state);
   if(endingId==="ED1_TRUE"){ // 波AG: 朝光——結末カードの背後に、右上から柔らかい暖色光を差し込ませる
     document.body.classList.add("st-ed1-glow");
     clearTimeout(window._stEd1GlowT);
@@ -1638,6 +1654,8 @@ function stEnding(endingId){
     }]);
   }
   const showPanel=()=>stPanel("《 "+ed.t+" 》",hint+ed.d,[
+    ["この旅の選択を振り返る",()=>{const review=window.StoryFollowthrough&&window.StoryFollowthrough.endingReview(endingId);stPanel("読み終えた結末と選択",review?'<p>'+stEsc(review.reason)+'</p>'+review.choices.map(c=>'<div class="st-follow-entry">第'+c.chapter+'話 · '+stEsc(c.text)+'</div>').join(''):'この結末の記録はありません。',[["結末へ戻る",showPanel]]);}],
+    ["伏線回収帳",()=>stShowThreads(showPanel)],
     ["結末の回想へ（他の結末を見る）",()=>stOpenEndingGallery()],
     ...extra,
     ["章をえらぶ",()=>{SM.state.endingId=null;stChapterMenu();}],
@@ -1647,7 +1665,7 @@ function stEnding(endingId){
   // 波AB: ED3は今やseq_630_ed3_fire(章6の自然な流れ)で火桶が消える演出を既に見せ終えているため、
   // ここで再度エフェクトを発火させない(二重発火防止)。全結末共通で一呼吸(暗転/白転)を挟んでからカードを出す
   stFade(endingId==="ED5_SPOOKY"?"black":"white");
-  setTimeout(showPanel,780);
+  if(owner)owner.endingPanelTimer=setTimeout(()=>{owner.endingPanelTimer=0;if(APP.story===owner&&APP.mode==='story')showPanel();},780);
 }
 function stOpenEndingGallery(){
   if(SM&&SM.state)SM.state.endingId=null;
@@ -1828,6 +1846,7 @@ function stChapterMenu(){
     gaugeLine+"<small style='color:#9a8a6a'>読了 "+doneN+"/5話 ｜ 結末 "+edN+"/5 ｜ デモ版"+paramLine+"</small>",btns);
 }
 function stStartChapter(id,resumeSeq){
+  clearTimeout(APP.story?.endingPanelTimer);
   stEl("stPanel").style.display="none";
   stCleanupSets();
   SM.state.endingId=null;
@@ -1956,6 +1975,7 @@ function startStory(){
 }
 function stExitToTitle(){
   const S=APP.story;
+  clearTimeout(S?.endingPanelTimer);
   APP.storyTokoyoSky=false;APP.storyIndoor=false;
   if(typeof ST_BGM!=="undefined")ST_BGM.stop(); // 物語を閉じる際は章BGMを必ず畳む
   stClearCollectibles();stCleanupSets();
@@ -1990,6 +2010,7 @@ function stExitToTitle(){
   if(typeof careerShowSenji==="function")careerShowSenji();
   if(typeof careerUpdateBadge==="function")careerUpdateBadge();
   if(typeof SFX!=="undefined"&&SFX.playTheme)SFX.playTheme();
+  if(window.SELECTED_UX&&window.SELECTED_UX.refresh)window.SELECTED_UX.refresh();
   beep(560,.08,"sine",.1);
 }
 /* ---- 毎フレーム更新(animateから呼ばれる) ---- */

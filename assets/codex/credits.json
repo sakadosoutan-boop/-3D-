@@ -208,5 +208,47 @@
     "height": 600,
     "changes": "Wikimedia Commonsの縮小表示用JPEGを同梱。色・内容・トリミングの変更なし。",
     "bytes": 102950
+  },
+  {
+    "id": "byoubu",
+    "items": [
+      "byoubu"
+    ],
+    "src": "assets/codex/byoubu.jpg",
+    "caption": "六曲屏風の部分 · 芥子図屏風の右端二面",
+    "note": "メトロポリタン美術館所蔵、17世紀初頭の六曲屏風（62.36.1）の右端二面を撮影した資料。縁・面の継ぎ目・画面の質感を比べる後世の資料です。平安期の絵柄の復元例ではありません。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:%E8%8A%A5%E5%AD%90%E5%9B%B3%E5%B1%8F%E9%A2%A8-Red_and_White_Poppies_MET_ASA236.jpg",
+    "collectionSource": "https://www.metmuseum.org/art/collection/search/44914",
+    "author": "The Metropolitan Museum of Art（作品: 伝土佐光茂筆・帰属は未確定）",
+    "license": "CC0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/8/87/%E8%8A%A5%E5%AD%90%E5%9B%B3%E5%B1%8F%E9%A2%A8-Red_and_White_Poppies_MET_ASA236.jpg",
+    "changes": "長辺1200pxへ縮小・JPEG再圧縮。色調・内容・トリミングの変更なし。",
+    "verifiedOn": "2026-10-08",
+    "width": 975,
+    "height": 1200,
+    "bytes": 230731
+  },
+  {
+    "id": "ryuteki",
+    "items": [
+      "ryuteki"
+    ],
+    "src": "assets/codex/ryuteki.jpg",
+    "caption": "下段が龍笛、上段が高麗笛 · 実物の比較資料",
+    "note": "メトロポリタン美術館所蔵の19世紀の楽器。写真下段のケースにある長い管が龍笛（48.126.1）、上段は高麗笛です。平安期の個体ではなく、管・漆塗りのケースを比べる参考写真です。",
+    "kind": "photo",
+    "source": "https://commons.wikimedia.org/wiki/File:Komabue_and_Ryuteki_fue.jpg",
+    "collectionSource": "https://www.metmuseum.org/art/collection/search/503033",
+    "author": "unforth / Claire H.",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Komabue_and_Ryuteki_fue.jpg",
+    "changes": "長辺1200pxへ縮小・JPEG再圧縮。色調・内容・トリミングの変更なし。写真の再利用にはCC BY-SA 2.0が適用されます。",
+    "verifiedOn": "2026-10-08",
+    "width": 1200,
+    "height": 900,
+    "bytes": 232966
   }
 ]

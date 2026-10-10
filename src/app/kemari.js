@@ -92,7 +92,7 @@ function kmrInitialState(){
     kickQueued:false,quickStep:false,flowTurns:0,
     online,onlineSyncBusy:false,onlineNextSync:0,onlineNextPublish:0,
     lastTs:0,lastHud:0,judgeTimer:null,timers:[],helpOpen:false,
-    message:"鞠庭に入り、仲間の声と鞠の弧を読む。"
+    message:"鞠庭に入り、仲間の声と鞠の弧を読む。",lastFailure:""
   };
 }
 
@@ -209,6 +209,17 @@ function kmrInputQuality(S,now){
   if(time<=save&&position<=.86)return{kind:"save",time,position,technique};
   return{kind:"miss",time,position,technique};
 }
+/* 判定と同じ閾値を使い、一度に直すべき操作を一つ示す。得点には触れない。 */
+function kmrFailureReason(S,data){
+  const d=S.delivery;if(!d)return"鞠がまだ来ていない。次の軌道を待とう";
+  const progress=(kmrNow()-d.start)/d.flight;
+  const time=Number.isFinite(data?.time)?data.time:Math.abs(progress-1);
+  const position=Number.isFinite(data?.position)?data.position:Math.abs(S.playerX-d.lane);
+  if(position>.86)return`${["左","中央","右"][d.lane+1]}へ寄ろう。落下輪の真下で待つ`;
+  if(time>KEMARI_CFG.saveWindow)return progress<1?"蹴るのが早い。鞠が落下輪に入ってから蹴ろう":"蹴るのが遅い。落下輪に入ったらすぐ蹴ろう";
+  if(!data?.technique)return`技が違う。次は「${KEMARI_CFG.techniques[d.technique].label}」で返そう`;
+  return"落下輪に近づき、鞠が足元に来た瞬間に蹴ろう";
+}
 /* 蹴る。tech を渡すとその技で蹴り、以後の既定の技にもなる(＝「選んでから蹴る」の二手を一手にする)。
    opt.at はジェスチャー判定のために指を離した時刻ではなく「触れた時刻」を渡すためのもの。
    opt.fromQueue は構え済みの自動発動。 */
@@ -277,9 +288,10 @@ function kmrNextPartner(S,d,kind){
 }
 function kmrDrop(S,data){
   S.poise--;S.combo=0;S.teamSync=kmrClamp(S.teamSync-18,0,100);S.miyabi=kmrClamp(S.miyabi-9,0,100);
-  S.impact=.5;S.shake=7;S.message=`鞠が乱れた。残る余裕は ${Math.max(0,S.poise)}。`;
+  S.lastFailure=kmrFailureReason(S,data);
+  S.impact=.5;S.shake=7;S.message=`${S.lastFailure}　残る余裕 ${Math.max(0,S.poise)}。`;
   kmrSound("miss");if(typeof seNG==="function")kmrSafe(()=>seNG());
-  kmrShowJudge(S.poise>0?"乱れた… 仲間が鞠を拾う":"鞠を落としてしまった…","miss");
+  kmrShowJudge(S.lastFailure,"miss");
   kmrUpdateHud(true);
   if(S.poise<=0){S.over=true;S.phase="over";kemariGameOver(false);return;}
   S.phase="recovery";
@@ -312,7 +324,7 @@ function kemariGameOver(victory){
   const el=kmr$("kmrGoDetail");
   if(el){
     const title=won?"四つの懸を巡り、鞠を成就した。":"鞠は地に落ちたが、次の一鞠へ学びは残る。";
-    el.innerHTML=`${title}<br>続け鞠: <b>${S.rally}回</b>　最高連携: <b>${S.maxCombo}</b><br>得点: <b>${S.score}</b>　雅: <b>${Math.round(S.miyabi)}</b><br>自己最高: <b>${next.rally}回 / ${next.score}点</b>${won?`<br>成就回数: <b>${next.clears}</b>`:""}`;
+    el.innerHTML=`${title}<br>続け鞠: <b>${S.rally}回</b>　最高連携: <b>${S.maxCombo}</b><br>得点: <b>${S.score}</b>　雅: <b>${Math.round(S.miyabi)}</b><br>自己最高: <b>${next.rally}回 / ${next.score}点</b>${won?`<br>成就回数: <b>${next.clears}</b>`:`<br>次の一鞠: ${S.lastFailure}`}`;
   }
   const newBest=kmr$("kmrNewBest");if(newBest)newBest.classList.toggle("show",S.score>prev.score||won&&S.round+1>prev.round);
   const go=kmr$("kemariGameOver");if(go)go.classList.add("show");
@@ -815,7 +827,7 @@ function kmrBind(){
   if(quit)quit.onclick=()=>{if(typeof beep==="function")beep(400,.06);if(typeof enterMode==="function")enterMode("walk");};
   if(helpStart)helpStart.onclick=()=>{const help=kmr$("kemariHelp");if(help)help.classList.remove("show");kmrMarkHelpSeen();if(KMR){KMR.helpOpen=false;kmrStartRound(KMR);}if(typeof beep==="function")beep(520,.06);};
   if(retry)retry.onclick=()=>{if(typeof beep==="function")beep(600,.07);const go=kmr$("kemariGameOver");if(go)go.classList.remove("show");startKemari();};
-  if(title)title.onclick=()=>location.reload();
+  if(title)title.onclick=()=>returnToTitle();
   /* 下段の札は「その技で蹴る」ボタン。ジェスチャーと同じ動作をボタンでも用意する
      (PC・タッチが苦手な場合・スクリーンリーダー利用者のための同等操作)。 */
   const controlActions=[

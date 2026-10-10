@@ -151,8 +151,8 @@
       "id": "seq_304_fail",
       "type": "dialogue",
       "speaker": "語り",
-      "text": "焦るあまり、身を乗り出しすぎた。にわかに立ちこめた霧が視界を塞ぎ、頭の奥が、どく、と脈打つ。——息を整え、もう一度だけ、几帳の隙間へ目を細める。",
-      "next": "seq_304b1"
+      "text": "身を乗り出しすぎた。几帳の向こうで、衣擦れが止まる。見ようとした相手が、こちらを恐れたのだと、遅れて気づいた。",
+      "next": "seq_follow_apology"
     },
     {
       "id": "seq_304b1",
@@ -628,14 +628,14 @@
       "emotes": {
         "kohagi": "smile"
       },
-      "next": "seq_315_kohagi_words"
+      "next": "seq_follow_bond"
     },
     {
       "id": "seq_314_after_fail",
       "type": "dialogue",
       "speaker": "右近",
-      "text": "「お見事——とは申せませぬが、水底から戻られただけで上々でございます。あの主、次は足元の影から参りますぞ。太刀の間合いを思い出されませ。——参りますぞ、若君！　仕切り直しにございます！」",
-      "next": "seq_312_kappa_boss",
+      "text": "「戻られた。それでまず一つ、勝ちにございます。——次へ参る前に、若君。いま恐ろしかったものを、それがしに話せますか」",
+      "next": "seq_follow_kappa_recover",
       "emotes": {
         "ukon": "stern"
       }
@@ -656,6 +656,128 @@
       "speaker": "語り",
       "text": "月が、東の対の屋根の上に昇りきる。秋の夕は終わり、秋の夜が始まる。秀頼は、相手を見つめることと、相手を奪うことの違いを——そして、見なかったことにする優しさがこの世にあることを、知った。",
       "next": "chapter_complete"
+    },
+    {
+      "id": "seq_follow_apology",
+      "type": "choice",
+      "text": "向こうから返事はない。何を返す？",
+      "options": [
+        {
+          "text": "顔を追ったことを詫び、返事を待つ",
+          "next": "seq_follow_apology_wait",
+          "setFlag": {
+            "repairedKaimami": true
+          }
+        },
+        {
+          "text": "今は距離を取り、小萩に文の渡し方を教わる",
+          "next": "seq_follow_apology_learn",
+          "setFlag": {
+            "askedForHelp": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "seq_follow_apology_wait",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「お詫びに返事を求めては、また相手を急かします。……ここで待ちましょう。沈黙も、あの方のお返事にございます」",
+      "next": "seq_304b1"
+    },
+    {
+      "id": "seq_follow_apology_learn",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「承りました。届ける道は、目で踏み込む道だけではございませぬ。まずは、散ってしまった文を拾うところから」",
+      "next": "seq_304b1"
+    },
+    {
+      "id": "seq_follow_kappa_recover",
+      "type": "choice",
+      "text": "右近が太刀を下げ、返事を待っている。",
+      "options": [
+        {
+          "text": "「近づかれると、何も見えなくなる」——間合いを聞く",
+          "next": "seq_follow_kappa_lesson",
+          "setFlag": {
+            "trustedUkon": true
+          }
+        },
+        {
+          "text": "言葉を整えてから、もう一度挑む",
+          "next": "seq_follow_kappa_breathe"
+        }
+      ]
+    },
+    {
+      "id": "seq_follow_kappa_lesson",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "「ならば、追わずに一歩退く。遠ければ矢、迫れば太刀。水の主だけでなく、ご自身の立つ場所も見てくださいませ。……怖いと申せる方には、背を預けられます」",
+      "next": "seq_312_kappa_boss"
+    },
+    {
+      "id": "seq_follow_kappa_breathe",
+      "type": "dialogue",
+      "speaker": "秀頼（心）",
+      "text": "勝ちたい、だけじゃ足りない。戻ってきて、話の続きをしたい。柄を握り直す。今度は水面だけでなく、退ける場所を見ておこう。",
+      "next": "seq_312_kappa_boss"
+    },
+    {
+      "id": "seq_follow_bond",
+      "type": "choice",
+      "text": "霧が引く。右近と小萩が、帰り道で足を止めた。この人たちに、何を残したい？",
+      "options": [
+        {
+          "text": "「次は、わからないうちに相談する」",
+          "next": "seq_follow_bond_trust",
+          "setFlag": {
+            "bondTrust": true,
+            "bondFriendship": false,
+            "bondFarewell": false
+          }
+        },
+        {
+          "text": "「役目のない時にも、一緒に話したい」",
+          "next": "seq_follow_bond_friend",
+          "setFlag": {
+            "bondTrust": false,
+            "bondFriendship": true,
+            "bondFarewell": false
+          }
+        },
+        {
+          "text": "「帰る時は、黙って消えずに別れを言う」",
+          "next": "seq_follow_bond_farewell",
+          "setFlag": {
+            "bondTrust": false,
+            "bondFriendship": false,
+            "bondFarewell": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "seq_follow_bond_trust",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「では、わたくしも知らぬことを、知った顔で申さぬようにいたします。導く者と従う者だけでは、道を見失うこともございましょうから」",
+      "next": "seq_315_kohagi_words"
+    },
+    {
+      "id": "seq_follow_bond_friend",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "「それは困った。役目のほかには、下手な歌と軽口しかございませぬぞ」——笑う声に、小萩もつられた。秀頼は初めて、この二人にも暇な時間があればいいと思った。",
+      "next": "seq_315_kohagi_words"
+    },
+    {
+      "id": "seq_follow_bond_farewell",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「……承りました。引き止めぬよう、努めます。別れの言葉を聞けるのなら、待つことも少しは違いましょう」",
+      "next": "seq_315_kohagi_words"
     }
   ]
 }

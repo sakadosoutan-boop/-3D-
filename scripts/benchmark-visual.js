@@ -104,6 +104,8 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
      // The close-up camera is assigned after the paused frame; refresh the character's normal distance LOD.
      if(s.subject==='hime')for(const p of people)if(p.detail)p.detail.visible=camera.position.distanceTo(p.g.position)<15;
      if(typeof VISUAL_EXPERIENCE!=='undefined'&&VISUAL_EXPERIENCE)VISUAL_EXPERIENCE.update(clock.elapsedTime);
+     // Manual inspection cameras need the same geometry LOD refresh as a rendered game frame.
+     if(typeof SELECTED_PERFORMANCE!=='undefined'&&SELECTED_PERFORMANCE){window.__visualLODClock=(window.__visualLODClock||100)+1;SELECTED_PERFORMANCE.update(window.__visualLODClock);}
      if(s.subject==='moon'){moonPhaseShadow.lookAt(camera.position);}
      TEX.clouds.offset.set(.1,0);cloudDome.position.copy(camera.position);scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
      updateControlUI();renderer.render(scene,camera);

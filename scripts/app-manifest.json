@@ -126,5 +126,124 @@
     "kind": "markers-exist",
     "begin": "/* APP_CODEX_VIEWER_EMBED_BEGIN (src/app/codex-viewer.js から自動生成。ここを直接編集しない) */",
     "end": "/* APP_CODEX_VIEWER_EMBED_END */"
+  },
+  {
+    "name": "combat",
+    "src": "src/app/combat.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_COMBAT_EMBED_BEGIN (src/app/combat.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_COMBAT_EMBED_END */"
+  },
+  {
+    "name": "utakai",
+    "src": "src/app/utakai.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_UTAKAI_EMBED_BEGIN (src/app/utakai.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_UTAKAI_EMBED_END */"
+  },
+  {
+    "name": "kaiawase",
+    "src": "src/app/kaiawase.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_KAIAWASE_EMBED_BEGIN (src/app/kaiawase.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_KAIAWASE_EMBED_END */"
+  },
+  {
+    "name": "selected-ux-css",
+    "src": "src/app/selected-ux.css",
+    "kind": "markers-exist",
+    "begin": "/* APP_SELECTED_UX_CSS_EMBED_BEGIN (src/app/selected-ux.css から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_SELECTED_UX_CSS_EMBED_END */"
+  },
+  {
+    "name": "learning-extension-css",
+    "src": "src/app/learning-extension.css",
+    "kind": "markers-exist",
+    "begin": "/* APP_LEARNING_EXTENSION_CSS_EMBED_BEGIN (src/app/learning-extension.css から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_LEARNING_EXTENSION_CSS_EMBED_END */"
+  },
+  {
+    "name": "story-followthrough-css",
+    "src": "src/app/story-followthrough.css",
+    "kind": "markers-exist",
+    "begin": "/* APP_STORY_FOLLOWTHROUGH_CSS_EMBED_BEGIN (src/app/story-followthrough.css から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_STORY_FOLLOWTHROUGH_CSS_EMBED_END */"
+  },
+  {
+    "name": "combat-upgrade-css",
+    "src": "src/app/combat-upgrade.css",
+    "kind": "markers-exist",
+    "begin": "/* APP_COMBAT_UPGRADE_CSS_EMBED_BEGIN (src/app/combat-upgrade.css から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_COMBAT_UPGRADE_CSS_EMBED_END */"
+  },
+  {
+    "name": "story-followthrough",
+    "src": "src/app/story-followthrough.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_STORY_FOLLOWTHROUGH_EMBED_BEGIN (src/app/story-followthrough.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_STORY_FOLLOWTHROUGH_EMBED_END */"
+  },
+  {
+    "name": "waka-notes",
+    "src": "src/app/waka-notes.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_WAKA_NOTES_EMBED_BEGIN (src/app/waka-notes.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_WAKA_NOTES_EMBED_END */"
+  },
+  {
+    "name": "learning-extension",
+    "src": "src/app/learning-extension.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_LEARNING_EXTENSION_EMBED_BEGIN (src/app/learning-extension.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_LEARNING_EXTENSION_EMBED_END */"
+  },
+  {
+    "name": "selected-ux",
+    "src": "src/app/selected-ux.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_SELECTED_UX_EMBED_BEGIN (src/app/selected-ux.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_SELECTED_UX_EMBED_END */"
+  },
+  {
+    "name": "selected-performance-css",
+    "src": "src/app/selected-performance.css",
+    "kind": "markers-exist",
+    "begin": "/* APP_SELECTED_PERFORMANCE_CSS_EMBED_BEGIN (src/app/selected-performance.css から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_SELECTED_PERFORMANCE_CSS_EMBED_END */"
+  },
+  {
+    "name": "selected-performance",
+    "src": "src/app/selected-performance.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_SELECTED_PERFORMANCE_EMBED_BEGIN (src/app/selected-performance.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_SELECTED_PERFORMANCE_EMBED_END */"
+  },
+  {
+    "name": "selected-world-css",
+    "src": "src/app/selected-world.css",
+    "kind": "markers-exist",
+    "begin": "/* APP_SELECTED_WORLD_CSS_EMBED_BEGIN (src/app/selected-world.css から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_SELECTED_WORLD_CSS_EMBED_END */"
+  },
+  {
+    "name": "selected-world",
+    "src": "src/app/selected-world.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_SELECTED_WORLD_EMBED_BEGIN (src/app/selected-world.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_SELECTED_WORLD_EMBED_END */"
+  },
+  {
+    "name": "selected-visuals-css",
+    "src": "src/app/selected-visuals.css",
+    "kind": "markers-exist",
+    "begin": "/* APP_SELECTED_VISUALS_CSS_EMBED_BEGIN (src/app/selected-visuals.css から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_SELECTED_VISUALS_CSS_EMBED_END */"
+  },
+  {
+    "name": "selected-visuals",
+    "src": "src/app/selected-visuals.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_SELECTED_VISUALS_EMBED_BEGIN (src/app/selected-visuals.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_SELECTED_VISUALS_EMBED_END */"
   }
 ]

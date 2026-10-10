@@ -18,6 +18,7 @@ function isIgnorableConsoleError(text) {
 }
 
 async function launchBrowser() {
+  if(process.env.PLAYWRIGHT_CHANNEL)return chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL});
   const attempts = [
     () => chromium.launch({ headless: true }),
     () => chromium.launch({ headless: true, channel: 'chrome' }),
