@@ -1,4 +1,17 @@
-/* ==== TSURE_INSECTS (draft header; API doc written at the end) ==== */
+/* =============================================================================
+ tsurezure-insects.js — ミンミンゼミ・モンカゲロウ・カゲロウの群れ   →  const TSURE_INSECTS
+ 依存: THREE (r128) のみ。形はミリ単位で作り、root を 0.001 倍して実寸（m）にする。テクスチャは canvas。
+ 生き物は +Z が頭、+Y が背（上）。止まり場所の面に置く時は、その面の Object3D（+Y=法線, +Z=前）へ add する。
+ ── API ──────────────────────────────────────────────────────────────
+ TSURE_INSECTS.makeMinminZemi({quality, seed?}) -> Group   ミンミンゼミ（全長 ≈0.059m, 翅端まで）。
+   原点 = 脚の接地面。userData.setSinging(v 0..1)（腹の振動・翅の震え）/ singing / anchors {head,eyes,thorax,abdomen,wingTip,center}
+   userData.update(dt,t)（触角・脚のしぐさ）/ size {length,width,height} / dispose()
+ TSURE_INSECTS.makeMonKagerou({pose:"rest"|"fly"|"spent", quality, seed?}) -> Group   モンカゲロウ（尾まで ≈0.05m）。
+   rest: 翅を背の上で閉じて止まる。fly: 羽ばたき（userData.flap 0..1）。spent: 水面に翅を広げて横たわる（力尽きた姿）。
+   userData.anchors {head,thorax,wingTip,center} / update(dt,t) / dispose()
+ TSURE_INSECTS.makeMayflySwarm({count?:40, radius?:1.2, height?:2.0, glow?, quality, seed?}) -> Group
+   夕暮れの婚姻飛翔の群れ（InstancedMesh）。原点 = 群れの下端中心。逆光で翅が光る。update(dt,t) / dispose()
+============================================================================= */
 const TSURE_INSECTS=(()=>{
 "use strict";
 /* ------------------------------------------------------------------

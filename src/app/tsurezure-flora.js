@@ -1,4 +1,22 @@
-/* TSURE_FLORA — header placeholder */
+/* =============================================================================
+ tsurezure-flora.js — 露の草むら（遠景〜近景）と接写セット   →  const TSURE_FLORA
+ 依存: THREE (r128) のみ。テクスチャは手続き生成。単位 m / +Y 上。
+ ── 草地 ─────────────────────────────────────────────────────────────
+ makeGrassField({width, depth, center:[x,z], heightAt(x,z), mask?(x,z)->0..1, season, dew?, quality, focus?, turf?}) -> Group
+   ススキ・オギ・エノコログサ・秋草と地面の芝。InstancedMesh。mask 0 で生えない（0.5 前後は疎ら）。
+   userData.setDew(v 0..1)（朝露のきらめき）/ setSeason(key) / update(dt,t,camera) / counts / stats {triangles,drawCalls} / dispose()
+   シェーダーの乱数は原点から数 km 離れた座標でも崩れない形（舞台が 2.4km 沖にあるため）。
+ ── 接写セット（実寸で作り、ゲーム側で 20 倍して撮る。ぼけ背景＋専用ライティング） ───────────
+ 共通 userData: cameraHint {position,target,fov}（セット局所）/ setSun(dir,color,intensity) / update(dt,t,camera) / dispose()
+ makeDewMacroSet({style:"dawn"|"dusk", quality}) -> Group  葉先の露（大写し）。triggerFall({slowmo,reform}) で一粒こぼれる。
+   setEvaporate(v) / hero（露の中心）
+ makeBarkMacroSet({quality, seed?}) -> Group  夏の桜の枝（横長の皮目・剥がれ・地衣）。userData.perch（+Y=樹皮の法線, +Z=枝の上方向）に蝉を載せる。
+   樹皮は MeshStandard（場の太陽で照らされる）で、焦点から外れた所の質感がぼける。
+ makeLeafMacroSet({quality, seed?}) -> Group  夕暮れの葦の葉（逆光で透ける）。userData.perch（+Y=葉の表, +Z=葉先）にカゲロウを載せる。
+ makeWaterMacroSet({quality, seed?}) -> Group  夕暮れの静かな水面（背景の映り込み・陽のきらめき・表面張力のくぼみ）。
+   userData.perch（水面・+Z=頭の向き）/ perches（奥の 2 点を含む）/ ripple(k)（虫のもがきの波紋）。
+ makeBokehBackdrop({width, height, style:"meadowDawn"|"foliageSummer"|"waterDusk"|"night", sunPos?, quality}) -> Mesh  ぼけ背景。
+============================================================================= */
 const TSURE_FLORA=(()=>{
 "use strict";
 /* ------------------------------------------------------------------
@@ -960,7 +978,10 @@ function cardAtlas(ql){const W=QS(ql,256,512,512),Hh=W/2,cv=mkCanvas(W,Hh),x=cv.
   for(let i=0;i<QS(ql,30,40,44);i++){const x0=hw*.5+R.g()*hw*.16,len=Hh*R.r(.3,.97)*(R()<.3?.6:1),ang=R.g()*.5,bend=R.s()*1.1;blade(x0,Hh,len,ang,bend,R.r(2,3.6)*W/512,R.r(.62,1),false);}
   /* right: susuki clump with arching leaves (midrib) */
   for(let i=0;i<QS(ql,16,20,22);i++){const x0=hw*1.5+R.s()*hw*.06,len=Hh*R.r(.6,1.2),side=R()<.5?-1:1,ang=side*R.r(.03,.4),bend=side*R.r(.8,2.2);blade(x0,Hh,len,ang,bend,R.r(2.6,4.4)*W/512,R.r(.7,1),true);}
-  const t=new T.CanvasTexture(cv);t.encoding=T.sRGBEncoding;t.anisotropy=4;t.wrapS=t.wrapT=T.ClampToEdgeWrapping;return t;}
+  /* transparent texels carry a light grey (the canvas leaves them black): without MSAA alpha-to-coverage the soft edges
+     would otherwise render as opaque black fringes ("dark palm" clumps) and mip levels would darken the blades */
+  const d=canvasBytes(cv);for(let k=0;k<d.length;k+=4){const a8=d[k+3];if(a8<250){const w=a8/250;d[k]=Math.round(d[k]*w+196*(1-w));d[k+1]=Math.round(d[k+1]*w+196*(1-w));d[k+2]=Math.round(d[k+2]*w+196*(1-w));}}
+  const t=dataTex(d,W,Hh,{srgb:true,aniso:4});t.image.width=W;return t;}
 function glintGeometry(cands,R){/* one camera-facing quad per candidate */
   const n=cands.length,pos=new Float32Array(n*12),cor=new Float32Array(n*8),ag=new Float32Array(n*16),idx=[];
   cands.forEach((p,i)=>{const r1=R(),r2=R(),sz=Math.pow(R(),2.2);const C=[[-1,-1],[1,-1],[1,1],[-1,1]];
@@ -1207,7 +1228,7 @@ function makeGrassField(opts){opts=opts||{};
   const tuftMesh=build(tufts,tG,tuftMat,"tufts",true);
   /* far cards (grass + susuki clumps share the atlas and material) */
   const cAtlas=bag.add(cardAtlas(ql));
-  const cardOpts=(pal)=>({map:cAtlas,alphaTest:.02,uniforms:{uPal:pal,uDry:S.dry,uMidrib:S.mid,uLod:farLod,uTexW:{value:cAtlas.image.width}},
+  const cardOpts=(pal)=>({map:cAtlas,alphaTest:.42,uniforms:{uPal:pal,uDry:S.dry,uMidrib:S.mid,uLod:farLod,uTexW:{value:cAtlas.image.width}},
     vCol:"col*=1.08;",transBack:"0.45",transFwd:"0.9",cardA2C:true});
   const cardMat=bag.add(fieldMaterial("card",ql,FU,cardOpts(pals.tuft)));
   const cardMesh=build(cards,cardGeometry(RNG(seed+6),BUD.cardSeg,0,.5,BUD.cardG),cardMat,"cards",BUD.cardG>0);

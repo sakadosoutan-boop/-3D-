@@ -205,6 +205,8 @@ const SAIGEN_TSUREZURE=(()=>{
     S.sky.name="tsure-sky";S.sky.visible=false;S.stage.add(S.sky);own(S.sky);
   }
 
+  // 遠山の森の細かな斑(岩肌のように見える)を弱め、稜線と樹冠の起伏は残す
+  function softenHills(h,k){try{((h.userData&&h.userData.ridges)||[]).forEach(U=>{if(U.uDetail)U.uDetail.value*=k;});}catch(e){}}
   function buildAdashi(){
     const z=zoneGroup("adashi"),M=MODS(),q=S.quality;
     const terrain=safeMake("adashi-terrain",()=>M.NAT&&M.NAT.makeTerrain?M.NAT.makeTerrain({size:320,segments:q==="low"?96:q==="medium"?160:220,heightAt:hAdashi,quality:q}):null,
@@ -214,7 +216,7 @@ const SAIGEN_TSUREZURE=(()=>{
     const grass=safeMake("adashi-grass",()=>M.FLO&&M.FLO.makeGrassField?M.FLO.makeGrassField({width:150,depth:150,center:[0,-10],heightAt:hAdashi,season:"autumn",dew:true,quality:q}):null,()=>fbGroup("grass"));
     if(grass.userData&&grass.userData.setDew)grass.userData.setDew(1);
     z.add(own(track("adashi",grass)));S.assets.adashiGrass=grass;
-    const mist=safeMake("adashi-mist",()=>M.NAT&&M.NAT.makeMist?M.NAT.makeMist({width:170,depth:170,height:1.6,density:.7,color:0xf3e0cf,quality:q}):null,()=>fbGroup("mist"));
+    const mist=safeMake("adashi-mist",()=>M.NAT&&M.NAT.makeMist?M.NAT.makeMist({width:170,depth:170,height:1.2,density:.32,color:0xf3e0cf,heightAt:hAdashi,quality:q}):null,()=>fbGroup("mist"));
     z.add(own(track("adashi",mist)));S.assets.adashiMist=mist;
     // 卒塔婆と五輪塔(葬送の野。遺骸は描かない)
     const graves=[
@@ -238,6 +240,7 @@ const SAIGEN_TSUREZURE=(()=>{
       {distance:420,height:70,arcStart:-3.0,arcEnd:0.3,color:0x7f8fa4,seed:7,roughness:.5,forest:true},
       {distance:560,height:110,arcStart:-2.4,arcEnd:-0.9,color:0x9aa8bc,seed:11,roughness:.45,forest:false},
       {distance:520,height:46,arcStart:0.3,arcEnd:3.0,color:0x9eabbd,seed:17,roughness:.5,forest:false}]}):null,()=>fbGroup("hills"));
+    softenHills(hills,.55);
     z.add(own(track("adashi",hills)));S.assets.adashiHills=hills;
     // 野の松(点景)
     const pines=[[-26,-44,7.5,.2,31],[31,-58,9,.1,32],[-48,-70,8,.15,33]];
@@ -251,7 +254,7 @@ const SAIGEN_TSUREZURE=(()=>{
       ()=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(300,300),fbMat(0x5a5a40));m.rotation.x=-Math.PI/2;const g=fbGroup("terrain");g.add(m);return g;});
     if(terrain.userData&&terrain.userData.setSeason)terrain.userData.setSeason("autumn");
     z.add(own(terrain));
-    const grass=safeMake("toribe-grass",()=>M.FLO&&M.FLO.makeGrassField?M.FLO.makeGrassField({width:70,depth:60,center:[-6,0],heightAt:hToribe,season:"autumn",dew:false,quality:q==="high"?"medium":"low"}):null,()=>fbGroup("grass"));
+    const grass=safeMake("toribe-grass",()=>M.FLO&&M.FLO.makeGrassField?M.FLO.makeGrassField({width:140,depth:90,center:[24,0],focus:[-6,3],heightAt:hToribe,season:"autumn",dew:false,quality:q==="high"?"medium":"low"}):null,()=>fbGroup("grass"));
     z.add(own(track("toribe",grass)));
     [[3,-2,1.6,.5,41],[4.1,-1.3,1.35,.7,42],[2.2,-3.1,1.8,.3,43]].forEach(s=>{
       const o=safeMake("sotoba",()=>M.NAT&&M.NAT.makeSotoba?M.NAT.makeSotoba({height:s[2],age:s[3],seed:s[4],quality:"medium"}):null,()=>{const g=fbGroup("sotoba");const b=fbBox(.12,s[2],.02,0x6a5a48);b.position.y=s[2]/2;g.add(b);return g;});
@@ -262,6 +265,7 @@ const SAIGEN_TSUREZURE=(()=>{
       {distance:380,height:78,arcStart:-0.95,arcEnd:0.6,color:0x6f6a8a,seed:23,roughness:.5,forest:true},
       {distance:560,height:120,arcStart:-1.2,arcEnd:-0.2,color:0x8f88a8,seed:29,roughness:.42,forest:false}]}):null,()=>fbGroup("hills"));
     hills.rotation.y=-Math.PI/2; // 弧の中心(-z)を +x(東)へ向ける
+    softenHills(hills,.5);
     z.add(own(track("toribe",hills)));S.assets.toribeHills=hills;
     const smoke=safeMake("toribe-smoke",()=>M.NAT&&M.NAT.makeSmokePlume?M.NAT.makeSmokePlume({height:52,wind:[-.15,.55],color:0xb8b0b4,quality:q}):null,()=>fbGroup("smoke"));
     smoke.position.set(224,15,-10); // 稜線(x≈230 の山影)の手前の斜面から立ち、稜線を越えて空へなびく
@@ -320,6 +324,7 @@ const SAIGEN_TSUREZURE=(()=>{
       {distance:470,height:96,arcStart:-1.6,arcEnd:0.2,color:0x93a2b2,seed:83,roughness:.5,forest:true},
       {distance:420,height:58,arcStart:2.2,arcEnd:4.0,color:0x8a9aaa,seed:87,roughness:.5,forest:true}]}):null,()=>fbGroup("hills"));
     hills.rotation.y=Math.PI; // 弧を南(+z)側へ
+    softenHills(hills,.6);
     z.add(own(track("an",hills)));S.assets.anHills=hills;
     // 調度: 文机・燈台・円座・脇息
     const desk=safeMake("an-desk",()=>M.AN&&M.AN.makeFuzukue?M.AN.makeFuzukue({quality:q}):null,()=>{const g=fbGroup("desk");const b=fbBox(.75,.04,.36,0x5a3e28);b.position.y=.31;g.add(b);return g;});
@@ -506,7 +511,7 @@ const SAIGEN_TSUREZURE=(()=>{
         placeBeside(S.assets.armrest,"seat",-.35,.05,Math.PI/2);
         S.assets.kenko.read.userData.hideLabel=true;playOnce("hototogisu.mp3",.32,2.5);}}],
     /* 5 かげろふの夕べを待ち */
-    [{zone:"an",light:"earlySummerDusk",fov:42,cam:{pos:[-7.4,.55,anStreamZ(-7.4)+2.6],look:[-3.6,1.4,anStreamZ(-3.6)]},to:{pos:[-6.6,.5,anStreamZ(-6.6)+2.2],look:[-3.4,1.5,anStreamZ(-3.4)]},dur:6.5,shadow:{center:[-4,0,8],half:14},
+    [{zone:"an",light:"earlySummerDusk",fov:40,cam:{pos:[-1.4,.55,anStreamZ(-1.4)+1.7],look:[-3.6,1.25,anStreamZ(-3.6)]},to:{pos:[-1.8,.55,anStreamZ(-1.8)+1.45],look:[-3.7,1.35,anStreamZ(-3.7)]},dur:6.5,shadow:{center:[-3,0,8],half:12},
       enter(){anSeason("summer");hideAnProps();KENKO_POSES.forEach(p=>{if(S.assets.kenko[p])S.assets.kenko[p].visible=false;});if(S.assets.swarm)S.assets.swarm.visible=true;}},
      {zone:"leaf",macro:true,light:"earlySummerDusk",sunRel:[-.25,.14,1],fade:"black",fov:28,useHint:true,drift:[.003,.001,-.004],dur:7,shadow:{center:[0,0,0],half:3}},
      {zone:"water",macro:true,light:"earlySummerDusk",sunRel:[.3,.12,1],fade:"black",fov:30,useHint:true,drift:[0,-.002,-.003],dur:9,shadow:{center:[0,0,0],half:3},
@@ -521,14 +526,14 @@ const SAIGEN_TSUREZURE=(()=>{
       enter(){hideAnProps();showKenko("write","seat",0,{writing:true});placeOn(S.assets.enza,"seat",-.06);placeDesk("desk");S.timelapse={t:0,seq:["spring","summer","autumn","winter"],step:2.6,idx:-1};},
       tick(ctx,u,t){const L=S.timelapse;if(!L)return;const i=Math.min(L.seq.length-1,Math.floor(t/L.step));if(i!==L.idx){L.idx=i;const k=L.seq[i];anSeason(k);setLight(presetState(ANSEASON_LIGHT[k]),i===0?0:1.1);}}}],
     /* 8 飽かず、惜しと思はば、千年を過ぐすとも、一夜の夢の心地こそせめ */
-    [{zone:"an",light:"nightMoon",fov:38,cam:{pos:[1.12,1.3,1.62],look:[-.14,1.08,-.04]},to:{pos:[.92,1.26,1.42],look:[-.16,1.06,-.06]},dur:8,shadow:{center:[0,.6,0],half:4},lamp:{on:true,intensity:1.35},
+    [{zone:"an",light:{preset:"nightMoon",over:{hemi:{intensity:.12},ambient:{intensity:.04},rim:{intensity:.25}}},fov:38,frameUp:.16,cam:{pos:[-1.28,1.36,1.98],look:[-.2,1.08,-.1]},to:{pos:[-1.12,1.33,1.78],look:[-.2,1.07,-.1]},dur:8,shadow:{center:[0,.6,0],half:4},lamp:{on:true,intensity:1.3,distance:3.4,decay:2},
       enter(){anSeason("autumn");hideAnProps();showKenko("read","seatInside");placeOn(S.assets.enza2,"seatInside",-.06);placeBeside(S.assets.armrest,"seatInside",-.35,.05,Math.PI/2);placeBeside(S.assets.lamp,"seatInside",.42,.38,0);
-        if(S.assets.hut&&S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(1);if(S.assets.hut&&S.assets.hut.userData.setShutters)S.assets.hut.userData.setShutters(1);}},
+        if(S.assets.hut&&S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(.3);if(S.assets.hut&&S.assets.hut.userData.setShutters)S.assets.hut.userData.setShutters(1);}},
      {zone:"an",light:"nightMoon",lightTo:{preset:"predawnBlue",dur:7,delay:1.5},fov:44,cam:{pos:[4.8,1.6,7.2],look:[0,1.0,0]},to:{pos:[4.2,1.5,6.2],look:[0,1.0,0]},dur:12,shadow:{center:[0,0,1],half:12},lamp:{on:true,intensity:1.2,fadeTo:.25,fadeDur:8},
       tick(ctx,u,t){if(S.assets.hut&&S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(Math.max(.25,1-t/9));}}],
     /* 9 住み果てぬ世に、みにくき姿を待ちえて、何かはせん。命長ければ辱多し */
     [{zone:"an",light:{preset:"autumnDay",over:{sun:{dir:[-.3,.55,-.75],intensity:1.0},exposure:1.0}},fov:40,cam:{pos:[9.2,1.1,poolCamZ(1.4)],look:[7.4,.1,poolCamZ(-.6)]},to:{pos:[8.9,1.0,poolCamZ(1.1)],look:[7.4,.05,poolCamZ(-.6)]},dur:6,shadow:{center:[7,0,8],half:8},
-      enter(){anSeason("autumn");hideAnProps();showKenko("kneel","pool",Math.PI);const p=S.assets.pool;if(p&&p.userData.setRipple)p.userData.setRipple(.15);if(S.assets.hut&&S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(0);}},
+      enter(){anSeason("autumn");hideAnProps();showKenko("kneel","pool",0);const p=S.assets.pool;if(p&&p.userData.setRipple)p.userData.setRipple(.15);if(S.assets.hut&&S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(0);}},
      {zone:"an",light:{preset:"autumnDay",over:{sun:{dir:[-.3,.55,-.75],intensity:1.0},exposure:1.0}},fade:"black",fov:34,cam:{pos:[7.4,1.0,poolCamZ(.55)],look:[7.35,-.4,poolCamZ(-.35)]},to:{pos:[7.4,.95,poolCamZ(.45)],look:[7.35,-.4,poolCamZ(-.35)]},dur:10,shadow:{center:[7,0,8],half:6},
       tick(ctx,u,t){const p=S.assets.pool;if(p&&p.userData.setRipple)p.userData.setRipple(t>4.5&&t<7?.85:.18);}}],
     /* 10 長くとも、四十に足らぬほどにて死なんこそ、めやすかるべけれ */
@@ -539,15 +544,15 @@ const SAIGEN_TSUREZURE=(()=>{
      {zone:"an",light:{preset:"autumnDay",over:{sun:{dir:[-.4,.5,.75],intensity:1.1}}},fade:"black",fov:42,cam:{pos:[2.6,1.3,5.4],look:[0,.95,1.2]},to:{pos:[2.2,1.25,4.8],look:[0,.95,1.2]},dur:10,shadow:{center:[0,0,1.5],half:10},
       tick(ctx,u,t){const d=S.assets.desk;if(d&&d.userData.setWritten)d.userData.setWritten(Math.min(1,.9+t*.02));}}],
     /* 11 そのほど過ぎぬれば、かたちを恥づる心もなく、人に出でまじらはんことを思ひ */
-    [{zone:"estate",fov:48,estateCam:true,cam:{pos:[4.5,2.4,13.5],look:[-2.5,1.8,5.4]},to:{pos:[5.2,2.4,12.6],look:[0.5,1.8,5.4]},dur:12,
+    [{zone:"estate",fov:44,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.walkFrom[1];return {cam:{pos:[4.2,y+1.0,10.6],look:[-2.6,y+1.25,5.4]},to:{pos:[4.6,y+1.0,10.2],look:[0.6,y+1.25,5.4]}};},dur:12,
       enter(){showRoujin("walk");(S.assets.attendants||[]).forEach(f=>{f.visible=true;});const r=S.assets.roujin.walk,P=S.assets.estatePos;r.position.set(...P.walkFrom);r.rotation.y=Math.PI/2;r.userData.walking=true;r.userData.walkSpeed=.55;r.userData.hideLabel=false;S._walk={t:0};},
       tick(ctx,u,t){const r=S.assets.roujin.walk,P=S.assets.estatePos;const k=Math.min(1,t/12);r.position.x=lerp(P.walkFrom[0],P.walkTo[0],k);r.position.y=(typeof groundH==="function")?groundH(r.position.x,r.position.z):r.position.y;r.userData.walking=k<1;}}],
     /* 12 夕べの日に子孫を愛して、栄ゆく末を見んまでの命をあらまし */
-    [{zone:"estate",fov:40,estateCam:true,cam:{pos:[6.8,1.9,11.2],look:[2.8,1.6,5.3]},to:{pos:[6.2,1.85,10.4],look:[2.8,1.6,5.3]},dur:12,
+    [{zone:"estate",fov:40,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.hold[1];return {cam:{pos:[3.95,y+1.62,7.75],look:[2.95,y+.70,5.35]},to:{pos:[3.75,y+1.56,7.4],look:[2.95,y+.70,5.35]}};},dur:12,
       enter(){showRoujin("hold");const P=S.assets.estatePos,r=S.assets.roujin.hold;r.position.set(...P.hold);r.rotation.y=.25;r.userData.hideLabel=true;
         const m=S.assets.magoPlay;if(m){m.visible=true;m.position.set(...P.play);m.rotation.y=-.9;m.userData.hideLabel=false;S.labelFig.mago=m;}}}],
     /* 13 ひたすら世をむさぼる心のみ深く、もののあはれも知らずなりゆくなん、あさましき */
-    [{zone:"estate",fov:40,estateCam:true,cam:{pos:[1.6,2.0,4.4],look:[-1.2,1.55,0.7]},to:{pos:[1.3,1.95,3.8],look:[-1.2,1.5,0.7]},dur:9,lamp:{on:true,intensity:1.1,estate:true},
+    [{zone:"estate",fov:40,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.count[1];return {cam:{pos:[.6,y+1.0,1.62],look:[-1.1,y+.66,.66]},to:{pos:[.48,y+.98,1.46],look:[-1.1,y+.64,.66]}};},dur:9,frameUp:.2,lamp:{on:true,intensity:1.0,estate:true,distance:3.6,decay:2},estateNight:.35,
       enter(){showRoujin("count");const P=S.assets.estatePos,r=S.assets.roujin.count;r.position.set(...P.count);r.rotation.y=.35;r.userData.hideLabel=true;S.assets.magoPlay.visible=false;
         const l=S.assets.estateLamp;l.visible=true;l.position.set(...P.lamp);}},
      {zone:"an",light:"nightMoon",fade:"black",fov:40,cam:{pos:[2.8,1.25,6.9],look:[0,1.15,1.2]},to:{pos:[2.4,1.3,6.2],look:[0,1.2,1.1]},dur:12,shadow:{center:[0,0,2],half:12},
@@ -673,6 +678,7 @@ const SAIGEN_TSUREZURE=(()=>{
     S.shotIdx=i;S.shotT=0;
     if(sh.fade&&!first&&typeof saigenFade==="function")saigenFade(sh.fade);
     activateZone(sh.zone);
+    if(sh.camFn){try{const cf=sh.camFn();sh.cam=cf.cam;sh.to=cf.to;}catch(e){}}
     const c=shotCam(sh);S.camPath=c;
     S.fovFrom=sh.fov||c.fov||50;S.fovTo=sh.fovTo||S.fovFrom;
     if(sh.light){const L=typeof sh.light==="string"?presetState(sh.light):presetState(sh.light.preset,sh.light.over);
@@ -797,12 +803,15 @@ const SAIGEN_TSUREZURE=(()=>{
       let k=S.lampCfg.intensity||1.2;
       if(S.lampCfg.fadeTo!=null){const u=clamp01(S.shotT/(S.lampCfg.fadeDur||8));k=lerp(k,S.lampCfg.fadeTo,u);if(lamp&&lamp.userData.setIntensity)lamp.userData.setIntensity(lerp(1,.45,u));}
       const fl=(lamp&&lamp.userData&&lamp.userData.flicker!=null)?lamp.userData.flicker:1;
-      interiorLight.color.setHex(0xffa858);interiorLight.distance=9;interiorLight.decay=1.7;
+      interiorLight.color.setHex(0xffa858);interiorLight.distance=S.lampCfg.distance||9;interiorLight.decay=S.lampCfg.decay||1.7;
       interiorLight.intensity=k*(.82+.18*fl);
     }else if(S.curZone!=="estate"){
       interiorLight.intensity=0;
     }
-    if(S.curZone==="estate"||!L)return;
+    if(S.curZone==="estate"){const sh=S.shots[S.shotIdx];const k=sh&&sh.estateNight;
+      if(k!=null){hemi.intensity*=k;ambient.intensity*=k;rim.intensity*=k;if(typeof moon!=="undefined"&&moon)moon.intensity*=k;}
+      return;}
+    if(!L)return;
     // ここからは自前のゾーン: 空・霧・光を場の状態で上書き
     if(typeof cloudDome!=="undefined"&&cloudDome)cloudDome.visible=false;
     if(typeof sunMesh!=="undefined"&&sunMesh)sunMesh.visible=false;

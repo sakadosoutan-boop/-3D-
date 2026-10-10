@@ -1,4 +1,28 @@
-/* TSURE_NATURE — API doc is generated below (see bottom of file header written at finalisation). */
+/* =============================================================================
+ tsurezure-nature.js — 空・地形・遣水・水鏡・遠山・火葬の煙・霧・卒塔婆・五輪塔・石・烏   →  const TSURE_NATURE
+ 依存: THREE (r128) のみ。テクスチャは手続き生成（共有分は参照カウント）。単位 m / +Y 上。
+ ── 光の状態（場の空と光の表） ───────────────────────────────────────────
+ TSURE_NATURE.SKY_PRESETS[name] : autumnDawnMist, autumnDuskToribe, autumnDay, earlySummerDay, earlySummerDusk, summerNoon,
+   nightMoon, predawnBlue, springDay, winterDay ほか。各値は空シェーダーの状態（zenith/horizon/hazeColor/ground=線形RGB配列,
+   sunDir, moon*, cloud*, stars …）＋ sunLight{color,intensity,dir} hemi{sky,ground,intensity} ambient{color,intensity}
+   fog{color,density} exposure rim{color,intensity,dir} と、素材の色合い hills{near,far,light} mist{color,glow} smoke{light,ambient} water{…}。
+ TSURE_NATURE.blendPresets(a,b,u) -> 状態   二つの状態の補間（色・方向・数値）。applyPreset(state,{sky,hills,mist,smoke,water,lights}) で一括適用。
+ ── 素材 ─────────────────────────────────────────────────────────────
+ makeSky({radius?:700, state?}) -> Mesh  空の球（カメラ追従）。userData.setState(state) / update(dt,t,camera) / getState() / dispose()
+ makeTerrain({size, segments, heightAt(x,z), center?, season?, soilPatches?, rockSlope?, …}) -> Group  地面（草地・土・岩の混ぜ）。
+   userData.heightAt / setSeason(key) / setSnow(v) / setLeaves(v) / dispose()
+ carveStream({points,width,depth,bank}) -> heightAt の補正関数 / makeStream({points:[[x,y,z]…], width, heightAt?, rocks?, …}) -> Group
+   流れ（水面シェーダー・川床・石）。userData.setSky(state) / update(dt,t) / dispose()
+ makeMirrorWater({width, depth, resolution?, ripple?, …}) -> Mesh  水鏡（反射レンダーターゲット）。userData.setRipple(v) / addRipple(x,z,s) /
+   setEnabled(bool) / setSky / dispose()。兼好が姿を映す場で使う。
+ makeHills({center:[x,z], ridges:[{distance,height,arcStart,arcEnd,color,seed,roughness,forest}], near?, far?, light?}) -> Group
+   遠山の稜線（距離 distance の円弧上の帯。角度 0 は -Z 方向、+X 向きに増える）。userData.setTint({near,far,light,sunDir}) / dispose()
+ makeSmokePlume({height, wind:[x,z], color?, count?, life?, fogScale?, …}) -> Group  火葬の煙（粒子）。原点 = 煙の根元。
+   userData.update(dt,t,camera) / warm(sec) / setLight({dir,color,ambient}) / dispose()
+ makeMist({width, depth, height, density, color, …}) -> Group  地を這う朝霧。userData.setColor(c) / setLight({dir,color}) / update / dispose()
+ makeSotoba({height, age, seed, quality}) / makeGorintou({height, moss, seed}) / makeStonePile({seed}) / makeRock({…}) -> Group（墓標・石）
+ makeCrows({count, center:[x,y,z], dir:[x,z], spread, speed, …}) -> Group  夕空を帰る烏。userData.update(dt,t) / dispose()
+============================================================================= */
 const TSURE_NATURE=(()=>{
 "use strict";
 const T=THREE, TAU=Math.PI*2;

@@ -1,4 +1,28 @@
-/* tsurezure-figures.js — 徒然草 第七段 人物（兼好・老人・孫） — API doc is finalized at the end of development. */
+/* =============================================================================
+ tsurezure-figures.js — 徒然草 第七段の人物（兼好法師・老いた貴族・孫）   →  const TSURE_FIGURES
+ 依存: THREE (r128) のみ。形は SDF（符号付き距離関数）を CPU で多角形化して作る（髪・衣の襞・手指まで）。
+ 顔の細部（皺・眉・唇）は canvas の顔テクスチャ。乱数はシード付き。単位 m / +Y 上 / 人物は +Z が正面。
+ 生成は重い（1体 1〜4 秒）。多角形は GEO_CACHE（姿勢|品質ごと）に再利用される。
+ ── API ──────────────────────────────────────────────────────────────
+ TSURE_FIGURES.makeKenko({pose:"write"|"read"|"gaze"|"kneel", seatY?:0.06, quality, headParams?}) -> Group
+   兼好（五十代の僧・剃髪・墨染の衣に白衿）。原点 = 座る床面（円座の下）、腰は seatY の高さ。kneel は水辺で膝をつく姿。
+   write: 文机（上面 y=0.315, 手前 z=0.255〜0.60）に向かい右手の筆で書く。read: 冊子を読み、右肘を脇息
+   （x=-0.41〜-0.29, 上面 0.322）に預ける。燈台は左前（+0.42, 0, +0.38）が自然。gaze: 縁先で遠くを眺める。
+   userData.anchors {eyes, headTop, chest, book?, brushTip?} / userData.head（頭のピボット）/ userData.writing（write の筆の動き）
+   userData.update(dt,t)（呼吸・視線・筆）/ userData.dispose() / userData.stats {ms,tris,meshes}
+ TSURE_FIGURES.makeRoujin({pose:"walk"|"hold"|"count", quality, headParams?}) -> Group
+   老いた貴族（七十代・白髪白髭・立烏帽子・藤丸文の狩衣に指貫）。原点 = 足元の床。
+   walk: 扇を持って歩く（userData.walking=true / walkSpeed で足が動く。位置の移動は呼び出し側）。
+   hold: 座って膝に子を抱く。userData.lapAnchor（膝の上の座面）に makeMago({pose:"held"}) を add する。
+   count: 座って宝（銭を収めた蒔絵の箱）を数える。userData.anchors {headTop, eyes, chest, fan?, box?, lap?}
+   userData.update(dt,t) / userData.dispose()
+ TSURE_FIGURES.makeMago({pose:"held"|"play", sex?, age?, quality, headParams?}) -> Group
+   孫。held = 三つほどの孫娘（紅梅の袙・濃色の袴・尼削ぎの髪・ひいな人形を持つ）。原点 = 座面（lapAnchor に置く）。
+   play = 六つほどの孫息子（萌黄の水干・括り袴・振分髪・毬杖と毬）。原点 = 地面。
+   子どもの頭身は、共通の頭部 SDF を子ども向けの比率（大きな頭蓋・小さな顎と鼻・ふっくらした頬）にして全体を縮める。
+   userData.anchors {eyes, doll?|mallet?, ball?} / update(dt,t) / dispose()
+ 注意: 頭部パラメータの brow は「眉の色」、browK は「眉骨の大きさ」（同名にすると頭部が壊れる）。
+============================================================================= */
 const TSURE_FIGURES=(()=>{
 "use strict";
 // =====================================================================================

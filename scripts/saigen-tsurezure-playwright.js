@@ -3,6 +3,7 @@
 // - 開始 → 全13場を順に描画 → 各場のショット列を早送りしても例外が出ないこと
 // - カメラ・光・霧が有限値に保たれ、自前のゾーンでは空/霧/光の上書きフックが働くこと
 // - 終了(表紙へ/他モードへ)で、カメラ(near/fov)・光源・フック・専用音が元に戻ること
+// - 素材が代替の箱に落ちず、兼好の頭部・老人と孫・接写セットの止まり場所がそろうこと
 // - 既存の2作品(枕草子・古今著聞集)が引き続き開始できること
 const path = require('path');
 const { pathToFileURL } = require('url');
@@ -96,6 +97,17 @@ function ignorable(text) {
         const label = document.getElementById('sgCounter').textContent;
         out.beats.push({ i: i + 1, zones: [...zones], shots: T.shots.length, finite, fogOk, label, speaker: document.getElementById('sgSpeaker').textContent });
       }
+      // 全場を通ったので、素材が代替の箱に落ちていないこと・人物の頭部があること・接写セットに止まり場所があること
+      {
+        const T2 = SAIGEN_TSUREZURE.S; const fallback = [];
+        SAIGEN_STAGE.traverse((o) => { if (o.name && o.name.indexOf('tsure-fallback-') === 0) fallback.push(o.name); });
+        const triCount = (root) => { let n = 0; if (root) root.traverse((m) => { if (m.isMesh && m.geometry) { const g = m.geometry; n += (g.index ? g.index.count : g.attributes.position.count) / 3; } }); return Math.round(n); };
+        out.fallback = fallback;
+        out.heads = Object.entries(T2.assets.kenko || {}).map(([k, f]) => [k, triCount(f.userData && f.userData.head)]);
+        out.figures = ['walk', 'hold', 'count'].map((k) => [k, triCount(T2.assets.roujin && T2.assets.roujin[k])]).concat([['magoHeld', triCount(T2.assets.magoHeld)], ['magoPlay', triCount(T2.assets.magoPlay)]]);
+        out.perches = ['barkSet', 'leafSet', 'waterSet'].map((k) => [k, !!(T2.assets[k] && T2.assets[k].userData.perch && T2.assets[k].userData.cameraHint)]);
+        out.jobs = Object.keys(T2.done || {}).length;
+      }
       // 「絵を見る」切替
       document.getElementById('sgView').click();
       out.viewOn = document.getElementById('saigenHud').classList.contains('sg-view');
@@ -135,6 +147,12 @@ function ignorable(text) {
       if (b.label !== `第${b.i}場 / 全13場`) failures.push(`beat ${b.i}: counter "${b.label}"`);
       if (b.speaker !== '— 兼好法師 —') failures.push(`beat ${b.i}: speaker "${b.speaker}"`);
     });
+    if (run.fallback && run.fallback.length) failures.push(`assets fell back to placeholder boxes: ${[...new Set(run.fallback)].join(', ')}`);
+    (run.heads || []).forEach(([k, n]) => { if (n < 3000) failures.push(`kenko ${k}: head mesh missing or too small (${n} tris)`); });
+    if (!run.heads || run.heads.length !== 4) failures.push(`expected 4 kenko poses, got ${run.heads && run.heads.length}`);
+    (run.figures || []).forEach(([k, n]) => { if (n < 3000) failures.push(`figure ${k}: too small or missing (${n} tris)`); });
+    (run.perches || []).forEach(([k, ok]) => { if (!ok) failures.push(`${k}: perch/cameraHint missing`); });
+    if (run.jobs !== 18) failures.push(`expected all 18 asset jobs to run, got ${run.jobs}`);
     if (!run.viewOn) failures.push('view-only toggle did not hide the text panel');
     const a = run.after;
     if (a.active || a.hook || a.stage) failures.push(`exit did not clean up: ${JSON.stringify(a)}`);

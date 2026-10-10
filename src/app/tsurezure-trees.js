@@ -1,7 +1,14 @@
-/* =====================================================================================
- * tsurezure-trees.js  —  const TSURE_TREES   (API doc: see bottom-of-header block "API")
- * placeholder header — replaced at the end of development
- * ===================================================================================== */
+/* =============================================================================
+ tsurezure-trees.js — 樹木と季節の粒子   →  const TSURE_TREES
+ 依存: THREE (r128) のみ。樹皮・葉のアトラスは手続き生成（全樹で共有・参照カウント）。単位 m / +Y 上。原点 = 根元の地面。
+ ── API ──────────────────────────────────────────────────────────────
+ makePine({height, lean?, seed, quality, overhang?}) / makeMaple({height, seed, quality, spread?}) / makeCherry({height, seed, quality})
+   / makeBambooGrove({width, depth, height, seed, quality, count?}) / makeHagi({seed, quality}) / makeShrub({kind, seed, quality}) -> Group
+   共通 userData: setSeason("spring"|"summer"|"autumn"|"winter", sec?)（新緑・紅葉・落葉・雪）/ setWind(v,dx,dz) / update(dt,t) / dispose()
+   / kind / height。quality は葉・枝の数と分割数（low ≈ 0.3 倍）。竹林は広さに比例して稈が増えるので背景には low を推奨。
+ makeFallingParticles({kind:"maple"|"petals"|"snow", width, height, depth, quality, active?}) -> Group  散る紅葉・花びら・雪。
+   userData.setActive(on) / setWind(x,z) / update(dt,t) / dispose()
+============================================================================= */
 const TSURE_TREES=(()=>{
 "use strict";
 const T=THREE,V3=T.Vector3,TAU=Math.PI*2,UP=new V3(0,1,0);

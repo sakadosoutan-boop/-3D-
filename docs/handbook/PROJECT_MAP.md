@@ -25,6 +25,9 @@
 | `src/app/quiz-pool.js` | 本体HTMLから分離したクイズ対象(QUIZ_POOL)の正本。編集後 `npm run build:app` で本体へ注入 |
 | `src/app/map-kamakura.js` | 鎌倉武家屋敷マップ(`?map=kamakura`)の正本。設計は docs/plans/KAMAKURA_BUKE_YASHIKI_PLAN.md。編集後 `npm run build:app` |
 | `src/app/visual-finish.js` | 季節の雪材質、隅棟、庭の追加植栽、室内の接地影と灯台の光、遠景。`GARDEN_POLISH` 後で初期化し、省電力に追従。編集後 `npm run build:app` |
+| `src/app/saigen-tsurezure.js` | 再現モード「徒然草 第七段」の場面（13場の本文・カメラ割り・光・音・段階的な組み立て）。編集後 `npm run build:app` |
+| `src/app/tsurezure-*.js` | 徒然草の素材（insects/figures/an/nature/flora/trees）。各ファイル先頭に API。編集後 `npm run build:app` |
+| `scripts/saigen-tsurezure-playwright.js` | 徒然草の回帰テスト（全13場の早送り・終了時の後始末・既存2作品の開始） |
 | `scripts/build-story.js` | 章JSONからHTML内 `STORY_EMBED` を同期/確認 |
 | `scripts/build-app.js` | manifest(scripts/app-manifest.json)駆動で src/app/ の全ブロックをHTMLへ同期/確認/初回抽出 |
 | `scripts/app-manifest.json` | 分離ブロックの対応表（name / src / マーカー）。ブロック追加はここに定義 |
@@ -60,6 +63,9 @@
 | `stChapterMenu` / `stStartChapter` | 物語章メニュー/開始 | EDゲージは結末到達後に解放 |
 | `SFX` / `AmbientAudio` / `ST_BGM` | 音響 | autoplay制約とミュート追従に注意 |
 | `QUALITY` / `BLOOM` / `GFX` | 画質/ブルーム | モバイル負荷に注意 |
+| `SAIGEN_SCENES` / `startSaigen` / `buildSaigenStage` | 再現モードの本文と舞台 | env を持つ場面（徒然草）は `SAIGEN_PROP_BUILDERS` の道具側が舞台を作る |
+| `SAIGEN_ENV_HOOK` | 再現モード中に animate から毎フレーム呼ぶ空・光の上書き | 徒然草の自前ゾーンだけが設定。終了時に null へ戻す |
+| `SAIGEN_TSUREZURE` | 徒然草の場面モジュール（`S` に状態） | 本体側は `APP_SAIGEN_TSUREZURE_EMBED` の自動生成領域 |
 
 ## 検証コマンド
 

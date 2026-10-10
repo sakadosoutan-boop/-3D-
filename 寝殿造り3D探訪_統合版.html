@@ -25060,7 +25060,20 @@ addEventListener("keydown",e=>{
 });
 
 /* APP_TSUREZURE_INSECTS_EMBED_BEGIN (src/app/tsurezure-insects.js から自動生成。ここを直接編集しない) */
-/* ==== TSURE_INSECTS (draft header; API doc written at the end) ==== */
+/* =============================================================================
+ tsurezure-insects.js — ミンミンゼミ・モンカゲロウ・カゲロウの群れ   →  const TSURE_INSECTS
+ 依存: THREE (r128) のみ。形はミリ単位で作り、root を 0.001 倍して実寸（m）にする。テクスチャは canvas。
+ 生き物は +Z が頭、+Y が背（上）。止まり場所の面に置く時は、その面の Object3D（+Y=法線, +Z=前）へ add する。
+ ── API ──────────────────────────────────────────────────────────────
+ TSURE_INSECTS.makeMinminZemi({quality, seed?}) -> Group   ミンミンゼミ（全長 ≈0.059m, 翅端まで）。
+   原点 = 脚の接地面。userData.setSinging(v 0..1)（腹の振動・翅の震え）/ singing / anchors {head,eyes,thorax,abdomen,wingTip,center}
+   userData.update(dt,t)（触角・脚のしぐさ）/ size {length,width,height} / dispose()
+ TSURE_INSECTS.makeMonKagerou({pose:"rest"|"fly"|"spent", quality, seed?}) -> Group   モンカゲロウ（尾まで ≈0.05m）。
+   rest: 翅を背の上で閉じて止まる。fly: 羽ばたき（userData.flap 0..1）。spent: 水面に翅を広げて横たわる（力尽きた姿）。
+   userData.anchors {head,thorax,wingTip,center} / update(dt,t) / dispose()
+ TSURE_INSECTS.makeMayflySwarm({count?:40, radius?:1.2, height?:2.0, glow?, quality, seed?}) -> Group
+   夕暮れの婚姻飛翔の群れ（InstancedMesh）。原点 = 群れの下端中心。逆光で翅が光る。update(dt,t) / dispose()
+============================================================================= */
 const TSURE_INSECTS=(()=>{
 "use strict";
 /* ------------------------------------------------------------------
@@ -25965,7 +25978,31 @@ return{makeMinminZemi,makeMonKagerou,makeMayflySwarm};
 })();
 /* APP_TSUREZURE_INSECTS_EMBED_END */
 /* APP_TSUREZURE_FIGURES_EMBED_BEGIN (src/app/tsurezure-figures.js から自動生成。ここを直接編集しない) */
-/* tsurezure-figures.js — 徒然草 第七段 人物（兼好・老人・孫） — API doc is finalized at the end of development. */
+/* =============================================================================
+ tsurezure-figures.js — 徒然草 第七段の人物（兼好法師・老いた貴族・孫）   →  const TSURE_FIGURES
+ 依存: THREE (r128) のみ。形は SDF（符号付き距離関数）を CPU で多角形化して作る（髪・衣の襞・手指まで）。
+ 顔の細部（皺・眉・唇）は canvas の顔テクスチャ。乱数はシード付き。単位 m / +Y 上 / 人物は +Z が正面。
+ 生成は重い（1体 1〜4 秒）。多角形は GEO_CACHE（姿勢|品質ごと）に再利用される。
+ ── API ──────────────────────────────────────────────────────────────
+ TSURE_FIGURES.makeKenko({pose:"write"|"read"|"gaze"|"kneel", seatY?:0.06, quality, headParams?}) -> Group
+   兼好（五十代の僧・剃髪・墨染の衣に白衿）。原点 = 座る床面（円座の下）、腰は seatY の高さ。kneel は水辺で膝をつく姿。
+   write: 文机（上面 y=0.315, 手前 z=0.255〜0.60）に向かい右手の筆で書く。read: 冊子を読み、右肘を脇息
+   （x=-0.41〜-0.29, 上面 0.322）に預ける。燈台は左前（+0.42, 0, +0.38）が自然。gaze: 縁先で遠くを眺める。
+   userData.anchors {eyes, headTop, chest, book?, brushTip?} / userData.head（頭のピボット）/ userData.writing（write の筆の動き）
+   userData.update(dt,t)（呼吸・視線・筆）/ userData.dispose() / userData.stats {ms,tris,meshes}
+ TSURE_FIGURES.makeRoujin({pose:"walk"|"hold"|"count", quality, headParams?}) -> Group
+   老いた貴族（七十代・白髪白髭・立烏帽子・藤丸文の狩衣に指貫）。原点 = 足元の床。
+   walk: 扇を持って歩く（userData.walking=true / walkSpeed で足が動く。位置の移動は呼び出し側）。
+   hold: 座って膝に子を抱く。userData.lapAnchor（膝の上の座面）に makeMago({pose:"held"}) を add する。
+   count: 座って宝（銭を収めた蒔絵の箱）を数える。userData.anchors {headTop, eyes, chest, fan?, box?, lap?}
+   userData.update(dt,t) / userData.dispose()
+ TSURE_FIGURES.makeMago({pose:"held"|"play", sex?, age?, quality, headParams?}) -> Group
+   孫。held = 三つほどの孫娘（紅梅の袙・濃色の袴・尼削ぎの髪・ひいな人形を持つ）。原点 = 座面（lapAnchor に置く）。
+   play = 六つほどの孫息子（萌黄の水干・括り袴・振分髪・毬杖と毬）。原点 = 地面。
+   子どもの頭身は、共通の頭部 SDF を子ども向けの比率（大きな頭蓋・小さな顎と鼻・ふっくらした頬）にして全体を縮める。
+   userData.anchors {eyes, doll?|mallet?, ball?} / update(dt,t) / dispose()
+ 注意: 頭部パラメータの brow は「眉の色」、browK は「眉骨の大きさ」（同名にすると頭部が壊れる）。
+============================================================================= */
 const TSURE_FIGURES=(()=>{
 "use strict";
 // =====================================================================================
@@ -28487,7 +28524,31 @@ return{makeAn,makeFuzukue,makeToudai,makeEnza,makeKyousoku,makeShibagaki,makeAka
 })();
 /* APP_TSUREZURE_AN_EMBED_END */
 /* APP_TSUREZURE_NATURE_EMBED_BEGIN (src/app/tsurezure-nature.js から自動生成。ここを直接編集しない) */
-/* TSURE_NATURE — API doc is generated below (see bottom of file header written at finalisation). */
+/* =============================================================================
+ tsurezure-nature.js — 空・地形・遣水・水鏡・遠山・火葬の煙・霧・卒塔婆・五輪塔・石・烏   →  const TSURE_NATURE
+ 依存: THREE (r128) のみ。テクスチャは手続き生成（共有分は参照カウント）。単位 m / +Y 上。
+ ── 光の状態（場の空と光の表） ───────────────────────────────────────────
+ TSURE_NATURE.SKY_PRESETS[name] : autumnDawnMist, autumnDuskToribe, autumnDay, earlySummerDay, earlySummerDusk, summerNoon,
+   nightMoon, predawnBlue, springDay, winterDay ほか。各値は空シェーダーの状態（zenith/horizon/hazeColor/ground=線形RGB配列,
+   sunDir, moon*, cloud*, stars …）＋ sunLight{color,intensity,dir} hemi{sky,ground,intensity} ambient{color,intensity}
+   fog{color,density} exposure rim{color,intensity,dir} と、素材の色合い hills{near,far,light} mist{color,glow} smoke{light,ambient} water{…}。
+ TSURE_NATURE.blendPresets(a,b,u) -> 状態   二つの状態の補間（色・方向・数値）。applyPreset(state,{sky,hills,mist,smoke,water,lights}) で一括適用。
+ ── 素材 ─────────────────────────────────────────────────────────────
+ makeSky({radius?:700, state?}) -> Mesh  空の球（カメラ追従）。userData.setState(state) / update(dt,t,camera) / getState() / dispose()
+ makeTerrain({size, segments, heightAt(x,z), center?, season?, soilPatches?, rockSlope?, …}) -> Group  地面（草地・土・岩の混ぜ）。
+   userData.heightAt / setSeason(key) / setSnow(v) / setLeaves(v) / dispose()
+ carveStream({points,width,depth,bank}) -> heightAt の補正関数 / makeStream({points:[[x,y,z]…], width, heightAt?, rocks?, …}) -> Group
+   流れ（水面シェーダー・川床・石）。userData.setSky(state) / update(dt,t) / dispose()
+ makeMirrorWater({width, depth, resolution?, ripple?, …}) -> Mesh  水鏡（反射レンダーターゲット）。userData.setRipple(v) / addRipple(x,z,s) /
+   setEnabled(bool) / setSky / dispose()。兼好が姿を映す場で使う。
+ makeHills({center:[x,z], ridges:[{distance,height,arcStart,arcEnd,color,seed,roughness,forest}], near?, far?, light?}) -> Group
+   遠山の稜線（距離 distance の円弧上の帯。角度 0 は -Z 方向、+X 向きに増える）。userData.setTint({near,far,light,sunDir}) / dispose()
+ makeSmokePlume({height, wind:[x,z], color?, count?, life?, fogScale?, …}) -> Group  火葬の煙（粒子）。原点 = 煙の根元。
+   userData.update(dt,t,camera) / warm(sec) / setLight({dir,color,ambient}) / dispose()
+ makeMist({width, depth, height, density, color, …}) -> Group  地を這う朝霧。userData.setColor(c) / setLight({dir,color}) / update / dispose()
+ makeSotoba({height, age, seed, quality}) / makeGorintou({height, moss, seed}) / makeStonePile({seed}) / makeRock({…}) -> Group（墓標・石）
+ makeCrows({count, center:[x,y,z], dir:[x,z], spread, speed, …}) -> Group  夕空を帰る烏。userData.update(dt,t) / dispose()
+============================================================================= */
 const TSURE_NATURE=(()=>{
 "use strict";
 const T=THREE, TAU=Math.PI*2;
@@ -29988,7 +30049,25 @@ return {_dev:{makeGrassTex,makeSoilTex,makeRockTex,makeLeafTex,makePebbleTex,mak
 })();
 /* APP_TSUREZURE_NATURE_EMBED_END */
 /* APP_TSUREZURE_FLORA_EMBED_BEGIN (src/app/tsurezure-flora.js から自動生成。ここを直接編集しない) */
-/* TSURE_FLORA — header placeholder */
+/* =============================================================================
+ tsurezure-flora.js — 露の草むら（遠景〜近景）と接写セット   →  const TSURE_FLORA
+ 依存: THREE (r128) のみ。テクスチャは手続き生成。単位 m / +Y 上。
+ ── 草地 ─────────────────────────────────────────────────────────────
+ makeGrassField({width, depth, center:[x,z], heightAt(x,z), mask?(x,z)->0..1, season, dew?, quality, focus?, turf?}) -> Group
+   ススキ・オギ・エノコログサ・秋草と地面の芝。InstancedMesh。mask 0 で生えない（0.5 前後は疎ら）。
+   userData.setDew(v 0..1)（朝露のきらめき）/ setSeason(key) / update(dt,t,camera) / counts / stats {triangles,drawCalls} / dispose()
+   シェーダーの乱数は原点から数 km 離れた座標でも崩れない形（舞台が 2.4km 沖にあるため）。
+ ── 接写セット（実寸で作り、ゲーム側で 20 倍して撮る。ぼけ背景＋専用ライティング） ───────────
+ 共通 userData: cameraHint {position,target,fov}（セット局所）/ setSun(dir,color,intensity) / update(dt,t,camera) / dispose()
+ makeDewMacroSet({style:"dawn"|"dusk", quality}) -> Group  葉先の露（大写し）。triggerFall({slowmo,reform}) で一粒こぼれる。
+   setEvaporate(v) / hero（露の中心）
+ makeBarkMacroSet({quality, seed?}) -> Group  夏の桜の枝（横長の皮目・剥がれ・地衣）。userData.perch（+Y=樹皮の法線, +Z=枝の上方向）に蝉を載せる。
+   樹皮は MeshStandard（場の太陽で照らされる）で、焦点から外れた所の質感がぼける。
+ makeLeafMacroSet({quality, seed?}) -> Group  夕暮れの葦の葉（逆光で透ける）。userData.perch（+Y=葉の表, +Z=葉先）にカゲロウを載せる。
+ makeWaterMacroSet({quality, seed?}) -> Group  夕暮れの静かな水面（背景の映り込み・陽のきらめき・表面張力のくぼみ）。
+   userData.perch（水面・+Z=頭の向き）/ perches（奥の 2 点を含む）/ ripple(k)（虫のもがきの波紋）。
+ makeBokehBackdrop({width, height, style:"meadowDawn"|"foliageSummer"|"waterDusk"|"night", sunPos?, quality}) -> Mesh  ぼけ背景。
+============================================================================= */
 const TSURE_FLORA=(()=>{
 "use strict";
 /* ------------------------------------------------------------------
@@ -30950,7 +31029,10 @@ function cardAtlas(ql){const W=QS(ql,256,512,512),Hh=W/2,cv=mkCanvas(W,Hh),x=cv.
   for(let i=0;i<QS(ql,30,40,44);i++){const x0=hw*.5+R.g()*hw*.16,len=Hh*R.r(.3,.97)*(R()<.3?.6:1),ang=R.g()*.5,bend=R.s()*1.1;blade(x0,Hh,len,ang,bend,R.r(2,3.6)*W/512,R.r(.62,1),false);}
   /* right: susuki clump with arching leaves (midrib) */
   for(let i=0;i<QS(ql,16,20,22);i++){const x0=hw*1.5+R.s()*hw*.06,len=Hh*R.r(.6,1.2),side=R()<.5?-1:1,ang=side*R.r(.03,.4),bend=side*R.r(.8,2.2);blade(x0,Hh,len,ang,bend,R.r(2.6,4.4)*W/512,R.r(.7,1),true);}
-  const t=new T.CanvasTexture(cv);t.encoding=T.sRGBEncoding;t.anisotropy=4;t.wrapS=t.wrapT=T.ClampToEdgeWrapping;return t;}
+  /* transparent texels carry a light grey (the canvas leaves them black): without MSAA alpha-to-coverage the soft edges
+     would otherwise render as opaque black fringes ("dark palm" clumps) and mip levels would darken the blades */
+  const d=canvasBytes(cv);for(let k=0;k<d.length;k+=4){const a8=d[k+3];if(a8<250){const w=a8/250;d[k]=Math.round(d[k]*w+196*(1-w));d[k+1]=Math.round(d[k+1]*w+196*(1-w));d[k+2]=Math.round(d[k+2]*w+196*(1-w));}}
+  const t=dataTex(d,W,Hh,{srgb:true,aniso:4});t.image.width=W;return t;}
 function glintGeometry(cands,R){/* one camera-facing quad per candidate */
   const n=cands.length,pos=new Float32Array(n*12),cor=new Float32Array(n*8),ag=new Float32Array(n*16),idx=[];
   cands.forEach((p,i)=>{const r1=R(),r2=R(),sz=Math.pow(R(),2.2);const C=[[-1,-1],[1,-1],[1,1],[-1,1]];
@@ -31197,7 +31279,7 @@ function makeGrassField(opts){opts=opts||{};
   const tuftMesh=build(tufts,tG,tuftMat,"tufts",true);
   /* far cards (grass + susuki clumps share the atlas and material) */
   const cAtlas=bag.add(cardAtlas(ql));
-  const cardOpts=(pal)=>({map:cAtlas,alphaTest:.02,uniforms:{uPal:pal,uDry:S.dry,uMidrib:S.mid,uLod:farLod,uTexW:{value:cAtlas.image.width}},
+  const cardOpts=(pal)=>({map:cAtlas,alphaTest:.42,uniforms:{uPal:pal,uDry:S.dry,uMidrib:S.mid,uLod:farLod,uTexW:{value:cAtlas.image.width}},
     vCol:"col*=1.08;",transBack:"0.45",transFwd:"0.9",cardA2C:true});
   const cardMat=bag.add(fieldMaterial("card",ql,FU,cardOpts(pals.tuft)));
   const cardMesh=build(cards,cardGeometry(RNG(seed+6),BUD.cardSeg,0,.5,BUD.cardG),cardMat,"cards",BUD.cardG>0);
@@ -31579,10 +31661,17 @@ return {makeGrassField:(typeof makeGrassField!=="undefined"?makeGrassField:null)
 })();
 /* APP_TSUREZURE_FLORA_EMBED_END */
 /* APP_TSUREZURE_TREES_EMBED_BEGIN (src/app/tsurezure-trees.js から自動生成。ここを直接編集しない) */
-/* =====================================================================================
- * tsurezure-trees.js  —  const TSURE_TREES   (API doc: see bottom-of-header block "API")
- * placeholder header — replaced at the end of development
- * ===================================================================================== */
+/* =============================================================================
+ tsurezure-trees.js — 樹木と季節の粒子   →  const TSURE_TREES
+ 依存: THREE (r128) のみ。樹皮・葉のアトラスは手続き生成（全樹で共有・参照カウント）。単位 m / +Y 上。原点 = 根元の地面。
+ ── API ──────────────────────────────────────────────────────────────
+ makePine({height, lean?, seed, quality, overhang?}) / makeMaple({height, seed, quality, spread?}) / makeCherry({height, seed, quality})
+   / makeBambooGrove({width, depth, height, seed, quality, count?}) / makeHagi({seed, quality}) / makeShrub({kind, seed, quality}) -> Group
+   共通 userData: setSeason("spring"|"summer"|"autumn"|"winter", sec?)（新緑・紅葉・落葉・雪）/ setWind(v,dx,dz) / update(dt,t) / dispose()
+   / kind / height。quality は葉・枝の数と分割数（low ≈ 0.3 倍）。竹林は広さに比例して稈が増えるので背景には low を推奨。
+ makeFallingParticles({kind:"maple"|"petals"|"snow", width, height, depth, quality, active?}) -> Group  散る紅葉・花びら・雪。
+   userData.setActive(on) / setWind(x,z) / update(dt,t) / dispose()
+============================================================================= */
 const TSURE_TREES=(()=>{
 "use strict";
 const T=THREE,V3=T.Vector3,TAU=Math.PI*2,UP=new V3(0,1,0);
@@ -32912,6 +33001,8 @@ const SAIGEN_TSUREZURE=(()=>{
     S.sky.name="tsure-sky";S.sky.visible=false;S.stage.add(S.sky);own(S.sky);
   }
 
+  // 遠山の森の細かな斑(岩肌のように見える)を弱め、稜線と樹冠の起伏は残す
+  function softenHills(h,k){try{((h.userData&&h.userData.ridges)||[]).forEach(U=>{if(U.uDetail)U.uDetail.value*=k;});}catch(e){}}
   function buildAdashi(){
     const z=zoneGroup("adashi"),M=MODS(),q=S.quality;
     const terrain=safeMake("adashi-terrain",()=>M.NAT&&M.NAT.makeTerrain?M.NAT.makeTerrain({size:320,segments:q==="low"?96:q==="medium"?160:220,heightAt:hAdashi,quality:q}):null,
@@ -32921,7 +33012,7 @@ const SAIGEN_TSUREZURE=(()=>{
     const grass=safeMake("adashi-grass",()=>M.FLO&&M.FLO.makeGrassField?M.FLO.makeGrassField({width:150,depth:150,center:[0,-10],heightAt:hAdashi,season:"autumn",dew:true,quality:q}):null,()=>fbGroup("grass"));
     if(grass.userData&&grass.userData.setDew)grass.userData.setDew(1);
     z.add(own(track("adashi",grass)));S.assets.adashiGrass=grass;
-    const mist=safeMake("adashi-mist",()=>M.NAT&&M.NAT.makeMist?M.NAT.makeMist({width:170,depth:170,height:1.6,density:.7,color:0xf3e0cf,quality:q}):null,()=>fbGroup("mist"));
+    const mist=safeMake("adashi-mist",()=>M.NAT&&M.NAT.makeMist?M.NAT.makeMist({width:170,depth:170,height:1.2,density:.32,color:0xf3e0cf,heightAt:hAdashi,quality:q}):null,()=>fbGroup("mist"));
     z.add(own(track("adashi",mist)));S.assets.adashiMist=mist;
     // 卒塔婆と五輪塔(葬送の野。遺骸は描かない)
     const graves=[
@@ -32945,6 +33036,7 @@ const SAIGEN_TSUREZURE=(()=>{
       {distance:420,height:70,arcStart:-3.0,arcEnd:0.3,color:0x7f8fa4,seed:7,roughness:.5,forest:true},
       {distance:560,height:110,arcStart:-2.4,arcEnd:-0.9,color:0x9aa8bc,seed:11,roughness:.45,forest:false},
       {distance:520,height:46,arcStart:0.3,arcEnd:3.0,color:0x9eabbd,seed:17,roughness:.5,forest:false}]}):null,()=>fbGroup("hills"));
+    softenHills(hills,.55);
     z.add(own(track("adashi",hills)));S.assets.adashiHills=hills;
     // 野の松(点景)
     const pines=[[-26,-44,7.5,.2,31],[31,-58,9,.1,32],[-48,-70,8,.15,33]];
@@ -32958,7 +33050,7 @@ const SAIGEN_TSUREZURE=(()=>{
       ()=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(300,300),fbMat(0x5a5a40));m.rotation.x=-Math.PI/2;const g=fbGroup("terrain");g.add(m);return g;});
     if(terrain.userData&&terrain.userData.setSeason)terrain.userData.setSeason("autumn");
     z.add(own(terrain));
-    const grass=safeMake("toribe-grass",()=>M.FLO&&M.FLO.makeGrassField?M.FLO.makeGrassField({width:70,depth:60,center:[-6,0],heightAt:hToribe,season:"autumn",dew:false,quality:q==="high"?"medium":"low"}):null,()=>fbGroup("grass"));
+    const grass=safeMake("toribe-grass",()=>M.FLO&&M.FLO.makeGrassField?M.FLO.makeGrassField({width:140,depth:90,center:[24,0],focus:[-6,3],heightAt:hToribe,season:"autumn",dew:false,quality:q==="high"?"medium":"low"}):null,()=>fbGroup("grass"));
     z.add(own(track("toribe",grass)));
     [[3,-2,1.6,.5,41],[4.1,-1.3,1.35,.7,42],[2.2,-3.1,1.8,.3,43]].forEach(s=>{
       const o=safeMake("sotoba",()=>M.NAT&&M.NAT.makeSotoba?M.NAT.makeSotoba({height:s[2],age:s[3],seed:s[4],quality:"medium"}):null,()=>{const g=fbGroup("sotoba");const b=fbBox(.12,s[2],.02,0x6a5a48);b.position.y=s[2]/2;g.add(b);return g;});
@@ -32969,6 +33061,7 @@ const SAIGEN_TSUREZURE=(()=>{
       {distance:380,height:78,arcStart:-0.95,arcEnd:0.6,color:0x6f6a8a,seed:23,roughness:.5,forest:true},
       {distance:560,height:120,arcStart:-1.2,arcEnd:-0.2,color:0x8f88a8,seed:29,roughness:.42,forest:false}]}):null,()=>fbGroup("hills"));
     hills.rotation.y=-Math.PI/2; // 弧の中心(-z)を +x(東)へ向ける
+    softenHills(hills,.5);
     z.add(own(track("toribe",hills)));S.assets.toribeHills=hills;
     const smoke=safeMake("toribe-smoke",()=>M.NAT&&M.NAT.makeSmokePlume?M.NAT.makeSmokePlume({height:52,wind:[-.15,.55],color:0xb8b0b4,quality:q}):null,()=>fbGroup("smoke"));
     smoke.position.set(224,15,-10); // 稜線(x≈230 の山影)の手前の斜面から立ち、稜線を越えて空へなびく
@@ -33027,6 +33120,7 @@ const SAIGEN_TSUREZURE=(()=>{
       {distance:470,height:96,arcStart:-1.6,arcEnd:0.2,color:0x93a2b2,seed:83,roughness:.5,forest:true},
       {distance:420,height:58,arcStart:2.2,arcEnd:4.0,color:0x8a9aaa,seed:87,roughness:.5,forest:true}]}):null,()=>fbGroup("hills"));
     hills.rotation.y=Math.PI; // 弧を南(+z)側へ
+    softenHills(hills,.6);
     z.add(own(track("an",hills)));S.assets.anHills=hills;
     // 調度: 文机・燈台・円座・脇息
     const desk=safeMake("an-desk",()=>M.AN&&M.AN.makeFuzukue?M.AN.makeFuzukue({quality:q}):null,()=>{const g=fbGroup("desk");const b=fbBox(.75,.04,.36,0x5a3e28);b.position.y=.31;g.add(b);return g;});
@@ -33213,7 +33307,7 @@ const SAIGEN_TSUREZURE=(()=>{
         placeBeside(S.assets.armrest,"seat",-.35,.05,Math.PI/2);
         S.assets.kenko.read.userData.hideLabel=true;playOnce("hototogisu.mp3",.32,2.5);}}],
     /* 5 かげろふの夕べを待ち */
-    [{zone:"an",light:"earlySummerDusk",fov:42,cam:{pos:[-7.4,.55,anStreamZ(-7.4)+2.6],look:[-3.6,1.4,anStreamZ(-3.6)]},to:{pos:[-6.6,.5,anStreamZ(-6.6)+2.2],look:[-3.4,1.5,anStreamZ(-3.4)]},dur:6.5,shadow:{center:[-4,0,8],half:14},
+    [{zone:"an",light:"earlySummerDusk",fov:40,cam:{pos:[-1.4,.55,anStreamZ(-1.4)+1.7],look:[-3.6,1.25,anStreamZ(-3.6)]},to:{pos:[-1.8,.55,anStreamZ(-1.8)+1.45],look:[-3.7,1.35,anStreamZ(-3.7)]},dur:6.5,shadow:{center:[-3,0,8],half:12},
       enter(){anSeason("summer");hideAnProps();KENKO_POSES.forEach(p=>{if(S.assets.kenko[p])S.assets.kenko[p].visible=false;});if(S.assets.swarm)S.assets.swarm.visible=true;}},
      {zone:"leaf",macro:true,light:"earlySummerDusk",sunRel:[-.25,.14,1],fade:"black",fov:28,useHint:true,drift:[.003,.001,-.004],dur:7,shadow:{center:[0,0,0],half:3}},
      {zone:"water",macro:true,light:"earlySummerDusk",sunRel:[.3,.12,1],fade:"black",fov:30,useHint:true,drift:[0,-.002,-.003],dur:9,shadow:{center:[0,0,0],half:3},
@@ -33228,14 +33322,14 @@ const SAIGEN_TSUREZURE=(()=>{
       enter(){hideAnProps();showKenko("write","seat",0,{writing:true});placeOn(S.assets.enza,"seat",-.06);placeDesk("desk");S.timelapse={t:0,seq:["spring","summer","autumn","winter"],step:2.6,idx:-1};},
       tick(ctx,u,t){const L=S.timelapse;if(!L)return;const i=Math.min(L.seq.length-1,Math.floor(t/L.step));if(i!==L.idx){L.idx=i;const k=L.seq[i];anSeason(k);setLight(presetState(ANSEASON_LIGHT[k]),i===0?0:1.1);}}}],
     /* 8 飽かず、惜しと思はば、千年を過ぐすとも、一夜の夢の心地こそせめ */
-    [{zone:"an",light:"nightMoon",fov:38,cam:{pos:[1.12,1.3,1.62],look:[-.14,1.08,-.04]},to:{pos:[.92,1.26,1.42],look:[-.16,1.06,-.06]},dur:8,shadow:{center:[0,.6,0],half:4},lamp:{on:true,intensity:1.35},
+    [{zone:"an",light:{preset:"nightMoon",over:{hemi:{intensity:.12},ambient:{intensity:.04},rim:{intensity:.25}}},fov:38,frameUp:.16,cam:{pos:[-1.28,1.36,1.98],look:[-.2,1.08,-.1]},to:{pos:[-1.12,1.33,1.78],look:[-.2,1.07,-.1]},dur:8,shadow:{center:[0,.6,0],half:4},lamp:{on:true,intensity:1.3,distance:3.4,decay:2},
       enter(){anSeason("autumn");hideAnProps();showKenko("read","seatInside");placeOn(S.assets.enza2,"seatInside",-.06);placeBeside(S.assets.armrest,"seatInside",-.35,.05,Math.PI/2);placeBeside(S.assets.lamp,"seatInside",.42,.38,0);
-        if(S.assets.hut&&S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(1);if(S.assets.hut&&S.assets.hut.userData.setShutters)S.assets.hut.userData.setShutters(1);}},
+        if(S.assets.hut&&S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(.3);if(S.assets.hut&&S.assets.hut.userData.setShutters)S.assets.hut.userData.setShutters(1);}},
      {zone:"an",light:"nightMoon",lightTo:{preset:"predawnBlue",dur:7,delay:1.5},fov:44,cam:{pos:[4.8,1.6,7.2],look:[0,1.0,0]},to:{pos:[4.2,1.5,6.2],look:[0,1.0,0]},dur:12,shadow:{center:[0,0,1],half:12},lamp:{on:true,intensity:1.2,fadeTo:.25,fadeDur:8},
       tick(ctx,u,t){if(S.assets.hut&&S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(Math.max(.25,1-t/9));}}],
     /* 9 住み果てぬ世に、みにくき姿を待ちえて、何かはせん。命長ければ辱多し */
     [{zone:"an",light:{preset:"autumnDay",over:{sun:{dir:[-.3,.55,-.75],intensity:1.0},exposure:1.0}},fov:40,cam:{pos:[9.2,1.1,poolCamZ(1.4)],look:[7.4,.1,poolCamZ(-.6)]},to:{pos:[8.9,1.0,poolCamZ(1.1)],look:[7.4,.05,poolCamZ(-.6)]},dur:6,shadow:{center:[7,0,8],half:8},
-      enter(){anSeason("autumn");hideAnProps();showKenko("kneel","pool",Math.PI);const p=S.assets.pool;if(p&&p.userData.setRipple)p.userData.setRipple(.15);if(S.assets.hut&&S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(0);}},
+      enter(){anSeason("autumn");hideAnProps();showKenko("kneel","pool",0);const p=S.assets.pool;if(p&&p.userData.setRipple)p.userData.setRipple(.15);if(S.assets.hut&&S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(0);}},
      {zone:"an",light:{preset:"autumnDay",over:{sun:{dir:[-.3,.55,-.75],intensity:1.0},exposure:1.0}},fade:"black",fov:34,cam:{pos:[7.4,1.0,poolCamZ(.55)],look:[7.35,-.4,poolCamZ(-.35)]},to:{pos:[7.4,.95,poolCamZ(.45)],look:[7.35,-.4,poolCamZ(-.35)]},dur:10,shadow:{center:[7,0,8],half:6},
       tick(ctx,u,t){const p=S.assets.pool;if(p&&p.userData.setRipple)p.userData.setRipple(t>4.5&&t<7?.85:.18);}}],
     /* 10 長くとも、四十に足らぬほどにて死なんこそ、めやすかるべけれ */
@@ -33246,15 +33340,15 @@ const SAIGEN_TSUREZURE=(()=>{
      {zone:"an",light:{preset:"autumnDay",over:{sun:{dir:[-.4,.5,.75],intensity:1.1}}},fade:"black",fov:42,cam:{pos:[2.6,1.3,5.4],look:[0,.95,1.2]},to:{pos:[2.2,1.25,4.8],look:[0,.95,1.2]},dur:10,shadow:{center:[0,0,1.5],half:10},
       tick(ctx,u,t){const d=S.assets.desk;if(d&&d.userData.setWritten)d.userData.setWritten(Math.min(1,.9+t*.02));}}],
     /* 11 そのほど過ぎぬれば、かたちを恥づる心もなく、人に出でまじらはんことを思ひ */
-    [{zone:"estate",fov:48,estateCam:true,cam:{pos:[4.5,2.4,13.5],look:[-2.5,1.8,5.4]},to:{pos:[5.2,2.4,12.6],look:[0.5,1.8,5.4]},dur:12,
+    [{zone:"estate",fov:44,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.walkFrom[1];return {cam:{pos:[4.2,y+1.0,10.6],look:[-2.6,y+1.25,5.4]},to:{pos:[4.6,y+1.0,10.2],look:[0.6,y+1.25,5.4]}};},dur:12,
       enter(){showRoujin("walk");(S.assets.attendants||[]).forEach(f=>{f.visible=true;});const r=S.assets.roujin.walk,P=S.assets.estatePos;r.position.set(...P.walkFrom);r.rotation.y=Math.PI/2;r.userData.walking=true;r.userData.walkSpeed=.55;r.userData.hideLabel=false;S._walk={t:0};},
       tick(ctx,u,t){const r=S.assets.roujin.walk,P=S.assets.estatePos;const k=Math.min(1,t/12);r.position.x=lerp(P.walkFrom[0],P.walkTo[0],k);r.position.y=(typeof groundH==="function")?groundH(r.position.x,r.position.z):r.position.y;r.userData.walking=k<1;}}],
     /* 12 夕べの日に子孫を愛して、栄ゆく末を見んまでの命をあらまし */
-    [{zone:"estate",fov:40,estateCam:true,cam:{pos:[6.8,1.9,11.2],look:[2.8,1.6,5.3]},to:{pos:[6.2,1.85,10.4],look:[2.8,1.6,5.3]},dur:12,
+    [{zone:"estate",fov:40,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.hold[1];return {cam:{pos:[3.95,y+1.62,7.75],look:[2.95,y+.70,5.35]},to:{pos:[3.75,y+1.56,7.4],look:[2.95,y+.70,5.35]}};},dur:12,
       enter(){showRoujin("hold");const P=S.assets.estatePos,r=S.assets.roujin.hold;r.position.set(...P.hold);r.rotation.y=.25;r.userData.hideLabel=true;
         const m=S.assets.magoPlay;if(m){m.visible=true;m.position.set(...P.play);m.rotation.y=-.9;m.userData.hideLabel=false;S.labelFig.mago=m;}}}],
     /* 13 ひたすら世をむさぼる心のみ深く、もののあはれも知らずなりゆくなん、あさましき */
-    [{zone:"estate",fov:40,estateCam:true,cam:{pos:[1.6,2.0,4.4],look:[-1.2,1.55,0.7]},to:{pos:[1.3,1.95,3.8],look:[-1.2,1.5,0.7]},dur:9,lamp:{on:true,intensity:1.1,estate:true},
+    [{zone:"estate",fov:40,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.count[1];return {cam:{pos:[.6,y+1.0,1.62],look:[-1.1,y+.66,.66]},to:{pos:[.48,y+.98,1.46],look:[-1.1,y+.64,.66]}};},dur:9,frameUp:.2,lamp:{on:true,intensity:1.0,estate:true,distance:3.6,decay:2},estateNight:.35,
       enter(){showRoujin("count");const P=S.assets.estatePos,r=S.assets.roujin.count;r.position.set(...P.count);r.rotation.y=.35;r.userData.hideLabel=true;S.assets.magoPlay.visible=false;
         const l=S.assets.estateLamp;l.visible=true;l.position.set(...P.lamp);}},
      {zone:"an",light:"nightMoon",fade:"black",fov:40,cam:{pos:[2.8,1.25,6.9],look:[0,1.15,1.2]},to:{pos:[2.4,1.3,6.2],look:[0,1.2,1.1]},dur:12,shadow:{center:[0,0,2],half:12},
@@ -33380,6 +33474,7 @@ const SAIGEN_TSUREZURE=(()=>{
     S.shotIdx=i;S.shotT=0;
     if(sh.fade&&!first&&typeof saigenFade==="function")saigenFade(sh.fade);
     activateZone(sh.zone);
+    if(sh.camFn){try{const cf=sh.camFn();sh.cam=cf.cam;sh.to=cf.to;}catch(e){}}
     const c=shotCam(sh);S.camPath=c;
     S.fovFrom=sh.fov||c.fov||50;S.fovTo=sh.fovTo||S.fovFrom;
     if(sh.light){const L=typeof sh.light==="string"?presetState(sh.light):presetState(sh.light.preset,sh.light.over);
@@ -33504,12 +33599,15 @@ const SAIGEN_TSUREZURE=(()=>{
       let k=S.lampCfg.intensity||1.2;
       if(S.lampCfg.fadeTo!=null){const u=clamp01(S.shotT/(S.lampCfg.fadeDur||8));k=lerp(k,S.lampCfg.fadeTo,u);if(lamp&&lamp.userData.setIntensity)lamp.userData.setIntensity(lerp(1,.45,u));}
       const fl=(lamp&&lamp.userData&&lamp.userData.flicker!=null)?lamp.userData.flicker:1;
-      interiorLight.color.setHex(0xffa858);interiorLight.distance=9;interiorLight.decay=1.7;
+      interiorLight.color.setHex(0xffa858);interiorLight.distance=S.lampCfg.distance||9;interiorLight.decay=S.lampCfg.decay||1.7;
       interiorLight.intensity=k*(.82+.18*fl);
     }else if(S.curZone!=="estate"){
       interiorLight.intensity=0;
     }
-    if(S.curZone==="estate"||!L)return;
+    if(S.curZone==="estate"){const sh=S.shots[S.shotIdx];const k=sh&&sh.estateNight;
+      if(k!=null){hemi.intensity*=k;ambient.intensity*=k;rim.intensity*=k;if(typeof moon!=="undefined"&&moon)moon.intensity*=k;}
+      return;}
+    if(!L)return;
     // ここからは自前のゾーン: 空・霧・光を場の状態で上書き
     if(typeof cloudDome!=="undefined"&&cloudDome)cloudDome.visible=false;
     if(typeof sunMesh!=="undefined"&&sunMesh)sunMesh.visible=false;
