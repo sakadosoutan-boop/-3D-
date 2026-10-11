@@ -300,14 +300,14 @@
       "type": "flag_branch",
       "flag": "balancedReturnPoem",
       "trueNext": "seq_505bx_poem",
-      "falseNext": "seq_505c"
+      "falseNext": "seq_follow_bond_return"
     },
     {
       "id": "seq_505bx_poem",
       "type": "dialogue",
       "speaker": "秀頼（心）",
       "text": "（——帰る袖にも、残る香がある。あの冬の夜、おれが詠んだ歌だ。捨てろと言われて、捨てられるものかよ）",
-      "next": "seq_505c"
+      "next": "seq_follow_bond_return"
     },
     {
       "id": "seq_505c",
@@ -595,6 +595,48 @@
       "id": "seq_518_ed3",
       "type": "ending_check",
       "requirements": {}
+    },
+    {
+      "id": "seq_follow_bond_return",
+      "type": "flag_branch",
+      "flag": "bondTrust",
+      "trueNext": "seq_follow_trust_close",
+      "falseNext": "seq_follow_friend_branch"
+    },
+    {
+      "id": "seq_follow_friend_branch",
+      "type": "flag_branch",
+      "flag": "bondFriendship",
+      "trueNext": "seq_follow_friend_close",
+      "falseNext": "seq_follow_farewell_branch"
+    },
+    {
+      "id": "seq_follow_farewell_branch",
+      "type": "flag_branch",
+      "flag": "bondFarewell",
+      "trueNext": "seq_follow_farewell_close",
+      "falseNext": "seq_505c"
+    },
+    {
+      "id": "seq_follow_trust_close",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「先の道は、わたくしにも見えませぬ。——知らぬと申す約束、いま守ります。若君のお考えを聞かせてくださいませ」",
+      "next": "seq_505c"
+    },
+    {
+      "id": "seq_follow_friend_close",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "「帰られたら、それがしの下手な歌も覚えておいでください。役目のなかったひと時まで、なかったことにはせぬように」",
+      "next": "seq_505c"
+    },
+    {
+      "id": "seq_follow_farewell_close",
+      "type": "dialogue",
+      "speaker": "秀頼",
+      "text": "「帰り道を探す。でも、黙って消えない。ここで交わした約束まで捨てるために、帰るんじゃない」",
+      "next": "seq_505c"
     }
   ]
 }

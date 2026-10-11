@@ -322,7 +322,7 @@
       "options": [
         {
           "text": "「半蔀。閉じるものにも、開き方があるってこと」",
-          "next": "seq_004o_learning_close",
+          "next": "seq_follow_half",
           "effects": {
             "realityEgo": 3,
             "fantasySynchro": 3
@@ -333,7 +333,7 @@
         },
         {
           "text": "「几帳。薄いのに、人との距離を守ってること」",
-          "next": "seq_004o_learning_close",
+          "next": "seq_follow_screen",
           "effects": {
             "fantasySynchro": 6
           },
@@ -343,7 +343,7 @@
         },
         {
           "text": "「廂。内でも外でもない場所があること」",
-          "next": "seq_004o_learning_close",
+          "next": "seq_follow_eaves",
           "effects": {
             "realityEgo": 4,
             "fantasySynchro": 2
@@ -520,6 +520,36 @@
       "se": "seagull",
       "next": "chapter_complete",
       "note": "Clue for the real-world connection: the impossible seagull is an outside signal that does not belong to the mansion or the inland classroom."
+    },
+    {
+      "id": "seq_follow_half",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「開けられるからと、いつでも開けてよいとは限りませぬ。……けれど、閉ざしたままにもせぬ。その加減を、わたくしも覚えたいのです」",
+      "next": "seq_004o_learning_close",
+      "emotes": {
+        "kohagi": "listen"
+      }
+    },
+    {
+      "id": "seq_follow_screen",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「薄い布一枚で守れる距離もございます。守ってくださる方なら、こちらから声をかけることもできます」",
+      "next": "seq_004o_learning_close",
+      "emotes": {
+        "kohagi": "smile"
+      }
+    },
+    {
+      "id": "seq_follow_eaves",
+      "type": "dialogue",
+      "speaker": "小萩",
+      "text": "「どちらにも入りきれぬ場所を、不思議と思われるのですね。そこに立ってよいのだと、わたくしは……少し、安心いたしました」",
+      "next": "seq_004o_learning_close",
+      "emotes": {
+        "kohagi": "sad"
+      }
     }
   ]
 }

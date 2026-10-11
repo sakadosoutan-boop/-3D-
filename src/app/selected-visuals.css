@@ -1,0 +1,5 @@
+.selected-rain-glass{position:fixed;inset:0;z-index:24;pointer-events:none;opacity:0;transition:opacity .35s ease;overflow:hidden}
+.selected-rain-glass i{position:absolute;top:-9%;width:2px;height:32px;border-radius:100%;background:linear-gradient(transparent,rgba(226,242,247,.56),transparent);filter:blur(.35px);animation:selected-rain-drop 2.5s linear infinite}
+.selected-rain-glass i:nth-child(1){left:8%;animation-delay:-.3s}.selected-rain-glass i:nth-child(2){left:24%;animation-delay:-1.8s}.selected-rain-glass i:nth-child(3){left:42%;animation-delay:-.8s}.selected-rain-glass i:nth-child(4){left:61%;animation-delay:-2.2s}.selected-rain-glass i:nth-child(5){left:77%;animation-delay:-1.1s}.selected-rain-glass i:nth-child(6){left:92%;animation-delay:-1.5s}
+@keyframes selected-rain-drop{0%{transform:translateY(-5vh) rotate(14deg)}100%{transform:translateY(115vh) rotate(14deg)}}
+@media(prefers-reduced-motion:reduce){.selected-rain-glass i{animation:none;display:none}}

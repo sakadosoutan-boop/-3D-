@@ -1,0 +1,7 @@
+/* 選択した戦闘・歌合・貝合わせ改善の補助表示 */
+#tjf3Sign{white-space:nowrap;font-size:clamp(17px,3.6vw,24px);padding:3px 9px;border-radius:999px;background:rgba(21,12,24,.82);border:1px solid currentColor;box-shadow:0 2px 11px #0008}
+#utakaiHud .uk-loan-mark{position:absolute;right:1px;bottom:3px;writing-mode:vertical-rl;font-size:8px;font-weight:700;color:#175a60;background:#e5f3e7;border:1px solid #4e9990;border-radius:3px;padding:2px 1px;z-index:2}
+.codex-boss-note{margin-top:10px;padding:9px 11px;border-left:3px solid #9b5742;background:rgba(156,102,68,.10);line-height:1.65}
+.codex-boss-note b{color:#8a392d}
+#kaiLoreBanner.hit{max-height:120px;overflow-y:auto}
+@media (max-width:520px){#tjf3Sign{font-size:18px}#utakaiHud .uk-loan-mark{font-size:7px}}

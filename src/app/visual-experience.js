@@ -248,7 +248,8 @@ VISUAL_EXPERIENCE=(()=>{
       r.g.worldToLocal(local.copy(camera.position));const front=local.z>0&&Math.abs(local.x)<5;
       r.head.rotation.y=motion&&front?THREE.MathUtils.clamp(Math.atan2(local.x,local.z)*.22,-.075,.075):0;
       const nod=Math.max(0,Math.sin(t*.71+r.phase)-.93);
-      r.head.rotation.x=motion?nod*.42:0;r.eyes.position.x=motion&&front?THREE.MathUtils.clamp(local.x*.0025,-.006,.006):0;
+       r.expressionHeadX=motion?nod*.42:0;r.head.rotation.x=r.expressionHeadX;
+       r.eyes.position.x=motion&&front?THREE.MathUtils.clamp(local.x*.0025,-.006,.006):0;
       if(r.held){r.held.rotation.x=r.heldX+(motion?.018*Math.sin(t*.85+r.phase):0);r.held.rotation.z=r.heldZ+(motion?.012*Math.sin(t*.71+r.phase):0);}
     }
   }

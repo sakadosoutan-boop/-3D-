@@ -10,7 +10,13 @@ CODEX_VIEWER=(()=>{
   const stage=document.getElementById("viewerStage"),viewCamera=new THREE.PerspectiveCamera(42,1,.015,500);
   const target=new THREE.Vector3(),size=new THREE.Vector3(),box=new THREE.Box3(),viewport=new THREE.Vector4(),scissor=new THREE.Vector4();
   const visibility=new Map(),pointers=new Map(),media=CODEX_MEDIA;
-  let active=false,id=null,tab="game",roots=[],photos=[],photoIndex=0,isolated=true,azimuth=.25,elevation=.18,distance=3,baseDistance=3,previousFocus=null,oldLabelMode=0,pinch=0;
+  let active=false,id=null,tab="game",roots=[],photos=[],photoIndex=0,isolated=true,azimuth=.25,elevation=.18,distance=3,baseDistance=3,previousFocus=null,oldLabelMode=0,oldCodexOpen=false,pinch=0;
+  let comparison=null,question=null;
+  const compareBar=document.createElement("div");compareBar.id="viewerCompareBar";compareBar.className="viewer-tools";
+  compareBar.innerHTML='<label for="viewerCompareSelect">模型を並べて比べる</label><select id="viewerCompareSelect"><option value="">単体表示</option></select><span>回転・拡大は両方に反映／表示寸法はそれぞれに合わせます</span>';
+  document.getElementById("viewerGamePanel").insertBefore(compareBar,stage);
+  const stageLabels=document.createElement("div");stageLabels.id="viewerCompareLabels";stageLabels.hidden=true;stage.appendChild(stageLabels);
+  const questionPanel=document.createElement("div");questionPanel.id="viewerQuestion";questionPanel.hidden=true;dialog.appendChild(questionPanel);
   function escape(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
   function modelRoots(item){
     const data=interactables[item];let list=(data?.roots||[]).filter(r=>r.parent);
@@ -55,20 +61,25 @@ CODEX_VIEWER=(()=>{
   }
   function open(item,initial="game"){
     if(!ITEMS[item]||!codexUnlocked.has(item))return false;
-    if(active)close(false);resetInputState();active=true;id=item;roots=modelRoots(item);photos=media.filter(m=>m.items.includes(item));photoIndex=0;
-    previousFocus=document.activeElement;oldLabelMode=APP.labelMode;APP.labelMode=0;APP.codexOpen=true;
+    if(active)close(false,false);resetInputState();active=true;id=item;roots=modelRoots(item);photos=media.filter(m=>m.items.includes(item));photoIndex=0;
+    previousFocus=document.activeElement;oldLabelMode=APP.labelMode;oldCodexOpen=APP.codexOpen;APP.labelMode=0;APP.codexOpen=true;
+    comparison=null;question=null;questionPanel.hidden=true;dialog.classList.remove("identification");stageLabels.hidden=true;compareBar.hidden=false;
+    document.getElementById("viewerContext").disabled=false;stage.setAttribute("aria-label","ゲームの3Dモデル。ドラッグまたは矢印キーで回転、ホイールまたはプラスとマイナスで拡大縮小");
+    const select=document.getElementById("viewerCompareSelect");select.innerHTML='<option value="">単体表示</option>'+Object.keys(ITEMS).filter(other=>other!==item&&codexUnlocked.has(other)&&modelRoots(other).length).map(other=>`<option value="${escape(other)}">${escape(ITEMS[other].n)}</option>`).join("");
     isolated=ITEMS[item].cat!=="b";dialog.hidden=false;document.body.classList.add("codex-viewing");document.getElementById("codexViewerTitle").textContent=ITEMS[item].n;
     document.getElementById("viewerGameTab").disabled=!roots.length;
     const hidden=roots.some(r=>!isObjVisible(r));mask();fit();
     document.getElementById("viewerGameNote").textContent="ゲームで使うモデルと材質を表示しています。ドラッグで回転、ホイール・2本指で拡大縮小。"+(hidden?" 現在の季節・時刻では邸内に現れない被写体を単体で表示しています。":" 季節と光は現在のゲームの状態です。");
     setTab(initial==="game"&&roots.length?"game":"photo");document.getElementById("viewerClose").focus();return true;
   }
-  function close(restoreFocus=true){
-    if(!active)return;active=false;restoreVisibility();pointers.clear();pinch=0;dialog.hidden=true;document.body.classList.remove("codex-viewing");
-    APP.labelMode=oldLabelMode;resetInputState();clock.oldTime=performance.now();
+  function close(restoreFocus=true,notifyCancel=true){
+    if(!active)return;const abandoned=notifyCancel?question?.cancel:null;active=false;question=null;comparison=null;restoreVisibility();pointers.clear();pinch=0;dialog.hidden=true;document.body.classList.remove("codex-viewing");
+    APP.labelMode=oldLabelMode;APP.codexOpen=oldCodexOpen;resetInputState();clock.oldTime=performance.now();
     renderer.shadowMap.needsUpdate=true;renderer.setScissorTest(false);renderer.setViewport(0,0,innerWidth,innerHeight);if(restoreFocus&&previousFocus?.isConnected)previousFocus.focus();
+    if(abandoned)abandoned();
   }
   function setTab(which){
+    if(question&&which!=="game")return;
     tab=which;const game=tab==="game";document.getElementById("viewerGamePanel").hidden=!game;document.getElementById("viewerPhotoPanel").hidden=game;
     dialog.classList.toggle("photo-tab",!game);
     for(const [name,selected] of [["Game",game],["Photo",!game]]){const el=document.getElementById("viewer"+name+"Tab");el.setAttribute("aria-selected",String(selected));el.tabIndex=selected?0:-1;}
@@ -79,7 +90,7 @@ CODEX_VIEWER=(()=>{
     image.classList.remove("zoomed");document.getElementById("viewerPhotoZoom").setAttribute("aria-pressed","false");
     if(!m){image.hidden=true;image.removeAttribute("src");caption.textContent="この項目の写真はまだ同梱していません。ゲーム内のモデルは「ゲーム内の姿」から閲覧できます。";}else{
       image.hidden=false;image.alt=m.caption;image.src=location.protocol==="file:"?m.dataUrl:m.src;image.dataset.inlineFallback="0";
-      caption.innerHTML=`<h3>${escape(m.caption)}</h3><p>${escape(m.note)}</p><p class="viewer-credit">作者・所蔵: ${escape(m.author)} · <a href="${escape(m.source)}" target="_blank" rel="noopener noreferrer">出典ページ</a> · <a href="${escape(m.licenseUrl)}" target="_blank" rel="noopener noreferrer">${escape(m.license)}</a></p><p class="viewer-credit">${escape(m.changes)}</p>`;
+      caption.innerHTML=`<h3>${escape(m.caption)}</h3><p>${escape(m.note)}</p><p class="viewer-credit">作者・所蔵: ${escape(m.author)} · <a href="${escape(m.source)}" target="_blank" rel="noopener noreferrer">出典ページ</a>${m.collectionSource?` · <a href="${escape(m.collectionSource)}" target="_blank" rel="noopener noreferrer">所蔵館の資料情報</a>`:""} · <a href="${escape(m.licenseUrl)}" target="_blank" rel="noopener noreferrer">${escape(m.license)}</a></p><p class="viewer-credit">${escape(m.changes)}</p>`;
     }
     document.getElementById("viewerPhotoCount").textContent=m?`${photoIndex+1} / ${photos.length}`:"0 / 0";
     for(const button of ["viewerPreviousPhoto","viewerNextPhoto"])document.getElementById(button).disabled=photos.length<2;
@@ -93,16 +104,49 @@ CODEX_VIEWER=(()=>{
   function render(){
     if(!active||tab!=="game"||!roots.length)return;
     const r=stage.getBoundingClientRect();if(r.width<1||r.height<1)return;
-    const minAspect=Math.min(1,r.width/r.height),safeDistance=distance/minAspect;
-    viewCamera.aspect=r.width/r.height;viewCamera.position.set(target.x+Math.sin(azimuth)*Math.cos(elevation)*safeDistance,target.y+Math.sin(elevation)*safeDistance,target.z+Math.cos(azimuth)*Math.cos(elevation)*safeDistance);
-    viewCamera.lookAt(target);viewCamera.updateProjectionMatrix();viewCamera.updateMatrixWorld(true);
     renderer.getViewport(viewport);renderer.getScissor(scissor);const wasScissor=renderer.getScissorTest();
     try{
       renderer.setScissorTest(false);renderer.setViewport(0,0,innerWidth,innerHeight);renderer.clear();
-      renderer.setViewport(r.left,innerHeight-r.bottom,r.width,r.height);renderer.setScissor(r.left,innerHeight-r.bottom,r.width,r.height);renderer.setScissorTest(true);
-      renderer.render(scene,viewCamera);
+      const originalRoots=roots;
+      const panels=comparison?[{roots:originalRoots,target:target.clone(),base:baseDistance},{roots:comparison.roots,target:comparison.target,base:comparison.base}]:[{roots:originalRoots,target:target.clone(),base:baseDistance}];
+      try{panels.forEach((panel,index)=>{
+        if(comparison){roots=panel.roots;mask();}
+        const width=r.width/panels.length,left=r.left+index*width;
+        const safeDistance=panel.base*(distance/baseDistance)/Math.min(1,width/r.height);
+        viewCamera.aspect=width/r.height;viewCamera.position.set(panel.target.x+Math.sin(azimuth)*Math.cos(elevation)*safeDistance,panel.target.y+Math.sin(elevation)*safeDistance,panel.target.z+Math.cos(azimuth)*Math.cos(elevation)*safeDistance);
+        viewCamera.lookAt(panel.target);viewCamera.updateProjectionMatrix();viewCamera.updateMatrixWorld(true);
+        renderer.setViewport(left,innerHeight-r.bottom,width,r.height);renderer.setScissor(left,innerHeight-r.bottom,width,r.height);renderer.setScissorTest(true);renderer.render(scene,viewCamera);
+      });}finally{roots=originalRoots;if(comparison)mask();}
     }finally{renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(wasScissor);}
   }
+  // Render original world models in two scissored views. No clones, owned GPU resources or world transforms.
+  function compare(other){
+    if(!active||question||other===id)return false;
+    if(other&&(!ITEMS[other]||!codexUnlocked.has(other)||!modelRoots(other).length))return false;
+    comparison=null;stageLabels.hidden=!other;
+    if(other){
+      const saved={roots,target:target.clone(),size:size.clone(),baseDistance,distance,azimuth,elevation,far:viewCamera.far};
+      roots=modelRoots(other);fit();comparison={id:other,roots,target:target.clone(),base:baseDistance};
+      roots=saved.roots;target.copy(saved.target);size.copy(saved.size);baseDistance=saved.baseDistance;distance=saved.distance;azimuth=saved.azimuth;elevation=saved.elevation;viewCamera.far=Math.max(saved.far,viewCamera.far);
+      isolated=true;stageLabels.innerHTML=`<span>${escape(ITEMS[id].n)}</span><span>${escape(ITEMS[other].n)}</span>`;
+    }
+    document.getElementById("viewerCompareSelect").value=other||"";document.getElementById("viewerContext").disabled=!!comparison;mask();render();return true;
+  }
+  function openQuestion(item,options,onAnswer,onCancel,caption){
+    if(!options.includes(item)||options.some(option=>!ITEMS[option]||!codexUnlocked.has(option)))return false;
+    if(!open(item,"game")||!roots.length){close();return false;}
+    question={answer:onAnswer,cancel:onCancel};isolated=true;mask();azimuth=Math.random()*Math.PI*2;elevation=.12+Math.random()*.3;
+    dialog.classList.add("identification");compareBar.hidden=true;document.getElementById("codexViewerTitle").textContent=caption||"模型の形を見て答えよう";
+    stage.setAttribute("aria-label","識別問題の模型。ドラッグまたは矢印キーで回転できます");
+    document.getElementById("viewerGameNote").textContent="場所・札・周囲を隠しています。回転して形や構造を確かめ、名前を選んでください。";
+    questionPanel.hidden=false;questionPanel.innerHTML='<p id="viewerQuestionFeedback" role="status" aria-live="polite"></p><div class="learning-answers">'+options.map(option=>`<button type="button" data-model-answer="${escape(option)}">${escape(ITEMS[option].n)}</button>`).join("")+"</div>";render();return true;
+  }
+  function questionFeedback(correct){
+    const status=document.getElementById("viewerQuestionFeedback");if(status)status.textContent=correct?"正解。次の問題へ進みます。":"形をもう一度確かめて選びましょう。";
+    if(correct){questionPanel.querySelectorAll("button").forEach(b=>b.disabled=true);if(question)question.cancel=null;}
+  }
+  questionPanel.onclick=e=>{const b=e.target.closest("[data-model-answer]");if(b&&!b.disabled&&question)question.answer(b.dataset.modelAnswer);};
+  document.getElementById("viewerCompareSelect").onchange=e=>compare(e.target.value);
   function zoom(factor){distance=THREE.MathUtils.clamp(distance*factor,baseDistance*.27,baseDistance*3.8);render();}
   function rotate(x,y=0){azimuth+=x;elevation=THREE.MathUtils.clamp(elevation+y,-.65,1.20);render();}
   stage.addEventListener("pointerdown",e=>{e.preventDefault();stage.focus();stage.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pointers.size===2){const [a,b]=[...pointers.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);}});
@@ -124,12 +168,12 @@ CODEX_VIEWER=(()=>{
     if(!active)return;e.stopImmediatePropagation();
     if(e.key==="Escape"){e.preventDefault();close();return;}
     if(e.key==="Tab"){
-      const all=[...dialog.querySelectorAll("button:not(:disabled),a[href],[tabindex='0']")].filter(el=>el.getClientRects().length);
+      const all=[...dialog.querySelectorAll("button:not(:disabled),select:not(:disabled),summary,a[href],[tabindex='0']")].filter(el=>el.getClientRects().length);
       const first=all[0],last=all[all.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}return;
     }
     if(e.target.getAttribute("role")==="tab"&&["ArrowLeft","ArrowRight"].includes(e.key)){e.preventDefault();if(roots.length){setTab(tab==="game"?"photo":"game");document.getElementById(tab==="game"?"viewerGameTab":"viewerPhotoTab").focus();}return;}
     if(e.target===stage){const actions={ArrowLeft:()=>rotate(-.12),ArrowRight:()=>rotate(.12),ArrowUp:()=>rotate(0,.08),ArrowDown:()=>rotate(0,-.08),"+":()=>zoom(.88),"=":()=>zoom(.88),"-":()=>zoom(1.12)};if(actions[e.key]){e.preventDefault();actions[e.key]();}}
   },true);
   addEventListener("resize",()=>{if(active)render();});
-  return {open,close,render,buttons,modelRoots,setTab,zoom,rotate,get active(){return active;},get item(){return id;},get tab(){return tab;},get camera(){return viewCamera;},get distance(){return distance;}};
+  return {open,close,render,buttons,modelRoots,setTab,zoom,rotate,compare,openQuestion,questionFeedback,get active(){return active;},get item(){return id;},get tab(){return tab;},get camera(){return viewCamera;},get distance(){return distance;},get comparison(){return comparison?.id||null;},get question(){return !!question;}};
 })();

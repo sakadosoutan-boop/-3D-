@@ -205,6 +205,11 @@
     const close=element("button","el-close","×");close.type="button";close.setAttribute("aria-label","日課を閉じる");close.onclick=closeSchedule;
     head.append(title,close);fragment.appendChild(head);
     fragment.appendChild(element("p","el-time",({dawn:"朝",day:"昼",dusk:"夕",night:"夜"}[state.phase]||state.phase)+"の務め"));
+    if(window.SELECTED_WORLD){
+      const join=element("button","el-event","家司・舎人の務めを手伝う");join.type="button";
+      join.disabled=!walkMode()||APP.map==="kamakura";
+      join.onclick=()=>{closeSchedule();window.SELECTED_WORLD.open();};fragment.appendChild(join);
+    }
     ROLES.forEach(id=>{
       const root=actorFor(id),name=ROLE_NAMES[id]||id,activity=root&&root.userData&&root.userData.estateActivityName||"持ち場を整える";
       const row=element("div","el-row");row.append(element("strong","",name),element("span","",activity));fragment.appendChild(row);

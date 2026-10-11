@@ -272,7 +272,7 @@
       "speaker": "語り",
       "text": "五枚目の札が手の中で光をほどいた瞬間、庭の景色が、ぴん、と張り直された。渡殿は渡殿の顔になり、遣水は遣水の音を取り戻した。世界に名前が戻っていく手応えが、指先に残っている。",
       "se": "koto",
-      "next": "seq_206_place_intro"
+      "next": "seq_follow_found_branch"
     },
     {
       "id": "seq_206_place_intro",
@@ -551,6 +551,27 @@
       "speaker": "語り",
       "text": "夏の昼が、ゆっくりと傾いていく。秀頼は邸を歩くための名を拾い、そして、拾ってはいけないような気がする問いをひとつ、袖の内に隠した。——空の白い鳥だけが、この邸に海がないことを知っている。",
       "next": "chapter_complete"
+    },
+    {
+      "id": "seq_follow_found_branch",
+      "type": "flag_branch",
+      "flag": "firstFoundWater",
+      "trueNext": "seq_follow_water",
+      "falseNext": "seq_follow_building"
+    },
+    {
+      "id": "seq_follow_water",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "「最初に水の名を戻されましたな。足場より先に流れを見るとは。それがしにはない目でございます。水辺へ参る折は、若君の見立ても伺いましょう」",
+      "next": "seq_206_place_intro"
+    },
+    {
+      "id": "seq_follow_building",
+      "type": "dialogue",
+      "speaker": "右近",
+      "text": "「最初に板敷の方から名を戻されましたな。立つ場所を確かめてから進む——戦でも頼りになる心掛けでございます」",
+      "next": "seq_206_place_intro"
     }
   ]
 }

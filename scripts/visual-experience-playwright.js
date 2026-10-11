@@ -10,7 +10,7 @@ for(const m of media){
  assert(m.source.startsWith('https://commons.wikimedia.org/wiki/File:'));const b=fs.readFileSync(path.join(root,m.src));assert.equal(b.length,m.bytes);assert.equal(b.readUInt16BE(),0xffd8);assert(m.width>0&&m.height>0&&m.kind==='photo');
  assert.deepEqual(Buffer.from(inline.find(i=>i.id===m.id).dataUrl.split(',')[1],'base64'),b,'single HTML photograph differs from licensed asset');
 }
-assert.equal(media.length,11);assert(/Jidai_matsuri/.test(media.find(m=>m.id==='gissha').source),'gissha must be a photographed replica, not a painting');
+assert.equal(media.length,13);assert(/Jidai_matsuri/.test(media.find(m=>m.id==='gissha').source),'gissha must be a photographed replica, not a painting');
 const passed=['bundled photographs map to existing entries and retain source, author, license and original dimensions'],errors=[];
 function check(ok,message){assert(ok,message);passed.push(message);}
 (async()=>{

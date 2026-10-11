@@ -1,0 +1,10 @@
+#storyHud .st-vn{gap:3px}
+#storyHud .st-vn button{padding:4px 6px}
+#storyHud .st-spk{padding-right:230px}
+.st-follow-entry{text-align:left;border-bottom:1px solid #79633c;padding:10px 0;line-height:1.8}
+.st-follow-entry strong{display:block;color:#e5c781}
+#stRecall{position:fixed;right:12px;bottom:100px;z-index:56;pointer-events:auto;max-width:80vw}
+.st-renai-closure{text-align:left;margin-top:18px;border-top:1px solid #a88b53;padding-top:10px;line-height:1.85}
+.st-renai-closure button{display:block;width:100%;margin:8px 0;padding:12px;background:#39291c;color:#fff1d5;border:1px solid #b89455;border-radius:6px;cursor:pointer;text-align:left;min-height:44px;font:inherit}
+.st-renai-closure h4{color:#ead394}.st-renai-stats{font-size:12px;color:#b5a276}
+@media(max-width:480px){#storyHud .st-spk{padding-right:0;padding-top:26px}#storyHud .st-vn{top:5px}.st-follow-entry{font-size:12px}}

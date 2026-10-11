@@ -346,7 +346,7 @@
       "type": "dialogue",
       "speaker": "蓮",
       "text": "「——ただいま」",
-      "next": "seq_617_ed1_close"
+      "next": "seq_follow_morning_choice"
     },
     {
       "id": "seq_617_ed1_close",
@@ -573,6 +573,46 @@
       "id": "seq_655_ed5_end",
       "type": "ending",
       "endingId": "ED5_SPOOKY"
+    },
+    {
+      "id": "seq_follow_morning_choice",
+      "type": "choice",
+      "text": "これから隣の席で、どんな時間を重ねよう。",
+      "options": [
+        {
+          "text": "わからない時に、互いに尋ねられる関係でいたい",
+          "next": "seq_follow_morning_trust"
+        },
+        {
+          "text": "古典の話以外も、友達として聞きたい",
+          "next": "seq_follow_morning_friend"
+        },
+        {
+          "text": "夢の小萩には別れを。目の前の栞とは、ここから",
+          "next": "seq_follow_morning_farewell"
+        }
+      ]
+    },
+    {
+      "id": "seq_follow_morning_trust",
+      "type": "dialogue",
+      "speaker": "栞",
+      "text": "「私も、全部知ってるわけじゃないよ。一緒に調べて、違ってたら言い直そう」——答えをくれる人ではなく、問いを持ち寄る隣人が、そこにいた。",
+      "next": "seq_617_ed1_close"
+    },
+    {
+      "id": "seq_follow_morning_friend",
+      "type": "dialogue",
+      "speaker": "栞",
+      "text": "「じゃあ、今日の帰り道。古典じゃない話もしていい？」蓮はうなずく。ノートが閉じられても、会話は終わらなかった。",
+      "next": "seq_617_ed1_close"
+    },
+    {
+      "id": "seq_follow_morning_farewell",
+      "type": "dialogue",
+      "speaker": "蓮",
+      "text": "「小萩、ありがとう」——声に出さず、夢の人へ別れを告げる。それから栞を見る。「きみの話を、聞かせて」。夢の続きを押しつけないための、最初の言葉だった。",
+      "next": "seq_617_ed1_close"
     }
   ]
 }

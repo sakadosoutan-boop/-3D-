@@ -1,0 +1,14 @@
+.learning-tools{margin:12px 0;padding:12px;border:1px solid #a48a56;border-radius:9px;background:#f6efd9;font-family:var(--sans);line-height:1.6}
+.learning-tools strong{color:#6b3123}.learning-tools p{margin:4px 0 9px}.learning-tools small{display:block;margin-top:8px;color:#67543a}
+.learning-tools button{min-height:44px;padding:9px 12px;margin:3px;border:1px solid #887044;border-radius:6px;background:#fff9e9;color:#513e28;font:inherit;cursor:pointer}
+.learning-tools button:disabled{opacity:.6;cursor:default}.learning-record,.learning-note{font-size:12px;line-height:1.6;color:#786346}
+.waka-deep-notes{margin:12px 0;padding:9px 12px;border:1px solid #b99f69;border-radius:6px;font-size:13px;line-height:1.7}
+.waka-deep-notes summary{min-height:36px;cursor:pointer;color:#7b3828;font-weight:700}.waka-deep-notes h4{margin:12px 0 3px}.waka-deep-notes dt{font-weight:700}.waka-deep-notes dd{margin:0 0 8px 12px}.waka-deep-notes p{margin:7px 0}
+#viewerCompareBar{font-size:12px;position:relative;z-index:2;background:#201c17;padding-bottom:8px}#viewerCompareBar span{font-size:10px;color:#c4b699}#viewerCompareSelect{max-width:230px;min-height:42px;border:1px solid #9e8455;border-radius:6px;background:#30291f;color:#f7edd5;padding:6px;font:inherit}
+#viewerCompareLabels{position:absolute;inset:0 0 auto;display:flex;pointer-events:none}#viewerCompareLabels span{width:50%;text-align:center;color:#f7edd5;background:#201c17dd;padding:5px;border-right:1px solid #9e8455;font-size:12px}
+#viewerLearningContext{flex:none;position:relative;z-index:2;background:#201c17;padding:6px 10px;max-height:24vh;overflow:auto;font-size:12px;line-height:1.6}#viewerLearningContext summary{cursor:pointer;min-height:32px;color:#e6c773}#viewerLearningContext .codex-chip{margin:3px;color:#f7edd5}#viewerLearningContext .codex-chip.locked{color:#d6c6a5}
+#codexViewer.identification .viewer-tabs,#codexViewer.identification #viewerContext,#codexViewer.identification #viewerLearningContext{display:none!important}
+#viewerQuestion{position:relative;z-index:2;background:#201c17;padding:4px 0 8px;font-size:13px}#viewerQuestionFeedback{min-height:20px;margin:3px 0;color:#e6c773}.learning-answers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}#codexViewer .learning-answers button{font-size:15px;min-height:48px}
+/* Let enlarged photographs start at their top-left, so overflow never loses the image's left half. */
+#viewerPhotoArea:has(.zoomed){display:block}#viewerPhoto.zoomed{width:max(100%,1100px);height:auto;min-width:0;max-width:none;max-height:none}
+@media(max-width:600px){#viewerCompareBar{gap:4px}#viewerCompareBar span{flex-basis:100%}#viewerCompareSelect{max-width:180px}.learning-answers{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#codexViewer .learning-answers button{font-size:13px}#viewerLearningContext{max-height:19vh}.waka-deep-notes{padding:8px}}

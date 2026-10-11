@@ -249,6 +249,11 @@
     }
 
     handleSpawnCollectibles(event){
+      const already=this.state.collected[event.groupId]||{};
+      if((event.positions||[]).length&&(event.positions||[]).every(p=>already[p.id])){
+        if(global.StoryFollowthrough)global.StoryFollowthrough.master(event.groupId,event.positions.map(p=>p.id));
+        return this.goNext(event.next);
+      }
       this.hooks.onCollectibles({
         groupId: event.groupId,
         kind: event.kind,
@@ -317,6 +322,7 @@
       if(!event || event.type !== "choice")throw new Error("No active choice event");
       const option = (event.options || [])[optionIndex];
       if(!option)throw new Error(`Choice option not found: ${optionIndex}`);
+      this.state.history.push({chapterId:this.state.chapterId,sequenceId:event.id,type:"chosen",choiceText:option.text,optionIndex});
       this.applyEffects(option.effects);
       const forced = this._takeForcedEnding();
       if(forced)return forced;
@@ -366,6 +372,11 @@
     }
 
     collect(groupId, itemId){
+      const active=this.sequenceMap.get(this.currentSequenceId);
+      if(!active||active.type!=="spawn_collectibles"||active.groupId!==groupId||!(active.positions||[]).some(p=>p.id===itemId))return this.snapshot();
+      const firstKey="firstFound_"+groupId;
+      if(!this.state.routeFlags[firstKey])this.state.routeFlags[firstKey]=itemId;
+      if(groupId==="chapter2_terms"&&this.state.routeFlags[firstKey]==="yarimizu")this.state.routeFlags.firstFoundWater=true;
       if(!groupId || !itemId)return;
       if(!this.state.collected[groupId])this.state.collected[groupId] = {};
       this.state.collected[groupId][itemId] = true;
@@ -375,6 +386,7 @@
       if(event && event.type === "spawn_collectibles" && event.groupId === groupId){
         const count = Object.keys(this.state.collected[groupId]).length;
         if(count >= (event.count || 0) && event.next){
+          if(global.StoryFollowthrough)global.StoryFollowthrough.master(groupId,(event.positions||[]).map(p=>p.id));
           return this.goNext(event.next);
         }
       }
