@@ -75,6 +75,9 @@ function ignorable(text) {
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       const out = { beats: [], errors: [] };
       const saved = { near: camera.near, fov: 62, il: interiorLight.position.toArray(), sunTarget: sun.target.position.toArray(), hemi: hemi.color.getHex() };
+      // 本編の人物(女房・家人)は屋敷の場の間だけ隠し、離れたら戻す
+      const folkVisible = () => people.filter((p) => p.g.visible).length + householdPeople.filter((g) => g.visible).length;
+      out.folkBefore = folkVisible(); out.folkInEstate = -1;
       enterMode('saigen');
       const pk = document.getElementById('sgPicker'); if (pk) pk.style.display = 'none';
       startSaigen('tsurezure_adashino');
@@ -94,6 +97,7 @@ function ignorable(text) {
         let t = 0; const dt = 1 / 15;
         const total = T.shots.reduce((a, s) => a + (s.dur || 8), 0) + 1;
         const zones = new Set([T.curZone]);
+        if (i === 10) out.folkInEstate = folkVisible();
         for (; t < total; t += dt) { props.update(dt, t); window.SAIGEN_ENV_HOOK(dt); zones.add(T.curZone); }
         await wait(30);
         const finite = [player.pos.x, player.pos.y, player.pos.z, player.yaw, player.pitch, camera.fov, sun.intensity, renderer.toneMappingExposure].every(Number.isFinite);
@@ -140,6 +144,7 @@ function ignorable(text) {
       await wait(100);
       const loopsBefore = Object.keys(SAIGEN_TSUREZURE.S.loops).length;
       enterMode('walk'); await wait(100);
+      out.folkAfter = folkVisible();
       out.leave = { active: SAIGEN_TSUREZURE.S.active, hook: typeof window.SAIGEN_ENV_HOOK === 'function', loops: Object.keys(SAIGEN_TSUREZURE.S.loops).length, loopsBefore, near: camera.near, stage: !!window.SAIGEN_STAGE };
       return out;
     });
@@ -178,6 +183,8 @@ function ignorable(text) {
     const l = run.leave;
     if (l.active || l.hook || l.loops || l.stage) failures.push(`leaving to walk mode did not clean up: ${JSON.stringify(l)}`);
     if (!l.loopsBefore) failures.push('beat 6 did not start its cicada audio loops');
+    if (run.folkInEstate !== 0) failures.push(`base-game figures still visible in the estate scenes: ${run.folkInEstate}`);
+    if (run.folkAfter !== run.folkBefore) failures.push(`base-game figures not restored after leaving: ${run.folkAfter} of ${run.folkBefore}`);
   } catch (error) {
     failures.push(`exception: ${error.message}`);
   }

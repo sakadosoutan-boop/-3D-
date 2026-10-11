@@ -404,10 +404,10 @@ const SAIGEN_TSUREZURE=(()=>{
     const f=safeMake("mago-"+pose,()=>M.FIG&&M.FIG.makeMago?M.FIG.makeMago({pose,sex,age,quality:q}):null,()=>fbFigure(0xa04040,.8));
     f.visible=false;f.userData.saigenCustom=true;f.userData.cname="孫";f.userData.label=label||"孫";f.userData.labelY=(pose==="play"||pose==="stand")?1.25:.95;f.userData.hideLabel=true;
     track("estate",f);return own(f);}
-  // 外出を待つ従者二人(階の下の両脇で、上の簀子の老人の方を向いて控える)
+  // 外出を待つ従者二人(階の西、簀子の前の庭に立ち、老人が下りてくる階の方を向いて控える)
   function buildAttendants(){const M=MODS(),q=S.quality,z=S.zones.estate;if(!z)return;
     const gy=(x,zz)=>(typeof groundH==="function")?groundH(x,zz):0;
-    [[-0.55,8.7,Math.PI+.25],[1.95,8.95,Math.PI-.3]].forEach((a,i)=>{
+    [[-3.2,7.5,1.90],[-4.3,8.0,2.05]].forEach((a,i)=>{
       const f=safeMake("juusha"+i,()=>M.FIG&&M.FIG.makeJuusha?M.FIG.makeJuusha({index:i,quality:q==="high"?"medium":q}):null,()=>fbFigure(i?0x5a4a32:0x3d4a5a,1.6));
       f.position.set(a[0],gy(a[0],a[1]),a[1]);f.rotation.y=a[2];f.visible=false;f.userData.saigenCustom=true;f.userData.hideLabel=true;
       z.add(own(track("estate",f)));S.assets.attendants.push(f);});}
@@ -546,7 +546,7 @@ const SAIGEN_TSUREZURE=(()=>{
      {zone:"an",light:{preset:"autumnDay",over:{sun:{dir:[-.4,.5,.75],intensity:1.1}}},fade:"black",fov:42,cam:{pos:[2.6,1.3,5.4],look:[0,.95,1.2]},to:{pos:[2.2,1.25,4.8],look:[0,.95,1.2]},dur:10,shadow:{center:[0,0,1.5],half:10},
       tick(ctx,u,t){const d=S.assets.desk;if(d&&d.userData.setWritten)d.userData.setWritten(Math.min(1,.9+t*.02));}}],
     /* 11 そのほど過ぎぬれば、かたちを恥づる心もなく、人に出でまじらはんことを思ひ */
-    [{zone:"estate",fov:36,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.walkFrom[1];return {cam:{pos:[4.2,y+1.0,10.6],look:[-2.6,y+1.25,5.4]},to:{pos:[4.6,y+1.0,10.2],look:[0.6,y+1.25,5.4]}};},dur:12,
+    [{zone:"estate",fov:40,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.walkFrom[1];return {cam:{pos:[4.2,y+1.0,10.6],look:[-2.6,y+1.25,5.4]},to:{pos:[4.6,y+1.0,10.2],look:[0.6,y+1.25,5.4]}};},dur:12,
       enter(){showRoujin("walk");(S.assets.attendants||[]).forEach(f=>{f.visible=true;});const r=S.assets.roujin.walk,P=S.assets.estatePos;r.position.set(...P.walkFrom);r.rotation.y=Math.PI/2;r.userData.walking=true;r.userData.walkSpeed=.55;r.userData.hideLabel=false;S._walk={t:0};},
       tick(ctx,u,t){const r=S.assets.roujin.walk,P=S.assets.estatePos;const k=Math.min(1,t/12);r.position.x=lerp(P.walkFrom[0],P.walkTo[0],k);r.position.y=(typeof groundH==="function")?groundH(r.position.x,r.position.z):r.position.y;r.userData.walking=k<1;}}],
     /* 12 夕べの日に子孫を愛して、栄ゆく末を見んまでの命をあらまし */
@@ -666,6 +666,16 @@ const SAIGEN_TSUREZURE=(()=>{
     if(S.sky)S.sky.visible=(zone!=="estate");
     // 屋敷の場は本体の通常の空・光に任せる(老人と孫の場)。自前で書き換えた値(本体が毎フレームは戻さない分)を戻す
     if(zone==="estate"&&!wasEstate)restoreEstateLighting();
+    hideEstateFolk(zone==="estate");
+  }
+  // 屋敷の場の間は、本編の人物(女房・家人)を隠す。この段の老人と孫・従者だけの場にし、
+  // 簡易な本編人物が彫刻の人物の背後に並ばないように。ゾーンを離れる時と後片付けで元に戻す
+  function hideEstateFolk(on){
+    if(on){if(S.folkHidden)return;S.folkHidden=[];
+      const add=g=>{if(g&&g.isObject3D&&g.visible){g.visible=false;S.folkHidden.push(g);}};
+      try{if(typeof people!=="undefined"&&Array.isArray(people))people.forEach(p=>add(p&&p.g));}catch(e){}
+      try{const hh=window.householdPeople;if(Array.isArray(hh))hh.forEach(add);}catch(e){}
+    }else if(S.folkHidden){S.folkHidden.forEach(g=>{g.visible=true;});S.folkHidden=null;}
   }
   function restoreEstateLighting(){
     const s=S.saved;if(!s)return;
@@ -888,6 +898,7 @@ const SAIGEN_TSUREZURE=(()=>{
     S.active=false;
     if(S.pumpTimer){clearTimeout(S.pumpTimer);S.pumpTimer=null;}
     S.done={};S.proxy=null;S.labelFig={};S.started=false;S.pendingBeat=null;
+    hideEstateFolk(false);
     {const el=document.getElementById("sgPrep");if(el&&el.parentNode)el.parentNode.removeChild(el);}
     stopAudio();
     restoreGlobals();

@@ -117,13 +117,17 @@ npm run verify:public
 - `supabase/migrations/20260803_coop_hunt.sql`: `coop_hunt` モード、共有ボスラン/行動ログ、サーバー計算ダメージ、連番/重複排除/RLS。公開前に本番DBへ適用必須。
 - `story/story_manager.js` / `story/story_runtime.js`: セーブ移行と `window.STORY_SLOTS` の限定API。
 
-## 再現モード「徒然草 第七段」（claude/modest-cori-39laop）
+## 再現モード「徒然草 第七段」
 
 - 場面は `src/app/saigen-tsurezure.js`、素材は `src/app/tsurezure-*.js`（各ファイル先頭に API）。本体HTMLは manifest で自動生成。
-- 舞台は屋敷から 2.4km 離れたゾーン（あだし野・鳥部山・草庵・接写セット4種）＋屋敷の場（老人と孫）。
+- 舞台は屋敷から 2.4km 離れたゾーン（あだし野・鳥部山・草庵・接写セット4種）＋屋敷の場（老人と孫・従者）。
   本体の `animate` から `SAIGEN_ENV_HOOK` を毎フレーム呼び、自前ゾーンだけ空・霧・光を上書きする（屋敷の場は本体の光のまま）。
 - 素材の生成は重い（人物1体1〜4秒、全部で数十秒）。`BEAT_JOBS` で場ごとに必要な仕事だけを `onBeat` で作り、
   残りは `pumpJobs` が見ている間に一件ずつ作る。新しい素材を足す時は JOB_DEFS / JOB_ORDER / BEAT_JOBS に登録する。
+- まだ素材の出来ていない場へ飛んだ時は、`onBeat` が暗幕 `#sgPrep`（「絵を整えています…」）を先に描かせてから作り、出来たら場を始める
+  （`S.pendingBeat` が立っている間は場が始まっていない）。テストや撮影で同期的に作らせたい時は `SAIGEN_TSUREZURE.S.syncBuild=true`。
+- 屋敷の場（老人・孫・従者）の間は、本編の人物（`people` の女房たち・`householdPeople`）を隠し、ゾーンを離れる時と後片付けで戻す（`hideEstateFolk`）。
+  再現モード中は月齢の告知トーストも出さない（散策へ戻ってから一度だけ出る）。
 - 名札・吹き出しは本体が `figure.position` をワールド座標として使うため、ゾーンや庵の子になった人物には代理点（`S.proxy`）を
   頭上へ毎フレーム写している。
 - 検証は `npm run test:saigen`（全13場の早送り・終了の後始末・既存2作品）。撮影確認は Playwright で各場のショットを早送りして撮る。
