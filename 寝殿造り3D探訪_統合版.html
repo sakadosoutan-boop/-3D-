@@ -33820,7 +33820,7 @@ const SAIGEN_TSUREZURE=(()=>{
     // 先に暗幕と「絵を整えています」を描かせてから作り、出来たら場を始める
     const missing=(BEAT_JOBS[i]||[]).filter(n=>!S.done[n]);
     if(missing.length&&S.started&&!S.syncBuild){
-      S.shots=[];S.pendingBeat={i};showPrep(true);
+      S.shots=[];S.labelFig={};S.pendingBeat={i};showPrep(true); // 前の場の名札も暗幕の上に残さない
       const go=()=>{const pb=S.pendingBeat;if(!S.active||!pb||pb.i!==i)return;S.pendingBeat=null;setupBeat(b,i);showPrep(false);};
       requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(go,0)));
       return;
