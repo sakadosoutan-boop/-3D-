@@ -369,7 +369,8 @@ const SAIGEN_TSUREZURE=(()=>{
       const m=safeMake("mayfly-far",()=>M.INS&&M.INS.makeMonKagerou?M.INS.makeMonKagerou({pose:"spent",quality:"low",seed:31+i}):null,()=>fbGroup("mayfly"));p.add(own(track("water",m)));});}
   // 夕暮れの流れの上で群れ舞うカゲロウ(草庵の遣水)
   function buildSwarm(){const M=MODS(),q=S.quality;if(!S.zones.an)return;
-    const sw=safeMake("mayfly-swarm",()=>M.INS&&M.INS.makeMayflySwarm?M.INS.makeMayflySwarm({count:q==="low"?24:q==="medium"?40:60,radius:2.2,height:2.6,quality:q}):null,()=>fbGroup("swarm"));
+    const sw=safeMake("mayfly-swarm",()=>M.INS&&M.INS.makeMayflySwarm?M.INS.makeMayflySwarm({count:q==="low"?28:q==="medium"?44:64,radius:2.0,height:2.4,glow:1.2,glintSize:.08,quality:q}):null,()=>fbGroup("swarm"));
+    if(sw.userData&&sw.userData.setTint)sw.userData.setTint(0xffc890,1.35);
     sw.position.set(-3.6,STREAM_Y+.35,anStreamZ(-3.6));S.zones.an.add(own(track("an",sw)));S.assets.swarm=sw;sw.visible=false;}
 
   function buildEstateBase(){
@@ -377,14 +378,8 @@ const SAIGEN_TSUREZURE=(()=>{
     z.visible=true; // 原点の屋敷そのもの。自前の人物と灯だけを置く
     const gy=(x,zz)=>(typeof groundH==="function")?groundH(x,zz):0;
     S.assets.roujin={};
-    // 外出を待つ従者(既存の平安人物モデル。遠景の点景として)
+    // 外出を待つ従者は buildAttendants(老人と同じ彫刻の人物)で作る
     S.assets.attendants=[];
-    if(typeof makeHeianFigure==="function"){
-      [[[-0.9,0,9.6],2.7,[0x6b5a3a,0x8a7652,0xb9a77a]],[[0.7,0,10.1],-2.9,[0x3f4a3a,0x5b6650,0xa89a6a]]].forEach(a=>{
-        try{const f=makeHeianFigure({role:"kikoshi",pose:"standing",palette:a[2],scale:.94,prop:null});
-          f.position.set(a[0][0],gy(a[0][0],a[0][2]),a[0][2]);f.rotation.y=a[1];f.visible=false;z.add(f);S.assets.attendants.push(f);}catch(e){console.error("[tsurezure] attendant:",e);}
-      });
-    }
     // 屋敷の場の灯(宝を数える夜)
     const lamp=safeMake("estate-lamp",()=>M.AN&&M.AN.makeToudai?M.AN.makeToudai({quality:q}):null,()=>{const g=fbGroup("lamp");const f=new THREE.Object3D();f.position.y=.86;g.add(f);g.userData.flame=f;return g;});
     lamp.visible=false;z.add(own(track("estate",lamp)));S.assets.estateLamp=lamp;
@@ -409,6 +404,13 @@ const SAIGEN_TSUREZURE=(()=>{
     const f=safeMake("mago-"+pose,()=>M.FIG&&M.FIG.makeMago?M.FIG.makeMago({pose,sex,age,quality:q}):null,()=>fbFigure(0xa04040,.8));
     f.visible=false;f.userData.saigenCustom=true;f.userData.cname="孫";f.userData.label=label||"孫";f.userData.labelY=(pose==="play"||pose==="stand")?1.25:.95;f.userData.hideLabel=true;
     track("estate",f);return own(f);}
+  // 外出を待つ従者二人(階の下の両脇で、上の簀子の老人の方を向いて控える)
+  function buildAttendants(){const M=MODS(),q=S.quality,z=S.zones.estate;if(!z)return;
+    const gy=(x,zz)=>(typeof groundH==="function")?groundH(x,zz):0;
+    [[-0.55,8.7,Math.PI+.25],[1.95,8.95,Math.PI-.3]].forEach((a,i)=>{
+      const f=safeMake("juusha"+i,()=>M.FIG&&M.FIG.makeJuusha?M.FIG.makeJuusha({index:i,quality:q==="high"?"medium":q}):null,()=>fbFigure(i?0x5a4a32:0x3d4a5a,1.6));
+      f.position.set(a[0],gy(a[0],a[1]),a[1]);f.rotation.y=a[2];f.visible=false;f.userData.saigenCustom=true;f.userData.hideLabel=true;
+      z.add(own(track("estate",f)));S.assets.attendants.push(f);});}
   function buildMagoPlay(){const z=S.zones.estate;if(!z)return;S.assets.magoPlay=makeMagoFig("play","boy",6,"孫");z.add(S.assets.magoPlay);}
 
   /* ============================================================
@@ -419,11 +421,11 @@ const SAIGEN_TSUREZURE=(()=>{
     sky:buildSky,adashi:buildAdashi,dew:buildDewSet,toribe:buildToribe,an:buildAn,
     "kenko-gaze":()=>buildKenko("gaze"),"kenko-read":()=>buildKenko("read"),"kenko-write":()=>buildKenko("write"),"kenko-kneel":()=>buildKenko("kneel"),
     swarm:buildSwarm,leaf:buildLeafSet,water:buildWaterSet,semi:buildSemiSet,
-    estate:buildEstateBase,"roujin-walk":()=>buildRoujin("walk"),"roujin-hold":()=>buildRoujin("hold"),"mago-play":buildMagoPlay,"roujin-count":()=>buildRoujin("count")
+    estate:buildEstateBase,"roujin-walk":()=>buildRoujin("walk"),attendants:buildAttendants,"roujin-hold":()=>buildRoujin("hold"),"mago-play":buildMagoPlay,"roujin-count":()=>buildRoujin("count")
   };
-  const JOB_ORDER=["sky","adashi","dew","toribe","an","kenko-gaze","kenko-read","swarm","leaf","water","semi","kenko-write","kenko-kneel","estate","roujin-walk","roujin-hold","mago-play","roujin-count"];
+  const JOB_ORDER=["sky","adashi","dew","toribe","an","kenko-gaze","kenko-read","swarm","leaf","water","semi","kenko-write","kenko-kneel","estate","roujin-walk","attendants","roujin-hold","mago-play","roujin-count"];
   const BEAT_JOBS=[["sky","adashi","dew"],["sky","toribe"],["sky","an","kenko-gaze"],["sky","an","kenko-read"],["sky","an","swarm","leaf","water"],["sky","an","semi"],
-    ["sky","an","kenko-write"],["sky","an","kenko-read"],["sky","an","kenko-kneel"],["sky","an","kenko-write"],["estate","roujin-walk"],["estate","roujin-hold","mago-play"],
+    ["sky","an","kenko-write"],["sky","an","kenko-read"],["sky","an","kenko-kneel"],["sky","an","kenko-write"],["estate","roujin-walk","attendants"],["estate","roujin-hold","mago-play"],
     ["estate","roujin-count","sky","an","kenko-gaze"]];
   function runJob(name){
     if(!S.active||S.done[name])return;S.done[name]=true;
@@ -511,7 +513,7 @@ const SAIGEN_TSUREZURE=(()=>{
         placeBeside(S.assets.armrest,"seat",-.35,.05,Math.PI/2);
         S.assets.kenko.read.userData.hideLabel=true;playOnce("hototogisu.mp3",.32,2.5);}}],
     /* 5 かげろふの夕べを待ち */
-    [{zone:"an",light:"earlySummerDusk",fov:40,cam:{pos:[-1.4,.55,anStreamZ(-1.4)+1.7],look:[-3.6,1.25,anStreamZ(-3.6)]},to:{pos:[-1.8,.55,anStreamZ(-1.8)+1.45],look:[-3.7,1.35,anStreamZ(-3.7)]},dur:6.5,shadow:{center:[-3,0,8],half:12},
+    [{zone:"an",light:"earlySummerDusk",fov:40,cam:{pos:[-2.3,.58,anStreamZ(-2.3)+2.7],look:[-3.7,1.15,anStreamZ(-3.7)-.7]},to:{pos:[-2.5,.58,anStreamZ(-2.5)+2.3],look:[-3.7,1.25,anStreamZ(-3.7)-.7]},dur:6.5,shadow:{center:[-3,0,8],half:12},
       enter(){anSeason("summer");hideAnProps();KENKO_POSES.forEach(p=>{if(S.assets.kenko[p])S.assets.kenko[p].visible=false;});if(S.assets.swarm)S.assets.swarm.visible=true;}},
      {zone:"leaf",macro:true,light:"earlySummerDusk",sunRel:[-.25,.14,1],fade:"black",fov:28,useHint:true,drift:[.003,.001,-.004],dur:7,shadow:{center:[0,0,0],half:3}},
      {zone:"water",macro:true,light:"earlySummerDusk",sunRel:[.3,.12,1],fade:"black",fov:30,useHint:true,drift:[0,-.002,-.003],dur:9,shadow:{center:[0,0,0],half:3},
@@ -544,7 +546,7 @@ const SAIGEN_TSUREZURE=(()=>{
      {zone:"an",light:{preset:"autumnDay",over:{sun:{dir:[-.4,.5,.75],intensity:1.1}}},fade:"black",fov:42,cam:{pos:[2.6,1.3,5.4],look:[0,.95,1.2]},to:{pos:[2.2,1.25,4.8],look:[0,.95,1.2]},dur:10,shadow:{center:[0,0,1.5],half:10},
       tick(ctx,u,t){const d=S.assets.desk;if(d&&d.userData.setWritten)d.userData.setWritten(Math.min(1,.9+t*.02));}}],
     /* 11 そのほど過ぎぬれば、かたちを恥づる心もなく、人に出でまじらはんことを思ひ */
-    [{zone:"estate",fov:44,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.walkFrom[1];return {cam:{pos:[4.2,y+1.0,10.6],look:[-2.6,y+1.25,5.4]},to:{pos:[4.6,y+1.0,10.2],look:[0.6,y+1.25,5.4]}};},dur:12,
+    [{zone:"estate",fov:36,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.walkFrom[1];return {cam:{pos:[4.2,y+1.0,10.6],look:[-2.6,y+1.25,5.4]},to:{pos:[4.6,y+1.0,10.2],look:[0.6,y+1.25,5.4]}};},dur:12,
       enter(){showRoujin("walk");(S.assets.attendants||[]).forEach(f=>{f.visible=true;});const r=S.assets.roujin.walk,P=S.assets.estatePos;r.position.set(...P.walkFrom);r.rotation.y=Math.PI/2;r.userData.walking=true;r.userData.walkSpeed=.55;r.userData.hideLabel=false;S._walk={t:0};},
       tick(ctx,u,t){const r=S.assets.roujin.walk,P=S.assets.estatePos;const k=Math.min(1,t/12);r.position.x=lerp(P.walkFrom[0],P.walkTo[0],k);r.position.y=(typeof groundH==="function")?groundH(r.position.x,r.position.z):r.position.y;r.userData.walking=k<1;}}],
     /* 12 夕べの日に子孫を愛して、栄ゆく末を見んまでの命をあらまし */
@@ -717,7 +719,25 @@ const SAIGEN_TSUREZURE=(()=>{
   function onBeat(b,sc,st){
     if(!S.active)return;
     const i=(APP.saigen&&APP.saigen.i!=null)?APP.saigen.i:0;
-    S.beat=i;S.shots=BEAT_SHOTS[i]||[];S.timelapse=null;
+    S.beat=i;S.timelapse=null;
+    // まだ作っていない素材がある場へ進んだ時(開幕の場を除く)は、止まったように見せないよう
+    // 先に暗幕と「絵を整えています」を描かせてから作り、出来たら場を始める
+    const missing=(BEAT_JOBS[i]||[]).filter(n=>!S.done[n]);
+    if(missing.length&&S.started&&!S.syncBuild){
+      S.shots=[];S.pendingBeat={i};showPrep(true);
+      const go=()=>{const pb=S.pendingBeat;if(!S.active||!pb||pb.i!==i)return;S.pendingBeat=null;setupBeat(b,i);showPrep(false);};
+      requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(go,0)));
+      return;
+    }
+    S.pendingBeat=null;showPrep(false);setupBeat(b,i);
+  }
+  function showPrep(on){
+    let el=document.getElementById("sgPrep");
+    if(!el){if(!on)return;el=document.createElement("div");el.id="sgPrep";el.setAttribute("aria-live","polite");el.innerHTML="<span>絵を整えています…</span>";document.body.appendChild(el);}
+    el.classList.toggle("show",!!on);
+  }
+  function setupBeat(b,i){
+    S.shots=BEAT_SHOTS[i]||[];
     const tb=performance.now();ensureBeat(i);
     if(performance.now()-tb>50&&typeof console!=="undefined")console.log("[tsurezure] beat "+(i+1)+" assets ready in "+Math.round(performance.now()-tb)+"ms (quality "+S.quality+")");
     // 前の場の残り(群舞・虫の声・老人の歩み)をリセット
@@ -735,6 +755,7 @@ const SAIGEN_TSUREZURE=(()=>{
     if(S.zones.estate){const sh0=S.shots[0];if(sh0&&sh0.zone==="estate")snapEstateTime(b.time);}
     startShot(0,true);
     setLoops(BEAT_AUDIO[i]||{});
+    S.started=true;
     pumpJobs();
   }
   // 屋敷の場へのハードカットでは、時刻の補間(約1秒)を待たずに光を目標値へ合わせる
@@ -866,7 +887,8 @@ const SAIGEN_TSUREZURE=(()=>{
     if(!S.active&&!S.stage)return;
     S.active=false;
     if(S.pumpTimer){clearTimeout(S.pumpTimer);S.pumpTimer=null;}
-    S.done={};S.proxy=null;S.labelFig={};
+    S.done={};S.proxy=null;S.labelFig={};S.started=false;S.pendingBeat=null;
+    {const el=document.getElementById("sgPrep");if(el&&el.parentNode)el.parentNode.removeChild(el);}
     stopAudio();
     restoreGlobals();
     (S.assets.list||[]).forEach(o=>{try{if(o&&o.userData&&typeof o.userData.dispose==="function")o.userData.dispose();}catch(e){console.error("[tsurezure] dispose:",e);}});
@@ -878,7 +900,7 @@ const SAIGEN_TSUREZURE=(()=>{
   /* ---------- 舞台の組み立て(本体の buildSaigenStage から) ---------- */
   function build(stage){
     dispose();
-    S.stage=stage;S.active=true;S.quality=qualityKey();S.assets={};S.actors={};S.done={};S.jobMs={};S.timing=S.timing||null;
+    S.stage=stage;S.active=true;S.quality=qualityKey();S.assets={};S.actors={};S.done={};S.jobMs={};S.timing=S.timing||null;S.started=false;S.pendingBeat=null;
     saveGlobals();
     // 名札・吹き出しの代理点(本体の名札は figure.position をワールド座標として扱うため、ゾーンや庵の子になった人物の
     // 頭上位置を毎フレームここへ写す)

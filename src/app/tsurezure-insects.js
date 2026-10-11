@@ -882,7 +882,7 @@ function makeMayflySwarm(opts){opts=opts||{};const ql=qlevel(opts);const count=M
   const gtex=cTex(gc,true,1);disposables.push(gtex);
   const gpos=new Float32Array(count*3);const pgeo=new THREE.BufferGeometry();pgeo.setAttribute("position",new THREE.BufferAttribute(gpos,3).setUsage(THREE.DynamicDrawUsage));disposables.push(pgeo);
   const glowBase=opts.glow!=null?+opts.glow:.9;
-  const pmat=new THREE.PointsMaterial({map:gtex,size:.062,sizeAttenuation:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:glowBase,color:new THREE.Color(1,.82,.55)});disposables.push(pmat);
+  const pmat=new THREE.PointsMaterial({map:gtex,size:opts.glintSize!=null?+opts.glintSize:.062,sizeAttenuation:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:glowBase,color:new THREE.Color(1,.82,.55)});disposables.push(pmat);
   const pts=new THREE.Points(pgeo,pmat);pts.frustumCulled=false;pts.renderOrder=6;group.add(pts);
   // ---- dance state ----
   const F=[];for(let i=0;i<count;i++){const r=radius*Math.sqrt(rng()),a=rng()*TAU;const y=height*(.12+.75*rng());

@@ -82,8 +82,12 @@ function ignorable(text) {
       const T = SAIGEN_TSUREZURE.S;
       out.built = !!window.SAIGEN_STAGE && T.active && typeof window.SAIGEN_ENV_HOOK === 'function';
       out.viewToggle = !!document.getElementById('sgView');
+      out.prepShown = 0;
       for (let i = 0; i < 13; i++) {
         APP.saigen.i = i; renderSaigenBeat();
+        // 未作成の素材がある場は暗幕を出してから次の描画で作る(その間は場を始めない)
+        if (T.pendingBeat) { out.prepShown += document.querySelector('#sgPrep.show') ? 1 : 0; }
+        for (let k = 0; k < 1200 && T.pendingBeat; k++) await wait(50);
         await wait(60);
         const props = SAIGEN_STAGE.userData.props;
         // ショット列を早送り(全ショットを通過させる)
@@ -104,7 +108,10 @@ function ignorable(text) {
         const triCount = (root) => { let n = 0; if (root) root.traverse((m) => { if (m.isMesh && m.geometry) { const g = m.geometry; n += (g.index ? g.index.count : g.attributes.position.count) / 3; } }); return Math.round(n); };
         out.fallback = fallback;
         out.heads = Object.entries(T2.assets.kenko || {}).map(([k, f]) => [k, triCount(f.userData && f.userData.head)]);
-        out.figures = ['walk', 'hold', 'count'].map((k) => [k, triCount(T2.assets.roujin && T2.assets.roujin[k])]).concat([['magoHeld', triCount(T2.assets.magoHeld)], ['magoPlay', triCount(T2.assets.magoPlay)]]);
+        out.figures = ['walk', 'hold', 'count'].map((k) => [k, triCount(T2.assets.roujin && T2.assets.roujin[k])]).concat([['magoHeld', triCount(T2.assets.magoHeld)], ['magoPlay', triCount(T2.assets.magoPlay)]],
+          (T2.assets.attendants || []).map((f, j) => ['attendant' + j, triCount(f)]));
+        out.attendants = (T2.assets.attendants || []).length;
+        out.prepLeft = !!document.querySelector('#sgPrep.show');
         out.perches = ['barkSet', 'leafSet', 'waterSet'].map((k) => [k, !!(T2.assets[k] && T2.assets[k].userData.perch && T2.assets[k].userData.cameraHint)]);
         out.jobs = Object.keys(T2.done || {}).length;
       }
@@ -128,7 +135,9 @@ function ignorable(text) {
       out.chomon = APP.saigen && APP.saigen.scene.id === 'chomon_uta';
       // 再入場→他モードへ離脱しても片付くこと
       startSaigen('tsurezure_adashino'); await wait(100);
-      APP.saigen.i = 5; renderSaigenBeat(); await wait(100);
+      APP.saigen.i = 5; renderSaigenBeat();
+      for (let k = 0; k < 1200 && SAIGEN_TSUREZURE.S.pendingBeat; k++) await wait(50);
+      await wait(100);
       const loopsBefore = Object.keys(SAIGEN_TSUREZURE.S.loops).length;
       enterMode('walk'); await wait(100);
       out.leave = { active: SAIGEN_TSUREZURE.S.active, hook: typeof window.SAIGEN_ENV_HOOK === 'function', loops: Object.keys(SAIGEN_TSUREZURE.S.loops).length, loopsBefore, near: camera.near, stage: !!window.SAIGEN_STAGE };
@@ -152,7 +161,10 @@ function ignorable(text) {
     if (!run.heads || run.heads.length !== 4) failures.push(`expected 4 kenko poses, got ${run.heads && run.heads.length}`);
     (run.figures || []).forEach(([k, n]) => { if (n < 3000) failures.push(`figure ${k}: too small or missing (${n} tris)`); });
     (run.perches || []).forEach(([k, ok]) => { if (!ok) failures.push(`${k}: perch/cameraHint missing`); });
-    if (run.jobs !== 18) failures.push(`expected all 18 asset jobs to run, got ${run.jobs}`);
+    if (run.jobs !== 19) failures.push(`expected all 19 asset jobs to run, got ${run.jobs}`);
+    if (run.attendants !== 2) failures.push(`expected 2 attendants for the outing scene, got ${run.attendants}`);
+    if (!run.prepShown) failures.push('jumping to an unprepared scene did not show the preparing curtain');
+    if (run.prepLeft) failures.push('the preparing curtain was left on screen');
     if (!run.viewOn) failures.push('view-only toggle did not hide the text panel');
     const a = run.after;
     if (a.active || a.hook || a.stage) failures.push(`exit did not clean up: ${JSON.stringify(a)}`);

@@ -362,6 +362,10 @@ function faceRelief(P,C){
     return d;};
 }
 function v_in(v,a,b){return v>a&&v<b;}
+// child face: the part below the eyes is compressed vertically (shorter mid/lower face, smaller chin, shorter neck).
+// W(y) maps a warped (actual) head-local y back to the canonical face position; C1-smooth around y0.
+function kidWarpFn(P){const k=P.kidWarp,y0=P.kidWarpY!=null?P.kidWarpY:.012,b=.02;if(!k||k>=1)return null;const kI=1/k-1;
+  return y=>{const d=y0-y;if(d<=0)return y;const h=d>=b?d-b*.5:d*d/(2*b);return y-kI*h;};}
 function headSDF(P){
   const er=P.eyeR||.0118;const eyes=[[-.0315,.0245,.0735],[.0315,.0245,.0735]];
   const C=faceCurves(P);
@@ -406,10 +410,12 @@ function headSDF(P){
   F=S(F,cuts);
   F=D(F,faceRelief(P,C),.0030);
   const ears=[];
-  for(const s of[-1,1]){const e=earSDF(P);const M=mulM(rotM(0,-.42,0),rotM(-.12,0,0));
+  for(const s of[-1,1]){const e=earSDF(P);const M=mulM(rotM(0,-(P.earYaw!=null?P.earYaw:.42),0),rotM(-.12,0,0));
     let node=T(e,M,[.0715*cr[0]+co[0]*0,.004+co[1]*.3,-.006+co[2]*.5]);if(s<0)node=mirrorX(node);ears.push(node);}
   F=U([F,K(U(ears),.0035)]);
-  return{F,eyes,er,C};
+  const W=kidWarpFn(P);
+  if(W){const F0=F.f;F={f:(x,y,z)=>F0(x,W(y),z)*.9,bs:F.bs};}
+  return{F,eyes,er,C,W};
 }
 function eyeAperture(ec,s,C){const ex=ec[0],ez=ec[2],W=C.W;
   return{f:(x,y,z)=>{const e=C.eye(s,x);return mx(mx(y-e[1],e[2]-y,ab(e[0]+.0004)-W),-(z-ez-.002));},bs:[ex,ec[1],ez+.02,.03]};}
@@ -609,13 +615,14 @@ function buildHead(R,P,q){
   if(poly.fresh){
   // front weight + planar UV
   const fw=new Float32Array(n),uv=new Float32Array(n*2);
-  for(let v=0;v<n;v++){const x=pp[v*3],y=pp[v*3+1],z=pp[v*3+2],nz=nn[v*3+2];
+  const Wk=H.W||(y=>y);
+  for(let v=0;v<n;v++){const x=pp[v*3],y=Wk(pp[v*3+1]),z=pp[v*3+2],nz=nn[v*3+2];
     let w=sstep(.18,.45,nz)*sstep(.030,.052,z)*sstep(.078,.066,ab(x))*sstep(-.115,-.100,y);
     fw[v]=w;uv[v*2]=(x-FX0)/(FX1-FX0);uv[v*2+1]=(y-FY0)/(FY1-FY0);}
   poly.uv=uv;poly.fw=fw;
   const ao=bakeAO(poly,H.F.f,.0035,3,1.3);
   const pf=headPainter(P,H);
-  paint(poly,(x,y,z,a,b,c,i)=>pf(x,y,z,a,b,c,i,fw[i]),ao,.30);
+  paint(poly,(x,y,z,a,b,c,i)=>pf(x,Wk(y),z,a,b,c,i,fw[i]),ao,.30);
   GEO_CACHE.set(key,{pos:poly.pos,nrm:poly.nrm,idx:poly.idx,n:poly.n,uv:poly.uv,col:poly.col,fw:poly.fw});}
   const g=R.add(toGeom(poly));g.setAttribute("frontW",new THREE.BufferAttribute(poly.fw,1));
   HEADT.aopaint=performance.now()-tA;
@@ -1236,15 +1243,15 @@ function makeRoujin(opts){opts=opts||{};const R=Res();const q=opts.quality||"hig
   const kAll=(x,y,z)=>{let d=mn(upF(x,y,z),slF[0](x,y,z),slF[1](x,y,z));if(pnF)d=mn(d,pnF(x,y,z));if(lapPanel)d=mn(d,lapPanel.f(x,y,z));return d;};
   const Gall=(x,y,z)=>mn(kAll(x,y,z),szF(x,y,z),prox.f(x,y,z),y-sY*0,inF(x,y,z));
   const hR=q==="low"?.022:q==="medium"?.018:.015;
-  const key="roujin|"+pose+"|"+sY+"|"+q;
+  const key="roujin|"+pose+"|"+sY+"|"+q+(opts.variant?("|"+opts.variant):"");const pal=opts.palette||{};
   // karaginu upper (rigid) — torso + sleeves (+ seated panels)
   const kUpper=U([G.up,K(G.sleeves[0],.012),K(G.sleeves[1],.012)].concat(lapPanel?[K(lapPanel,.01)]:[]));
   const bb0=[-.75,st?.18:-.02,-.60],bb1=[.75,st?1.48:sY+.95,.75];
   const greyAO=(x,y,z)=>[1,1,1];
   const pK=buildPart(kUpper,bb0,bb1,hR,null,null,Gall,.016,1.3,greyAO,{aoN:3,aoMin:.12,key:key+"|kU"});
-  const kTex=patternTex(R,{ground:"#4a2140",fig:"#b89ac0",fig2:"#d8c48a",r:.20,seed:3});
+  const kTex=patternTex(R,Object.assign({ground:"#4a2140",fig:"#b89ac0",fig2:"#d8c48a",r:.20,seed:3},pal.k||{}));
   const kMat=triMat(R,kTex,{scale:2.9,rough:.62});
-  const sTex=patternTex(R,{ground:"#a99ab8",fig:"#e8e2ee",fig2:"#f4efe6",r:.17,px:256,alpha:.85,seed:5});
+  const sTex=patternTex(R,Object.assign({ground:"#a99ab8",fig:"#e8e2ee",fig2:"#f4efe6",r:.17,px:256,alpha:.85,seed:5},pal.s||{}));
   // inner white layer
   const pI=buildPart({f:(x,y,z)=>mx(inF(x,y,z),-mn(upF(x,y,z)+.002,1)),bs:G.inner.bs},bb0,bb1,q==="low"?.012:.009,null,null,Gall,.012,1.2,(x,y,z)=>lin(0xe9e5dc),{aoN:3,aoMin:.2,key:key+"|in"});
   const pC=buildPart(G.innerCuffs,bb0,bb1,.006,null,null,Gall,.01,1.0,(x,y,z)=>lin(0xece8df),{aoN:3,aoMin:.2,key:key+"|cf"});
@@ -1286,7 +1293,7 @@ function makeRoujin(opts){opts=opts||{};const R=Res();const q=opts.quality||"hig
     for(const k of["L","R"]){const sm=meshOf(R,sockPolys[k],sockM);placeObj(sm,feet[k].M,feet[k].A);g.add(sm);}}
   root.add(kUM,inM,pivot,handPiv.L,handPiv.R,chest);
   // props
-  if(pose==="walk"){const fan=new THREE.Mesh(fanGeom(R),R.add(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.5})));fan.castShadow=true;
+  if(pose==="walk"&&opts.fan!==false){const fan=new THREE.Mesh(fanGeom(R),R.add(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.5})));fan.castShadow=true;
     fan.position.set(-.006,.050,-.012);fan.rotation.set(0,0,PI/2+.15);handPiv.R.add(fan);anchors.fan=fan;}
   if(pose==="count"){const box=coinBoxGroup(R,q);box.position.set(0,0,.50);g.add(box);anchors.box=box;
     const cs=new THREE.Mesh(new THREE.CylinderGeometry(.0118,.0118,.13,10),R.add(new THREE.MeshStandardMaterial({color:0xb08850,roughness:.42,metalness:.55})));R.add(cs.geometry);
@@ -1312,6 +1319,14 @@ function makeRoujin(opts){opts=opts||{};const R=Res();const q=opts.quality||"hig
   let tris=0,meshes=0;g.traverse(o=>{if(o.isMesh){meshes++;const gg=o.geometry;tris+=(gg.index?gg.index.count:gg.attributes.position.count)/3;}});
   T_.total=performance.now()-t0;g.userData.timings=T_;g.userData.stats={ms:T_.total,tris,meshes};
   return g;}
+// attendants (zuishin / zassiki) waiting for the outing: younger men, plain kariginu, short tate-eboshi, no fan
+const JUUSHA_HEAD={seed:37,age:34,thin:.3,smile:0,scalp:"hair",hairC:0x1c1814,beard:"none",whiskers:0,eboshi:true,eboH:.21,skin:0xc49a74,skinRed:0xb87c62,
+  wrinkles:.35,spots:2,browHairs:200,brow:0x2a2420,browDrop:.010,nose:1,jaw:1,browK:1,hood:1,earL:1,neckR:1,gazePitch:.02};
+const JUUSHA_PAL=[{k:{ground:"#3d4a5a",fig:"#55657a",fig2:"#66778c",r:.14,alpha:.35,seed:41},s:{ground:"#d9d2c2",fig:"#e6e0d2",fig2:"#efeadf",r:.12,px:256,alpha:.3,seed:43}},
+  {k:{ground:"#5a4a32",fig:"#6e5c40",fig2:"#7e6a4a",r:.14,alpha:.35,seed:45},s:{ground:"#cfc6b2",fig:"#ddd5c4",fig2:"#e8e2d4",r:.12,px:256,alpha:.3,seed:47}}];
+function makeJuusha(opts){opts=opts||{};const v=(opts.index|0)%JUUSHA_PAL.length;
+  const hp=Object.assign({},JUUSHA_HEAD,{seed:37+v*11,skin:v?0xc8a07c:0xc49a74},opts.headParams||{});
+  return makeRoujin({pose:"walk",quality:opts.quality,headParams:hp,palette:JUUSHA_PAL[v],fan:false,variant:"juusha"+v});}
 // white sock (shitouzu): foot without separate toes
 function sockSDF(){const parts=[K(sEll([0,-.046,-.030],[.032,.029,.036]),0),K(sEll([.004,-.044,.045],[.040,.028,.060]),.03),K(sEll([.008,-.052,.120],[.046,.020,.042]),.03),
   K(sEll([.012,-.054,.168],[.036,.017,.026]),.025),K(sCap([0,-.012,.0],[.006,-.040,.105],.023),.025),K(sCone([0,.0,-.004],[0,.13,-.012],.034,.040),.02)];
@@ -1327,7 +1342,7 @@ function sockSDF(){const parts=[K(sEll([0,-.046,-.030],[.032,.029,.036]),0),K(sE
 // =====================================================================================
 const MAGO_HEAD={seed:41,age:20,thin:0,kid:1,smile:.5,lipU:.0040,lipL:.0052,lipUvol:.0012,lipLvol:.0017,mouthW:.0172,scalp:"none",hairC:0x17120f,beard:"none",
   skin:0xeccaae,skinRed:0xe6a694,skinLight:0xf5dcc8,lip:0xc8786e,lipColL:0xd08478,iris:[34,24,18],wrinkles:0,spots:0,eyeW:.0164,eyeOpenU:.0062,eyeOpenL:.0038,eyeTilt:.03,
-  browDrop:.003,brow:0x2c2520,browHairs:90,browW:.7,cran:[1.10,1.16,1.10],cranOff:[0,.016,-.006],jaw:.78,nose:.62,browK:.55,cheekFat:1.12,hood:.5,earL:.86,neckR:.74,eyeR:.0134,gazePitch:.06,rough:.5};
+  browDrop:.003,brow:0x2c2520,browHairs:90,browW:.7,cran:[1.10,1.16,1.10],cranOff:[0,.016,-.006],jaw:.80,nose:.58,browK:.5,cheekFat:1.28,hood:.45,earL:.8,earYaw:.30,neckR:.74,eyeR:.0136,gazePitch:.06,rough:.5,kidWarp:.86};
 function Sc(node,s){const f=node.f,b=node.bs;return{f:(x,y,z)=>s*f(x/s,y/s,z/s),bs:[b[0]*s,b[1]*s,b[2]*s,b[3]*s],k:node.k};}
 function magoRig(pose){const R={pose};
   const held=pose==="held";let A;
@@ -1339,7 +1354,7 @@ function magoRig(pose){const R={pose};
     A={L:{W:[.050,.215,.180],fwd:[-.45,-.05,.89],dor:[.85,.35,.3],hp:"hold",pole:[.8,-.5,-.3]},R:{W:[-.050,.215,.180],fwd:[.45,-.05,.89],dor:[-.85,.35,.3],hp:"hold",pole:[-.8,-.5,-.3]}};}
   else{R.hip=[0,.70,0];R.TM=rotM(.07,0,0);
     const tp=v=>add3(R.hip,apM(R.TM,v));R.tp=tp;
-    R.sh={L:tp([.148,.42,-.012]),R:tp([-.148,.42,-.012])};R.pivot=tp([0,.53,.008]);R.headM=mulM(R.TM,rotM(.20,-.10,.03));R.gazeP=.12;
+    R.sh={L:tp([.148,.42,-.012]),R:tp([-.148,.42,-.012])};R.pivot=tp([0,.505,.008]);R.headM=mulM(R.TM,rotM(.20,-.10,.03));R.gazeP=.12;
     R.hipJ={L:[.072,.69,0],R:[-.072,.69,0]};R.knee={L:[.095,.37,.035],R:[-.085,.37,.005]};R.ankle={L:[.105,.065,.0],R:[-.095,.065,-.035]};
     R.UA=.20;R.FA=.17;
     A={R:{W:[-.185,.76,.12],fwd:[.10,-.95,.30],dor:[-.95,.05,.10],hp:"grasp",pole:[-.6,-.2,-.8]},L:{W:[.17,.80,.20],fwd:[.05,-.55,.83],dor:[.75,.45,-.2],hp:"relax",pole:[.7,-.4,-.6]}};}
@@ -1477,5 +1492,5 @@ function makeMago(opts){opts=opts||{};const R=Res();const q=opts.quality||"high"
   let tris=0,meshes=0;g.traverse(o=>{if(o.isMesh){meshes++;const gg=o.geometry;tris+=(gg.index?gg.index.count:gg.attributes.position.count)/3;}});
   g.userData.stats={ms:performance.now()-t0,tris,meshes};
   return g;}
-return{makeKenko,makeRoujin,makeMago,_dev:{headSDF,polygonize,bakeAO,POLY_STATS,kenkoRig,kenkoRobe,handSDF,footSDF,HANDP,T,U}};
+return{makeKenko,makeRoujin,makeMago,makeJuusha,_dev:{headSDF,polygonize,bakeAO,POLY_STATS,kenkoRig,kenkoRobe,handSDF,footSDF,HANDP,T,U}};
 })();

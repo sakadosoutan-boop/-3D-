@@ -1608,6 +1608,10 @@ body.saigen-mode #topbar{display:none!important}
 #sgFade.white{background:#f2ead8}
 #sgFade.show{opacity:1;transition:opacity 0s}
 #sgFade.quick{transition:opacity .12s ease}
+/* 再現モード: まだ作っていない場の素材を作る間の暗幕(本文パネルは上に見えたまま) */
+#sgPrep{position:fixed;inset:0;z-index:44;display:flex;align-items:flex-start;justify-content:center;padding-top:22vh;background:#07090d;color:#d9d0b8;font-size:14px;letter-spacing:.25em;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,visibility 0s linear .35s}
+#sgPrep.show{opacity:1;visibility:visible;transition:none}
+#sgPrep span{padding:.5em 1.2em;border-top:1px solid rgba(217,208,184,.35);border-bottom:1px solid rgba(217,208,184,.35)}
 #sgBubbles .sg-bub.hush::after{border-top-color:rgba(225,225,225,.92)}
 @media (prefers-reduced-motion:reduce){#sgBubbles .sg-bub.laugh{animation:none}}
 @media (max-width:520px){
