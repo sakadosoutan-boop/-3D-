@@ -550,9 +550,17 @@ const SAIGEN_TSUREZURE=(()=>{
       enter(){showRoujin("walk");(S.assets.attendants||[]).forEach(f=>{f.visible=true;});const r=S.assets.roujin.walk,P=S.assets.estatePos;r.position.set(...P.walkFrom);r.rotation.y=Math.PI/2;r.userData.walking=true;r.userData.walkSpeed=.55;r.userData.hideLabel=false;S._walk={t:0};},
       tick(ctx,u,t){const r=S.assets.roujin.walk,P=S.assets.estatePos;const k=Math.min(1,t/12);r.position.x=lerp(P.walkFrom[0],P.walkTo[0],k);r.position.y=(typeof groundH==="function")?groundH(r.position.x,r.position.z):r.position.y;r.userData.walking=k<1;}}],
     /* 12 夕べの日に子孫を愛して、栄ゆく末を見んまでの命をあらまし */
-    [{zone:"estate",fov:40,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.hold[1];return {cam:{pos:[3.95,y+1.62,7.75],look:[2.95,y+.70,5.35]},to:{pos:[3.75,y+1.56,7.4],look:[2.95,y+.70,5.35]}};},dur:12,
+    [{zone:"estate",fov:40,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.hold[1];return {cam:{pos:[3.95,y+1.62,7.75],look:[2.95,y+.70,5.35]},to:{pos:[3.8,y+1.58,7.5],look:[2.95,y+.70,5.35]}};},dur:7,
       enter(){showRoujin("hold");const P=S.assets.estatePos,r=S.assets.roujin.hold;r.position.set(...P.hold);r.rotation.y=.25;r.userData.hideLabel=true;
-        const m=S.assets.magoPlay;if(m){m.visible=true;m.position.set(...P.play);m.rotation.y=-.9;m.userData.hideLabel=false;S.labelFig.mago=m;}}}],
+        const m=S.assets.magoPlay;if(m){m.visible=true;m.position.set(...P.play);m.rotation.y=-.9;m.userData.hideLabel=false;S.labelFig.mago=m;}}},
+     // 寄り: 膝の孫娘と、それを見下ろす祖父の顔(簀子の上から、孫娘の目の高さで)
+     {zone:"estate",fov:34,estateCam:true,camFn(){const hw=headWorld(S.assets.magoHeld,true);const P=S.assets.estatePos;
+        const h=hw?hw.p:[P.hold[0]+.1,P.hold[1]+.6,P.hold[2]+.3],F=hw?hw.f:[Math.sin(.07),0,Math.cos(.07)];const fl=Math.hypot(F[0],F[2])||1,fx=F[0]/fl,fz=F[2]/fl;
+        // 孫娘の顔の正面から少し右寄り・目より上(伏し目で手の人形を見ているのが見える高さ)から、顔と祖父の顔の間を見る
+        // (目の高さより下からだと、伏せた顔がこちらを上目づかいに見ているように写る)
+        const at=(d,side,up)=>[h[0]+fx*d+fz*side,h[1]+up,h[2]+fz*d-fx*side];
+        return {cam:{pos:at(.92,-.12,.22),look:[h[0],h[1]+.11,h[2]]},to:{pos:at(.82,-.10,.21),look:[h[0],h[1]+.11,h[2]]}};},dur:6,
+      enter(){S.labelFig={};}}],
     /* 13 ひたすら世をむさぼる心のみ深く、もののあはれも知らずなりゆくなん、あさましき */
     [{zone:"estate",fov:40,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.count[1];return {cam:{pos:[.6,y+1.0,1.62],look:[-1.1,y+.66,.66]},to:{pos:[.48,y+.98,1.46],look:[-1.1,y+.64,.66]}};},dur:9,frameUp:.2,lamp:{on:true,intensity:1.0,estate:true,distance:3.6,decay:2},estateNight:.35,
       enter(){showRoujin("count");const P=S.assets.estatePos,r=S.assets.roujin.count;r.position.set(...P.count);r.rotation.y=.35;r.userData.hideLabel=true;S.assets.magoPlay.visible=false;
@@ -668,6 +676,10 @@ const SAIGEN_TSUREZURE=(()=>{
     if(zone==="estate"&&!wasEstate)restoreEstateLighting();
     hideEstateFolk(zone==="estate");
   }
+  // 人物の頭(首の付け根の回転点)のワールド位置。dir=true なら顔の向き(ワールド)も返す
+  function headWorld(f,dir){const hd=f&&f.userData&&f.userData.head;if(!hd)return null;
+    try{hd.updateWorldMatrix(true,false);const v=new THREE.Vector3();hd.getWorldPosition(v);if(!dir)return[v.x,v.y,v.z];
+      const q=new THREE.Quaternion();hd.getWorldQuaternion(q);const d=new THREE.Vector3(0,0,1).applyQuaternion(q);return{p:[v.x,v.y,v.z],f:[d.x,d.y,d.z]};}catch(e){return null;}}
   // 屋敷の場の間は、本編の人物(女房・家人)を隠す。この段の老人と孫・従者だけの場にし、
   // 簡易な本編人物が彫刻の人物の背後に並ばないように。ゾーンを離れる時と後片付けで元に戻す
   function hideEstateFolk(on){
