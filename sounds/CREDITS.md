@@ -40,6 +40,32 @@ CC BY 等を採用する場合は出典・作者・ライセンスを明記す�
 | sei_ge_choku_kaku01.mp3 | se: "chalk" | 教室セットの黒板が現れる時 |
 | sei_ge_spen_kaku02.mp3 | se: "pencil" | 栞がペンで字を直す場面 |
 | 刀剣・斬る07.mp3 | se: "slash"(剣で斬る2.mp3から更新) | 退治モードの太刀斬撃 |
+| semi_minmin.mp3 | 再現モード「徒然草 第七段」専用ループ | 「夏の蝉の春秋を知らぬ」の場面（ミンミンゼミの大写し） |
+| semi_chorus.mp3 | 再現モード「徒然草 第七段」専用ループ | 同場面の遠い蝉時雨（小音量で重ねる） |
+| kane_bonsho.mp3 | 再現モード「徒然草 第七段」専用（一回鳴らし） | 鳥部山の夕暮れ・あだし野の夜明けに遠く響く梵鐘 |
+
+## 出典・ライセンス（確定済み: 再現モード「徒然草 第七段」用）
+
+### semi_minmin.mp3 — ミンミンゼミ（Hyalessa maculaticollis）の鳴き声
+
+- **出典**: Wikimedia Commons「File:Hyalessa maculaticollis v01.ogg」 https://commons.wikimedia.org/wiki/File:Hyalessa_maculaticollis_v01.ogg
+- **作者**: Σ64（2012-08-10 録音）
+- **ライセンス**: CC BY 3.0（https://creativecommons.org/licenses/by/3.0/）
+- **変更点**: 52.4〜77.0秒（「ミーンミンミンミンミー」5フレーズ）を切り出し、1.8kHz以下の低域ノイズを除去、0.35秒のクロスフェードで継ぎ目なくループ化、モノラル64kbpsに再エンコード。
+
+### semi_chorus.mp3 — 遠い蝉時雨（環境音）
+
+- **出典**: freesound「Cicada in Japanese forest.」 https://freesound.org/people/macdaddyno1/sounds/320060/
+- **作者**: macdaddyno1
+- **ライセンス**: CC0 1.0（パブリックドメイン）
+- **変更点**: 3.0〜25.0秒を切り出し、低域ノイズを除去、1.2秒のクロスフェードでループ化、モノラル64kbpsに再エンコード。
+
+### kane_bonsho.mp3 — 梵鐘（一撞き）
+
+- **出典**: freesound「Montbell (Bonshō) von Japan」 https://freesound.org/people/Vurca/sounds/397352/
+- **作者**: Vurca（2017年3月、飛騨の里で録音）
+- **ライセンス**: CC0 1.0（パブリックドメイン）
+- **変更点**: 撞いた瞬間から27.5秒を切り出し、末尾5.5秒をフェードアウト、ラウドネスを調整、モノラル64kbpsに再エンコード。
 
 ## 出典・ライセンス（要確定）
 
