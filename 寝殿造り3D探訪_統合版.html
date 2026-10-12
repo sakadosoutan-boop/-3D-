@@ -26529,14 +26529,15 @@ function canvasTex(R,w,h,draw,opts){const c=document.createElement("canvas");c.w
   const t=new THREE.CanvasTexture(c);t.encoding=opts&&opts.linear?THREE.LinearEncoding:THREE.sRGBEncoding;
   t.wrapS=t.wrapT=opts&&opts.clamp?THREE.ClampToEdgeWrapping:THREE.RepeatWrapping;t.anisotropy=4;t.needsUpdate=true;R.add(t);return t;}
 function skinMat(R,o){o=o||{};const m=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:o.rough!=null?o.rough:.62,metalness:0});R.add(m);return m;}
-function eyeTexture(R,iris){return canvasTex(R,256,256,(g,w,h)=>{
+function eyeTexture(R,iris,o){o=o||{};return canvasTex(R,256,256,(g,w,h)=>{
   // polar layout: canvas y = angle from gaze axis (top=center of iris), x = azimuth
-  const IR=.163,PU=.056,LIM=.19;// fractions of height (pi)
+  // o.irisR / o.pupilR: angular radii (fractions of pi); o.sclera: [r,g,b] of the white; o.catchlight: painted highlights
+  const IR=o.irisR||.163,PU=o.pupilR||.056,LIM=IR+.027,SC=o.sclera||[214,204,190];
   for(let y=0;y<h;y++){const a=y/h;let col;
     if(a<PU)col=[8,6,6];
     else if(a<IR){const t=(a-PU)/(IR-PU);const base=iris;col=[base[0]*(0.75+0.5*t),base[1]*(0.75+0.45*t),base[2]*(0.8+0.3*t)];if(t>.82){const k=(t-.82)/.18;col=mixc(col,[20,14,12],k*.85);}}
-    else if(a<LIM){const t=(a-IR)/(LIM-IR);col=mixc([120,104,96],[214,204,190],t);}
-    else{const t=(a-LIM)/(1-LIM);col=mixc([206,196,184],[180,140,130],sstep(.0,.5,t));}
+    else if(a<LIM){const t=(a-IR)/(LIM-IR);col=mixc(mixc([120,104,96],SC,.25),SC,t);}
+    else{const t=(a-LIM)/(1-LIM);col=mixc(mixc(SC,[206,196,184],.25),[180,140,130],sstep(.0,.5,t));}
     g.fillStyle="rgb("+(col[0]|0)+","+(col[1]|0)+","+(col[2]|0)+")";g.fillRect(0,y,w,1);}
   // upper-lid shadow (azimuth 0.75 = up)
   const sg=g.createLinearGradient(0,0,w,0);sg.addColorStop(0,"rgba(40,25,20,0)");sg.addColorStop(.55,"rgba(40,25,20,0)");sg.addColorStop(.75,"rgba(40,25,20,.55)");sg.addColorStop(.95,"rgba(40,25,20,0)");sg.addColorStop(1,"rgba(40,25,20,0)");
@@ -26545,12 +26546,18 @@ function eyeTexture(R,iris){return canvasTex(R,256,256,(g,w,h)=>{
   const rnd=mulberry32(99);g.globalAlpha=.25;
   for(let i=0;i<220;i++){const x=rnd()*w;g.strokeStyle=rnd()<.5?"rgba(30,18,10,1)":"rgba(150,105,60,1)";g.lineWidth=1+rnd()*1.5;g.beginPath();g.moveTo(x,h*PU);g.lineTo(x+(rnd()-.5)*4,h*IR*.98);g.stroke();}
   g.globalAlpha=.18;for(let i=0;i<60;i++){const x=rnd()*w;g.strokeStyle="rgba(170,60,50,1)";g.lineWidth=1;g.beginPath();g.moveTo(x,h*.98);g.lineTo(x+(rnd()-.5)*30,h*(LIM+.1+rnd()*.3));g.stroke();}
-  g.globalAlpha=1;},{clamp:true});}
+  g.globalAlpha=1;
+  // painted catchlights (upper one at azimuth .75 = up, a small one below): keeps the eyes alive in any light
+  if(o.catchlight){const spot=(az,a,rx,ry,al)=>{g.save();g.translate(w*az,h*a);g.scale(rx*w,ry*h);const gr=g.createRadialGradient(0,0,0,0,0,1);
+      gr.addColorStop(0,"rgba(255,255,255,"+al+")");gr.addColorStop(.6,"rgba(255,255,255,"+al*.8+")");gr.addColorStop(1,"rgba(255,255,255,0)");
+      g.fillStyle=gr;g.beginPath();g.arc(0,0,1,0,7);g.fill();g.restore();};
+    spot(.80,IR*.52,.07,.030,.95);spot(.30,IR*.62,.04,.016,.55);}
+  },{clamp:true});}
 
 // =====================================================================================
 //  4. HEAD  (head-local frame: origin = midpoint between ear canals, +Z face forward, +Y up; meters)
 // =====================================================================================
-// P: {seed, eyeOpenU/L, eyeTilt, gazePitch, gazeYaw, smile, age, thin, ...}
+// P: {seed, eyeOpenU/L, eyeTilt, gazePitch (>0 looks up), gazeYaw (>0 toward the figure's left), smile, age, thin, ...}
 function gauss(d,w){const t=d/w;return t*t>16?0:Math.exp(-t*t);}
 function dPoly2(u,v,pts){let best=1e9,bt=0,bs=0,acc=0,tot=0;for(let i=0;i<pts.length-1;i++)tot+=Math.hypot(pts[i+1][0]-pts[i][0],pts[i+1][1]-pts[i][1]);
   for(let i=0;i<pts.length-1;i++){const ax=pts[i][0],ay=pts[i][1],bx=pts[i+1][0]-ax,by=pts[i+1][1]-ay,l2=bx*bx+by*by,L=sq(l2);
@@ -26571,7 +26578,7 @@ function faceCurves(P){
   const nlf=[[.0195,-.0195],[.0262,-.0350],[.0300,-.0500],[.0335,-.0640]];
   const alar=[[.0098,-.0142],[.0172,-.0150],[.0216,-.0195],[.0210,-.0255],[.0172,-.0290]];
   const brow=t=>{// t 0..1 inner->outer ; returns [x(abs), y]
-    const x=.0105+.047*t;return[x,.0425+.0062*Math.sin(clamp(t,0,1)*PI*.85)-(P.browDrop||.010)*t*t];};
+    const x=.0105+.047*t;return[x,.0425+(P.browY||0)+.0062*Math.sin(clamp(t,0,1)*PI*.85)-(P.browDrop||.010)*t*t];};
   return{ys,yU,yL,MW,eye,W,EX,EY,nlf,alar,brow};
 }
 // geometric relief: only features >= ~4mm wide (finer detail lives in the face textures)
@@ -26624,9 +26631,10 @@ function headSDF(P){
     fp.push(K(sCap([s*.050,.040,.074],[0,.042,.093],.0085*bw),.02));
     fp.push(K(sEll([s*.034,.001,.078],[.017,.012,.011]),.016));
     fp.push(K(sEll([s*.029,-.027,.081],[.012,.015,.010]),.013));
-    if(P.cheekFat)fp.push(K(sEll([s*.036,-.022,.070],[.026*P.cheekFat,.026*P.cheekFat,.020*P.cheekFat]),.02));
-    // child: the buccal fat fills the hollow between the cheekbone arch and the jaw angle (no gaunt fold)
-    if(P.kid)fp.push(K(sEll([s*.051,-.026,.034],[.021,.027,.032]),.03));
+    // child: round "apple" cheeks high under the eyes, and the buccal fat filling the side of the face
+    // (no hollow under the cheekbone, no bulge beside the mouth)
+    if(P.kid){const cf=P.cheekFat||1;fp.push(K(sEll([s*.038,-.008,.064],[.024*cf,.023*cf,.021*cf]),.03),K(sEll([s*.050,-.022,.036],[.016,.022,.028]),.035));}
+    else if(P.cheekFat)fp.push(K(sEll([s*.036,-.022,.070],[.026*P.cheekFat,.026*P.cheekFat,.020*P.cheekFat]),.02));
   }
   let F=U([cran,K(U(fp),.025)]);
   F=S(F,[K(sEll([-.0185,.0255,.0885],[.0062,.0075,.0065]),.007),K(sEll([.0185,.0255,.0885],[.0062,.0075,.0065]),.007)]);
@@ -26685,7 +26693,7 @@ function headPainter(P,H){
     const cheek=Math.exp(-(((ab(x)-.040)/.020)**2+((y+.006)/.022)**2))*(z>.05?1:0);
     const nose=Math.exp(-((x/.012)**2+((y+.016)/.015)**2+((z-.106)/.012)**2));
     const ear=sstep(.062,.075,ab(x))*sstep(.0,.02,-z+.02);
-    c=mixc(c,skinR,clamp(cheek*.30+nose*.40+ear*.35,0,1));
+    c=mixc(c,skinR,clamp(cheek*(.30+.25*(P.kid||0))+nose*.40+ear*.35,0,1));
     const az=Math.atan2(x,z),aaz=ab(az);
     const yb=aaz<.6?lerp(.090,.074,aaz/.6):aaz<1.15?lerp(.074,.047,(aaz-.6)/.55):aaz<1.55?lerp(.047,.036,(aaz-1.15)/.4):aaz<2.0?lerp(.036,-.008,(aaz-1.55)/.45):lerp(-.008,-.052,(aaz-2.0)/(PI-2.0));
     let hair=sstep(yb-.005,yb+.006,y);
@@ -26708,7 +26716,7 @@ function faceTextures(R,P,C){
   // ratio color string (target/skin) encoded sRGB, for multiplicative tinting
   const rel=(hex,k)=>{const t=lin(hex);const e=c=>{c=clamp(c,0,1);return Math.round(255*(c<=.0031308?c*12.92:1.055*Math.pow(c,1/2.4)-.055));};
     const r=[t[0]/skin[0],t[1]/skin[1],t[2]/skin[2]].map(v=>1+(v-1)*(k==null?1:k));return"rgb("+e(r[0])+","+e(r[1])+","+e(r[2])+")";};
-  const ag=clamp(((P.age!=null?P.age:50)-25)/45,0,1.2);
+  const ag=clamp(((P.age!=null?P.age:50)-25)/45,0,1.2),kid=P.kid||0;
   const path=(g,f,x0,x1,n)=>{g.beginPath();for(let i=0;i<=n;i++){const x=x0+(x1-x0)*i/n;const y=f(x);if(i)g.lineTo(X(x),Y(y));else g.moveTo(X(x),Y(y));}};
   const soft=(g,draw,w,color,alpha,passes)=>{passes=passes||4;g.strokeStyle=color;g.lineCap="round";g.lineJoin="round";
     for(let i=passes-1;i>=0;i--){g.lineWidth=w*(1+i*.9);g.globalAlpha=alpha*(i===0?1:.28/i);draw();g.stroke();}g.globalAlpha=1;};
@@ -26717,8 +26725,12 @@ function faceTextures(R,P,C){
     const rnd=mulberry32((P.seed||5)*31+mode);
     g.fillStyle=mode?"rgb(128,128,128)":"#fff";g.fillRect(0,0,S,S);
     // pores / mottling
-    for(let i=0;i<(mode?26000:9000);i++){const x=rnd()*S,y=rnd()*S,r=mode?.8+rnd()*1.2:1.5+rnd()*5;
+    for(let i=0;i<(mode?26000:9000)*(1-.85*kid);i++){const x=rnd()*S,y=rnd()*S,r=mode?.8+rnd()*1.2:1.5+rnd()*5;
       g.fillStyle=mode?(rnd()<.5?"rgba(100,100,100,.35)":"rgba(160,160,160,.25)"):(rnd()<.6?"rgba(200,150,130,.05)":"rgba(255,235,220,.05)");g.beginPath();g.arc(x,y,r,0,7);g.fill();}
+    // child: rosy apples of the cheeks and a little warmth on the nose tip and chin
+    if(kid&&!mode){const blush=(x,y,rx,ry,al)=>{g.save();g.translate(X(x),Y(y));g.scale(rx*PX,ry*PX);const gr=g.createRadialGradient(0,0,0,0,0,1);
+        gr.addColorStop(0,rel(P.blushC||0xe98a7c,1));gr.addColorStop(1,rel(P.blushC||0xe98a7c,0));g.globalAlpha=al*kid;g.fillStyle=gr;g.beginPath();g.arc(0,0,1,0,7);g.fill();g.restore();g.globalAlpha=1;};
+      for(const sx of[-1,1])blush(sx*.041,-.008,.027,.021,.42);blush(0,-.012,.010,.008,.22);blush(0,-.072,.012,.008,.18);}
     // ---------- lips ----------
     const MW=C.MW;
     if(!mode){
@@ -26737,11 +26749,14 @@ function faceTextures(R,P,C){
       for(const sx of[-1,1]){g.fillStyle=rel(0x6a4034,.7);g.globalAlpha=.5;g.beginPath();g.arc(X(sx*MW),Y(C.ys(sx*MW)),5,0,7);g.fill();g.globalAlpha=1;}
     }
     // lip vertical lines (both maps)
-    for(let i=0;i<70;i++){const x=(rnd()*2-1)*MW*.9;const up=rnd()<.45;const y0=C.ys(x),y1=up?C.yU(x):C.yL(x);
-      g.strokeStyle=mode?"rgba(80,80,80,.5)":rel(0x7a4a40,.6);g.globalAlpha=mode?.6:.25;g.lineWidth=1;g.beginPath();g.moveTo(X(x),Y(lerp(y0,y1,.15)));g.lineTo(X(x+(rnd()-.5)*.001),Y(lerp(y0,y1,.85)));g.stroke();}
+    for(let i=0;i<70*(1-.7*kid);i++){const x=(rnd()*2-1)*MW*.9;const up=rnd()<.45;const y0=C.ys(x),y1=up?C.yU(x):C.yL(x);
+      g.strokeStyle=mode?"rgba(80,80,80,.5)":rel(0x7a4a40,.6);g.globalAlpha=(mode?.6:.25)*(1-.6*kid);g.lineWidth=1;g.beginPath();g.moveTo(X(x),Y(lerp(y0,y1,.15)));g.lineTo(X(x+(rnd()-.5)*.001),Y(lerp(y0,y1,.85)));g.stroke();}
     g.globalAlpha=1;
     if(mode){soft(g,()=>path(g,C.ys,-MW,MW,50),2.5,"rgb(40,40,40)",.8,3);}
     // ---------- brows ----------
+    if(kid&&!mode)for(const sx of[-1,1]){g.save();g.globalAlpha=.22*kid;g.lineCap="round";g.strokeStyle=rel(P.brow||0x3a3431,.8);
+      for(let k=3;k>=0;k--){g.lineWidth=(.0024+k*.0012)*PX*(P.browW||1);g.globalAlpha=.22*kid*(k?.35:1);g.beginPath();
+        for(let i=0;i<=20;i++){const b=C.brow(i/20*.92);if(i)g.lineTo(X(sx*b[0]),Y(b[1]));else g.moveTo(X(sx*b[0]),Y(b[1]));}g.stroke();}g.restore();}
     for(const sx of[-1,1]){const n=P.browHairs||260;
       for(let i=0;i<n;i++){const t=Math.pow(rnd(),.85);const b=C.brow(t);const w=(.0032-.0016*t)*(P.browW||1);const off=(rnd()-.5)*w;
         const x=sx*b[0],y=b[1]+off;const ang=t<.15?1.2-t*3:.18-.15*t+(rnd()-.5)*.25;// flow up at inner end, then outward
@@ -26755,10 +26770,10 @@ function faceTextures(R,P,C){
       const up=x=>C.eye(s,x)[1],lo=x=>C.eye(s,x)[2];
       if(!mode){
         // lid pigmentation
-        g.save();g.globalAlpha=.16;g.fillStyle=rel(0x8e6a5a);g.beginPath();path(g,x=>up(x)+.0005,x0,x1,30);
+        g.save();g.globalAlpha=.16*(1-.7*kid);g.fillStyle=rel(0x8e6a5a);g.beginPath();path(g,x=>up(x)+.0005,x0,x1,30);
         for(let i=30;i>=0;i--){const x=x0+(x1-x0)*i/30;g.lineTo(X(x),Y(up(x)+.0075+.002*Math.sin(PI*i/30)));}g.closePath();g.shadowColor=g.fillStyle;g.shadowBlur=6;g.fill();g.restore();
         // under eye
-        g.save();g.globalAlpha=.18*(.5+ag);g.fillStyle=rel(0x8a6050);g.beginPath();path(g,x=>lo(x)-.0006,x0,x1,30);
+        g.save();g.globalAlpha=.18*(.5+ag)*(1-.8*kid);g.fillStyle=rel(0x8a6050);g.beginPath();path(g,x=>lo(x)-.0006,x0,x1,30);
         for(let i=30;i>=0;i--){const x=x0+(x1-x0)*i/30;g.lineTo(X(x),Y(lo(x)-.006*Math.sin(PI*i/30)-.0008));}g.closePath();g.shadowColor=g.fillStyle;g.shadowBlur=8;g.fill();g.restore();
       }
       // lash line upper (thicker toward outer corner) & lower
@@ -26767,7 +26782,7 @@ function faceTextures(R,P,C){
         g.globalAlpha=mode?.5:.95;g.lineWidth=(1.6+3.2*Math.sin(PI*clamp(t0*1.1,0,1))*(.55+.45*t0))*(P.lash||1);g.beginPath();g.moveTo(X(xa),Y(up(xa)+.0004));g.lineTo(X(xb),Y(up(xb)+.0004));g.stroke();}
       g.globalAlpha=mode?.3:.45;soft(g,()=>path(g,x=>lo(x)-.0003,x0,x1,24),1.2,lash,mode?.3:.4,2);
       // lid crease (softer at inner corner = epicanthic)
-      soft(g,()=>path(g,x=>up(x)+.0052+.0012*Math.sin(PI*clamp((x-x0)/(x1-x0),0,1)),s<0?lerp(x0,x1,.0):lerp(x0,x1,.25),s<0?lerp(x0,x1,.75):x1,24),1.6,mode?"rgb(70,70,70)":rel(0x7a5444),mode?.5:.35,3);
+      soft(g,()=>path(g,x=>up(x)+.0052+.0012*Math.sin(PI*clamp((x-x0)/(x1-x0),0,1)),s<0?lerp(x0,x1,.0):lerp(x0,x1,.25),s<0?lerp(x0,x1,.75):x1,24),1.6,mode?"rgb(70,70,70)":rel(0x7a5444),(mode?.5:.35)*(1-.6*kid),3);
       // crow's feet & under-eye lines
       if(ag>0)for(let k=0;k<4;k++){const ox=s*(C.EX+C.W+.0015),oy=C.EY+.0015;const a=(-.55+k*.38)+(rnd()-.5)*.15;const L=.006+rnd()*.006;
         g.beginPath();g.moveTo(X(ox),Y(oy+Math.sin(a)*.001));g.quadraticCurveTo(X(ox+s*Math.cos(a)*L*.5),Y(oy+Math.sin(a)*L*.5+.0005),X(ox+s*Math.cos(a)*L),Y(oy+Math.sin(a)*L));
@@ -26781,9 +26796,9 @@ function faceTextures(R,P,C){
           soft(g,()=>path(g,x=>ly+.0028*Math.cos(x*52)+.0012*Math.sin(x*140+k),xa,mn(xb,.046),20),mode?3.2:2.2,mode?"rgb(70,70,70)":rel(0x8f6652),(mode?.45:.10)*ag,4);}}
       for(const sx of[-1,1])soft(g,()=>{g.beginPath();g.moveTo(X(sx*.0045),Y(.035));g.lineTo(X(sx*.0050),Y(.045));},mode?2.6:2,mode?"rgb(80,80,80)":rel(0x8f6652),(mode?.35:.08)*ag,4);}
     // ---------- nasolabial / marionette ----------
-    for(const sx of[-1,1]){soft(g,()=>polyXY(g,C.nlf.slice(0,3),sx),3.5,mode?"rgb(90,90,90)":rel(0x8a5a48),(mode?.30:.10)*(.4+ag),4);
+    for(const sx of[-1,1]){soft(g,()=>polyXY(g,C.nlf.slice(0,3),sx),3.5,mode?"rgb(90,90,90)":rel(0x8a5a48),(mode?.30:.10)*(.4+ag)*(1-kid),4);
       if(ag>.3)soft(g,()=>{g.beginPath();g.moveTo(X(sx*(MW+.0008)),Y(C.ys(sx*MW)-.0015));g.lineTo(X(sx*(MW+.0035)),Y(-.067));},1.3,mode?"rgb(80,80,80)":rel(0x8a5a48),(mode?.4:.22)*ag,3);
-      soft(g,()=>polyXY(g,C.alar,sx),3,mode?"rgb(90,90,90)":rel(0x7a5040),mode?.30:.12,3);}
+      soft(g,()=>polyXY(g,C.alar,sx),3,mode?"rgb(90,90,90)":rel(0x7a5040),(mode?.30:.12)*(1-.6*kid),3);}
     // ---------- beard stubble & whiskers ----------
     if(P.beard==="stubble"){
       const dens=(x,y)=>{const ax=ab(x);const mous=gauss(y-(C.yU(x)+.0045),.0035)*gauss(x,.020)*(y>C.yU(x)+.0008?1:0);
@@ -26872,7 +26887,7 @@ function buildHead(R,P,q){
   const tex=faceTextures(R,P,H.C);HEADT.tex=performance.now()-tA;
   const grp=new THREE.Group();
   const mesh=new THREE.Mesh(g,faceSkinMat(R,tex.map,tex.bump,{rough:P.rough}));mesh.castShadow=true;mesh.receiveShadow=true;grp.add(mesh);
-  const etex=eyeTexture(R,P.iris||[70,46,30]);
+  const etex=eyeTexture(R,P.iris||[70,46,30],{irisR:P.irisR,pupilR:P.pupilR,sclera:P.sclera,catchlight:P.catchlight});
   const em=R.add(new THREE.MeshStandardMaterial({map:etex,roughness:.10,metalness:0}));
   const eg=[];for(const e of H.eyes){const sg=new THREE.SphereGeometry(H.er,28,20);sg.rotateX(PI/2);
     sg.rotateX(-(P.gazePitch||0));sg.rotateY((P.gazeYaw||0));sg.translate(e[0],e[1],e[2]);eg.push(sg);}
@@ -27584,21 +27599,25 @@ function sockSDF(){const parts=[K(sEll([0,-.046,-.030],[.032,.029,.036]),0),K(sE
 //  play: boy of ~6 standing with a gicchou mallet (and the ball at his feet). Origin = ground. +Z = front.
 //  Hair: furiwake / amasogi bob (centre parting, cut straight at the shoulders / jaw).
 // =====================================================================================
-const MAGO_HEAD={seed:41,age:20,thin:0,kid:1,smile:.5,lipU:.0040,lipL:.0052,lipUvol:.0012,lipLvol:.0017,mouthW:.0172,scalp:"none",hairC:0x17120f,beard:"none",
-  skin:0xeccaae,skinRed:0xe6a694,skinLight:0xf5dcc8,lip:0xc8786e,lipColL:0xd08478,iris:[34,24,18],wrinkles:0,spots:0,eyeW:.0168,eyeOpenU:.0069,eyeOpenL:.0042,eyeTilt:.03,
-  browDrop:.003,brow:0x2c2520,browHairs:90,browW:.7,cran:[1.10,1.16,1.10],cranOff:[0,.016,-.006],jaw:.80,nose:.58,browK:.5,cheekFat:1.28,hood:.45,earL:.8,earYaw:.30,noEars:true,neckR:.74,eyeR:.0136,gazePitch:.06,rough:.5,kidWarp:.86};
+const MAGO_HEAD={seed:41,age:20,thin:0,kid:1,smile:1.5,lipU:.0042,lipL:.0060,lipUvol:.0016,lipLvol:.0024,mouthW:.0176,scalp:"none",hairC:0x17120f,beard:"none",
+  skin:0xf2c09a,skinRed:0xee9a84,skinLight:0xf8d4b8,lip:0xd9776e,lipColL:0xe08a80,blushC:0xec8c7c,wrinkles:0,spots:0,
+  // eyes narrowed by the smile (the lower lid lifted, the aperture a little low): the lids do not follow the gaze, so wide
+  // open eyes that look down read as an upward stare from above
+  iris:[104,66,40],irisR:.19,pupilR:.062,sclera:[240,236,230],catchlight:true,eyeR:.0146,eyeW:.0190,eyeOpenU:.0072,eyeOpenL:.0040,eyeApY:-.0006,eyeTilt:0,hood:.25,
+  browDrop:0,browY:.003,brow:0x5a4636,browHairs:120,browW:.7,browAmt:.6,cran:[1.10,1.16,1.10],cranOff:[0,.016,-.006],jaw:.70,nose:.58,browK:.5,cheekFat:1,
+  earL:.8,earYaw:.30,noEars:true,neckR:.74,gazePitch:.06,rough:.56,kidWarp:.84};
 function Sc(node,s){const f=node.f,b=node.bs;return{f:(x,y,z)=>s*f(x/s,y/s,z/s),bs:[b[0]*s,b[1]*s,b[2]*s,b[3]*s],k:node.k};}
 function magoRig(pose){const R={pose};
   const held=pose==="held";let A;
   if(held){R.hip=[0,.075,-.02];R.TM=rotM(-.10,0,0);
     const tp=v=>add3(R.hip,apM(R.TM,v));R.tp=tp;
-    R.sh={L:tp([.132,.335,-.012]),R:tp([-.132,.335,-.012])};R.pivot=tp([0,.405,.0]);R.headM=mulM(R.TM,rotM(.16,.08,0));R.gazeP=.22;
+    R.sh={L:tp([.132,.335,-.012]),R:tp([-.132,.335,-.012])};R.pivot=tp([0,.405,.0]);R.headM=mulM(R.TM,rotM(.30,.08,0));R.gazeP=-.15;
     R.hipJ={L:[.062,.055,0],R:[-.062,.055,0]};R.knee={L:[.088,.085,.25],R:[-.082,.08,.245]};R.ankle={L:[.08,-.13,.33],R:[-.074,-.135,.32]};
     R.UA=.165;R.FA=.145;
     A={L:{W:[.050,.215,.180],fwd:[-.45,-.05,.89],dor:[.85,.35,.3],hp:"hold",pole:[.8,-.5,-.3]},R:{W:[-.050,.215,.180],fwd:[.45,-.05,.89],dor:[-.85,.35,.3],hp:"hold",pole:[-.8,-.5,-.3]}};}
   else{R.hip=[0,.70,0];R.TM=rotM(.07,0,0);
     const tp=v=>add3(R.hip,apM(R.TM,v));R.tp=tp;
-    R.sh={L:tp([.148,.42,-.012]),R:tp([-.148,.42,-.012])};R.pivot=tp([0,.505,.008]);R.headM=mulM(R.TM,rotM(.20,-.10,.03));R.gazeP=.12;
+    R.sh={L:tp([.148,.42,-.012]),R:tp([-.148,.42,-.012])};R.pivot=tp([0,.505,.008]);R.headM=mulM(R.TM,rotM(.20,-.10,.03));R.gazeP=-.15;
     R.hipJ={L:[.072,.69,0],R:[-.072,.69,0]};R.knee={L:[.095,.37,.035],R:[-.085,.37,.005]};R.ankle={L:[.105,.065,.0],R:[-.095,.065,-.035]};
     R.UA=.20;R.FA=.17;
     A={R:{W:[-.185,.76,.12],fwd:[.10,-.95,.30],dor:[-.95,.05,.10],hp:"grasp",pole:[-.6,-.2,-.8]},L:{W:[.17,.80,.20],fwd:[.05,-.55,.83],dor:[.75,.45,-.2],hp:"relax",pole:[.7,-.4,-.6]}};}
@@ -27641,10 +27660,11 @@ function magoGarments(R){const held=R.pose==="held";
       const a=Math.atan2(dz,dx);d+=.006*foldProfile(a*4+nz(a,r*3,y*4)*.9)*sstep(.03,.10,r)*sstep(.30,.18,r);}return d;},.007);
   const ties=[];if(!held)for(const k of["L","R"]){const kn=R.knee[k];ties.push(K(sCap(add3(kn,[0,-.085,.005]),add3(kn,[0,-.085,.006]),.052),0));}
   return{up,inner,sleeves:sl,cuffs:U(cuffs),lower:L,ties:ties.length?U(ties):null};}
-// child hair: "mezashi" bob (kamuro) — fringe cut straight above the brows, the rest cut straight at `cut`.
+// child hair: "furiwake-gami" — parted in the middle, the forehead open, the hair falling to both sides and cut
+// straight at `cut` (a blunt fringe over a pale face reads as an Ichimatsu doll, so there is none).
 // A shell over the skull (the same cranium ellipsoids as headSDF, so the skull can never poke through); below
 // the widest ring of the skull the hair hangs straight down (that ring extruded). The face is opened in front of
-// the side locks and below the fringe. Pair with P.noEars (the ears sit under the side locks).
+// the side locks and below the hairline. Pair with P.noEars (the ears sit under the side locks).
 function childHairSDF(P,cut){const cr=P.cran||[1,1,1],co=P.cranOff||[0,0,0];
   const cE=(c,r)=>sEll([c[0]*cr[0]+co[0],c[1]*cr[1]+co[1],c[2]*cr[2]+co[2]],[r[0]*cr[0],r[1]*cr[1],r[2]*cr[2]]);
   const skull=U([K(cE([0,.044,-.010],[.0765,.084,.095]),0),K(cE([0,.040,.030],[.064,.070,.066]),.035),K(cE([0,.020,-.045],[.068,.064,.058]),.035)]);
@@ -27654,14 +27674,18 @@ function childHairSDF(P,cut){const cr=P.cran||[1,1,1],co=P.cranOff||[0,0,0];
   const C0=[0,.044*cr[1]+co[1],-.010*cr[2]+co[2]],SV=[1.085,1.10,1.085];
   const hs=(x,y,z)=>sf((x-C0[0])/SV[0]+C0[0],(y-C0[1])/SV[1]+C0[1],(z-C0[2])/SV[2]+C0[2])*1.085;
   let F={f:(x,y,z)=>y>yW?hs(x,y,z):hs(x,yW,z)-.0030*sstep(yW,cut,y),bs:[0,.02,-.01,.18]};
-  // face opening: in front of the side locks (their front edge slants back toward the bottom) and below the fringe
-  const zF=y=>.010+.022*sstep(-.02,.045,y),yF=x=>.050+.012*sstep(.030,.064,ab(x));
+  // face opening: in front of the side locks (their front edge slants back toward the bottom) and below the
+  // hairline, which rises to the parting at the centre of the forehead and sweeps down over the temples
+  const zF=y=>.010+.022*sstep(-.02,.045,y),yF=x=>{const t=Math.min(1,ab(x)/.066);return .092-.058*Math.pow(t,1.55);};
   F=S(F,[K({f:(x,y,z)=>mx(zF(y)-z,y-yF(x)),bs:[0,-.03,.08,.16]},.004),K({f:(x,y,z)=>y-cut,bs:[0,cut-.06,-.02,.32]},.003)]); // (cutter = region removed: below `cut`)
   const nz=makeNoise(57);
   F=D(F,(x,y,z)=>{const top=sstep(.05,.10,y);
     const a=Math.atan2(x,-z+.02);const strands=.00055*Math.sin(a*130+nz(x*40,y*12,z*40)*2.4)*(1-top);
-    const ends=.0010*Math.sin(x*240+z*170+nz(x*90,1,z*90)*3)*(sstep(cut+.018,cut,y)+sstep(yF(x)+.014,yF(x),y)*sstep(zF(y)-.01,zF(y)+.01,z));
-    return strands+ends;},.002);
+    // the parting (a soft groove along the top from the hairline back to the crown) and strands combed from it to the sides
+    const part=-.0016*gauss(x,.0032)*top*sstep(-.07,-.01,z);
+    const comb=.00035*Math.sin(z*420+nz(x*30,y*30,z*60)*2.0)*top*sstep(.003,.012,ab(x));
+    const ends=.0010*Math.sin(x*240+z*170+nz(x*90,1,z*90)*3)*sstep(cut+.018,cut,y);
+    return strands+part+comb+ends;},.002);
   return F;}
 function hiinaGroup(R,q){// little paper doll held by the girl (~6 cm): conical robes, white face, black hair
   const g=new THREE.Group();const mat=c=>R.add(new THREE.MeshStandardMaterial({color:c,roughness:.75,metalness:0}));
@@ -27683,7 +27707,7 @@ function makeMago(opts){opts=opts||{};const R=Res();const q=opts.quality||"high"
   const g=new THREE.Group();g.name="mago_"+pose;const body=new THREE.Group();g.add(body);
   const k=opts.scale||(held?.76:.80);body.scale.setScalar(k);
   const rig=magoRig(pose);
-  const HP=Object.assign({},MAGO_HEAD,{gazePitch:rig.gazeP,smile:held?.55:.4,seed:held?41:43},opts.headParams||{});
+  const HP=Object.assign({},MAGO_HEAD,{gazePitch:rig.gazeP,smile:held?1.5:1.6,seed:held?41:43},opts.headParams||{});
   const hd=buildHead(R,HP,q);
   const G=magoGarments(rig);
   // hands (child size) & socks
@@ -33636,9 +33660,17 @@ const SAIGEN_TSUREZURE=(()=>{
       enter(){showRoujin("walk");(S.assets.attendants||[]).forEach(f=>{f.visible=true;});const r=S.assets.roujin.walk,P=S.assets.estatePos;r.position.set(...P.walkFrom);r.rotation.y=Math.PI/2;r.userData.walking=true;r.userData.walkSpeed=.55;r.userData.hideLabel=false;S._walk={t:0};},
       tick(ctx,u,t){const r=S.assets.roujin.walk,P=S.assets.estatePos;const k=Math.min(1,t/12);r.position.x=lerp(P.walkFrom[0],P.walkTo[0],k);r.position.y=(typeof groundH==="function")?groundH(r.position.x,r.position.z):r.position.y;r.userData.walking=k<1;}}],
     /* 12 夕べの日に子孫を愛して、栄ゆく末を見んまでの命をあらまし */
-    [{zone:"estate",fov:40,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.hold[1];return {cam:{pos:[3.95,y+1.62,7.75],look:[2.95,y+.70,5.35]},to:{pos:[3.75,y+1.56,7.4],look:[2.95,y+.70,5.35]}};},dur:12,
+    [{zone:"estate",fov:40,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.hold[1];return {cam:{pos:[3.95,y+1.62,7.75],look:[2.95,y+.70,5.35]},to:{pos:[3.8,y+1.58,7.5],look:[2.95,y+.70,5.35]}};},dur:7,
       enter(){showRoujin("hold");const P=S.assets.estatePos,r=S.assets.roujin.hold;r.position.set(...P.hold);r.rotation.y=.25;r.userData.hideLabel=true;
-        const m=S.assets.magoPlay;if(m){m.visible=true;m.position.set(...P.play);m.rotation.y=-.9;m.userData.hideLabel=false;S.labelFig.mago=m;}}}],
+        const m=S.assets.magoPlay;if(m){m.visible=true;m.position.set(...P.play);m.rotation.y=-.9;m.userData.hideLabel=false;S.labelFig.mago=m;}}},
+     // 寄り: 膝の孫娘と、それを見下ろす祖父の顔(簀子の上から、孫娘の目の高さで)
+     {zone:"estate",fov:34,estateCam:true,camFn(){const hw=headWorld(S.assets.magoHeld,true);const P=S.assets.estatePos;
+        const h=hw?hw.p:[P.hold[0]+.1,P.hold[1]+.6,P.hold[2]+.3],F=hw?hw.f:[Math.sin(.07),0,Math.cos(.07)];const fl=Math.hypot(F[0],F[2])||1,fx=F[0]/fl,fz=F[2]/fl;
+        // 孫娘の顔の正面から少し右寄り・目より上(伏し目で手の人形を見ているのが見える高さ)から、顔と祖父の顔の間を見る
+        // (目の高さより下からだと、伏せた顔がこちらを上目づかいに見ているように写る)
+        const at=(d,side,up)=>[h[0]+fx*d+fz*side,h[1]+up,h[2]+fz*d-fx*side];
+        return {cam:{pos:at(.92,-.12,.22),look:[h[0],h[1]+.11,h[2]]},to:{pos:at(.82,-.10,.21),look:[h[0],h[1]+.11,h[2]]}};},dur:6,
+      enter(){S.labelFig={};}}],
     /* 13 ひたすら世をむさぼる心のみ深く、もののあはれも知らずなりゆくなん、あさましき */
     [{zone:"estate",fov:40,estateCam:true,camFn(){const P=S.assets.estatePos,y=P.count[1];return {cam:{pos:[.6,y+1.0,1.62],look:[-1.1,y+.66,.66]},to:{pos:[.48,y+.98,1.46],look:[-1.1,y+.64,.66]}};},dur:9,frameUp:.2,lamp:{on:true,intensity:1.0,estate:true,distance:3.6,decay:2},estateNight:.35,
       enter(){showRoujin("count");const P=S.assets.estatePos,r=S.assets.roujin.count;r.position.set(...P.count);r.rotation.y=.35;r.userData.hideLabel=true;S.assets.magoPlay.visible=false;
@@ -33754,6 +33786,10 @@ const SAIGEN_TSUREZURE=(()=>{
     if(zone==="estate"&&!wasEstate)restoreEstateLighting();
     hideEstateFolk(zone==="estate");
   }
+  // 人物の頭(首の付け根の回転点)のワールド位置。dir=true なら顔の向き(ワールド)も返す
+  function headWorld(f,dir){const hd=f&&f.userData&&f.userData.head;if(!hd)return null;
+    try{hd.updateWorldMatrix(true,false);const v=new THREE.Vector3();hd.getWorldPosition(v);if(!dir)return[v.x,v.y,v.z];
+      const q=new THREE.Quaternion();hd.getWorldQuaternion(q);const d=new THREE.Vector3(0,0,1).applyQuaternion(q);return{p:[v.x,v.y,v.z],f:[d.x,d.y,d.z]};}catch(e){return null;}}
   // 屋敷の場の間は、本編の人物(女房・家人)を隠す。この段の老人と孫・従者だけの場にし、
   // 簡易な本編人物が彫刻の人物の背後に並ばないように。ゾーンを離れる時と後片付けで元に戻す
   function hideEstateFolk(on){
