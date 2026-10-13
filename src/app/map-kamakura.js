@@ -5,9 +5,8 @@
    方針:
    - 既定(寝殿造)マップの挙動は 1バイトも変えない。本ブロックは
      APP.map==="kamakura" のときだけ実行される自己完結コード。
-   - 既存ヘルパー(building/hipRoof/hipRoofGeo/box/cyl/tree/canv/M/
-     makeHeianFigure/MAT)を流用。図鑑登録(register)・SEASONAL登録・
-     クイズ連携は一切行わない(P1スコープ外・オプトイン安全)。
+   - 既存ヘルパーを流用し、武家30項目の図鑑・名称クイズへ接続。
+     他時代の物語/戦闘モードを開放せず、季節登録も追加しない。
    - 座標系: -z が北、+z が南。yaw=0 は -z(北)向き(forward=(0,0,-1))。
      郭(内郭)は概ね ±35、堀は ±37〜42、全体は ±54 以内(散策の ±57 クランプ内)。
    ============================================================ */
@@ -141,10 +140,10 @@ if(APP.map==="kamakura"){
   /* ---- 4. マテリアル/テクスチャ(手続き生成。canv が sRGBEncoding を付与) ---- */
   const MK={};
   /* 横板張り(板塀・板壁) */
-  MK.itabei=M({map:canv(128,128,(x,w,h)=>{ x.fillStyle="#8a6a45";x.fillRect(0,0,w,h);
-    for(let y=0;y<h;y+=16){ x.fillStyle=`rgba(${rnd(120,150)|0},${rnd(92,116)|0},${rnd(58,78)|0},.92)`;x.fillRect(0,y,w,15);
-      x.strokeStyle="rgba(50,34,18,.55)";x.lineWidth=2;x.beginPath();x.moveTo(0,y+15);x.lineTo(w,y+15);x.stroke();
-      for(let i=0;i<9;i++){x.strokeStyle="rgba(60,42,24,.22)";x.lineWidth=1;x.beginPath();const yy=y+rnd(2,13);x.moveTo(0,yy);x.lineTo(w,yy);x.stroke();}
+  MK.itabei=M({map:canv(128,128,(x,w,h)=>{ x.fillStyle="#806b50";x.fillRect(0,0,w,h);
+    for(let y=0;y<h;y+=16){const shade=Math.round(Math.sin(y*.61)*5);x.fillStyle=`rgb(${127+shade},${105+shade},${77+shade})`;x.fillRect(0,y,w,15);
+      x.strokeStyle="rgba(50,39,25,.32)";x.lineWidth=1;x.beginPath();x.moveTo(0,y+15);x.lineTo(w,y+15);x.stroke();
+      for(let i=0;i<5;i++){x.strokeStyle="rgba(60,47,31,.11)";x.lineWidth=.6;x.beginPath();const yy=y+2+i*2.5;x.moveTo(0,yy);x.bezierCurveTo(w*.3,yy+1,w*.7,yy-1,w,yy);x.stroke();}
     }}),roughness:.85});
   /* 板葺き屋根(横板+石置き) */
   MK.itabuki=M({map:canv(256,256,(x,w,h)=>{ x.fillStyle="#6b5f4c";x.fillRect(0,0,w,h);
@@ -178,10 +177,10 @@ if(APP.map==="kamakura"){
   MK.smoke=new THREE.MeshBasicMaterial({color:0x9a938a,transparent:true,opacity:.26,depthWrite:false});
   MK.slit=new THREE.MeshBasicMaterial({color:0x140f0a});
   /* 馬の毛(茶=鹿毛 / 黒鹿毛) */
-  const _hide=canv(128,128,(x,w,h)=>{ x.fillStyle="#5a3c22";x.fillRect(0,0,w,h);
+  const _hide=canv(128,128,(x,w,h)=>{ x.fillStyle="#c6bcae";x.fillRect(0,0,w,h);
     for(let i=0;i<700;i++){x.strokeStyle=`rgba(${rnd(90,130)|0},${rnd(60,90)|0},${rnd(34,54)|0},${rnd(.1,.3)})`;x.lineWidth=.8;const sx=rnd(0,w),sy=rnd(0,h);x.beginPath();x.moveTo(sx,sy);x.lineTo(sx+rnd(2,6),sy+rnd(-1,1));x.stroke();}});
-  MK.umaKage=M({map:_hide,color:0x8a5a30,roughness:.9});
-  MK.umaKuro=M({map:_hide,color:0x3e2c1c,roughness:.9});
+  MK.umaKage=M({map:_hide,color:0x9a6945,roughness:.96});
+  MK.umaKuro=M({map:_hide,color:0x66503e,roughness:.96});
   /* 草地(タイル) */
   MK.grass=M({map:canv(128,128,(x,w,h)=>{ x.fillStyle="#5f7444";x.fillRect(0,0,w,h);
     for(let i=0;i<1600;i++){x.fillStyle=`rgba(${rnd(70,110)|0},${rnd(96,140)|0},${rnd(52,84)|0},.5)`;x.fillRect(rnd(0,w),rnd(0,h),1.5,rnd(2,4));}
@@ -189,15 +188,81 @@ if(APP.map==="kamakura"){
 
   /* ---- 5. 汎用ビルダー ---- */
   function plane(mat,w,d,cx,y,cz){ const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),mat);m.rotation.x=-Math.PI/2;m.position.set(cx,y,cz);m.receiveShadow=true;return m; }
-  function boardRoof(w,d,h,ridge,y){ const m=new THREE.Mesh(hipRoofGeo(w,d,h,ridge),MK.itabuki);m.position.y=y;m.castShadow=true;m.receiveShadow=true;return m; }
+  function boardRoof(w,d,h,ridge,y){
+    const m=new THREE.Mesh(hipRoofGeo(w,d,h,ridge),MK.itabuki);m.position.y=y;m.castShadow=true;m.receiveShadow=true;
+    // 徒然草草庵と同じく、屋根面だけでなく厚みと荷重を受ける端部を見せる。
+    [-1,1].forEach(s=>{m.add(box(w,.12,.10,MAT.woodDark,0,-.01,s*d/2));m.add(box(.10,.12,d,MAT.woodDark,s*w/2,-.01,0));});
+    [-1,1].forEach(x=>[-1,1].forEach(z=>kBeam(m,[x*w*.48,-.06,z*d*.48],[0,h-.08,0],.10,.10,MAT.woodDark,"hip-rafter")));
+    return m;
+  }
+
+  // 接合位置を共有する部材。名前は図鑑モデルと造形検査でも使う（新しい項目IDではない）。
+  const kSphereGeo=new THREE.SphereGeometry(1,16,10);
+  function kPart(parent,obj,name){obj.name=name||"";parent.add(obj);return obj;}
+  function kOval(parent,mat,x,y,z,sx,sy,sz,name){
+    const m=new THREE.Mesh(kSphereGeo,mat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;return kPart(parent,m,name);
+  }
+  function kBeam(parent,a,b,width,depth,mat,name){
+    const av=new THREE.Vector3(...a),bv=new THREE.Vector3(...b),v=bv.clone().sub(av);
+    const m=box(width,v.length(),depth,mat,0,0,0);m.position.copy(av).add(bv).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());return kPart(parent,m,name);
+  }
+  function kCurve(parent,pts,r,mat,name){
+    const curve=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(...p)));
+    const m=new THREE.Mesh(new THREE.TubeGeometry(curve,Math.max(8,pts.length*3),r,5,false),mat);m.castShadow=true;m.receiveShadow=true;return kPart(parent,m,name);
+  }
+  // 襞を別の棒で貼らず、衣の断面へ織り込む。SDF人物の輪郭/接地の考えを軽い輪断面へ適用。
+  function kGarment(parent,mat,rings,name){
+    const pos=[],uv=[],index=[],n=20;
+    for(let j=0;j<rings.length;j++){const [y,rx,rz]=rings[j];for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,fold=1+.045*Math.cos(a*8)*(1-j/rings.length);pos.push(Math.cos(a)*rx*fold,y,Math.sin(a)*rz*fold);uv.push(i/n,j/(rings.length-1));}}
+    for(let j=0;j<rings.length-1;j++)for(let i=0;i<n;i++){const a=j*(n+1)+i,b=a+n+1;index.push(a,b,a+1,a+1,b,b+1);}
+    // 上下の開口は手/足や襟の内部へ重ねる。底を床へ突き抜ける球で塞がない。
+    const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));geo.setIndex(index);geo.computeVertexNormals();
+    const mesh=new THREE.Mesh(geo,mat);mesh.castShadow=true;mesh.receiveShadow=true;return kPart(parent,mesh,name);
+  }
+  const kClothMap=canv(64,64,(ctx,w,h)=>{ctx.fillStyle="#e3dfd5";ctx.fillRect(0,0,w,h);for(let i=0;i<w;i+=4){ctx.fillStyle="rgba(78,71,59,.07)";ctx.fillRect(i,0,1,h);ctx.fillRect(0,i,w,1);}});
+  const kIron=M({color:0x39342c,roughness:.68}),kRope=M({color:0xbaa071,roughness:.92});
+  function kDoor(parent,x,y,z,w,h,side,angle){
+    const pivot=new THREE.Group();pivot.position.set(x,y,z);pivot.rotation.y=side*angle;pivot.name="hinged-door";
+    kPart(pivot,box(w,h,.10,MK.itabei,side*w/2,h/2,0),"door-leaf");
+    [.17,h-.17].forEach(yy=>kPart(pivot,box(w,.13,.15,MAT.woodDark,side*w/2,yy,0),"door-crossrail"));
+    [.27,h-.27].forEach(yy=>{kPart(pivot,cyl(.075,.075,.22,kIron,0,yy,0,8),"door-hinge");
+      [.23,w-.2].forEach(xx=>kOval(pivot,kIron,side*xx,yy,.08,.045,.045,.025,"door-stud"));});
+    parent.add(pivot);return pivot;
+  }
+  function kPanel(parent,w,h,x,y,z,yaw,paper){
+    const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=yaw||0;parent.add(g);
+    g.add(box(w,h,.055,paper?MK.shoji:MK.mairado,0,h/2,0));
+    [-1,1].forEach(s=>g.add(box(.065,h,.09,MAT.woodDark,s*(w/2-.033),h/2,0)));
+    [0,h].forEach(yy=>g.add(box(w,.065,.09,MAT.woodDark,0,yy,0)));
+    if(paper){for(let i=1;i<4;i++)g.add(box(.028,h,.072,MAT.wood,(-.5+i/4)*w,h/2,.008));}
+    for(let yy=.25;yy<h;yy+=paper?.43:.22)g.add(box(w,.025,.073,MAT.wood,0,yy,.008));
+    return g;
+  }
+  function kBow(){
+    const g=new THREE.Group();g.name="strung-bow";
+    kCurve(g,[[0,-.70,0],[0,-.50,.12],[0,0,.18],[0,.58,.13],[0,1.10,0]],.024,MK.log,"bow-limb");
+    kBeam(g,[0,-.70,0],[0,1.10,0],.008,.008,kRope,"bow-string");
+    kPart(g,box(.055,.19,.055,kIron,0,0,.18),"bow-grip");return g;
+  }
+  const kStepZones=[];
+  function kSteps(parent,x,z,width,top,run){
+    const count=Math.ceil(top/.20),depth=run/count;
+    for(let i=0;i<count;i++){const h=top*(i+1)/count,cz=z+run-depth*(i+.5);
+      kPart(parent,box(width,h,depth+.02,MAT.woodDark,x,h/2,cz),"approach-step");
+      kStepZones.push([parent.position.x+x,parent.position.z+cz,width,depth+.02,h]);
+    }
+  }
 
   /* 土塁+板塀 の一区間(horizontal=true は x方向、false は z方向に走る) */
   function rampart(cx,cz,len,horizontal){
     const g=new THREE.Group(); g.position.set(cx,0,cz);
     const w=horizontal?len:3, d=horizontal?3:len;
-    g.add(box(w,1.3,d,MK.dorui,0,.65,0));                                   // 土塁(台形状の盛土)
+    const earth=new THREE.BoxGeometry(w,1.3,d),ep=earth.attributes.position;
+    for(let i=0;i<ep.count;i++)if(ep.getY(i)>0){if(horizontal)ep.setZ(i,ep.getZ(i)*.48);else ep.setX(i,ep.getX(i)*.48);}earth.computeVertexNormals();
+    const bank=new THREE.Mesh(earth,MK.dorui);bank.position.y=.65;g.add(bank); // 台形断面。下端3m・上端1.44m
     g.add(box(horizontal?len:.32,2.0,horizontal?.32:len,MK.itabei,0,2.3,0)); // 板塀
     g.add(box(horizontal?len:.5,.18,horizontal?.5:len,MAT.woodDark,0,3.35,0));// 笠木
+    for(let q=-len/2+.8;q<len/2;q+=3.5)g.add(box(.18,2.18,.18,MAT.woodDark,horizontal?q:0,2.26,horizontal?0:q));
     worldK.add(g); return g;
   }
 
@@ -214,24 +279,62 @@ if(APP.map==="kamakura"){
     return g;
   }
 
+  // 馬3頭は首・尾・鬣・蹄の少頂点geometryを共有。全てローカル支点で組む。
+  const kHorseNeckGeo=(()=>{
+    const rings=[[.95,.61,.31,.35],[1.12,.69,.305,.325],[1.32,.81,.275,.29],[1.53,.94,.245,.26],[1.72,1.055,.21,.235],[1.90,1.14,.18,.205],[2.08,1.19,.145,.17]],p=[],uv=[],ix=[],n=18;
+    rings.forEach(([y,z,rx,rz],j)=>{for(let i=0;i<=n;i++){const a=i/n*Math.PI*2;p.push(Math.cos(a)*rx,y,z+Math.sin(a)*rz);uv.push(i/n,j/(rings.length-1));}});
+    for(let j=0;j<rings.length-1;j++)for(let i=0;i<n;i++){const a=j*(n+1)+i,b=a+n+1;ix.push(a,b,a+1,a+1,b,b+1);}
+    const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(p,3));geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));geo.setIndex(ix);geo.computeVertexNormals();return geo;
+  })();
+  function kTaperedHair(points,radii){
+    const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p))),segments=18,radial=8;
+    const geo=new THREE.TubeGeometry(curve,segments,1,radial,false),p=geo.attributes.position,v=new THREE.Vector3();
+    for(let j=0;j<=segments;j++){const t=j/segments,a=t*(radii.length-1),lo=Math.min(radii.length-2,Math.floor(a)),r=THREE.MathUtils.lerp(radii[lo],radii[lo+1],a-lo),c=curve.getPointAt(t);
+      for(let i=0;i<=radial;i++){const k=j*(radial+1)+i;v.fromBufferAttribute(p,k).sub(c).multiplyScalar(r).add(c);p.setXYZ(k,v.x,v.y,v.z);}}
+    geo.computeVertexNormals();return geo;
+  }
+  const kHorseTailGeo=kTaperedHair([[0,1.34,-.99],[0,1.10,-1.15],[.02,.70,-1.26],[.06,.30,-1.26]],[.075,.085,.11,.018]);
+  const kHorseManeGeo=kTaperedHair([[0,2.21,1.11],[0,1.93,.95],[0,1.63,.76],[0,1.32,.54]],[.055,.075,.07,.02]);
+  const kHorseHoofGeo=new THREE.CylinderGeometry(.105,.13,.18,10),kHorseShinGeo=new THREE.CylinderGeometry(.072,.056,.48,10);
+  const kHorseHoof=M({color:0x40392f,roughness:.87}),kHorseMane=M({color:0x30271f,roughness:.97}),kHorseEye=M({color:0x17140f,roughness:.34}),kHorseInnerEar=M({color:0x796454,roughness:.96});
+  const kHorseLeather=M({color:0x49331f,roughness:.86}),kHorseBitGeo=new THREE.TorusGeometry(.026,.007,5,10);
+  const kHorseMuzzles=new Map();
   /* 馬(静止立ちポーズ)。頭は +z 向き。coat=毛色マテリアル */
   function makeUma(coat){
-    const g=new THREE.Group();
-    const hoof=M({color:0x241c15,roughness:.8}), mane=M({color:0x2a1e14,roughness:.9});
-    g.add(box(.62,.86,1.7,coat,0,1.15,0));                                        // 胴
-    const chest=new THREE.Mesh(new THREE.SphereGeometry(.44,10,8),coat);chest.position.set(0,1.15,.8);chest.scale.set(1,1,.7);g.add(chest);
-    const rump=new THREE.Mesh(new THREE.SphereGeometry(.46,10,8),coat);rump.position.set(0,1.2,-.82);rump.scale.set(1,1,.7);g.add(rump);
-    const headG=new THREE.Group(); g.userData.head=headG;                          // 頭部グループ(馬の世話の頷きアニメ用・Wave3-②)
-    const neck=box(.42,.9,.5,coat,0,1.6,1.0);neck.rotation.x=-.7;headG.add(neck);   // 首
-    const head=box(.34,.34,.7,coat,0,2.0,1.42);head.rotation.x=.35;headG.add(head); // 頭
-    headG.add(box(.28,.28,.3,coat,0,1.86,1.68));                                    // 鼻面
-    [-1,1].forEach(s=>{const e=box(.08,.2,.1,coat,s*.12,2.18,1.28);e.rotation.x=-.2;headG.add(e);});        // 耳
-    [-1,1].forEach(s=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.05,8,6),new THREE.MeshBasicMaterial({color:0x0a0806}));e.position.set(s*.16,2.02,1.5);headG.add(e);}); // 目
-    for(let i=0;i<6;i++){const m=box(.1,.22,.14,mane,0,1.9-i*.02,1.15-i*.11);m.rotation.x=-.7;headG.add(m);} // 鬣
+    const g=new THREE.Group();g.name="kamakura-horse";
+    const hoof=kHorseHoof,mane=kHorseMane;
+    if(!kHorseMuzzles.has(coat)){const mat=coat.clone();mat.color.lerp(new THREE.Color(0xc8aa87),.27);kHorseMuzzles.set(coat,mat);}const muzzle=kHorseMuzzles.get(coat);
+    kOval(g,coat,0,1.15,0,.38,.46,.93,"horse-barrel");                           // 胴の腹と肩を連続させる
+    kOval(g,coat,0,1.18,.65,.38,.47,.42,"horse-chest");
+    kOval(g,coat,0,1.17,-.72,.40,.44,.38,"horse-rump");
+    const headG=new THREE.Group();g.userData.head=headG;headG.name="horse-head-pivot"; // 既存の頷きはこの群だけを動かす
+    kPart(headG,new THREE.Mesh(kHorseNeckGeo,coat),"horse-neck");
+    kOval(headG,coat,0,2.06,1.28,.19,.23,.23,"horse-cranium");
+    kOval(headG,coat,0,1.98,1.39,.19,.19,.24,"horse-cheek-and-poll");
+    const nasal=kOval(headG,coat,0,1.93,1.50,.145,.18,.33,"horse-nasal-bridge");nasal.rotation.x=.50;
+    kOval(headG,coat,0,1.91,1.28,.175,.16,.22,"horse-jaw");
+    kOval(headG,muzzle,0,1.78,1.76,.155,.125,.18,"horse-muzzle");
+    [-1,1].forEach(s=>{
+      const ear=kOval(headG,coat,s*.12,2.30,1.17,.055,.14,.035,"horse-ear");ear.rotation.z=-s*.2;
+      const inside=kOval(headG,kHorseInnerEar,s*.12,2.31,1.199,.03,.091,.014,"horse-inner-ear");inside.rotation.z=-s*.2;
+      kOval(headG,muzzle,s*.174,2.078,1.411,.022,.044,.054,"horse-eye-rim");
+      kOval(headG,kHorseEye,s*.189,2.078,1.419,.015,.028,.037,"horse-eye");
+      kOval(headG,hoof,s*.105,1.80,1.883,.035,.027,.018,"nostril");
+      kCurve(headG,[[s*.17,2.17,1.34],[s*.175,2.08,1.38],[s*.16,1.94,1.58],[s*.14,1.82,1.79]],.018,kHorseLeather,"halter-cheek");
+      const bit=kPart(headG,new THREE.Mesh(kHorseBitGeo,kIron),"halter-bit-ring");bit.position.set(s*.14,1.81,1.79);bit.rotation.y=Math.PI/2;
+    });
+    kCurve(headG,[[-.11,1.73,1.876],[0,1.714,1.912],[.11,1.73,1.876]],.009,hoof,"horse-mouth");
+    kCurve(headG,[[-.17,2.17,1.34],[0,2.19,1.49],[.17,2.17,1.34]],.018,kHorseLeather,"halter-browband");
+    kCurve(headG,[[-.14,1.82,1.79],[0,1.88,1.87],[.14,1.82,1.79]],.019,kHorseLeather,"halter-noseband");
+    kPart(headG,new THREE.Mesh(kHorseManeGeo,mane),"horse-mane");
     g.add(headG);
-    [[.24,.62],[-.24,.62],[.24,-.6],[-.24,-.6]].forEach(p=>{                        // 4脚+蹄
-      g.add(cyl(.1,.09,1.06,coat,p[0],.55,p[1],7)); g.add(cyl(.12,.12,.14,hoof,p[0],.07,p[1],7)); });
-    const tail=cyl(.06,.14,.72,mane,0,1.15,-.95,6);tail.rotation.x=-.5;g.add(tail); // 尾
+    [[.24,.62],[-.24,.62],[.24,-.6],[-.24,-.6]].forEach(p=>{
+      kOval(g,coat,p[0],.86,p[1],.11,.34,.12,"horse-upper-leg");
+      kOval(g,coat,p[0],.56,p[1],.082,.09,.085,"horse-knee");
+      const shin=kPart(g,new THREE.Mesh(kHorseShinGeo,coat),"horse-shin");shin.position.set(p[0],.36,p[1]);
+      const foot=kPart(g,new THREE.Mesh(kHorseHoofGeo,hoof),"horse-hoof");foot.position.set(p[0],.09,p[1]+.012);foot.scale.z=1.12;
+    });
+    kPart(g,new THREE.Mesh(kHorseTailGeo,mane),"horse-tail");
     g.traverse(o=>{ if(o.isMesh){o.castShadow=true;o.receiveShadow=true;} });
     return g;
   }
@@ -239,33 +342,47 @@ if(APP.map==="kamakura"){
   /* 武士(直垂+袴+侍烏帽子)。前(顔)は +z 向き。makeLowRankPerson の円柱体型を参考にした新規実装 */
   function makeBushiFigure(o){
     o=o||{};
+    const isHitatare=!o.monk&&!o.nohat&&!o.kasa;
     const scale=o.scale||1,
-      cloth=M({color:o.monk?0x3b3a36:(o.color||0x27506b),roughness:.85}),   // 僧は墨染めの灰黒
-      hakama=M({color:o.monk?0x2f2e2a:(o.hakama||0x6b3a24),roughness:.85}),
+      cloth=M({color:o.monk?0x3b3a36:(o.color||0x27506b),map:kClothMap,roughness:.93,side:THREE.DoubleSide}),
+      hakama=isHitatare?cloth:M({color:o.monk?0x2f2e2a:(o.hakama||0x6b3a24),map:kClothMap,roughness:.93,side:THREE.DoubleSide}),
       skin=M({color:0xe3c39c,roughness:.7}), black=M({color:0x14110d,roughness:.6});
     const g=new THREE.Group();
-    const lower=new THREE.Mesh(new THREE.CylinderGeometry(.22,.34,.9,10),hakama);lower.position.y=.46;g.add(lower); // 袴
+    g.name=o.monk?"kamakura-monk":"kamakura-person";
+    g.userData.kamakuraAttire=isHitatare?"hitatare":o.monk?"monk":o.child?"child":"work-clothes";
+    if(o.monk)kGarment(g,hakama,[[.075,.31,.21],[.20,.30,.20],[.48,.245,.16],[.78,.205,.145]],"monk-robe-hem");
+    else [-1,1].forEach(s=>{const leg=kGarment(g,hakama,[[.07,.135,.13],[.19,.16,.15],[.40,.155,.15],[.65,.13,.125],[.77,.105,.10]],"hakama-leg");leg.position.x=s*.13;});
     [-1,1].forEach(s=>{ g.add(cyl(.06,.07,.28,black,s*.12,.14,.02,7)); g.add(box(.14,.06,.24,black,s*.12,.03,.08,false)); }); // 足首/足
-    const body=new THREE.Mesh(new THREE.CylinderGeometry(.21,.26,.62,10),cloth);body.position.y=1.0;g.add(body); // 直垂上衣(筒袖)
-    g.add(box(.44,.05,.27,hakama,0,.74,.03)); // 胸紐
+    kGarment(g,cloth,[[.74,.215,.145],[.89,.255,.155],[1.09,.25,.16],[1.23,.21,.135],[1.31,.10,.085]],"tailored-torso");
+    const collar=M({color:o.monk?0x6d6759:0xd8c7a3,roughness:.9});
+    kBeam(g,[-.10,1.30,.10],[.14,.94,.15],.055,.028,collar,"crossed-collar");
+    kBeam(g,[.10,1.30,.10],[-.08,1.06,.16],.048,.028,cloth,"overlapping-collar");
+    g.add(box(.45,.07,.31,hakama,0,.77,.01));
+    if(!o.monk){
+      kCurve(g,[[-.12,1.13,.145],[0,1.09,.17],[.12,1.13,.145]],.012,kRope,"chest-cord");
+    }else kCurve(g,[[-.20,1.27,.11],[.16,1.03,.18],[.20,.76,.16]],.032,collar,"monk-kesa-edge");
     if(o.pose==="draw"){                                                                                                     // 弓を引く静止ポーズ(腕の角度で表現)
-      const la=new THREE.Mesh(new THREE.CylinderGeometry(.055,.08,.54,8),cloth);la.position.set(.26,1.08,.28);la.rotation.x=-1.15;g.add(la);   // 左腕(前方へ・弓を保持)
-      const lh=new THREE.Mesh(new THREE.SphereGeometry(.05,8,6),skin);lh.position.set(.30,1.14,.54);g.add(lh);
-      const ra=new THREE.Mesh(new THREE.CylinderGeometry(.055,.08,.42,8),cloth);ra.position.set(-.14,1.16,-.02);ra.rotation.z=.55;g.add(ra);   // 右腕(引き絞り)
-      const rh=new THREE.Mesh(new THREE.SphereGeometry(.05,8,6),skin);rh.position.set(0,1.3,.06);g.add(rh);                                    // 右手(弦を頬へ)
-      g.add(cyl(.02,.02,1.7,M({color:0x5b3a22,roughness:.7}),.30,1.14,.54,7));                                                                 // 弓(縦)
-      const su=cyl(.006,.006,.9,new THREE.MeshBasicMaterial({color:0xece3cf}),.17,1.5,.34,4);su.rotation.z=-.5;su.rotation.x=.2;g.add(su);      // 弦(上)
-      const sd=cyl(.006,.006,.9,new THREE.MeshBasicMaterial({color:0xece3cf}),.17,.78,.34,4);sd.rotation.z=.5;sd.rotation.x=-.2;g.add(sd);      // 弦(下)
-      const ya=cyl(.012,.012,.95,M({color:0x8a7048,roughness:.7}),.16,1.2,.3,5);ya.rotation.x=Math.PI/2;g.add(ya);                             // 矢
+      kBeam(g,[.19,1.21,0],[.25,1.22,.50],.16,.16,cloth,"bow-arm");
+      kBeam(g,[-.2,1.23,0],[-.38,1.25,-.10],.16,.16,cloth,"drawing-elbow");
+      kBeam(g,[-.38,1.25,-.10],[0,1.28,.15],.13,.13,cloth,"drawing-forearm");
+      kOval(g,skin,.25,1.22,.57,.065,.055,.05,"bow-hand");kOval(g,skin,0,1.28,.15,.055,.055,.05,"drawing-hand");
+      const bow=kBow();bow.position.set(.25,1.22,.39);g.add(bow);bow.remove(bow.getObjectByName("bow-string"));
+      kCurve(g,[[.25,.52,.39],[0,1.28,.15],[.25,2.32,.39]],.007,kRope,"drawn-string");
+      kBeam(g,[0,1.28,.15],[.34,1.20,.91],.016,.016,MK.log,"nocked-arrow");
     } else {
       [-1,1].forEach(s=>{
-        const arm=new THREE.Mesh(new THREE.CylinderGeometry(.06,.085,.5,8),cloth);arm.position.set(s*.28,1.02,.05);arm.rotation.z=s*.28;g.add(arm);
-        const hand=new THREE.Mesh(new THREE.SphereGeometry(.05,8,6),skin);hand.position.set(s*.37,.8,.12);g.add(hand);
+        const hand=o.oke?[s*.17,.96,.31]:o.monk?[s*.07,.96,.24]:o.kuwa&&s===1?[.30,.80,.28]:o.yumi&&s===1?[.35,.96,.14]:[s*.33,.80,.10];
+        kBeam(g,[s*.20,1.22,0],[s*.30,1.00,.06],.20,.19,cloth,"sleeve-upper");
+        kBeam(g,[s*.30,1.00,.06],hand,.14,.14,cloth,"sleeve-lower");
+        kOval(g,skin,...hand,.055,.065,.05,"hand");
       });
     }
     const head=new THREE.Mesh(new THREE.SphereGeometry(.135,12,10),skin);head.position.set(0,1.42,.02);head.scale.set(1,1.12,1);g.add(head);
     if(o.kasa){                                                                                                             // 円錐の笠(農夫)
       const kasa=new THREE.Mesh(new THREE.ConeGeometry(.32,.28,16),M({color:o.kasaColor||0xc7a867,roughness:.95}));kasa.position.set(0,1.60,0);kasa.castShadow=true;kasa.receiveShadow=true;g.add(kasa);
+    } else if(o.nohat){
+      const hairCap=new THREE.Mesh(new THREE.SphereGeometry(.141,14,9,0,Math.PI*2,0,Math.PI*.53),black);hairCap.position.set(0,1.48,.01);g.add(hairCap);
+      kOval(g,black,0,1.40,-.085,.12,o.child?.10:.17,.08,"tied-hair");
     } else if(!o.monk){                                                                                                     // 侍烏帽子(僧は剃髪＝被り物なし)
       const eb=new THREE.Group();                                                                                          // 図鑑「侍烏帽子」を頭部だけで別クリック対象にするため小グループ化
       const cap=new THREE.Mesh(new THREE.CylinderGeometry(.09,.115,.2,10),black);cap.position.set(0,1.58,-.01);cap.rotation.x=-.12;eb.add(cap);
@@ -273,9 +390,12 @@ if(APP.map==="kamakura"){
       g.add(eb); g.userData.eboshi=eb;
     }
     [-1,1].forEach(s=>g.add(box(.03,.008,.008,new THREE.MeshBasicMaterial({color:0x201510}),s*.045,1.44,.14,false)));                          // 目
+    [-1,1].forEach(s=>kOval(g,skin,s*.128,1.42,.02,.028,.048,.025,"ear"));
+    kOval(g,skin,0,1.415,.153,.022,.040,.030,"nose");
+    kBeam(g,[-.025,1.375,.146],[.025,1.375,.146],.008,.008,black,"mouth");
     if(o.monk){                                                                                                             // 数珠(小球の連なり)
       const bm=M({color:0x4a3a2c,roughness:.7});
-      for(let i=0;i<14;i++){const a=i/14*Math.PI*2;const bd=new THREE.Mesh(new THREE.SphereGeometry(.02,6,5),bm);bd.position.set(Math.cos(a)*.15,.9,.12+Math.sin(a)*.05);g.add(bd);}
+      for(let i=0;i<14;i++){const a=i/14*Math.PI*2;const bd=new THREE.Mesh(new THREE.SphereGeometry(.018,6,5),bm);bd.position.set(Math.cos(a)*.10,.88+Math.sin(a)*.075,.26);g.add(bd);}
     }
     if(o.kuwa){                                                                                                             // 鍬(柄+刃)
       const sh=cyl(.022,.022,1.1,M({color:0x7a5a34,roughness:.8}),.30,.72,.34,6);sh.rotation.x=-.9;g.add(sh);
@@ -285,20 +405,24 @@ if(APP.map==="kamakura"){
       g.add(cyl(.16,.13,.2,M({color:0x8a6a45,roughness:.85}),0,.9,.3,10));
       g.add(cyl(.14,.12,.05,M({color:0xc7a867,roughness:1}),0,1.0,.3,10));
     }
-    if(o.tachi){const sh=cyl(.03,.025,.85,M({color:0x2a2018,roughness:.45}),-.28,.72,-.03,8);sh.rotation.z=.5;sh.rotation.x=.12;g.add(sh);}     // 太刀(黒漆鞘)
-    if(o.yumi&&o.pose!=="draw"){const bow=cyl(.02,.02,1.55,M({color:0x5b3a22,roughness:.7}),.42,.95,.06,7);bow.rotation.z=.14;g.add(bow);}      // 弓(携行)
+    if(o.tachi){kCurve(g,[[-.31,.89,.30],[-.34,.66,0],[-.36,.30,-.35]],.035,black,"tachi-scabbard");kBeam(g,[-.31,.89,.30],[-.29,1.03,.44],.045,.045,kRope,"tachi-hilt");g.add(box(.14,.025,.10,kIron,-.31,.89,.30));}
+    if(o.yumi&&o.pose!=="draw"){const bow=kBow();bow.position.set(.35,.96,-.04);g.add(bow);}
     g.scale.setScalar(scale);
     g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} });
     return g;
   }
 
   /* ---- 6. 地形: 草地・堀・空堀・土橋 ---- */
-  worldK.add(plane(MK.grass,140,140,0,-0.02,0));                               // 全体の草地
+  // 北の空堀を草地で塞がない。水堀は草面より高い水面、空堀は露出した溝底を持つ。
+  worldK.add(plane(MK.grass,140,107,0,-.02,16.5));
+  worldK.add(plane(MK.grass,140,28,0,-.02,-56));
+  [-56,56].forEach(x=>worldK.add(plane(MK.grass,28,5,x,-.02,-39.5)));
   const MOAT0=37,MOAT1=42;
   K.hori=plane(MAT.water,2*MOAT1,MOAT1-MOAT0,0,.05,(MOAT0+MOAT1)/2);worldK.add(K.hori);      // 南の水堀
   worldK.add(plane(MAT.water,MOAT1-MOAT0,MOAT0+MOAT1,(MOAT0+MOAT1)/2,.05,2.5));// 東の水堀
   worldK.add(plane(MAT.water,MOAT1-MOAT0,MOAT0+MOAT1,-(MOAT0+MOAT1)/2,.05,2.5));//西の水堀
   K.karabori=plane(MK.dorui,2*MOAT1,MOAT1-MOAT0,0,-.35,-(MOAT0+MOAT1)/2);worldK.add(K.karabori);     // 北の空堀(乾いた溝)
+  [-37.3,-41.7].forEach(z=>worldK.add(box(84,.35,.6,MK.dorui,0,-.18,z)));
   worldK.add(plane(MK.grass,2*MOAT1,1.4,0,-.04,-MOAT0-.2));                    // 空堀の縁草
   K.dobashi=box(6,.3,8.5,MK.dorui,0,.16,39.3);worldK.add(K.dobashi);                              // 南の土橋(堀を渡る)
   worldK.add(box(5.4,.08,8.5,MAT.woodDark,0,.32,39.3));                       // 土橋の板張り天端
@@ -320,7 +444,7 @@ if(APP.map==="kamakura"){
     g.add(box(7.6,2.0,2.6,MK.itabei,0,5.3,0));                                                        // 上層矢倉(板壁)
     for(let i=-2;i<=2;i++)g.add(box(.28,.5,.08,MK.slit,i*1.4,5.4,1.33,false));                        // 矢狭間(南面)
     g.add(boardRoof(9,4,1.4,.5,6.4));                                                                 // 板屋根
-    [-1,1].forEach(s=>{const dr=box(1.5,3.4,.12,MK.itabei,s*1.7,1.7,-.05);dr.rotation.y=s*.32;g.add(dr);});// 門扉(半開)
+    [-1,1].forEach(s=>kDoor(g,s*2.74,.03,.9,2.55,3.5,-s,1.18)); // 柱の際の軸で開く。金物も戸に所属
     worldK.add(g); return g;
   })();
   K.urakido=(function backGate(){
@@ -335,12 +459,13 @@ if(APP.map==="kamakura"){
     const g=new THREE.Group(); g.position.set(31,0,31);
     const P=[[-1.5,-1.5],[1.5,-1.5],[-1.5,1.5],[1.5,1.5]];
     P.forEach(p=>g.add(box(.35,4.5,.35,MAT.woodDark,p[0],2.25,p[1])));         // 4本柱
+    [-1,1].forEach(s=>kBeam(g,[-1.5,.4,s*1.5],[1.5,4.15,s*1.5],.16,.16,MAT.woodDark,"tower-brace"));
     g.add(box(3.7,.2,.2,MAT.woodDark,0,2.2,-1.5)); g.add(box(3.7,.2,.2,MAT.woodDark,0,2.2,1.5)); // 貫
     g.add(box(3.9,.3,3.9,MAT.floor,0,4.4,0));                                  // 高床
     [-1,1].forEach(s=>{ g.add(box(3.9,.5,.1,MAT.woodDark,0,4.85,s*1.9));g.add(box(.1,.5,3.9,MAT.woodDark,s*1.9,4.85,0)); }); // 手すり
     P.forEach(p=>g.add(box(.2,1.5,.2,MAT.woodDark,p[0],5.3,p[1])));            // 上部柱
     g.add(boardRoof(5.2,5.2,1.7,.5,6.05));                                     // 板屋根
-    const lad=new THREE.Group(); lad.position.set(0,0,2.3); lad.rotation.x=.16;
+    const lad=new THREE.Group(); lad.position.set(0,0,3.0); lad.rotation.x=-.24;
     [-.5,.5].forEach(x=>lad.add(box(.1,4.7,.1,MAT.wood,x,2.35,0)));
     for(let i=0;i<7;i++)lad.add(box(1.1,.08,.08,MAT.wood,0,.6+i*.6,0));        // 梯子
     g.add(lad); worldK.add(g); return g;
@@ -351,17 +476,19 @@ if(APP.map==="kamakura"){
     const cx=0,cz=-5,w=17,d=11,fh=1.0,ph=2.8;
     const b=building({w:w,d:d,fh:fh,ph:ph,roofH:4.6,ridge:.5,wall:false,doors:[]});
     b.position.set(cx,0,cz); b.traverse(m=>{ if(m.isMesh&&m.material===MAT.roof)m.material=MK.itabuki; });
+    const entryPosts=[];b.traverse(m=>{const p=m.geometry&&m.geometry.parameters;if(p&&p.width===.3&&p.height===ph&&Math.abs(m.position.x)<.01&&Math.abs(m.position.z-d/2)<.01)entryPosts.push(m);});entryPosts.forEach(m=>m.parent.remove(m));
     worldK.add(b); K.shuden=b;                                                 // 図鑑「主殿」
+    kSteps(b,0,d/2,2.8,fh,1.7);
     const wy=fh+ (ph-.2)/2;
     const maira=new THREE.Group(); worldK.add(maira); K.mairado=maira;         // 図鑑「舞良戸」
-    maira.add(box(w-.5,ph-.2,.14,MK.mairado,cx,wy,cz-d/2+.1));                 // 北面: 舞良戸(蔀の差替え)
-    maira.add(box(.14,ph-.2,d*.62,MK.mairado,cx-w/2+.1,wy,cz-1.7));           // 西面: 舞良戸
+    for(let i=0;i<6;i++)kPanel(maira,(w-.5)/6,ph-.2,cx-(w-.5)/2+(i+.5)*(w-.5)/6,fh,cz-d/2+.1,0,false);
+    for(let i=0;i<3;i++)kPanel(maira,d*.62/3,ph-.2,cx-w/2+.1,fh,cz-1.7-d*.31+(i+.5)*d*.62/3,Math.PI/2,false);
     const shoji=new THREE.Group(); worldK.add(shoji); K.akarishoji=shoji;      // 図鑑「明障子」
-    shoji.add(box(.14,ph-.2,d*.62,MK.shoji,cx+w/2-.1,wy,cz-1.7));            // 東面: 明障子
-    shoji.add(box(6.2,ph-.2,.1,MK.shoji,cx+4.6,wy,cz+d/2-.1));               // 南面東寄り: 明障子(残り開放)
+    for(let i=0;i<3;i++)kPanel(shoji,d*.62/3,ph-.2,cx+w/2-.1,fh,cz-1.7-d*.31+(i+.5)*d*.62/3,Math.PI/2,true);
+    for(let i=0;i<3;i++)kPanel(shoji,6.2/3,ph-.2,cx+1.5+(i+.5)*6.2/3,fh,cz+d/2-.1,0,true);
     /* 置き畳 2〜3枚 */
     const oki=new THREE.Group(); worldK.add(oki); K.okidatami=oki;             // 図鑑「置き畳」
-    [[cx-3,cz-1],[cx-3,cz-3.4],[cx+2.4,cz-2]].forEach(p=>oki.add(box(1.8,.14,2.6,MAT.tatami,p[0],1.02,p[1])));
+    [[cx-3,cz-1],[cx-3,cz-3.4],[cx+2.4,cz-2]].forEach(p=>{oki.add(box(1.8,.14,2.6,MAT.tatami,p[0],1.075,p[1]));[-.86,.86].forEach(x=>oki.add(box(.08,.145,2.6,MAT.woodDark,p[0]+x,1.075,p[1])));});
     /* 囲炉裏(炉+灰+炎+火光) */
     const ir=new THREE.Group(); ir.position.set(cx+2.0,0,cz-4.4); K.irori=ir;  // 図鑑「囲炉裏」
     ir.add(box(1.4,.2,1.4,MAT.woodDark,0,.98,0)); ir.add(box(1.06,.1,1.06,MAT.ash,0,1.02,0));
@@ -376,17 +503,53 @@ if(APP.map==="kamakura"){
 
   /* ---- 10. 侍所・持仏堂・板倉・厩・竈屋・井戸・湯屋・厠 ---- */
   const samurai=bukeHall(9,6,.8,2.4,3.2,["S"]); samurai.position.set(-15,0,22); worldK.add(samurai); K.samuraidokoro=samurai; // 侍所(門内北西)
+  kSteps(samurai,0,3,2.4,.8,1.35);
 
   (function jibutsudo(){                                                         // 持仏堂(北西・方一間+宝形板屋根+金小仏)
     const g=new THREE.Group(); g.position.set(-20,0,-18); const s=4.0;
+    g.name="kamakura-jibutsudo";
     g.add(box(s,.3,s,MAT.floor,0,.6,0));
+    [-1.68,1.68].forEach(x=>[-1.68,1.68].forEach(z=>{g.add(box(.38,.45,.38,MAT.woodDark,x,.225,z));g.add(cyl(.28,.31,.12,MK.dorui,x,.06,z,8));}));
     [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(p=>g.add(box(.25,2.4,.25,MAT.woodDark,p[0]*s*.42,1.8,p[1]*s*.42)));
     g.add(box(s,2.2,.12,MK.itabei,0,1.75,-s/2+.1)); g.add(box(.12,2.2,s,MK.itabei,-s/2+.1,1.75,0)); g.add(box(.12,2.2,s,MK.itabei,s/2-.1,1.75,0));
+    [-1.68,1.68].forEach(z=>g.add(box(3.8,.22,.24,MAT.woodDark,0,2.91,z)));
+    [-1.68,1.68].forEach(x=>g.add(box(.24,.22,3.8,MAT.woodDark,x,2.91,0)));
+    kPart(g,box(3.6,.12,.28,MAT.woodDark,0,.79,1.68),"hall-threshold");
+    [-1,1].forEach(sgn=>kDoor(g,sgn*1.54,.85,1.68,1.47,1.95,-sgn,1.40));
+    kSteps(g,0,2.0,2.2,.75,1.35);
     g.add(boardRoof(s+1.4,s+1.4,2.0,.02,3.0));                                   // 宝形(ridge≈0でピラミッド状)
     g.add(box(.3,.5,.3,MAT.kin,0,5.0,0));                                        // 露盤・宝珠(金)
-    const bd=new THREE.Group(); bd.position.set(0,.75,-.5);
-    bd.add(cyl(.36,.46,.16,MAT.kin,0,.08,0,12)); bd.add(new THREE.Mesh(new THREE.SphereGeometry(.4,12,10),MAT.kin));
-    const bh=new THREE.Mesh(new THREE.SphereGeometry(.18,10,8),MAT.kin);bh.position.y=.55;bd.add(bh);
+    // 木造漆箔の小坐像を読みやすく簡略化。実在像の縮尺複製ではない。
+    const bd=new THREE.Group(); bd.position.set(0,.75,-.55);bd.name="kamakura-amida";
+    const gold=M({color:0xc59b56,metalness:.28,roughness:.61}),fold=M({color:0x8f672f,metalness:.20,roughness:.72}),hair=M({color:0x453f32,roughness:.85}),eye=M({color:0x433222,roughness:.9});
+    kPart(bd,cyl(.55,.59,.12,fold,0,.06,0,24),"lotus-foot");
+    kPart(bd,cyl(.48,.54,.14,gold,0,.18,0,24),"lotus-seat");
+    const petals=new THREE.InstancedMesh(kSphereGeo.clone().scale(.11,.14,.055),gold,14),pose=new THREE.Object3D();petals.position.y=.20;petals.frustumCulled=false;
+    for(let i=0;i<14;i++){const a=i/14*Math.PI*2;pose.position.set(Math.cos(a)*.48,0,Math.sin(a)*.48);pose.rotation.set(0,-a+Math.PI/2,.25);pose.updateMatrix();petals.setMatrixAt(i,pose.matrix);}kPart(bd,petals,"lotus-petals");
+    [-1,1].forEach(sgn=>kOval(bd,gold,sgn*.25,.40,.07,.33,.17,.29,"folded-knee"));
+    kOval(bd,gold,0,.80,-.035,.29,.44,.20,"robed-torso");
+    kOval(bd,gold,0,1.20,0,.105,.12,.105,"neck");
+    kOval(bd,gold,0,1.40,.01,.19,.235,.18,"face");
+    [-1,1].forEach(sgn=>{
+      kOval(bd,gold,sgn*.187,1.36,.012,.052,.12,.043,"long-ear");
+      kCurve(bd,[[sgn*.21,1.09,0],[sgn*.34,.88,.02],[sgn*.22,.66,.20]],.105,gold,"robe-sleeve");
+      kOval(bd,gold,sgn*.09,.645,.255,.12,.047,.073,"meditation-palm");
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(.035,.012,5,12),gold);ring.position.set(sgn*.036,.70,.30);bd.add(ring);
+      kCurve(bd,[[sgn*.035,1.445,.177],[sgn*.08,1.46,.170],[sgn*.133,1.44,.145]],.013,fold,"brow");
+      kCurve(bd,[[sgn*.034,1.414,.180],[sgn*.075,1.403,.180],[sgn*.116,1.409,.163]],.008,eye,"lowered-eye");
+      kCurve(bd,[[sgn*.15,.94,.15],[sgn*.21,.77,.18],[sgn*.30,.53,.25],[sgn*.46,.41,.20]],.012,fold,"robe-fold");
+    });
+    kOval(bd,gold,0,1.385,.191,.031,.068,.044,"nose");
+    kCurve(bd,[[-.051,1.312,.163],[0,1.305,.183],[.051,1.312,.163]],.009,eye,"closed-mouth");
+    kOval(bd,gold,0,1.495,.183,.014,.014,.009,"urna");
+    const cap=new THREE.Mesh(new THREE.SphereGeometry(.195,20,12,0,Math.PI*2,0,Math.PI*.56),hair);cap.position.set(0,1.47,0);bd.add(cap);
+    kOval(bd,hair,0,1.67,-.01,.09,.07,.085,"ushnisha");
+    const curls=new THREE.InstancedMesh(kSphereGeo.clone().scale(.028,.026,.028),hair,48);curls.position.y=1.47;curls.frustumCulled=false;pose.rotation.set(0,0,0);
+    for(let row=0;row<4;row++){const theta=.28+row*.35,rr=Math.sin(theta)*.20;for(let i=0;i<12;i++){const a=(i+row%2*.5)/12*Math.PI*2;pose.position.set(Math.cos(a)*rr,Math.cos(theta)*.20,Math.sin(a)*rr);pose.updateMatrix();curls.setMatrixAt(row*12+i,pose.matrix);}}kPart(bd,curls,"hair-curls");
+    kCurve(bd,[[-.22,1.11,.12],[-.12,.92,.20],[.08,.73,.21],[.26,.60,.21]],.024,fold,"robe-lapel");
+    for(let i=0;i<3;i++)kCurve(bd,[[-.38,.39+i*.035,.25],[0,.32+i*.045,.32],[.38,.39+i*.035,.25]],.010,fold,"lap-fold");
+    const halo=new THREE.Mesh(new THREE.TorusGeometry(.49,.027,6,40),gold);halo.position.set(0,1.21,-.29);halo.scale.y=1.24;halo.name="halo";bd.add(halo);
+    kBeam(bd,[0,.12,-.29],[0,.64,-.29],.07,.06,fold,"halo-support");
     g.add(bd); g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g);
     K.jibutsudo=g; K.amidabutsu=bd;                                              // 図鑑「持仏堂」「阿弥陀仏」
   })();
@@ -395,13 +558,14 @@ if(APP.map==="kamakura"){
     const g=new THREE.Group(); g.position.set(18,0,-20); const w=6,d=4.5,fh=1.6;
     [[-1,-1],[1,-1],[-1,1],[1,1],[0,0]].forEach(p=>g.add(cyl(.2,.24,fh,MAT.woodDark,p[0]*w*.35,fh/2,p[1]*d*.35,8))); // 床束
     g.add(box(w,.3,d,MAT.floor,0,fh,0));                                          // 高床
-    const wallH=2.4,n=9,dy=wallH/n;
-    for(let i=0;i<n;i++){ const y=fh+.3+i*dy+dy/2;
-      const a=cyl(.14,.14,w,MK.log,0,y,-d/2,7);a.rotation.z=Math.PI/2;g.add(a);
-      const b=cyl(.14,.14,w,MK.log,0,y,d/2,7);b.rotation.z=Math.PI/2;g.add(b);
-      const c=cyl(.14,.14,d,MK.log,-w/2,y,0,7);c.rotation.x=Math.PI/2;g.add(c);
-      const e=cyl(.14,.14,d,MK.log,w/2,y,0,7);e.rotation.x=Math.PI/2;g.add(e);
-    }
+    const wallH=2.4;
+    g.add(box(w,wallH,.16,MK.itabei,0,fh+.15+wallH/2,-d/2));
+    [-1,1].forEach(sgn=>{g.add(box(.16,wallH,d,MK.itabei,sgn*w/2,fh+.15+wallH/2,0));
+      g.add(box(2.25,wallH,.16,MK.itabei,sgn*1.875,fh+.15+wallH/2,d/2));
+      g.add(box(.23,wallH+.18,.23,MAT.woodDark,sgn*.78,fh+.15+wallH/2,d/2+.03));});
+    kPart(g,box(1.4,2.05,.15,MK.mairado,0,fh+.15+1.025,d/2+.035),"store-door");
+    g.add(box(1.7,.16,.22,MAT.woodDark,0,fh+.15+2.10,d/2));
+    g.add(box(w+.2,.24,d+.2,MAT.woodDark,0,fh+.25+wallH,0));
     g.add(boardRoof(w+1.6,d+1.6,1.9,.6,fh+.3+wallH+.1));                          // 妻入り板屋根
     g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g); return g;
   })();
@@ -410,6 +574,7 @@ if(APP.map==="kamakura"){
     const g=new THREE.Group(); g.position.set(18,0,0); const w=9,d=4,ph=2.6;
     for(let i=0;i<4;i++){ const x=-w/2+i*(w/3); g.add(box(.3,ph,.3,MAT.woodDark,x,ph/2,-d/2+.3)); g.add(box(.3,ph,.3,MAT.woodDark,x,ph/2,d/2-.3)); }
     g.add(box(w,.25,.25,MAT.woodDark,0,ph,-d/2+.3)); g.add(box(w,.25,.25,MAT.woodDark,0,ph,d/2-.3)); // 桁
+    for(let i=0;i<4;i++)g.add(box(.20,.22,d,MAT.woodDark,-w/2+i*w/3,ph+.10,0));
     g.add(box(w,ph,.12,MK.itabei,0,ph/2,-d/2+.2));                                // 背面板壁
     g.add(box(w-1,.12,.12,MAT.wood,0,1.2,d/2-.6));                                // 繋ぎ横木
     for(let i=1;i<3;i++)g.add(box(.1,1.6,d-1,MK.itabei,-w/2+i*(w/3),.8,0));       // 仕切り
@@ -427,9 +592,13 @@ if(APP.map==="kamakura"){
     g.add(box(w,.06,d,MK.dorui,0,.03,0));                                         // 土間
     g.add(box(w,ph,.12,MK.itabei,0,ph/2,-d/2+.15)); g.add(box(.12,ph,d,MK.itabei,-w/2+.15,ph/2,0));
     g.add(boardRoof(w+1.5,d+1.5,1.4,.6,ph+.15));
-    const kama=box(1.6,.9,1.0,MK.tsuchi,-1,.45,-.6); g.add(kama); K.kamado=kama;   // 竈本体(土)図鑑「竈」
-    g.add(cyl(.35,.4,.12,MK.tsuchi,-.8,.95,-.6,12));                              // 釜口
-    const fk=new THREE.Mesh(new THREE.ConeGeometry(.16,.34,7),MAT.flame);fk.position.set(-1.4,.3,-.05);fk.rotation.x=.4;g.add(fk); // 焚口の火
+    const stove=new THREE.Group();g.add(stove);K.kamado=stove;
+    stove.add(box(1.6,.9,1.0,MK.tsuchi,-1,.45,-.6));
+    stove.add(cyl(.35,.4,.12,MK.tsuchi,-.8,.95,-.6,12));
+    kPart(stove,box(.55,.42,.015,MK.slit,-1.15,.29,-.09),"stove-fire-mouth");
+    kOval(stove,kIron,-.8,1.02,-.6,.34,.24,.34,"cooking-pot");
+    stove.add(cyl(.36,.36,.045,MAT.wood,-.8,1.245,-.6,16));stove.add(box(.20,.055,.07,MAT.woodDark,-.8,1.285,-.6));
+    const fk=new THREE.Mesh(new THREE.ConeGeometry(.16,.34,7),MAT.flame);fk.position.set(-1.15,.3,-.05);fk.rotation.x=.4;stove.add(fk); // 焚口の火
     g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g);
     for(let i=0;i<5;i++){const s=new THREE.Mesh(new THREE.SphereGeometry(.3+i*.12,8,6),MK.smoke);s.position.set(-1+Math.sin(i)*.4,ph+.7+i*.75,-16-.6);worldK.add(s);} // 煙
   })();
@@ -442,10 +611,17 @@ if(APP.map==="kamakura"){
       const c=cyl(.09,.09,s+.4,MK.log,-s/2,y+.12,0,7);c.rotation.x=Math.PI/2;g.add(c);
       const e=cyl(.09,.09,s+.4,MK.log,s/2,y+.12,0,7);e.rotation.x=Math.PI/2;g.add(e);
     }
-    [-s/2,s/2].forEach(x=>g.add(box(.12,2.3,.12,MAT.woodDark,x,1.4,0)));          // 支柱
-    g.add(box(.14,.14,s+.6,MAT.woodDark,0,2.5,0));                                // 桁
+    [-s/2,s/2].forEach(x=>g.add(box(.12,2.5,.12,MAT.woodDark,x,1.25,0)));          // 支柱は地面から桁へ接続
+    g.add(box(s+.6,.14,.14,MAT.woodDark,0,2.5,0));                                // 二本の支柱を結ぶ桁
     g.add(boardRoof(s+1.2,s+1.0,.8,.6,2.6));
-    g.add(cyl(.18,.16,.28,MAT.wood,0,1.55,0,10));                                 // 桶
+    kPart(g,plane(MK.slit,1,1,0,.02,0),"well-dark-opening");
+    const pulley=cyl(.15,.15,.07,MAT.woodDark,0,2.32,0,16);pulley.rotation.z=Math.PI/2;g.add(pulley);
+    kBeam(g,[0,2.50,0],[0,2.31,0],.08,.08,kIron,"pulley-hanger");
+    const wellRope=M({color:0xb99b6b,roughness:1});
+    kCurve(g,[[0,2.32,.15],[0,2.03,.205],[0,1.72,.14]],.027,wellRope,"bucket-rope");
+    kPart(g,cyl(.18,.16,.28,MAT.wood,0,1.48,.14,12),"well-bucket");
+    kCurve(g,[[-.14,1.59,.14],[-.14,1.72,.14],[.14,1.72,.14],[.14,1.59,.14]],.017,kIron,"bucket-handle");
+    kPart(g,cyl(.148,.148,.012,MK.slit,0,1.625,.14,12),"bucket-opening");
     g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g); return g;
   })();
 
@@ -469,8 +645,8 @@ if(APP.map==="kamakura"){
   (function baba(){
     const cz=50;
     const babaG=new THREE.Group(); worldK.add(babaG); K.baba=babaG;               // 図鑑「馬場」(柵+横木)
-    for(let x=-30;x<=30;x+=5){ babaG.add(box(.15,1.2,.15,MAT.wood,x,.6,cz-3.5)); babaG.add(box(.15,1.2,.15,MAT.wood,x,.6,cz+3.5)); } // 柵
-    babaG.add(box(62,.1,.1,MAT.wood,0,1.0,cz-3.5)); babaG.add(box(62,.1,.1,MAT.wood,0,1.0,cz+3.5));                                   // 横木
+    for(let x=-30;x<=30;x+=5)if(Math.abs(x)>=3){ babaG.add(box(.15,1.2,.15,MAT.wood,x,.6,cz-3.5)); babaG.add(box(.15,1.2,.15,MAT.wood,x,.6,cz+3.5)); }
+    [-17,17].forEach(x=>[-3.5,3.5].forEach(z=>babaG.add(box(28,.1,.1,MAT.wood,x,1.0,cz+z)))); // 中央幅6mは門と馬場への出入口
     const matoG=new THREE.Group(); worldK.add(matoG); K.kasagake_mato=matoG;      // 図鑑「笠懸の的」
     [-18,-2,14].forEach(x=>{ matoG.add(box(.12,2.6,.12,MAT.woodDark,x,1.3,cz-4.2)); matoG.add(box(.7,.7,.1,MK.mato,x,1.8,cz-4.2)); });// 笠懸の的
     const h=makeUma(MK.umaKage);h.position.set(-6,0,cz);h.rotation.y=Math.PI/2;worldK.add(h);                                          // 馬1頭
@@ -479,18 +655,19 @@ if(APP.map==="kamakura"){
   /* ---- 12. 周辺(郭外西): 水田(畦+水面/稲面) と 下人小屋 ---- */
   (function ta(){
     const ox=-48,oz=0;
-    for(let i=0;i<3;i++)for(let j=0;j<4;j++){
-      const x=ox+i*7, z=oz-18+j*11, flooded=((i+j)%2===0);
-      worldK.add(plane(flooded?MAT.water:MK.ine,6,10,x,flooded?.03:.05,z));       // 水田面 or 稲面
-      worldK.add(box(6.4,.15,.3,MK.dorui,x,.08,z-5)); worldK.add(box(6.4,.15,.3,MK.dorui,x,.08,z+5)); // 畦
-      worldK.add(box(.3,.15,10,MK.dorui,x-3,.08,z)); worldK.add(box(.3,.15,10,MK.dorui,x+3,.08,z));
+    for(let i=0;i<2;i++)for(let j=0;j<4;j++){
+      const x=-52+i*7, z=-22+j*11, flooded=((i+j)%2===0);
+      worldK.add(plane(flooded?MAT.water:MK.ine,5.2,9.4,x,flooded?.03:.05,z));
+      worldK.add(box(5.6,.15,.3,MK.dorui,x,.08,z-4.8)); worldK.add(box(5.6,.15,.3,MK.dorui,x,.08,z+4.8));
+      worldK.add(box(.3,.15,9.8,MK.dorui,x-2.7,.08,z)); worldK.add(box(.3,.15,9.8,MK.dorui,x+2.7,.08,z));
     }
   })();
   (function genin(){                                                             // 下人小屋(田の際・藁葺き)
-    [[-51,12],[-51,-6]].forEach(p=>{
+    [[-51,26],[-51,-31]].forEach(p=>{
       const g=new THREE.Group(); g.position.set(p[0],0,p[1]);
       g.add(box(3.4,1.8,2.8,MK.itabei,0,.9,0)); g.add(boardRoof(4.4,3.8,1.8,.4,1.9)); // ↓屋根は藁葺き色へ差替え
       g.children[g.children.length-1].material=MK.wara;
+      g.add(box(.86,1.45,.08,MAT.woodDark,0,.73,1.44));g.add(box(.70,1.30,.07,MK.mairado,0,.68,1.50));
       g.traverse(m=>{ if(m.isMesh){m.castShadow=true;m.receiveShadow=true;} }); worldK.add(g);
     });
   })();
@@ -503,12 +680,12 @@ if(APP.map==="kamakura"){
   });
 
   /* ---- 14. 人物(武士): あるじ1名(主殿前) + 郎党2名(侍所前・的場) ---- */
-  const aruji=makeBushiFigure({color:0x27506b,hakama:0x6b3a24,tachi:true,scale:1.06}); // 藍の直垂・柿渋の袴
+  const aruji=makeBushiFigure({color:0x27506b,tachi:true,scale:1.06}); // 藍の上下そろいの直垂
   aruji.position.set(2.5,0,4); aruji.rotation.y=0; worldK.add(aruji);                   // 主殿前・門(南)へ正対
   K.hitatare=aruji; K.samuraieboshi=aruji.userData.eboshi;                              // 図鑑「直垂」(全身)「侍烏帽子」(頭部)
-  const rodo1=makeBushiFigure({color:0x4a4a3a,hakama:0x5a3a28,yumi:true});               // 侍所前
+  const rodo1=makeBushiFigure({color:0x4a4a3a,yumi:true});               // 侍所前
   rodo1.position.set(-15,0,26); rodo1.rotation.y=0; worldK.add(rodo1);
-  const rodo2=makeBushiFigure({color:0x2f4f6b,hakama:0x4a3b2a,yumi:true});               // 的場
+  const rodo2=makeBushiFigure({color:0x2f4f6b,yumi:true});               // 的場
   rodo2.position.set(20,0,23); rodo2.rotation.y=Math.PI; worldK.add(rodo2);              // 的(北)へ向かう
 
   /* ---- 15. 全メッシュに影を付与(取りこぼし防止) ---- */
@@ -525,6 +702,33 @@ if(APP.map==="kamakura"){
     [-15,22,9,6,.8],      // 侍所の床
     [-20,-18,4,4,.75]     // 持仏堂の床
   ];
+  KAMA_ZONES.push(...kStepZones);
+  // 非表示の寝殿の柱を残さず、見えている鎌倉の境界へ置き換える。
+  // WALK_SOLIDS は共有の掃引/押出し処理を使う。寸法には歩行者の半径.22mを含める。
+  WALK_SOLIDS=[];
+  function kSolid(x,z,w,d){WALK_SOLIDS.push({x,z,hw:w/2+.22,hd:d/2+.22});}
+  [[-19.5,35,31,3],[19.5,35,31,3],[-18.5,-35,33,3],[18.5,-35,33,3],[35,0,3,70],[-35,0,3,70]].forEach(a=>kSolid(...a));
+  [[-22.5,39.5,39,5],[22.5,39.5,39,5],[-39.5,0,5,79],[39.5,0,5,79],[0,-39.5,84,5]].forEach(a=>kSolid(...a));
+  function kHallPosts(cx,cz,w,d){
+    const nx=Math.max(2,Math.round(w/3)),nz=Math.max(1,Math.round(d/3));
+    for(let ix=0;ix<=nx;ix++)for(let iz=0;iz<=nz;iz++)if(ix===0||ix===nx||iz===0||iz===nz){if(cx===0&&iz===nz&&ix===nx/2)continue;kSolid(cx-w/2+w*ix/nx,cz-d/2+d*iz/nz,.30,.30);}
+  }
+  kHallPosts(0,-5,17,11);kHallPosts(-15,22,9,6);
+  [[0,-10.4,16.5,.14],[-8.4,-6.7,.14,6.82],[8.4,-6.7,.14,6.82],[4.6,.4,6.2,.1],
+    [-15,19.08,8.6,.12],[-19.42,22,.12,5.6],[-10.58,22,.12,5.6],
+    [-20,-19.9,4,.12],[-21.9,-18,.12,4],[-18.1,-18,.12,4],
+    [18,-20,6,4.5],[0,-17.85,6,.12],[-2.85,-16,.12,4],[-1,-16.6,1.6,1],
+    [6,-16,1.5,1.5],[-9,-31,3,2.6],[-5,-31,1.9,1.9],[.2,-35,2,.1],
+    [-51,26,3.4,2.8],[-51,-31,3.4,2.8],[20,16.8,4,1.6]].forEach(a=>kSolid(...a));
+  // 開き戸のAABBは固定した開角に一致。各扉の板だけを取り、柱と一体の通路を残す。
+  worldK.updateMatrixWorld(true);
+  worldK.traverse(o=>{if(o.name==="door-leaf"){const b=new THREE.Box3().setFromObject(o),c=b.getCenter(new THREE.Vector3()),s=b.getSize(new THREE.Vector3());kSolid(c.x,c.z,s.x,s.z);}});
+  [[-3,34.1],[3,34.1],[-3,35.9],[3,35.9],[-21.68,-16.32],[-18.32,-16.32],[-21.68,-19.68],[-18.32,-19.68],
+    [29.5,29.5],[32.5,29.5],[29.5,32.5],[32.5,32.5]].forEach(p=>kSolid(p[0],p[1],.35,.35));
+  for(let i=0;i<4;i++)[-1.7,1.7].forEach(z=>kSolid(13.5+i*3,z,.3,.3));
+  kSolid(18,-1.8,9,.12);[16.5,19.5].forEach(x=>kSolid(x,0,.1,3));
+  // 馬場南北柵にも門への幅6mの通り道を設ける。
+  [-17,17].forEach(x=>[46.5,53.5].forEach(z=>kSolid(x,z,28,.15)));
   inPond=function(){ return false; };
   groundH=function(px,pz){
     let h=0;
@@ -544,7 +748,7 @@ if(APP.map==="kamakura"){
   const _modeBriefData=modeBriefData;
   modeBriefData=function(m){
     if(m==="walk")return {kicker:"KAMAKURA",title:"武家の館を歩く",
-      lead:"鎌倉時代・東国御家人の館。寝殿造りの邸と「どこが違うか」を探しながら歩く散策モードです。",
+      lead:"絵巻などを参考に構成した、鎌倉時代の東国武士の館の模型です。特定の遺構の復元ではありません。寝殿造りの模型との配置の違いを歩いて確かめます。",
       goals:["堀・土塁・矢倉門——「守りの構え」を見つける","主殿・厩・的場・持仏堂を見つける","寝殿造りとの違いを3つ、自分の言葉で言ってみる"],
       controls:["WASD / ジョイスティック:移動","画面ドラッグ:見回す","👁:俯瞰"]};
     return _modeBriefData(m);
@@ -598,21 +802,26 @@ if(APP.map==="kamakura"){
       worldK.add(flame(.06,.14,MAT.flame,x,y+.6,z)); })();
     (function(){ const z=-9.7;                                                       // 弓掛け(弓2張・北壁)
       worldK.add(box(3.0,.09,.12,MAT.woodDark,-3,2.3,z)); [-3.7,-2.3].forEach(x=>worldK.add(box(.12,.09,.4,MAT.woodDark,x,2.3,z+.2)));
-      [-3.7,-2.3].forEach(x=>worldK.add(cyl(.02,.02,1.9,bowWood,x,1.95,z+.15,7))); })();
+      [-3.7,-2.3].forEach(x=>{const bow=kBow();bow.position.set(x,1.9,z+.15);worldK.add(bow);}); })();
     (function(){ const x=6.5,z=-7.9,y=1.0;                                           // 太刀掛け(太刀1振・黒漆鞘)
       [-.45,.45].forEach(o=>{worldK.add(box(.08,.7,.08,MAT.woodDark,x,y+.35,z+o)); worldK.add(box(.14,.1,.1,MAT.woodDark,x,y+.66,z+o));});
-      const t=cyl(.035,.028,.98,kuroU,x,y+.72,z,8);t.rotation.x=Math.PI/2;worldK.add(t); worldK.add(cyl(.045,.045,.16,MAT.black,x,y+.72,z+.5,8)); })();
+      kCurve(worldK,[[x,y+.72,z-.55],[x+.05,y+.72,z],[x+.12,y+.74,z+.45]],.034,kuroU,"tachi-on-rack");
+      kBeam(worldK,[x+.12,y+.74,z+.45],[x+.15,y+.75,z+.67],.05,.05,kRope,"rack-sword-hilt");worldK.add(box(.14,.10,.025,iron,x+.12,y+.74,z+.45)); })();
     (function(){ const x=-6.7;                                                       // 二枚折屏風
-      const p1=box(1.5,1.5,.05,screen,x,1.78,-2.5);p1.rotation.y=.32;worldK.add(p1);
-      const p2=box(1.5,1.5,.05,screen,x-.1,1.78,-4.0);p2.rotation.y=-.32;worldK.add(p2); })();
+      const joint=new THREE.Group();joint.position.set(x,1.01,-3.4);joint.name="joined-screen";worldK.add(joint);
+      [-1,1].forEach(s=>{const leaf=new THREE.Group();leaf.rotation.y=s*.62;
+        leaf.add(box(1.5,1.5,.05,screen,s*.75,.75,0));
+        [0,1.5].forEach(y=>leaf.add(box(1.5,.04,.065,MAT.woodDark,s*.75,y,0)));
+        leaf.add(box(.04,1.5,.065,MAT.woodDark,s*1.5,.75,0));joint.add(leaf);});
+      joint.add(cyl(.025,.025,1.5,MAT.woodDark,0,.75,0,8)); })();
     (function(){ const x=6.6,z=-4.2,y=1.0;                                           // 棚(横板)+高坏
-      worldK.add(box(1.5,.05,.5,MAT.woodDark,x,y+.8,z)); [-.6,.6].forEach(o=>worldK.add(box(.06,.8,.06,MAT.woodDark,x,y+.4,z+o)));
+      worldK.add(box(1.5,.05,.5,MAT.woodDark,x,y+.8,z)); [-.6,.6].forEach(o=>[-.18,.18].forEach(zz=>worldK.add(box(.06,.8,.06,MAT.woodDark,x+o,y+.4,z+zz))));
       worldK.add(cyl(.06,.09,.2,MAT.woodDark,x,y+.9,z,8)); worldK.add(cyl(.17,.1,.05,dishMat,x,y+1.0,z,12)); })();
 
     /* 侍所(-15,22, 床y=.8, 南開放): 弓3張+箙・盾2・莚・囲炉裏(小)・木刀掛け */
     (function(){ const z=19.4,y=.8;                                                  // 弓3張(背壁)+箙(矢束)
       worldK.add(box(3.2,.08,.1,MAT.woodDark,-15,2.2,z));
-      [-16.2,-15,-13.8].forEach(x=>worldK.add(cyl(.02,.02,1.8,bowWood,x,1.7,z+.12,7)));
+      [-16.2,-15,-13.8].forEach(x=>{const bow=kBow();bow.position.set(x,1.6,z+.12);worldK.add(bow);});
       worldK.add(cyl(.13,.16,.8,MAT.woodDark,-12.4,1.2,z+.2,8)); for(let i=0;i<7;i++)worldK.add(cyl(.01,.01,.5,bowWood,-12.4+(i-3)*.03,1.75,z+.2,4)); })();
     [21.2,21.9].forEach((zz,i)=>{const s=box(.9,1.3,.07,MAT.woodDark,-19.2+i*.12,1.45,zz);s.rotation.z=.12;worldK.add(s);}); // 盾2枚立てかけ
     worldK.add(plane(strawTex,3.0,3.0,-15,.82,22));                                  // 莚
@@ -627,7 +836,10 @@ if(APP.map==="kamakura"){
     (function(){ const x=14.0,z=0,y=0;                                               // 鞍と鐙の掛け台 図鑑「鞍」
       const kg=new THREE.Group(); worldK.add(kg); K.kura_saddle=kg;
       [-.5,.5].forEach(o=>kg.add(box(.08,1.0,.08,MAT.woodDark,x,y+.5,z+o))); kg.add(box(.12,.1,1.2,MAT.woodDark,x,y+1.0,z));
-      kg.add(box(.5,.28,.7,MAT.woodDark,x,y+1.2,z)); [-.28,.28].forEach(o=>kg.add(cyl(.02,.02,.3,iron,x+o,y+.95,z,6))); })();
+      kg.add(box(.52,.11,.68,kuroU,x,y+1.14,z));
+      [-.35,.35].forEach(zz=>kCurve(kg,[[x-.30,1.16,z+zz],[x-.23,1.43,z+zz],[x,1.51,z+zz],[x+.23,1.43,z+zz],[x+.30,1.16,z+zz]],.055,MAT.wood,"saddle-arch"));
+      [-1,1].forEach(s=>{kBeam(kg,[x+s*.25,1.15,z],[x+s*.34,.72,z],.04,.025,kuroU,"stirrup-strap");
+        kCurve(kg,[[x+s*.34,.75,z],[x+s*.34,.57,z-.10],[x+s*.34,.46,z],[x+s*.34,.57,z+.10],[x+s*.34,.75,z]],.022,iron,"stirrup-ring");}); })();
     [-.4,0,.4].forEach(o=>worldK.add(cyl(.012,.012,.5,rope,18+o,1.0,1.4,4)));        // 手綱(繋ぎ横木から)
     worldK.add(plane(strawTex,7,2.4,18,.04,-.3));                                    // 馬糞よけの筵(厩内)
 
@@ -645,8 +857,8 @@ if(APP.map==="kamakura"){
     /* 板倉(18,-20, 高床): 米俵4・木櫃2・梯子(前で積み降ろし) */
     K.tawara=tawara(15.6,.32,-17.6); tawara(15.6,.32,-16.6); tawara(16.4,.32,-17.1); tawara(15.6,.98,-17.1); // 米俵×4 図鑑「俵」
     [[17.4,-16.2],[17.4,-15.1]].forEach(p=>{worldK.add(box(.9,.6,.6,MAT.woodDark,p[0],.3,p[1])); worldK.add(box(.94,.08,.64,MAT.wood,p[0],.63,p[1]));}); // 木櫃×2
-    (function(){ const g=new THREE.Group();g.position.set(18,0,-17.6);g.rotation.x=.18;              // 梯子
-      [-.35,.35].forEach(x=>g.add(box(.08,2.2,.08,MAT.wood,x,1.1,0))); for(let i=0;i<6;i++)g.add(box(.8,.06,.06,MAT.wood,0,.3+i*.35,0)); worldK.add(g); })();
+    (function(){ const g=new THREE.Group();g.position.set(18,0,-17.28);g.rotation.x=-.27;g.name="store-ladder";
+      [-.35,.35].forEach(x=>g.add(box(.08,1.9,.08,MAT.wood,x,.95,0))); for(let i=0;i<6;i++)g.add(box(.8,.06,.06,MAT.wood,0,.25+i*.29,0)); worldK.add(g); })();
 
     /* 持仏堂(-20,-18, 床y=.75): 香炉・花瓶一対・経机+経巻・座布 */
     (function(){ const x=-20,z=-16.6,y=.75;                                          // 香炉(小・三足)+香の火
@@ -657,7 +869,7 @@ if(APP.map==="kamakura"){
     (function(){ const x=-21.0,z=-18.6,y=.75;                                        // 経机+経巻
       worldK.add(box(.9,.05,.4,MAT.woodDark,x,y+.3,z)); [[-.38,-.15],[.38,-.15],[-.38,.15],[.38,.15]].forEach(p=>worldK.add(box(.05,.3,.05,MAT.woodDark,x+p[0],y+.15,z+p[1])));
       const roll=cyl(.045,.045,.5,paper,x,y+.35,z,8);roll.rotation.z=Math.PI/2;worldK.add(roll); })();
-    worldK.add(box(.6,.08,.6,strawTex,-20,.79,-15.6));                               // 座布(僧の座)
+    worldK.add(box(.6,.08,.6,strawTex,-20,.79,-16.4));                               // 座具は床上、階段外へ浮かせない
 
     /* 外構 */
     function kagaribi(x,z){ const g=new THREE.Group();g.position.set(x,0,z);         // 篝火台(夜は火・PointLight)
@@ -666,18 +878,16 @@ if(APP.map==="kamakura"){
       g.add(flame(.26,.62,MAT.flame,0,1.92,0)); g.add(flame(.14,.36,yFlame,0,2.0,0));
       const pl=new THREE.PointLight(0xff9440,.95,11,2);pl.position.set(0,2.2,0);g.add(pl); worldK.add(g); }
     kagaribi(-4.2,33.6); kagaribi(4.2,33.6);                                         // 篝火台×2(門脇, PointLight2つ=上限)
-    [[-1.7,-1.0],[1.0,1.7]].forEach(cols=>cols.forEach(x=>[1.1,1.6,2.1,2.5].forEach(y=>worldK.add(sph(.05,iron,x,y,34.86,6))))); // 矢倉門扉の乳金物風(黒鉄の点列)
     (function(){ const post=(x,z,ax,az)=>{const p=cyl(.12,.14,2.4,MAT.woodDark,x,1.2,z,6);p.rotation.z=ax;p.rotation.x=az;worldK.add(p);};
-      for(let x=-28;x<=28;x+=14)post(x,33.4,0,.18); for(let z=-26;z<=26;z+=13){post(33.4,z,-.18,0);post(-33.4,z,.18,0);} })(); // 控柱(塀内側・等間隔)
+      for(let x=-28;x<=28;x+=14)if(Math.abs(x)>4)post(x,33.4,0,.18); for(let z=-26;z<=26;z+=13){post(33.4,z,-.18,0);post(-33.4,z,.18,0);} })(); // 門の開口内に控柱を置かない
     (function(){ const x=31,z=30.0;                                                  // 物見矢倉の半鐘(小鐘)
       worldK.add(box(.06,.06,1.0,MAT.woodDark,x,5.2,z)); worldK.add(cyl(.006,.006,.5,rope,x,4.95,z,4));
       worldK.add(cyl(.14,.18,.32,bronze,x,4.7,z,10)); worldK.add(cyl(.06,.02,.1,bronze,x,4.9,z,8)); })();
     (function(){ const x=22,z=20;                                                    // 的場の矢立て+予備の的
       worldK.add(cyl(.14,.16,.7,MAT.woodDark,x,.35,z,8)); for(let i=0;i<6;i++)worldK.add(cyl(.012,.012,.8,bowWood,x+(i-3)*.03,.9,z,4));
-      const m=new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,.06,18),MK.mato);m.rotation.z=.3;m.position.set(23.5,.7,17);m.castShadow=true;m.receiveShadow=true;worldK.add(m); K.mato_spare=m; })(); // 掛け替え的(弓稽古の的3)
-    worldK.add(box(62,.1,.1,MAT.wood,0,.5,46.5)); worldK.add(box(62,.1,.1,MAT.wood,0,.5,53.5)); // 馬場柵の補強横木(中段)
-    (function(){ const x=6,z=-16;                                                    // 井戸の滑車と縄(桶吊り)
-      worldK.add(cyl(.14,.14,.06,MAT.woodDark,x,2.35,z,10)); worldK.add(cyl(.008,.008,1.0,rope,x+.12,1.9,z,4)); worldK.add(cyl(.13,.11,.2,MAT.wood,x+.12,1.35,z,10)); })();
+      const m=new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,.06,18),MK.mato);m.rotation.x=Math.PI/2;m.rotation.z=.18;m.position.set(23.5,.7,17);m.castShadow=true;m.receiveShadow=true;worldK.add(m); K.mato_spare=m;
+      kBeam(worldK,[23.5,0,16.75],[23.5,1.05,17],.09,.09,MAT.wood,"spare-target-prop"); })(); // 的面を射座へ向ける
+    [-17,17].forEach(x=>[46.5,53.5].forEach(z=>K.baba.add(box(28,.1,.1,MAT.wood,x,.5,z)))); // 柵の中段も出入口を空ける
     (function(){ const x=-44,z=-4;                                                   // 案山子(田)
       worldK.add(box(.08,2.2,.08,MAT.wood,x,1.1,z)); worldK.add(box(1.4,.08,.08,MAT.wood,x,1.7,z));
       worldK.add(sph(.16,strawTex,x,2.15,z,8)); worldK.add(con(.34,.24,straw,x,2.32,z,10)); worldK.add(box(.7,.7,.12,M({color:0x7a6a4a,roughness:1}),x,1.4,z)); })();
@@ -690,15 +900,15 @@ if(APP.map==="kamakura"){
     worldK.add(plane(sand,2.4,8,20,.03,21));                                         // 的場に白砂帯
 
     /* 人物7名(計画§3)。makeBushiFigure/makeHeianFigure ＝内部で castShadow 設定済み */
-    const mon=(x,rot)=>{const f=makeBushiFigure({color:0x3a4a5a,hakama:0x4a3b2a,yumi:true,scale:1.0});f.position.set(x,0,33);f.rotation.y=rot;worldK.add(f);};
+    const mon=(x,rot)=>{const f=makeBushiFigure({color:0x3a4a5a,yumi:true,scale:1.0});f.position.set(x,0,33);f.rotation.y=rot;worldK.add(f);};
     mon(-2.8,Math.PI); mon(2.8,Math.PI);                                            // 門番×2(矢倉門内側・門へ正対)
-    const archer=makeBushiFigure({color:0x2f4f6b,hakama:0x4a3b2a,pose:"draw",scale:1.03}); archer.position.set(20,0,25.2); archer.rotation.y=0; worldK.add(archer); K.archer=archer; // 稽古の郎党(射座・弓構え・クイズ/稽古の案内役)
-    const umaban=makeBushiFigure({color:0xa08a5a,hakama:0x8a7048,oke:true,scale:.99}); umaban.position.set(14,0,2.6); umaban.rotation.y=0; worldK.add(umaban);        // 厩番(飼葉桶を持つ)
-    const gejo=makeHeianFigure({role:"nyoubou",palette:[0x6a5c48,0x8a7a5c,0x9a8a68,0x5a5040],scale:.95,pose:"standing"}); gejo.position.set(-1,0,-14.2); gejo.rotation.y=Math.PI;
+    const archer=makeBushiFigure({color:0x2f4f6b,pose:"draw",scale:1.03}); archer.position.set(18.5,0,25.2); archer.rotation.y=Math.PI; worldK.add(archer); K.archer=archer;
+    const umaban=makeBushiFigure({color:0xa08a5a,oke:true,scale:.99}); umaban.position.set(14,0,2.6); umaban.rotation.y=0; worldK.add(umaban);
+    const gejo=makeBushiFigure({color:0x7e715d,hakama:0x675d4d,nohat:true,scale:.95}); gejo.position.set(-1,0,-14.2); gejo.rotation.y=Math.PI;
     gejo.add(box(.32,.5,.06,M({color:0xb8ae92,roughness:.9}),0,.55,.2)); worldK.add(gejo);   // 下女(小袖+前掛け・竈前)
-    const sou=makeBushiFigure({monk:true,scale:1.0}); sou.position.set(-20,0,-15.2); sou.rotation.y=0; worldK.add(sou);   // 僧(持仏堂前・灰黒の衣+数珠)
+    const sou=makeBushiFigure({monk:true,scale:1.0}); sou.position.set(-22.3,0,-14.7); sou.rotation.y=.6; worldK.add(sou);   // 参道と階段を空ける
     const nofu=makeBushiFigure({color:0x6b6a58,hakama:0x5a5240,kasa:true,kuwa:true,scale:1.0}); nofu.position.set(-45,0,3); nofu.rotation.y=Math.PI/2; worldK.add(nofu); // 農夫(田・円錐笠+鍬)
-    const warabe=makeBushiFigure({color:0x9a4a38,hakama:0x4a5a6a,scale:.6}); warabe.position.set(-3,0,9); warabe.rotation.y=Math.PI; worldK.add(warabe);                // 童(庭・scale0.6の直垂)
+    const warabe=makeBushiFigure({color:0x9a4a38,hakama:0x4a5a6a,nohat:true,child:true,scale:.6}); warabe.position.set(-3,0,9); warabe.rotation.y=Math.PI; worldK.add(warabe);
   })();
 
   /* ---- 19. 図鑑登録・名称札・クイズ鎌倉編(計画§4/§5, Wave2) ----

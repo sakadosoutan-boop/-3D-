@@ -71,11 +71,11 @@ const {chromium}=require('playwright');
     passed.push('rendered snow brightens upward rock faces and leaves vertical faces unchanged');
 
     const seasons=await page.evaluate(()=>{
-      const mesh=SEASONAL.maples[0].userData.foliage.find(o=>o.isInstancedMesh),original=mesh.instanceMatrix.array.slice();
-      applySeason('winter');backlogDraw();const sparse=mesh.instanceMatrix.array.some((v,i)=>v!==original[i]);
+      const foliage=SEASONAL.maples[0].userData.foliage.filter(o=>o.isInstancedMesh),original=foliage.map(mesh=>mesh.instanceMatrix.array.slice());
+      applySeason('winter');backlogDraw();const fallen=foliage.every(mesh=>!mesh.visible||mesh.count===0);
       const snow=VISUAL_FINISH.snowStrength===1&&VISUAL_FINISH.winterBatches.every(m=>m.visible);
-      applySeason('summer');backlogDraw();const restored=mesh.instanceMatrix.array.every((v,i)=>v===original[i]);
-      return {sparse,snow,restored,noSnow:VISUAL_FINISH.snowStrength===0&&VISUAL_FINISH.winterBatches.every(m=>!m.visible)};
+      applySeason('summer');backlogDraw();const restored=foliage.every((mesh,j)=>mesh.instanceMatrix.array.every((v,i)=>v===original[j][i]))&&foliage.some(mesh=>mesh.visible&&mesh.count>0);
+      return {fallen,snow,restored,noSnow:VISUAL_FINISH.snowStrength===0&&VISUAL_FINISH.winterBatches.every(m=>!m.visible)};
     });
     assert.ok(Object.values(seasons).every(Boolean),JSON.stringify(seasons));passed.push('deciduous foliage and settled snow restore correctly through season changes');
 

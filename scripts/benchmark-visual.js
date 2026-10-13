@@ -3,7 +3,15 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..'),out=path.join(root,'artifacts/review');
 const label=process.argv[2]||'after';
-const html=fs.readFileSync(path.resolve(root,process.argv[3]||'寝殿造り3D探訪_統合版.html'));
+const originalHtml=fs.readFileSync(path.resolve(root,process.argv[3]||'寝殿造り3D探訪_統合版.html'));
+let html=originalHtml.toString('utf8');
+// r128's private UUID generator consumes four Math.random values per object.
+// Isolate only those four vendor calls in the served test copy, so added model
+// resources cannot change the game's seeded bird/lantern movement parameters.
+const vendorStart=html.indexOf('<script>')+8,vendorEnd=html.indexOf('</script>',vendorStart),vendor=html.slice(vendorStart,vendorEnd),uuidRandom='4294967295*Math.random()';
+if(vendor.split(uuidRandom).length!==5)throw Error('r128 UUID isolation needs exactly four vendor calls');
+html=html.slice(0,vendorStart)+vendor.split(uuidRandom).join('4294967295*window.__VISUAL_UUID_RANDOM()')+html.slice(vendorEnd);
+const cameraBaseline=process.env.VISUAL_CAMERA_BASELINE&&JSON.parse(fs.readFileSync(path.resolve(root,process.env.VISUAL_CAMERA_BASELINE),'utf8'));
 const scenes=[
  {name:'front',time:'day',season:'spring',view:'fp',pos:[0,1.62,26],yaw:0},
  {name:'roof',time:'day',season:'spring',view:'fp',pos:[23,12,20],target:[0,6,-2]},
@@ -38,7 +46,11 @@ const scenes=[
  {name:'hime',time:'day',season:'spring',view:'fp',pos:[0,2.2,0],subject:'hime'},
  {name:'duck',time:'day',season:'summer',view:'fp',pos:[0,2.2,0],subject:'duck'},
  {name:'crane',time:'day',season:'winter',view:'fp',pos:[0,2.2,0],subject:'crane'},
- {name:'gissha',time:'day',season:'spring',view:'fp',pos:[0,2.2,0],subject:'gissha'}
+ {name:'gissha',time:'day',season:'spring',view:'fp',pos:[0,2.2,0],subject:'gissha'},
+ {name:'duck-front',time:'day',season:'summer',view:'fp',pos:[0,2.2,0],subject:'duck-front'},
+ {name:'crane-front',time:'day',season:'winter',view:'fp',pos:[0,2.2,0],subject:'crane-front'},
+ {name:'ox',time:'day',season:'spring',view:'fp',pos:[0,2.2,0],subject:'ox'},
+ ...['kappa','chochin','yukionna'].map(subject=>({name:subject,time:'night',season:subject==='yukionna'?'winter':'summer',view:'fp',pos:[0,2.2,0],subject}))
 ];
 const requested=process.env.VISUAL_SCENES&&process.env.VISUAL_SCENES.split(',');
 if(requested&&requested.some(name=>!scenes.some(scene=>scene.name===name)))throw Error('Unknown VISUAL_SCENES entry');
@@ -55,7 +67,7 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
  });
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||'chrome'});
- const report={label,sourceBytes:html.length,profiles:[],errors:[]};
+ const report={label,sourceBytes:originalHtml.length,uuidStreamIsolated:true,cameraBaseline:process.env.VISUAL_CAMERA_BASELINE||null,profiles:[],errors:[]};
  try{
   for(const eco of [false,true]){
    const context=await browser.newContext({viewport:{width:1280,height:800},deviceScaleFactor:1,hasTouch:eco});
@@ -64,6 +76,7 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
    await page.addInitScript(eco=>{
     window.__SHINDEN_BENCH_PAUSE=true;window.SHINDEN_ONLINE_CONFIG={enabled:false};
     let seed=0x5eed1234;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+    let uuidSeed=0x75756964;window.__VISUAL_UUID_RANDOM=()=>{uuidSeed=(Math.imul(uuidSeed,1664525)+1013904223)>>>0;return uuidSeed/4294967296;};
     if(!eco){
      for(let p=window;p;p=Object.getPrototypeOf(p)){try{delete p.ontouchstart;}catch{}}
      Object.defineProperty(navigator,'maxTouchPoints',{get:()=>0});
@@ -98,18 +111,31 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
      if(s.subject==='duck'||s.subject==='crane'){const p=waterBirds.find(b=>b.kind===s.subject).g.position;
        s.pos=[p.x+1.1,p.y+(s.subject==='duck'?.7:1.5),p.z+(s.subject==='duck'?1.9:2.8)];s.target=[p.x,p.y+(s.subject==='duck'?.3:1.2),p.z];}
      if(s.subject==='gissha'){const p=GISSHA_YARD.cart.position;s.pos=[p.x+8,2.8,p.z+5];s.target=[p.x+1,1.8,p.z];}
+     if(s.subject==='duck-front'||s.subject==='crane-front'){
+       const duck=s.subject==='duck-front',g=waterBirds.find(b=>b.kind===(duck?'duck':'crane')).g;g.visible=true;g.updateWorldMatrix(true,true);
+       s.pos=g.localToWorld(new THREE.Vector3(duck?.85:1.5,duck?.8:2.0,duck?1.8:3.1)).toArray();
+       s.target=g.localToWorld(new THREE.Vector3(0,duck?.35:1.35,.15)).toArray();
+     }
+     if(s.subject==='ox'){const g=GISSHA_YARD.cart.userData.drive.ox;g.updateWorldMatrix(true,true);s.pos=g.localToWorld(new THREE.Vector3(1.5,1.8,-3.2)).toArray();s.target=g.localToWorld(new THREE.Vector3(0,1.0,-.4)).toArray();}
+     if(['kappa','chochin','yukionna'].includes(s.subject)){
+       const y=creatures.yokai.find(y=>(y.type||y.g.userData.type)===s.subject),g=y.g;g.visible=true;g.updateWorldMatrix(true,true);
+       s.pos=g.localToWorld(new THREE.Vector3(.85,1.5,2.6)).toArray();s.target=g.localToWorld(new THREE.Vector3(0,.85,0)).toArray();
+     }
      if(s.subject==='moon')s.target=moonMesh.position.toArray();
      camera.position.set(...s.pos);camera.rotation.order='YXZ';
      if(s.target)camera.lookAt(...s.target);else if(s.view==='ov')camera.lookAt(0,0,0);else camera.rotation.set(-.05,s.yaw||0,0,'YXZ');
+     if(s.benchCamera){camera.position.fromArray(s.benchCamera.position);camera.quaternion.fromArray(s.benchCamera.quaternion);camera.fov=s.benchCamera.fov;camera.updateProjectionMatrix();}
      // The close-up camera is assigned after the paused frame; refresh the character's normal distance LOD.
      if(s.subject==='hime')for(const p of people)if(p.detail)p.detail.visible=camera.position.distanceTo(p.g.position)<15;
      if(typeof VISUAL_EXPERIENCE!=='undefined'&&VISUAL_EXPERIENCE)VISUAL_EXPERIENCE.update(clock.elapsedTime);
+     if(typeof CREATURE_REFINEMENT!=='undefined'&&CREATURE_REFINEMENT)CREATURE_REFINEMENT.update(camera);
+     if(typeof NIGHT_LIGHTING!=='undefined'&&NIGHT_LIGHTING)NIGHT_LIGHTING.update(camera,true);
      // Manual inspection cameras need the same geometry LOD refresh as a rendered game frame.
      if(typeof SELECTED_PERFORMANCE!=='undefined'&&SELECTED_PERFORMANCE){window.__visualLODClock=(window.__visualLODClock||100)+1;SELECTED_PERFORMANCE.update(window.__visualLODClock);}
      if(s.subject==='moon'){moonPhaseShadow.lookAt(camera.position);}
      TEX.clouds.offset.set(.1,0);cloudDome.position.copy(camera.position);scene.updateMatrixWorld(true);camera.updateMatrixWorld(true);
      updateControlUI();renderer.render(scene,camera);
-    },shot);
+    },{...shot,benchCamera:cameraBaseline?.profiles.find(p=>p.name===profile.name)?.scenes.find(s=>s.name===shot.name)?.camera});
     await page.waitForTimeout(60);
     const measurement=await page.evaluate(()=>{
      const gl=renderer.getContext(),samples=[];
@@ -120,7 +146,7 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
      geos.forEach(g=>{Object.values(g.attributes).forEach(a=>buffers.add(a.array));if(g.index)buffers.add(g.index.array);});
      let pointLights=0;scene.traverseVisible(o=>{if(o.isPointLight)pointLights++;});
      const pixels=[...textures].reduce((sum,t)=>sum+(t.image&&t.image.width&&t.image.height?t.image.width*t.image.height:0),0);
-     return {pointLights,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,
+     return {camera:{position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),fov:camera.fov},pointLights,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,
       geometryBytes:[...buffers].reduce((sum,b)=>sum+b.byteLength,0),instanceBytes:[...instances].reduce((sum,b)=>sum+b.byteLength,0),texturePixels:pixels,programs:renderer.info.programs.length,
       pixelRatio:renderer.getPixelRatio(),shadows:renderer.shadowMap.enabled,shadowSize:sun.shadow.mapSize.width,touch:IS_TOUCH,ibl:!!scene.environment,normal:!!MAT.sand.normalMap,ao:!!MAT.sand.aoMap,
       medianMs:+samples[Math.floor(samples.length*.5)].toFixed(2),p95Ms:+samples[Math.floor(samples.length*.95)].toFixed(2),fog:scene.fog.density};
@@ -128,7 +154,8 @@ const selectedScenes=requested?scenes.filter(scene=>requested.includes(scene.nam
     profile.scenes.push({name:shot.name,...measurement});
     if(!eco&&!process.env.VISUAL_NO_SCREENSHOTS){
      await page.evaluate(()=>document.getElementById('toast').style.display='none');
-     await page.screenshot({path:path.join(out,`visual-${label}-${shot.name}.png`)});
+     const png=await page.evaluate(()=>{renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png').split(',')[1];});
+     fs.writeFileSync(path.join(out,`visual-${label}-${shot.name}.png`),Buffer.from(png,'base64'));
     }
     console.log(`${label}/${profile.name}/${shot.name}: ${measurement.calls} calls; ${measurement.medianMs} ms`);
    }

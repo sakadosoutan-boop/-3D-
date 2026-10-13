@@ -32,8 +32,7 @@ async function launchBrowser() {
 }
 
 function ignorable(text) {
-  return /THREE\.WebGLProgram: shader error:/.test(text)
-    || /The play\(\) request was interrupted/.test(text)
+  return /The play\(\) request was interrupted/.test(text)
     || /AudioContext was not allowed to start/.test(text)
     || /net::ERR_|Failed to load resource/.test(text);
 }

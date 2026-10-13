@@ -26,19 +26,32 @@
   const panel=el("section",null,"sw-panel");panel.id="selectedWorldPanel";panel.hidden=true;panel.setAttribute("role","dialog");panel.setAttribute("aria-label","邸で交わす小さな約束");
   const header=el("header"),heading=el("h2","邸で交わす小さな約束"),closeButton=el("button","閉じる");closeButton.type="button";closeButton.onclick=close;header.append(heading,closeButton);
   const body=el("div",null,"sw-body"),status=el("p","","sw-status");status.setAttribute("role","status");panel.append(header,body,status);document.body.append(panel);
-  const hud=el("button","小さな約束","sw-hud");hud.id="selectedWorldOpen";hud.type="button";hud.hidden=true;hud.onclick=()=>show();document.body.append(hud);
+  const hud=el("button","小さな約束","sw-hud");hud.id="selectedWorldOpen";hud.type="button";hud.hidden=true;hud.onclick=()=>show(era()==="heian"&&record.lost===0&&near("lost")?"lost":"home");document.body.append(hud);
   const menu=document.getElementById("tbMoreMenu");if(menu){const b=el("button","小さな約束・時代を比べる","tbm-item");b.id="tbmWorld";b.type="button";b.onclick=()=>{if(typeof tbMoreClose==="function")tbMoreClose();show();};menu.append(b);}
   const props=new THREE.Group();props.name="selected-world-episode-props";scene.add(props);
   const paperGeometry=new THREE.BoxGeometry(.7,.04,.45),paperMaterial=new THREE.MeshStandardMaterial({color:0xf3dfb6,roughness:.94});
   const markers={};
   for(const key of ["lost","labels","packet"]){const g=new THREE.Group(),p=points[key];g.position.set(p.x,groundH(p.x,p.z)+.06,p.z);const count=key==="labels"?3:1;for(let i=0;i<count;i++){const mesh=new THREE.Mesh(paperGeometry,paperMaterial);mesh.position.x=(i-(count-1)/2)*.95;mesh.rotation.y=(i-1)*.12;g.add(mesh);}props.add(g);markers[key]=g;}
-  // The lost fan has a distinct silhouette from the sealed delivery packet.
+  // A dropped paper folding fan: exposed ribs, a pivot and the owner's tied cord.
   markers.lost.clear();
-  const fan=new THREE.Mesh(new THREE.CircleGeometry(.65,18,-Math.PI/3,Math.PI*2/3),new THREE.MeshStandardMaterial({color:0xc6a668,roughness:.9,side:THREE.DoubleSide}));
-  fan.rotation.x=-Math.PI/2;markers.lost.add(fan);
+  const fanRoot=markers.lost;fanRoot.name="lost-folding-fan";fanRoot.position.y=groundH(points.lost.x,points.lost.z)+.012;fanRoot.rotation.y=-.34;
+  const fanRadius=.47,fanInner=.125,fanSpan=Math.PI*.66,fanStart=-fanSpan/2,fanVertices=[],fanColors=[];
+  const paperA=new THREE.Color(0xe7d4a3),paperB=new THREE.Color(0xc8b781);
+  function paperPoint(r,a,high){return[r*Math.cos(a),high?.016:.008,-r*Math.sin(a)];}
+  for(let i=0;i<10;i++){
+    const a=fanStart+i*fanSpan/10,b=a+fanSpan/10,p=[paperPoint(fanInner,a,i%2===0),paperPoint(fanRadius,a,i%2===0),paperPoint(fanRadius,b,i%2!==0),paperPoint(fanInner,b,i%2!==0)],c=(i%2?paperA:paperB);
+    for(const k of [0,1,2,0,2,3]){fanVertices.push(...p[k]);fanColors.push(c.r,c.g,c.b);}
+  }
+  const fanGeo=new THREE.BufferGeometry();fanGeo.setAttribute("position",new THREE.Float32BufferAttribute(fanVertices,3));fanGeo.setAttribute("color",new THREE.Float32BufferAttribute(fanColors,3));fanGeo.computeVertexNormals();
+  const fan=new THREE.Mesh(fanGeo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.94,side:THREE.DoubleSide}));fan.name="pleated-fan-paper";fanRoot.add(fan);
   const ribs=new THREE.BufferGeometry(),ribPoints=[];
-  for(let i=0;i<=6;i++){const a=-Math.PI/3+i*Math.PI/9;ribPoints.push(0,.015,0,.65*Math.cos(a),.015,-.65*Math.sin(a));}
-  ribs.setAttribute("position",new THREE.Float32BufferAttribute(ribPoints,3));markers.lost.add(new THREE.LineSegments(ribs,new THREE.LineBasicMaterial({color:0x5d3f25})));
+  for(let i=0;i<=10;i++){const a=fanStart+i*fanSpan/10;ribPoints.push(-.07,.018,0,(fanRadius+.012)*Math.cos(a),.018,-(fanRadius+.012)*Math.sin(a));}
+  ribs.setAttribute("position",new THREE.Float32BufferAttribute(ribPoints,3));const ribMesh=new THREE.LineSegments(ribs,new THREE.LineBasicMaterial({color:0x69482b}));ribMesh.name="fan-bamboo-ribs";fanRoot.add(ribMesh);
+  const handle=new THREE.Mesh(new THREE.BoxGeometry(.16,.022,.035),new THREE.MeshStandardMaterial({color:0x69482b,roughness:.9}));handle.name="fan-pivot-grip";handle.position.set(-.052,.014,0);fanRoot.add(handle);
+  const pivot=new THREE.Mesh(new THREE.CylinderGeometry(.016,.016,.012,8),new THREE.MeshStandardMaterial({color:0xb3974e,roughness:.62,metalness:.2}));pivot.name="fan-rivet";pivot.position.set(0,.029,0);fanRoot.add(pivot);
+  const cordPoints=[[-.085,.026,0],[-.13,.020,-.036],[-.19,.013,-.029],[-.215,.011,.015],[-.185,.013,.042],[-.13,.015,.015],[-.15,.014,-.015],[-.26,.010,-.065],[-.30,.010,-.055]];
+  const cordGeo=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(cordPoints.map(p=>new THREE.Vector3(...p))),24,.007,4,false),cord=new THREE.Mesh(cordGeo,new THREE.MeshStandardMaterial({color:0x73576e,roughness:.98}));cord.name="fan-owner-cord";fanRoot.add(cord);
+  fanRoot.userData.episode="lost";fanRoot.userData.description="落とし扇。柄の結び紐を手がかりに持主を確かめる小事件の道具。";
   function button(text,fn,disabled=false){const b=el("button",text);b.type="button";b.disabled=disabled;b.onclick=()=>{if(!active())return;fn();};body.append(b);return b;}
   function prose(text){body.append(el("p",text));}
   function nav(key){record.nav=key;save();message=direction(key);render();}
@@ -122,7 +135,8 @@
   function update(dt){
     const isActive=active();if(lastMode!==isActive){lastMode=isActive;hud.hidden=!isActive;syncProps();if(!isActive)close();}
     elapsed+=Math.max(0,dt||0);if(elapsed<.3)return;elapsed=0;if(!isActive)return;
-    if(record.nav){const valid=(era()==="heian"&&record.nav!=="kamakura")||(era()==="kamakura"&&record.nav==="kamakura");hud.textContent=valid?direction(record.nav):"時代の比較・約束の記録";}else hud.textContent="小さな約束 — 人物に道を尋ねる";
+    if(era()==="heian"&&record.lost===0&&near("lost")){hud.textContent="落とし扇 — 結び紐を調べる";hud.title="地面の扇は落とし物です。持主を確かめて返しましょう。";}
+    else {hud.title="";if(record.nav){const valid=(era()==="heian"&&record.nav!=="kamakura")||(era()==="kamakura"&&record.nav==="kamakura");hud.textContent=valid?direction(record.nav):"時代の比較・約束の記録";}else hud.textContent="小さな約束 — 人物に道を尋ねる";}
     if(open){const next=APP.time+["keishi","toneri","lost","labels","packet",era()].map(k=>near(k)?1:0).join("");if(panel.dataset.near!==next)render();}
   }
   const previousInfo=showInfo;

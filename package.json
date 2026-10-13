@@ -20,12 +20,13 @@
     "smoke": "node scripts/smoke-playwright.js",
     "test:quality": "node scripts/quality-playwright.js",
     "test:graphics": "node scripts/graphics-quality-playwright.js",
-    "test": "npm run build:app:check && npm run build:story:check && npm run verify:html && npm run verify:story && npm run verify:routes && npm run smoke && npm run test:quality && npm run test:graphics && npm run test:gissha && npm run test:visual-backlog && npm run test:visual-experience && npm run test:selected && npm run test:saigen",
+    "test": "npm run build:app:check && npm run build:story:check && npm run verify:html && npm run verify:story && npm run verify:routes && npm run smoke && npm run test:quality && npm run test:graphics && npm run test:gissha && npm run test:visual-backlog && npm run test:visual-experience && npm run test:selected && npm run test:saigen && npm run test:refinement",
     "test:gissha": "node scripts/gissha-quality-playwright.js",
     "test:visual-backlog": "node scripts/visual-backlog-playwright.js",
     "test:visual-experience": "node scripts/visual-experience-playwright.js",
     "test:selected": "node scripts/verify-waka-notes.js && node story/tests/followthrough.test.cjs && node story/tests/followthrough-browser.cjs && node scripts/learning-extension-playwright.cjs && node scripts/selected-combat-playwright.js && node scripts/selected-world-playwright.js && node scripts/selected-visuals-playwright.js && node scripts/selected-ux-playwright.js && node scripts/selected-performance-playwright.js && node scripts/story-lifecycle-playwright.cjs && node scripts/selected-memory-playwright.js",
-    "test:saigen": "node scripts/saigen-tsurezure-playwright.js"
+    "test:saigen": "node scripts/saigen-tsurezure-playwright.js",
+    "test:refinement": "node scripts/foliage-refinement-test.cjs && node scripts/night-lighting-playwright.cjs && node scripts/foliage-refinement-playwright.cjs && node scripts/creature-refinement-playwright.js && node scripts/kamakura-refinement-playwright.cjs"
   },
   "devDependencies": {
     "playwright": "1.61.1"

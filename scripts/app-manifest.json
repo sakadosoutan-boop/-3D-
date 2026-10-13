@@ -294,5 +294,19 @@
     "kind": "markers-exist",
     "begin": "/* APP_SAIGEN_TSUREZURE_EMBED_BEGIN (src/app/saigen-tsurezure.js から自動生成。ここを直接編集しない) */",
     "end": "/* APP_SAIGEN_TSUREZURE_EMBED_END */"
+  },
+  {
+    "name": "creature-refinement",
+    "src": "src/app/creature-refinement.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_CREATURE_REFINEMENT_EMBED_BEGIN (src/app/creature-refinement.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_CREATURE_REFINEMENT_EMBED_END */"
+  },
+  {
+    "name": "night-lighting",
+    "src": "src/app/night-lighting.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_NIGHT_LIGHTING_EMBED_BEGIN (src/app/night-lighting.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_NIGHT_LIGHTING_EMBED_END */"
   }
 ]

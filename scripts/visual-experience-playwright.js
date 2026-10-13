@@ -41,7 +41,7 @@ function check(ok,message){assert(ok,message);passed.push(message);}
   check(expressions.blink<.2&&expressions.open===1&&expressions.held&&expressions.seatedStable&&expressions.standingStable&&expressions.face,'blinking and held props animate close-up while seated and standing roots stay grounded');
   const vegetation=await page.evaluate(()=>{
    applySeason('summer');const a=VISUAL_EXPERIENCE.foliage.filter(f=>f.mesh.userData.estateLeaves);
-   return{maple:a.filter(f=>f.maple).every(f=>f.mesh.geometry.userData.estateLeaf==='palmate'&&f.mesh.count>=100),camellia:a.filter(f=>!f.maple).every(f=>f.mesh.geometry.userData.estateLeaf==='elliptic'&&f.mesh.material.roughness<.5),both:a.some(f=>f.maple)&&a.some(f=>!f.maple),registered:!!interactables.kaede&&!!interactables.tsubaki};
+   return{maple:a.filter(f=>f.maple).every(f=>f.mesh.geometry.userData.estateLeaf==='palmate'&&f.mesh.instanceMatrix.count*f.mesh.geometry.userData.leavesPerShoot>=100&&f.mesh.geometry.userData.singleLeaf),camellia:a.filter(f=>!f.maple).every(f=>f.mesh.geometry.userData.estateLeaf==='elliptic'&&f.mesh.material.roughness<.5),both:a.some(f=>f.maple)&&a.some(f=>!f.maple),registered:!!interactables.kaede&&!!interactables.tsubaki};
   });
   check(vegetation.maple&&vegetation.camellia&&vegetation.both&&vegetation.registered,'maples and camellias have distinct dense leaf shapes and discoverable encyclopedia entries');
   const bounds=await page.evaluate(()=>{

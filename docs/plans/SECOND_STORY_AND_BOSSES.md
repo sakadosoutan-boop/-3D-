@@ -1,5 +1,7 @@
 # 第2ストーリーと新ボス案 — 読みを返す一夜
 
+**2026-10-13改定:** 最新の推奨は武家屋敷を舞台とする [「弓馬の館、帰りの文」](SECOND_STORY_KAMAKURA.md)。新マップと合戦の規模も同書に整理した。以下は2026-10-07時点の平安編の別案として保持する。
+
 2026-10-07。企画のみ。本書による新章・新ボスの製品実装は行わない。
 参照正本: `story/STORY_SCENARIO_BIBLE.md` / `story/STYLE_RUBRIC.md`。
 既存案 `docs/plans/SECOND_STORY_MODE_MEGURI.md` と `story/drafts/meguri_ch1_pilot.json`（101章）は確認済み。ドラフトを現在の1〜6章へ混入させない。

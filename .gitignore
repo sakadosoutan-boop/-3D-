@@ -23,6 +23,9 @@ debug.log
 artifacts/review/
 artifacts/learning/
 artifacts/selected-memory/
+artifacts/night-lighting/
+artifacts/foliage-refinement/
+artifacts/kamakura-refinement/
 
 # 参照資料・並行ツール設定（コード本体ではない・PDF等で重い）
 素材/
