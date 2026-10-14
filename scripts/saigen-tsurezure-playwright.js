@@ -189,6 +189,32 @@ function ignorable(text) {
     if (!l.loopsBefore) failures.push('beat 6 did not start its cicada audio loops');
     if (run.folkInEstate !== 0) failures.push(`base-game figures still visible in the estate scenes: ${run.folkInEstate}`);
     if (run.folkAfter !== run.folkBefore) failures.push(`base-game figures not restored after leaving: ${run.folkAfter} of ${run.folkBefore}`);
+
+    // 本文パネルの見え方(全作品): 暗転の膜がパネルを覆わないこと、縦長のスマホでも本文が最後の文字まで枠に収まること
+    await page.setViewportSize({ width: 390, height: 844 });
+    const text = await page.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const z = (el) => parseInt(getComputedStyle(el).zIndex, 10) || 0;
+      const fadeBelowPanel = z(document.getElementById('sgFade')) < z(document.querySelector('#saigenHud .sg-stage-cap'));
+      enterMode('saigen'); const pk = document.getElementById('sgPicker'); if (pk) pk.style.display = 'none';
+      const cut = [];
+      for (const id of ['makura_haru', 'chomon_uta']) {
+        startSaigen(id); await wait(300);
+        const sc = APP.saigen.scene;
+        for (let i = 0; i < sc.beats.length; i++) {
+          APP.saigen.i = i; renderSaigenBeat(); await wait(60);
+          const hw = document.getElementById('sgHonbunWrap'), hb = document.getElementById('sgHonbun');
+          if (hb.classList.contains('sg-waka-text') || !hb.firstChild) continue;
+          const wr = hw.getBoundingClientRect(), rg = document.createRange(), t = hb.firstChild, n = t.textContent.length;
+          rg.setStart(t, n - 1); rg.setEnd(t, n); const rr = rg.getBoundingClientRect();
+          if (rr.left < wr.left - 1 || rr.right > wr.right + 1 || rr.bottom > wr.bottom + 1) cut.push(`${id}#${i + 1}`);
+        }
+      }
+      saigenBackToTitle();
+      return { fadeBelowPanel, cut };
+    });
+    if (!text.fadeBelowPanel) failures.push('the scene-change fade (#sgFade) covers the text panel');
+    if (text.cut.length) failures.push(`honbun does not fit its box on a 390x844 screen: ${text.cut.join(', ')}`);
   } catch (error) {
     failures.push(`exception: ${error.message}`);
   }

@@ -1608,6 +1608,9 @@ body.saigen-mode #topbar{display:none!important}
 #sgFade.white{background:#f2ead8}
 #sgFade.show{opacity:1;transition:opacity 0s}
 #sgFade.quick{transition:opacity .12s ease}
+/* 再現モード: 場面転換の暗転・白転・稲光(#sgFade)は場面の絵だけを覆い、本文パネルと上端のボタンは覆わない
+   (覆うと場が変わるたびに本文が1秒余り読めなくなる) */
+#saigenHud .sg-stage-cap,#saigenHud .sg-top,#saigenHud #sgQuit{z-index:47}
 /* 再現モード: まだ作っていない場の素材を作る間の暗幕(本文パネルは上に見えたまま) */
 #sgPrep{position:fixed;inset:0;z-index:44;display:flex;align-items:flex-start;justify-content:center;padding-top:22vh;background:#07090d;color:#d9d0b8;font-size:14px;letter-spacing:.25em;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,visibility 0s linear .35s}
 #sgPrep.show{opacity:1;visibility:visible;transition:none}
