@@ -2623,7 +2623,7 @@ body.saigen-mode #topbar{display:none!important}
   background:rgba(28,18,10,.88);border:1px solid var(--kin);border-radius:4px;
   padding:2px 8px;font-family:var(--serif);font-size:11.5px;letter-spacing:.12em;color:var(--gofun);
   white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.5)}
-#sgPicker{position:fixed;inset:0;z-index:47;display:none;align-items:center;justify-content:center;pointer-events:auto;
+#sgPicker{position:fixed;inset:0;z-index:49;display:none;align-items:center;justify-content:center;pointer-events:auto;
   background:radial-gradient(ellipse at center,rgba(10,7,4,.72),rgba(6,4,2,.88))}
 #sgPicker .sg-pick-card{width:min(440px,92vw);max-height:86vh;overflow-y:auto;background:linear-gradient(180deg,rgba(28,19,11,.97),rgba(15,10,6,.98));
   border:1px solid var(--kin);border-radius:13px;box-shadow:0 14px 50px rgba(0,0,0,.6);padding:18px 18px 16px;text-align:center}
@@ -2663,7 +2663,10 @@ body.saigen-mode #topbar{display:none!important}
 #sgFade.quick{transition:opacity .12s ease}
 /* 再現モード: 場面転換の暗転・白転・稲光(#sgFade)は場面の絵だけを覆い、本文パネルと上端のボタンは覆わない
    (覆うと場が変わるたびに本文が1秒余り読めなくなる) */
-#saigenHud .sg-stage-cap,#saigenHud .sg-top,#saigenHud #sgQuit{z-index:47}
+#saigenHud .sg-stage-cap{z-index:47}
+/* 上端のボタン列と✕は本文パネルよりさらに手前。背の低い画面でパネルが上まで届いても押せるように
+   (本文を選ぶ画面 #sgPicker は z-index:49 で、これまでどおりボタン列を覆う) */
+#saigenHud .sg-top,#saigenHud #sgQuit{z-index:48}
 /* 再現モード中の通知(#toast, z-index:50)は本文パネルの上に重なるので、上端のボタン列の下(場面の上側)へ出す。縦長の画面ではボタン列が2段に折り返す分も空ける */
 body.saigen-mode #toast{bottom:auto;top:calc(env(safe-area-inset-top) + 74px)}
 /* 再現モード: まだ作っていない場の素材を作る間の暗幕(本文パネルは上に見えたまま) */
@@ -25136,16 +25139,28 @@ function renderSaigenBeat(){
    それでも足りなければ文字を小さくして(最小12px)、続きが枠の左へ隠れて横にずらさないと読めない状態を避ける */
 function fitSaigenHonbun(){
   const hw=$("sgHonbunWrap"),hb=$("sgHonbun");if(!hw||!hb)return;
-  hw.style.height="";hw.style.maxHeight="";hb.style.fontSize="";
-  const over=()=>hw.scrollWidth>hw.clientWidth+1;
-  if(!hb.classList.contains("sg-waka-text")&&over()){
-    const cap=document.querySelector("#saigenHud .sg-stage-cap");
-    const room=cap?Math.max(0,cap.getBoundingClientRect().top-56):0; // 上端のボタン列の下までは広げてよい
-    const maxH=Math.min(hw.clientHeight+room,Math.round(innerHeight*.5));
+  const yk=$("sgYaku"),cap=document.querySelector("#saigenHud .sg-stage-cap"),bar=document.querySelector("#saigenHud .sg-top");
+  hw.style.height="";hw.style.maxHeight="";hb.style.fontSize="";if(yk)yk.style.maxHeight="";
+  const waka=hb.classList.contains("sg-waka-text"),over=()=>hw.scrollWidth>hw.clientWidth+1;
+  // パネルは上端のボタン列より下に収める。上端の位置は「絵を見る」中の下げ(transform)を含めず、bottom と高さから求める
+  const top=(bar?bar.getBoundingClientRect().bottom:40)+10;
+  const room=()=>cap?innerHeight-(parseFloat(getComputedStyle(cap).bottom)||8)-cap.offsetHeight-top:0;
+  // 背の低い画面(横向きのスマホなど)でパネルがボタン列に食い込む時は、本文の枠を縮める。
+  // 和歌は句の途中で折り返さないので、文字を少し小さくして(11pxまで)最も長い句が収まる高さまでにとどめる
+  if(room()<0){
+    const target=hw.clientHeight+room(),lines=[...hb.querySelectorAll(".sg-waka-line")];
+    const need=()=>lines.reduce((m,l)=>Math.max(m,Math.ceil(l.getBoundingClientRect().height)+22),96);
+    if(waka){const f0=parseFloat(getComputedStyle(hb).fontSize)||12;for(let f=f0-.5;need()>target&&f>=11;f-=.5)hb.style.fontSize=f+"px";}
+    hw.style.maxHeight="none";hw.style.height=Math.max(need(),target)+"px";
+  }
+  if(!waka&&over()){
+    const maxH=Math.min(hw.clientHeight+Math.max(0,room()),Math.round(innerHeight*.5)); // ボタン列の下までは広げてよい
     hw.style.maxHeight="none";
     for(let h=hw.clientHeight+12;over()&&h<=maxH;h+=12)hw.style.height=h+"px";
     if(over()){const f0=parseFloat(getComputedStyle(hb).fontSize)||15;for(let f=f0-1;over()&&f>=12;f--)hb.style.fontSize=f+"px";}
   }
+  // 現代語訳が枠からあふれる時(縦長のスマホで後半が隠れていた)は、パネルの上の余白の範囲で枠を伸ばす
+  if(yk&&yk.scrollHeight>yk.clientHeight+1&&room()>0)yk.style.maxHeight=Math.min(yk.scrollHeight,yk.clientHeight+room())+"px";
   hw.scrollLeft=hw.scrollWidth; // 縦書きは右端(冒頭)から、収まる時は中央寄せ
 }
 addEventListener("resize",()=>{if(APP.mode==="saigen"&&APP.saigen)fitSaigenHonbun();},{passive:true});
