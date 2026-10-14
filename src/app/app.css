@@ -1570,7 +1570,7 @@ body.saigen-mode #topbar{display:none!important}
   background:rgba(28,18,10,.88);border:1px solid var(--kin);border-radius:4px;
   padding:2px 8px;font-family:var(--serif);font-size:11.5px;letter-spacing:.12em;color:var(--gofun);
   white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.5)}
-#sgPicker{position:fixed;inset:0;z-index:47;display:none;align-items:center;justify-content:center;pointer-events:auto;
+#sgPicker{position:fixed;inset:0;z-index:49;display:none;align-items:center;justify-content:center;pointer-events:auto;
   background:radial-gradient(ellipse at center,rgba(10,7,4,.72),rgba(6,4,2,.88))}
 #sgPicker .sg-pick-card{width:min(440px,92vw);max-height:86vh;overflow-y:auto;background:linear-gradient(180deg,rgba(28,19,11,.97),rgba(15,10,6,.98));
   border:1px solid var(--kin);border-radius:13px;box-shadow:0 14px 50px rgba(0,0,0,.6);padding:18px 18px 16px;text-align:center}
@@ -1610,7 +1610,12 @@ body.saigen-mode #topbar{display:none!important}
 #sgFade.quick{transition:opacity .12s ease}
 /* 再現モード: 場面転換の暗転・白転・稲光(#sgFade)は場面の絵だけを覆い、本文パネルと上端のボタンは覆わない
    (覆うと場が変わるたびに本文が1秒余り読めなくなる) */
-#saigenHud .sg-stage-cap,#saigenHud .sg-top,#saigenHud #sgQuit{z-index:47}
+#saigenHud .sg-stage-cap{z-index:47}
+/* 上端のボタン列と✕は本文パネルよりさらに手前。背の低い画面でパネルが上まで届いても押せるように
+   (本文を選ぶ画面 #sgPicker は z-index:49 で、これまでどおりボタン列を覆う) */
+#saigenHud .sg-top,#saigenHud #sgQuit{z-index:48}
+/* 再現モード中の通知(#toast, z-index:50)は本文パネルの上に重なるので、上端のボタン列の下(場面の上側)へ出す。縦長の画面ではボタン列が2段に折り返す分も空ける */
+body.saigen-mode #toast{bottom:auto;top:calc(env(safe-area-inset-top) + 74px)}
 /* 再現モード: まだ作っていない場の素材を作る間の暗幕(本文パネルは上に見えたまま) */
 #sgPrep{position:fixed;inset:0;z-index:44;display:flex;align-items:flex-start;justify-content:center;padding-top:22vh;background:#07090d;color:#d9d0b8;font-size:14px;letter-spacing:.25em;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,visibility 0s linear .35s}
 #sgPrep.show{opacity:1;visibility:visible;transition:none}
