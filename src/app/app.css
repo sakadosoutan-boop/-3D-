@@ -1611,6 +1611,8 @@ body.saigen-mode #topbar{display:none!important}
 /* 再現モード: 場面転換の暗転・白転・稲光(#sgFade)は場面の絵だけを覆い、本文パネルと上端のボタンは覆わない
    (覆うと場が変わるたびに本文が1秒余り読めなくなる) */
 #saigenHud .sg-stage-cap,#saigenHud .sg-top,#saigenHud #sgQuit{z-index:47}
+/* 再現モード中の通知(#toast, z-index:50)は本文パネルの上に重なるので、上端のボタン列の下(場面の上側)へ出す。縦長の画面ではボタン列が2段に折り返す分も空ける */
+body.saigen-mode #toast{bottom:auto;top:calc(env(safe-area-inset-top) + 74px)}
 /* 再現モード: まだ作っていない場の素材を作る間の暗幕(本文パネルは上に見えたまま) */
 #sgPrep{position:fixed;inset:0;z-index:44;display:flex;align-items:flex-start;justify-content:center;padding-top:22vh;background:#07090d;color:#d9d0b8;font-size:14px;letter-spacing:.25em;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,visibility 0s linear .35s}
 #sgPrep.show{opacity:1;visibility:visible;transition:none}

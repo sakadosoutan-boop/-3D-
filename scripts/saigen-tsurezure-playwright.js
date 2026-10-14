@@ -190,19 +190,27 @@ function ignorable(text) {
     if (run.folkInEstate !== 0) failures.push(`base-game figures still visible in the estate scenes: ${run.folkInEstate}`);
     if (run.folkAfter !== run.folkBefore) failures.push(`base-game figures not restored after leaving: ${run.folkAfter} of ${run.folkBefore}`);
 
-    // 本文パネルの見え方(全作品): 暗転の膜がパネルを覆わないこと、縦長のスマホでも本文が最後の文字まで枠に収まること
+    // 本文パネルの見え方(全作品): 暗転の膜や通知がパネルを覆わないこと、縦長のスマホでも本文が最後の文字まで枠に収まること
     await page.setViewportSize({ width: 390, height: 844 });
     const text = await page.evaluate(async () => {
       const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       const z = (el) => parseInt(getComputedStyle(el).zIndex, 10) || 0;
       const fadeBelowPanel = z(document.getElementById('sgFade')) < z(document.querySelector('#saigenHud .sg-stage-cap'));
+      const overlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+      const ts = document.getElementById('toast'); ts.style.display = 'none';
       enterMode('saigen'); const pk = document.getElementById('sgPicker'); if (pk) pk.style.display = 'none';
-      const cut = [];
+      const panel = document.querySelector('#saigenHud .sg-stage-cap');
+      const cut = [], seasonToast = [], covered = [];
       for (const id of ['makura_haru', 'chomon_uta']) {
         startSaigen(id); await wait(300);
         const sc = APP.saigen.scene;
         for (let i = 0; i < sc.beats.length; i++) {
           APP.saigen.i = i; renderSaigenBeat(); await wait(60);
+          // 季節替わり(枕草子は毎場)の「○の庭になりました」を再現中に出さないこと。出ても本文パネルに重ならないこと
+          if (ts.style.display !== 'none') {
+            if (/の庭になりました/.test(ts.textContent)) seasonToast.push(`${id}#${i + 1}`);
+            if (overlap(ts.getBoundingClientRect(), panel.getBoundingClientRect())) covered.push(`${id}#${i + 1}: ${ts.textContent}`);
+          }
           const hw = document.getElementById('sgHonbunWrap'), hb = document.getElementById('sgHonbun');
           if (hb.classList.contains('sg-waka-text') || !hb.firstChild) continue;
           const wr = hw.getBoundingClientRect(), rg = document.createRange(), t = hb.firstChild, n = t.textContent.length;
@@ -210,10 +218,17 @@ function ignorable(text) {
           if (rr.left < wr.left - 1 || rr.right > wr.right + 1 || rr.bottom > wr.bottom + 1) cut.push(`${id}#${i + 1}`);
         }
       }
+      toast('通知の位置の確認', 3000); await wait(30);
+      const tr = ts.getBoundingClientRect();
+      const toastClear = tr.top >= 0 && !overlap(tr, panel.getBoundingClientRect());
+      ts.style.display = 'none';
       saigenBackToTitle();
-      return { fadeBelowPanel, cut };
+      return { fadeBelowPanel, cut, seasonToast, covered, toastClear };
     });
     if (!text.fadeBelowPanel) failures.push('the scene-change fade (#sgFade) covers the text panel');
+    if (text.seasonToast.length) failures.push(`season-change toast shown during the reenactment: ${text.seasonToast.join(', ')}`);
+    if (text.covered.length) failures.push(`a toast covers the text panel: ${text.covered.join(' / ')}`);
+    if (!text.toastClear) failures.push('toasts in reenactment mode are drawn over the text panel');
     if (text.cut.length) failures.push(`honbun does not fit its box on a 390x844 screen: ${text.cut.join(', ')}`);
   } catch (error) {
     failures.push(`exception: ${error.message}`);

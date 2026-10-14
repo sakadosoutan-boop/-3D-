@@ -2664,6 +2664,8 @@ body.saigen-mode #topbar{display:none!important}
 /* 再現モード: 場面転換の暗転・白転・稲光(#sgFade)は場面の絵だけを覆い、本文パネルと上端のボタンは覆わない
    (覆うと場が変わるたびに本文が1秒余り読めなくなる) */
 #saigenHud .sg-stage-cap,#saigenHud .sg-top,#saigenHud #sgQuit{z-index:47}
+/* 再現モード中の通知(#toast, z-index:50)は本文パネルの上に重なるので、上端のボタン列の下(場面の上側)へ出す。縦長の画面ではボタン列が2段に折り返す分も空ける */
+body.saigen-mode #toast{bottom:auto;top:calc(env(safe-area-inset-top) + 74px)}
 /* 再現モード: まだ作っていない場の素材を作る間の暗幕(本文パネルは上に見えたまま) */
 #sgPrep{position:fixed;inset:0;z-index:44;display:flex;align-items:flex-start;justify-content:center;padding-top:22vh;background:#07090d;color:#d9d0b8;font-size:14px;letter-spacing:.25em;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,visibility 0s linear .35s}
 #sgPrep.show{opacity:1;visibility:visible;transition:none}
@@ -12332,7 +12334,8 @@ function applySeason(key){
   TIMES.day.sky=s.sky;TIMES.day.fog=s.sky;
   if(VISUAL_FINISH)VISUAL_FINISH.season(key);
   if(VISUAL_EXPERIENCE)VISUAL_EXPERIENCE.season(key);
-  toast(SEASONS[key].name+"の庭になりました",2200);
+  // 再現モードでは場面ごとの季節替わりが演出そのもの。毎場この通知を出すと本文パネル(現代語訳の行)に重なって読めなくなるので出さない
+  if(APP.mode!=="saigen")toast(SEASONS[key].name+"の庭になりました",2200);
   if(typeof updateWakaVisibility==="function")updateWakaVisibility();
 }
 // 白砂への花びら・落ち葉・雪の積もり(地面パッチ)
