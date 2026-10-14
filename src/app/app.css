@@ -3061,6 +3061,9 @@ body.tour-mode #joy,body.tour-mode #interactBtn,body.tour-mode #crosshair{displa
 #letterboxBottom{bottom:0}
 body.story-mode #letterboxTop,body.story-mode #letterboxBottom,
 body.saigen-mode #letterboxTop,body.saigen-mode #letterboxBottom{height:min(6.2vh,54px)}
+/* 再現モードでは黒帯を本文パネル・上端のボタン(#saigenHud, z-index:45)の奥に置く。手前のままだと縦長の画面(全画面表示など)で
+   「次へ」や「絵を見る/本文を表示」「✕」が黒帯の下に隠れて押せなくなる */
+body.saigen-mode .letterbox-bar{z-index:44}
 @media (prefers-reduced-motion:reduce){.letterbox-bar{transition:none}}
 
 /* ============================================================

@@ -85,6 +85,9 @@ function ignorable(text) {
       const T = SAIGEN_TSUREZURE.S;
       out.built = !!window.SAIGEN_STAGE && T.active && typeof window.SAIGEN_ENV_HOOK === 'function';
       out.viewToggle = !!document.getElementById('sgView');
+      // 上下の黒帯が本文パネル・上端のボタンより手前にあると、縦長の画面で「次の場」や「絵を見る」が隠れて押せない
+      { const z = (id) => parseInt(getComputedStyle(document.getElementById(id)).zIndex, 10);
+        out.letterboxBelowHud = ['letterboxTop', 'letterboxBottom'].every((id) => !document.getElementById(id) || z(id) < z('saigenHud')); }
       out.prepShown = 0;
       for (let i = 0; i < 13; i++) {
         APP.saigen.i = i; renderSaigenBeat();
@@ -151,6 +154,7 @@ function ignorable(text) {
 
     if (!run.built) failures.push('tsurezure stage/hook did not build');
     if (!run.viewToggle) failures.push('#sgView toggle button missing');
+    if (!run.letterboxBelowHud) failures.push('letterbox bars are drawn over the reenactment HUD (next/view buttons get hidden)');
     const expectZones = [['adashi', 'dew'], ['toribe'], ['an'], ['an'], ['an', 'leaf', 'water'], ['semi', 'an'], ['an'], ['an'], ['an'], ['an'], ['estate'], ['estate'], ['estate', 'an']];
     run.beats.forEach((b, idx) => {
       if (!b.finite) failures.push(`beat ${b.i}: non-finite camera/light values`);
