@@ -319,7 +319,7 @@ function eyeTexture(R,iris,o){o=o||{};return canvasTex(R,256,256,(g,w,h)=>{
 // =====================================================================================
 //  4. HEAD  (head-local frame: origin = midpoint between ear canals, +Z face forward, +Y up; meters)
 // =====================================================================================
-// P: {seed, eyeOpenU/L, eyeTilt, gazePitch (>0 looks up), gazeYaw (>0 toward the figure's left), smile, age, thin, ...}
+// P: {seed, eyeOpenU/L, eyeTilt, gazePitch (>0 looks down), gazeYaw (>0 toward the figure's left), smile, age, thin, ...}
 function gauss(d,w){const t=d/w;return t*t>16?0:Math.exp(-t*t);}
 function dPoly2(u,v,pts){let best=1e9,bt=0,bs=0,acc=0,tot=0;for(let i=0;i<pts.length-1;i++)tot+=Math.hypot(pts[i+1][0]-pts[i][0],pts[i+1][1]-pts[i][1]);
   for(let i=0;i<pts.length-1;i++){const ax=pts[i][0],ay=pts[i][1],bx=pts[i+1][0]-ax,by=pts[i+1][1]-ay,l2=bx*bx+by*by,L=sq(l2);
@@ -334,9 +334,13 @@ function faceCurves(P){
   const yL=x=>{const t=clamp(x/(MW*.92),-1,1);return ys(x)-(P.lipL||.0062)*Math.pow(mx(0,1-t*t),.6);};
   const W=P.eyeW||.0142,aU=P.eyeOpenU!=null?P.eyeOpenU:.0046,aL=P.eyeOpenL!=null?P.eyeOpenL:.0029,tilt=P.eyeTilt!=null?P.eyeTilt:.10,yc=P.eyeApY||0;
   const EX=.0315,EY=.0245;
+  // the lids follow the vertical gaze (upper lid fully, lower lid by half; the corners stay put): with fixed lids a
+  // downward look rolls the iris behind the lower lid and leaves a blank white eye (gazePitch > 0 looks down)
+  const sDn=(P.eyeR||.0118)*Math.sin(clamp(P.gazePitch||0,-.7,.7))*.9;
   // eye s (-1 right eye at -x, +1 left eye): returns [u (toward temple), yUpper, yLower] at planar x
-  const eye=(s,x)=>{const u=(x-s*EX)*s,t=clamp(u/W,-1,1),q=mx(0,1-t*t);
-    return[u,EY+yc+aU*Math.pow(q,.55)*(1-.22*t)+tilt*u,EY+yc-aL*Math.pow(q,.7)*(1+.1*t)+tilt*.55*u];};
+  const eye=(s,x)=>{const u=(x-s*EX)*s,t=clamp(u/W,-1,1),q=mx(0,1-t*t),lf=Math.sqrt(q);
+    const lo=EY+yc-aL*Math.pow(q,.7)*(1+.1*t)+tilt*.55*u-sDn*.5*lf;
+    return[u,mx(EY+yc+aU*Math.pow(q,.55)*(1-.22*t)+tilt*u-sDn*lf,lo+.0008*q),lo];};
   const nlf=[[.0195,-.0195],[.0262,-.0350],[.0300,-.0500],[.0335,-.0640]];
   const alar=[[.0098,-.0142],[.0172,-.0150],[.0216,-.0195],[.0210,-.0255],[.0172,-.0290]];
   const brow=t=>{// t 0..1 inner->outer ; returns [x(abs), y]
@@ -652,7 +656,7 @@ function buildHead(R,P,q){
   const etex=eyeTexture(R,P.iris||[70,46,30],{irisR:P.irisR,pupilR:P.pupilR,sclera:P.sclera,catchlight:P.catchlight});
   const em=R.add(new THREE.MeshStandardMaterial({map:etex,roughness:.10,metalness:0}));
   const eg=[];for(const e of H.eyes){const sg=new THREE.SphereGeometry(H.er,28,20);sg.rotateX(PI/2);
-    sg.rotateX(-(P.gazePitch||0));sg.rotateY((P.gazeYaw||0));sg.translate(e[0],e[1],e[2]);eg.push(sg);}
+    sg.rotateX((P.gazePitch||0));sg.rotateY((P.gazeYaw||0));sg.translate(e[0],e[1],e[2]);eg.push(sg);} // gazePitch > 0 looks down
   const emesh=new THREE.Mesh(mergeGeoms(R,eg),em);grp.add(emesh);
   const hq=q==="low"?.004:q==="medium"?.003:.0024;
   if(P.beard==="long"){const B=beardSDF(P);const hc=lin(P.hairC||0xd8d3ca);
@@ -1031,7 +1035,7 @@ function bookGroup(R,o){o=o||{};const g=new THREE.Group();const W=o.w||.115,H=o.
 // =====================================================================================
 //  9. KENKO factory
 // =====================================================================================
-const KENKO_HEAD={seed:11,age:52,thin:.6,smile:.25,lipU:.0040,lipL:.0052,lipUvol:.0014,lipLvol:.0019,scalp:"stubble",stubAmt:.30,beard:"stubble",skin:0xc49a78,skinRed:0xbd7b64,lip:0x94645a,lipColL:0x9a6a60,brow:0x3e3834,iris:[46,32,24],wrinkles:1,spots:5,eyeOpenU:.0040,eyeOpenL:.0027,gazePitch:.18};
+const KENKO_HEAD={seed:11,age:52,thin:.6,smile:.25,lipU:.0040,lipL:.0052,lipUvol:.0014,lipLvol:.0019,scalp:"stubble",stubAmt:.30,beard:"stubble",skin:0xc49a78,skinRed:0xbd7b64,lip:0x94645a,lipColL:0x9a6a60,brow:0x3e3834,iris:[46,32,24],catchlight:true,wrinkles:1,spots:5,eyeOpenU:.0040,eyeOpenL:.0027,gazePitch:.18};
 const HEAD_PIV=[0,-.032,-.018];// pivot (atlas) in head-local coords
 function makeKenko(opts){opts=opts||{};const R=Res();const q=opts.quality||"high";const pose=["write","read","gaze","kneel"].includes(opts.pose)?opts.pose:"read";
   const sY=opts.seatY!=null?opts.seatY:.06;const t0=performance.now();const T_={};
@@ -1119,13 +1123,13 @@ function makeKenko(opts){opts=opts||{};const R=Res();const q=opts.quality||"high
 //  10. ROUJIN (elderly noble in karaginu, sashinuki, tate-eboshi)
 // =====================================================================================
 const ROUJIN_HEAD={seed:23,age:72,thin:.85,smile:.15,lipU:.0036,lipL:.0046,lipUvol:.0011,lipLvol:.0015,scalp:"hair",hairC:0xd9d4cb,beard:"long",beardLen:.13,eboshi:true,
-  skin:0xc29a7c,skinRed:0xb97862,lip:0x9a6a60,lipColL:0x9e7064,browHairs:0,iris:[44,32,26],wrinkles:1.3,spots:9,eyeOpenU:.0038,eyeOpenL:.0026,eyeTilt:.02,browDrop:.016,
-  nose:1.06,jaw:.96,browK:1.1,hood:1.35,earL:1.12,neckR:.94,gazePitch:.05,whiskers:0};
+  skin:0xc29a7c,skinRed:0xb97862,lip:0x9a6a60,lipColL:0x9e7064,browHairs:0,iris:[62,44,32],catchlight:true,wrinkles:1.3,spots:9,eyeOpenU:.0046,eyeOpenL:.0030,eyeTilt:.02,browDrop:.016,
+  nose:1.06,jaw:.96,browK:1.1,hood:1.2,earL:1.12,neckR:.94,gazePitch:.05,whiskers:0};
 const ARM_U2=.272,ARM_F2=.232;
 function roujinRig(pose,sY){const R={pose,sY};
   let hip,lean,hP,hY=0,hR=0,gP;
   if(pose==="walk"){hip=[0,.845,-.010];lean=.11;hP=-.13;gP=.02;}
-  else if(pose==="hold"){hip=[0,sY+.085,-.03];lean=.20;hP=.40;hR=.05;gP=.32;}
+  else if(pose==="hold"){hip=[0,sY+.085,-.03];lean=.20;hP=.40;hR=.05;gP=.14;} // eyes on the grandchild's face (just below his chin), so they still read from the front
   else{hip=[0,sY+.085,-.03];lean=.40;hP=.42;gP=.36;}
   const TM=rotM(lean,0,0);R.TM=TM;R.hip=hip;const tp=v=>add3(hip,apM(TM,v));R.tp=tp;
   const st=pose==="walk";
@@ -1373,13 +1377,13 @@ function magoRig(pose){const R={pose};
   const held=pose==="held";let A;
   if(held){R.hip=[0,.075,-.02];R.TM=rotM(-.10,0,0);
     const tp=v=>add3(R.hip,apM(R.TM,v));R.tp=tp;
-    R.sh={L:tp([.132,.335,-.012]),R:tp([-.132,.335,-.012])};R.pivot=tp([0,.405,.0]);R.headM=mulM(R.TM,rotM(.30,.08,0));R.gazeP=-.15;
+    R.sh={L:tp([.132,.335,-.012]),R:tp([-.132,.335,-.012])};R.pivot=tp([0,.405,.0]);R.headM=mulM(R.TM,rotM(.30,.08,0));R.gazeP=.15;
     R.hipJ={L:[.062,.055,0],R:[-.062,.055,0]};R.knee={L:[.088,.085,.25],R:[-.082,.08,.245]};R.ankle={L:[.08,-.13,.33],R:[-.074,-.135,.32]};
     R.UA=.165;R.FA=.145;
     A={L:{W:[.050,.215,.180],fwd:[-.45,-.05,.89],dor:[.85,.35,.3],hp:"hold",pole:[.8,-.5,-.3]},R:{W:[-.050,.215,.180],fwd:[.45,-.05,.89],dor:[-.85,.35,.3],hp:"hold",pole:[-.8,-.5,-.3]}};}
   else{R.hip=[0,.70,0];R.TM=rotM(.07,0,0);
     const tp=v=>add3(R.hip,apM(R.TM,v));R.tp=tp;
-    R.sh={L:tp([.148,.42,-.012]),R:tp([-.148,.42,-.012])};R.pivot=tp([0,.505,.008]);R.headM=mulM(R.TM,rotM(.20,-.10,.03));R.gazeP=-.15;
+    R.sh={L:tp([.148,.42,-.012]),R:tp([-.148,.42,-.012])};R.pivot=tp([0,.505,.008]);R.headM=mulM(R.TM,rotM(.20,-.10,.03));R.gazeP=.15;
     R.hipJ={L:[.072,.69,0],R:[-.072,.69,0]};R.knee={L:[.095,.37,.035],R:[-.085,.37,.005]};R.ankle={L:[.105,.065,.0],R:[-.095,.065,-.035]};
     R.UA=.20;R.FA=.17;
     A={R:{W:[-.185,.76,.12],fwd:[.10,-.95,.30],dor:[-.95,.05,.10],hp:"grasp",pole:[-.6,-.2,-.8]},L:{W:[.17,.80,.20],fwd:[.05,-.55,.83],dor:[.75,.45,-.2],hp:"relax",pole:[.7,-.4,-.6]}};}
