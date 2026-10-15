@@ -1,8 +1,21 @@
 # 引き継ぎ資料（最新） — 寝殿造り3D探訪
 
-最終更新: 2026-08-03
+最終更新: 2026-10-16（今回の引き継ぎを追記、旧章は元の記録を保持）
 正本: GitHub `origin/main`
 現在の確認済み main: 公開直前に `git fetch origin` して更新すること
+
+## 2026-10-14の継続作業
+
+今回の専用ブランチは `codex/kamakura-experiences-20261013`。`origin/main` の `bafc839`（#16〜#18の目・黒帯・冒頭負荷・本文表示修正）を統合済み。前回の夜景・造形改善 `dbc6b32` と今回の追加はいずれもmainへ公開していない。詳細は [武家屋敷の暮らし・笠懸・草庵](../KAMAKURA_EXPERIENCES_2026-10-14.md)。
+
+- 新ソース `kamakura-games.js` / `kamakura-customs.js/css` / `kenko-hermitage.js/css` はmanifestの末尾で登録。`install-kamakura-experiences.cjs` が登録・核心hook・別時代の演出guardを一度だけ挿入する。再生成は `build:app` → `build:story`。
+- mapの最後に `KAMAKURA_WORLD={K,world,anchors,contentIds}`。最終起動前にgames/customsをinit。通常animateのカメラ補間後にゲームupdate、時刻取得直後に草庵専用frameへの早期分岐。mapのanimateラップも草庵中は後段を実行しない。
+- `?map=kamakura` から生活仕事場と笠懸へ。`?map=kamakura&visit=kenko` は草庵へ直接訪問して元館へ帰還。再現ボタンだけ平安側の `?replay=tsurezure7` へ移る。鎌倉のstory/taiji gateを全解除していない。
+- 矢場の `K.kyudoStart/Shoot/Stop` は世代を管理。新しいゲームは専用の入力・UI・停止・復元を持つ。書付の問題や施設配置は創作で、典拠の年代差を図鑑/資料へ記載。
+- 夜の怪異・四神・昼の童/雀・平安側の来客にmap guard。鎌倉の新模型や選択アウトラインをまとめて隠す処理へ置き換えていない。
+- `npm test` の最後に `test:kamakura-experiences` を追加。画像/生のreportはignored artifactsへ、統合結果はdocsへ記録。iPhone/iPad実機、第2ストーリー、新ボスは残存。
+- `app.css` は再現中の読み込み幕を操作列の奥へ移し、低い横画面を本文・訳の2列にする。`test:saigen` に3画面57段の表示・実クリック検査を追加。詳しくは [低い画面の再現UI](../saigen-layout.md)。
+- 2026-10-16、生成HTML 10,155,451 bytesで `npm test` 全体が終了コード0。専用判定は笠懸40・生活場面35・書付20・草庵CPU7、再現レイアウト57段。PC/ブラウザの結果であり実機結果ではない。[統合結果](../metrics/KAMAKURA_EXPERIENCES_2026-10-16.json) を参照。
 
 ## 最重要
 

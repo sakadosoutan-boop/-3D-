@@ -1630,6 +1630,27 @@ body.saigen-mode #toast{bottom:auto;top:calc(env(safe-area-inset-top) + 74px)}
   #saigenHud .sg-btn{padding:8px 13px;font-size:12px}
   #sgLabels .sg-label{font-size:10.5px;padding:1px 6px}
 }
+/* SAIGEN_LANDSCAPE_BEGIN: preparation covers the scene; replay controls remain available. */
+body.saigen-mode #loadingScreen{z-index:44;pointer-events:none}
+@media (orientation:landscape) and (max-height:520px){
+  #saigenHud .sg-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto 1fr auto auto;column-gap:12px;padding:6px 9px 7px}
+  #saigenHud .sg-speaker{grid-column:1/-1;grid-row:1;margin-bottom:3px}
+  #saigenHud .sg-panel .sg-honbun-wrap{grid-column:1;grid-row:2/5;min-width:0;height:calc(100vh - 140px);height:calc(100dvh - 140px);max-height:none}
+  #saigenHud .sg-yaku-label{grid-column:2;grid-row:2;margin-top:0}
+  #saigenHud .sg-panel .sg-yaku{grid-column:2;grid-row:3;align-self:start;max-height:none}
+  #saigenHud .sg-note{grid-column:2;grid-row:4;align-self:start}
+  #saigenHud .sg-nav{grid-column:1/-1;grid-row:5;margin-top:6px}
+  #saigenHud .sg-btn{padding:6px 12px;font-size:11px}
+}
+@media (orientation:landscape) and (max-height:340px){
+  #saigenHud .sg-honbun.sg-waka-text{font-size:11px}
+  #saigenHud .sg-honbun:not(.sg-waka-text){font-size:12px;line-height:1.8;letter-spacing:.04em;padding:6px 8px}
+  #saigenHud .sg-yaku{font-size:12px;line-height:1.5}
+}
+@media (orientation:portrait){
+  #saigenHud .sg-panel .sg-honbun-wrap:has(.sg-waka-text){height:192px}
+}
+/* SAIGEN_LANDSCAPE_END */
 /* ===== 恋愛モード (renaiShort / renaiSim) ===== */
 body.renai-mode #topbar{display:flex!important}
 #renaiHud{position:fixed;inset:0;z-index:45;pointer-events:none;display:none}

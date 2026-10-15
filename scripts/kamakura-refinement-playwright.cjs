@@ -54,7 +54,7 @@ function check(ok,label){assert.ok(ok,label);passed.push(label);}
       ok.saddle=all(K.kura_saddle,'saddle-arch').length===2&&all(K.kura_saddle,'stirrup-ring').length===2;
       ok.bow=all(K.archer,'bow-limb').length===1&&all(K.archer,'drawn-string').length===1&&Math.abs(K.archer.rotation.y-Math.PI)<.01;
       const hitatare=[];worldK.traverse(o=>{if(o.userData.kamakuraAttire==='hitatare')hitatare.push(o);});
-      ok.matchingHitatare=hitatare.length>=5&&hitatare.every(o=>{const upper=o.getObjectByName('tailored-torso'),legs=all(o,'hakama-leg');return upper&&legs.length===2&&legs.every(leg=>leg.material===upper.material);});
+      ok.matchingHitatare=hitatare.length>=5&&hitatare.every(o=>{const upper=o.getObjectByName('tailored-torso'),legs=all(o,'hakama-leg').concat(all(o,'seated-hakama'));return upper&&legs.length===2&&legs.every(leg=>leg.material===upper.material);});
       ok.roleColorsRemain=new Set(hitatare.map(o=>o.getObjectByName('tailored-torso').material.color.getHex())).size>=3;
       ok.codex=['hori','karabori','dorui','itabei','dobashi','yaguramon','urakido','monomiyagura','shuden_k','mairado','akarishoji','okidatami','irori','samuraidokoro','umaya','uma','kaibaoke','kura_saddle','matoba','azuchi','kasagake_mato','baba','jibutsudo','amidabutsu','itakura','tawara','kamado','tsurubeido','hitatare','samuraieboshi'].every(id=>interactables[id]?.roots?.length);
       // Sweep the production collision resolver with small steps, no teleport across obstacles.

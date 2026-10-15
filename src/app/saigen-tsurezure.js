@@ -941,6 +941,29 @@ const SAIGEN_TSUREZURE=(()=>{
   SAIGEN_PROP_BUILDERS.tsurezure=build;
   if(typeof SAIGEN_CHARS!=="undefined")SAIGEN_CHARS.kenko=SAIGEN_CHARS.kenko||{name:"兼好法師",role:"kikoshi",palette:[0x2c2a28,0x3a3734,0xd8d4cc],scale:1,prop:null};
 
+  // A visitor owns the same assets and disposal path, without starting shots or background jobs.
+  function createHermitage(stage){
+    if(S.active)throw new Error("再現の舞台を閉じてから草庵を開いてください");
+    try{build(stage);}catch(e){dispose();throw e;}S.directVisit=true;S.curZone="an";S.lightTo2=null;S.shots=[];S.labelFig={};
+    const steps=[()=>runJob("sky"),()=>runJob("an"),()=>{
+      S.zones.an.position.set(0,0,0);S.zones.an.visible=true;S.sky.visible=true;
+      anSeason("autumn");hideAnProps();placeDesk("deskInside");
+      placeOn(S.assets.enza,"seatInside",-.06);placeOn(S.assets.lamp,"lamp");placeOn(S.assets.armrest,"armrest");
+      runJob("kenko-read");showKenko("read","seatInside",0);
+      S.shadowCenter.set(0,0,2);S.shadowHalf=32;setLight(presetState("autumnDay"),0);
+      S.lampCfg={on:false};if(S.assets.lamp.userData.setLit)S.assets.lamp.userData.setLit(false);
+      setLoops(BEAT_AUDIO[2]);
+    }];
+    let next=0,closed=false;
+    return {get ready(){return next===steps.length&&!closed;},get assets(){return S.assets;},
+      prepare(){if(closed)return false;if(next<steps.length)steps[next++]();return next===steps.length;},
+      update(dt,t){if(closed)return;update(dt,t);envHook(dt);},
+      setNight(on){if(closed||next<steps.length)return;setLight(presetState(on?"nightMoon":"autumnDay"),0);S.lampCfg={on:!!on,intensity:.75,distance:6,decay:1.8};
+        if(S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(on?1:0);
+        if(S.assets.lamp.userData.setLit)S.assets.lamp.userData.setLit(!!on);},
+      dispose(){if(closed)return;closed=true;S.directVisit=false;dispose();},heightAt:hAn,streamZ:anStreamZ};
+  }
+
   /* ============================================================
      本文(13場)
   ============================================================ */
@@ -1003,5 +1026,5 @@ const SAIGEN_TSUREZURE=(()=>{
     SAIGEN_SCENES.push({id:SCENE_ID,work:"徒然草",title:"第七段 あだし野の露消ゆる時なく",author:"兼好法師",unit:"場",
       env:"tsurezure",buildProps:"tsurezure",quietBg:true,quietUi:true,cast:[],beats:BEATS});
   }
-  return {S,ZONES,BEAT_SHOTS,BEATS,presetState,MACRO_SCALE,hAn,hAdashi,hToribe,anStreamZ};
+  return {S,ZONES,BEAT_SHOTS,BEATS,presetState,MACRO_SCALE,hAn,hAdashi,hToribe,anStreamZ,createHermitage};
 })();

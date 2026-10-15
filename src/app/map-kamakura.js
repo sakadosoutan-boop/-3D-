@@ -33,7 +33,8 @@ if(APP.map==="kamakura"){
      ※毎フレーム再表示される平安のアイドル系(童/雀/鳥・陰陽師トースト等)は本掃除では消えない。
        それらの遮断は各更新系を APP.map で分岐する別対応が必要(既存の課題・本Wave対象外)。 */
   function _kamaHideForeign(){
-    scene.children.forEach(o=>{ if(o===worldK||o.isLight||_kamaKeep.has(o))return; o.visible=false; });
+    const visitStage=window.KENKO_HERMITAGE?.stage;
+    scene.children.forEach(o=>{ if(o===worldK||o===visitStage||o.isLight||_kamaKeep.has(o))return; o.visible=false; });
   }
   [80,500,1200,2500,4500].forEach(t=>setTimeout(_kamaHideForeign,t));
 
@@ -211,12 +212,16 @@ if(APP.map==="kamakura"){
     const m=new THREE.Mesh(new THREE.TubeGeometry(curve,Math.max(8,pts.length*3),r,5,false),mat);m.castShadow=true;m.receiveShadow=true;return kPart(parent,m,name);
   }
   // 襞を別の棒で貼らず、衣の断面へ織り込む。SDF人物の輪郭/接地の考えを軽い輪断面へ適用。
+  const kGarmentGeometries=new Map();
   function kGarment(parent,mat,rings,name){
+    const key=JSON.stringify(rings);let geo=kGarmentGeometries.get(key);
+    if(!geo){
     const pos=[],uv=[],index=[],n=20;
     for(let j=0;j<rings.length;j++){const [y,rx,rz]=rings[j];for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,fold=1+.045*Math.cos(a*8)*(1-j/rings.length);pos.push(Math.cos(a)*rx*fold,y,Math.sin(a)*rz*fold);uv.push(i/n,j/(rings.length-1));}}
     for(let j=0;j<rings.length-1;j++)for(let i=0;i<n;i++){const a=j*(n+1)+i,b=a+n+1;index.push(a,b,a+1,a+1,b,b+1);}
     // 上下の開口は手/足や襟の内部へ重ねる。底を床へ突き抜ける球で塞がない。
-    const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));geo.setIndex(index);geo.computeVertexNormals();
+    geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));geo.setIndex(index);geo.computeVertexNormals();kGarmentGeometries.set(key,geo);
+    }
     const mesh=new THREE.Mesh(geo,mat);mesh.castShadow=true;mesh.receiveShadow=true;return kPart(parent,mesh,name);
   }
   const kClothMap=canv(64,64,(ctx,w,h)=>{ctx.fillStyle="#e3dfd5";ctx.fillRect(0,0,w,h);for(let i=0;i<w;i+=4){ctx.fillStyle="rgba(78,71,59,.07)";ctx.fillRect(i,0,1,h);ctx.fillRect(0,i,w,1);}});
@@ -352,7 +357,7 @@ if(APP.map==="kamakura"){
     g.userData.kamakuraAttire=isHitatare?"hitatare":o.monk?"monk":o.child?"child":"work-clothes";
     if(o.monk)kGarment(g,hakama,[[.075,.31,.21],[.20,.30,.20],[.48,.245,.16],[.78,.205,.145]],"monk-robe-hem");
     else [-1,1].forEach(s=>{const leg=kGarment(g,hakama,[[.07,.135,.13],[.19,.16,.15],[.40,.155,.15],[.65,.13,.125],[.77,.105,.10]],"hakama-leg");leg.position.x=s*.13;});
-    [-1,1].forEach(s=>{ g.add(cyl(.06,.07,.28,black,s*.12,.14,.02,7)); g.add(box(.14,.06,.24,black,s*.12,.03,.08,false)); }); // 足首/足
+    [-1,1].forEach(s=>{ kPart(g,cyl(.06,.07,.28,black,s*.12,.14,.02,7),'figure-ankle'); kPart(g,box(.14,.06,.24,black,s*.12,.03,.08,false),'figure-foot'); }); // 足首/足
     kGarment(g,cloth,[[.74,.215,.145],[.89,.255,.155],[1.09,.25,.16],[1.23,.21,.135],[1.31,.10,.085]],"tailored-torso");
     const collar=M({color:o.monk?0x6d6759:0xd8c7a3,roughness:.9});
     kBeam(g,[-.10,1.30,.10],[.14,.94,.15],.055,.028,collar,"crossed-collar");
@@ -371,13 +376,13 @@ if(APP.map==="kamakura"){
       kBeam(g,[0,1.28,.15],[.34,1.20,.91],.016,.016,MK.log,"nocked-arrow");
     } else {
       [-1,1].forEach(s=>{
-        const hand=o.oke?[s*.17,.96,.31]:o.monk?[s*.07,.96,.24]:o.kuwa&&s===1?[.30,.80,.28]:o.yumi&&s===1?[.35,.96,.14]:[s*.33,.80,.10];
+        const hand=o.workHands?o.workHands[s===-1?0:1]:o.oke?[s*.17,.96,.31]:o.monk?[s*.07,.96,.24]:o.kuwa&&s===1?[.30,.80,.28]:o.yumi&&s===1?[.35,.96,.14]:[s*.33,.80,.10];
         kBeam(g,[s*.20,1.22,0],[s*.30,1.00,.06],.20,.19,cloth,"sleeve-upper");
         kBeam(g,[s*.30,1.00,.06],hand,.14,.14,cloth,"sleeve-lower");
         kOval(g,skin,...hand,.055,.065,.05,"hand");
       });
     }
-    const head=new THREE.Mesh(new THREE.SphereGeometry(.135,12,10),skin);head.position.set(0,1.42,.02);head.scale.set(1,1.12,1);g.add(head);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.135,12,10),skin);head.position.set(0,1.42,.02);head.scale.set(1,1.12,1);kPart(g,head,'figure-head');
     if(o.kasa){                                                                                                             // 円錐の笠(農夫)
       const kasa=new THREE.Mesh(new THREE.ConeGeometry(.32,.28,16),M({color:o.kasaColor||0xc7a867,roughness:.95}));kasa.position.set(0,1.60,0);kasa.castShadow=true;kasa.receiveShadow=true;g.add(kasa);
     } else if(o.nohat){
@@ -674,7 +679,7 @@ if(APP.map==="kamakura"){
 
   /* ---- 13. 植栽(松・雑木。tree()流用。SEASONAL登録せず=常時表示) ---- */
   [[30,-30,3.4,"old"],[-30,-31,3.0,null],[32,10,3.2,"old"],[-28,29,2.8,null],[11,31,3.0,null],
-   [-11,-29,3.2,"old"],[27,-9,2.6,null],[-46,26,3.0,null],[47,-24,3.2,"old"],[45,21,2.6,null],
+   [-11,-29,3.2,"old"],[29,-9,2.6,null],[-46,26,3.0,null],[47,-24,3.2,"old"],[45,21,2.6,null],
    [-31,7,2.8,null],[24,-31,3.0,"old"]].forEach(p=>{
     const t=tree(p[2],p[3]); t.position.set(p[0],0,p[1]); worldK.add(t);
   });
@@ -743,6 +748,7 @@ if(APP.map==="kamakura"){
   const _enterMode=enterMode;
   enterMode=function(m){
     if(m!=="walk"&&m!=="title"&&m!=="quiz"){ toast("この館は散策と名称当てクイズのみ楽しめます",2600); return; }
+    if(m!=="walk"&&K.kyudoStop)K.kyudoStop(true);
     return _enterMode(m);
   };
   const _modeBriefData=modeBriefData;
@@ -911,6 +917,120 @@ if(APP.map==="kamakura"){
     const warabe=makeBushiFigure({color:0x9a4a38,hakama:0x4a5a6a,nohat:true,child:true,scale:.6}); warabe.position.set(-3,0,9); warabe.rotation.y=Math.PI; worldK.add(warabe);
   })();
 
+  /* ---- 18b. 荷・文書・食器を扱う生活の場（創作配置、典拠と年代は専用docs） ----
+     建物の外形と小道具を同じ親へ置き、床/台の上面を接合の基準にする。
+     新しい毎フレーム処理はない。ゲームは末尾の明示APIから別モジュールへ接続する。 */
+  const kLifeRoots=[],kLifeColliders=[],kLifeAnchors={};
+  const kLifeBoxGeo=new THREE.BoxGeometry(1,1,1),kLifeStone=M({color:0x77786c,roughness:1});
+  function kLifeBox(g,name,w,h,d,x,y,z,mat){
+    const m=new THREE.Mesh(kLifeBoxGeo,mat||MAT.wood);m.scale.set(w,h,d);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;return kPart(g,m,name);
+  }
+  function kLifeGroup(name,x,y,z,parent){const g=new THREE.Group();g.name=name;g.position.set(x,y,z);(parent||worldK).add(g);return g;}
+  function kLifeSolid(x,z,w,d){kSolid(x,z,w,d);kLifeColliders.push({x,z,w,d});}
+  function kLifeShelter(name,x,z,w,d,floor){
+    const g=kLifeGroup(name,x,0,z),postY=floor+2.35,postX=w/2-.18,postZ=d/2-.18;
+    kLifeRoots.push(g);g.userData.contentFacility=true;
+    if(floor){
+      kLifeBox(g,'work-floor',w,.18,d,0,floor-.09,0,MK.itabei);
+      KAMA_ZONES.push([x,z,w,d,floor]);
+      // 三段の上面と歩行高を同時生成。中央1.9mの入口を保つ。
+      for(let i=0;i<3;i++){const h=floor*(i+1)/3,zz=d/2+(2-i)*.38+.19;kLifeBox(g,'work-step',1.9,h,.40,0,h/2,zz);KAMA_ZONES.push([x,z+zz,1.9,.4,h]);}
+    }
+    for(const xx of[-postX,postX])for(const zz of[-postZ,postZ]){
+      kLifeBox(g,'work-post',.20,postY,.20,xx,postY/2,zz,MAT.woodDark);kLifeSolid(x+xx,z+zz,.20,.20);
+      kLifeBox(g,'post-stone',.32,.08,.32,xx,.04,zz,kLifeStone);
+    }
+    for(const zz of[-postZ,postZ])kLifeBox(g,'work-beam',w,.20,.22,0,postY,zz,MAT.woodDark);
+    for(const xx of[-postX,postX])kLifeBox(g,'work-tie',.18,.20,d,xx,postY,0,MAT.woodDark);
+    const roof=boardRoof(w+.9,d+1.0,1.0,.6,postY+.10);roof.name='work-roof';g.add(roof);
+    // 北壁のみ板で囲い、正面と両側から見通せる。柱→桁→屋根が連続。
+    kLifeBox(g,'work-back-wall',w-.35,2.15,.09,0,floor+1.075,-postZ,MK.itabei);kLifeSolid(x,z-postZ,w-.35,.09);
+    return g;
+  }
+  function kLifeTable(parent,x,y,z,w,d,h){
+    const t=kLifeGroup('work-table',x,y,z,parent);kLifeBox(t,'table-top',w,.07,d,0,h-.035,0,MK.itabei);
+    for(const xx of[-w/2+.10,w/2-.10])for(const zz of[-d/2+.10,d/2-.10])kLifeBox(t,'table-leg',.09,h-.06,.09,xx,(h-.06)/2,zz,MAT.woodDark);
+    for(const zz of[-d/2+.10,d/2-.10])kLifeBox(t,'table-stretcher',w-.2,.06,.06,0,.16,zz,MAT.woodDark);return t;
+  }
+  const kBentwoodGeo=new THREE.LatheGeometry([[0,0],[.30,0],[.32,.03],[.32,.34],[.291,.34],[.291,.045],[0,.045]].map(p=>new THREE.Vector2(...p)),20);
+  const kBowlGeo=new THREE.LatheGeometry([[0,0],[.07,0],[.075,.035],[.13,.07],[.18,.16],[.182,.185],[.164,.185],[.15,.12],[.105,.065],[0,.052]].map(p=>new THREE.Vector2(...p)),20);
+  const kBowlMat=M({color:0x54271e,roughness:.47}),kPaperMat=M({color:0xe8dfbd,roughness:1}),kInkMat=M({color:0x343532,roughness:.78});
+  function kBentwood(parent,x,y,z){
+    const g=kLifeGroup('bentwood-vessel',x,y,z,parent);kPart(g,new THREE.Mesh(kBentwoodGeo,MAT.wood),'bentwood-wall-and-base');
+    // 薄板の継ぎ目を縫い留める。桶の縦板/箍と取り違えない。
+    for(const yy of[.09,.17,.25])kLifeBox(g,'bentwood-stitch',.055,.015,.018,.02,yy,.320,MAT.woodDark);
+    return g;
+  }
+  function kBowl(parent,x,y,z){const m=new THREE.Mesh(kBowlGeo,kBowlMat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;return kPart(parent,m,'lacquer-bowl');}
+  function kLifePerson(id,x,y,z,options){
+    const g=makeBushiFigure(options);g.name=id;g.position.set(x,y,z);g.userData.contentRole=id;worldK.add(g);K[id]=g;return g;
+  }
+  (function dailyWork(){
+    // 荷受けは倉南側。厩と東の松の間に接近路を残す。
+    const load=kLifeShelter('delivery-shelter',24,-10,5.2,3.8,0);K.niuke=load;
+    const rack=kLifeTable(load,-1.1,0,-.60,1.65,.90,.42);kLifeSolid(22.9,-10.6,1.65,.90);
+    K.magemono=kBentwood(rack,-.35,.42,0);kBentwood(rack,.38,.42,0);
+    const tied=kLifeGroup('tied-package',1.05,0,-.65,load);
+    kLifeBox(tied,'package-core',.90,.60,.72,0,.30,0,MK.wara);
+    for(const xx of[-.26,.26])kCurve(tied,[[xx,.05,-.37],[xx,.62,-.37],[xx,.63,.37],[xx,.05,.37]],.018,kRope,'package-lashing');
+    kLifeSolid(25.05,-10.65,.94,.78);
+    K.nifuda=kLifeGroup('cargo-tag',0,.44,.39,tied);
+    kLifeBox(K.nifuda,'tag-board',.18,.29,.025,0,0,0,MAT.wood);
+    kCurve(K.nifuda,[[0,.11,.012],[0,.23,-.03],[0,.20,-.08]],.012,kRope,'tag-string');
+    [-.045,0,.045].forEach((xx,i)=>kLifeBox(K.nifuda,'tag-ink',.012,.10+i*.015,.003,xx,-.015,.014,kInkMat));
+    const porter=kLifePerson('nihakobi_k',24.3,0,-8.25,{nohat:true,color:0x7e7456,hakama:0x665641,workHands:[[-.25,.99,.35],[.25,.99,.35]]});
+    kLifeBox(porter,'carried-box',.55,.30,.43,0,1.10,.36,MK.wara);
+    kLifeBox(porter,'carried-tie',.57,.025,.025,0,1.10,.59,kRope);
+    kLifeAnchors.deliveries={object:porter,position:{x:24.3,y:0,z:-6.8},itemId:'nihakobi_k'};
+
+    // 文書を扱う小部屋。主殿に隣接する創作の事務空間で、幕府の政所の復元ではない。
+    const office=kLifeShelter('document-room',-15,-6,4.8,4.0,.36);K.fumidokoro=office;
+    const desk=kLifeTable(office,-.55,.36,-.35,1.90,.80,.46);K.fumizukue=desk;kLifeSolid(-15.55,-6.35,1.9,.8);
+    K.suzuri_k=kLifeGroup('writing-kit',.47,.46,0,desk);
+    kLifeBox(K.suzuri_k,'inkstone-base',.28,.045,.42,0,.0225,0,kInkMat);
+    kLifeBox(K.suzuri_k,'inkstone-sea',.205,.004,.13,0,.047,-.10,MK.slit);
+    const waterMat=M({color:0x967846,metalness:.38,roughness:.58});
+    kOval(K.suzuri_k,waterMat,.33,.09,-.06,.09,.09,.085,'water-dropper');
+    kBeam(K.suzuri_k,[.32,.10,0],[.32,.12,.06],.032,.032,waterMat,'water-dropper-spout');
+    kLifeBox(K.suzuri_k,'ink-stick',.035,.025,.14,-.19,.013,-.07,kInkMat);
+    K.shojo_k=kLifeGroup('letter-sheet',-.32,.465,.04,desk);
+    kLifeBox(K.shojo_k,'letter-paper',.58,.009,.38,0,.0045,0,kPaperMat);
+    for(let col=0;col<5;col++)for(let row=0;row<5;row++)kLifeBox(K.shojo_k,'letter-ink',.012+(row%2)*.012,.001,.018,.20-col*.09,.0097,-.13+row*.046,kInkMat);
+    const writer=kLifePerson('kakite_k',-15.55,.36,-7.05,{color:0x655274,workHands:[[-.22,1.00,.33],[-.12,1.00,.42]]});
+    // 跪坐：元の立脚だけを外し、上半身を膝上へ下げる。机と筆・掌が同じ高さになる。
+    writer.children.slice().forEach(o=>{if(o.name==='hakama-leg'||o.name==='figure-ankle'||o.name==='figure-foot')writer.remove(o);else o.position.y-=.46;});
+    const cloth=writer.getObjectByName('tailored-torso').material;
+    [-1,1].forEach(s=>kOval(writer,cloth,s*.16,.16,.09,.18,.16,.30,'seated-hakama'));
+    kBeam(writer,[-.12,.54,.42],[-.12,.486,.59],.018,.018,MAT.woodDark,'held-brush');
+    kOval(writer,kInkMat,-.12,.478,.606,.011,.015,.02,'brush-tip');
+    // 手紙を運ぶ役は机正面の開口から離し、入口と既存の西回廊を空ける。
+    const messenger=kLifePerson('tsukai_k',-17.0,0,-2.35,{color:0x54705e,workHands:[[-.17,.96,.31],[.17,.96,.31]]});
+    kLifeBox(messenger,'folded-letter',.36,.20,.035,0,1.03,.33,kPaperMat);
+    kLifeBox(messenger,'letter-tie',.018,.21,.038,0,1.03,.33,kRope);
+    kLifeAnchors.documents={object:writer,position:{x:-15,y:.36,z:-4.8},itemId:'kakite_k'};
+    kLifeAnchors.messenger={object:messenger,position:{x:-17,y:0,z:-.9},itemId:'tsukai_k'};
+
+    // 配膳仕事場は竈屋の西北。水を汲む・炊く・器を整える場を区別する。
+    const serving=kLifeShelter('serving-shelter',-7,-19,4.7,3.2,0);K.haizendai=serving;
+    const table=kLifeTable(serving,0,0,-.55,2.9,.9,.79);kLifeSolid(-7,-19.55,2.9,.9);
+    K.urushiwan=kLifeGroup('serving-bowls',-.66,.79,0,table);
+    kBowl(K.urushiwan,-.30,0,0);kBowl(K.urushiwan,.20,0,0);kBowl(table,.7,.79,.07);
+    const vessel=kBentwood(table,1.05,.79,-.12);vessel.scale.setScalar(.64);
+    K.hashi_k=kLifeGroup('chopsticks',-.24,.80,.29,table);
+    [-.028,.028].forEach(zz=>kLifeBox(K.hashi_k,'chopstick',.30,.012,.012,0,0,zz,MAT.wood));
+    const server=kLifePerson('haizen_k',-7,0,-17.90,{nohat:true,color:0x99795b,hakama:0x545f59,workHands:[[-.28,.97,.34],[.28,.97,.34]]});
+    kLifeBox(server,'carried-tray',.62,.035,.42,0,.99,.35,MAT.woodDark);kBowl(server,0,1.0075,.35);
+    kLifeAnchors.serving={object:server,position:{x:-7,y:0,z:-16.6},itemId:'haizen_k'};
+    // 登録根とラベル位置を一つの表へ。後で子を先に図鑑登録する。
+    K.contentEntries=[['magemono',K.magemono,[22.55,1.1,-10.6]],['nifuda',K.nifuda,[25.05,1.1,-10.3]],
+      ['suzuri_k',K.suzuri_k,[-15.08,1.15,-6.35]],['shojo_k',K.shojo_k,[-15.87,1.08,-6.31]],
+      ['urushiwan',K.urushiwan,[-7.66,1.35,-19.55]],['hashi_k',K.hashi_k,[-7.24,1.10,-19.26]],
+      ['niuke',K.niuke,[24,3.4,-10]],['haizendai',K.haizendai,[-7,3.1,-19]],
+      ['kakite_k',writer,[-15.55,1.75,-7.05]],['tsukai_k',messenger,[-17,2.1,-2.35]],
+      ['nihakobi_k',porter,[24.3,2.1,-8.25]],['haizen_k',server,[-7,2.1,-17.90]]];
+    kLifeRoots.forEach(g=>g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}}));
+  })();
+
   /* ---- 19. 図鑑登録・名称札・クイズ鎌倉編(計画§4/§5, Wave2) ----
      register() でクリック対象化(rayTargets)＋interactables登録、makeLabel() で名称札を生成。
      本ブロックは本体の自動ラベル付与ループ(約8346行)より後に実行されるため makeLabel を手動で呼ぶ。
@@ -921,6 +1041,8 @@ if(APP.map==="kamakura"){
     const V=(x,y,z)=>new THREE.Vector3(x,y,z);
     const done={};
     function reg(root,id,lp){ if(!root||!ITEMS[id])return; register(root,id,lp); if(!done[id]){done[id]=true; makeLabel(id);} }
+
+    K.contentEntries.forEach(([id,root,p])=>reg(root,id,V(...p)));
 
     /* 地形・外構 */
     reg(K.hori,"hori",V(8,1.1,39.5));
@@ -1015,7 +1137,7 @@ if(APP.map==="kamakura"){
     })();
 
     /* 稽古状態と的リスト(丸的/掛け替え的/笠懸の的×3) */
-    const kyudo={active:false,fired:0,landed:0,score:0,cd:0,stance:{x:20,z:24.5},stuck:[],targets:[]};
+    const kyudo={active:false,fired:0,landed:0,score:0,cd:0,generation:0,resultTimer:null,resultOpen:false,savedView:null,stance:{x:20,z:24.5},stuck:[],targets:[]};
     APP.kamaKyudo=kyudo;
     if(K.mato_main)kyudo.targets.push({m:K.mato_main,r:.7});
     if(K.mato_spare)kyudo.targets.push({m:K.mato_spare,r:.6});
@@ -1034,20 +1156,34 @@ if(APP.map==="kamakura"){
     }
 
     function start(){
+      if(APP.map!=="kamakura"||APP.mode!=="walk"||!worldK.visible)return;
+      if((window.KAMAKURA_GAMES&&window.KAMAKURA_GAMES.state.active)||(window.KENKO_HERMITAGE&&window.KENKO_HERMITAGE.active)||(window.KAMAKURA_CUSTOMS&&window.KAMAKURA_CUSTOMS.state.active))return;
+      if(kyudo.savedView===null)kyudo.savedView=APP.view;
+      kyudo.generation++;clearTimeout(kyudo.resultTimer);kyudo.resultTimer=null;kyudo.resultOpen=false;closeModal();APP.view="fp";
       kyudo.active=true; kyudo.fired=0; kyudo.landed=0; kyudo.score=0; kyudo.cd=0;
       clearStuck();
       player.pos.x=kyudo.stance.x; player.pos.z=kyudo.stance.z; player.yaw=0; player.pitch=-0.02;
+      player.pos.y=groundH(player.pos.x,player.pos.z)+1.62;
+      camera.position.copy(player.pos);camera.lookAt(player.pos.x,player.pos.y-.13,18);camera.updateMatrixWorld(true);worldK.updateMatrixWorld(true);
+      if(typeof dummyCam!=="undefined"&&dummyCam){dummyCam.position.copy(camera.position);dummyCam.quaternion.copy(camera.quaternion);}
       toast("弓の稽古。画面タップで射る。振り向けば馬場の的も。Escで中断",4200);
     }
-    function stop(){ kyudo.active=false; closeModal(); toast("弓の稽古を切り上げた",1600); }
+    function restoreView(){if(kyudo.savedView!==null){APP.view=kyudo.savedView;kyudo.savedView=null;}}
+    function validSession(token){return token===kyudo.generation&&kyudo.active&&APP.map==="kamakura"&&APP.mode==="walk"&&worldK.visible;}
+    function stop(silent){
+      const hadSession=kyudo.active||kyudo.resultTimer!==null||kyudo.resultOpen;
+      kyudo.generation++;clearTimeout(kyudo.resultTimer);kyudo.resultTimer=null;kyudo.active=false;kyudo.resultOpen=false;restoreView();
+      if(hadSession){closeModal();clearStuck();if(!silent)toast("弓の稽古を切り上げた",1600);}
+    }
     function confirmStart(){
       modal({title:"的場・射座",body:"射座に立った。<br>弓の稽古を始めますか？",actions:[
         {label:"始める",primary:true,on:()=>{ closeModal(); start(); }},
         {label:"やめる",on:()=>closeModal()}
       ]});
     }
-    function result(){
-      kyudo.active=false;
+    function result(token){
+      if(!validSession(token))return;
+      kyudo.resultTimer=null;kyudo.active=false;kyudo.resultOpen=true;restoreView();
       let best=parseInt(localStorage.getItem("kamakura-kyudo-best")||"0",10); if(!(best>=0))best=0;
       const isNew=kyudo.score>best; if(isNew){ best=kyudo.score; try{ localStorage.setItem("kamakura-kyudo-best",String(best)); }catch(_e){} }
       const rating=kyudo.score>=16?"見事":kyudo.score>=9?"なかなか":"まだまだ";
@@ -1059,15 +1195,18 @@ if(APP.map==="kamakura"){
           {label:"やめる",on:()=>{ closeModal(); stop(); }}
         ]});
     }
-    function land(pts,from,to,stuck){
+    function land(token,pts,from,to,stuck){
+      if(!validSession(token))return;
       if(stuck){ seArrowHit(); addStuck(from,to); }
       kyudo.score+=pts; kyudo.landed++;
       toast((pts===2?"中心! +2":pts===1?"的中 +1":"外れ…")+"　(計 "+kyudo.score+"点 / "+kyudo.landed+"射)",1500);
-      if(kyudo.landed>=10)setTimeout(result,650);
+      if(kyudo.landed>=10){clearTimeout(kyudo.resultTimer);kyudo.resultTimer=setTimeout(()=>result(token),650);}
     }
     function shoot(sx,sy){
-      if(!kyudo.active)return; const now=performance.now();
+      const token=kyudo.generation;if(!validSession(token))return; const now=performance.now();
       if(kyudo.fired>=10)return; if(now<(kyudo.cd||0))return; kyudo.cd=now+260;
+      if(!Number.isFinite(sx))sx=innerWidth/2;if(!Number.isFinite(sy))sy=innerHeight/2;
+      camera.updateMatrixWorld(true);worldK.updateMatrixWorld(true);
       raycaster.setFromCamera({x:sx/innerWidth*2-1,y:-(sy/innerHeight)*2+1},camera);
       const meshes=kyudo.targets.map(t=>t.m);
       const hits=raycaster.intersectObjects(meshes,false);
@@ -1079,9 +1218,10 @@ if(APP.map==="kamakura"){
       else { to=raycaster.ray.at(30,new THREE.Vector3()); }
       const from=camera.position.clone().add(raycaster.ray.direction.clone().multiplyScalar(.6));
       kyudo.fired++; seArrowShot();
-      spawnArrow(from,to,()=>{ if(kyudo.active||kyudo.landed<10)land(pts,from,to,stuck); });
+      spawnArrow(from,to,()=>land(token,pts,from,to,stuck));
     }
     K.kyudoStart=start; // Wave3-②(郎党「弓稽古の話を聞く」)から呼ぶ
+    K.kyudoShoot=shoot;K.kyudoStop=stop;
 
     /* pick相乗り(function宣言＝本ガード内で再代入可。射座と稽古中の射撃のみ横取りし他は元pickへ委譲) */
     const kamaExtra=[]; if(K.kyudoSeat)kamaExtra.push(K.kyudoSeat);
@@ -1103,8 +1243,9 @@ if(APP.map==="kamakura"){
 
     /* animate相乗り(function宣言を再代入。稽古中の移動固定＋矢の飛翔更新＋射座近接ヒント) */
     const _animate=animate;
-    animate=function(now){ _animate(now); try{ kamaFrame(now); }catch(_e){} };
+    animate=function(now){ _animate(now); if(window.KENKO_HERMITAGE&&window.KENKO_HERMITAGE.active){if(kyudo.active)stop(true);return;} try{ kamaFrame(now); }catch(_e){} };
     function kamaFrame(now){
+      if(kyudo.active&&!validSession(kyudo.generation))stop(true);
       if(kyudo.active){ player.pos.x=kyudo.stance.x; player.pos.z=kyudo.stance.z; }
       if(taijiArrows.length)updateTaijiFx(performance.now());
       if(!kyudo.active&&APP.mode==="walk"&&!K._seatHinted&&K.kyudoSeat){
@@ -1179,7 +1320,7 @@ if(APP.map==="kamakura"){
         {label:"名を当ててみよ（名称当てクイズ）",primary:true,on:()=>{ K.closeModal(); startKamaQuiz(); }},
         {label:"弓稽古の話を聞く",on:()=>{ K.closeModal(); if(typeof beep==="function")beep(600,.06);
           toast("「弓馬の道こそ武士の本分。あの射座に立てば、稽古を始められる」",4200);
-          setTimeout(()=>{ if(K.kyudoStart)K.kyudoStart(); },800); }}
+          if(K.kyudoStart)K.kyudoStart(); }}
       ]});
     }
 
@@ -1189,8 +1330,16 @@ if(APP.map==="kamakura"){
     /* ①の pick 相乗りへ分岐を差し込む(郎党→クイズ選択 / 馬→世話panel)。他は元pickへ委譲 */
     K.pickHook=function(hit){
       let o=hit.object; while(o&&o!==scene){ if(o.userData&&o.userData.kamaArcher){ openArcherPanel(); return true; } o=o.parent; }
+      if(APP.mode==="walk"&&worldK.visible&&hit.object.userData&&hit.object.userData.iid==="kakite_k"){
+        const actions=[];
+        if(window.KAMAKURA_CUSTOMS&&typeof window.KAMAKURA_CUSTOMS.open==="function")actions.push({label:"書付を照合する",primary:true,on:()=>{K.closeModal();window.KAMAKURA_CUSTOMS.open(true);}});
+        actions.push({label:"この人の仕事を見る",on:()=>{K.closeModal();showInfo("kakite_k");}},{label:"戻る",on:()=>K.closeModal()});
+        K.modal({title:"書付を扱う人",body:"「紙に記したことと、持参した控えを確かめましょう。」<br>人物と照合の内容は、この館のために作ったものです。",actions});return true;
+      }
       if(hit.object.userData&&hit.object.userData.iid==="uma"){ openCarePanel(); return true; }
       return false;
     };
   })();
+  // 別モジュールが人物/用具に体験を結ぶための小さな公開面。保存/移動/イベントをここでは追加しない。
+  window.KAMAKURA_WORLD={K,world:worldK,anchors:kLifeAnchors,contentIds:K.contentEntries.map(e=>e[0])};
 }

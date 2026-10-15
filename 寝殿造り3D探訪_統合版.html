@@ -2683,6 +2683,27 @@ body.saigen-mode #toast{bottom:auto;top:calc(env(safe-area-inset-top) + 74px)}
   #saigenHud .sg-btn{padding:8px 13px;font-size:12px}
   #sgLabels .sg-label{font-size:10.5px;padding:1px 6px}
 }
+/* SAIGEN_LANDSCAPE_BEGIN: preparation covers the scene; replay controls remain available. */
+body.saigen-mode #loadingScreen{z-index:44;pointer-events:none}
+@media (orientation:landscape) and (max-height:520px){
+  #saigenHud .sg-panel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto 1fr auto auto;column-gap:12px;padding:6px 9px 7px}
+  #saigenHud .sg-speaker{grid-column:1/-1;grid-row:1;margin-bottom:3px}
+  #saigenHud .sg-panel .sg-honbun-wrap{grid-column:1;grid-row:2/5;min-width:0;height:calc(100vh - 140px);height:calc(100dvh - 140px);max-height:none}
+  #saigenHud .sg-yaku-label{grid-column:2;grid-row:2;margin-top:0}
+  #saigenHud .sg-panel .sg-yaku{grid-column:2;grid-row:3;align-self:start;max-height:none}
+  #saigenHud .sg-note{grid-column:2;grid-row:4;align-self:start}
+  #saigenHud .sg-nav{grid-column:1/-1;grid-row:5;margin-top:6px}
+  #saigenHud .sg-btn{padding:6px 12px;font-size:11px}
+}
+@media (orientation:landscape) and (max-height:340px){
+  #saigenHud .sg-honbun.sg-waka-text{font-size:11px}
+  #saigenHud .sg-honbun:not(.sg-waka-text){font-size:12px;line-height:1.8;letter-spacing:.04em;padding:6px 8px}
+  #saigenHud .sg-yaku{font-size:12px;line-height:1.5}
+}
+@media (orientation:portrait){
+  #saigenHud .sg-panel .sg-honbun-wrap:has(.sg-waka-text){height:192px}
+}
+/* SAIGEN_LANDSCAPE_END */
 /* ===== 恋愛モード (renaiShort / renaiSim) ===== */
 body.renai-mode #topbar{display:flex!important}
 #renaiHud{position:fixed;inset:0;z-index:45;pointer-events:none;display:none}
@@ -4273,6 +4294,37 @@ body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf
 @media(prefers-reduced-motion:reduce){.selected-rain-glass i{animation:none;display:none}}
 /* APP_SELECTED_VISUALS_CSS_EMBED_END */
 </style>
+<style>
+/* APP_KAMAKURA_CUSTOMS_CSS_EMBED_BEGIN (src/app/kamakura-customs.css から自動生成。ここを直接編集しない) */
+#kamaLetters[hidden],#kamaLettersPrompt[hidden]{display:none!important}
+#kamaLetters{position:fixed;inset:0;z-index:550;display:flex;align-items:center;justify-content:center;background:#13170fe8;color:#342818;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));font-family:var(--serif,serif)}
+#kamaLetters .kc-frame{width:min(860px,100%);max-height:100%;overflow:auto;overscroll-behavior:contain;background:#efe2c4;border:2px solid #9e7b42;border-radius:12px;padding:20px;box-shadow:0 16px 65px #0008}
+#kamaLetters header{display:flex;justify-content:space-between;align-items:center;gap:12px}#kamaLetters h2{margin:4px 0;font-size:23px}#kamaLetters small{color:#755025}
+#kamaLetters button{font:inherit;cursor:pointer;color:#f8edd7;background:#584127;border:1px solid #826139;border-radius:7px;min-height:44px;padding:8px 15px}#kamaLetters button:focus-visible,#kamaLetters summary:focus-visible{outline:3px solid #12677d;outline-offset:3px}
+#kamaLetters .kc-intro{font-size:13px;line-height:1.8}#kamaLetters .kc-progress{font-weight:bold;color:#66441d}#kamaLetters .kc-content{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+#kamaLetters .kc-letter{padding:15px 20px;background:#faf2db;border:1px solid #baa47a;border-radius:3px;box-shadow:2px 4px 7px #68533018}#kamaLetters h3{font-size:17px;margin:0 0 10px;border-bottom:1px solid #cab994;padding-bottom:9px}
+#kamaLetters dl{margin:0}#kamaLetters dl>div{display:grid;grid-template-columns:4.5em 1fr;padding:10px 5px;border-bottom:1px dashed #d5c7aa}#kamaLetters dt{color:#76603d;font-size:13px}#kamaLetters dd{margin:0;font-size:19px;letter-spacing:.12em}#kamaLetters .kc-different{background:#f3ce87;border:1px solid #a56923!important;border-radius:3px}#kamaLetters .kc-letter-foot{font-size:11px;color:#8a744d;margin:15px 0 0}
+#kamaLetters .kc-feedback{min-height:2.8em;line-height:1.6;margin:18px 0 10px;font-weight:bold}#kamaLetters .kc-actions{display:flex;gap:12px;flex-wrap:wrap}#kamaLetters details{font-size:12px;line-height:1.8;margin-top:16px}#kamaLetters summary{cursor:pointer}#kamaLetters a{color:#15556a}#kamaLetters .kc-result{grid-column:1/-1;line-height:1.8}#kamaLetters ol{padding-left:1.5em;font-size:14px}
+#kamaLettersPrompt{position:fixed;right:12px;bottom:max(18px,env(safe-area-inset-bottom));z-index:510;padding:11px 15px;border:1px solid #bc9863;border-radius:8px;color:#f3dfae;background:#18303cee;font:14px var(--serif,serif);cursor:pointer;min-height:44px}
+body.kamakura-customs-mode #crosshair,body.kamakura-customs-mode #kamaGamesPrompt{display:none!important}
+@media(max-width:600px){#kamaLetters .kc-frame{padding:14px}#kamaLetters h2{font-size:19px}#kamaLetters .kc-content{gap:9px}#kamaLetters .kc-letter{padding:12px 8px}#kamaLetters dl>div{display:block;padding:7px 3px}#kamaLetters dd{font-size:17px;margin-top:3px}#kamaLetters h3{font-size:14px}#kamaLetters .kc-letter-foot{font-size:10px}}
+/* APP_KAMAKURA_CUSTOMS_CSS_EMBED_END */
+</style>
+<style>
+/* APP_KENKO_HERMITAGE_CSS_EMBED_BEGIN (src/app/kenko-hermitage.css から自動生成。ここを直接編集しない) */
+body.kenko-hermitage-mode #topbar,body.kenko-hermitage-mode #worldStatusBar,body.kenko-hermitage-mode #minimapWrap,body.kenko-hermitage-mode #homeChoices,body.kenko-hermitage-mode #renaiWorldStatus{display:none!important}
+body.kenko-hermitage-mode #kamaKyudoHud,body.kenko-hermitage-mode #kamaGamesPrompt,body.kenko-hermitage-mode #kamaGamesHud,body.kenko-hermitage-mode #kamaLettersPrompt{display:none!important}
+body.kenko-hermitage-mode #selectedWorldOpen,body.kenko-hermitage-mode #selectedWorldPanel{display:none!important}
+body.kenko-hermitage-mode #modeBrief{display:none!important}
+#kenkoVisitHud[hidden],#kenkoVisitNote[hidden]{display:none!important}
+#kenkoVisitHud{position:fixed;z-index:110;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(760px,calc(100vw - 24px));padding:12px 16px;background:rgba(26,22,17,.88);border:1px solid #a18448;border-radius:12px;color:#f4ead5;box-sizing:border-box;pointer-events:auto}
+#kenkoVisitHud header,#kenkoVisitNote header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#kenkoVisitHud h2{margin:2px 0;font-size:18px}#kenkoVisitHud small{color:#d6bc86}#kenkoVisitHud p{font-size:12px;margin:8px 0;line-height:1.6}#kenkoVisitHud nav{display:flex;gap:6px;flex-wrap:wrap}
+#kenkoVisitHud button,#kenkoVisitNote button{padding:9px 12px;min-height:40px;border:1px solid #a18448;border-radius:6px;background:#30291e;color:#f6e8c7;font:inherit;font-size:12px;cursor:pointer}#kenkoVisitHud button:focus-visible,#kenkoVisitNote button:focus-visible,#kenkoVisitNote a:focus-visible{outline:3px solid #f8d982;outline-offset:3px}
+#kenkoVisitNote{position:fixed;z-index:500;left:50%;top:50%;transform:translate(-50%,-50%);width:min(540px,calc(100vw - 32px));max-height:75vh;overflow:auto;box-sizing:border-box;padding:22px;background:#211d17;color:#f4ead5;border:1px solid #b29458;border-radius:12px;box-shadow:0 0 0 100vmax #0009}#kenkoVisitNote h2{font-size:18px;margin:0}#kenkoVisitNote p{font-size:14px;line-height:1.9}#kenkoVisitNote a{color:#e7c77d}
+@media(max-width:600px){#kenkoVisitHud{padding:8px 10px}#kenkoVisitHud nav{gap:4px}#kenkoVisitHud button{padding:8px;font-size:11px}#kenkoVisitHud h2{font-size:16px}}
+/* APP_KENKO_HERMITAGE_CSS_EMBED_END */
+</style>
 </head>
 <body>
 <!-- ============================================================
@@ -5633,6 +5685,19 @@ seiryu:{n:"青竜",k:"せいりゅう",cat:"s",d:"四神(しじん)の一つで�
 suzaku:{n:"朱雀",k:"すざく",cat:"s",d:"四神の一つで、南を守る赤い霊鳥(れいちょう)。五行では夏・火にあたる。南の池の上に、うっすらと舞い現れる。",t:"平安京の南の正門は<b>朱雀門</b>、都の中央を貫く大路は<b>朱雀大路</b>。南に開けた池沼が朱雀にあたる。"},
 byakko:{n:"白虎",k:"びゃっこ",cat:"s",d:"四神の一つで、西を守る白い虎。五行では秋・金にあたる。西の門に近づくと、うっすらと姿を現す。",t:"四神相応では、西へ走る<b>大道(山陽道)</b>が白虎にあたるとされる。白は西と秋の色。"},
 genbu:{n:"玄武",k:"げんぶ",cat:"s",d:"四神の一つで、北を守る、亀(かめ)に蛇(へび)が巻きついた姿の霊獣。五行では冬・水にあたる。北の門に近づくと、うっすらと姿を現す。",t:"四神相応では、北にそびえる<b>船岡山(ふなおかやま)</b>が玄武にあたるとされる。玄(くろ)は北と冬の色。"},
+/* ---- 武家の生活仕事（配置・人物はゲーム創作。典拠の年代は本文でも区別） ---- */
+niuke:{n:"荷受けの庇",k:"にうけのひさし",cat:"k",d:"倉へ納める前に、荷と容器を確かめる仕事場。屋根の下の台、包みを縛る縄、曲物を見てみよう。ここでは荷を運ぶ人が、包みを両手で支えている。",t:"この庇と作業順は<b>ゲームの創作配置</b>。発掘された特定の館の復元ではない。食料を蓄える倉だけでなく、運ぶ・受け取る・確かめる仕事を表した。すべての館に同じ施設があったとは限らない。"},
+magemono:{n:"曲物",k:"まげもの",cat:"k",d:"薄い木の板を曲げて側面を作り、底板と組み合わせた容器。模型では開いた口から内側と底が見え、側面の継ぎ目を小さな綴じ目で表している。縦板を並べた桶とは作りが違う。",t:"鎌倉市の発掘資料には、曲物やしゃもじなどの生活用品がある。ここでは<b>鎌倉期の出土品を参考にした簡略模型</b>を荷受けと配膳の場へ置いた。資料ごとの細かな年代・用途まで、13世紀前半のこの館と同一視しない。"},
+nifuda:{n:"荷の付札",k:"にのつけふだ",cat:"k",d:"包みに結びつけ、荷を見分けるための木の札。この模型では札を縄へつなぎ、荷物と札が離れないようにしている。文字の跡は、読み取りやすく省略したゲーム用の表現。",t:"草戸千軒町遺跡の出土品には付札などの木簡がある。ただし遺跡の年代は<b>13世紀中頃〜16世紀初頭</b>で、この館の基準より後まで含む。ここへの配置と荷の内容は創作。1265年銘の鎌倉の警護番役の木札を、荷札として扱っているわけではない。"},
+suzuri_k:{n:"硯と水滴",k:"すずりとすいてき",cat:"k",d:"墨をすり、水を少しずつ加えるための道具。黒い硯には墨をする面と液をためる部分、小さな水滴には口がある。書付の机で、筆・墨・紙との組み合わせを見てみよう。",t:"<b>北条氏常盤亭跡</b>から硯と水滴が出土している。公開資料の年代は鎌倉時代（展示資料によって13〜14世紀）で、13世紀前半と限定できるものではない。この模型の輪郭・寸法・配置は説明用に簡略化した。"},
+shojo_k:{n:"書状",k:"しょじょう",cat:"k",d:"知らせや依頼、処理すべき事柄を紙に記したもの。この模型では机に開いた紙と、使者が持つ折りたたんだ紙を置き、書く人から運ぶ人へのつながりを表している。",t:"三重県所蔵の<b>北条義時書状</b>は、承久4年（1222）とみられ、寺領をめぐる訴えの処理を伝える。武士の仕事は武芸だけではなかった。模型や照合遊びの文面は創作で、実物の翻刻・裁許の再現ではない。"},
+haizendai:{n:"配膳の仕事場",k:"はいぜんのしごとば",cat:"k",d:"竈で炊いた物を運ぶ前に、器をそろえる場。柱と梁が屋根を支え、台の脚が天板を受ける。台の上には漆椀・箸・曲物、配膳役の手には器を載せた盆がある。",t:"<b>配置と台の形はゲーム用の構成</b>。鎌倉市内の遺跡から出土した食器や生活用品を参考に、炊く・器を整える・運ぶという別々の仕事を見える形にした。特定の家の献立や食事作法を復元したものではない。"},
+urushiwan:{n:"漆椀",k:"うるしわん",cat:"k",d:"木の器に漆を塗った椀。模型では高台、丸く広がる胴、薄い口縁、くぼんだ内側を作り分けた。台の上と配膳役の盆の上にあり、器の底がそれぞれの面へ接している。",t:"鎌倉の遺跡からは、黒漆と赤色の漆で花や鳥などを描いた椀皿も出土している。武家の生活を<b>飾りのない道具だけ</b>で捉えないようにしたい。模型は無文の簡略形で、個々の出土品の文様や年代を再現していない。"},
+hashi_k:{n:"箸",k:"はし",cat:"k",d:"食べ物をはさんで口へ運ぶ二本の細い道具。配膳の台に並べた模型では、椀や曲物との大きさの違いも見てみよう。",t:"鎌倉市の発掘資料には<b>箸を含む生活用品</b>が示されている。身近な小道具も、当時の食事を考える手がかりになる。この模型の並べ方を、その時代の唯一の配膳作法として覚えるものではない。"},
+kakite_k:{n:"書付を扱う人",k:"かきつけをあつかうひと",cat:"k",d:"書付の机で筆を持ち、文書を確かめる人。硯・墨・水滴・紙をそろえ、座った姿勢で作業している。この人物から、書付の照合の体験へ進める。",t:"人物と担当名は<b>ゲームの創作</b>で、すべての館にこの名の役職があったという意味ではない。1222年とみられる北条義時書状などを手がかりに、文書による伝達や土地をめぐる処理を考える。"},
+tsukai_k:{n:"書状を運ぶ使者",k:"しょじょうをはこぶししゃ",cat:"k",d:"折りたたんだ書状を両手で持ち、取り次ぎを待つ人。書く場所と受け取る場所を結ぶ役割を表した。入口の階段をふさがない位置に立っている。",t:"この人物、衣の色、持ち方、行き先は<b>ゲーム用の設定</b>。残された書状から伝達の仕事を考えられるが、この模型の姿が特定の使者の復元であるわけではない。"},
+nihakobi_k:{n:"荷を運ぶ人",k:"にをはこぶひと",cat:"k",d:"荷受けの庇で包みを両手に抱えている人。荷を置く台、倉、台所の位置を見比べると、館の暮らしが運ぶ仕事に支えられていることが分かる。",t:"人物と作業の組み合わせは<b>ゲームの創作</b>。12世紀の『信貴山縁起絵巻』にも米俵を扱う人々が描かれるが、先行する物語絵巻の一場面を、すべての武家の生活規則に広げない。"},
+haizen_k:{n:"器を運ぶ人",k:"うつわをはこぶひと",cat:"k",d:"盆の上に椀を載せ、両手で支える配膳役。竈・井戸・配膳の仕事場を見比べると、一回の食事にも複数の仕事があることをたどれる。",t:"人物と役割分担は<b>ゲームの創作</b>。出土した食器から暮らしを考える場面として設けた。調理や配膳に携わる人を、性別や身分だけで一律に決めつけるものではない。"},
 /* ---- 武家(鎌倉・?map=kamakura で登場) ---- */
 hori:{n:"堀",k:"ほり",cat:"k",d:"館の四方をぐるりと囲む堀。水を張った水堀と、水のない空堀があり、外から攻め寄せる敵の侵入を防いだ。築地塀で「格式」を示した寝殿造りに対し、武家の館はまず堀で「守り」を固めた。",t:"各地に残る<b>「堀ノ内」「土居」</b>という地名は、かつて堀と土塁に囲まれた武士の館があった名残。一辺50〜100mほどの四角い構え(方形館)が基本だった。"},
 karabori:{n:"空堀",k:"からぼり",cat:"k",d:"水を張らず、掘っただけの乾いた堀。台地の上など水を引きにくい土地では、水堀のかわりにこちらが築かれた。底を深く、斜面を急にして、敵がよじ登りにくいよう工夫された。",t:"水堀と空堀は、土地の高さや水の便で使い分けられた。空堀はのちの戦国の城でも守りの主役となり、<b>堀切</b>や竪堀(たてぼり)へと発達していく。"},
@@ -10263,7 +10328,7 @@ function updateHouseholdWalk(dt,t){
   const ESTATE_TAG="〔屋敷の一日〕";
   function notify(message,ms){say(ESTATE_TAG+" "+message,ms);}
   function sound(f){if(typeof beep==="function")beep(f,.045,"sine",.055);}
-  function walkMode(){return !!(APP&&APP.mode==="walk");}
+  function walkMode(){return !!(APP&&APP.mode==="walk"&&APP.map!=="kamakura");}
   function blocked(){return !walkMode()||!!(APP&&APP.gisshaCarry&&APP.gisshaCarry.active);}
   function actorFor(id){return state.actors[id]||null;}
   function actorDistance(root){
@@ -11819,7 +11884,7 @@ function makeWarawa(){
   sparrowChase.flock=flock;
 })();
 function updateSparrowChase(t){
-  const day=(APP.time==="day");                          // [fix] 童・雀は昼のみ出現(夜/夕は非表示=ピックも無効)
+  const day=APP.map!=="kamakura"&&(APP.time==="day");                       // [fix] 童・雀は昼のみ出現(夜/夕は非表示=ピックも無効)
   if(sparrowChase.child)sparrowChase.child.visible=day;
   if(sparrowChase.flock)sparrowChase.flock.visible=day;
   if(!day)return;
@@ -34135,6 +34200,29 @@ const SAIGEN_TSUREZURE=(()=>{
   SAIGEN_PROP_BUILDERS.tsurezure=build;
   if(typeof SAIGEN_CHARS!=="undefined")SAIGEN_CHARS.kenko=SAIGEN_CHARS.kenko||{name:"兼好法師",role:"kikoshi",palette:[0x2c2a28,0x3a3734,0xd8d4cc],scale:1,prop:null};
 
+  // A visitor owns the same assets and disposal path, without starting shots or background jobs.
+  function createHermitage(stage){
+    if(S.active)throw new Error("再現の舞台を閉じてから草庵を開いてください");
+    try{build(stage);}catch(e){dispose();throw e;}S.directVisit=true;S.curZone="an";S.lightTo2=null;S.shots=[];S.labelFig={};
+    const steps=[()=>runJob("sky"),()=>runJob("an"),()=>{
+      S.zones.an.position.set(0,0,0);S.zones.an.visible=true;S.sky.visible=true;
+      anSeason("autumn");hideAnProps();placeDesk("deskInside");
+      placeOn(S.assets.enza,"seatInside",-.06);placeOn(S.assets.lamp,"lamp");placeOn(S.assets.armrest,"armrest");
+      runJob("kenko-read");showKenko("read","seatInside",0);
+      S.shadowCenter.set(0,0,2);S.shadowHalf=32;setLight(presetState("autumnDay"),0);
+      S.lampCfg={on:false};if(S.assets.lamp.userData.setLit)S.assets.lamp.userData.setLit(false);
+      setLoops(BEAT_AUDIO[2]);
+    }];
+    let next=0,closed=false;
+    return {get ready(){return next===steps.length&&!closed;},get assets(){return S.assets;},
+      prepare(){if(closed)return false;if(next<steps.length)steps[next++]();return next===steps.length;},
+      update(dt,t){if(closed)return;update(dt,t);envHook(dt);},
+      setNight(on){if(closed||next<steps.length)return;setLight(presetState(on?"nightMoon":"autumnDay"),0);S.lampCfg={on:!!on,intensity:.75,distance:6,decay:1.8};
+        if(S.assets.hut.userData.setNight)S.assets.hut.userData.setNight(on?1:0);
+        if(S.assets.lamp.userData.setLit)S.assets.lamp.userData.setLit(!!on);},
+      dispose(){if(closed)return;closed=true;S.directVisit=false;dispose();},heightAt:hAn,streamZ:anStreamZ};
+  }
+
   /* ============================================================
      本文(13場)
   ============================================================ */
@@ -34197,7 +34285,7 @@ const SAIGEN_TSUREZURE=(()=>{
     SAIGEN_SCENES.push({id:SCENE_ID,work:"徒然草",title:"第七段 あだし野の露消ゆる時なく",author:"兼好法師",unit:"場",
       env:"tsurezure",buildProps:"tsurezure",quietBg:true,quietUi:true,cast:[],beats:BEATS});
   }
-  return {S,ZONES,BEAT_SHOTS,BEATS,presetState,MACRO_SCALE,hAn,hAdashi,hToribe,anStreamZ};
+  return {S,ZONES,BEAT_SHOTS,BEATS,presetState,MACRO_SCALE,hAn,hAdashi,hToribe,anStreamZ,createHermitage};
 })();
 /* APP_SAIGEN_TSUREZURE_EMBED_END */
 
@@ -36919,6 +37007,7 @@ function animate(now){
      REDUCED_MOTIONでは無効。時計(clock)自体はそのまま進めるため一時停止とは競合しない。 */
   if(typeof HITSTOP_UNTIL!=="undefined"&&HITSTOP_UNTIL>now)dt*=0.04;
   const t=clock.elapsedTime;
+  if(typeof KENKO_HERMITAGE!=="undefined"&&KENKO_HERMITAGE.active){KENKO_HERMITAGE.frame(dt,t);return;}
   __perf.tick(dt);  /* [Phase0] パフォーマンス計測 */
   /* 波AF: プレイ時間統計をメモリ上へ蓄積(タイトル中は数えない)。書き込みは30秒毎にまとめて行う。
      物理用dt(上の.08クランプ)ではなく__rawDtを1秒までで丸めた値を使う。理由:
@@ -37100,7 +37189,7 @@ function animate(now){
   // 四神: 四方の門/池に近づくとうっすら出現し図鑑に登録
   if(typeof SHISHIN!=="undefined")SHISHIN.forEach(s=>{
     const d=Math.hypot(player.pos.x-s.px, player.pos.z-s.pz);
-    const spiritBlocked=!!APP.gisshaCarry?.active||(s.id==="seiryu"&&(APP.mode==="quiz"||APP.mode==="quest"||APP.mode==="kaimami"));
+    const spiritBlocked=APP.map==="kamakura"||!!APP.gisshaCarry?.active||(s.id==="seiryu"&&(APP.mode==="quiz"||APP.mode==="quest"||APP.mode==="kaimami"));
     const target=s.ready&&!spiritBlocked?Math.max(0,Math.min(1,(s.R-d)/(s.R-5)))*0.76:0;
     if(spiritBlocked)s.base=0;else s.base+=(target-s.base)*Math.min(1,dt*3);
     const vis=s.base>0.012;s.g.visible=vis;
@@ -37142,7 +37231,7 @@ function animate(now){
   }
 
   /* --- 夜の怪異 --- */
-  const nightFade=Math.max(0,Math.min(1,(cur.moon-0.05)/0.3)); 
+  const nightFade=APP.map==="kamakura"?0:Math.max(0,Math.min(1,(cur.moon-0.05)/0.3));
   // ボス戦中は鬼の乱入を止める(雑魚討伐フェーズのみ出現)。ボスラッシュ中は常に非表示。
   const _tj=APP.taiji,_bossOn=APP.mode==="taiji"&&_tj&&(_tj.bossRush||_tj.bossSpawned||_tj.bossLoading||(_tj.boss&&!_tj.boss.dead)||(_tj.bossGate&&_tj.bossGate.triggered));
   creatures.oni.forEach(o=>{
@@ -37663,6 +37752,8 @@ function animate(now){
     if(typeof SELECTED_WORLD!=="undefined"&&SELECTED_WORLD)SELECTED_WORLD.update(dt,t);
     if(typeof SELECTED_VISUALS!=="undefined"&&SELECTED_VISUALS)SELECTED_VISUALS.update(dt,t);
     if(typeof SELECTED_PERFORMANCE!=="undefined"&&SELECTED_PERFORMANCE)SELECTED_PERFORMANCE.update(t);
+    if(typeof KAMAKURA_GAMES!=="undefined")KAMAKURA_GAMES.update(dt,t);
+    if(typeof KAMAKURA_CUSTOMS!=="undefined")KAMAKURA_CUSTOMS.update();
     if(typeof CREATURE_REFINEMENT!=="undefined"&&CREATURE_REFINEMENT)CREATURE_REFINEMENT.update(camera);
     if(typeof NIGHT_LIGHTING!=="undefined"&&NIGHT_LIGHTING)NIGHT_LIGHTING.update(camera);
     /* [発熱対策] 自由散策では影マップの更新を2フレームに1回へ間引く。太陽はほぼ静止しキャスターも大半が静的なので体感差はなく、影パスのGPU負荷を約半減できる。他モード(退治戦など動きの速い影)は毎フレーム更新へ戻す */
@@ -42009,7 +42100,8 @@ if(APP.map==="kamakura"){
      ※毎フレーム再表示される平安のアイドル系(童/雀/鳥・陰陽師トースト等)は本掃除では消えない。
        それらの遮断は各更新系を APP.map で分岐する別対応が必要(既存の課題・本Wave対象外)。 */
   function _kamaHideForeign(){
-    scene.children.forEach(o=>{ if(o===worldK||o.isLight||_kamaKeep.has(o))return; o.visible=false; });
+    const visitStage=window.KENKO_HERMITAGE?.stage;
+    scene.children.forEach(o=>{ if(o===worldK||o===visitStage||o.isLight||_kamaKeep.has(o))return; o.visible=false; });
   }
   [80,500,1200,2500,4500].forEach(t=>setTimeout(_kamaHideForeign,t));
 
@@ -42187,12 +42279,16 @@ if(APP.map==="kamakura"){
     const m=new THREE.Mesh(new THREE.TubeGeometry(curve,Math.max(8,pts.length*3),r,5,false),mat);m.castShadow=true;m.receiveShadow=true;return kPart(parent,m,name);
   }
   // 襞を別の棒で貼らず、衣の断面へ織り込む。SDF人物の輪郭/接地の考えを軽い輪断面へ適用。
+  const kGarmentGeometries=new Map();
   function kGarment(parent,mat,rings,name){
+    const key=JSON.stringify(rings);let geo=kGarmentGeometries.get(key);
+    if(!geo){
     const pos=[],uv=[],index=[],n=20;
     for(let j=0;j<rings.length;j++){const [y,rx,rz]=rings[j];for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,fold=1+.045*Math.cos(a*8)*(1-j/rings.length);pos.push(Math.cos(a)*rx*fold,y,Math.sin(a)*rz*fold);uv.push(i/n,j/(rings.length-1));}}
     for(let j=0;j<rings.length-1;j++)for(let i=0;i<n;i++){const a=j*(n+1)+i,b=a+n+1;index.push(a,b,a+1,a+1,b,b+1);}
     // 上下の開口は手/足や襟の内部へ重ねる。底を床へ突き抜ける球で塞がない。
-    const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));geo.setIndex(index);geo.computeVertexNormals();
+    geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));geo.setIndex(index);geo.computeVertexNormals();kGarmentGeometries.set(key,geo);
+    }
     const mesh=new THREE.Mesh(geo,mat);mesh.castShadow=true;mesh.receiveShadow=true;return kPart(parent,mesh,name);
   }
   const kClothMap=canv(64,64,(ctx,w,h)=>{ctx.fillStyle="#e3dfd5";ctx.fillRect(0,0,w,h);for(let i=0;i<w;i+=4){ctx.fillStyle="rgba(78,71,59,.07)";ctx.fillRect(i,0,1,h);ctx.fillRect(0,i,w,1);}});
@@ -42328,7 +42424,7 @@ if(APP.map==="kamakura"){
     g.userData.kamakuraAttire=isHitatare?"hitatare":o.monk?"monk":o.child?"child":"work-clothes";
     if(o.monk)kGarment(g,hakama,[[.075,.31,.21],[.20,.30,.20],[.48,.245,.16],[.78,.205,.145]],"monk-robe-hem");
     else [-1,1].forEach(s=>{const leg=kGarment(g,hakama,[[.07,.135,.13],[.19,.16,.15],[.40,.155,.15],[.65,.13,.125],[.77,.105,.10]],"hakama-leg");leg.position.x=s*.13;});
-    [-1,1].forEach(s=>{ g.add(cyl(.06,.07,.28,black,s*.12,.14,.02,7)); g.add(box(.14,.06,.24,black,s*.12,.03,.08,false)); }); // 足首/足
+    [-1,1].forEach(s=>{ kPart(g,cyl(.06,.07,.28,black,s*.12,.14,.02,7),'figure-ankle'); kPart(g,box(.14,.06,.24,black,s*.12,.03,.08,false),'figure-foot'); }); // 足首/足
     kGarment(g,cloth,[[.74,.215,.145],[.89,.255,.155],[1.09,.25,.16],[1.23,.21,.135],[1.31,.10,.085]],"tailored-torso");
     const collar=M({color:o.monk?0x6d6759:0xd8c7a3,roughness:.9});
     kBeam(g,[-.10,1.30,.10],[.14,.94,.15],.055,.028,collar,"crossed-collar");
@@ -42347,13 +42443,13 @@ if(APP.map==="kamakura"){
       kBeam(g,[0,1.28,.15],[.34,1.20,.91],.016,.016,MK.log,"nocked-arrow");
     } else {
       [-1,1].forEach(s=>{
-        const hand=o.oke?[s*.17,.96,.31]:o.monk?[s*.07,.96,.24]:o.kuwa&&s===1?[.30,.80,.28]:o.yumi&&s===1?[.35,.96,.14]:[s*.33,.80,.10];
+        const hand=o.workHands?o.workHands[s===-1?0:1]:o.oke?[s*.17,.96,.31]:o.monk?[s*.07,.96,.24]:o.kuwa&&s===1?[.30,.80,.28]:o.yumi&&s===1?[.35,.96,.14]:[s*.33,.80,.10];
         kBeam(g,[s*.20,1.22,0],[s*.30,1.00,.06],.20,.19,cloth,"sleeve-upper");
         kBeam(g,[s*.30,1.00,.06],hand,.14,.14,cloth,"sleeve-lower");
         kOval(g,skin,...hand,.055,.065,.05,"hand");
       });
     }
-    const head=new THREE.Mesh(new THREE.SphereGeometry(.135,12,10),skin);head.position.set(0,1.42,.02);head.scale.set(1,1.12,1);g.add(head);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.135,12,10),skin);head.position.set(0,1.42,.02);head.scale.set(1,1.12,1);kPart(g,head,'figure-head');
     if(o.kasa){                                                                                                             // 円錐の笠(農夫)
       const kasa=new THREE.Mesh(new THREE.ConeGeometry(.32,.28,16),M({color:o.kasaColor||0xc7a867,roughness:.95}));kasa.position.set(0,1.60,0);kasa.castShadow=true;kasa.receiveShadow=true;g.add(kasa);
     } else if(o.nohat){
@@ -42650,7 +42746,7 @@ if(APP.map==="kamakura"){
 
   /* ---- 13. 植栽(松・雑木。tree()流用。SEASONAL登録せず=常時表示) ---- */
   [[30,-30,3.4,"old"],[-30,-31,3.0,null],[32,10,3.2,"old"],[-28,29,2.8,null],[11,31,3.0,null],
-   [-11,-29,3.2,"old"],[27,-9,2.6,null],[-46,26,3.0,null],[47,-24,3.2,"old"],[45,21,2.6,null],
+   [-11,-29,3.2,"old"],[29,-9,2.6,null],[-46,26,3.0,null],[47,-24,3.2,"old"],[45,21,2.6,null],
    [-31,7,2.8,null],[24,-31,3.0,"old"]].forEach(p=>{
     const t=tree(p[2],p[3]); t.position.set(p[0],0,p[1]); worldK.add(t);
   });
@@ -42719,6 +42815,7 @@ if(APP.map==="kamakura"){
   const _enterMode=enterMode;
   enterMode=function(m){
     if(m!=="walk"&&m!=="title"&&m!=="quiz"){ toast("この館は散策と名称当てクイズのみ楽しめます",2600); return; }
+    if(m!=="walk"&&K.kyudoStop)K.kyudoStop(true);
     return _enterMode(m);
   };
   const _modeBriefData=modeBriefData;
@@ -42887,6 +42984,120 @@ if(APP.map==="kamakura"){
     const warabe=makeBushiFigure({color:0x9a4a38,hakama:0x4a5a6a,nohat:true,child:true,scale:.6}); warabe.position.set(-3,0,9); warabe.rotation.y=Math.PI; worldK.add(warabe);
   })();
 
+  /* ---- 18b. 荷・文書・食器を扱う生活の場（創作配置、典拠と年代は専用docs） ----
+     建物の外形と小道具を同じ親へ置き、床/台の上面を接合の基準にする。
+     新しい毎フレーム処理はない。ゲームは末尾の明示APIから別モジュールへ接続する。 */
+  const kLifeRoots=[],kLifeColliders=[],kLifeAnchors={};
+  const kLifeBoxGeo=new THREE.BoxGeometry(1,1,1),kLifeStone=M({color:0x77786c,roughness:1});
+  function kLifeBox(g,name,w,h,d,x,y,z,mat){
+    const m=new THREE.Mesh(kLifeBoxGeo,mat||MAT.wood);m.scale.set(w,h,d);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;return kPart(g,m,name);
+  }
+  function kLifeGroup(name,x,y,z,parent){const g=new THREE.Group();g.name=name;g.position.set(x,y,z);(parent||worldK).add(g);return g;}
+  function kLifeSolid(x,z,w,d){kSolid(x,z,w,d);kLifeColliders.push({x,z,w,d});}
+  function kLifeShelter(name,x,z,w,d,floor){
+    const g=kLifeGroup(name,x,0,z),postY=floor+2.35,postX=w/2-.18,postZ=d/2-.18;
+    kLifeRoots.push(g);g.userData.contentFacility=true;
+    if(floor){
+      kLifeBox(g,'work-floor',w,.18,d,0,floor-.09,0,MK.itabei);
+      KAMA_ZONES.push([x,z,w,d,floor]);
+      // 三段の上面と歩行高を同時生成。中央1.9mの入口を保つ。
+      for(let i=0;i<3;i++){const h=floor*(i+1)/3,zz=d/2+(2-i)*.38+.19;kLifeBox(g,'work-step',1.9,h,.40,0,h/2,zz);KAMA_ZONES.push([x,z+zz,1.9,.4,h]);}
+    }
+    for(const xx of[-postX,postX])for(const zz of[-postZ,postZ]){
+      kLifeBox(g,'work-post',.20,postY,.20,xx,postY/2,zz,MAT.woodDark);kLifeSolid(x+xx,z+zz,.20,.20);
+      kLifeBox(g,'post-stone',.32,.08,.32,xx,.04,zz,kLifeStone);
+    }
+    for(const zz of[-postZ,postZ])kLifeBox(g,'work-beam',w,.20,.22,0,postY,zz,MAT.woodDark);
+    for(const xx of[-postX,postX])kLifeBox(g,'work-tie',.18,.20,d,xx,postY,0,MAT.woodDark);
+    const roof=boardRoof(w+.9,d+1.0,1.0,.6,postY+.10);roof.name='work-roof';g.add(roof);
+    // 北壁のみ板で囲い、正面と両側から見通せる。柱→桁→屋根が連続。
+    kLifeBox(g,'work-back-wall',w-.35,2.15,.09,0,floor+1.075,-postZ,MK.itabei);kLifeSolid(x,z-postZ,w-.35,.09);
+    return g;
+  }
+  function kLifeTable(parent,x,y,z,w,d,h){
+    const t=kLifeGroup('work-table',x,y,z,parent);kLifeBox(t,'table-top',w,.07,d,0,h-.035,0,MK.itabei);
+    for(const xx of[-w/2+.10,w/2-.10])for(const zz of[-d/2+.10,d/2-.10])kLifeBox(t,'table-leg',.09,h-.06,.09,xx,(h-.06)/2,zz,MAT.woodDark);
+    for(const zz of[-d/2+.10,d/2-.10])kLifeBox(t,'table-stretcher',w-.2,.06,.06,0,.16,zz,MAT.woodDark);return t;
+  }
+  const kBentwoodGeo=new THREE.LatheGeometry([[0,0],[.30,0],[.32,.03],[.32,.34],[.291,.34],[.291,.045],[0,.045]].map(p=>new THREE.Vector2(...p)),20);
+  const kBowlGeo=new THREE.LatheGeometry([[0,0],[.07,0],[.075,.035],[.13,.07],[.18,.16],[.182,.185],[.164,.185],[.15,.12],[.105,.065],[0,.052]].map(p=>new THREE.Vector2(...p)),20);
+  const kBowlMat=M({color:0x54271e,roughness:.47}),kPaperMat=M({color:0xe8dfbd,roughness:1}),kInkMat=M({color:0x343532,roughness:.78});
+  function kBentwood(parent,x,y,z){
+    const g=kLifeGroup('bentwood-vessel',x,y,z,parent);kPart(g,new THREE.Mesh(kBentwoodGeo,MAT.wood),'bentwood-wall-and-base');
+    // 薄板の継ぎ目を縫い留める。桶の縦板/箍と取り違えない。
+    for(const yy of[.09,.17,.25])kLifeBox(g,'bentwood-stitch',.055,.015,.018,.02,yy,.320,MAT.woodDark);
+    return g;
+  }
+  function kBowl(parent,x,y,z){const m=new THREE.Mesh(kBowlGeo,kBowlMat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;return kPart(parent,m,'lacquer-bowl');}
+  function kLifePerson(id,x,y,z,options){
+    const g=makeBushiFigure(options);g.name=id;g.position.set(x,y,z);g.userData.contentRole=id;worldK.add(g);K[id]=g;return g;
+  }
+  (function dailyWork(){
+    // 荷受けは倉南側。厩と東の松の間に接近路を残す。
+    const load=kLifeShelter('delivery-shelter',24,-10,5.2,3.8,0);K.niuke=load;
+    const rack=kLifeTable(load,-1.1,0,-.60,1.65,.90,.42);kLifeSolid(22.9,-10.6,1.65,.90);
+    K.magemono=kBentwood(rack,-.35,.42,0);kBentwood(rack,.38,.42,0);
+    const tied=kLifeGroup('tied-package',1.05,0,-.65,load);
+    kLifeBox(tied,'package-core',.90,.60,.72,0,.30,0,MK.wara);
+    for(const xx of[-.26,.26])kCurve(tied,[[xx,.05,-.37],[xx,.62,-.37],[xx,.63,.37],[xx,.05,.37]],.018,kRope,'package-lashing');
+    kLifeSolid(25.05,-10.65,.94,.78);
+    K.nifuda=kLifeGroup('cargo-tag',0,.44,.39,tied);
+    kLifeBox(K.nifuda,'tag-board',.18,.29,.025,0,0,0,MAT.wood);
+    kCurve(K.nifuda,[[0,.11,.012],[0,.23,-.03],[0,.20,-.08]],.012,kRope,'tag-string');
+    [-.045,0,.045].forEach((xx,i)=>kLifeBox(K.nifuda,'tag-ink',.012,.10+i*.015,.003,xx,-.015,.014,kInkMat));
+    const porter=kLifePerson('nihakobi_k',24.3,0,-8.25,{nohat:true,color:0x7e7456,hakama:0x665641,workHands:[[-.25,.99,.35],[.25,.99,.35]]});
+    kLifeBox(porter,'carried-box',.55,.30,.43,0,1.10,.36,MK.wara);
+    kLifeBox(porter,'carried-tie',.57,.025,.025,0,1.10,.59,kRope);
+    kLifeAnchors.deliveries={object:porter,position:{x:24.3,y:0,z:-6.8},itemId:'nihakobi_k'};
+
+    // 文書を扱う小部屋。主殿に隣接する創作の事務空間で、幕府の政所の復元ではない。
+    const office=kLifeShelter('document-room',-15,-6,4.8,4.0,.36);K.fumidokoro=office;
+    const desk=kLifeTable(office,-.55,.36,-.35,1.90,.80,.46);K.fumizukue=desk;kLifeSolid(-15.55,-6.35,1.9,.8);
+    K.suzuri_k=kLifeGroup('writing-kit',.47,.46,0,desk);
+    kLifeBox(K.suzuri_k,'inkstone-base',.28,.045,.42,0,.0225,0,kInkMat);
+    kLifeBox(K.suzuri_k,'inkstone-sea',.205,.004,.13,0,.047,-.10,MK.slit);
+    const waterMat=M({color:0x967846,metalness:.38,roughness:.58});
+    kOval(K.suzuri_k,waterMat,.33,.09,-.06,.09,.09,.085,'water-dropper');
+    kBeam(K.suzuri_k,[.32,.10,0],[.32,.12,.06],.032,.032,waterMat,'water-dropper-spout');
+    kLifeBox(K.suzuri_k,'ink-stick',.035,.025,.14,-.19,.013,-.07,kInkMat);
+    K.shojo_k=kLifeGroup('letter-sheet',-.32,.465,.04,desk);
+    kLifeBox(K.shojo_k,'letter-paper',.58,.009,.38,0,.0045,0,kPaperMat);
+    for(let col=0;col<5;col++)for(let row=0;row<5;row++)kLifeBox(K.shojo_k,'letter-ink',.012+(row%2)*.012,.001,.018,.20-col*.09,.0097,-.13+row*.046,kInkMat);
+    const writer=kLifePerson('kakite_k',-15.55,.36,-7.05,{color:0x655274,workHands:[[-.22,1.00,.33],[-.12,1.00,.42]]});
+    // 跪坐：元の立脚だけを外し、上半身を膝上へ下げる。机と筆・掌が同じ高さになる。
+    writer.children.slice().forEach(o=>{if(o.name==='hakama-leg'||o.name==='figure-ankle'||o.name==='figure-foot')writer.remove(o);else o.position.y-=.46;});
+    const cloth=writer.getObjectByName('tailored-torso').material;
+    [-1,1].forEach(s=>kOval(writer,cloth,s*.16,.16,.09,.18,.16,.30,'seated-hakama'));
+    kBeam(writer,[-.12,.54,.42],[-.12,.486,.59],.018,.018,MAT.woodDark,'held-brush');
+    kOval(writer,kInkMat,-.12,.478,.606,.011,.015,.02,'brush-tip');
+    // 手紙を運ぶ役は机正面の開口から離し、入口と既存の西回廊を空ける。
+    const messenger=kLifePerson('tsukai_k',-17.0,0,-2.35,{color:0x54705e,workHands:[[-.17,.96,.31],[.17,.96,.31]]});
+    kLifeBox(messenger,'folded-letter',.36,.20,.035,0,1.03,.33,kPaperMat);
+    kLifeBox(messenger,'letter-tie',.018,.21,.038,0,1.03,.33,kRope);
+    kLifeAnchors.documents={object:writer,position:{x:-15,y:.36,z:-4.8},itemId:'kakite_k'};
+    kLifeAnchors.messenger={object:messenger,position:{x:-17,y:0,z:-.9},itemId:'tsukai_k'};
+
+    // 配膳仕事場は竈屋の西北。水を汲む・炊く・器を整える場を区別する。
+    const serving=kLifeShelter('serving-shelter',-7,-19,4.7,3.2,0);K.haizendai=serving;
+    const table=kLifeTable(serving,0,0,-.55,2.9,.9,.79);kLifeSolid(-7,-19.55,2.9,.9);
+    K.urushiwan=kLifeGroup('serving-bowls',-.66,.79,0,table);
+    kBowl(K.urushiwan,-.30,0,0);kBowl(K.urushiwan,.20,0,0);kBowl(table,.7,.79,.07);
+    const vessel=kBentwood(table,1.05,.79,-.12);vessel.scale.setScalar(.64);
+    K.hashi_k=kLifeGroup('chopsticks',-.24,.80,.29,table);
+    [-.028,.028].forEach(zz=>kLifeBox(K.hashi_k,'chopstick',.30,.012,.012,0,0,zz,MAT.wood));
+    const server=kLifePerson('haizen_k',-7,0,-17.90,{nohat:true,color:0x99795b,hakama:0x545f59,workHands:[[-.28,.97,.34],[.28,.97,.34]]});
+    kLifeBox(server,'carried-tray',.62,.035,.42,0,.99,.35,MAT.woodDark);kBowl(server,0,1.0075,.35);
+    kLifeAnchors.serving={object:server,position:{x:-7,y:0,z:-16.6},itemId:'haizen_k'};
+    // 登録根とラベル位置を一つの表へ。後で子を先に図鑑登録する。
+    K.contentEntries=[['magemono',K.magemono,[22.55,1.1,-10.6]],['nifuda',K.nifuda,[25.05,1.1,-10.3]],
+      ['suzuri_k',K.suzuri_k,[-15.08,1.15,-6.35]],['shojo_k',K.shojo_k,[-15.87,1.08,-6.31]],
+      ['urushiwan',K.urushiwan,[-7.66,1.35,-19.55]],['hashi_k',K.hashi_k,[-7.24,1.10,-19.26]],
+      ['niuke',K.niuke,[24,3.4,-10]],['haizendai',K.haizendai,[-7,3.1,-19]],
+      ['kakite_k',writer,[-15.55,1.75,-7.05]],['tsukai_k',messenger,[-17,2.1,-2.35]],
+      ['nihakobi_k',porter,[24.3,2.1,-8.25]],['haizen_k',server,[-7,2.1,-17.90]]];
+    kLifeRoots.forEach(g=>g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}}));
+  })();
+
   /* ---- 19. 図鑑登録・名称札・クイズ鎌倉編(計画§4/§5, Wave2) ----
      register() でクリック対象化(rayTargets)＋interactables登録、makeLabel() で名称札を生成。
      本ブロックは本体の自動ラベル付与ループ(約8346行)より後に実行されるため makeLabel を手動で呼ぶ。
@@ -42897,6 +43108,8 @@ if(APP.map==="kamakura"){
     const V=(x,y,z)=>new THREE.Vector3(x,y,z);
     const done={};
     function reg(root,id,lp){ if(!root||!ITEMS[id])return; register(root,id,lp); if(!done[id]){done[id]=true; makeLabel(id);} }
+
+    K.contentEntries.forEach(([id,root,p])=>reg(root,id,V(...p)));
 
     /* 地形・外構 */
     reg(K.hori,"hori",V(8,1.1,39.5));
@@ -42991,7 +43204,7 @@ if(APP.map==="kamakura"){
     })();
 
     /* 稽古状態と的リスト(丸的/掛け替え的/笠懸の的×3) */
-    const kyudo={active:false,fired:0,landed:0,score:0,cd:0,stance:{x:20,z:24.5},stuck:[],targets:[]};
+    const kyudo={active:false,fired:0,landed:0,score:0,cd:0,generation:0,resultTimer:null,resultOpen:false,savedView:null,stance:{x:20,z:24.5},stuck:[],targets:[]};
     APP.kamaKyudo=kyudo;
     if(K.mato_main)kyudo.targets.push({m:K.mato_main,r:.7});
     if(K.mato_spare)kyudo.targets.push({m:K.mato_spare,r:.6});
@@ -43010,20 +43223,34 @@ if(APP.map==="kamakura"){
     }
 
     function start(){
+      if(APP.map!=="kamakura"||APP.mode!=="walk"||!worldK.visible)return;
+      if((window.KAMAKURA_GAMES&&window.KAMAKURA_GAMES.state.active)||(window.KENKO_HERMITAGE&&window.KENKO_HERMITAGE.active)||(window.KAMAKURA_CUSTOMS&&window.KAMAKURA_CUSTOMS.state.active))return;
+      if(kyudo.savedView===null)kyudo.savedView=APP.view;
+      kyudo.generation++;clearTimeout(kyudo.resultTimer);kyudo.resultTimer=null;kyudo.resultOpen=false;closeModal();APP.view="fp";
       kyudo.active=true; kyudo.fired=0; kyudo.landed=0; kyudo.score=0; kyudo.cd=0;
       clearStuck();
       player.pos.x=kyudo.stance.x; player.pos.z=kyudo.stance.z; player.yaw=0; player.pitch=-0.02;
+      player.pos.y=groundH(player.pos.x,player.pos.z)+1.62;
+      camera.position.copy(player.pos);camera.lookAt(player.pos.x,player.pos.y-.13,18);camera.updateMatrixWorld(true);worldK.updateMatrixWorld(true);
+      if(typeof dummyCam!=="undefined"&&dummyCam){dummyCam.position.copy(camera.position);dummyCam.quaternion.copy(camera.quaternion);}
       toast("弓の稽古。画面タップで射る。振り向けば馬場の的も。Escで中断",4200);
     }
-    function stop(){ kyudo.active=false; closeModal(); toast("弓の稽古を切り上げた",1600); }
+    function restoreView(){if(kyudo.savedView!==null){APP.view=kyudo.savedView;kyudo.savedView=null;}}
+    function validSession(token){return token===kyudo.generation&&kyudo.active&&APP.map==="kamakura"&&APP.mode==="walk"&&worldK.visible;}
+    function stop(silent){
+      const hadSession=kyudo.active||kyudo.resultTimer!==null||kyudo.resultOpen;
+      kyudo.generation++;clearTimeout(kyudo.resultTimer);kyudo.resultTimer=null;kyudo.active=false;kyudo.resultOpen=false;restoreView();
+      if(hadSession){closeModal();clearStuck();if(!silent)toast("弓の稽古を切り上げた",1600);}
+    }
     function confirmStart(){
       modal({title:"的場・射座",body:"射座に立った。<br>弓の稽古を始めますか？",actions:[
         {label:"始める",primary:true,on:()=>{ closeModal(); start(); }},
         {label:"やめる",on:()=>closeModal()}
       ]});
     }
-    function result(){
-      kyudo.active=false;
+    function result(token){
+      if(!validSession(token))return;
+      kyudo.resultTimer=null;kyudo.active=false;kyudo.resultOpen=true;restoreView();
       let best=parseInt(localStorage.getItem("kamakura-kyudo-best")||"0",10); if(!(best>=0))best=0;
       const isNew=kyudo.score>best; if(isNew){ best=kyudo.score; try{ localStorage.setItem("kamakura-kyudo-best",String(best)); }catch(_e){} }
       const rating=kyudo.score>=16?"見事":kyudo.score>=9?"なかなか":"まだまだ";
@@ -43035,15 +43262,18 @@ if(APP.map==="kamakura"){
           {label:"やめる",on:()=>{ closeModal(); stop(); }}
         ]});
     }
-    function land(pts,from,to,stuck){
+    function land(token,pts,from,to,stuck){
+      if(!validSession(token))return;
       if(stuck){ seArrowHit(); addStuck(from,to); }
       kyudo.score+=pts; kyudo.landed++;
       toast((pts===2?"中心! +2":pts===1?"的中 +1":"外れ…")+"　(計 "+kyudo.score+"点 / "+kyudo.landed+"射)",1500);
-      if(kyudo.landed>=10)setTimeout(result,650);
+      if(kyudo.landed>=10){clearTimeout(kyudo.resultTimer);kyudo.resultTimer=setTimeout(()=>result(token),650);}
     }
     function shoot(sx,sy){
-      if(!kyudo.active)return; const now=performance.now();
+      const token=kyudo.generation;if(!validSession(token))return; const now=performance.now();
       if(kyudo.fired>=10)return; if(now<(kyudo.cd||0))return; kyudo.cd=now+260;
+      if(!Number.isFinite(sx))sx=innerWidth/2;if(!Number.isFinite(sy))sy=innerHeight/2;
+      camera.updateMatrixWorld(true);worldK.updateMatrixWorld(true);
       raycaster.setFromCamera({x:sx/innerWidth*2-1,y:-(sy/innerHeight)*2+1},camera);
       const meshes=kyudo.targets.map(t=>t.m);
       const hits=raycaster.intersectObjects(meshes,false);
@@ -43055,9 +43285,10 @@ if(APP.map==="kamakura"){
       else { to=raycaster.ray.at(30,new THREE.Vector3()); }
       const from=camera.position.clone().add(raycaster.ray.direction.clone().multiplyScalar(.6));
       kyudo.fired++; seArrowShot();
-      spawnArrow(from,to,()=>{ if(kyudo.active||kyudo.landed<10)land(pts,from,to,stuck); });
+      spawnArrow(from,to,()=>land(token,pts,from,to,stuck));
     }
     K.kyudoStart=start; // Wave3-②(郎党「弓稽古の話を聞く」)から呼ぶ
+    K.kyudoShoot=shoot;K.kyudoStop=stop;
 
     /* pick相乗り(function宣言＝本ガード内で再代入可。射座と稽古中の射撃のみ横取りし他は元pickへ委譲) */
     const kamaExtra=[]; if(K.kyudoSeat)kamaExtra.push(K.kyudoSeat);
@@ -43079,8 +43310,9 @@ if(APP.map==="kamakura"){
 
     /* animate相乗り(function宣言を再代入。稽古中の移動固定＋矢の飛翔更新＋射座近接ヒント) */
     const _animate=animate;
-    animate=function(now){ _animate(now); try{ kamaFrame(now); }catch(_e){} };
+    animate=function(now){ _animate(now); if(window.KENKO_HERMITAGE&&window.KENKO_HERMITAGE.active){if(kyudo.active)stop(true);return;} try{ kamaFrame(now); }catch(_e){} };
     function kamaFrame(now){
+      if(kyudo.active&&!validSession(kyudo.generation))stop(true);
       if(kyudo.active){ player.pos.x=kyudo.stance.x; player.pos.z=kyudo.stance.z; }
       if(taijiArrows.length)updateTaijiFx(performance.now());
       if(!kyudo.active&&APP.mode==="walk"&&!K._seatHinted&&K.kyudoSeat){
@@ -43155,7 +43387,7 @@ if(APP.map==="kamakura"){
         {label:"名を当ててみよ（名称当てクイズ）",primary:true,on:()=>{ K.closeModal(); startKamaQuiz(); }},
         {label:"弓稽古の話を聞く",on:()=>{ K.closeModal(); if(typeof beep==="function")beep(600,.06);
           toast("「弓馬の道こそ武士の本分。あの射座に立てば、稽古を始められる」",4200);
-          setTimeout(()=>{ if(K.kyudoStart)K.kyudoStart(); },800); }}
+          if(K.kyudoStart)K.kyudoStart(); }}
       ]});
     }
 
@@ -43165,10 +43397,18 @@ if(APP.map==="kamakura"){
     /* ①の pick 相乗りへ分岐を差し込む(郎党→クイズ選択 / 馬→世話panel)。他は元pickへ委譲 */
     K.pickHook=function(hit){
       let o=hit.object; while(o&&o!==scene){ if(o.userData&&o.userData.kamaArcher){ openArcherPanel(); return true; } o=o.parent; }
+      if(APP.mode==="walk"&&worldK.visible&&hit.object.userData&&hit.object.userData.iid==="kakite_k"){
+        const actions=[];
+        if(window.KAMAKURA_CUSTOMS&&typeof window.KAMAKURA_CUSTOMS.open==="function")actions.push({label:"書付を照合する",primary:true,on:()=>{K.closeModal();window.KAMAKURA_CUSTOMS.open(true);}});
+        actions.push({label:"この人の仕事を見る",on:()=>{K.closeModal();showInfo("kakite_k");}},{label:"戻る",on:()=>K.closeModal()});
+        K.modal({title:"書付を扱う人",body:"「紙に記したことと、持参した控えを確かめましょう。」<br>人物と照合の内容は、この館のために作ったものです。",actions});return true;
+      }
       if(hit.object.userData&&hit.object.userData.iid==="uma"){ openCarePanel(); return true; }
       return false;
     };
   })();
+  // 別モジュールが人物/用具に体験を結ぶための小さな公開面。保存/移動/イベントをここでは追加しない。
+  window.KAMAKURA_WORLD={K,world:worldK,anchors:kLifeAnchors,contentIds:K.contentEntries.map(e=>e[0])};
 }
 /* APP_KAMAKURA_EMBED_END */
 /* ============================================================
@@ -45911,6 +46151,577 @@ var NIGHT_LIGHTING=(()=>{
   return {update,get stats(){return {...stats,selected:stats.selected.slice()};}};
 })();
 /* APP_NIGHT_LIGHTING_EMBED_END */
+/* APP_KAMAKURA_GAMES_EMBED_BEGIN (src/app/kamakura-games.js から自動生成。ここを直接編集しない) */
+/* Kamakura archery extensions. Installed after map-kamakura has created KAMAKURA_WORLD. */
+var KAMAKURA_GAMES=(function(){
+  "use strict";
+  const state={ready:false,active:false,phase:"idle",kind:"training",assist:false,leg:0,index:0,
+    score:0,hits:0,shots:0,misses:0,drawStart:0,drawing:false,time:0,feedbackTime:0,projectiles:[],best:0};
+  let K,world,horse,savedHorse,savedPlayer,savedCamera,ui,style,bow,targets=[],supply,startMarker,practiceHud,gaitLegs=[];
+  let oldPickHook=null,ray=new THREE.Raycaster(),pointer={x:0,y:0},current=null,previousMode="walk",drawPointerId=null;
+  let lastPracticeShot=0,cueWindow=false,hoofAccum=0;
+  const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+  const mat=(color,roughness=.82)=>new THREE.MeshStandardMaterial({color,roughness,metalness:0});
+  const wood=mat(0x5a3924),leather=mat(0x392b20),paper=mat(0xd9c59b,.93),red=mat(0xb54f35),gold=mat(0xc9ab69,.6);
+  const shaftGeo=new THREE.CylinderGeometry(.012,.012,.76,6),tipGeo=new THREE.ConeGeometry(.033,.10,6),
+    plumeGeo=new THREE.ConeGeometry(.055,.16,5),postGeo=new THREE.CylinderGeometry(.065,.08,1.25,7),
+    ringGeo=new THREE.TorusGeometry(.50,.018,6,32),boltGeo=new THREE.BoxGeometry(.57,.41,.045);
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  function hermitageActive(){return !!(window.SAIGEN_TSUREZURE&&SAIGEN_TSUREZURE.S&&SAIGEN_TSUREZURE.S.active)||
+    !!(window.KENKO_HERMITAGE&&KENKO_HERMITAGE.active);}
+  function walk(){return APP&&APP.map==="kamakura"&&APP.mode==="walk"&&!hermitageActive();}
+  function paused(){return document.hidden||typeof gameplayInputBlocked==="function"&&gameplayInputBlocked();}
+  function near(x,z,r){return player&&Math.hypot(player.pos.x-x,player.pos.z-z)<=r;}
+  function mesh(g,m,p){const o=new THREE.Mesh(g,m);if(p)o.position.copy(p);o.castShadow=true;return o;}
+  function markTree(root,key){root.traverse(o=>{if(o.isMesh)o.userData[key]=true;});return root;}
+  function makeSign(x,z,textColor,name,key){
+    const g=new THREE.Group();g.name=name;g.position.set(x,0,z);
+    g.add(mesh(postGeo,wood,V(0,.625,0)));
+    const board=mesh(boltGeo,paper,V(0,1.26,.035));board.material=paper;g.add(board);
+    const inset=mesh(new THREE.BoxGeometry(.46,.07,.05),textColor,V(0,1.32,.064));g.add(inset);
+    const inset2=mesh(new THREE.BoxGeometry(.30,.035,.05),textColor,V(0,1.22,.064));g.add(inset2);
+    const cap=mesh(new THREE.BoxGeometry(.67,.065,.15),wood,V(0,1.49,.02));g.add(cap);
+    markTree(g,key);world.add(g);K.kamaExtra.push(...g.children.filter(o=>o.isMesh));return g;
+  }
+  function makeSupply(){
+    // The original rack at (22,20) is decorative and not in kamaExtra. This marker has its own large hit area.
+    const g=makeSign(22,20,red,"kamakura-arrow-supply","kamaArrowSupply");
+    const quiver=mesh(new THREE.CylinderGeometry(.17,.13,.58,10),leather,V(.42,.43,.06));g.add(quiver);
+    for(let i=0;i<4;i++){
+      const a=mesh(shaftGeo,paper,V(.36+i*.038,1.0,.06));g.add(a);
+      const f=mesh(plumeGeo,red,V(.36+i*.038,1.39,.06));f.rotation.z=Math.PI;g.add(f);
+    }
+    markTree(g,"kamaArrowSupply");K.kamaExtra.push(...g.children.filter(o=>o.isMesh));return g;
+  }
+  function makeTargets(){
+    const cards=(K.kasagake_mato&&K.kasagake_mato.children||[]).filter(c=>{
+      const p=c.geometry&&c.geometry.parameters;return p&&Math.abs((p.width||0)-.7)<.03&&Math.abs((p.height||0)-.7)<.03;
+    }).sort((a,b)=>a.position.x-b.position.x);
+    targets=cards.map((m,i)=>{
+      const ring=mesh(ringGeo,new THREE.MeshBasicMaterial({color:0xf2db8e,transparent:true,opacity:.78,depthWrite:false}),V(0,0,.075));
+      ring.visible=false;m.add(ring);return {mesh:m,ring,x:m.position.x,position:m.position.clone(),scale:m.scale.clone(),shot:false,flash:0,i};
+    });
+    return targets.length===3;
+  }
+  function prepareGait(){
+    // Reparent the existing four rigid leg assemblies. No new leg meshes or per-frame geometry.
+    const names=new Set(["horse-upper-leg","horse-knee","horse-shin","horse-hoof"]);
+    for(const sx of [-1,1])for(const sz of [-1,1]){
+      const pivot=new THREE.Group();pivot.name="kasagake-gait-leg";pivot.position.set(sx*.24,.86,sz*.62);
+      const parts=horse.children.filter(o=>names.has(o.name)&&Math.sign(o.position.x)===sx&&Math.sign(o.position.z)===sz);
+      if(parts.length!==4)continue;
+      for(const part of parts){part.position.sub(pivot.position);pivot.add(part);}
+      horse.add(pivot);gaitLegs.push({pivot,phase:sx===sz?0:Math.PI});
+    }
+  }
+  function resetGait(){for(const leg of gaitLegs)leg.pivot.rotation.x=0;
+    if(horse&&horse.userData.head)horse.userData.head.rotation.x=0;hoofAccum=0;}
+  function makeBow(){
+    bow=new THREE.Group();bow.name="kasagake-view-bow";
+    // Short lower limb, long upper limb, and a low grip echo the asymmetry of the map's bows.
+    const curve=new THREE.CatmullRomCurve3([V(0,-.40,0),V(-.075,-.25,.045),V(-.16,-.08,.075),V(-.13,.24,.07),V(-.06,.56,.035),V(0,.88,0)]);
+    const limb=mesh(new THREE.TubeGeometry(curve,24,.026,6,false),wood);bow.add(limb);bow.userData.limb=limb;
+    const grip=mesh(new THREE.CylinderGeometry(.038,.038,.20,7),leather,V(-.16,-.08,.075));bow.add(grip);bow.userData.grip=grip;
+    const positions=new Float32Array(9);const line=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xe8d5aa}));
+    line.geometry.setAttribute("position",new THREE.BufferAttribute(positions,3));bow.add(line);bow.userData.string=line;
+    const nocked=mesh(shaftGeo,paper,V(-.13,0,-.35));nocked.rotation.x=Math.PI/2;bow.add(nocked);bow.userData.nocked=nocked;
+    const tip=mesh(tipGeo,gold,V(-.13,0,-.76));tip.rotation.x=-Math.PI/2;bow.add(tip);bow.userData.tip=tip;
+    const feather=mesh(plumeGeo,red,V(-.13,0,-.01));feather.rotation.x=Math.PI/2;bow.add(feather);bow.userData.feather=feather;
+    bow.visible=false;world.add(bow);setDraw(0);
+  }
+  function setDraw(p){
+    if(!bow)return;const a=bow.userData.string.geometry.attributes.position;const pull=.30*p;
+    a.setXYZ(0,0,-.40,0);a.setXYZ(1,-.13,0,.03+pull);a.setXYZ(2,0,.88,0);a.needsUpdate=true;
+    // Shaft center + half-length (.38) meets the string's moving nock point.
+    bow.userData.nocked.position.z=-.35+pull;
+    bow.userData.tip.position.z=-.76+pull;
+    bow.userData.feather.position.z=-.01+pull;
+  }
+  function createUI(){
+    style=document.createElement("style");style.textContent=`
+      #kamaGamesHud{position:fixed;inset:0;z-index:61;pointer-events:none;color:#f5e8d0;font-family:var(--serif,serif);text-shadow:0 2px 5px #111;display:none}
+      #kamaGamesHud .kg-top{position:absolute;top:max(12px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(92vw,560px);padding:10px 14px;background:#13212bda;border:1px solid #ad9369;border-radius:9px;text-align:center;line-height:1.5}
+      body.kasagake-active #kamaGamesHud .kg-top{top:calc(var(--topbar-h,52px) + 8px)}
+      body.kasagake-active #worldStatusBar,body.kasagake-active #minimapWrap,body.kasagake-active #joy,body.kasagake-active #interactBtn,body.kasagake-active #crosshair,body.kasagake-active #toast{display:none!important}
+      body.kasagake-active #topbar #tbTitle,body.kasagake-active #topbar .brand,body.kasagake-active #topbar #modeTag,body.kasagake-active #topbar .tb-sep,body.kasagake-active #topbar #tbView,body.kasagake-active #topbar #tbHome,body.kasagake-active #topbar #tbMap,body.kasagake-active #topbar #tbEra{display:none!important}
+      body.kasagake-active #topbar .spacer{flex:1!important}
+      body.kasagake-active #topbar #tbPause,body.kasagake-active #topbar #tbMore,body.kasagake-active #topbar #tbCodex,body.kasagake-active #topbar #tbGfx,body.kasagake-active #topbar #tbHelp{display:inline-flex!important}
+      body.kasagake-active #tbMoreMenu.open{z-index:65}
+      #kamaGamesHud .kg-cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:36px/1 sans-serif;color:#eacb83;opacity:.88}
+      #kamaGamesHud .kg-feedback{position:absolute;left:50%;bottom:155px;transform:translateX(-50%);display:none;min-width:130px;padding:7px 14px;border:1px solid #e3b971;border-radius:18px;background:#17232ee8;text-align:center;font-size:16px;pointer-events:none}
+      #kamaGamesHud .kg-bottom{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(92vw,560px);text-align:center;padding:12px;background:#13212bda;border:1px solid #ad9369;border-radius:9px}
+      #kamaGamesHud .kg-meter{height:8px;border-radius:8px;background:#594f43;overflow:hidden;margin:7px 0}.kg-meter>i{display:block;width:0;height:100%;background:linear-gradient(90deg,#b85a3a,#f5cf78)}
+      #kamaGamesHud button{pointer-events:auto;color:#fff1d7;background:#57402a;border:1px solid #bc9863;border-radius:7px;min-height:40px;padding:6px 13px;font:inherit;cursor:pointer}
+      #kamaGamesHud button:focus-visible{outline:3px solid #ffdf80}
+      #kamaGamesHud .kg-result{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(90vw,370px);padding:20px;background:#17232ef2;border:1px solid #cfab70;border-radius:12px;text-align:center;pointer-events:auto;box-shadow:0 16px 46px #0009}
+      #kamaGamesHud .kg-result button{margin:5px}
+      #kamaGamesPrompt{position:fixed;right:12px;bottom:max(18px,env(safe-area-inset-bottom));z-index:510;display:none;max-width:220px;padding:8px 12px;border-radius:8px;background:#18303cdd;color:#f3dfae;border:1px solid #bc9863;font:14px var(--serif,serif);cursor:pointer}
+      #kamaKyudoHud{position:fixed;inset:0;z-index:509;display:none;pointer-events:none;color:#f5e8d0;font-family:var(--serif,serif);text-shadow:0 2px 5px #111}
+      #kamaKyudoHud .kk-top{position:absolute;top:max(12px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);padding:8px 13px;background:#172634db;border:1px solid #bc9863;border-radius:8px;text-align:center}
+      #kamaKyudoHud .kk-cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:30px sans-serif;color:#f3cd72}
+      #kamaKyudoHud .kk-controls{position:absolute;right:12px;bottom:max(16px,env(safe-area-inset-bottom));display:flex;gap:7px;pointer-events:auto}
+      #kamaKyudoHud button{min-height:48px;padding:8px 14px;border-radius:9px;color:#fff3db;background:#614125;border:1px solid #d1a66e;font:15px var(--serif,serif);cursor:pointer}
+      @media(max-width:600px){#kamaGamesHud .kg-top{font-size:12px}.kg-bottom{font-size:12px}}
+    `;document.head.appendChild(style);
+    ui=document.createElement("div");ui.id="kamaGamesHud";ui.innerHTML='<div class="kg-top"></div><div class="kg-cross">＋</div><div class="kg-feedback" aria-live="polite"></div><div class="kg-bottom"><div class="kg-note"></div><div class="kg-meter"><i></i></div><button class="kg-assist" type="button">照準補助 OFF</button> <button class="kg-exit" type="button">馬場を出る</button></div><div class="kg-result" hidden></div>';
+    document.body.appendChild(ui);
+    ui.querySelector(".kg-exit").onclick=e=>{e.stopPropagation();stop();};
+    ui.querySelector(".kg-assist").onclick=e=>{e.stopPropagation();setAssist(!state.assist);};
+    practiceHud=document.createElement("div");practiceHud.id="kamaKyudoHud";
+    practiceHud.innerHTML='<div class="kk-top">弓稽古　<span class="kk-count">0 / 10 射</span><br><small>視点を動かして狙い、短くタップ または「射る」で発射</small></div><div class="kk-cross">＋</div><div class="kk-controls"><button type="button" class="kk-fire">射る</button><button type="button" class="kk-refill">矢を補充</button><button type="button" class="kk-exit">終了</button></div>';
+    document.body.appendChild(practiceHud);
+    practiceHud.querySelector(".kk-fire").onclick=e=>{e.preventDefault();e.stopPropagation();practiceShot(innerWidth/2,innerHeight/2);};
+    practiceHud.querySelector(".kk-refill").onclick=e=>{e.preventDefault();e.stopPropagation();refill();};
+    practiceHud.querySelector(".kk-exit").onclick=e=>{e.preventDefault();e.stopPropagation();if(K.kyudoStop)K.kyudoStop();else APP.kamaKyudo.active=false;practiceHud.style.display="none";};
+    const prompt=document.createElement("button");prompt.id="kamaGamesPrompt";prompt.type="button";document.body.appendChild(prompt);
+    prompt.onclick=e=>{e.stopPropagation();if(!walk())return;if(state.active)return;
+      if(near(22,20,7))openSupply();else if(near(-27,50,7))openStart();};
+  }
+  function openSupply(){if(!walk()||state.active)return;K.modal({title:"矢立て・矢の補充",body:"予備の矢を受け取ります。弓稽古は新しい10射として始まり、前回の得点は自己ベストに残ります。",actions:[
+    {label:"10射分を補充して稽古",primary:true,on:()=>refill()},
+    {label:"戻る",on:()=>K.closeModal()}
+  ]});}
+  function refill(){if(!walk()||state.active)return false;K.closeModal();if(K.kyudoStop)K.kyudoStop(true);K.kyudoStart();return !!(APP.kamaKyudo&&APP.kamaKyudo.active);}
+  function openStart(){if(!walk()||state.active)return;K.modal({title:"馬場・笠懸",body:"走る馬上から、進路の脇の的を射ます。往路と復路で的の大きさを変え、遠笠懸・小笠懸を手短に体験する遊びです。実際の馬場・的の寸法は再現していません。<br>画面を押し続けて弓を引き、離して射ます。",actions:[
+    {label:"練習から始める",primary:true,on:()=>start("training")},
+    {label:"本番に挑む",on:()=>start("challenge")},
+    {label:"戻る",on:()=>K.closeModal()}
+  ]});}
+  function setAssist(v){state.assist=!!v;if(ui)ui.querySelector(".kg-assist").textContent="照準補助 "+(state.assist?"ON":"OFF");renderHUD();}
+  function start(kind){
+    if(!state.ready||!walk()||state.active)return false;
+    if(K.kyudoStop)K.kyudoStop(true);
+    K.closeModal();if(typeof hideModeBrief==="function")hideModeBrief(true);
+    if(typeof resetInputState==="function")resetInputState();previousMode=APP.mode;
+    savedHorse={position:horse.position.clone(),rotation:horse.rotation.clone(),visible:horse.visible};
+    savedPlayer={position:player.pos.clone(),yaw:player.yaw,pitch:player.pitch,view:APP.view};
+    savedCamera={position:camera.position.clone(),quaternion:camera.quaternion.clone(),fov:camera.fov};
+    state.active=true;state.phase="running";state.kind=kind==="challenge"?"challenge":"training";
+    state.leg=0;state.index=0;state.score=0;state.hits=0;state.shots=0;state.misses=0;state.drawing=false;state.time=0;state.feedbackTime=0;
+    targets.forEach(t=>{t.shot=false;t.flash=0;t.ring.visible=false;t.mesh.scale.copy(t.scale);t.mesh.position.copy(t.position);});
+    horse.position.set(-27,0,50);horse.rotation.y=Math.PI/2;horse.visible=true;resetGait();cueWindow=false;
+    document.body.classList.add("kasagake-active");ui.style.display="block";ui.querySelector(".kg-result").hidden=true;ui.querySelector(".kg-feedback").style.display="none";document.getElementById("kamaGamesPrompt").style.display="none";
+    pointer.x=0;pointer.y=0;drawPointerId=null;const sight=ui.querySelector(".kg-cross");sight.style.left="50%";sight.style.top="50%";
+    bow.visible=true;renderHUD();return true;
+  }
+  function stop(modeChange){
+    if(!state.active)return false;
+    state.active=false;state.phase="idle";state.drawing=false;state.drawStart=0;state.feedbackTime=0;current=null;drawPointerId=null;pointer.x=0;pointer.y=0;
+    document.body.classList.remove("kasagake-active");ui.querySelector(".kg-feedback").style.display="none";
+    if(typeof resetInputState==="function")resetInputState();
+    if(savedHorse){horse.position.copy(savedHorse.position);horse.rotation.copy(savedHorse.rotation);horse.visible=savedHorse.visible;}resetGait();
+    targets.forEach(t=>{t.ring.visible=false;t.mesh.scale.copy(t.scale);t.mesh.position.copy(t.position);});bow.visible=false;setDraw(0);
+    for(const p of state.projectiles)world.remove(p.mesh);state.projectiles.length=0;
+    if(!modeChange&&savedPlayer){player.pos.copy(savedPlayer.position);player.yaw=savedPlayer.yaw;player.pitch=savedPlayer.pitch;APP.view=savedPlayer.view;
+      camera.position.copy(savedCamera.position);camera.quaternion.copy(savedCamera.quaternion);camera.fov=savedCamera.fov;camera.updateProjectionMatrix();
+      if(typeof dummyCam!=="undefined"&&dummyCam){dummyCam.position.copy(camera.position);dummyCam.quaternion.copy(camera.quaternion);}}
+    const sight=ui.querySelector(".kg-cross");sight.style.left="50%";sight.style.top="50%";
+    ui.style.display="none";return true;
+  }
+  function targetFor(leg,index){const order=leg===0?[0,1,2]:[2,1,0];return targets[order[index]];}
+  function finish(){state.phase="result";state.drawing=false;setDraw(0);resetGait();targets.forEach(t=>t.ring.visible=false);
+    let best=0;try{best=parseInt(localStorage.getItem("kamakura-kasagake-best")||"0",10)||0;if(state.score>best){best=state.score;localStorage.setItem("kamakura-kasagake-best",String(best));}}catch(_e){}state.best=best;
+    const el=ui.querySelector(".kg-result");el.hidden=false;el.innerHTML='<h2>笠懸の結果</h2><p>'+state.score+' / 12 点　的中 '+state.hits+' / 6<br>自己ベスト '+best+' 点</p><p>往路と復路の小的を射終えました。</p><button type="button" data-go="training">練習をもう一度</button><button type="button" data-go="challenge">本番に再挑戦</button><button type="button" data-go="exit">馬場を出る</button>';
+    el.querySelectorAll("button").forEach(b=>b.onclick=e=>{e.stopPropagation();const go=b.dataset.go;stop();if(go!=="exit")start(go);});
+    renderHUD();
+  }
+  function renderHUD(){if(!ui||!state.active)return;const t=targetFor(state.leg,state.index),running=state.phase==="running";
+    const label=state.kind==="training"?"練習":"本番";
+    ui.querySelector(".kg-top").textContent="笠懸 "+label+" ｜ "+(state.leg===0?"往路・通常的":"復路・低い小的")+" ｜ "+Math.min(6,state.leg*3+state.index+1)+" / 6 的 ｜ "+state.score+" 点";
+    const note=ui.querySelector(".kg-note");note.textContent=running?(t&&cueWindow&&!t.shot?"今だ。押し続けて引き、離して射る":"次の的へ。押し続けて弓を引く")+(state.assist?"　照準補助 ON":"　照準補助 OFF"):state.phase==="landing"?"矢の着弾を待つ":"走行終了";
+    ui.querySelector(".kg-cross").style.opacity=state.assist?"1":".68";
+  }
+  function fire(){if(!state.active||state.phase!=="running")return false;
+    const t=targetFor(state.leg,state.index);if(!t||t.shot||Math.abs(horse.position.x-t.x)>7)return false;
+    const charge=clamp((performance.now()-state.drawStart)/750,0,1);state.drawing=false;setDraw(0);
+    // A ray through the visible reticle determines the hit; assistance widens the outer scoring zone only.
+    ray.setFromCamera(pointer,camera);const hit=ray.intersectObject(t.mesh,false)[0];
+    let point,pts=0;
+    if(hit){point=hit.point.clone();const center=t.mesh.getWorldPosition(V(0,0,0));const d=Math.hypot(point.x-center.x,point.y-center.y);
+      pts=d<(state.leg===0?.13:.085)?2:1;
+    }else{
+      const planeZ=t.mesh.getWorldPosition(V(0,0,0)).z;
+      const dist=(planeZ-ray.ray.origin.z)/ray.ray.direction.z;
+      point=dist>0&&dist<100?ray.ray.at(dist,V(0,0,0)):ray.ray.at(25,V(0,0,0));
+      const center=t.mesh.getWorldPosition(V(0,0,0));
+      if(state.assist&&charge>.35&&Math.hypot(point.x-center.x,point.y-center.y)<.53){pts=1;point.copy(center);point.z+=.06;}
+    }
+    if(charge<.16)pts=0;
+    t.shot=true;state.shots++;
+    const from=bow.getWorldPosition(V(0,0,0));const arrowMesh=mesh(shaftGeo,paper);
+    const projectile=new THREE.Group();projectile.add(arrowMesh);const head=mesh(tipGeo,gold,V(0,.43,0));projectile.add(head);
+    projectile.position.copy(from);projectile.quaternion.setFromUnitVectors(V(0,1,0),point.clone().sub(from).normalize());world.add(projectile);
+    state.projectiles.push({mesh:projectile,from,to:point,age:0,pts,target:t,resolved:false});
+    if(typeof seArrowShot==="function")seArrowShot();
+    renderHUD();return true;
+  }
+  function updateProjectiles(dt){for(let i=state.projectiles.length-1;i>=0;i--){const p=state.projectiles[i];p.age+=dt;
+      const f=clamp(p.age/.22,0,1);p.mesh.position.copy(p.from).lerp(p.to,f);
+      if(f>=1&&!p.resolved){p.resolved=true;if(p.pts){state.score+=p.pts;state.hits++;p.target.flash=.35;if(typeof seArrowHit==="function")seArrowHit();}else state.misses++;
+        const feedback=ui.querySelector(".kg-feedback");feedback.textContent=p.pts===2?"中心！ 2点":p.pts===1?"的中！ 1点":"外れ";feedback.style.display="block";state.feedbackTime=.9;renderHUD();}
+      if(p.age>.6){world.remove(p.mesh);state.projectiles.splice(i,1);}
+    }if(state.phase==="landing"&&state.projectiles.every(p=>p.resolved))finish();}
+  function update(dt,t){
+    if(!state.ready)return;if(state.active&&!walk()){stop(true);return;}
+    // The walk introduction is scheduled after mode entry. Keep it off the riding sight.
+    if(state.active&&typeof hideModeBrief==="function"&&document.getElementById("modeBrief")?.classList.contains("show"))hideModeBrief(true);
+    if(APP.kamaKyudo&&APP.kamaKyudo.active&&!walk()){
+      if(K.kyudoStop)K.kyudoStop();else APP.kamaKyudo.active=false;
+    }
+    const prompt=document.getElementById("kamaGamesPrompt");if(!state.active){
+      const available=walk()&&!paused(),practice=available&&!!(APP.kamaKyudo&&APP.kamaKyudo.active);
+      // The map's kyudoStart now snaps the first-person camera exactly onto the target.
+      const practiceDisplay=practice?"block":"none";if(practiceHud.style.display!==practiceDisplay)practiceHud.style.display=practiceDisplay;
+      if(practice){const k=APP.kamaKyudo,count=k.fired+" / 10 射　"+k.score+" 点",counter=practiceHud.querySelector(".kk-count");
+        if(counter.textContent!==count)counter.textContent=count;
+        const refillDisplay=k.fired>=10?"block":"none",button=practiceHud.querySelector(".kk-refill");
+        if(button.style.display!==refillDisplay)button.style.display=refillDisplay;}
+      const isSupply=available&&near(22,20,7),isStart=available&&near(-27,50,7);
+      const promptDisplay=!practice&&(isSupply||isStart)?"block":"none",promptText=isSupply?"矢立て：矢を補充する":"馬場：笠懸を始める";
+      if(prompt.style.display!==promptDisplay)prompt.style.display=promptDisplay;
+      if(prompt.style.display==="block"&&prompt.textContent!==promptText)prompt.textContent=promptText;return;
+    }
+    if(paused()){ui.style.visibility="hidden";drawPointerId=null;state.drawing=false;setDraw(0);return;}
+    ui.style.visibility="visible";
+    if(state.feedbackTime>0){state.feedbackTime=Math.max(0,state.feedbackTime-clamp(dt||0,0,.08));if(!state.feedbackTime)ui.querySelector(".kg-feedback").style.display="none";}
+    if(state.phase==="running"){
+      const step=clamp(dt||0,0,.08),speed=state.kind==="training"?4.6:7.2,dir=state.leg===0?1:-1;
+      state.time+=step;horse.position.x+=dir*speed*step;horse.position.y=Math.sin(state.time*12)*.026;
+      horse.rotation.y=dir>0?Math.PI/2:-Math.PI/2;
+      for(const leg of gaitLegs)leg.pivot.rotation.x=Math.sin(state.time*11+leg.phase)*.20;
+      if(horse.userData.head)horse.userData.head.rotation.x=Math.sin(state.time*11)*.025;
+      hoofAccum+=step;if(hoofAccum>=.36){hoofAccum-=.36;if(typeof beep==="function")beep(145,.035,"triangle",.018);}
+      const tgt=targetFor(state.leg,state.index);
+      if(tgt){const dx=horse.position.x-tgt.x;
+        if(dir*dx>7){if(!tgt.shot)state.misses++;state.index++;
+          if(state.index>=3){if(state.leg===0){state.leg=1;state.index=0;horse.position.x=23;horse.rotation.y=-Math.PI/2;
+            targets.forEach(x=>{x.shot=false;x.mesh.scale.copy(x.scale).multiplyScalar(.48);x.mesh.position.y=.62;});}
+            else state.phase="landing";}
+          cueWindow=false;
+          renderHUD();}
+      }
+      current=state.phase==="running"?targetFor(state.leg,state.index):null;
+      const nextCue=!!current&&!current.shot&&Math.abs(horse.position.x-current.x)<7;
+      if(nextCue!==cueWindow){cueWindow=nextCue;renderHUD();}
+      for(const tg of targets){tg.flash=Math.max(0,tg.flash-step);tg.ring.visible=(tg===current&&!tg.shot)||tg.flash>0;
+        if(tg.ring.visible){tg.ring.material.opacity=tg.flash>0?.95:.58+.22*Math.sin(state.time*8);tg.ring.scale.setScalar(tg.flash>0?1.1:state.leg===0?1:.82);}}
+    }
+    // Camera moves with the horse before BLOOM.render. A controlled sight sway makes aiming active.
+    const tgt=targetFor(state.leg,state.index)||targets[1],dir=state.leg===0?1:-1;
+    player.pos.set(horse.position.x,2.15,horse.position.z);player.yaw=dir>0?Math.PI/2:-Math.PI/2;player.pitch=-.04;
+    camera.position.set(horse.position.x-dir*1.35,2.42+Math.sin(state.time*12)*.02,horse.position.z+1.02);
+    camera.lookAt(tgt.x+Math.sin(state.time*2.8)*.42,tgt.mesh.position.y+.05,45.8);
+    camera.updateMatrixWorld();
+    if(typeof dummyCam!=="undefined"&&dummyCam){dummyCam.position.copy(camera.position);dummyCam.quaternion.copy(camera.quaternion);}
+    bow.position.copy(camera.position).add(V(camera.aspect<.7?.30:.55,-.34,-1.05).applyQuaternion(camera.quaternion));bow.quaternion.copy(camera.quaternion);
+    if(state.drawing&&state.phase==="running")setDraw(clamp((performance.now()-state.drawStart)/750,0,1));
+    ui.querySelector(".kg-meter i").style.width=(state.drawing?Math.round(clamp((performance.now()-state.drawStart)/750,0,1)*100):0)+"%";
+    updateProjectiles(dt||0);
+  }
+  function onPointerMove(e){if(!state.active||e.target!==cv&&drawPointerId===null)return;pointer.x=clamp(e.clientX/innerWidth*2-1,-1,1);pointer.y=clamp(1-e.clientY/innerHeight*2,-1,1);
+    const sight=ui.querySelector(".kg-cross");sight.style.left=e.clientX+"px";sight.style.top=e.clientY+"px";}
+  function practiceShot(x,y){
+    if(!walk()||state.active||paused()||!APP.kamaKyudo||!APP.kamaKyudo.active||K.isModalOpen&&K.isModalOpen())return false;
+    const now=performance.now();if(now-lastPracticeShot<150)return false;lastPracticeShot=now;
+    const sight=practiceHud.querySelector(".kk-cross");sight.style.left=x+"px";sight.style.top=y+"px";
+    // map-kamakura owns ammunition, arrow effects and scoring. Call the same shoot path.
+    if(typeof K.kyudoShoot==="function")K.kyudoShoot(x,y);else if(typeof pick==="function")pick(x,y);
+    return true;
+  }
+  function onPointerDown(e){if(!state.active||state.phase!=="running"||paused()||e.target!==cv)return;
+    onPointerMove(e);state.drawing=true;state.drawStart=performance.now();drawPointerId=e.pointerId;
+    e.preventDefault();e.stopImmediatePropagation();}
+  function onPointerUp(e){if(!state.active||drawPointerId!==e.pointerId)return;
+    drawPointerId=null;if(e.target===cv&&!paused()){onPointerMove(e);if(state.drawing)fire();e.preventDefault();e.stopImmediatePropagation();}
+    state.drawing=false;setDraw(0);}
+  function onPointerCancel(){if(!state.active)return;drawPointerId=null;state.drawing=false;setDraw(0);}
+  function onGameMouse(e){if(!state.active||e.target!==cv)return;e.preventDefault();e.stopImmediatePropagation();}
+  function onGameTouch(e){if(!state.active||e.target!==cv)return;e.preventDefault();e.stopImmediatePropagation();}
+  function onClick(e){if(!state.active||e.target!==cv)return;e.preventDefault();e.stopImmediatePropagation();}
+  function onKeyDown(e){if(!state.active||paused()||e.target&&e.target.closest&&e.target.closest('input,textarea,select,[contenteditable="true"]'))return;
+    if(e.key==="Escape"){stop();e.preventDefault();e.stopImmediatePropagation();return;}
+    if(e.code==="Space"){if(!state.drawing&&state.phase==="running"){state.drawing=true;state.drawStart=performance.now();pointer.x=0;pointer.y=0;
+      const sight=ui.querySelector(".kg-cross");sight.style.left="50%";sight.style.top="50%";}e.preventDefault();e.stopImmediatePropagation();return;}
+    if(/^[wasd]$/i.test(e.key)||e.key.startsWith("Arrow")){e.preventDefault();e.stopImmediatePropagation();}
+  }
+  function onKeyUp(e){if(!state.active||paused()||e.target&&e.target.closest&&e.target.closest('input,textarea,select,[contenteditable="true"]'))return;
+    if(e.code==="Space"){if(state.drawing)fire();state.drawing=false;setDraw(0);e.preventDefault();e.stopImmediatePropagation();}}
+  function init(context){
+    if(state.ready)return true;
+    if(!context||!context.K||!(context.world||context.worldK))return false;
+    K=context.K;world=context.world||context.worldK;
+    if(!K.kamaExtra||!K.modal||!K.kyudoStart)return false;
+    horse=world.children.find(o=>o.name==="kamakura-horse"&&Math.abs(o.position.z-50)<1);
+    if(!horse||!makeTargets())return false;
+    prepareGait();
+    supply=makeSupply();startMarker=makeSign(-27,50,gold,"kamakura-kasagake-start","kamaKasagakeStart");
+    makeBow();createUI();oldPickHook=K.pickHook;
+    K.pickHook=function(hit){let o=hit&&hit.object;while(o&&o!==world){
+      if(o.userData&&o.userData.kamaArrowSupply){if(walk()&&near(22,20,7))openSupply();return true;}
+      if(o.userData&&o.userData.kamaKasagakeStart){if(walk()&&near(-27,50,7))openStart();return true;}
+      o=o.parent;
+    }return oldPickHook?oldPickHook(hit):false;};
+    addEventListener("pointermove",onPointerMove,true);addEventListener("pointerdown",onPointerDown,true);
+    addEventListener("pointerup",onPointerUp,true);addEventListener("pointercancel",onPointerCancel,true);addEventListener("click",onClick,true);
+    addEventListener("keydown",onKeyDown,true);addEventListener("keyup",onKeyUp,true);
+    cv.addEventListener("mousedown",onGameMouse,true);cv.addEventListener("touchstart",onGameTouch,{capture:true,passive:false});
+    cv.addEventListener("touchend",onGameTouch,{capture:true,passive:false});
+    state.ready=true;return true;
+  }
+  return {init,update,start,stop,refill,setAssist,openSupply,openStart,get state(){return state;},
+    get supply(){return supply;},get startMarker(){return startMarker;},get horse(){return horse;},get targets(){return targets;}};
+})();
+/* APP_KAMAKURA_GAMES_EMBED_END */
+/* APP_KAMAKURA_CUSTOMS_EMBED_BEGIN (src/app/kamakura-customs.js から自動生成。ここを直接編集しない) */
+/* Letters attest to medieval written administration; the exercises below are fictional. */
+var KAMAKURA_CUSTOMS=(()=>{
+  'use strict';
+  const fields=[['to','届け先'],['goods','品目'],['count','数量']];
+  const models=[
+    {to:'竈屋',goods:'米',count:'三俵'},
+    {to:'厩',goods:'馬の飼葉',count:'二束'},
+    {to:'主殿',goods:'料紙',count:'十枚'},
+    {to:'荷受けの庇',goods:'曲物',count:'四つ'},
+    {to:'配膳仕事場',goods:'漆椀',count:'五口'},
+    {to:'書付の間',goods:'筆',count:'二本'}
+  ];
+  const S={ready:false,active:false,practice:true,index:0,score:0,answers:[],rounds:[],answered:false};
+  let world=null,focus=null,panel=null,prompt=null;
+  const qs=sel=>panel.querySelector(sel);
+  function eligible(){return S.ready&&APP.map==='kamakura'&&APP.mode==='walk'&&!(typeof KENKO_HERMITAGE!=='undefined'&&KENKO_HERMITAGE.active)&&!(typeof KAMAKURA_GAMES!=='undefined'&&KAMAKURA_GAMES.state.active)&&!APP.kamaKyudo?.active;}
+  function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function deal(){
+    const cards=models.map(m=>({...m}));
+    for(let i=cards.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]];}
+    // Exactly three matching letters and three discrepancies, shuffled independently.
+    const mismatches=[null,'to',null,'goods',null,'count'];
+    for(let i=mismatches.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[mismatches[i],mismatches[j]]=[mismatches[j],mismatches[i]];}
+    return cards.map((order,i)=>{
+      const receipt={...order},field=mismatches[i];
+      if(field)receipt[field]=models.filter(m=>m[field]!==order[field])[Math.floor(Math.random()*5)][field];
+      return {order,receipt,field};
+    });
+  }
+  function open(practice=true){
+    if(!eligible()||S.active)return false;
+    world.K.closeModal?.();focus=document.activeElement;resetInputState();
+    S.active=true;S.practice=practice!==false;S.index=0;S.score=0;S.answers=[];S.rounds=deal();S.answered=false;
+    document.body.classList.add('kamakura-customs-mode');panel.hidden=false;prompt.hidden=true;
+    render();return true;
+  }
+  function close(){if(!S.active)return;S.active=false;panel.hidden=true;document.body.classList.remove('kamakura-customs-mode');resetInputState();if(focus?.isConnected)focus.focus({preventScroll:true});}
+  function textCard(title,data,other,guide){
+    return '<article class="kc-letter"><h3>'+title+'</h3><dl>'+fields.map(([key,label])=>'<div'+(guide&&data[key]!==other[key]?' class="kc-different"':'')+'><dt>'+label+'</dt><dd>'+escapeHTML(data[key])+'</dd></div>').join('')+'</dl><p class="kc-letter-foot">この書付は体験用の創作文です</p></article>';
+  }
+  function render(){
+    const finished=S.index>=S.rounds.length;
+    qs('.kc-progress').textContent=finished?'照合を終えました':(S.practice?'手ほどき':'稽古')+'　'+(S.index+1)+' / '+S.rounds.length;
+    if(finished){
+      const correct=S.answers.filter(a=>a.correct).length;
+      qs('.kc-content').innerHTML='<div class="kc-result"><h3>'+correct+' / '+S.rounds.length+' 件を正しく照合</h3><p>書く人、運ぶ人、受け取る人が、同じ内容を確かめる仕事です。速さより、違う箇所を見つけることを大切にしましょう。</p><ol>'+S.answers.map(a=>'<li>'+escapeHTML(a.to)+'：'+(a.correct?'確認できました':'もう一度読み比べましょう')+' — '+escapeHTML(a.reason)+'</li>').join('')+'</ol></div>';
+      qs('.kc-feedback').textContent='';qs('.kc-actions').innerHTML='<button data-action="retry">'+(S.practice?'今度は手がかりなしで':'もう一度稽古する')+'</button><button data-action="close">屋敷に戻る</button>';
+      if(!S.practice){try{const best=Number(localStorage.getItem('kamakura-letter-best')||0);if(correct>best)localStorage.setItem('kamakura-letter-best',String(correct));}catch(_){}}
+    }else{
+      const r=S.rounds[S.index];S.answered=false;
+      qs('.kc-content').innerHTML=textCard('書付役の指示',r.order,r.receipt,S.practice)+textCard('使者の持参控え',r.receipt,r.order,S.practice);
+      qs('.kc-feedback').textContent=S.practice?(r.field?'色のついた行が違います。内容を確かめてから返しましょう。':'三つの欄が一致しています。受け取りを選びましょう。'):'届け先・品目・数量を、一つずつ読み比べてください。';
+      qs('.kc-actions').innerHTML='<button data-action="accept">受け取る</button><button data-action="return">確かめるため差し戻す</button>';
+    }
+    qs('.kc-actions button')?.focus();
+  }
+  function answer(accept){
+    if(!S.active||S.answered||S.index>=S.rounds.length)return false;
+    const r=S.rounds[S.index],correct=accept===!r.field;
+    const label=fields.find(f=>f[0]===r.field)?.[1];
+    const reason=r.field?label+'が「'+r.order[r.field]+'」と「'+r.receipt[r.field]+'」で違います。':'届け先・品目・数量がすべて一致しています。';
+    S.answered=true;S.score+=correct?1:0;S.answers.push({correct,to:r.order.to,reason});
+    if(r.field)panel.querySelectorAll('.kc-letter dl>div:nth-child('+(fields.findIndex(f=>f[0]===r.field)+1)+')').forEach(o=>o.classList.add('kc-different'));
+    qs('.kc-feedback').textContent=(correct?'よく確かめました。':'読み違いがありました。')+reason;
+    qs('.kc-actions').innerHTML='<button data-action="next">'+(S.index===S.rounds.length-1?'照合の振り返り':'次の書付')+'</button>';
+    qs('.kc-actions button').focus();return correct;
+  }
+  function update(){
+    if(!S.ready)return;
+    if(S.active&&!eligible()){close();return;}
+    const p=world.anchors.documents?.position;
+    prompt.hidden=!eligible()||S.active||!p||Math.hypot(player.pos.x-p.x,player.pos.z-p.z)>4.5||gameplayInputBlocked();
+  }
+  function init(ref){
+    if(S.ready||!ref?.K)return false;world=ref;
+    panel=document.createElement('section');panel.id='kamaLetters';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');panel.setAttribute('aria-labelledby','kcTitle');
+    panel.innerHTML='<div class="kc-frame"><header><div><small>武家屋敷の仕事</small><h2 id="kcTitle">使者の書付照合</h2></div><button data-action="close" aria-label="書付照合を閉じる">閉じる</button></header><p class="kc-intro">書付役の指示と、使者の持参控えを読み比べます。中世の書状や出土した筆記具を手がかりにした学習ゲームです。実際の文書手続や書式を再現したものではありません。</p><p class="kc-progress"></p><div class="kc-content"></div><p class="kc-feedback" role="status" aria-live="polite"></p><div class="kc-actions"></div><details><summary>史料から分かること</summary><p>鎌倉からは硯や水滴が出土し、武家の書状も伝わります。北条義時の書状は寺領の訴えへの処理を伝えるものです。この遊びの届け先・品目・数量や照合手続は創作です。</p><p><a href="https://www.city.kamakura.kanagawa.jp/rekibun/documents/list-2018-2.pdf" target="_blank" rel="noopener noreferrer">鎌倉歴史文化交流館：出土品の展示資料</a></p><p><a href="https://www.bunka.pref.mie.lg.jp/rekishi/kenshi/asp/shijyo/detail551.html" target="_blank" rel="noopener noreferrer">三重県：北条義時の書状</a></p></details></div>';
+    prompt=document.createElement('button');prompt.id='kamaLettersPrompt';prompt.textContent='書付役の仕事を体験';prompt.hidden=true;
+    document.body.append(panel,prompt);prompt.onclick=()=>open(true);
+    panel.addEventListener('click',e=>{const action=e.target.closest('[data-action]')?.dataset.action;if(action==='close')close();else if(action==='accept')answer(true);else if(action==='return')answer(false);else if(action==='next'&&S.answered){S.index++;render();}else if(action==='retry'){const practice=false;close();open(practice);}});
+    panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();close();}else if(e.key==='Tab'){const buttons=[...panel.querySelectorAll('button,a,summary')].filter(o=>o.getClientRects().length);let i=buttons.indexOf(document.activeElement);i=(i+(e.shiftKey?-1:1)+buttons.length)%buttons.length;e.preventDefault();buttons[i]?.focus();}},true);
+    const beforeBlock=pauseBlockingOverlayOpen;pauseBlockingOverlayOpen=function(){return S.active||beforeBlock();};
+    const beforeEnter=enterMode;enterMode=function(...args){close();return beforeEnter.apply(this,args);};
+    S.ready=true;return true;
+  }
+  return {init,open,close,update,answer,state:S};
+})();
+/* APP_KAMAKURA_CUSTOMS_EMBED_END */
+/* APP_KENKO_HERMITAGE_EMBED_BEGIN (src/app/kenko-hermitage.js から自動生成。ここを直接編集しない) */
+/* Direct visit reuses the Claude replay's garden, hut, furniture and disposal path. */
+var KENKO_HERMITAGE=(()=>{
+  const $=id=>document.getElementById(id),ray=new THREE.Raycaster(),pointer=new THREE.Vector2();
+  let stage=null,visit=null,saved=null,loading=false,generation=0,night=false,lastFocus=null;
+  const hud=document.createElement('section');hud.id='kenkoVisitHud';hud.hidden=true;
+  hud.innerHTML='<header><div><small>徒然草を歩く</small><h2>兼好の草庵</h2></div><button id="kenkoVisitBack">元の屋敷へ戻る</button></header><p id="kenkoVisitStatus" role="status" aria-live="polite">庭から沓脱石を通って、縁と室内へ。いつもの移動・視点操作で歩けます。</p><nav aria-label="草庵の操作"><button id="kenkoVisitInspect">目の前を調べる</button><button id="kenkoVisitGuide">原文と模型の案内</button><button id="kenkoVisitNight" aria-pressed="false">夜の灯を見る</button><button id="kenkoVisitReplay">第七段の再現を見る</button></nav>';
+  const note=document.createElement('section');note.id='kenkoVisitNote';note.hidden=true;note.setAttribute('role','dialog');note.setAttribute('aria-modal','true');note.setAttribute('aria-labelledby','kenkoVisitNoteTitle');
+  note.innerHTML='<header><h2 id="kenkoVisitNoteTitle"></h2><button id="kenkoVisitNoteClose" aria-label="解説を閉じる">閉じる</button></header><div id="kenkoVisitNoteBody"></div>';
+  document.body.append(hud,note);
+  const source=n=>'https://www2.yamanashi-ken.ac.jp/~itoyo/tsuredure/turedure000_049/turedure'+String(n).padStart(3,'0')+'.htm';
+  const notes={
+    hut:['草庵と住まい','床を少し上げた母屋、竹の簀子縁、吊り上げた蔀戸を観察できます。第十段では、住まいに庭の草木や調度がなじむ様子を語っています。これは兼好の実際の庵の実測復元ではありません。',10],
+    desk:['文机と硯','料紙、筆、硯、冊子、巻子を載せた文机です。序段の「硯にむかひて」という言葉から、書く営みを考える入口にしています。机や道具の具体的な形・配置を序段が記しているわけではありません。',0],
+    lamp:['燈台の小さな灯','油皿と灯心を持つ燈台の模型です。「夜の灯を見る」で紙の窓と室内の明かりを観察できます。第七段の原文はこの燈台を描写しておらず、夜の生活を考えるための調度です。',7],
+    garden:['庭の草・木立・遣水','草、松、楓、竹、流れを近くから見てください。第十段の「わざとならぬ庭の草」は、草木が自然に見える住まいの趣に結び付きます。この庭の地形・樹種・水路は模型の構成です。',10],
+    kenko:['兼好と第七段','第七段は「世は定めなきこそいみじけれ」と語り、限りある時間へ目を向けます。草庵を歩いた後は、既存の十三場の再現で露・煙・四季の場面を続けて見られます。ここに座る人物も学習用の表現です。',7],
+    guide:['原文と模型の案内','この草庵は既存の徒然草再現モードと同じ模型です。第七段は人の命と無常、第十段は住まいと庭の趣、序段は書く営みを読む入口になります。双ヶ岡は兼好ゆかりの地とされますが、建物の寸法・配置・調度は本文から特定できません。模型を手がかりに、原文の言葉へ戻ってください。',7]
+  };
+  function showNote(key){
+    if(!visit?.ready)return;const data=notes[key]||notes.guide;lastFocus=document.activeElement;resetInputState();
+    $('kenkoVisitNoteTitle').textContent=data[0];$('kenkoVisitNoteBody').innerHTML='<p>'+data[1]+'</p><p><a href="'+source(data[2])+'" target="_blank" rel="noopener noreferrer">原文：徒然草 '+(data[2]===0?'序段':'第'+data[2]+'段')+'（山梨県立大学公開本文）</a></p>'+(key==='guide'?'<p><a href="https://www.pref.kyoto.jp/select200/historical28.html" target="_blank" rel="noopener noreferrer">兼好ゆかりの雙ヶ岡（京都府）</a></p>':'');
+    note.hidden=false;$('kenkoVisitNoteClose').focus();
+  }
+  function closeNote(){note.hidden=true;resetInputState();if(lastFocus?.isConnected)lastFocus.focus();}
+  function snapshot(){
+    const lights=[];scene.traverse(o=>{if(o.isLight)lights.push({o,color:o.color.clone(),ground:o.groundColor?.clone(),intensity:o.intensity,position:o.position.clone(),quaternion:o.quaternion.clone(),distance:o.distance,decay:o.decay});});
+    return {player:player.pos.clone(),yaw:player.yaw,pitch:player.pitch,view:APP.view,labelMode:APP.labelMode,
+      camera:{position:camera.position.clone(),quaternion:camera.quaternion.clone(),near:camera.near,far:camera.far,fov:camera.fov},dummy:window.dummyCam,
+      visible:new Map(scene.children.filter(o=>!o.isLight).map(o=>[o,o.visible])),lights,
+      celestial:new Map([cloudDome,sunMesh,moonMesh,moonHalo,moonPhaseShadow].filter(Boolean).map(o=>[o,o.visible])),
+      background:scene.background,environment:scene.environment,fog:scene.fog?{color:scene.fog.color.clone(),density:scene.fog.density}:null,
+      exposure:renderer.toneMappingExposure,autoPaused:AUTO_TIME._paused,backgroundPaused:!!SFX._backgroundPaused,
+      rain:{season:rainFall.userData.rainSeason,on:rainFall.userData.rainOn,visible:rainFall.visible},focus:document.activeElement};
+  }
+  function restore(){
+    const s=saved;if(!s)return;
+    for(const [o,v] of s.visible)if(o.parent===scene)o.visible=v;
+    for(const [o,v] of s.celestial)o.visible=v;
+    for(const l of s.lights){l.o.color.copy(l.color);if(l.ground)l.o.groundColor.copy(l.ground);l.o.intensity=l.intensity;l.o.position.copy(l.position);l.o.quaternion.copy(l.quaternion);if(l.distance!==undefined)l.o.distance=l.distance;if(l.decay!==undefined)l.o.decay=l.decay;}
+    scene.background=s.background;scene.environment=s.environment;if(s.fog&&scene.fog){scene.fog.color.copy(s.fog.color);scene.fog.density=s.fog.density;}
+    renderer.toneMappingExposure=s.exposure;player.pos.copy(s.player);player.yaw=s.yaw;player.pitch=s.pitch;APP.view=s.view;APP.labelMode=s.labelMode;
+    camera.position.copy(s.camera.position);camera.quaternion.copy(s.camera.quaternion);camera.near=s.camera.near;camera.far=s.camera.far;camera.fov=s.camera.fov;camera.updateProjectionMatrix();window.dummyCam=s.dummy;
+    AUTO_TIME._paused=s.autoPaused;SFX.setBackgroundPaused(s.backgroundPaused);if(typeof ambientAudio!=='undefined'&&ambientAudio?.syncSynthLevels)ambientAudio.syncSynthLevels();
+    rainFall.userData.rainSeason=s.rain.season;rainFall.userData.rainOn=s.rain.on;rainFall.visible=s.rain.visible;
+    renderer.shadowMap.needsUpdate=true;clock.oldTime=performance.now();resetInputState();
+    if(typeof NIGHT_LIGHTING!=='undefined')NIGHT_LIGHTING.update(camera,true);s.focus?.focus?.({preventScroll:true});saved=null;
+  }
+  function leave(){
+    if(!stage&&!saved)return;generation++;loading=false;note.hidden=true;hud.hidden=true;document.body.classList.remove('kenko-hermitage-mode');
+    try{visit?.dispose();}finally{if(stage?.parent)stage.parent.remove(stage);stage=null;visit=null;restore();}
+  }
+  async function open(){
+    if(stage)return false;
+    if(typeof SAIGEN_TSUREZURE==='undefined'||!SAIGEN_TSUREZURE.createHermitage){toast('草庵の素材を読み込めませんでした',2400);return false;}
+    window.KAMAKURA_GAMES?.stop();window.KAMAKURA_WORLD?.K?.closeModal?.();
+    window.KAMAKURA_WORLD?.K?.kyudoStop?.();window.KAMAKURA_CUSTOMS?.close?.();
+    window.SELECTED_WORLD?.close?.();if(typeof tbMoreClose==='function')tbMoreClose();
+    if(typeof CODEX_VIEWER!=='undefined'&&CODEX_VIEWER.active)CODEX_VIEWER.close(false,false);
+    if(typeof setPhotoMode==='function'&&document.body.classList.contains('photo-mode'))setPhotoMode(false);
+    if(typeof closeCodex==='function')closeCodex();if(typeof closeInfo==='function')closeInfo();
+    closePauseMenu();closeResultPanel();
+    if(APP.mode!=='walk')enterMode('walk');
+    hideModeBrief(true);clearTimeout(_loadTimer);$('loadingScreen')?.classList.remove('show');
+    if(APP.tour?.active&&typeof endTour==='function')endTour(true,true);
+    if(APP.gisshaCarry?.active){toast('牛車を車宿へ戻してから草庵を訪ねてください',2400);return false;}
+    const owner=++generation;saved=snapshot();loading=true;night=false;stage=new THREE.Group();stage.name='kenko-hermitage-visit';stage.visible=false;
+    for(const [o] of saved.visible)o.visible=false;scene.add(stage);APP.view='fp';APP.labelMode=0;AUTO_TIME._paused=true;window.dummyCam=null;resetInputState();SFX.setBackgroundPaused(true);
+    document.body.classList.add('kenko-hermitage-mode');hud.hidden=false;$('kenkoVisitStatus').textContent='草庵の庭・建物・人物を順に整えています…';$('kenkoVisitNight').setAttribute('aria-pressed','false');$('kenkoVisitNight').textContent='夜の灯を見る';$('kenkoVisitBack').focus();
+    try{
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));if(owner!==generation)return false;
+      visit=SAIGEN_TSUREZURE.createHermitage(stage);
+      for(let step=0;step<3;step++){
+        if(owner!==generation)return false;visit.prepare();stage.visible=false;
+        $('kenkoVisitStatus').textContent=['空を整えました。庭と建物を用意しています…','庭と建物を整えました。調度と兼好を用意しています…','草庵へ入ります…'][step];
+        await new Promise(resolve=>setTimeout(resolve,0));
+      }
+      if(owner!==generation)return false;
+      if(!visit.ready||!visit.assets.hut?.userData.dims)throw new Error('草庵の建物を用意できませんでした');
+      stage.visible=true;loading=false;camera.near=.08;camera.far=800;camera.fov=62;camera.updateProjectionMatrix();
+      player.pos.set(.55,heightAt(.55,5)+1.62,5);player.yaw=0;player.pitch=-.12;camera.position.copy(player.pos);camera.rotation.set(player.pitch,player.yaw,0,'YXZ');
+      renderer.shadowMap.needsUpdate=true;$('kenkoVisitStatus').textContent='庭から沓脱石を通って、縁と室内へ。いつもの移動・視点操作で歩けます。'+(APP.map==='kamakura'?' 第七段の再現は平安の屋敷へ移って見ます。':'');
+      $('kenkoVisitReplay').textContent=APP.map==='kamakura'?'平安の屋敷で再現を見る':'第七段の再現を見る';frame(0,clock.elapsedTime);return true;
+    }catch(e){if(owner===generation){leave();toast('草庵を開けませんでした。'+e.message,4000);}return false;}
+  }
+  function heightAt(x,z){
+    if(!visit)return 0;const hut=visit.assets.hut,d=hut?.userData.dims;if(!d)return visit.heightAt(x,z);
+    const [x0,x1]=d.postsX,[z0,z1]=d.postsZ;
+    if((x>=x0&&x<=x1&&z>=z0&&z<=d.verandaFront)||(x>=x1&&x<=d.verandaEast&&z>=z0&&z<=d.verandaFront))return hut.position.y+d.floorY;
+    const p=hut.userData.anchors.stepFront.position;
+    if(Math.pow((x-p.x)/.56,2)+Math.pow((z-p.z)/.47,2)<=1)return hut.position.y+p.y;
+    return visit.heightAt(x,z);
+  }
+  function blocked(x,z){
+    if(!visit?.ready)return true;
+    if(x< -20||x>20||z< -14||z>18||Math.abs(z-visit.streamZ(x))<1.15)return true;
+    const d=visit.assets.hut.userData.dims,[x0,x1]=d.postsX,[z0,z1]=d.postsZ,r=.17;
+    if((Math.abs(x-x0)<r||Math.abs(x-x1)<r)&&z>=z0-r&&z<=z1+r)return true;
+    if(Math.abs(z-z0)<r&&x>=x0-r&&x<=x1+r)return true;
+    for(const [px,pz] of [[x0,z1],[x1,z1],[x0,z0],[x1,z0],[0,z0],[x0,0],[x1,0]])if(Math.hypot(x-px,z-pz)<.24)return true;
+    if(x>-.80&&x<.30&&z>-.04&&z<.59)return true; // document table, seated figure and lamp share the inside furniture area
+    if(Math.hypot(x+.25,z+.20)<.42||Math.hypot(x+.92,z-.02)<.25)return true;
+    if(Math.abs(x+7.2)<.20&&z>-7.2&&z<-.8)return true;
+    for(const tree of visit.assets.trees||[])if(Math.hypot(x-tree.position.x,z-tree.position.z)<(tree===visit.assets.pine?.55:.26))return true;
+    return false;
+  }
+  function resolveMove(fromX,fromZ,toX,toZ){
+    let x=fromX,z=fromZ;const steps=Math.max(1,Math.ceil(Math.hypot(toX-fromX,toZ-fromZ)/.06)),dx=(toX-fromX)/steps,dz=(toZ-fromZ)/steps;
+    const allowed=(nx,nz)=>!blocked(nx,nz)&&heightAt(nx,nz)-heightAt(x,z)<=.301;
+    for(let i=0;i<steps;i++){
+      if(allowed(x+dx,z+dz)){x+=dx;z+=dz;}
+      else if(allowed(x+dx,z))x+=dx;else if(allowed(x,z+dz))z+=dz;
+    }return {x,z};
+  }
+  function frame(dt,t){
+    if(!stage)return;if($('modeBrief')?.classList.contains('show'))hideModeBrief(true);if(loading){renderer.clear();return;}
+    if(GAMEPAD.active)gamepadPoll();
+    if(!gameplayInputBlocked()){
+      let mx=(keyActive('right')?1:0)-(keyActive('left')?1:0)+joy.vx,mz=(keyActive('back')?1:0)-(keyActive('forward')?1:0)+joy.vy;
+      if(GAMEPAD.active){mx+=GAMEPAD.mx;mz+=GAMEPAD.mz;const sensitivity=(APP_SENS||5)/5;player.yaw-=GAMEPAD.lookX*dt*2.2*sensitivity;player.pitch=THREE.MathUtils.clamp(player.pitch-GAMEPAD.lookY*dt*1.8*sensitivity*(APP_INV_Y?-1:1),-1.25,1.25);}
+      const length=Math.max(1,Math.hypot(mx,mz)),speed=(keyActive('run')?4.2:2.4)*Math.min(dt,.08),s=Math.sin(player.yaw),c=Math.cos(player.yaw);
+      const p=resolveMove(player.pos.x,player.pos.z,player.pos.x+(mz*s+mx*c)/length*speed,player.pos.z+(mz*c-mx*s)/length*speed);
+      player.pos.x=p.x;player.pos.z=p.z;player.pos.y=heightAt(p.x,p.z)+1.62;
+    }
+    camera.position.copy(player.pos);camera.rotation.set(player.pitch,player.yaw,0,'YXZ');camera.updateMatrixWorld(true);visit.update(dt,t);
+    if(typeof NIGHT_LIGHTING!=='undefined')NIGHT_LIGHTING.update(camera);renderer.render(scene,camera);
+  }
+  function inspect(x=innerWidth/2,y=innerHeight/2){
+    if(!visit?.ready||gameplayInputBlocked())return;pointer.set(x/innerWidth*2-1,1-y/innerHeight*2);ray.setFromCamera(pointer,camera);
+    const assets=visit.assets,hits=ray.intersectObjects([assets.hut,...(assets.trees||[]),assets.stream,assets.anGrass].filter(Boolean),true);
+    const hit=hits.find(h=>h.distance<9);if(!hit){showNote('guide');return;}
+    const within=root=>{for(let p=hit.object;p;p=p.parent)if(p===root)return true;return false;};
+    const key=within(assets.desk)?'desk':within(assets.lamp)?'lamp':within(assets.kenko?.read)?'kenko':within(assets.hut)?'hut':'garden';showNote(key);
+  }
+  $('kenkoVisitBack').onclick=leave;$('kenkoVisitGuide').onclick=()=>showNote('guide');$('kenkoVisitInspect').onclick=()=>inspect();$('kenkoVisitNoteClose').onclick=closeNote;
+  $('kenkoVisitNight').onclick=()=>{if(!visit?.ready)return;night=!night;visit.setNight(night);renderer.shadowMap.needsUpdate=true;$('kenkoVisitNight').setAttribute('aria-pressed',String(night));$('kenkoVisitNight').textContent=night?'昼の庭を見る':'夜の灯を見る';};
+  function startReplay(){
+    if(loading)return;leave();
+    if(APP.map==='kamakura'){
+      const url=new URL(location.href);url.searchParams.delete('map');url.searchParams.delete('visit');url.searchParams.set('replay','tsurezure7');location.assign(url.href);return;
+    }
+    enterMode('saigen');if(APP.mode!=='saigen')return;$('sgPicker').style.display='none';startSaigen('tsurezure_adashino');hideModeBrief(true);
+  }
+  $('kenkoVisitReplay').onclick=startReplay;
+  const baseEnter=enterMode;enterMode=function(...args){if(stage)leave();return baseEnter.apply(this,args);};
+  const basePick=pick;pick=function(...args){if(stage)return inspect(...args);return basePick.apply(this,args);};
+  const baseBlocking=pauseBlockingOverlayOpen;pauseBlockingOverlayOpen=function(){return !note.hidden||loading||baseBlocking();};
+  note.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();closeNote();}if(e.key==='Tab'){const list=[...note.querySelectorAll('button,a[href]')];let index=list.indexOf(document.activeElement);index=(index+(e.shiftKey?-1:1)+list.length)%list.length;e.preventDefault();list[index].focus();}},true);
+  const entry=document.createElement('button');entry.id='kenkoVisitEntry';entry.className='tb-btn';entry.textContent='兼好の草庵を訪ねる';entry.onclick=open;
+  ($('homeNext')||$('mainModes')||$('title')).append(entry);
+  const walkMenu=$('tbmTour')?.parentNode;
+  if(walkMenu){const button=document.createElement('button');button.id='kenkoVisitWalkEntry';button.className=$('tbmTour').className;button.textContent='兼好の草庵を訪ねる';button.onclick=open;walkMenu.append(button);}
+  // Parse the route once; returning to the title must not reopen it.
+  const route=new URLSearchParams(location.search);
+  if(route.get('visit')==='kenko')setTimeout(open,0);
+  else if(route.get('replay')==='tsurezure7')setTimeout(startReplay,0);
+  return {open,leave,frame,inspect,showNote,heightAt,resolveMove,get active(){return !!stage;},get loading(){return loading;},get stage(){return stage;},get assets(){return visit?.assets||null;}};
+})();
+/* APP_KENKO_HERMITAGE_EMBED_END */
+KAMAKURA_GAMES.init(window.KAMAKURA_WORLD);
+KAMAKURA_CUSTOMS.init(window.KAMAKURA_WORLD);
 /* ============================================================
    起動ローディングを閉じる
    本体スクリプトはここまで同期実行されるため、この時点で構築は完了している。
