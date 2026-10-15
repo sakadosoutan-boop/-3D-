@@ -188,6 +188,85 @@ function ignorable(text) {
     if (!l.loopsBefore) failures.push('beat 6 did not start its cicada audio loops');
     if (run.folkInEstate !== 0) failures.push(`base-game figures still visible in the estate scenes: ${run.folkInEstate}`);
     if (run.folkAfter !== run.folkBefore) failures.push(`base-game figures not restored after leaving: ${run.folkAfter} of ${run.folkBefore}`);
+
+    // 本文パネルの見え方(全作品): 暗転の膜や通知がパネルを覆わないこと、縦長のスマホでも本文が最後の文字まで枠に収まること
+    await page.setViewportSize({ width: 390, height: 844 });
+    const text = await page.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      const z = (el) => parseInt(getComputedStyle(el).zIndex, 10) || 0;
+      const fadeBelowPanel = z(document.getElementById('sgFade')) < z(document.querySelector('#saigenHud .sg-stage-cap'));
+      const overlap = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+      const ts = document.getElementById('toast'); ts.style.display = 'none';
+      enterMode('saigen'); const pk = document.getElementById('sgPicker'); if (pk) pk.style.display = 'none';
+      const panel = document.querySelector('#saigenHud .sg-stage-cap');
+      const cut = [], seasonToast = [], covered = [], yakuCut = [];
+      for (const id of ['makura_haru', 'chomon_uta']) {
+        startSaigen(id); await wait(300);
+        const sc = APP.saigen.scene;
+        for (let i = 0; i < sc.beats.length; i++) {
+          APP.saigen.i = i; renderSaigenBeat(); await wait(60);
+          // 季節替わり(枕草子は毎場)の「○の庭になりました」を再現中に出さないこと。出ても本文パネルに重ならないこと
+          if (ts.style.display !== 'none') {
+            if (/の庭になりました/.test(ts.textContent)) seasonToast.push(`${id}#${i + 1}`);
+            if (overlap(ts.getBoundingClientRect(), panel.getBoundingClientRect())) covered.push(`${id}#${i + 1}: ${ts.textContent}`);
+          }
+          // 現代語訳も最後の行まで枠に見えていること(スクロールしないと読めない状態にしない)
+          const yk = document.getElementById('sgYaku'); if (yk.scrollHeight > yk.clientHeight + 1) yakuCut.push(`${id}#${i + 1}`);
+          const hw = document.getElementById('sgHonbunWrap'), hb = document.getElementById('sgHonbun');
+          if (hb.classList.contains('sg-waka-text') || !hb.firstChild) continue;
+          const wr = hw.getBoundingClientRect(), rg = document.createRange(), t = hb.firstChild, n = t.textContent.length;
+          rg.setStart(t, n - 1); rg.setEnd(t, n); const rr = rg.getBoundingClientRect();
+          if (rr.left < wr.left - 1 || rr.right > wr.right + 1 || rr.bottom > wr.bottom + 1) cut.push(`${id}#${i + 1}`);
+        }
+      }
+      toast('通知の位置の確認', 3000); await wait(30);
+      const tr = ts.getBoundingClientRect();
+      const toastClear = tr.top >= 0 && !overlap(tr, panel.getBoundingClientRect());
+      ts.style.display = 'none';
+      saigenBackToTitle();
+      return { fadeBelowPanel, cut, seasonToast, covered, toastClear, yakuCut };
+    });
+    if (!text.fadeBelowPanel) failures.push('the scene-change fade (#sgFade) covers the text panel');
+    if (text.seasonToast.length) failures.push(`season-change toast shown during the reenactment: ${text.seasonToast.join(', ')}`);
+    if (text.covered.length) failures.push(`a toast covers the text panel: ${text.covered.join(' / ')}`);
+    if (!text.toastClear) failures.push('toasts in reenactment mode are drawn over the text panel');
+    if (text.cut.length) failures.push(`honbun does not fit its box on a 390x844 screen: ${text.cut.join(', ')}`);
+    if (text.yakuCut.length) failures.push(`modern translation is cut off (needs scrolling) on a 390x844 screen: ${text.yakuCut.join(', ')}`);
+
+    // 横向きのスマホ(背の低い画面): 本文パネルが上端のボタン列に食い込まず、✕・目次・絵を見るが押せること。本文と現代語訳も枠に収まること
+    await page.setViewportSize({ width: 844, height: 390 });
+    const land = await page.evaluate(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+      enterMode('saigen'); const pk = document.getElementById('sgPicker'); if (pk) pk.style.display = 'none';
+      const bar = document.querySelector('#saigenHud .sg-top'), panel = document.querySelector('#saigenHud .sg-stage-cap');
+      const hit = (id) => { const el = document.getElementById(id), r = el.getBoundingClientRect(); const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return !!at && (at === el || el.contains(at)); };
+      const bad = [];
+      for (const id of ['makura_haru', 'chomon_uta']) {
+        startSaigen(id); await wait(300);
+        const sc = APP.saigen.scene;
+        for (let i = 0; i < sc.beats.length; i++) {
+          APP.saigen.i = i; renderSaigenBeat(); await wait(60);
+          ukHideCut(); // 題名・和歌の大写し(クリックで閉じる演出)は除いて、パネルとボタンの重なりだけを見る
+          const why = [];
+          if (panel.getBoundingClientRect().top < bar.getBoundingClientRect().bottom) why.push('panel over buttons');
+          for (const b of ['sgQuit', 'sgMenu', 'sgView']) if (!hit(b)) why.push(`${b} covered`);
+          const yk = document.getElementById('sgYaku'); if (yk.scrollHeight > yk.clientHeight + 1) why.push('translation cut');
+          const hw = document.getElementById('sgHonbunWrap'), hb = document.getElementById('sgHonbun');
+          if (!hb.classList.contains('sg-waka-text') && hb.firstChild) {
+            const wr = hw.getBoundingClientRect(), rg = document.createRange(), t = hb.firstChild, n = t.textContent.length;
+            rg.setStart(t, n - 1); rg.setEnd(t, n); const rr = rg.getBoundingClientRect();
+            if (rr.left < wr.left - 1 || rr.right > wr.right + 1 || rr.bottom > wr.bottom + 1) why.push('honbun cut');
+          } else if (hb.classList.contains('sg-waka-text')) {
+            const wr = hw.getBoundingClientRect();
+            hb.querySelectorAll('.sg-waka-line').forEach((l) => { const r = l.getBoundingClientRect(); if (r.bottom > wr.bottom + 1) why.push('waka line cut'); });
+          }
+          if (why.length) bad.push(`${id}#${i + 1}: ${why.join(', ')}`);
+        }
+      }
+      saigenBackToTitle();
+      return bad;
+    });
+    if (land.length) failures.push(`text panel layout on a 844x390 (landscape phone) screen: ${land.join(' / ')}`);
   } catch (error) {
     failures.push(`exception: ${error.message}`);
   }

@@ -444,20 +444,23 @@ const SAIGEN_TSUREZURE=(()=>{
     S.jobMs[name]=Math.round(performance.now()-t0);
   }
   function ensureBeat(i){(BEAT_JOBS[i]||[]).forEach(runJob);}
-  // 見ている間に、次に要る素材を一件ずつ作る(ショットが落ち着いてから)
+  // 見ている間に、次に要る素材を一件ずつ作る。素材作りは一件で数百ms〜数秒の同期処理で、その間は画面が止まるため、
+  // カメラが動いている間は作らない。その場の最後のショットが動き終えて止まってから(本文を読んでいる間に)作る
   function pumpJobs(){
     if(!S.active||S.pumpTimer)return;
     S.pumpTimer=setTimeout(()=>{S.pumpTimer=null;if(!S.active)return;
       const next=JOB_ORDER.find(n=>!S.done[n]);if(!next)return;
-      if(S.shotT<1.5||document.hidden){pumpJobs();return;}
+      if(!cameraAtRest()||document.hidden||S.pendingBeat){pumpJobs();return;}
       runJob(next);pumpJobs();},700);
   }
+  function cameraAtRest(){const n=S.shots.length;if(!n)return false;const sh=S.shots[S.shotIdx];
+    return S.shotIdx>=n-1&&!!sh&&S.shotT>=(sh.dur||8)+.8;}
 
   /* ============================================================
      カメラ割り(各場の shots)
        zone   : ゾーン名
        cam/to : {pos:[x,y,z], look:[x,y,z]} ゾーン局所座標(macro:true のときはセット局所の実寸座標)
-       dur    : 秒(最後のショットは終わっても保持し、ゆっくり動き続ける)
+       dur    : 秒(最後のショットは動き終えるとその構図で止まる。止まった後に次の素材を作る)
        fov/fovTo, light(プリセット名 or {preset,over}), lightTo{preset,over,dur,delay}
        shadow : {center:[x,y,z](局所), half}
        fade   : 前のショットから切り替える時の暗転/白転
