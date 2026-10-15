@@ -294,5 +294,19 @@
     "kind": "markers-exist",
     "begin": "/* APP_SAIGEN_TSUREZURE_EMBED_BEGIN (src/app/saigen-tsurezure.js から自動生成。ここを直接編集しない) */",
     "end": "/* APP_SAIGEN_TSUREZURE_EMBED_END */"
+  },
+  {
+    "name": "makura-props",
+    "src": "src/app/makura-props.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_MAKURA_PROPS_EMBED_BEGIN (src/app/makura-props.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_MAKURA_PROPS_EMBED_END */"
+  },
+  {
+    "name": "saigen-makura",
+    "src": "src/app/saigen-makura.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_SAIGEN_MAKURA_EMBED_BEGIN (src/app/saigen-makura.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_SAIGEN_MAKURA_EMBED_END */"
   }
 ]
