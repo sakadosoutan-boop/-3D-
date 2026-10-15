@@ -170,8 +170,9 @@ const SAIGEN_MAKURA=(()=>{
     watadono:{from:[1.6,-8.4],to:[15.6,-8.4]},
     stream:[[23,-30],[19.5,-20],[15.2,-12.5],[12.6,-7.6],[10.4,-2.4],[8.2,3.2],[5.6,8.4],[1.6,12.6],[-3.6,16.2],[-8.4,19.4]],
     pond:{c:[-14,24.5],r:[10.5,6.8]},
+    island:{c:[-16.5,26.2],r:2.6},
     tsuiji:[[30,-34],[30,46],[-46,46],[-46,-34],[30,-34]],
-    sand:{x0:-13.5,x1:2.6,z0:.2,z1:5.6}
+    sand:{x0:-15.5,x1:3.0,z0:.2,z1:10.4}
   };
   const STREAM_Y=-.28; // 遣水の水面(局所)
   const POND_Y=-.36;   // 池の水面
@@ -191,7 +192,8 @@ const SAIGEN_MAKURA=(()=>{
     if(d<1.9)h-=.52*Math.pow(1-d/1.9,1.5);
     // 池
     const f=pondField(x,z);
-    if(f<1.35){const u=clamp01((1.35-f)/.55);h=lerp(h,-.9,u*u*(3-2*u));}
+    if(f<1.35){const u=clamp01((1.35-f)/.55);h=lerp(h,-.9,u*u*(3-2*u));
+      const I=MIYA.island,di=Math.hypot(x-I.c[0],z-I.c[1])/I.r;if(di<1.6)h=lerp(h,.35,ease(clamp01((1.6-di)/.9)));}
     // 殿舎・渡殿の下と前は平らに
     if(x>-16&&x<17&&z>-11&&z<6.2){const w=clamp01(Math.min(x+16,17-x,z+11,6.2-z)/1.5);h*=1-w;}
     return h;
@@ -226,7 +228,7 @@ const SAIGEN_MAKURA=(()=>{
   function buildMiya(){
     const z=zoneGroup("miya"),M=MODS(),q=S.quality;
     // 地面
-    const terrain=safeMake("miya-terrain",()=>M.NAT&&M.NAT.makeTerrain?M.NAT.makeTerrain({size:300,segments:q==="low"?110:q==="medium"?170:230,heightAt:hMiya,quality:q,soilPatches:.25}):null,
+    const terrain=safeMake("miya-terrain",()=>M.NAT&&M.NAT.makeTerrain?M.NAT.makeTerrain({size:300,segments:q==="low"?110:q==="medium"?170:230,heightAt:hMiya,quality:q,soilPatches:.12}):null,
       ()=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(300,300),fbMat(0x5f6a40));m.rotation.x=-Math.PI/2;m.receiveShadow=true;const g=fbGroup("terrain");g.add(m);return g;});
     z.add(own(terrain));S.assets.terrain=terrain;
     const sd=MIYA.sand,sand=makeSandPatch(sd.x1-sd.x0,sd.z1-sd.z0);sand.position.set((sd.x0+sd.x1)/2,.012,(sd.z0+sd.z1)/2);z.add(own(sand));S.assets.sand=sand;
@@ -253,14 +255,17 @@ const SAIGEN_MAKURA=(()=>{
     const stream=safeMake("miya-stream",()=>M.NAT&&M.NAT.makeStream?M.NAT.makeStream({points:pts,width:1.5,quality:down(q)}):null,()=>fbGroup("stream"));
     z.add(own(track("miya",stream)));S.assets.stream=stream;
     const P=MIYA.pond;
-    const pond=safeMake("miya-pond",()=>M.NAT&&M.NAT.makeMirrorWater?M.NAT.makeMirrorWater({width:P.r[0]*2.9,depth:P.r[1]*2.9,resolution:q==="low"?256:512,quality:q}):null,()=>{
+    const pond=safeMake("miya-pond",()=>M.NAT&&M.NAT.makeMirrorWater?M.NAT.makeMirrorWater({width:P.r[0]*2.9,depth:P.r[1]*2.9,resolution:q==="low"?256:512,maxDistance:150,quality:q}):null,()=>{
       const g=fbGroup("pond");const m=new THREE.Mesh(new THREE.PlaneGeometry(P.r[0]*2.9,P.r[1]*2.9),fbMat(0x1d2a2c,{roughness:.08,metalness:.2}));m.rotation.x=-Math.PI/2;g.add(m);return g;});
     pond.position.set(P.c[0],POND_Y,P.c[1]);z.add(own(track("miya",pond)));S.assets.pond=pond;
     // 前栽(遣水のほとりの草。殿舎の前の白砂・流れ・池・渡殿の下には生やさない)
     const grass=safeMake("miya-grass",()=>M.FLO&&M.FLO.makeGrassField?M.FLO.makeGrassField({width:96,depth:92,center:[-6,4],focus:[4,4],heightAt:hMiya,season:"spring",dew:true,quality:down(q),
-      mask:(x,zz)=>{if(x>-15&&x<3.2&&zz>-9&&zz<6)return 0;if(x>0&&x<17&&zz>-10.4&&zz<-6.4)return .25;
-        const d=polyDist(MIYA.stream,x,zz);if(d<.95)return 0;if(pondField(x,zz)<1.12)return 0;
-        if(x>29||zz>45||x<-45||zz<-33)return 0;return d<2.2?.85:.6;}}):null,()=>fbGroup("grass"));
+      mask:(x,zz)=>{const sd=MIYA.sand;if(x>-16&&x<3.4&&zz>-9.6&&zz<.4)return 0;if(x>sd.x0-.4&&x<sd.x1+.4&&zz>sd.z0-.4&&zz<sd.z1+.4)return 0;
+        if(x>0&&x<17&&zz>-10.4&&zz<-6.4)return .2;
+        const d=polyDist(MIYA.stream,x,zz);if(d<.95)return 0;const pf=pondField(x,zz);
+        const I=MIYA.island,di=Math.hypot(x-I.c[0],zz-I.c[1])/I.r;if(di<1)return .7;if(pf<1.12)return 0;
+        if(x>29.4||zz>45.4||x<-45.4||zz<-33.4)return (x>31||zz>47||x<-47||zz<-35)?.35:0;
+        if(d<2.7)return .95;if(pf<1.5)return .8;return .04;}}):null,()=>fbGroup("grass"));
     z.add(own(track("miya",grass)));S.assets.grass=grass;
     // 石(遣水と池の汀)
     const rocks=[[13.6,-6.2,.7,1],[11.2,-1.2,.55,2],[9.4,3.8,.8,3],[6.8,8.9,.6,4],[2.4,11.6,.75,5],[-2.8,16.9,.9,6],[-5.6,18.4,.65,7],[-9.4,17.4,1.1,8],[-21.5,21.6,1.0,9],[-17.8,30.2,.8,10],[-6.2,28.4,.7,11]];
@@ -272,11 +277,13 @@ const SAIGEN_MAKURA=(()=>{
     S.assets.cherry=Tr("miya-cherry",()=>M.TRE&&M.TRE.makeCherry?M.TRE.makeCherry({height:6.2,seed:301,quality:down(q)}):null,5.4,4.6,.6);
     Tr("miya-pine1",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:7.2,lean:.35,seed:302,quality:down(q)}):null,-9.6,15.6,2.4);
     Tr("miya-pine2",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:6.0,lean:.22,seed:303,quality:"low"}):null,-24.5,21,1.2);
+    Tr("miya-pine3",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:4.6,lean:.4,seed:308,quality:"low"}):null,MIYA.island.c[0]+.4,MIYA.island.c[1]-.3,.7);
     Tr("miya-maple1",()=>M.TRE&&M.TRE.makeMaple?M.TRE.makeMaple({height:4.8,seed:304,quality:down(q)}):null,13.8,-2.6);
     Tr("miya-maple2",()=>M.TRE&&M.TRE.makeMaple?M.TRE.makeMaple({height:4.0,seed:305,quality:"low"}):null,3.6,14.6);
     Tr("miya-hagi1",()=>M.TRE&&M.TRE.makeHagi?M.TRE.makeHagi({seed:306,quality:down(q)}):null,8.6,7.2);
     Tr("miya-hagi2",()=>M.TRE&&M.TRE.makeHagi?M.TRE.makeHagi({seed:307,quality:"low"}):null,-.6,12.8);
-    [[36,-22,8.5],[38.5,-6,9.5],[35.5,9,8],[41,22,10],[36.5,36,8.5],[-54,8,9],[-55,30,8],[2,55,8.5],[-22,55,9],[22,53,8]].forEach((p,i)=>
+    [[36,-22,8.5],[38.5,-6,9.5],[35.5,9,8],[41,22,10],[36.5,36,8.5],[44,-12,11],[47,4,9.5],[45,30,10.5],[52,16,12],[50,-28,10],
+     [-54,8,9],[-55,30,8],[-52,-14,10],[-58,42,9.5],[2,55,8.5],[-22,55,9],[22,53,8],[-38,57,10],[12,60,11],[34,58,9]].forEach((p,i)=>
       Tr("miya-bgpine"+i,()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:p[2],lean:.1,seed:320+i,quality:"low"}):null,p[0],p[1],i*.9));
     S.assets.bamboo=Tr("miya-bamboo",()=>M.TRE&&M.TRE.makeBambooGrove?M.TRE.makeBambooGrove({width:14,depth:4,height:9,seed:340,quality:"low"}):null,22,-27);
     // 京の山並み(東山・西山・北山)
