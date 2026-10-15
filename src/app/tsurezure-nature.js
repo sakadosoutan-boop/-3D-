@@ -190,6 +190,11 @@ uniform float uStars;uniform float uMilky;
 uniform float uCover;uniform float uCScale;uniform float uCSpeed;uniform float uCirrus;uniform float uScales;uniform float uCOpacity;
 uniform vec3 uCCol;uniform vec3 uCShade;uniform vec2 uWind;uniform vec3 uBeltCol;uniform float uBelt;uniform float uTime;
 uniform sampler2D tNoise;
+/* 枕草子で追加した層(既定値はすべて効果 0): たなびく雲・薄明の弧・紫の光・月の暈・全天を覆う雲 */
+uniform float uStreaks;uniform float uStreakAz;uniform float uStreakSpan;uniform float uStreakEl;uniform float uStreakElRange;uniform float uStreakThick;
+uniform vec3 uStreakLit;uniform vec3 uStreakShade;uniform float uStreakSeed;uniform float uStreakSpeed;uniform float uStreakCount;
+uniform float uArch;uniform vec3 uArchCol;uniform float uArchH;uniform float uArchW;uniform float uPurple;uniform vec3 uPurpleCol;
+uniform float uMoonHalo;uniform float uOvercast;
 varying vec3 vWorldPos;
 ${GL_HASH}
 vec3 starLayer(vec3 d,float sc,float dens,float px,float gain){
@@ -257,6 +262,16 @@ void main(){
     col+=uSunCol*uSunInt*uShafts*0.45*rays*env*(0.4+0.6*hb);
     col=max(col,vec3(0.0));
   }
+  /* 薄明の弧(山ぎはの白み)と、その上の紫の光 — 足し算の空の光。覆った星は薄れる */
+  float archDim=1.0;
+  if(uArch+uPurple>0.0005){
+    float azF=clamp(0.5+0.5*azS,0.0,1.0);
+    float arch=pow(azF,uArchW)*exp(-(hp+0.002)/max(uArchH,1e-3));
+    float pl=pow(azF,uArchW*0.55)*exp(-pow((hp-0.33)/0.20,2.0));
+    vec3 add=uArchCol*arch*uArch+uPurpleCol*pl*uPurple;
+    col+=add;
+    archDim=exp(-dot(add,vec3(0.3,0.5,0.2))*40.0);
+  }
   /* stars (+ optional milky way) */
   vec3 st=vec3(0.0);
   if(uStars>0.001){
@@ -269,7 +284,7 @@ void main(){
       st+=vec3(0.55,0.6,0.75)*band*(0.35+0.65*mn)*(1.0-0.7*smoothstep(0.45,0.8,dust)*exp(-gb*gb/0.006))*0.06*uMilky;
       st+=starLayer(d,620.0,0.10*band,pa,0.35*uMilky);
     }
-    st*=smoothstep(0.0,0.2,h)*uStars;
+    st*=smoothstep(0.0,0.2,h)*uStars*archDim;
   }
   /* moon */
   vec3 md=normalize(uMoonDir);
@@ -277,6 +292,12 @@ void main(){
   float illum=0.5-0.5*cos(uMoonPhase*6.2831853);
   float mUp=smoothstep(-0.04,0.02,md.y);
   col+=uMoonCol*uMoonVis*mUp*(0.4+0.6*illum)*illum*(0.05*exp(-mdist/(uMoonSize*2.6))+0.025*exp(-mdist/0.09)+0.012*exp(-mdist/0.35));
+  if(uMoonHalo>0.0005){ /* 湿った空気の月の暈: 大きな光冠 + かすかな22°の輪 */
+    float mca=acos(clamp(dot(d,md),-1.0,1.0));
+    float aure=0.55*exp(-mca/0.075)+0.45*exp(-mca/0.24);
+    float ring=exp(-pow((mca-0.384)/0.016,2.0))+0.35*exp(-pow((mca-0.40)/0.03,2.0));
+    col+=uMoonCol*uMoonVis*mUp*(0.4+0.6*illum)*illum*uMoonHalo*(0.022*aure+0.0035*ring);
+  }
   float mDisc=0.0;vec3 mCol=vec3(0.0);
   if(uMoonVis>0.001){
     vec3 upm=abs(md.y)>0.999?vec3(0.0,0.0,1.0):vec3(0.0,1.0,0.0);
@@ -359,6 +380,73 @@ void main(){
     float ca=(1.0-exp(-tau))*uCOpacity*smoothstep(0.0,0.085,h)*step(0.002,D);
     col=mix(col,cc,ca);
   }
+  /* 全天を覆う雲(雨雲・雪雲・薄曇り)。薄い時は日・月の光がにじむ */
+  if(uOvercast>0.0005){
+    vec2 op=d.xz/(hp+0.06)*0.55+uWind*uTime*0.0035*uCSpeed;
+    float o1=texture2D(tNoise,op*0.031+vec2(0.21,0.63)).r;
+    float o2=texture2D(tNoise,op*0.083+vec2(0.71,0.13)).b;
+    float o3=0.5;
+#if SKYQ>0
+    o3=texture2D(tNoise,op*0.21+vec2(0.37,0.91)).r;
+#endif
+    float om=o1*0.55+o2*0.30+o3*0.15;
+    vec3 oc=mix(uCShade,uCCol,smoothstep(0.22,0.82,om));
+    oc=mix(oc,mix(uHorizon,hazeC,clamp(uHaze*1.15,0.0,1.0)),exp(-hp*7.0)*0.65);
+    float thinO=clamp(1.0-uOvercast,0.0,1.0);
+    oc+=uSunCol*uSunInt*(0.05*nhg(cosS,0.80)+0.012*nhg(cosS,0.95))*sunVis*(0.35+0.65*thinO)*(1.15-0.5*om);
+    oc+=uMoonCol*uMoonVis*mUp*illum*0.02*nhg(dot(d,md),0.85);
+    col=mix(col,oc,clamp(uOvercast,0.0,1.0)*smoothstep(-0.01,0.03,h));
+  }
+  /* たなびく雲: 稜線の上に地平と平行に細く引く層雲の帯(2〜6本)。下面が地平線下の日に染まり、上面は青灰に沈む */
+  if(uStreaks>0.0005){
+    float azR=atan(d.x,-d.z);
+    float daz=azR-uStreakAz;daz=mod(daz+3.14159265,6.28318531)-3.14159265;
+    float aD=daz*57.29578;
+    float eD=asin(clamp(d.y,-1.0,1.0))*57.29578;
+    float eTop=uStreakEl+uStreakElRange*0.5+uStreakThick*3.0+2.0;
+    if(abs(aD)<uStreakSpan*0.8+4.0&&eD>-0.5&&eD<eTop){
+      float sEl=asin(clamp(sd.y,-1.0,1.0))*57.29578;
+      float prox=pow(clamp(0.5+0.5*azS,0.0,1.0),2.0);
+      float elF=smoothstep(-15.0,-5.0,sEl)*(1.0-0.35*smoothstep(3.0,14.0,sEl));
+      float ax=aD-uTime*uStreakSpeed;
+      vec3 horizonS=mix(uHorizon,hazeC,clamp(uHaze*1.15,0.0,1.0));
+      float nB=max(uStreakCount,1.0);
+      for(int i=0;i<6;i++){
+        float fi=float(i);
+        if(fi>=uStreakCount)break;
+        float r1=nh11(uStreakSeed*1.731+fi*7.137+0.11),r2=nh11(uStreakSeed*2.917+fi*3.411+0.53),r3=nh11(uStreakSeed*0.613+fi*5.773+0.97),r4=nh11(uStreakSeed*3.371+fi*1.913+0.29);
+        float eC=uStreakEl-uStreakElRange*0.5+uStreakElRange*(fi+0.5+0.7*(r1-0.5))/nB;
+        float depthK=clamp(eC/max(uStreakEl,0.5),0.35,1.8);
+        float th=uStreakThick*(0.55+0.8*r2)*mix(0.7,1.0,clamp(depthK*0.6,0.0,1.0));
+        float aC=(r3-0.5)*uStreakSpan*0.55;
+        float L=uStreakSpan*(0.28+0.30*r4);
+        float u=(aD-aC)/L;
+        if(abs(u)>1.35)continue;
+        float wav=texture2D(tNoise,vec2(ax*0.0061+fi*0.137,0.21+fi*0.093)).r-0.5;
+        float eLine=eC+(r1-0.5)*0.035*(aD-aC)+wav*th*2.2;
+        float thv=texture2D(tNoise,vec2(ax*0.0127+fi*0.311,0.67+fi*0.071)).b;
+        float thL=th*(0.45+1.05*thv);
+        float v=(eD-eLine)/max(thL,0.02);
+        if(abs(v)>3.0)continue;
+        float endN=texture2D(tNoise,vec2(ax*0.021+fi*0.53,0.41+fi*0.11)).r;
+        float env=1.0-smoothstep(0.5,1.0,abs(u)+(endN-0.5)*0.55);
+        float gap=texture2D(tNoise,vec2(ax*0.0093+fi*0.29,0.83+fi*0.05)).b;
+        env*=mix(1.0,smoothstep(0.30,0.62,gap),0.35+0.65*smoothstep(0.2,0.9,abs(u)));
+        float prof=smoothstep(-1.12,-0.62,v)*(1.0-smoothstep(-0.05,1.35,v));
+        float fib=texture2D(tNoise,vec2(ax*0.0117+fi*0.417,eD*0.61+fi*0.173)).r;
+        float lump=texture2D(tNoise,vec2(ax*0.031+fi*0.29,eD*0.19+fi*0.61)).b;
+        float dn=prof*env*(0.55+0.45*lump)+(fib-0.5)*0.42*prof*env;
+        float a=smoothstep(0.16,0.62,dn);
+        float under=1.0-smoothstep(-1.05,0.55,v);
+        float lit=clamp(under*(0.55+0.45*prox)*elF*(0.7+0.3*(1.0-a))+0.10*prox*elF,0.0,1.0);
+        vec3 cc=mix(uStreakShade,uStreakLit,lit);
+        cc+=uStreakLit*0.45*exp(-pow((v+0.85)/0.22,2.0))*elF*prox*(0.6+0.4*fib);
+        cc*=0.9+0.2*lump;
+        cc=mix(cc,horizonS,clamp(exp(-max(eD,0.0)/2.4)*0.55*(1.25-depthK*0.4),0.0,0.8));
+        col=mix(col,cc,a*clamp(uStreaks,0.0,1.0)*smoothstep(-0.3,0.4,eD));
+      }
+    }
+  }
   /* below the horizon */
   col=mix(col,uGround,1.0-exp(min(h,0.0)*16.0));
   gl_FragColor=vec4(max(col,vec3(0.0)),1.0);
@@ -371,7 +459,8 @@ const SKY_DEFAULT={zenith:[0.06,0.15,0.42],horizon:[0.36,0.61,0.96],haze:0.4,haz
   sunDir:[0.3,0.6,0.5],sunColor:[1.0,0.93,0.82],sunIntensity:1.2,sunSize:0.0115,glow:1.0,shafts:0.0,
   moonDir:[-0.4,0.5,-0.6],moonColor:[1.5,1.45,1.35],moonPhase:0.5,moonVisible:0,moonSize:0.022,
   stars:0,milkyWay:0,cloudCover:0.25,cloudColor:[1.1,1.1,1.12],cloudShade:[0.55,0.6,0.7],cloudScale:1.0,cloudSpeed:1.0,cloudOpacity:1.0,
-  cirrus:0,scales:0,wind:[1.0,0.3],belt:1.0,beltColor:[0.35,0.18,0.25]};
+  cirrus:0,scales:0,wind:[1.0,0.3],belt:1.0,beltColor:[0.35,0.18,0.25],
+  streaks:0,arch:0,purple:0,moonHalo:0,overcast:0};
 
 function makeSky(opts){opts=opts||{};const q=qlv(opts),res=Res(),radius=opts.radius||700;
   const U={uZenith:{value:new T.Color()},uHorizon:{value:new T.Color()},uGround:{value:new T.Color()},uHazeCol:{value:new T.Color()},uHaze:{value:0.4},
@@ -379,7 +468,11 @@ function makeSky(opts){opts=opts||{};const q=qlv(opts),res=Res(),radius=opts.rad
     uMoonDir:{value:new T.Vector3(0,1,0)},uMoonCol:{value:new T.Color()},uMoonPhase:{value:0.5},uMoonVis:{value:0},uMoonSize:{value:0.022},
     uStars:{value:0},uMilky:{value:0},uCover:{value:0},uCScale:{value:1},uCSpeed:{value:1},uCirrus:{value:0},uScales:{value:0},uCOpacity:{value:1},
     uCCol:{value:new T.Color()},uCShade:{value:new T.Color()},uWind:{value:new T.Vector2(1,0.3)},uBeltCol:{value:new T.Color()},uBelt:{value:1},
-    uTime:{value:0},tNoise:{value:noiseTex(res)}};
+    uTime:{value:0},tNoise:{value:noiseTex(res)},
+    uStreaks:{value:0},uStreakAz:{value:Math.PI/2},uStreakSpan:{value:60},uStreakEl:{value:6},uStreakElRange:{value:6},uStreakThick:{value:0.5},
+    uStreakLit:{value:new T.Color(0.9,0.5,0.6)},uStreakShade:{value:new T.Color(0.2,0.2,0.3)},uStreakSeed:{value:1},uStreakSpeed:{value:0.02},uStreakCount:{value:4},
+    uArch:{value:0},uArchCol:{value:new T.Color(1,1,1)},uArchH:{value:0.07},uArchW:{value:2},uPurple:{value:0},uPurpleCol:{value:new T.Color(0.5,0.3,0.5)},
+    uMoonHalo:{value:0},uOvercast:{value:0}};
   const mat=res.own(new T.ShaderMaterial({uniforms:U,vertexShader:SKY_VS,fragmentShader:"#define SKYQ "+q+"\n"+SKY_FS,side:T.BackSide,depthWrite:false,depthTest:true,fog:false}));
   mat.extensions={derivatives:true};
   const geo=res.own(new T.SphereGeometry(radius,48,24));
@@ -397,7 +490,13 @@ function makeSky(opts){opts=opts||{};const q=qlv(opts),res=Res(),radius=opts.rad
     num("stars","uStars");num("milkyWay","uMilky");num("cloudCover","uCover");num("cloudScale","uCScale");num("cloudSpeed","uCSpeed");
     num("cloudOpacity","uCOpacity");num("cirrus","uCirrus");num("scales","uScales");col("cloudColor","uCCol");col("cloudShade","uCShade");
     if(s.wind){if(s.wind.isVector2)U.uWind.value.copy(s.wind);else if(Array.isArray(s.wind))U.uWind.value.set(s.wind[0],s.wind[1]);state.wind=s.wind;}
-    col("beltColor","uBeltCol");num("belt","uBelt");}
+    col("beltColor","uBeltCol");num("belt","uBelt");
+    // 枕草子の層(度で受けてラジアンへ)
+    num("streaks","uStreaks");if(typeof s.streakAz==="number"){U.uStreakAz.value=s.streakAz*Math.PI/180;state.streakAz=s.streakAz;}
+    num("streakSpan","uStreakSpan");num("streakEl","uStreakEl");num("streakElRange","uStreakElRange");num("streakThick","uStreakThick");
+    col("streakLit","uStreakLit");col("streakShade","uStreakShade");num("streakSeed","uStreakSeed");num("streakSpeed","uStreakSpeed");num("streakCount","uStreakCount");
+    num("arch","uArch");col("archColor","uArchCol");if(typeof s.archHeight==="number"){U.uArchH.value=Math.max(0.05,s.archHeight)*Math.PI/180;state.archHeight=s.archHeight;}num("archWidth","uArchW");
+    num("purple","uPurple");col("purpleColor","uPurpleCol");num("moonHalo","uMoonHalo");num("overcast","uOvercast");}
   setState(SKY_DEFAULT);if(opts.state)setState(opts.state);
   function center(cam){if(!cam)return;_v.setFromMatrixPosition(cam.matrixWorld);if(mesh.parent&&mesh.parent.type!=="Scene"){mesh.parent.updateMatrixWorld();mesh.parent.worldToLocal(_v);}
     mesh.position.copy(_v);mesh.updateMatrixWorld(true);}
@@ -461,7 +560,78 @@ const PRESET_SRC={
     sun:[160,55],sunColor:"#fff4e6",sunIntensity:1.25,glow:0.95,cloudCover:0.16,scales:0.0,cirrus:0.35,cloudColor:"#ffffff",cloudShade:"#b2bccb",wind:[0.8,0.3],
     beltColor:"#000000",belt:0.0,
     rim:{color:0xd6e6ff,intensity:0.22},sunLight:{color:0xfff4e2,intensity:1.22},hemi:{sky:0xc8dcec,ground:0x8a845e,intensity:0.58},ambient:{color:0xf4f0ff,intensity:0.18},
-    fogDensity:0.006,hills:{near:"#6a7a62",far:"#c4ccd2",light:"#fff6e2"},mist:{color:"#e8ecee",glow:"#ffffff"}}
+    fogDensity:0.006,hills:{near:"#6a7a62",far:"#c4ccd2",light:"#fff6e2"},mist:{color:"#e8ecee",glow:"#ffffff"}},
+  /* ---- 枕草子 第一段(春はあけぼの〜冬はつとめて)。太陽の方位は北=0°・東=90°。夜明けは東 75°、夕日は西 255° ---- */
+  akebonoDark:{E:1.0,zenith:"#0b1330",horizon:"#252c4c",hazeColor:"#343a5a",haze:0.5,ground:"#090b12",
+    sun:[75,-12],sunColor:"#ff8a5a",sunIntensity:1.0,glow:0.5,
+    stars:0.6,milkyWay:0.0,cloudCover:0.0,cirrus:0.0,scales:0.0,cloudColor:"#3a3a58",cloudShade:"#141a30",wind:[0.4,0.1],beltColor:"#000000",belt:0.0,
+    arch:0.06,archColor:"#5a6290",archHeight:7,archWidth:2.2,
+    streaks:0.9,streakAz:80,streakSpan:46,streakEl:7.8,streakElRange:5.5,streakThick:0.42,streakLit:"#3e3550",streakShade:"#161a2c",streakSeed:3,streakSpeed:0.025,streakCount:5,
+    rim:{color:0x6f80c0,intensity:0.18},sunLight:{color:0x8a96cc,intensity:0.12},hemi:{sky:0x26305a,ground:0x0a0b10,intensity:0.24},ambient:{color:0x56649a,intensity:0.06},
+    fogDensity:0.006,hills:{near:"#0e1322",far:"#262c48",light:"#3c3e60",glow:"#2e3456"},mist:{color:"#2a3048",glow:"#4a4a6a"}},
+  akebonoWhite:{E:1.0,zenith:"#1a2858",horizon:"#6d76a0",hazeColor:"#9aa0bc",haze:0.5,ground:"#14161e",
+    sun:[75,-7],sunColor:"#ffb08a",sunIntensity:1.2,glow:0.6,
+    stars:0.2,milkyWay:0.0,cloudCover:0.0,cirrus:0.0,scales:0.0,cloudColor:"#6a6a88",cloudShade:"#262a44",wind:[0.4,0.1],beltColor:"#2a2440",belt:0.4,
+    arch:0.45,archColor:"#e6e4dc",archHeight:3.6,archWidth:2.0,purple:0.06,purpleColor:"#9a8ab0",
+    streaks:0.95,streakAz:80,streakSpan:46,streakEl:7.8,streakElRange:5.5,streakThick:0.42,streakLit:"#8a7094",streakShade:"#2c3150",streakSeed:3,streakSpeed:0.025,streakCount:5,
+    rim:{color:0x9aa8e0,intensity:0.24},sunLight:{color:0xa8b4e0,intensity:0.24},hemi:{sky:0x56669a,ground:0x16161c,intensity:0.32},ambient:{color:0x7884b8,intensity:0.08},
+    fogDensity:0.006,hills:{near:"#171d33",far:"#535a7c",light:"#a898b0",glow:"#8a90b0"},mist:{color:"#5a6280",glow:"#b0a8c0"}},
+  akebonoAkari:{E:1.0,zenith:"#33498a",horizon:"#b0a2b8",hazeColor:"#cdb8c0",haze:0.55,ground:"#2a2a34",
+    sun:[75,-3],sunColor:"#ff9a62",sunIntensity:1.8,glow:0.9,
+    stars:0.0,milkyWay:0.0,cloudCover:0.0,cirrus:0.0,scales:0.0,cloudColor:"#c49ab0",cloudShade:"#5a5478",wind:[0.4,0.1],beltColor:"#4a3048",belt:0.8,
+    arch:0.9,archColor:"#ffe6b8",archHeight:4.4,archWidth:2.0,purple:0.22,purpleColor:"#c890b0",
+    streaks:1.0,streakAz:80,streakSpan:46,streakEl:7.8,streakElRange:5.5,streakThick:0.42,streakLit:"#f2a0bc",streakShade:"#5c5680",streakSeed:3,streakSpeed:0.025,streakCount:5,
+    rim:{color:0xffc8b0,intensity:0.3},sunLight:{color:0xffc4aa,intensity:0.5},hemi:{sky:0x9a9ccc,ground:0x3a3438,intensity:0.42},ambient:{color:0xa0a0c8,intensity:0.12},
+    fogDensity:0.006,hills:{near:"#2c3048",far:"#8a84a2",light:"#ffc0a0",glow:"#d8b8b8"},mist:{color:"#b8a8bc",glow:"#ffc8a8"}},
+  akebonoRise:{E:1.0,zenith:"#5677b2",horizon:"#e4ccc0",hazeColor:"#efd8c8",haze:0.65,ground:"#4a4640",
+    sun:[75,2],sunColor:"#ffb070",sunIntensity:2.4,glow:1.1,shafts:0.15,
+    stars:0.0,milkyWay:0.0,cloudCover:0.0,cirrus:0.1,scales:0.0,cloudColor:"#ffd0a8",cloudShade:"#8a7e96",wind:[0.4,0.1],beltColor:"#4a3a4a",belt:0.5,
+    arch:0.6,archColor:"#ffe8c0",archHeight:5,archWidth:2.0,purple:0.08,purpleColor:"#d8a8b8",
+    streaks:0.85,streakAz:80,streakSpan:46,streakEl:7.8,streakElRange:5.5,streakThick:0.42,streakLit:"#ffd2a8",streakShade:"#8c7e98",streakSeed:3,streakSpeed:0.025,streakCount:5,
+    rim:{color:0xffd2b0,intensity:0.3},sunLight:{color:0xffcf9a,intensity:0.85},hemi:{sky:0xc4c4dc,ground:0x6a6050,intensity:0.5},ambient:{color:0xb8b8d0,intensity:0.15},
+    fogDensity:0.006,hills:{near:"#464a5e",far:"#b8aab8",light:"#ffd0a0",glow:"#f0d0b8"},mist:{color:"#e4d4d0",glow:"#ffd8b0"}},
+  natsuTsukiyo:{E:1.0,zenith:"#0b1838",horizon:"#26385a",hazeColor:"#304266",haze:0.55,ground:"#0b0f17",
+    sun:[330,-35],sunColor:"#ffffff",sunIntensity:0.0,glow:0.0,moon:[150,30],moonPhase:0.5,moonVisible:1,moonColor:"#fff6e0",moonBoost:2.0,moonHalo:0.6,
+    stars:0.32,milkyWay:0.0,cloudCover:0.06,cirrus:0.18,scales:0.0,cloudColor:"#5a6a8c",cloudShade:"#18213a",wind:[0.5,0.2],beltColor:"#000000",belt:0.0,
+    rim:{color:0x8fb0ff,intensity:0.45},sunLight:{color:0xa8bce8,intensity:0.45,dirFrom:"moon"},hemi:{sky:0x32446c,ground:0x0e1016,intensity:0.24},ambient:{color:0x6c7cae,intensity:0.07},
+    fogDensity:0.006,hills:{near:"#111a2c",far:"#2a3858",light:"#8ea2cc"},mist:{color:"#4a5a7a",glow:"#a8b8d8"}},
+  natsuYami:{E:1.0,zenith:"#060b1a",horizon:"#141c30",hazeColor:"#1a2236",haze:0.5,ground:"#05070c",
+    sun:[200,-40],sunColor:"#ffffff",sunIntensity:0.0,glow:0.0,
+    stars:0.35,milkyWay:0.12,cloudCover:0.0,cirrus:0.0,scales:0.0,cloudColor:"#1a2236",cloudShade:"#080c16",wind:[0.3,0.1],beltColor:"#000000",belt:0.0,
+    rim:{color:0x5a70b0,intensity:0.2},sunLight:{color:0x6a7aa8,intensity:0.05},hemi:{sky:0x1c2644,ground:0x06080c,intensity:0.16},ambient:{color:0x4a5a88,intensity:0.05},
+    fogDensity:0.006,hills:{near:"#090e1a",far:"#161e32",light:"#34446a"},mist:{color:"#1e2840",glow:"#3a4a70"}},
+  natsuAmeYoru:{E:1.0,zenith:"#121824",horizon:"#212834",hazeColor:"#283039",haze:0.8,ground:"#0a0c10",
+    sun:[200,-40],sunColor:"#ffffff",sunIntensity:0.0,glow:0.0,
+    stars:0.0,milkyWay:0.0,cloudCover:0.0,cirrus:0.0,scales:0.0,cloudColor:"#262d3a",cloudShade:"#10141c",wind:[0.6,0.3],beltColor:"#000000",belt:0.0,overcast:1.0,
+    rim:{color:0x5a6a90,intensity:0.16},sunLight:{color:0x6a7898,intensity:0.04},hemi:{sky:0x262e3e,ground:0x0a0c10,intensity:0.18},ambient:{color:0x485268,intensity:0.06},
+    fogDensity:0.014,hills:{near:"#11151e",far:"#202834",light:"#3a4252"},mist:{color:"#262e3a",glow:"#3a4252"}},
+  akiYuhi:{E:0.98,zenith:"#3f5f9e",horizon:"#e3a87e",hazeColor:"#efbd8c",haze:0.55,ground:"#3e3630",
+    sun:[255,3],sunColor:"#ff9440",sunIntensity:2.8,glow:1.3,shafts:0.22,
+    stars:0.0,cloudCover:0.06,cirrus:0.25,scales:0.15,cloudColor:"#ffb070",cloudShade:"#6a5a7a",wind:[0.8,0.25],beltColor:"#5a4060",belt:0.6,
+    arch:0.25,archColor:"#ffd090",archHeight:6,archWidth:2.5,
+    rim:{color:0xffb07a,intensity:0.34},sunLight:{color:0xffa45c,intensity:1.1},hemi:{sky:0xa8a8cc,ground:0x5a4a38,intensity:0.42},ambient:{color:0x9a98c0,intensity:0.14},
+    fogDensity:0.004,hills:{near:"#3a3448",far:"#a08898",light:"#ffb070",glow:"#e8a888"},mist:{color:"#c8a8a8",glow:"#ffb27a"},smoke:{light:0xffa35c,ambient:0x6f6a8e}},
+  akiHiiri:{E:1.0,zenith:"#1c2a5a",horizon:"#5a5a80",hazeColor:"#706a88",haze:0.5,ground:"#14141c",
+    sun:[255,-4],sunColor:"#ff7a40",sunIntensity:1.6,glow:0.8,
+    stars:0.12,cloudCover:0.0,cirrus:0.15,scales:0.0,cloudColor:"#a07890",cloudShade:"#2c2c48",wind:[0.6,0.2],beltColor:"#2a2848",belt:0.5,
+    arch:0.6,archColor:"#ff9a50",archHeight:3.5,archWidth:3.0,purple:0.12,purpleColor:"#b07898",
+    rim:{color:0x9aa8e0,intensity:0.26},sunLight:{color:0x9aa0d0,intensity:0.2},hemi:{sky:0x5a6494,ground:0x1c1a20,intensity:0.32},ambient:{color:0x7a80b0,intensity:0.09},
+    fogDensity:0.005,hills:{near:"#1a1c2e",far:"#4a4c6a",light:"#c08a80",glow:"#806a78"},mist:{color:"#4a4c66",glow:"#9a7a8a"}},
+  fuyuYukiAsa:{E:1.02,zenith:"#9aa0a8",horizon:"#c8ccd0",hazeColor:"#d4d6da",haze:0.85,ground:"#a8aaae",
+    sun:[120,8],sunColor:"#fff4ea",sunIntensity:0.5,glow:0.3,
+    stars:0.0,cloudCover:0.0,cirrus:0.0,scales:0.0,cloudColor:"#c4c8cc",cloudShade:"#8a9098",wind:[0.5,-0.2],beltColor:"#000000",belt:0.0,overcast:1.0,
+    rim:{color:0xdde6f4,intensity:0.16},sunLight:{color:0xe8ecf4,intensity:0.35},hemi:{sky:0xd8dce4,ground:0xb0b0b4,intensity:0.75},ambient:{color:0xdce0e8,intensity:0.22},
+    fogDensity:0.02,hills:{near:"#9a9ea6",far:"#c4c8ce",light:"#e8eaee"},mist:{color:"#dcdee2",glow:"#ffffff"}},
+  fuyuShimoAsa:{E:1.03,zenith:"#4a78c0",horizon:"#c8d8e8",hazeColor:"#dce4ec",haze:0.5,ground:"#9a9a96",
+    sun:[115,6],sunColor:"#ffe0b8",sunIntensity:1.8,glow:1.0,
+    stars:0.0,cloudCover:0.0,cirrus:0.1,scales:0.0,cloudColor:"#fff4ec",cloudShade:"#a8b4c8",wind:[0.6,-0.2],beltColor:"#000000",belt:0.0,
+    rim:{color:0xdde8ff,intensity:0.24},sunLight:{color:0xffe4c0,intensity:1.05},hemi:{sky:0xa8c4ec,ground:0x8a8a88,intensity:0.55},ambient:{color:0xb8d0f0,intensity:0.18},
+    fogDensity:0.004,hills:{near:"#5a6474",far:"#b8c8d8",light:"#ffe0c0"},mist:{color:"#e4ecf2",glow:"#fff0dc"}},
+  fuyuHiru:{E:1.04,zenith:"#8a9ab0",horizon:"#c8ced4",hazeColor:"#d4d8dc",haze:0.65,ground:"#94948e",
+    sun:[170,30],sunColor:"#fff6ec",sunIntensity:0.9,glow:0.6,
+    stars:0.0,cloudCover:0.0,cirrus:0.0,scales:0.0,cloudColor:"#d8dce0",cloudShade:"#a8b0bc",wind:[0.8,-0.3],beltColor:"#000000",belt:0.0,overcast:0.6,
+    rim:{color:0xe6ecf6,intensity:0.2},sunLight:{color:0xf4f2f0,intensity:0.6},hemi:{sky:0xd0d6e0,ground:0x9a9890,intensity:0.7},ambient:{color:0xe8ecf2,intensity:0.2},
+    fogDensity:0.006,hills:{near:"#6a7078",far:"#c0c6cc",light:"#f0f0ec"},mist:{color:"#e2e6ea",glow:"#ffffff"}}
 };
 function buildPreset(name,s){const E=s.E;const L=h=>linearOf(h,E);
   const sunDir=dirAzEl(s.sun[0],s.sun[1]);const moonDir=s.moon?dirAzEl(s.moon[0],s.moon[1]):dirAzEl((s.sun[0]+180)%360,-20);
@@ -481,6 +651,13 @@ function buildPreset(name,s){const E=s.E;const L=h=>linearOf(h,E);
     mist:{color:parseInt(s.mist.color.slice(1),16),glow:parseInt(s.mist.glow.slice(1),16)},
     smoke:s.smoke?Object.assign({},s.smoke):{light:s.sunLight.color,ambient:s.hemi.sky},
     water:{zenith:zen,horizon:hzEff,sunDir,sunColor:sc,sunIntensity:s.sunIntensity}};
+  // 枕草子で足した層。無い場は効果 0 の既定値を持たせる(補間の相手に値が揃うように)
+  p.streaks=s.streaks||0;p.streakAz=s.streakAz!==undefined?s.streakAz:s.sun[0];p.streakSpan=s.streakSpan||60;p.streakEl=s.streakEl||6;p.streakElRange=s.streakElRange||6;
+  p.streakThick=s.streakThick||0.5;p.streakLit=s.streakLit?LC(s.streakLit):[0.9,0.5,0.6];p.streakShade=s.streakShade?LC(s.streakShade):[0.2,0.2,0.3];
+  p.streakSeed=s.streakSeed||1;p.streakSpeed=s.streakSpeed!==undefined?s.streakSpeed:0.02;p.streakCount=s.streakCount||4;
+  p.arch=s.arch||0;p.archColor=s.archColor?LC(s.archColor):[1,1,1];p.archHeight=s.archHeight||4;p.archWidth=s.archWidth||2;
+  p.purple=s.purple||0;p.purpleColor=s.purpleColor?LC(s.purpleColor):[0.5,0.3,0.5];p.moonHalo=s.moonHalo||0;p.overcast=s.overcast||0;
+  p.hills.glow=s.hills.glow?parseInt(s.hills.glow.slice(1),16):p.hills.far;
   return p;}
 const SKY_PRESETS={};
 Object.keys(PRESET_SRC).forEach(k=>{SKY_PRESETS[k]=buildPreset(k,PRESET_SRC[k]);});
@@ -491,12 +668,19 @@ function blendVal(a,b,t,key){
   if(Array.isArray(a)&&Array.isArray(b))return a.map((v,i)=>lerp(v,b[i]!==undefined?b[i]:v,t));
   if(a&&b&&typeof a==="object"&&typeof b==="object"){const o={};new Set([...Object.keys(a),...Object.keys(b)]).forEach(k=>{o[k]=(k in a&&k in b)?blendVal(a[k],b[k],t,k):(k in a?a[k]:b[k]);});return o;}
   return t<0.5?a:b;}
+// 量が 0 の側からは形(方位・高さ・種・色)を補間しない: 帯の位置が動きながら現れるのを防ぐ
+const LAYER_SHAPE={streaks:["streakAz","streakSpan","streakEl","streakElRange","streakThick","streakSeed","streakSpeed","streakCount","streakLit","streakShade"],
+  arch:["archColor","archHeight","archWidth"],purple:["purpleColor"]};
 function blendPresets(a,b,t){if(typeof a==="string")a=SKY_PRESETS[a];if(typeof b==="string")b=SKY_PRESETS[b];const o=blendVal(a,b,clamp(t,0,1),"");
-  ["sunDir","moonDir"].forEach(k=>{if(o[k]){const l=Math.hypot(o[k][0],o[k][1],o[k][2])||1;o[k]=o[k].map(v=>v/l);}});return o;}
+  ["sunDir","moonDir"].forEach(k=>{if(o[k]){const l=Math.hypot(o[k][0],o[k][1],o[k][2])||1;o[k]=o[k].map(v=>v/l);}});
+  if(a&&b)Object.keys(LAYER_SHAPE).forEach(k=>{const za=!(a[k]>0),zb=!(b[k]>0);if(za!==zb){const src=za?b:a;
+    LAYER_SHAPE[k].forEach(s=>{if(src[s]!==undefined)o[s]=Array.isArray(src[s])?src[s].slice():src[s];});}});
+  return o;}
 function rotYArr(v,yaw){if(!v)return v;const c=Math.cos(yaw),s=Math.sin(yaw);return [v[0]*c+v[2]*s,v[1],-v[0]*s+v[2]*c];}
 function applyPreset(p,o){if(typeof p==="string")p=SKY_PRESETS[p];if(!p)return null;o=o||{};const yaw=o.yaw||0;
   const st=Object.assign({},p);if(yaw){st.sunDir=rotYArr(p.sunDir,yaw);st.moonDir=rotYArr(p.moonDir,yaw);
-    if(p.wind){const r=rotYArr([p.wind[0],0,p.wind[1]],yaw);st.wind=[r[0],r[2]];}}
+    if(p.wind){const r=rotYArr([p.wind[0],0,p.wind[1]],yaw);st.wind=[r[0],r[2]];}
+    if(typeof p.streakAz==="number")st.streakAz=p.streakAz-yaw*180/Math.PI;}
   if(o.sky&&o.sky.userData.setState)o.sky.userData.setState(st);
   if(o.sun&&p.sunLight){o.sun.color.set(p.sunLight.color);o.sun.intensity=p.sunLight.intensity;const d=V3(yaw?rotYArr(p.sunLight.dir,yaw):p.sunLight.dir).normalize();
     const tg=o.sun.target?o.sun.target.position:new T.Vector3();o.sun.position.copy(tg).addScaledVector(d,o.sunDistance||80);}
@@ -1240,8 +1424,10 @@ function makeHills(opts){opts=opts||{};const q=qlv(opts),res=Res();const center=
     const bottom=r.base!==undefined?r.base:baseY-Math.max(30,H*0.8);
     const pos=[],arc=[],tops=[],idx=[],slp=[],tng=[],hs=[],ends=[];
     for(let k=0;k<=nSeg;k++){const t=k/nSeg,a=lerp(a0,a1,t),x=dist*(a-a0);
-      let h=H*(0.58+0.42*(fbm1(x/(dist*0.32)+seed*3.1,3,seed)-0.35)*1.4);
-      h+=rough*H*0.16*(fbm1(x/(dist*0.07)+seed,3,seed+5)-0.5)*2;
+      let h;
+      if(typeof r.profile==="function")h=r.profile(a,t);   // 稜線の形を関数で与える(京の山並み)
+      else{h=H*(0.58+0.42*(fbm1(x/(dist*0.32)+seed*3.1,3,seed)-0.35)*1.4);
+      h+=rough*H*0.16*(fbm1(x/(dist*0.07)+seed,3,seed+5)-0.5)*2;}
       if(r.peaks)r.peaks.forEach(pk=>{const w=pk.width||0.15,g=Math.exp(-Math.pow((a-pk.at)/w,2));h=h*(1-g)+Math.max(h,(pk.height||H*1.3))*g;});
       h=Math.max(h,H*0.08);
       if(r.taper!==false){const e=Math.min(a-a0,a1-a)/Math.max(1e-3,(a1-a0)*0.14);h*=smooth(0,1,e);}
@@ -1258,7 +1444,8 @@ function makeHills(opts){opts=opts||{};const q=qlv(opts),res=Res();const center=
       uAerial:{value:0},uMist:{value:r.mist!==undefined?r.mist:0.55},uMistH:{value:r.mistHeight!==undefined?r.mistHeight:0.55},uForest:{value:forest?1:0},uCrown:{value:crown},uSeed:{value:seed*1.618},
       uBase:{value:bottom},uGround:{value:baseY},uRim:{value:r.rim!==undefined?r.rim:0.55},uFront:{value:r.front!==undefined?r.front:0.6},uDetail:{value:clamp(1.25-dist/700,0.15,1)},
       uAutumn:{value:C(r.autumnColor,0xa04a28)},uAutumnAmt:{value:r.autumn||0},tNoise:{value:noise}};
-    const m=res.own(new T.ShaderMaterial({uniforms:Uh,vertexShader:HILL_VS,fragmentShader:HILL_FS,transparent:true,depthWrite:true,depthTest:true,fog:false,toneMapped:false,side:T.DoubleSide}));
+    if(typeof opts._uniforms==="function")Object.assign(Uh,opts._uniforms(r,i));
+    const m=res.own(new T.ShaderMaterial({uniforms:Uh,vertexShader:HILL_VS,fragmentShader:opts._fs||HILL_FS,transparent:true,depthWrite:true,depthTest:true,fog:false,toneMapped:false,side:T.DoubleSide}));
     m.extensions={derivatives:true};
     const mesh=new T.Mesh(g,m);mesh.renderOrder=-9+rank*0.01;mesh.frustumCulled=false;mesh.name="TSURE_ridge_"+i;grp.add(mesh);
     items.push({U:Uh,r,tr});});
@@ -1268,6 +1455,66 @@ function makeHills(opts){opts=opts||{};const q=qlv(opts),res=Res();const center=
       it.U.uCol.value.copy(base);it.U.uFar.value.copy(tint.far);it.U.uLight.value.copy(tint.light);it.U.uAerial.value=it.r.aerial!==undefined?it.r.aerial:(0.12+it.tr*0.5);});}
   setTint({});
   grp.userData={setTint,ridges:items.map(i=>i.U),dispose(){res.dispose();}};return grp;}
+
+/* ---- 京の山並み(東山・西山・北山): makeHills の帯に、季節の色・頂の雪・日の側の明るい霞を足した版 ---- */
+const KYOTO_HILL_FS=HILL_FS
+  .replace("uniform float uGround;","uniform float uGround;uniform vec3 uSeasonTint;uniform float uSnow;uniform vec3 uSnowCol;uniform float uSnowLine;uniform vec3 uGlowCol;uniform float uGlowAmt;")
+  .replace("col=mix(col,uAutumn*(0.75+0.5*tc),am*0.8);",`col=mix(col,uAutumn*(0.75+0.5*tc),am*0.8);
+  col*=uSeasonTint;
+  /* 頂の雪: 尾根の上ほど白く、谷筋と樹冠の黒みが残る */
+  float snowM=uSnow*smoothstep(uSnowLine-0.16,uSnowLine+0.14,rel+(tc-0.5)*0.22+(sp1-0.5)*0.42-(sp2-0.5)*0.2);
+  snowM*=0.5+0.5*smoothstep(0.3,0.7,tc2*0.7+tc*0.3);
+  col=mix(col,uSnowCol*(0.86+0.24*tc),clamp(snowM,0.0,1.0));`)
+  .replace("col=mix(col,uFar,uAerial);",`vec3 farC=mix(uFar,uGlowCol,clamp(uGlowAmt*pow(max(dot(radial,sH),0.0),2.0),0.0,1.0));
+  col=mix(col,farC,uAerial);`)
+  .replace("col=mix(col,uFar,mist);","col=mix(col,farC,mist);");
+/* 稜線の形: 丸い峰(ガウス)を滑らかな最大で重ねる。peaks=[[方位°,仰角°,幅°],...], base=裾の仰角°。戻り値は高さ(m) */
+function ridgeProfile(dist,peaks,base,seed,rough){const toH=e=>dist*Math.tan(e*Math.PI/180),k=4.0/Math.max(4,toH(1.2));
+  return a=>{const az=a*180/Math.PI;let s=Math.exp(k*toH(base));
+    for(let i=0;i<peaks.length;i++){const p=peaks[i],d=(az-p[0])/p[2];if(Math.abs(d)<4)s+=Math.exp(k*toH(p[1])*Math.exp(-d*d*1.35));}
+    let h=Math.log(s)/k;h+=toH(1)*(rough||0)*(fbm1(az*0.45+seed*1.7,3,seed)-0.5)*1.2+toH(1)*(rough||0)*0.35*(fbm1(az*2.3+seed,2,seed+3)-0.5);
+    return Math.max(h,toH(0.4));};}
+const KYOTO_SEASON={spring:{tint:[1.03,1.04,1.0],autumn:0.14,autumnColor:0xdcb6bc,mist:0.66,snow:0},
+  summer:{tint:[0.86,1.0,0.84],autumn:0.0,autumnColor:0xa04a28,mist:0.5,snow:0},
+  autumn:{tint:[1.05,0.97,0.9],autumn:0.38,autumnColor:0xa8502a,mist:0.55,snow:0},
+  winter:{tint:[0.94,0.95,0.99],autumn:0.12,autumnColor:0x6e5e4e,mist:0.6,snow:0.85}};
+function makeKyotoRidges(opts){opts=opts||{};const q=qlv(opts);const sides=opts.sides||["east","west","north"];const has=k=>sides.indexOf(k)>=0;
+  const R=(az0,az1,dist,peaks,base,seed,rough,extra)=>Object.assign({distance:dist,arcStart:az0*Math.PI/180,arcEnd:az1*Math.PI/180,seed,roughness:rough,
+    profile:ridgeProfile(dist,peaks,base,seed,rough),height:dist*Math.tan(Math.max(base,...peaks.map(p=>p[1]))*Math.PI/180),crown:Math.max(2.2,dist*0.0052),forest:true},extra||{});
+  const list=[];
+  if(has("east")){ // 東山: 比叡山(北東)がひときわ高く、南へなだらかな丸い峰が連なる(東山三十六峰)
+    list.push(R(22,84,650,[[34,5.4,6],[44,8.6,5.2],[52,7.2,4.5],[60,6.0,5],[70,5.2,6],[80,4.6,6]],3.2,11,0.7,{side:"east",mist:0.6}));
+    const hp=[];for(let i=0;i<17;i++){const az=56+i*5.3+(ih2(i,3,41)-0.5)*2.2;const e=4.0+1.1*Math.sin(i*0.9+0.4)+(ih2(i,5,43)-0.5)*1.0+(Math.abs(az-81)<6?1.0:0)-(az>118?0.9*(az-118)/20:0);hp.push([az,e,2.0+ih2(i,7,47)*1.6]);}
+    list.push(R(50,146,545,hp,2.6,13,0.55,{side:"east",mist:0.6}));
+    const fp=[];for(let i=0;i<10;i++){const az=60+i*7.5+(ih2(i,9,51)-0.5)*3;fp.push([az,2.9+(ih2(i,11,53)-0.5)*1.0,2.4+ih2(i,13,57)*1.8]);}
+    list.push(R(58,136,462,fp,1.6,17,0.5,{side:"east",mist:0.65}));}
+  if(has("west")){ // 西山: 北西に愛宕山の高い峰、手前に低い山並み。夕日の沈む南西(250〜265°)は低い
+    list.push(R(268,334,735,[[282,5.0,7],[296,8.8,4.6],[304,8.2,3.6],[314,6.2,5],[326,4.8,6]],3.0,21,0.7,{side:"west",mist:0.62}));
+    list.push(R(214,300,640,[[222,3.4,6],[232,2.8,5],[244,2.3,6],[256,2.1,5],[266,2.6,5],[276,3.6,5],[288,4.4,5]],1.4,23,0.6,{side:"west",mist:0.6}));
+    list.push(R(230,292,565,[[240,1.6,4],[252,1.4,5],[262,1.7,4],[274,2.5,4],[284,2.9,4]],0.8,27,0.5,{side:"west",mist:0.65}));}
+  if(has("north")){ // 北山: 低く重なる
+    const wrap=ps=>ps.map(p=>[p[0]<300?p[0]+360:p[0],p[1],p[2]]); // 0° をまたぐ弧は 360° 以上で連続に表す
+    list.push(R(318,402,700,wrap([[326,4.6,6],[338,5.2,5],[350,4.4,6],[2,4.9,5],[14,4.2,6],[24,4.6,5],[36,4.0,6]]),2.6,31,0.6,{side:"north",mist:0.62}));
+    list.push(R(328,392,610,wrap([[334,3.0,5],[346,3.4,4],[358,2.8,5],[10,3.2,4],[22,2.9,5],[30,2.6,5]]),1.6,33,0.5,{side:"north",mist:0.66}));}
+  const extras=[];
+  const grp=makeHills({center:opts.center||[0,0],quality:opts.quality,ridges:list,near:opts.near,far:opts.far,light:opts.light,_fs:KYOTO_HILL_FS,
+    _uniforms:(r)=>{const u={uSeasonTint:{value:new T.Vector3(1,1,1)},uSnow:{value:0},uSnowCol:{value:new T.Color(0.9,0.92,0.95)},uSnowLine:{value:0.62},
+      uGlowCol:{value:new T.Color()},uGlowAmt:{value:0}};extras.push({r,u});return u;}});
+  grp.name="TSURE_kyoto_ridges";
+  const base=grp.userData.setTint,tint={far:new T.Color(0xa9b5c4),light:new T.Color(0xfff0d8),glow:null};let season="spring",snowOver=null;
+  const ridgeU=grp.userData.ridges;
+  function applySeason(){const S=KYOTO_SEASON[season]||KYOTO_SEASON.spring;const snow=snowOver!==null?snowOver:S.snow;
+    const sc=tint.far.clone().lerp(tint.light,0.35);sc.multiplyScalar(1.1);sc.r=Math.min(sc.r,1);sc.g=Math.min(sc.g,1);sc.b=Math.min(sc.b,1);
+    extras.forEach(({r,u})=>{u.uSeasonTint.value.set(S.tint[0],S.tint[1],S.tint[2]);u.uSnow.value=snow*(r.side==="east"?0.8:1.0);u.uSnowCol.value.copy(sc);
+      u.uGlowCol.value.copy(tint.glow||tint.far);u.uGlowAmt.value=tint.glow?1:0;});
+    ridgeU.forEach((U,i)=>{const r=extras[i]?extras[i].r:null;U.uAutumnAmt.value=S.autumn*(r&&r.side==="north"?0.7:1);U.uAutumn.value.setHex(S.autumnColor);U.uMist.value=S.mist;});}
+  function setTint(t){if(!t)return;base(t);if(t.far!==undefined)setC(tint.far,t.far);if(t.light!==undefined)setC(tint.light,t.light);
+    if(t.glow!==undefined&&t.glow!==null){tint.glow=tint.glow||new T.Color();setC(tint.glow,t.glow);}applySeason();}
+  function setSeason(k){if(KYOTO_SEASON[k])season=k;applySeason();}
+  function setSnow(v){snowOver=(v===null||v===undefined)?null:clamp(v,0,1);applySeason();}
+  grp.userData.setTint=setTint;grp.userData.setSeason=setSeason;grp.userData.setSnow=setSnow;grp.userData.getSeason=()=>season;
+  if(opts.season)season=opts.season;applySeason();
+  return grp;}
 
 /* =====================================================================
  * 10. SMOKE PLUME (CPU-sorted soft billboards)
@@ -1519,5 +1766,6 @@ function makeCrows(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts.see
  * exports
  * ===================================================================== */
 return {_dev:{makeGrassTex,makeSoilTex,makeRockTex,makeLeafTex,makePebbleTex,makeNoiseTex,makeSotobaTex,makeGraniteTex},makeSky,SKY_PRESETS,applyPreset,blendPresets,makeTerrain,carveStream,makeStream,makeMirrorWater,makeHills,makeSmokePlume,makeMist,
-  makeSotoba,makeGorintou,makeStonePile,makeRock,makeCrows,SEASONS,util:{displayOf,linearOf,dirAzEl}};
+  makeSotoba,makeGorintou,makeStonePile,makeRock,makeCrows,SEASONS,util:{displayOf,linearOf,dirAzEl},
+  makeKyotoRidges};
 })();
