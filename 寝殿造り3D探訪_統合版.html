@@ -11884,7 +11884,7 @@ function makeWarawa(){
   sparrowChase.flock=flock;
 })();
 function updateSparrowChase(t){
-  const day=APP.map!=="kamakura"&&(APP.time==="day");                       // [fix] 童・雀は昼のみ出現(夜/夕は非表示=ピックも無効)
+  const day=APP.map!=="kamakura"&&(APP.time==="day");                     // [fix] 童・雀は昼のみ出現(夜/夕は非表示=ピックも無効)
   if(sparrowChase.child)sparrowChase.child.visible=day;
   if(sparrowChase.flock)sparrowChase.flock.visible=day;
   if(!day)return;
@@ -16041,8 +16041,10 @@ function koyomiWalkPick(){
   if(seasonal)return {...seasonal,byDate:false};
   return null;
 }
+function koyomiWalkAllowed(){return APP.mode==="walk"&&APP.map!=="kamakura"&&world.visible&&!(typeof KENKO_HERMITAGE!=="undefined"&&KENKO_HERMITAGE.active);}
 function koyomiWalkCheck(){
   koyomiWalkHideAllDeco();
+  if(!koyomiWalkAllowed()){window.KOYOMI_WALK_STATUS={active:false};return;}
   const pick=koyomiWalkPick();
   if(!pick){window.KOYOMI_WALK_STATUS={active:false};return;}
   const g=koyomiWalkDeco[pick.visual.key];if(g)g.visible=true;
@@ -16050,7 +16052,7 @@ function koyomiWalkCheck(){
   const shownKey=pick.title+"|"+(pick.byDate?"date":"season");
   if(!koyomiWalkShownKeys.has(shownKey)){
     koyomiWalkShownKeys.add(shownKey);
-    setTimeout(()=>{if(APP.mode==="walk")toast(pick.visual.announce,4200);},900); // 「ドラッグで見回し…」の案内トーストと重ならぬよう少し遅らせる
+    setTimeout(()=>{if(koyomiWalkAllowed()&&g&&g.visible)toast(pick.visual.announce,4200);},900); // 「ドラッグで見回し…」の案内トーストと重ならぬよう少し遅らせる
   }
 }
 

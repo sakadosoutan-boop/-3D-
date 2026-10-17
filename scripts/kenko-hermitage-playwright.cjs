@@ -11,11 +11,18 @@ const root=path.resolve(__dirname,'..'),out=path.join(root,'artifacts/kenko-herm
     await page.goto(url+'?adaptive=0&eco=off',{waitUntil:'load',timeout:180000});
     assert(await page.evaluate(()=>typeof KENKO_HERMITAGE!=='undefined'&&!!SAIGEN_TSUREZURE.createHermitage),'Build the hermitage sources and frame hook first');
     await page.evaluate(()=>{enterMode('walk');hideModeBrief(true);GFX.setPreset('high');GFX.setBloom('off');AUTO_TIME._paused=true;});
+    const seasonal=await page.evaluate(async()=>{
+      const original=toast;window.__kenkoSeasonalToasts=[];
+      toast=function(message,...args){if(Object.values(KOYOMI_WALK_VISUALS).some(v=>v.announce===message))window.__kenkoSeasonalToasts.push(message);return original(message,...args);};
+      koyomiWalkShownKeys.clear();koyomiWalkCheck();await new Promise(r=>setTimeout(r,950));
+      const pick=koyomiWalkPick();return {heian:KOYOMI_WALK_STATUS.active&&Object.values(koyomiWalkDeco).some(g=>g.visible)&&window.__kenkoSeasonalToasts.includes(pick?.visual.announce)};
+    });assert(seasonal.heian,'Heian walk must retain the actual delayed seasonal announcement and decoration');
     const setup=await page.evaluate(async()=>{
       window.__kenkoRenderer=renderer;window.__kenkoSnapshot={position:player.pos.toArray(),yaw:player.yaw,pitch:player.pitch,view:APP.view,near:camera.near,far:camera.far,fov:camera.fov,
         world:world.visible,il:interiorLight.position.toArray(),auto:AUTO_TIME._paused,bg:!!SFX._backgroundPaused,
         floors:floorZones.length,solids:WALK_SOLIDS.length,background:scene.background,environment:scene.environment,
         celestial:[cloudDome,sunMesh,moonMesh,moonHalo,moonPhaseShadow].map(o=>o.visible)};
+      window.__kenkoSeasonalToasts=[];koyomiWalkShownKeys.clear();koyomiWalkCheck(); // Real pending 900ms callback must not follow us into the visit.
       const started=await KENKO_HERMITAGE.open();hideModeBrief(true);document.getElementById('loadingScreen').classList.remove('show');
       const a=KENKO_HERMITAGE.assets;KENKO_HERMITAGE.frame(.016,12);
       return {started,active:KENKO_HERMITAGE.active,ready:!KENKO_HERMITAGE.loading,masked:!world.visible,hut:!!a.hut.userData.dims,figure:!!a.kenko.read.userData.head,
@@ -23,6 +30,8 @@ const root=path.resolve(__dirname,'..'),out=path.join(root,'artifacts/kenko-herm
         floors:floorZones.length,solids:WALK_SOLIDS.length};
     });
     assert(setup.started&&setup.active&&setup.ready&&setup.masked&&setup.hut&&setup.figure&&setup.sameRenderer);assert.deepEqual(setup.zones,['an']);assert.equal(setup.shots,0);assert.deepEqual(setup.jobs,['sky','an','kenko-read']);
+    seasonal.visit=await page.evaluate(async()=>{await new Promise(r=>setTimeout(r,950));const pendingBlocked=window.__kenkoSeasonalToasts.length===0;koyomiWalkCheck();return pendingBlocked&&!KOYOMI_WALK_STATUS.active&&Object.values(koyomiWalkDeco).every(g=>!g.visible);});
+    assert(seasonal.visit,'The real pending Heian announcement and direct seasonal check must stay silent in the hermitage');
     const start=await page.evaluate(()=>player.pos.z);await page.keyboard.down('w');
     const walked=await page.evaluate(()=>{for(let i=0;i<110;i++)KENKO_HERMITAGE.frame(1/60,12+i/60);return {position:player.pos.toArray(),floor:KENKO_HERMITAGE.heightAt(player.pos.x,player.pos.z)};});await page.keyboard.up('w');
     assert(walked.position[2]<start-2.5);assert(Math.abs(walked.position[1]-walked.floor-1.62)<1e-6);assert(walked.floor>.5,'Real keyboard walk must reach the raised veranda through the step');
@@ -48,6 +57,7 @@ const root=path.resolve(__dirname,'..'),out=path.join(root,'artifacts/kenko-herm
         background:scene.background===s.background&&scene.environment===s.environment,hud:document.getElementById('kenkoVisitHud').hidden,loops:Object.keys(SAIGEN_TSUREZURE.S.loops).length};
     });
     assert(!restore.active&&!restore.stage&&restore.hook&&restore.world&&restore.position&&restore.camera&&restore.lighting&&restore.auto&&restore.bg&&restore.celestial&&restore.floors&&restore.ownedReleased&&restore.materialsReleased&&restore.texturesReleased&&restore.background&&restore.hud&&restore.loops===0,JSON.stringify(restore));
+    seasonal.restored=await page.evaluate(async()=>{window.__kenkoSeasonalToasts=[];koyomiWalkShownKeys.clear();koyomiWalkCheck();await new Promise(r=>setTimeout(r,950));return KOYOMI_WALK_STATUS.active&&window.__kenkoSeasonalToasts.length>0;});assert(seasonal.restored,'Returning to the Heian estate must permit its seasonal guidance again');
     const modes=await page.evaluate(async()=>{
       const results=[];
       for(const mode of ['title','quiz','walk']){await KENKO_HERMITAGE.open();enterMode(mode);results.push(!KENKO_HERMITAGE.active&&!SAIGEN_TSUREZURE.S.active&&!scene.children.some(o=>o.name==='kenko-hermitage-visit'));}
@@ -77,6 +87,10 @@ const root=path.resolve(__dirname,'..'),out=path.join(root,'artifacts/kenko-herm
     });assert(mobile,'Mobile HUD must remain readable and inside the viewport');await page.screenshot({path:path.join(out,'mobile-yard.png')});
     await page.click('#kenkoVisitGuide');await page.screenshot({path:path.join(out,'mobile-notes.png')});await page.click('#kenkoVisitNoteClose');
     const direct=await page.evaluate(()=>{const map=APP.map,visible=window.KAMAKURA_WORLD?.world?.visible;KENKO_HERMITAGE.leave();return map==='kamakura'&&visible===false&&!KENKO_HERMITAGE.active&&window.KAMAKURA_WORLD?.world?.visible===true;});assert(direct,'URL visit must restore the original Kamakura estate');
+    seasonal.kamakura=await page.evaluate(async()=>{
+      const original=toast,messages=[];toast=function(message,...args){if(Object.values(KOYOMI_WALK_VISUALS).some(v=>v.announce===message))messages.push(message);return original(message,...args);};
+      try{koyomiWalkShownKeys.clear();koyomiWalkCheck();await new Promise(r=>setTimeout(r,950));return !KOYOMI_WALK_STATUS.active&&Object.values(koyomiWalkDeco).every(g=>!g.visible)&&messages.length===0;}finally{toast=original;}
+    });assert(seasonal.kamakura,'Kamakura walk must neither activate Heian decorations nor announce them');
     await page.evaluate(()=>KENKO_HERMITAGE.open());
     await Promise.all([page.waitForURL(/replay=tsurezure7/,{timeout:180000}),page.click('#kenkoVisitReplay')]);
     await page.waitForFunction(()=>APP.mode==='saigen'&&APP.saigen?.scene.id==='tsurezure_adashino',null,{timeout:180000});await page.waitForTimeout(5100);
@@ -86,6 +100,6 @@ const root=path.resolve(__dirname,'..'),out=path.join(root,'artifacts/kenko-herm
       return APP.map!=='kamakura'&&APP.mode==='saigen'&&!!stage?.visible&&APP.saigen.scene.beats.length===13&&finite&&document.getElementById('title').classList.contains('hide')&&
         !document.getElementById('modeBrief').classList.contains('show')&&getComputedStyle(document.getElementById('sgPicker')).display==='none';
     });assert(routed,'Kamakura replay must route to the Heian replay without stale title/brief overlays');await page.screenshot({path:path.join(out,'mobile-routed-replay.png')});
-    assert.deepEqual(errors,[]);const report={setup,walked,freeze,night,restore,modes,direct,delayed,mobile,routed,errors};fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+    assert.deepEqual(errors,[]);const report={setup,seasonal,walked,freeze,night,restore,modes,direct,delayed,mobile,routed,errors};fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
   }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

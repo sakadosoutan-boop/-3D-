@@ -6,7 +6,7 @@
 
 ## 2026-10-14の継続作業
 
-今回の専用ブランチは `codex/kamakura-experiences-20261013`。`origin/main` の `bafc839`（#16〜#18の目・黒帯・冒頭負荷・本文表示修正）を統合済み。2026-10-17の公開対象は、前回の夜景・造形改善 `dbc6b32` と今回の追加 `466ab63`、入口のキャッシュ更新。main反映後はPages完了と公開URLを確認する。詳細は [武家屋敷の暮らし・笠懸・草庵](../KAMAKURA_EXPERIENCES_2026-10-14.md)。
+今回の専用ブランチは `codex/kamakura-experiences-20261013`。`origin/main` の `bafc839`（#16〜#18の目・黒帯・冒頭負荷・本文表示修正）を統合済み。2026-10-17、前回の夜景・造形改善 `dbc6b32` と今回の追加 `466ab63`、入口のキャッシュ更新を `60921d5` でmainへ反映し、Pages成功と公開サイトの起動・直接訪問・帰還まで確認した。公開後の追補では平安の行事案内の時代混入を抑止し、入口のキャッシュ識別子を `kamakura-20261017-v2` にする。詳細は [武家屋敷の暮らし・笠懸・草庵](../KAMAKURA_EXPERIENCES_2026-10-14.md)。
 
 - 新ソース `kamakura-games.js` / `kamakura-customs.js/css` / `kenko-hermitage.js/css` はmanifestの末尾で登録。`install-kamakura-experiences.cjs` が登録・核心hook・別時代の演出guardを一度だけ挿入する。再生成は `build:app` → `build:story`。
 - mapの最後に `KAMAKURA_WORLD={K,world,anchors,contentIds}`。最終起動前にgames/customsをinit。通常animateのカメラ補間後にゲームupdate、時刻取得直後に草庵専用frameへの早期分岐。mapのanimateラップも草庵中は後段を実行しない。
@@ -16,6 +16,8 @@
 - `npm test` の最後に `test:kamakura-experiences` を追加。画像/生のreportはignored artifactsへ、統合結果はdocsへ記録。iPhone/iPad実機、第2ストーリー、新ボスは残存。
 - `app.css` は再現中の読み込み幕を操作列の奥へ移し、低い横画面を本文・訳の2列にする。`test:saigen` に3画面57段の表示・実クリック検査を追加。詳しくは [低い画面の再現UI](../saigen-layout.md)。
 - 2026-10-16、生成HTML 10,155,451 bytesで `npm test` 全体が終了コード0。専用判定は笠懸40・生活場面35・書付20・草庵CPU7、再現レイアウト57段。PC/ブラウザの結果であり実機結果ではない。[統合結果](../metrics/KAMAKURA_EXPERIENCES_2026-10-16.json) を参照。
+- 公開後の追補: coreの `koyomiWalkAllowed()` をinstallerで登録。平安の散策・world可視・草庵でない条件を、行事の準備時と900ms後の案内時に確認する。平安表示維持/草庵抑止/帰還後の復帰/鎌倉抑止の実タイマー検査を草庵の既存検査へ追加。installerは既存guardの空白も書き換えず、再実行でHTML/manifestのbyteが一致することを確認。
+- 2026-10-17、追補後の生成HTML 10,155,700 bytesでも `npm test` 一式が終了コード0。全専用判定と季節案内4条件を含めて成功。[再検証結果](../metrics/KAMAKURA_EXPERIENCES_2026-10-17.json) を参照。
 
 ## 最重要
 

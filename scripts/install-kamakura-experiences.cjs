@@ -26,8 +26,18 @@ for(const [before,after]of [
   ['const day=(APP.time==="day");','const day=APP.map!=="kamakura"&&(APP.time==="day");'],
   ['const spiritBlocked=!!APP.gisshaCarry?.active||','const spiritBlocked=APP.map==="kamakura"||!!APP.gisshaCarry?.active||']
 ]){
-  if(html.includes(after)){assert.equal(html.split(after).length,2,'one era guard');html=html.replace(after+' ',after);continue;}
+  if(html.includes(after)){assert.equal(html.split(after).length,2,'one era guard');continue;}
   const anchor=unique(before);html=html.replace(anchor,after);
 }
+// The visit keeps APP.mode=walk; both entry and the delayed announcement need the estate guard.
+const koyomiAllowed='function koyomiWalkAllowed(){return APP.mode==="walk"&&APP.map!=="kamakura"&&world.visible&&!(typeof KENKO_HERMITAGE!=="undefined"&&KENKO_HERMITAGE.active);}';
+if(!html.includes(koyomiAllowed)){const anchor=unique('function koyomiWalkCheck(){');html=html.replace(anchor,koyomiAllowed+'\n'+anchor);}
+const koyomiEntry='  if(!koyomiWalkAllowed()){window.KOYOMI_WALK_STATUS={active:false};return;}';
+if(!html.includes(koyomiEntry)){
+  const anchor=unique('function koyomiWalkCheck(){\n  koyomiWalkHideAllDeco();');html=html.replace(anchor,anchor+'\n'+koyomiEntry);
+}
+const koyomiBefore='setTimeout(()=>{if(APP.mode==="walk")toast(pick.visual.announce,4200);},900);';
+const koyomiAfter='setTimeout(()=>{if(koyomiWalkAllowed()&&g&&g.visible)toast(pick.visual.announce,4200);},900);';
+if(!html.includes(koyomiAfter)){const anchor=unique(koyomiBefore);html=html.replace(anchor,koyomiAfter);}
 fs.writeFileSync(file,html);fs.writeFileSync(mp,JSON.stringify(manifest,null,2)+'\n');
 console.log('Kamakura experiences and hermitage hooks registered');
