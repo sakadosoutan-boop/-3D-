@@ -34681,7 +34681,7 @@ const SAIGEN_MAKURA=(()=>{
     Tr("miya-pine1",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:7.2,lean:.35,seed:302,quality:down(q)}):null,-9.6,15.6,2.4);
     Tr("miya-pine2",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:6.0,lean:.22,seed:303,quality:"low"}):null,-24.5,21,1.2);
     Tr("miya-pine3",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:4.6,lean:.4,seed:308,quality:"low"}):null,MIYA.island.c[0]+.4,MIYA.island.c[1]-.3,.7);
-    Tr("miya-maple1",()=>M.TRE&&M.TRE.makeMaple?M.TRE.makeMaple({height:4.8,seed:304,quality:down(q)}):null,13.8,-2.6);
+    Tr("miya-maple1",()=>M.TRE&&M.TRE.makeMaple?M.TRE.makeMaple({height:4.8,seed:304,quality:down(q)}):null,12.6,5.4); // 夜明けの視線(東北東)を遮らない所
     Tr("miya-maple2",()=>M.TRE&&M.TRE.makeMaple?M.TRE.makeMaple({height:4.0,seed:305,quality:"low"}):null,3.6,14.6);
     Tr("miya-hagi1",()=>M.TRE&&M.TRE.makeHagi?M.TRE.makeHagi({seed:306,quality:down(q)}):null,8.6,7.2);
     Tr("miya-hagi2",()=>M.TRE&&M.TRE.makeHagi?M.TRE.makeHagi({seed:307,quality:"low"}):null,-.6,12.8);
@@ -34920,7 +34920,8 @@ const SAIGEN_MAKURA=(()=>{
     [{zone:"miya",light:"akebonoDark",lightTo:{preset:"akebonoWhite",dur:9,delay:.8},fov:44,camFn:seiShot([-.9,1.0,-.6,40,6,-10],[-.7,1.0,-.5,40,6.5,-10]),dur:11,shadow:{center:[2,0,0],half:22},lamp:{on:true,intensity:.6,fadeTo:.35,fadeDur:10,distance:5,decay:2},
       enter(){seasonMiya("spring");setNight(.4);setMisu(.55);showSei("spring",Math.PI*.42);S.assets.lamp.visible=true;}}],
     /* 3 紫だちたる雲のほそくたなびきたる。 */
-    [{zone:"miya",light:"akebonoWhite",lightTo:{preset:"akebonoAkari",dur:7,delay:.3},fov:15,fovTo:13,cam:{pos:[2,2.2,0],look:[420,32,-120]},to:{pos:[2,2.2,0],look:[420,30,-80]},dur:9,shadow:{center:[0,0,0],half:22},
+    // 望遠: 東山の稜線の上(方位およそ 72°→88°、仰角 7〜8°)にたなびく紫の雲
+    [{zone:"miya",light:"akebonoWhite",lightTo:{preset:"akebonoAkari",dur:7,delay:.3},fov:15,fovTo:13.5,frameUp:0,cam:{pos:[2,2.2,0],look:[382,56,-123]},to:{pos:[2,2.2,0],look:[402,56,-14]},dur:9,shadow:{center:[0,0,0],half:22},
       enter(){seasonMiya("spring");setNight(.2);}},
      {zone:"miya",light:"akebonoAkari",fade:"black",fov:28,frameUp:.15,camFn:seiShot([1.0,.92,.55,0,.8,0],[.92,.9,.5,0,.8,0]),dur:7,shadow:{center:[-1.6,1.2,-2],half:4},
       enter(){showSei("spring",Math.PI*.42);setMisu(.55);playOnce(SND.uguisu,.34,1.4);}}],
