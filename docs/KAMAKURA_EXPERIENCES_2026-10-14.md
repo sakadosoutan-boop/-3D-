@@ -42,4 +42,6 @@ authoritative source は `src/app`。登録は `scripts/install-kamakura-experie
 
 全体検査で見つけた再現画面の読み込み幕と長い和歌の重なりも修正した。844×390、568×320、390×844の計57段で原文・訳・操作ボタンの収まりと実クリックを検査し、代表6画像を目視した。詳細は [再現UIの検証](saigen-layout.md)。PCでの検証記録と生成物のhashは [統合結果](metrics/KAMAKURA_EXPERIENCES_2026-10-16.json)。
 
-変更は専用ブランチ `codex/kamakura-experiences-20261013`。公開済みの44項目と、このブランチの未公開追加を区別する。iPhone / iPadでの実機評価、第2ストーリー・新ボス、GitHub Pagesへの反映は別の残存作業として記録する。
+変更は専用ブランチ `codex/kamakura-experiences-20261013`、実装コミット `466ab63`。2026-10-17、ユーザーの公開指示により、前回の夜景・造形改善も含めてmainへ反映する公開対象とした。入口のキャッシュ識別子は `kamakura-20261017-v1`。公開前の10-16の検証JSONは、その時点の状態を示す記録として保持する。
+
+公開確認はPages workflow完了後に `npm run verify:public` と配信HTMLの一致検査、キャッシュ回避付きのブラウザ表示で行う。iPhone / iPadでの実機評価、第2ストーリー・新ボスは残存作業。

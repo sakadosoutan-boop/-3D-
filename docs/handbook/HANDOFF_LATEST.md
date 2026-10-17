@@ -1,12 +1,12 @@
 # 引き継ぎ資料（最新） — 寝殿造り3D探訪
 
-最終更新: 2026-10-16（今回の引き継ぎを追記、旧章は元の記録を保持）
+最終更新: 2026-10-17（今回の引き継ぎを追記、旧章は元の記録を保持）
 正本: GitHub `origin/main`
 現在の確認済み main: 公開直前に `git fetch origin` して更新すること
 
 ## 2026-10-14の継続作業
 
-今回の専用ブランチは `codex/kamakura-experiences-20261013`。`origin/main` の `bafc839`（#16〜#18の目・黒帯・冒頭負荷・本文表示修正）を統合済み。前回の夜景・造形改善 `dbc6b32` と今回の追加はいずれもmainへ公開していない。詳細は [武家屋敷の暮らし・笠懸・草庵](../KAMAKURA_EXPERIENCES_2026-10-14.md)。
+今回の専用ブランチは `codex/kamakura-experiences-20261013`。`origin/main` の `bafc839`（#16〜#18の目・黒帯・冒頭負荷・本文表示修正）を統合済み。2026-10-17の公開対象は、前回の夜景・造形改善 `dbc6b32` と今回の追加 `466ab63`、入口のキャッシュ更新。main反映後はPages完了と公開URLを確認する。詳細は [武家屋敷の暮らし・笠懸・草庵](../KAMAKURA_EXPERIENCES_2026-10-14.md)。
 
 - 新ソース `kamakura-games.js` / `kamakura-customs.js/css` / `kenko-hermitage.js/css` はmanifestの末尾で登録。`install-kamakura-experiences.cjs` が登録・核心hook・別時代の演出guardを一度だけ挿入する。再生成は `build:app` → `build:story`。
 - mapの最後に `KAMAKURA_WORLD={K,world,anchors,contentIds}`。最終起動前にgames/customsをinit。通常animateのカメラ補間後にゲームupdate、時刻取得直後に草庵専用frameへの早期分岐。mapのanimateラップも草庵中は後段を実行しない。
