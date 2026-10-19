@@ -26651,7 +26651,7 @@ function headSDF(P){
     fp.push(K(sCap(J([s*.0485,-.060,.0]),J([s*.019,-.089,.071]),.0100*jw),.025));
     fp.push(K(sCap(J([s*.0485,-.060,.0]),[s*.058,-.015,-.008],.010),.02));
     {const ck=P.cheekK!=null?P.cheekK:1;fp.push(K(sEll([s*.047,.007,.064],[.023*ck,.013*ck,.019*ck],rotM(0,s*.45,0)),.02));}
-    fp.push(K(sCap([s*.058,.006,.050],[s*.070,.004,.008],.008),.02));
+    {const zk=P.zygK||1;fp.push(K(sCap([s*.058*zk,.006,.050],[s*.070*zk,.004,.008],.008),.02));}
     fp.push(K(sCap([s*.050,.040,.074],[0,.042,.093],.0085*bw),.02));
     fp.push(K(sEll([s*.034,.001,.078],[.017,.012,.011]),.016));
     fp.push(K(sEll([s*.029,-.027,.081],[.012,.015,.010]),.013));
@@ -26660,6 +26660,7 @@ function headSDF(P){
     if(P.kid){const cf=P.cheekFat||1;fp.push(K(sEll([s*.038,-.008,.064],[.024*cf,.023*cf,.021*cf]),.03),K(sEll([s*.050,-.022,.036],[.016,.022,.028]),.035));}
     else if(P.cheekFat)fp.push(K(sEll([s*.036,-.022,.070],[.026*P.cheekFat,.026*P.cheekFat,.020*P.cheekFat]),.02));
   }
+  if(P.egg){const e=P.egg;fp.push(K(sEll([0,-.030,.030],[.055*e,.050,.044]),.030));}
   let F=U([cran,K(U(fp),.025)]);
   F=S(F,[K(sEll([-.0185,.0255,.0885],[.0062,.0075,.0065]),.007),K(sEll([.0185,.0255,.0885],[.0062,.0075,.0065]),.007)]);
   const nose=U([K(sCone(N([0,.029,.0905]),N([0,-.007,.1035]),.0058*ns,.0070*ns),0),K(sEll(N([0,-.013,.0915]),[.0120*ns,.0130*ns,.0110*ns]),.008),
@@ -27817,7 +27818,7 @@ const NYOBO_HEAD={seed:61,age:25,smile:.55,fem:1,lipU:.0042,lipL:.0056,lipUvol:.
   iris:[62,40,28],irisR:.17,pupilR:.058,sclera:[228,222,214],catchlight:true,
   eyeW:.0156,eyeOpenU:.0052,eyeOpenL:.0031,eyeTilt:.09,hood:.75,lash:1.15,
   browY:-.0012,browDrop:.0065,brow:0x2b211c,browHairs:220,browW:1.35,browAmt:.7,softBrow:.7,
-  cran:[.95,.99,.975],taper:.12,faceW:.89,jaw:.82,nose:.80,browK:.50,cheekFat:.25,cheekK:.72,eyeR:.0121,earL:.92,noEars:true,neckR:.92,
+  cran:[.95,.99,.975],taper:.14,faceW:.88,egg:.95,zygK:.90,jaw:.80,nose:.78,browK:.50,cheekFat:.10,cheekK:.66,eyeR:.0121,earL:.92,noEars:true,neckR:.92,
   nlfAmt:.3,underEyeAmt:.45,creaseAmt:.65,poreAmt:.55,lipLines:.35,lidAmt:.9,lidC:0xa8786a,rough:.42,gazePitch:0};
 // hair frame (head-local): the face is open in front of zF(y) and below the hairline yF(x) (centre parting, high forehead)
 function nyHairFrame(){return{zF:y=>.033+.011*sstep(-.07,.03,y)-.006*sstep(.05,.09,y),yF:x=>{const t=Math.min(1,ab(x)/.068);return .096-.066*Math.pow(t,1.4);}};}
@@ -27996,11 +27997,11 @@ function nyRig(pose,attire){const R={pose,attire,seated:pose!=="carry"};
 // ---- seated body: torso (outer robe level) + robes spread on the floor; lam(x,y,z) = layer coordinate ----
 function nyBodySeated(R,attire){const kara=attire==="karaginu",nR=kara?8:4;
   const tl=U([K(sEll([0,.05,-.03],[.215,.11,.175]),0),K(sEll([0,.17,-.025],[.170,.11,.134]),.07),K(sEll([0,.30,-.022],[.160,.12,.126]),.07),
-    K(sEll([0,.395,-.035],[.158,.085,.116]),.06),K(sCap([.05,.468,-.040],[.160,.430,-.040],.046),.05),K(sCap([-.05,.468,-.040],[-.160,.430,-.040],.046),.05),
+    K(sEll([0,.395,-.035],[.158,.085,.116]),.06),K(sCap([.05,.462,-.040],[.158,.412,-.040],.040),.05),K(sCap([-.05,.462,-.040],[-.158,.412,-.040],.040),.05),
     K(sEll([0,.468,-.042],[.090,.046,.070]),.04)]);
-  const ring=[[.056,.528,.050],[.068,.542,.000],[.054,.552,-.046],[0,.558,-.066],[-.054,.552,-.046],[-.068,.542,.000],[-.056,.528,.050]];
-  const ringN=ring.map(p=>nrm3([p[0],.35,p[2]+.004]));
-  let torso=U([tl,K(sRibbon(ring,ringN,.036,.0105,.006),.014)]);
+  const ring=[[.040,.512,.052],[.054,.528,.016],[.056,.538,-.020],[.042,.546,-.050],[0,.551,-.064],[-.042,.546,-.050],[-.056,.538,-.020],[-.054,.528,.016],[-.040,.512,.052]];
+  const ringN=ring.map(p=>{const r_=mx(1e-3,sq(p[0]*p[0]+(p[2]+.006)**2));return nrm3([p[0]/r_,.28,(p[2]+.006)/r_]);});
+  let torso=tl;const collarL=sRibbon(ring,ringN,.027,.0045,.0035);
   torso=S(torso,[K(sCone([0,.47,-.012],[0,.72,.026],.0435,.048),.007)]);
   const torsoW=T(torso,R.TM,R.hip);
   const sup=[];for(const k of["L","R"]){sup.push({a:R.hipJ[k],b:R.knee[k],r:.088,sl:1.15});sup.push({a:R.knee[k],b:R.ankle[k],r:.062,sl:1.1});}
@@ -28013,7 +28014,7 @@ function nyBodySeated(R,attire){const kara=attire==="karaginu",nR=kara?8:4;
     if(pl[1]<.24&&pl[2]>.10){const xe=.008+(pl[2]-.12)*.30+mx(0,.20-pl[1])*.05;const e=(xe-ab(pl[0]))*.89;if(e>0)L=mx(L,e/dF);}
     const hd=lap.hemD(x,z);if(hd>-nR*dH*1.2)L=mx(L,mn(nR-.5,nR+hd/dH));
     return clamp(L,.5,nR+.5);};
-  return{F,torsoW,lap,lam,nR};}
+  return{F,torsoW,lap,lam,nR,collar:T(collarL,R.TM,R.hip)};}
 // ---- sleeve: arm tubes + a big hanging bag resting on the robes; lam from the distance to the free edges ----
 function nySleeve(A,o){const S0=A.S,E=A.E,W=A.W;const fd=nrm3(sub3(W,E)),ud=nrm3(sub3(E,S0));
   const cuff=add3(W,scl3(fd,-.010)),Sx=add3(S0,scl3(ud,-.035));
@@ -28021,7 +28022,7 @@ function nySleeve(A,o){const S0=A.S,E=A.E,W=A.W;const fd=nrm3(sub3(W,E)),ud=nrm3
   let hz=[cuff[0]-S0[0],0,cuff[2]-S0[2]];if(len3(hz)<.04)hz=[0,0,1];hz=nrm3(hz);
   const o0=E;const uS=dot3(sub3(S0,E),hz),uC=dot3(sub3(cuff,E),hz);
   const n=cross3(hz,[0,1,0]);const sg=dot3(n,sub3(E,o.center))>0?1:-1;
-  const kp=[[uS-.03,S0[1]-.012-E[1]],[0,.004],[uC,cuff[1]-.002-E[1]]].sort((p,q)=>p[0]-q[0]);
+  const kp=[[uS-.03,S0[1]-.055-E[1]],[0,-.004],[uC,cuff[1]-.002-E[1]]].sort((p,q)=>p[0]-q[0]);
   const vt=u=>{if(u<=kp[0][0])return kp[0][1];if(u>=kp[2][0])return kp[2][1];const i=u<kp[1][0]?0:1;const t=(u-kp[i][0])/mx(1e-4,kp[i+1][0]-kp[i][0]);return lerp(kp[i][1],kp[i+1][1],t);};
   const ua=mn(uS,0)-o.back,ub=uC+o.front;
   const vb=u=>{const fu=clamp((u-ua)/(ub-ua),0,1),fl=sg*o.flare*(.8+.2*Math.sin(PI*fu));const x=o0[0]+hz[0]*u+n[0]*fl,z=o0[2]+hz[2]*u+n[2]*fl;return mx(o.ground(x,z)+.010,o.vbAbs)+.008*Math.sin(u*9+o.seed)-o0[1];};
@@ -28039,13 +28040,13 @@ function nySleeve(A,o){const S0=A.S,E=A.E,W=A.W;const fd=nrm3(sub3(W,E)),ud=nrm3
   return{F,bb:[b0,b1],o0,hz,ua,ub,uC,vb,vt,edge};}
 // ---- karaginu (唐衣): short jacket over the torso & the upper sleeves, open in front, collar folded back (lining band) ----
 function nyKaraginu(R,body,slv){const Fb=body.F.f,sL=slv.L,sR=slv.R,sLf=sL.F.f,sRf=sR.F.f,tF=body.torsoW.f;
-  const off=.0075,yh=.165,xk=y=>.058+.30*mx(0,.47-y),lw=.042;
+  const off=.006,yh=.205,xk=y=>.058+.30*mx(0,.47-y),lw=.042;
   const Sall=(x,y,z)=>mn(Fb(x,y,z),sLf(x,y,z),sRf(x,y,z));
-  const regT=(x,y,z)=>{const pl=R.tl(x,y,z);let r=mx(yh-pl[1],pl[1]-.566);if(pl[2]>-.03)r=mx(r,xk(pl[1])-ab(pl[0]));return r;};
+  const regT=(x,y,z)=>{const pl=R.tl(x,y,z);let r=mx(yh-pl[1],pl[1]-.522);if(pl[2]>-.03)r=mx(r,xk(pl[1])-ab(pl[0]));return r;};
   const regS=(s,sf,x,y,z)=>{const u=(x-s.o0[0])*s.hz[0]+(z-s.o0[2])*s.hz[2],v=y-s.o0[1];return mx(u-(s.uC-.13),(s.vt(u)-.20)-v);};
   const lapel=(x,y,z)=>{const pl=R.tl(x,y,z);if(pl[1]<yh-.02)return 0;if(pl[2]>-.03)return sstep(xk(pl[1])+lw+.003,xk(pl[1])+lw-.003,ab(pl[0]));const rN=sq(pl[0]*pl[0]+(pl[2]+.02)**2);return sstep(.452,.466,pl[1])*sstep(.125,.112,rN);};
   const f=(x,y,z)=>{const reg=mn(mx(regT(x,y,z),tF(x,y,z)-.05),mx(regS(sL,sLf,x,y,z),sLf(x,y,z)-.05),mx(regS(sR,sRf,x,y,z),sRf(x,y,z)-.05));
-    if(reg>.03)return reg;return smax(Sall(x,y,z)-off-.0035*lapel(x,y,z),reg,.003);};
+    if(reg>.03)return reg;return smax(Sall(x,y,z)-off-.002*lapel(x,y,z),reg,.003);};
   const lam=(x,y,z)=>{const pl=R.tl(x,y,z);let w=0;if(pl[1]>yh-.02){if(pl[2]>-.03){const xe=xk(pl[1])+lw;w=clamp((xe-ab(pl[0]))/.006+.5,0,1);}else{const rN=sq(pl[0]*pl[0]+(pl[2]+.02)**2);w=clamp((pl[1]-.459)/.006+.5,0,1)*clamp((.118-rN)/.006+.5,0,1);}}
     // narrow lining rim at the sleeve edges
     for(const s of[sL,sR]){const u=(x-s.o0[0])*s.hz[0]+(z-s.o0[2])*s.hz[2],v=y-s.o0[1];const e=mn((s.uC-.13)-u,v-(s.vt(u)-.20));if(e>-.01&&e<.006&&s.F.f(x,y,z)<.03)w=mx(w,clamp((.004-e)/.004,0,1));}
@@ -28058,7 +28059,7 @@ function nyMo(R,body){const Fb=body.F.f;const top=R.tp([0,.255,-.150]);const ctr
   for(const z of[zl-.07,zl-.18,zl-.34,zl-.52,zl-.70]){const s=nyProbe(Fb,[0,.8,z],[0,-1,0],1.0,.006);ctrl.push([0,mx(s?s[1]:0,0)+.008,z]);}
   const pts=nyCR(ctrl,30);const nr=pts.map((p,i)=>{const a=pts[Math.max(0,i-1)],b=pts[Math.min(pts.length-1,i+1)];const t=nrm3(sub3(b,a));return nrm3([0,-t[2],t[1]]);});
   const tri=x=>{const v=Math.sin(2*PI*x);return(v>0?Math.pow(v,.7):-Math.pow(-v,.7))*.5;};
-  const sw=nySweep(pts,nr,{w:t=>lerp(.16,.55,sstep(.0,.9,t)),th:t=>.018,rr:.004,off:(t,b)=>-.012+(.0060*sstep(.0,.10,t)-.0015*sstep(.5,1,t))*tri(b/.058+.25)});
+  const sw=nySweep(pts,nr,{w:t=>lerp(.16,.55,sstep(.0,.9,t)),th:t=>.018,rr:.004,off:(t,b)=>-.012+(.0095*sstep(.0,.10,t)-.002*sstep(.5,1,t))*tri(b/.066+.25)+.014*Math.sin(t*11+b*5)*sstep(.35,.6,t)+.010*Math.sin(b*9+1)*sstep(.5,1,t)});
   return{F:sw,sw};}
 // ---- hair: cap (head-local) with centre parting, high forehead, binsogi side locks; long hair swept down the back ----
 function nyHairCapSDF(P){const cr=P.cran||[1,1,1],co=P.cranOff||[0,0,0];
@@ -28066,13 +28067,13 @@ function nyHairCapSDF(P){const cr=P.cran||[1,1,1],co=P.cranOff||[0,0,0];
   const skull=U([K(cE([0,.044,-.010],[.0765,.084,.095]),0),K(cE([0,.040,.030],[.064,.070,.066]),.035),K(cE([0,.020,-.045],[.068,.064,.058]),.035)]);
   const sf=skull.f,yW=.045,C0=[0,.044*cr[1]+co[1],-.010*cr[2]+co[2]],SV=[1.068,1.058,1.072];
   const hs=(x,y,z)=>sf((x-C0[0])/SV[0]+C0[0],(y-C0[1])/SV[1]+C0[1],(z-C0[2])/SV[2]+C0[2])*1.07;
-  let F={f:(x,y,z)=>{if(y>yW)return hs(x,y,z);const dy=yW-y;const side=sstep(.03,.075,ab(x));
-      return mx(hs(x*(1-.06*side*sstep(.02,.12,dy)),yW,z+side*.62*sstep(0,.10,dy)*dy)-.0025*sstep(0,.15,dy),z-NY_HF.zF(y)-.003);},bs:[0,0,-.01,.2]};
+  let F={f:(x,y,z)=>{const h0=hs(x,y,z);const dy=mx(yW-y,0);const side=sstep(.03,.075,ab(x));
+      return smin(h0,mx(y-yW,0)+mx(hs(x*(1-.06*side*sstep(.02,.12,dy)),yW,z+side*.62*sstep(0,.10,dy)*dy)-.0025*sstep(0,.15,dy),z-NY_HF.zF(y)-.003),.018);},bs:[0,0,-.01,.2]};
   const cut={f:(x,y,z)=>y-lerp(-.165,-.085,sstep(-.06,.05,z)),bs:[0,-.15,0,.3]};
   F=S(F,[K({f:(x,y,z)=>nyHairline(x,y,z)-.0015,bs:[0,-.02,.09,.16]},.009),K(cut,.010)]);
   const locks=[];for(const s of[-1,1]){const top=.075,bot=-.118;
     locks.push({f:(x,y,z)=>{const t=clamp((top-y)/(top-bot),0,1);const dz=z+.012,r=sq(x*x+dz*dz),th=Math.atan2(s*x,dz);
-      const band=ab(r-(.0862+.005*t))-(.0050-.0014*t),da=mx(.76-.06*t-th,th-1.24)*r;return smax(smax(band,da,.003),mx(y-top,bot-.003*Math.cos(z*80)-y),.004);},bs:[s*.077,-.04,.03,.11]});}
+      const band=ab(r-(.0850+.004*t))-(.0046-.0020*t*t),da=mx(.70-.05*t-th,th-1.10)*r;return smax(smax(band,da,.003),mx(y-top,bot-.003*Math.cos(z*80)-y),.004);},bs:[s*.077,-.04,.03,.11]});}
   F=U([F,K(U(locks),.006)]);
   const nz=makeNoise(73);
   F=D(F,(x,y,z)=>{const top=sstep(.06,.11,y);const a=Math.atan2(x,-z+.02);
@@ -28138,6 +28139,7 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   const hm=body.lap.bs;
   const pB=nyPart(key+"|body",body.F,[-.70,-.006,-.66],[.70,rig.pivot[1]+.03,.68],hB,Gall,AO,cloth(body.lam));
   const meshes=[nyMesh(R,pB,clothM)];meshes[0].name="ny_body";T_.body=performance.now()-t0;
+  {const cF=body.collar;meshes.push(nyMesh(R,nyPart(key+"|collar",cF,[-.12,rig.pivot[1]-.16,-.14],[.12,rig.pivot[1]+.03,.12],q==="low"?.0065:.0042,Gall,[.008,1.0,3,.25],cloth(body.lam)),clothM));meshes[meshes.length-1].name="ny_collar";}
   for(const k of["L","R"]){const s=slv[k];const lamS=(x,y,z)=>clamp(nR-s.edge(x,y,z)/(kara?.016:.020),.5,nR-.5);
     meshes.push(nyMesh(R,nyPart(key+"|sl"+k,s.F,s.bb[0],s.bb[1],hS,Gall,AO,cloth(lamS)),clothM));meshes[meshes.length-1].name="ny_sleeve"+k;}
   T_.sleeves=performance.now()-t0;
@@ -28146,7 +28148,7 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   for(const m of meshes)g.add(m);
   // ---- hair ----
   const hairM=nyHairMat(R);const hc=lin(HP.hairC);
-  const capF=nyHairCapSDF(HP);const hq=q==="low"?.0068:q==="medium"?.0058:.0050;
+  const capF=nyHairCapSDF(HP);const hq=q==="low"?.0062:q==="medium"?.0050:.0042;
   const pCap=nyPart(key+"|hcap|"+HP.seed,capF,[-.115,-.18,-.135],[.115,.15,.125],hq,(x,y,z)=>mn(capF.f(x,y,z),hd.H.F.f(x,y,z)),[.004,1.2,3,.35],(x,y,z,nx,ny,nz,v,o,a)=>{
       const c=mulc(hc,a*(.88+.12*N2(x*300,y*60,z*300)));o.col.set(c,v*3);
       const top=sstep(.05,.11,y),sd=x<0?-1:1;let d=[sd*(.9*top+.25*(1-top)),-(.35*top+1)*(1-.0),-.30];const dn=d[0]*nx+d[1]*ny+d[2]*nz;d=nrm3([d[0]-nx*dn,d[1]-ny*dn,d[2]-nz*dn]);
@@ -31412,10 +31414,11 @@ varying vec2 vUv;varying float vA;varying float vBig;varying float vRot;varying 
 #include <fog_pars_fragment>
 void main(){
   vec2 p=vUv;float d;
-  if(vBig>0.5){float c=cos(vRot),s=sin(vRot);p=vec2(c*p.x-s*p.y,s*p.x+c*p.y);d=0.0;
-    for(int k=0;k<5;k++){float fk=float(k);float a=fk*1.2566+vSeed*6.2831853;float rr=(0.28+0.18*fract(vSeed*7.3+fk*0.31))*step(0.5,fk);
-      vec2 cc=vec2(cos(a),sin(a))*rr;float r2=0.30+0.12*fract(vSeed*3.1+fk*0.53);vec2 dv=(p-cc)/r2;d=max(d,exp(-dot(dv,dv)*1.6));}
-    d=smoothstep(0.28,0.72,d)*(0.88+0.12*d);}
+  if(vBig>0.5){float c=cos(vRot),s=sin(vRot);p=vec2(c*p.x-s*p.y,s*p.x+c*p.y);float sum=0.0;
+    /* ぼたん雪: 小さな結晶が寄り集まった不揃いな綿の塊。芯は濃く、縁はほつれて淡い */
+    for(int k=0;k<7;k++){float fk=float(k);float a=fk*2.39996+vSeed*6.2831853;float rr=(0.12+0.36*fract(vSeed*7.3+fk*0.618))*step(0.5,fk);
+      vec2 cc=vec2(cos(a),sin(a))*rr;float r2=0.17+0.2*fract(vSeed*3.1+fk*0.53);vec2 dv=(p-cc)/r2;sum+=exp(-dot(dv,dv)*2.2);}
+    d=smoothstep(0.30,1.05,sum)*0.92+0.10*smoothstep(0.05,0.4,sum);}
   else{d=exp(-dot(p,p)*3.2);}
   float a=d*vA;if(a<0.003)discard;
   gl_FragColor=vec4(vCol,a);
@@ -31430,13 +31433,13 @@ function makeSnowfall(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts.
   const sh=shelterOf(opts,(opts.drips||[]).filter(p=>p&&p.length>=3));
   const amb=new T.Color(0.7,0.72,0.76);let ambOverride=opts.color!==undefined?C(opts.color):null;
   let intensity=clamp(opts.intensity!==undefined?opts.intensity:1,0,1),active=opts.active!==false,tAcc=0;
-  const N=opts.count||[2600,5000,8500][q];
+  const N=opts.count||[3200,6400,10500][q];
   const g=quadIGeo(res,-0.5,-0.5,0.5,0.5);const s1=new Float32Array(N*4),s2=new Float32Array(N*4);
   for(let i=0;i<N;i++){for(let k=0;k<4;k++){s1[i*4+k]=rng.f();s2[i*4+k]=rng.f();}}
   g.setAttribute("iSeed",new T.InstancedBufferAttribute(s1,4));g.setAttribute("iSeed2",new T.InstancedBufferAttribute(s2,4));g.instanceCount=N;
   const wind=opts.wind||[0.25,0.1];
   const U=Object.assign(T.UniformsUtils.clone(T.UniformsLib.fog),LU,{uHull:{value:sh.arr},uHullN:{value:sh.n},uRoofY:{value:sh.top},uBoxC:{value:center0.clone()},uBox:{value:box.clone()},
-    uEye:{value:new T.Vector3()},uTime:{value:0},uWind:{value:new T.Vector2(wind[0],wind[1])},uInt:{value:intensity},uPx:{value:0.0015},uSize:{value:opts.size||1},uNear:{value:0.7},
+    uEye:{value:new T.Vector3()},uTime:{value:0},uWind:{value:new T.Vector2(wind[0],wind[1])},uInt:{value:intensity},uPx:{value:0.0015},uSize:{value:opts.size||1.35},uNear:{value:0.7},
     uAmb:{value:amb},uBig:{value:opts.botan!==undefined?opts.botan:0.3}});
   const mat=res.own(new T.ShaderMaterial({uniforms:U,vertexShader:SNOW_VS,fragmentShader:SNOW_FS,transparent:true,depthWrite:false,fog:true}));
   const mesh=new T.Mesh(g,mat);mesh.frustumCulled=false;mesh.renderOrder=5;mesh.name="TSURE_snowflakes";mesh.castShadow=false;mesh.receiveShadow=false;grp.add(mesh);
@@ -31444,7 +31447,7 @@ function makeSnowfall(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts.
   function update(dt,t,camera){dt=clamp(dt||0,0,0.1);if(!active)return;tAcc+=dt;U.uTime.value=tAcc%900;
     if(camera){camera.updateMatrixWorld();_cw.setFromMatrixPosition(camera.matrixWorld);grp.updateMatrixWorld();if(follow){U.uBoxC.value.copy(_cw);mesh.worldToLocal(U.uBoxC.value);}
       if(!explicitLights)lw.points(mesh,_cw,LU);}
-    if(ambOverride)amb.copy(ambOverride);else{lw.ambient(amb,0.62,0.9,0.42);amb.multiplyScalar(0.92);}}
+    if(ambOverride)amb.copy(ambOverride);else{lw.ambient(amb,0.62,0.9,0.42);amb.multiplyScalar(1.08);}}
   grp.userData={update,setIntensity(v){intensity=clamp(v,0,1);U.uInt.value=intensity;},getIntensity:()=>intensity,
     setActive(on){active=!!on;grp.visible=!!on;},setWind(x,z){U.uWind.value.set(x||0,z||0);},
     setLights(list){explicitLights=Array.isArray(list);if(explicitLights)setLightList(LU,list);},setColor(c){ambOverride=(c===null||c===undefined)?null:C(c);},
@@ -31500,18 +31503,18 @@ function featherStrip(a,b,w,n,y0,thick,colTop,colBot,wing,tipRound){const pos=[]
 /* マガン一羽(+Z が頭、翼開長 ≈1.5m、全長 ≈0.72m) */
 function gooseGeometry(q){const sg=[6,9,12][q],nc=[2,3,4][q],geos=[];
   const BODY=hexC(0x6c6255),FLANK=hexC(0x786c5d),BELLY=hexC(0x8c8174),BAR=hexC(0x2c2723),WHITE=hexC(0xeeeae2),NECK=hexC(0x5d5348),HEAD=hexC(0x4c4239),BILL=hexC(0xe49c86),FOOT=hexC(0xe0883a);
-  geos.push(vcPart(latheZ([[0.004,-0.27],[0.03,-0.245],[0.056,-0.2],[0.075,-0.14],[0.086,-0.07],[0.089,-0.01],[0.084,0.04],[0.07,0.08],[0.05,0.11],[0.03,0.125],[0.004,0.132]],sg+2,0.88),
+  geos.push(vcPart(latheZ([[0.004,-0.27],[0.032,-0.245],[0.06,-0.2],[0.081,-0.14],[0.093,-0.07],[0.096,-0.01],[0.09,0.04],[0.076,0.08],[0.056,0.11],[0.034,0.126],[0.004,0.134]],sg+2,0.9),
     (x,y,z)=>{if(z<-0.15&&y<0.01)return WHITE;if(z<-0.19&&y>0.025)return WHITE;
       if(y<-0.03&&z>-0.08&&z<0.06){const bar=Math.sin(z*95+Math.sin(x*60)*1.2)>0.55;return bar?BAR:BELLY;}
       if(y<-0.02)return BELLY;return y>0.04?BODY:FLANK;},false));
-  {const g=latheZ([[0.042,0.0],[0.036,0.06],[0.029,0.13],[0.024,0.19],[0.022,0.23]],sg,1.0);g.rotateX(-0.14);g.translate(0,0.022,0.085);geos.push(vcPart(g,()=>NECK,false));}
+  {const g=latheZ([[0.048,0.0],[0.04,0.06],[0.033,0.13],[0.028,0.19],[0.026,0.23]],sg,1.0);g.rotateX(-0.14);g.translate(0,0.022,0.085);geos.push(vcPart(g,()=>NECK,false));}
   {const g=new T.SphereGeometry(1,sg+2,sg);g.scale(0.028,0.03,0.045);g.translate(0,0.046,0.33);geos.push(vcPart(g,(x,y,z)=>(z>0.355&&y<0.058)?WHITE:HEAD,false));}
   {const g=new T.CylinderGeometry(0.0035,0.0125,0.052,sg,1);g.rotateX(Math.PI/2);g.translate(0,0.04,0.395);geos.push(vcPart(g,()=>BILL,false));}
   {const fan=[];for(let i=0;i<=8;i++){const a=(i/8-0.5)*0.95;fan.push(a);}
     fan.slice(0,-1).forEach((a,i)=>{const b=fan[i+1],r=0.11,z0=-0.21;
       geos.push(featherStrip([Math.sin((a+b)/2)*0.012,z0],[Math.sin((a+b)/2)*r,z0-Math.cos((a+b)/2)*r],0.03,2,0.012,0.003,t=>t>0.8?WHITE:HEAD,()=>WHITE,false,true));});}
   [-1,1].forEach(s=>{const g=new T.BoxGeometry(0.016,0.012,0.055);g.translate(s*0.024,-0.045,-0.24);geos.push(vcPart(g,()=>FOOT,false));});
-  const prof=[[0.04,0.075,-0.115],[0.12,0.09,-0.15],[0.2,0.095,-0.165],[0.28,0.095,-0.165],[0.36,0.09,-0.15],[0.44,0.07,-0.125],[0.52,0.05,-0.098],[0.6,0.028,-0.072],[0.67,0.008,-0.052],[0.72,-0.012,-0.04],[0.755,-0.026,-0.036]];
+  const prof=[[0.04,0.085,-0.15],[0.12,0.105,-0.2],[0.2,0.11,-0.215],[0.28,0.108,-0.21],[0.36,0.1,-0.19],[0.44,0.078,-0.158],[0.52,0.054,-0.124],[0.6,0.03,-0.092],[0.67,0.008,-0.066],[0.72,-0.012,-0.05],[0.755,-0.028,-0.042]];
   const P=prof.length>sg?prof:prof;
   const top=(s,v)=>s<0.36?(v>0.66?hexC(0x463d35):(v>0.3&&v<0.52?hexC(0x8a8276):hexC(0x766a5c))):(v<0.32?hexC(0x6c645a):hexC(0x3b332d));
   const bot=(s,v)=>v>0.7?hexC(0x4a423a):hexC(0x5a5148);
@@ -31559,7 +31562,7 @@ function makeGeese(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts.see
       flap[i*3]=lerp(0.1+0.5*s,0.06,b.gl);flap[i*3+1]=lerp(-0.16*c-0.03,0.0,b.gl);flap[i*3+2]=lerp(-0.1*c,0.02,b.gl);
       const F=b.f+0.25*Math.sin(t*0.21+b.w1),R=b.r+0.32*Math.sin(t*0.17+b.w2)+0.1*Math.sin(t*0.53+b.w3),Uu=b.u+0.22*Math.sin(t*0.27+b.w3)-0.035*s*(1-b.gl);
       pv.set(center.x+dir.x*(A+F)+right.x*R,center.y+Uu,center.z+dir.y*(A+F)+right.y*R);
-      const turn=0.32*0.17*Math.cos(t*0.17+b.w2)/Math.max(speed,1);e.set(-0.03,yaw0+turn,-turn*8);qq.setFromEuler(e);
+      const turn=0.32*0.17*Math.cos(t*0.17+b.w2)/Math.max(speed,6);e.set(-0.03,yaw0+turn,clamp(-turn*8,-0.35,0.35));qq.setFromEuler(e);
       const endF=range>0?smooth(range*0.5,range*0.44,Math.abs(A)):1;sv.setScalar(scale*endF+1e-4);m4.compose(pv,qq,sv);im.setMatrixAt(i,m4);});
     im.instanceMatrix.needsUpdate=true;fa.needsUpdate=true;}
   resetBirds();step(0);
@@ -31574,7 +31577,7 @@ function makeCrowFlock(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts
     return {n:Math.max(1,Math.round(G.count||3)),c:V3(G.center,new T.Vector3(0,30,-60)),d,r:new T.Vector2(-d.y,d.x),sp:G.speed!==undefined?G.speed:10,delay:G.delay||0,yaw:Math.atan2(d.x,d.y)};});
   const total=groups.reduce((a,G)=>a+G.n,0),scale=opts.scale||1,range=opts.range||0,spread=opts.spread||3.2;
   const geo=res.own(crowGeometryHD(q));const flap=new Float32Array(total*3);const fa=new T.InstancedBufferAttribute(flap,3);fa.setUsage(T.DynamicDrawUsage);geo.setAttribute("iFlap",fa);
-  const BM=birdMaterial(res,{fogScale:opts.fogScale!==undefined?opts.fogScale:0.45,vertexColors:false,color:opts.color!==undefined?opts.color:0x0c0c10,roughness:0.42,joint:[0.035,0.2,0.33],wingY:0.02,sweep:0.3},"tsure_crowhd");
+  const BM=birdMaterial(res,{fogScale:opts.fogScale!==undefined?opts.fogScale:0.45,vertexColors:false,color:opts.color!==undefined?opts.color:0x0c0c10,roughness:0.55,joint:[0.035,0.2,0.33],wingY:0.02,sweep:0.3},"tsure_crowhd");
   const im=new T.InstancedMesh(geo,BM.mat,total);im.instanceMatrix.setUsage(T.DynamicDrawUsage);im.frustumCulled=false;im.castShadow=false;im.receiveShadow=false;im.name="TSURE_crow_flock";
   const grp=new T.Group();grp.name="TSURE_crow_flock";grp.add(im);
   const birds=[];groups.forEach((G,gi)=>{for(let k=0;k<G.n;k++)birds.push({g:gi,f:(rng.f()-0.5)*spread*1.6-k*0.4,r:(rng.f()-0.5)*spread*1.4,u:(rng.f()-0.5)*spread*0.5,
@@ -31589,7 +31592,7 @@ function makeCrowFlock(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts
       flap[i*3]=lerp(0.06+0.6*s,0.08,b.gl);flap[i*3+1]=lerp(-0.34*c+0.04,-0.02,b.gl);flap[i*3+2]=lerp(-0.3*Math.cos(b.ph-0.35)+0.06,0.05,b.gl);
       const F=b.f+0.4*Math.sin(t*0.31+b.w1),R=b.r+0.9*Math.sin(t*b.wv+b.w2),Uu=b.u+0.35*Math.sin(t*0.43+b.w3)-0.045*s*(1-b.gl);
       pv.set(G.c.x+G.d.x*(A+F)+G.r.x*R,G.c.y+Uu,G.c.z+G.d.y*(A+F)+G.r.y*R);
-      const turn=0.9*b.wv*Math.cos(t*b.wv+b.w2)/Math.max(G.sp,1);e.set(-0.06+0.04*s*(1-b.gl),G.yaw+turn*0.8,-turn*6);qq.setFromEuler(e);
+      const turn=0.9*b.wv*Math.cos(t*b.wv+b.w2)/Math.max(G.sp,6);e.set(-0.06+0.04*s*(1-b.gl),G.yaw+turn*0.8,clamp(-turn*6,-0.45,0.45));qq.setFromEuler(e);
       const endF=range>0?smooth(range*0.5,range*0.44,Math.abs(A)):1;sv.setScalar(scale*endF+1e-4);m4.compose(pv,qq,sv);im.setMatrixAt(i,m4);});
     im.instanceMatrix.needsUpdate=true;fa.needsUpdate=true;}
   resetBirds();step(0);

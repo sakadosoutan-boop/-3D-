@@ -393,7 +393,7 @@ function headSDF(P){
     fp.push(K(sCap(J([s*.0485,-.060,.0]),J([s*.019,-.089,.071]),.0100*jw),.025));
     fp.push(K(sCap(J([s*.0485,-.060,.0]),[s*.058,-.015,-.008],.010),.02));
     {const ck=P.cheekK!=null?P.cheekK:1;fp.push(K(sEll([s*.047,.007,.064],[.023*ck,.013*ck,.019*ck],rotM(0,s*.45,0)),.02));}
-    fp.push(K(sCap([s*.058,.006,.050],[s*.070,.004,.008],.008),.02));
+    {const zk=P.zygK||1;fp.push(K(sCap([s*.058*zk,.006,.050],[s*.070*zk,.004,.008],.008),.02));}
     fp.push(K(sCap([s*.050,.040,.074],[0,.042,.093],.0085*bw),.02));
     fp.push(K(sEll([s*.034,.001,.078],[.017,.012,.011]),.016));
     fp.push(K(sEll([s*.029,-.027,.081],[.012,.015,.010]),.013));
@@ -402,6 +402,7 @@ function headSDF(P){
     if(P.kid){const cf=P.cheekFat||1;fp.push(K(sEll([s*.038,-.008,.064],[.024*cf,.023*cf,.021*cf]),.03),K(sEll([s*.050,-.022,.036],[.016,.022,.028]),.035));}
     else if(P.cheekFat)fp.push(K(sEll([s*.036,-.022,.070],[.026*P.cheekFat,.026*P.cheekFat,.020*P.cheekFat]),.02));
   }
+  if(P.egg){const e=P.egg;fp.push(K(sEll([0,-.030,.030],[.055*e,.050,.044]),.030));}
   let F=U([cran,K(U(fp),.025)]);
   F=S(F,[K(sEll([-.0185,.0255,.0885],[.0062,.0075,.0065]),.007),K(sEll([.0185,.0255,.0885],[.0062,.0075,.0065]),.007)]);
   const nose=U([K(sCone(N([0,.029,.0905]),N([0,-.007,.1035]),.0058*ns,.0070*ns),0),K(sEll(N([0,-.013,.0915]),[.0120*ns,.0130*ns,.0110*ns]),.008),
@@ -1559,7 +1560,7 @@ const NYOBO_HEAD={seed:61,age:25,smile:.55,fem:1,lipU:.0042,lipL:.0056,lipUvol:.
   iris:[62,40,28],irisR:.17,pupilR:.058,sclera:[228,222,214],catchlight:true,
   eyeW:.0156,eyeOpenU:.0052,eyeOpenL:.0031,eyeTilt:.09,hood:.75,lash:1.15,
   browY:-.0012,browDrop:.0065,brow:0x2b211c,browHairs:220,browW:1.35,browAmt:.7,softBrow:.7,
-  cran:[.95,.99,.975],taper:.12,faceW:.89,jaw:.82,nose:.80,browK:.50,cheekFat:.25,cheekK:.72,eyeR:.0121,earL:.92,noEars:true,neckR:.92,
+  cran:[.95,.99,.975],taper:.14,faceW:.88,egg:.95,zygK:.90,jaw:.80,nose:.78,browK:.50,cheekFat:.10,cheekK:.66,eyeR:.0121,earL:.92,noEars:true,neckR:.92,
   nlfAmt:.3,underEyeAmt:.45,creaseAmt:.65,poreAmt:.55,lipLines:.35,lidAmt:.9,lidC:0xa8786a,rough:.42,gazePitch:0};
 // hair frame (head-local): the face is open in front of zF(y) and below the hairline yF(x) (centre parting, high forehead)
 function nyHairFrame(){return{zF:y=>.033+.011*sstep(-.07,.03,y)-.006*sstep(.05,.09,y),yF:x=>{const t=Math.min(1,ab(x)/.068);return .096-.066*Math.pow(t,1.4);}};}
@@ -1738,11 +1739,11 @@ function nyRig(pose,attire){const R={pose,attire,seated:pose!=="carry"};
 // ---- seated body: torso (outer robe level) + robes spread on the floor; lam(x,y,z) = layer coordinate ----
 function nyBodySeated(R,attire){const kara=attire==="karaginu",nR=kara?8:4;
   const tl=U([K(sEll([0,.05,-.03],[.215,.11,.175]),0),K(sEll([0,.17,-.025],[.170,.11,.134]),.07),K(sEll([0,.30,-.022],[.160,.12,.126]),.07),
-    K(sEll([0,.395,-.035],[.158,.085,.116]),.06),K(sCap([.05,.468,-.040],[.160,.430,-.040],.046),.05),K(sCap([-.05,.468,-.040],[-.160,.430,-.040],.046),.05),
+    K(sEll([0,.395,-.035],[.158,.085,.116]),.06),K(sCap([.05,.462,-.040],[.158,.412,-.040],.040),.05),K(sCap([-.05,.462,-.040],[-.158,.412,-.040],.040),.05),
     K(sEll([0,.468,-.042],[.090,.046,.070]),.04)]);
-  const ring=[[.056,.528,.050],[.068,.542,.000],[.054,.552,-.046],[0,.558,-.066],[-.054,.552,-.046],[-.068,.542,.000],[-.056,.528,.050]];
-  const ringN=ring.map(p=>nrm3([p[0],.35,p[2]+.004]));
-  let torso=U([tl,K(sRibbon(ring,ringN,.036,.0105,.006),.014)]);
+  const ring=[[.040,.512,.052],[.054,.528,.016],[.056,.538,-.020],[.042,.546,-.050],[0,.551,-.064],[-.042,.546,-.050],[-.056,.538,-.020],[-.054,.528,.016],[-.040,.512,.052]];
+  const ringN=ring.map(p=>{const r_=mx(1e-3,sq(p[0]*p[0]+(p[2]+.006)**2));return nrm3([p[0]/r_,.28,(p[2]+.006)/r_]);});
+  let torso=tl;const collarL=sRibbon(ring,ringN,.027,.0045,.0035);
   torso=S(torso,[K(sCone([0,.47,-.012],[0,.72,.026],.0435,.048),.007)]);
   const torsoW=T(torso,R.TM,R.hip);
   const sup=[];for(const k of["L","R"]){sup.push({a:R.hipJ[k],b:R.knee[k],r:.088,sl:1.15});sup.push({a:R.knee[k],b:R.ankle[k],r:.062,sl:1.1});}
@@ -1755,7 +1756,7 @@ function nyBodySeated(R,attire){const kara=attire==="karaginu",nR=kara?8:4;
     if(pl[1]<.24&&pl[2]>.10){const xe=.008+(pl[2]-.12)*.30+mx(0,.20-pl[1])*.05;const e=(xe-ab(pl[0]))*.89;if(e>0)L=mx(L,e/dF);}
     const hd=lap.hemD(x,z);if(hd>-nR*dH*1.2)L=mx(L,mn(nR-.5,nR+hd/dH));
     return clamp(L,.5,nR+.5);};
-  return{F,torsoW,lap,lam,nR};}
+  return{F,torsoW,lap,lam,nR,collar:T(collarL,R.TM,R.hip)};}
 // ---- sleeve: arm tubes + a big hanging bag resting on the robes; lam from the distance to the free edges ----
 function nySleeve(A,o){const S0=A.S,E=A.E,W=A.W;const fd=nrm3(sub3(W,E)),ud=nrm3(sub3(E,S0));
   const cuff=add3(W,scl3(fd,-.010)),Sx=add3(S0,scl3(ud,-.035));
@@ -1763,7 +1764,7 @@ function nySleeve(A,o){const S0=A.S,E=A.E,W=A.W;const fd=nrm3(sub3(W,E)),ud=nrm3
   let hz=[cuff[0]-S0[0],0,cuff[2]-S0[2]];if(len3(hz)<.04)hz=[0,0,1];hz=nrm3(hz);
   const o0=E;const uS=dot3(sub3(S0,E),hz),uC=dot3(sub3(cuff,E),hz);
   const n=cross3(hz,[0,1,0]);const sg=dot3(n,sub3(E,o.center))>0?1:-1;
-  const kp=[[uS-.03,S0[1]-.012-E[1]],[0,.004],[uC,cuff[1]-.002-E[1]]].sort((p,q)=>p[0]-q[0]);
+  const kp=[[uS-.03,S0[1]-.055-E[1]],[0,-.004],[uC,cuff[1]-.002-E[1]]].sort((p,q)=>p[0]-q[0]);
   const vt=u=>{if(u<=kp[0][0])return kp[0][1];if(u>=kp[2][0])return kp[2][1];const i=u<kp[1][0]?0:1;const t=(u-kp[i][0])/mx(1e-4,kp[i+1][0]-kp[i][0]);return lerp(kp[i][1],kp[i+1][1],t);};
   const ua=mn(uS,0)-o.back,ub=uC+o.front;
   const vb=u=>{const fu=clamp((u-ua)/(ub-ua),0,1),fl=sg*o.flare*(.8+.2*Math.sin(PI*fu));const x=o0[0]+hz[0]*u+n[0]*fl,z=o0[2]+hz[2]*u+n[2]*fl;return mx(o.ground(x,z)+.010,o.vbAbs)+.008*Math.sin(u*9+o.seed)-o0[1];};
@@ -1781,13 +1782,13 @@ function nySleeve(A,o){const S0=A.S,E=A.E,W=A.W;const fd=nrm3(sub3(W,E)),ud=nrm3
   return{F,bb:[b0,b1],o0,hz,ua,ub,uC,vb,vt,edge};}
 // ---- karaginu (唐衣): short jacket over the torso & the upper sleeves, open in front, collar folded back (lining band) ----
 function nyKaraginu(R,body,slv){const Fb=body.F.f,sL=slv.L,sR=slv.R,sLf=sL.F.f,sRf=sR.F.f,tF=body.torsoW.f;
-  const off=.0075,yh=.165,xk=y=>.058+.30*mx(0,.47-y),lw=.042;
+  const off=.006,yh=.205,xk=y=>.058+.30*mx(0,.47-y),lw=.042;
   const Sall=(x,y,z)=>mn(Fb(x,y,z),sLf(x,y,z),sRf(x,y,z));
-  const regT=(x,y,z)=>{const pl=R.tl(x,y,z);let r=mx(yh-pl[1],pl[1]-.566);if(pl[2]>-.03)r=mx(r,xk(pl[1])-ab(pl[0]));return r;};
+  const regT=(x,y,z)=>{const pl=R.tl(x,y,z);let r=mx(yh-pl[1],pl[1]-.522);if(pl[2]>-.03)r=mx(r,xk(pl[1])-ab(pl[0]));return r;};
   const regS=(s,sf,x,y,z)=>{const u=(x-s.o0[0])*s.hz[0]+(z-s.o0[2])*s.hz[2],v=y-s.o0[1];return mx(u-(s.uC-.13),(s.vt(u)-.20)-v);};
   const lapel=(x,y,z)=>{const pl=R.tl(x,y,z);if(pl[1]<yh-.02)return 0;if(pl[2]>-.03)return sstep(xk(pl[1])+lw+.003,xk(pl[1])+lw-.003,ab(pl[0]));const rN=sq(pl[0]*pl[0]+(pl[2]+.02)**2);return sstep(.452,.466,pl[1])*sstep(.125,.112,rN);};
   const f=(x,y,z)=>{const reg=mn(mx(regT(x,y,z),tF(x,y,z)-.05),mx(regS(sL,sLf,x,y,z),sLf(x,y,z)-.05),mx(regS(sR,sRf,x,y,z),sRf(x,y,z)-.05));
-    if(reg>.03)return reg;return smax(Sall(x,y,z)-off-.0035*lapel(x,y,z),reg,.003);};
+    if(reg>.03)return reg;return smax(Sall(x,y,z)-off-.002*lapel(x,y,z),reg,.003);};
   const lam=(x,y,z)=>{const pl=R.tl(x,y,z);let w=0;if(pl[1]>yh-.02){if(pl[2]>-.03){const xe=xk(pl[1])+lw;w=clamp((xe-ab(pl[0]))/.006+.5,0,1);}else{const rN=sq(pl[0]*pl[0]+(pl[2]+.02)**2);w=clamp((pl[1]-.459)/.006+.5,0,1)*clamp((.118-rN)/.006+.5,0,1);}}
     // narrow lining rim at the sleeve edges
     for(const s of[sL,sR]){const u=(x-s.o0[0])*s.hz[0]+(z-s.o0[2])*s.hz[2],v=y-s.o0[1];const e=mn((s.uC-.13)-u,v-(s.vt(u)-.20));if(e>-.01&&e<.006&&s.F.f(x,y,z)<.03)w=mx(w,clamp((.004-e)/.004,0,1));}
@@ -1800,7 +1801,7 @@ function nyMo(R,body){const Fb=body.F.f;const top=R.tp([0,.255,-.150]);const ctr
   for(const z of[zl-.07,zl-.18,zl-.34,zl-.52,zl-.70]){const s=nyProbe(Fb,[0,.8,z],[0,-1,0],1.0,.006);ctrl.push([0,mx(s?s[1]:0,0)+.008,z]);}
   const pts=nyCR(ctrl,30);const nr=pts.map((p,i)=>{const a=pts[Math.max(0,i-1)],b=pts[Math.min(pts.length-1,i+1)];const t=nrm3(sub3(b,a));return nrm3([0,-t[2],t[1]]);});
   const tri=x=>{const v=Math.sin(2*PI*x);return(v>0?Math.pow(v,.7):-Math.pow(-v,.7))*.5;};
-  const sw=nySweep(pts,nr,{w:t=>lerp(.16,.55,sstep(.0,.9,t)),th:t=>.018,rr:.004,off:(t,b)=>-.012+(.0060*sstep(.0,.10,t)-.0015*sstep(.5,1,t))*tri(b/.058+.25)});
+  const sw=nySweep(pts,nr,{w:t=>lerp(.16,.55,sstep(.0,.9,t)),th:t=>.018,rr:.004,off:(t,b)=>-.012+(.0095*sstep(.0,.10,t)-.002*sstep(.5,1,t))*tri(b/.066+.25)+.014*Math.sin(t*11+b*5)*sstep(.35,.6,t)+.010*Math.sin(b*9+1)*sstep(.5,1,t)});
   return{F:sw,sw};}
 // ---- hair: cap (head-local) with centre parting, high forehead, binsogi side locks; long hair swept down the back ----
 function nyHairCapSDF(P){const cr=P.cran||[1,1,1],co=P.cranOff||[0,0,0];
@@ -1808,13 +1809,13 @@ function nyHairCapSDF(P){const cr=P.cran||[1,1,1],co=P.cranOff||[0,0,0];
   const skull=U([K(cE([0,.044,-.010],[.0765,.084,.095]),0),K(cE([0,.040,.030],[.064,.070,.066]),.035),K(cE([0,.020,-.045],[.068,.064,.058]),.035)]);
   const sf=skull.f,yW=.045,C0=[0,.044*cr[1]+co[1],-.010*cr[2]+co[2]],SV=[1.068,1.058,1.072];
   const hs=(x,y,z)=>sf((x-C0[0])/SV[0]+C0[0],(y-C0[1])/SV[1]+C0[1],(z-C0[2])/SV[2]+C0[2])*1.07;
-  let F={f:(x,y,z)=>{if(y>yW)return hs(x,y,z);const dy=yW-y;const side=sstep(.03,.075,ab(x));
-      return mx(hs(x*(1-.06*side*sstep(.02,.12,dy)),yW,z+side*.62*sstep(0,.10,dy)*dy)-.0025*sstep(0,.15,dy),z-NY_HF.zF(y)-.003);},bs:[0,0,-.01,.2]};
+  let F={f:(x,y,z)=>{const h0=hs(x,y,z);const dy=mx(yW-y,0);const side=sstep(.03,.075,ab(x));
+      return smin(h0,mx(y-yW,0)+mx(hs(x*(1-.06*side*sstep(.02,.12,dy)),yW,z+side*.62*sstep(0,.10,dy)*dy)-.0025*sstep(0,.15,dy),z-NY_HF.zF(y)-.003),.018);},bs:[0,0,-.01,.2]};
   const cut={f:(x,y,z)=>y-lerp(-.165,-.085,sstep(-.06,.05,z)),bs:[0,-.15,0,.3]};
   F=S(F,[K({f:(x,y,z)=>nyHairline(x,y,z)-.0015,bs:[0,-.02,.09,.16]},.009),K(cut,.010)]);
   const locks=[];for(const s of[-1,1]){const top=.075,bot=-.118;
     locks.push({f:(x,y,z)=>{const t=clamp((top-y)/(top-bot),0,1);const dz=z+.012,r=sq(x*x+dz*dz),th=Math.atan2(s*x,dz);
-      const band=ab(r-(.0862+.005*t))-(.0050-.0014*t),da=mx(.76-.06*t-th,th-1.24)*r;return smax(smax(band,da,.003),mx(y-top,bot-.003*Math.cos(z*80)-y),.004);},bs:[s*.077,-.04,.03,.11]});}
+      const band=ab(r-(.0850+.004*t))-(.0046-.0020*t*t),da=mx(.70-.05*t-th,th-1.10)*r;return smax(smax(band,da,.003),mx(y-top,bot-.003*Math.cos(z*80)-y),.004);},bs:[s*.077,-.04,.03,.11]});}
   F=U([F,K(U(locks),.006)]);
   const nz=makeNoise(73);
   F=D(F,(x,y,z)=>{const top=sstep(.06,.11,y);const a=Math.atan2(x,-z+.02);
@@ -1880,6 +1881,7 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   const hm=body.lap.bs;
   const pB=nyPart(key+"|body",body.F,[-.70,-.006,-.66],[.70,rig.pivot[1]+.03,.68],hB,Gall,AO,cloth(body.lam));
   const meshes=[nyMesh(R,pB,clothM)];meshes[0].name="ny_body";T_.body=performance.now()-t0;
+  {const cF=body.collar;meshes.push(nyMesh(R,nyPart(key+"|collar",cF,[-.12,rig.pivot[1]-.16,-.14],[.12,rig.pivot[1]+.03,.12],q==="low"?.0065:.0042,Gall,[.008,1.0,3,.25],cloth(body.lam)),clothM));meshes[meshes.length-1].name="ny_collar";}
   for(const k of["L","R"]){const s=slv[k];const lamS=(x,y,z)=>clamp(nR-s.edge(x,y,z)/(kara?.016:.020),.5,nR-.5);
     meshes.push(nyMesh(R,nyPart(key+"|sl"+k,s.F,s.bb[0],s.bb[1],hS,Gall,AO,cloth(lamS)),clothM));meshes[meshes.length-1].name="ny_sleeve"+k;}
   T_.sleeves=performance.now()-t0;
@@ -1888,7 +1890,7 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   for(const m of meshes)g.add(m);
   // ---- hair ----
   const hairM=nyHairMat(R);const hc=lin(HP.hairC);
-  const capF=nyHairCapSDF(HP);const hq=q==="low"?.0068:q==="medium"?.0058:.0050;
+  const capF=nyHairCapSDF(HP);const hq=q==="low"?.0062:q==="medium"?.0050:.0042;
   const pCap=nyPart(key+"|hcap|"+HP.seed,capF,[-.115,-.18,-.135],[.115,.15,.125],hq,(x,y,z)=>mn(capF.f(x,y,z),hd.H.F.f(x,y,z)),[.004,1.2,3,.35],(x,y,z,nx,ny,nz,v,o,a)=>{
       const c=mulc(hc,a*(.88+.12*N2(x*300,y*60,z*300)));o.col.set(c,v*3);
       const top=sstep(.05,.11,y),sd=x<0?-1:1;let d=[sd*(.9*top+.25*(1-top)),-(.35*top+1)*(1-.0),-.30];const dn=d[0]*nx+d[1]*ny+d[2]*nz;d=nrm3([d[0]-nx*dn,d[1]-ny*dn,d[2]-nz*dn]);

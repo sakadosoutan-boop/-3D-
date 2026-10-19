@@ -2150,10 +2150,11 @@ varying vec2 vUv;varying float vA;varying float vBig;varying float vRot;varying 
 #include <fog_pars_fragment>
 void main(){
   vec2 p=vUv;float d;
-  if(vBig>0.5){float c=cos(vRot),s=sin(vRot);p=vec2(c*p.x-s*p.y,s*p.x+c*p.y);d=0.0;
-    for(int k=0;k<5;k++){float fk=float(k);float a=fk*1.2566+vSeed*6.2831853;float rr=(0.28+0.18*fract(vSeed*7.3+fk*0.31))*step(0.5,fk);
-      vec2 cc=vec2(cos(a),sin(a))*rr;float r2=0.30+0.12*fract(vSeed*3.1+fk*0.53);vec2 dv=(p-cc)/r2;d=max(d,exp(-dot(dv,dv)*1.6));}
-    d=smoothstep(0.28,0.72,d)*(0.88+0.12*d);}
+  if(vBig>0.5){float c=cos(vRot),s=sin(vRot);p=vec2(c*p.x-s*p.y,s*p.x+c*p.y);float sum=0.0;
+    /* ぼたん雪: 小さな結晶が寄り集まった不揃いな綿の塊。芯は濃く、縁はほつれて淡い */
+    for(int k=0;k<7;k++){float fk=float(k);float a=fk*2.39996+vSeed*6.2831853;float rr=(0.12+0.36*fract(vSeed*7.3+fk*0.618))*step(0.5,fk);
+      vec2 cc=vec2(cos(a),sin(a))*rr;float r2=0.17+0.2*fract(vSeed*3.1+fk*0.53);vec2 dv=(p-cc)/r2;sum+=exp(-dot(dv,dv)*2.2);}
+    d=smoothstep(0.30,1.05,sum)*0.92+0.10*smoothstep(0.05,0.4,sum);}
   else{d=exp(-dot(p,p)*3.2);}
   float a=d*vA;if(a<0.003)discard;
   gl_FragColor=vec4(vCol,a);
@@ -2168,13 +2169,13 @@ function makeSnowfall(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts.
   const sh=shelterOf(opts,(opts.drips||[]).filter(p=>p&&p.length>=3));
   const amb=new T.Color(0.7,0.72,0.76);let ambOverride=opts.color!==undefined?C(opts.color):null;
   let intensity=clamp(opts.intensity!==undefined?opts.intensity:1,0,1),active=opts.active!==false,tAcc=0;
-  const N=opts.count||[2600,5000,8500][q];
+  const N=opts.count||[3200,6400,10500][q];
   const g=quadIGeo(res,-0.5,-0.5,0.5,0.5);const s1=new Float32Array(N*4),s2=new Float32Array(N*4);
   for(let i=0;i<N;i++){for(let k=0;k<4;k++){s1[i*4+k]=rng.f();s2[i*4+k]=rng.f();}}
   g.setAttribute("iSeed",new T.InstancedBufferAttribute(s1,4));g.setAttribute("iSeed2",new T.InstancedBufferAttribute(s2,4));g.instanceCount=N;
   const wind=opts.wind||[0.25,0.1];
   const U=Object.assign(T.UniformsUtils.clone(T.UniformsLib.fog),LU,{uHull:{value:sh.arr},uHullN:{value:sh.n},uRoofY:{value:sh.top},uBoxC:{value:center0.clone()},uBox:{value:box.clone()},
-    uEye:{value:new T.Vector3()},uTime:{value:0},uWind:{value:new T.Vector2(wind[0],wind[1])},uInt:{value:intensity},uPx:{value:0.0015},uSize:{value:opts.size||1},uNear:{value:0.7},
+    uEye:{value:new T.Vector3()},uTime:{value:0},uWind:{value:new T.Vector2(wind[0],wind[1])},uInt:{value:intensity},uPx:{value:0.0015},uSize:{value:opts.size||1.35},uNear:{value:0.7},
     uAmb:{value:amb},uBig:{value:opts.botan!==undefined?opts.botan:0.3}});
   const mat=res.own(new T.ShaderMaterial({uniforms:U,vertexShader:SNOW_VS,fragmentShader:SNOW_FS,transparent:true,depthWrite:false,fog:true}));
   const mesh=new T.Mesh(g,mat);mesh.frustumCulled=false;mesh.renderOrder=5;mesh.name="TSURE_snowflakes";mesh.castShadow=false;mesh.receiveShadow=false;grp.add(mesh);
@@ -2182,7 +2183,7 @@ function makeSnowfall(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts.
   function update(dt,t,camera){dt=clamp(dt||0,0,0.1);if(!active)return;tAcc+=dt;U.uTime.value=tAcc%900;
     if(camera){camera.updateMatrixWorld();_cw.setFromMatrixPosition(camera.matrixWorld);grp.updateMatrixWorld();if(follow){U.uBoxC.value.copy(_cw);mesh.worldToLocal(U.uBoxC.value);}
       if(!explicitLights)lw.points(mesh,_cw,LU);}
-    if(ambOverride)amb.copy(ambOverride);else{lw.ambient(amb,0.62,0.9,0.42);amb.multiplyScalar(0.92);}}
+    if(ambOverride)amb.copy(ambOverride);else{lw.ambient(amb,0.62,0.9,0.42);amb.multiplyScalar(1.08);}}
   grp.userData={update,setIntensity(v){intensity=clamp(v,0,1);U.uInt.value=intensity;},getIntensity:()=>intensity,
     setActive(on){active=!!on;grp.visible=!!on;},setWind(x,z){U.uWind.value.set(x||0,z||0);},
     setLights(list){explicitLights=Array.isArray(list);if(explicitLights)setLightList(LU,list);},setColor(c){ambOverride=(c===null||c===undefined)?null:C(c);},
@@ -2238,18 +2239,18 @@ function featherStrip(a,b,w,n,y0,thick,colTop,colBot,wing,tipRound){const pos=[]
 /* マガン一羽(+Z が頭、翼開長 ≈1.5m、全長 ≈0.72m) */
 function gooseGeometry(q){const sg=[6,9,12][q],nc=[2,3,4][q],geos=[];
   const BODY=hexC(0x6c6255),FLANK=hexC(0x786c5d),BELLY=hexC(0x8c8174),BAR=hexC(0x2c2723),WHITE=hexC(0xeeeae2),NECK=hexC(0x5d5348),HEAD=hexC(0x4c4239),BILL=hexC(0xe49c86),FOOT=hexC(0xe0883a);
-  geos.push(vcPart(latheZ([[0.004,-0.27],[0.03,-0.245],[0.056,-0.2],[0.075,-0.14],[0.086,-0.07],[0.089,-0.01],[0.084,0.04],[0.07,0.08],[0.05,0.11],[0.03,0.125],[0.004,0.132]],sg+2,0.88),
+  geos.push(vcPart(latheZ([[0.004,-0.27],[0.032,-0.245],[0.06,-0.2],[0.081,-0.14],[0.093,-0.07],[0.096,-0.01],[0.09,0.04],[0.076,0.08],[0.056,0.11],[0.034,0.126],[0.004,0.134]],sg+2,0.9),
     (x,y,z)=>{if(z<-0.15&&y<0.01)return WHITE;if(z<-0.19&&y>0.025)return WHITE;
       if(y<-0.03&&z>-0.08&&z<0.06){const bar=Math.sin(z*95+Math.sin(x*60)*1.2)>0.55;return bar?BAR:BELLY;}
       if(y<-0.02)return BELLY;return y>0.04?BODY:FLANK;},false));
-  {const g=latheZ([[0.042,0.0],[0.036,0.06],[0.029,0.13],[0.024,0.19],[0.022,0.23]],sg,1.0);g.rotateX(-0.14);g.translate(0,0.022,0.085);geos.push(vcPart(g,()=>NECK,false));}
+  {const g=latheZ([[0.048,0.0],[0.04,0.06],[0.033,0.13],[0.028,0.19],[0.026,0.23]],sg,1.0);g.rotateX(-0.14);g.translate(0,0.022,0.085);geos.push(vcPart(g,()=>NECK,false));}
   {const g=new T.SphereGeometry(1,sg+2,sg);g.scale(0.028,0.03,0.045);g.translate(0,0.046,0.33);geos.push(vcPart(g,(x,y,z)=>(z>0.355&&y<0.058)?WHITE:HEAD,false));}
   {const g=new T.CylinderGeometry(0.0035,0.0125,0.052,sg,1);g.rotateX(Math.PI/2);g.translate(0,0.04,0.395);geos.push(vcPart(g,()=>BILL,false));}
   {const fan=[];for(let i=0;i<=8;i++){const a=(i/8-0.5)*0.95;fan.push(a);}
     fan.slice(0,-1).forEach((a,i)=>{const b=fan[i+1],r=0.11,z0=-0.21;
       geos.push(featherStrip([Math.sin((a+b)/2)*0.012,z0],[Math.sin((a+b)/2)*r,z0-Math.cos((a+b)/2)*r],0.03,2,0.012,0.003,t=>t>0.8?WHITE:HEAD,()=>WHITE,false,true));});}
   [-1,1].forEach(s=>{const g=new T.BoxGeometry(0.016,0.012,0.055);g.translate(s*0.024,-0.045,-0.24);geos.push(vcPart(g,()=>FOOT,false));});
-  const prof=[[0.04,0.075,-0.115],[0.12,0.09,-0.15],[0.2,0.095,-0.165],[0.28,0.095,-0.165],[0.36,0.09,-0.15],[0.44,0.07,-0.125],[0.52,0.05,-0.098],[0.6,0.028,-0.072],[0.67,0.008,-0.052],[0.72,-0.012,-0.04],[0.755,-0.026,-0.036]];
+  const prof=[[0.04,0.085,-0.15],[0.12,0.105,-0.2],[0.2,0.11,-0.215],[0.28,0.108,-0.21],[0.36,0.1,-0.19],[0.44,0.078,-0.158],[0.52,0.054,-0.124],[0.6,0.03,-0.092],[0.67,0.008,-0.066],[0.72,-0.012,-0.05],[0.755,-0.028,-0.042]];
   const P=prof.length>sg?prof:prof;
   const top=(s,v)=>s<0.36?(v>0.66?hexC(0x463d35):(v>0.3&&v<0.52?hexC(0x8a8276):hexC(0x766a5c))):(v<0.32?hexC(0x6c645a):hexC(0x3b332d));
   const bot=(s,v)=>v>0.7?hexC(0x4a423a):hexC(0x5a5148);
@@ -2297,7 +2298,7 @@ function makeGeese(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts.see
       flap[i*3]=lerp(0.1+0.5*s,0.06,b.gl);flap[i*3+1]=lerp(-0.16*c-0.03,0.0,b.gl);flap[i*3+2]=lerp(-0.1*c,0.02,b.gl);
       const F=b.f+0.25*Math.sin(t*0.21+b.w1),R=b.r+0.32*Math.sin(t*0.17+b.w2)+0.1*Math.sin(t*0.53+b.w3),Uu=b.u+0.22*Math.sin(t*0.27+b.w3)-0.035*s*(1-b.gl);
       pv.set(center.x+dir.x*(A+F)+right.x*R,center.y+Uu,center.z+dir.y*(A+F)+right.y*R);
-      const turn=0.32*0.17*Math.cos(t*0.17+b.w2)/Math.max(speed,1);e.set(-0.03,yaw0+turn,-turn*8);qq.setFromEuler(e);
+      const turn=0.32*0.17*Math.cos(t*0.17+b.w2)/Math.max(speed,6);e.set(-0.03,yaw0+turn,clamp(-turn*8,-0.35,0.35));qq.setFromEuler(e);
       const endF=range>0?smooth(range*0.5,range*0.44,Math.abs(A)):1;sv.setScalar(scale*endF+1e-4);m4.compose(pv,qq,sv);im.setMatrixAt(i,m4);});
     im.instanceMatrix.needsUpdate=true;fa.needsUpdate=true;}
   resetBirds();step(0);
@@ -2312,7 +2313,7 @@ function makeCrowFlock(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts
     return {n:Math.max(1,Math.round(G.count||3)),c:V3(G.center,new T.Vector3(0,30,-60)),d,r:new T.Vector2(-d.y,d.x),sp:G.speed!==undefined?G.speed:10,delay:G.delay||0,yaw:Math.atan2(d.x,d.y)};});
   const total=groups.reduce((a,G)=>a+G.n,0),scale=opts.scale||1,range=opts.range||0,spread=opts.spread||3.2;
   const geo=res.own(crowGeometryHD(q));const flap=new Float32Array(total*3);const fa=new T.InstancedBufferAttribute(flap,3);fa.setUsage(T.DynamicDrawUsage);geo.setAttribute("iFlap",fa);
-  const BM=birdMaterial(res,{fogScale:opts.fogScale!==undefined?opts.fogScale:0.45,vertexColors:false,color:opts.color!==undefined?opts.color:0x0c0c10,roughness:0.42,joint:[0.035,0.2,0.33],wingY:0.02,sweep:0.3},"tsure_crowhd");
+  const BM=birdMaterial(res,{fogScale:opts.fogScale!==undefined?opts.fogScale:0.45,vertexColors:false,color:opts.color!==undefined?opts.color:0x0c0c10,roughness:0.55,joint:[0.035,0.2,0.33],wingY:0.02,sweep:0.3},"tsure_crowhd");
   const im=new T.InstancedMesh(geo,BM.mat,total);im.instanceMatrix.setUsage(T.DynamicDrawUsage);im.frustumCulled=false;im.castShadow=false;im.receiveShadow=false;im.name="TSURE_crow_flock";
   const grp=new T.Group();grp.name="TSURE_crow_flock";grp.add(im);
   const birds=[];groups.forEach((G,gi)=>{for(let k=0;k<G.n;k++)birds.push({g:gi,f:(rng.f()-0.5)*spread*1.6-k*0.4,r:(rng.f()-0.5)*spread*1.4,u:(rng.f()-0.5)*spread*0.5,
@@ -2327,7 +2328,7 @@ function makeCrowFlock(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts
       flap[i*3]=lerp(0.06+0.6*s,0.08,b.gl);flap[i*3+1]=lerp(-0.34*c+0.04,-0.02,b.gl);flap[i*3+2]=lerp(-0.3*Math.cos(b.ph-0.35)+0.06,0.05,b.gl);
       const F=b.f+0.4*Math.sin(t*0.31+b.w1),R=b.r+0.9*Math.sin(t*b.wv+b.w2),Uu=b.u+0.35*Math.sin(t*0.43+b.w3)-0.045*s*(1-b.gl);
       pv.set(G.c.x+G.d.x*(A+F)+G.r.x*R,G.c.y+Uu,G.c.z+G.d.y*(A+F)+G.r.y*R);
-      const turn=0.9*b.wv*Math.cos(t*b.wv+b.w2)/Math.max(G.sp,1);e.set(-0.06+0.04*s*(1-b.gl),G.yaw+turn*0.8,-turn*6);qq.setFromEuler(e);
+      const turn=0.9*b.wv*Math.cos(t*b.wv+b.w2)/Math.max(G.sp,6);e.set(-0.06+0.04*s*(1-b.gl),G.yaw+turn*0.8,clamp(-turn*6,-0.45,0.45));qq.setFromEuler(e);
       const endF=range>0?smooth(range*0.5,range*0.44,Math.abs(A)):1;sv.setScalar(scale*endF+1e-4);m4.compose(pv,qq,sv);im.setMatrixAt(i,m4);});
     im.instanceMatrix.needsUpdate=true;fa.needsUpdate=true;}
   resetBirds();step(0);
