@@ -387,24 +387,27 @@ function headSDF(P){
   const NC=[0,-.010,.092],N=p=>[NC[0]+(p[0]-NC[0])*ns,NC[1]+(p[1]-NC[1])*ns,NC[2]+(p[2]-NC[2])*ns];
   const cran=U([K(cE([0,.044,-.010],[.0765,.084,.095]),0),K(cE([0,.040,.030],[.064,.070,.066]),.035),K(cE([0,.020,-.045],[.068,.064,.058]),.035)]);
   const fp=[K(sEll([0,.004,.050],[.066*(P.faceW||1),.044,.048]),0),K(sEll(J([0,-.047,.040]),[.047*jw,.046*jw,.051]),.03),
-    K(sEll(J([0,-.044,.071]),[.030*jw,.022*jw,.031]),.02),K(sEll(J([0,-.080,.081]),[.018*jw,.016*jw,.016*jw]),.018),
+    K(sEll(J([0,-.044,.071-(1-(P.muzK||1))*.012]),[.030*jw*(P.muzK||1),.022*jw,.031*(P.muzK||1)]),.02),K(sEll(J([0,-.080,.081]),[.018*jw,.016*jw,.016*jw]),.018),
     K(sEll(J([0,-.047,.0915]),[.022*jw,.0105,.0085]),.010)];
   for(const s of[-1,1]){
     fp.push(K(sCap(J([s*.0485,-.060,.0]),J([s*.019,-.089,.071]),.0100*jw),.025));
-    fp.push(K(sCap(J([s*.0485,-.060,.0]),[s*.058,-.015,-.008],.010),.02));
+    fp.push(K(sCap(J([s*.0485,-.060,.0]),[s*.058*(P.ramK||1),-.015,-.008],.010),.02));
     {const ck=P.cheekK!=null?P.cheekK:1;fp.push(K(sEll([s*.047,.007,.064],[.023*ck,.013*ck,.019*ck],rotM(0,s*.45,0)),.02));}
     {const zk=P.zygK||1;fp.push(K(sCap([s*.058*zk,.006,.050],[s*.070*zk,.004,.008],.008),.02));}
     fp.push(K(sCap([s*.050,.040,.074],[0,.042,.093],.0085*bw),.02));
     fp.push(K(sEll([s*.034,.001,.078],[.017,.012,.011]),.016));
-    fp.push(K(sEll([s*.029,-.027,.081],[.012,.015,.010]),.013));
+    {const nk_=P.nlK!=null?P.nlK:1;if(nk_>0)fp.push(K(sEll([s*.029,-.027,.081-(1-nk_)*.006],[.012*nk_,.015,.010*nk_]),.013));}
+    if(P.cheekHi)fp.push(K(sEll([s*.040,-.003,.066],[.021*P.cheekHi,.019*P.cheekHi,.018*P.cheekHi]),.025));
     // child: round "apple" cheeks high under the eyes, and the buccal fat filling the side of the face
     // (no hollow under the cheekbone, no bulge beside the mouth)
     if(P.kid){const cf=P.cheekFat||1;fp.push(K(sEll([s*.038,-.008,.064],[.024*cf,.023*cf,.021*cf]),.03),K(sEll([s*.050,-.022,.036],[.016,.022,.028]),.035));}
     else if(P.cheekFat)fp.push(K(sEll([s*.036,-.022,.070],[.026*P.cheekFat,.026*P.cheekFat,.020*P.cheekFat]),.02));
   }
-  if(P.egg){const e=P.egg;fp.push(K(sEll([0,-.030,.030],[.055*e,.050,.044]),.030));}
+  if(P.egg){const e=P.egg;fp.push(K(sEll([0,-.004,.028],[.054*e,.046,.040]),.030));}
+  if(P.foreK)fp.push(K(sEll([0,.052,.040],[.052,.040,.052*P.foreK]),.03));
   let F=U([cran,K(U(fp),.025)]);
   F=S(F,[K(sEll([-.0185,.0255,.0885],[.0062,.0075,.0065]),.007),K(sEll([.0185,.0255,.0885],[.0062,.0075,.0065]),.007)]);
+  if(P.jowlCut){const j=P.jowlCut;F=S(F,[K(sEll([.073,-.050,.050],[.020*j,.040,.045]),.02),K(sEll([-.073,-.050,.050],[.020*j,.040,.045]),.02)]);}
   const nose=U([K(sCone(N([0,.029,.0905]),N([0,-.007,.1035]),.0058*ns,.0070*ns),0),K(sEll(N([0,-.013,.0915]),[.0120*ns,.0130*ns,.0110*ns]),.008),
     K(sSphere(N([0,-.0165,.1030]),.0093*ns),.004),
     K(sEll(N([-.0140,-.0210,.0930]),[.0062*ns,.0058*ns,.0074*ns]),.0045),K(sEll(N([.0140,-.0210,.0930]),[.0062*ns,.0058*ns,.0074*ns]),.0045),
@@ -432,7 +435,7 @@ function headSDF(P){
   const W=kidWarpFn(P);
   if(W){const F0=F.f;F={f:(x,y,z)=>F0(x,W(y),z)*.9,bs:F.bs};}
   let X=null;
-  if(P.taper){const tp=P.taper,Wy=W||(y=>y),sx=yc=>1-tp*sstep(.010,-.100,yc);const F1=F.f;F={f:(x,y,z)=>{const s_=sx(Wy(y));return F1(x/s_,y,z)*s_;},bs:F.bs};X=(x,yc)=>x/sx(yc);}
+  if(P.taper){const tp=P.taper,Wy=W||(y=>y),sx=yc=>1-tp*Math.pow(clamp((.028-yc)/.13,0,1),1.25);const F1=F.f;F={f:(x,y,z)=>{const s_=sx(Wy(y));return F1(x/s_,y,z)*s_;},bs:F.bs};X=(x,yc)=>x/sx(yc);}
   return{F,eyes,er,C,W,X};
 }
 function eyeAperture(ec,s,C){const ex=ec[0],ez=ec[2],W=C.W;
@@ -1558,9 +1561,9 @@ const NYOBO_HEAD={seed:61,age:25,smile:.55,fem:1,lipU:.0042,lipL:.0056,lipUvol:.
   scalp:"fem",hairC:0x15100d,beard:"none",whiskers:0,wrinkles:0,spots:0,
   skin:0xe8bf9f,skinRed:0xdc9a82,skinLight:0xf2d5be,lip:0xb94a55,lipColL:0xc4565f,blush:.50,blushC:0xe2907f,noseRed:.35,
   iris:[62,40,28],irisR:.17,pupilR:.058,sclera:[228,222,214],catchlight:true,
-  eyeW:.0156,eyeOpenU:.0052,eyeOpenL:.0031,eyeTilt:.09,hood:.75,lash:1.15,
+  eyeW:.0156,eyeOpenU:.0056,eyeOpenL:.0031,eyeTilt:.09,hood:.75,lash:1.15,
   browY:-.0012,browDrop:.0065,brow:0x2b211c,browHairs:220,browW:1.35,browAmt:.7,softBrow:.7,
-  cran:[.95,.99,.975],taper:.14,faceW:.88,egg:.95,zygK:.90,jaw:.80,nose:.78,browK:.50,cheekFat:.10,cheekK:.66,eyeR:.0121,earL:.92,noEars:true,neckR:.92,
+  cran:[.95,.99,.975],taper:.21,faceW:.87,egg:.88,zygK:.90,jaw:.78,nose:.86,browK:.62,cheekFat:0,cheekK:.66,cheekHi:.8,muzK:.70,nlK:.35,foreK:1.03,ramK:.80,eyeR:.0121,earL:.92,noEars:true,neckR:1.02,
   nlfAmt:.3,underEyeAmt:.45,creaseAmt:.65,poreAmt:.55,lipLines:.35,lidAmt:.9,lidC:0xa8786a,rough:.42,gazePitch:0};
 // hair frame (head-local): the face is open in front of zF(y) and below the hairline yF(x) (centre parting, high forehead)
 function nyHairFrame(){return{zF:y=>.033+.011*sstep(-.07,.03,y)-.006*sstep(.05,.09,y),yF:x=>{const t=Math.min(1,ab(x)/.068);return .096-.066*Math.pow(t,1.4);}};}
@@ -1740,8 +1743,8 @@ function nyRig(pose,attire){const R={pose,attire,seated:pose!=="carry"};
 function nyBodySeated(R,attire){const kara=attire==="karaginu",nR=kara?8:4;
   const tl=U([K(sEll([0,.05,-.03],[.215,.11,.175]),0),K(sEll([0,.17,-.025],[.170,.11,.134]),.07),K(sEll([0,.30,-.022],[.160,.12,.126]),.07),
     K(sEll([0,.395,-.035],[.158,.085,.116]),.06),K(sCap([.05,.462,-.040],[.158,.412,-.040],.040),.05),K(sCap([-.05,.462,-.040],[-.158,.412,-.040],.040),.05),
-    K(sEll([0,.468,-.042],[.090,.046,.070]),.04)]);
-  const ring=[[.040,.512,.052],[.054,.528,.016],[.056,.538,-.020],[.042,.546,-.050],[0,.551,-.064],[-.042,.546,-.050],[-.056,.538,-.020],[-.054,.528,.016],[-.040,.512,.052]];
+    K(sEll([0,.478,-.040],[.090,.052,.072]),.04)]);
+  const ring=[[0,.470,.074],[.024,.494,.066],[.044,.516,.046],[.055,.532,.012],[.054,.542,-.024],[.040,.549,-.052],[0,.553,-.064],[-.040,.549,-.052],[-.054,.542,-.024],[-.055,.532,.012],[-.044,.516,.046],[-.024,.494,.066],[0,.470,.074]];
   const ringN=ring.map(p=>{const r_=mx(1e-3,sq(p[0]*p[0]+(p[2]+.006)**2));return nrm3([p[0]/r_,.28,(p[2]+.006)/r_]);});
   let torso=tl;const collarL=sRibbon(ring,ringN,.027,.0045,.0035);
   torso=S(torso,[K(sCone([0,.47,-.012],[0,.72,.026],.0435,.048),.007)]);
@@ -1750,7 +1753,7 @@ function nyBodySeated(R,attire){const kara=attire==="karaginu",nR=kara?8:4;
   sup.push({a:[-.14,.15,-.09],b:[.14,.15,-.09],r:.125,sl:1.0});
   const lap=nyLapHF(sup,{floor:0,th:kara?.020:.016,k:.06,hem:kara?{c:[0,.02],rx:.60,rzF:.56,rzB:.54,waves:9,wamp:.028,seed:7}:{c:[0,.03],rx:.50,rzF:.48,rzB:.46,waves:8,wamp:.03,seed:5},folds:nyLapFolds(R)});
   const F=U([torsoW,K(lap,.05)]);
-  const yc=.335,yn=.528,th0=.46,cosV=.30,dC=.0062,dF=kara?.0105:.014,dH=kara?.016:.022;
+  const yc=.395,yn=.530,th0=.42,cosV=.30,dC=.0062,dF=kara?.0105:.014,dH=kara?.016:.022;
   const lam=(x,y,z)=>{const pl=R.tl(x,y,z);let L=-1;
     if(pl[1]>yc-.01&&pl[1]<.60){const th=Math.atan2(pl[0],pl[2]+.02),at=ab(th);const ye=at<th0?yc+(yn-yc)*(at/th0):yn;if(pl[1]>ye)L=mx(L,mn(nR-.5,(pl[1]-ye)*(at<th0?cosV:1)/dC));}
     if(pl[1]<.24&&pl[2]>.10){const xe=.008+(pl[2]-.12)*.30+mx(0,.20-pl[1])*.05;const e=(xe-ab(pl[0]))*.89;if(e>0)L=mx(L,e/dF);}

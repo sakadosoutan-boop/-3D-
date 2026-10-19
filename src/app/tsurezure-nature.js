@@ -31,9 +31,11 @@
  空の状態に足した値(無い・0 の時は効果なし。全プリセットに既定値が入っている):
    streaks(たなびく雲の量 0..1), streakAz(帯の中心の方位°), streakSpan(方位の広がり°), streakEl(帯の中心の仰角°), streakElRange(帯の仰角の幅°),
    streakThick(帯の厚み°), streakLit(下面の色・線形RGB), streakShade(本体・上面の色), streakSeed, streakSpeed(°/秒), streakCount(本数 1..6)
-   arch(薄明の弧の強さ), archColor, archHeight(°), archWidth(方位の絞り) / purple(紫の光), purpleColor / moonHalo(月の暈) / overcast(全天の雲 0..1)
+   arch(薄明の弧: 地平近くの空をこの色で覆う割合), archColor, archHeight(°), archWidth(方位の絞り) / purple(紫の光), purpleColor /
+   moonHalo(月の暈) / overcast(全天の雲 0..1) / sunDisc(日の円盤の明るさの倍率、既定 1。夕日を白く飛ばさない)
    blendPresets は量が 0 の側から帯の形(方位・高さ・種・色)を補間しない(帯が動きながら現れない)。
-   プリセットの hills に glow(日の側の霞の色)・moon(0/1)・moonDir を足した(既存の makeHills は無視する)。
+   プリセットの hills に glow(日の側の霞の色)・moon(0/1)・moonDir・haze(雨雪で山が霞む 0..1) を足した(既存の makeHills は無視する)。
+   夜明けの帯の位置: 方位 80°±23°、仰角 5〜10.5°(東山の稜線 4〜5° のすぐ上)。望遠は方位 74°・仰角 4°前後・fov 11〜15 で帯と稜線が収まる。
  makeKyotoRidges({center:[x,z]=[0,0], sides:["east","west","north"], quality, season?}) -> Group  京の山並み(makeHills の帯)。
    東山 方位20〜148°(比叡山 44° 仰角 ≈8.4°、東山の丸い峰 4〜5°、距離 462〜650m) / 西山 212〜336°(愛宕山 296° ≈8.8°、日の沈む 245〜265° は 2〜2.5°、距離 565〜735m) /
    北山 316〜44°(3〜5°、610〜700m)。仰角は center から見た値(カメラ far 800m の内側)。
@@ -45,9 +47,12 @@
    座標はすべてこの Group の親(ゾーン)の局所座標。雨脚はカメラの周りの箱で降り続け(follow)、箱の面で折り返す。
    灯: lights を渡さなければ、場の点光源(PointLight/SpotLight, 最大4, 近い順)を毎秒見直して使う(燈台の interiorLight がそのまま効く)。灯のそばの雨脚・雫・輪紋がきらめく。
    屋根の下: drips の点列の凸包の内側・軒の高さより下には雨を降らせない(opts.shelter:{hull:[[x,z]...],top} で上書き、false で無効)。
-   water.bounds は既定で内接する楕円の池として扱う(縁の外に輪が出ない)。軒の雫が池に落ちると大きな輪が立つ。
+   water.bounds は既定で内接する楕円の池として扱う(縁の外に輪が出ない)。軒の雫が池に落ちると大きな輪が立つ。輪は灯の映り(きらめき)と
+   地平の空の色(fogColor × ringSky=0.55)を映すので、灯の無い暗い池でも見える。雫の床は drips の 4 番目の値 / dripFloor(数 or (x,z)=>y) / 既定 0。
+   その他の引数: count(雨脚の数), fallSpeed=8.5, streakLength=0.55, dropWidth=0.0032, alpha=0.55, rippleCount, ringSky, ambient(地の明るさを固定), seed。
    userData.update(dt,t,camera) / setIntensity(0..1) / setActive(bool) / setLights(list|null) / setWind(x,z) / setAmbient(color|null) / addRipple(x,z,s) / dispose()
- makeSnowfall({area:{width,depth,height}=40×18×40, follow=true, intensity=1, wind:[x,z]=[0.25,0.1], botan=0.3(ぼたん雪の割合), size=1, drips?|shelter?, quality}) -> Group
+ makeSnowfall({area:{width,depth,height}=40×18×40, follow=true, intensity=1, wind:[x,z]=[0.25,0.1], botan=0.3(ぼたん雪の割合), size=1.35, count?, drips?|shelter?, quality}) -> Group
+   (drips に軒の雫の点列を渡すと屋根の下には降らない。白い空・雪の地面の前では雪片は見えにくく、松・建物・室内の暗がりの前で見える = 実際と同じ)
    ぼたん雪と粉雪の混じり(draw call 1)。地の明るさは場の光(半球光・環境光・平行光)から自動。userData.update(dt,t,camera) / setIntensity / setActive / setWind(x,z) /
    setLights / setColor(color|null) / dispose()
  makeGeese({count=11, formation:"hook"(鉤)|"line"(竿)|"v", center:[x,y,z], dir:[x,z], speed=13, spacing=2.6, range=0(>0 で折り返し), scale=1, quality}) -> Group
@@ -216,7 +221,7 @@ varying vec3 vWorldPos;
 void main(){vec4 wp=modelMatrix*vec4(position,1.0);vWorldPos=wp.xyz;vec4 cp=projectionMatrix*viewMatrix*wp;cp.z=cp.w*0.99999;gl_Position=cp;}`;
 const SKY_FS=`
 uniform vec3 uZenith;uniform vec3 uHorizon;uniform vec3 uGround;uniform vec3 uHazeCol;uniform float uHaze;
-uniform vec3 uSunDir;uniform vec3 uSunCol;uniform float uSunInt;uniform float uSunSize;uniform float uGlow;uniform float uShafts;
+uniform vec3 uSunDir;uniform vec3 uSunCol;uniform float uSunInt;uniform float uSunSize;uniform float uGlow;uniform float uShafts;uniform float uSunDisc;
 uniform vec3 uMoonDir;uniform vec3 uMoonCol;uniform float uMoonPhase;uniform float uMoonVis;uniform float uMoonSize;
 uniform float uStars;uniform float uMilky;
 uniform float uCover;uniform float uCScale;uniform float uCSpeed;uniform float uCirrus;uniform float uScales;uniform float uCOpacity;
@@ -351,7 +356,7 @@ void main(){
   float sdist=length(d-sd);float saa=pa*1.4;
   float sdisc=1.0-smoothstep(uSunSize-saa,uSunSize+saa,sdist);
   float mu=sqrt(max(1.0-sdist*sdist/(uSunSize*uSunSize),0.0));
-  vec3 sunC=uSunCol*uSunInt*26.0*sdisc*(0.55+0.45*pow(mu,0.45))*smoothstep(-0.0015,0.0025,h);
+  vec3 sunC=uSunCol*uSunInt*26.0*uSunDisc*sdisc*(0.55+0.45*pow(mu,0.45))*smoothstep(-0.0015,0.0025,h);
   col+=st*(1.0-mDisc);
   col+=mCol*mDisc;
   col+=sunC;
@@ -498,7 +503,7 @@ const SKY_DEFAULT={zenith:[0.06,0.15,0.42],horizon:[0.36,0.61,0.96],haze:0.4,haz
   moonDir:[-0.4,0.5,-0.6],moonColor:[1.5,1.45,1.35],moonPhase:0.5,moonVisible:0,moonSize:0.022,
   stars:0,milkyWay:0,cloudCover:0.25,cloudColor:[1.1,1.1,1.12],cloudShade:[0.55,0.6,0.7],cloudScale:1.0,cloudSpeed:1.0,cloudOpacity:1.0,
   cirrus:0,scales:0,wind:[1.0,0.3],belt:1.0,beltColor:[0.35,0.18,0.25],
-  streaks:0,arch:0,purple:0,moonHalo:0,overcast:0};
+  streaks:0,arch:0,purple:0,moonHalo:0,overcast:0,sunDisc:1};
 
 function makeSky(opts){opts=opts||{};const q=qlv(opts),res=Res(),radius=opts.radius||700;
   const U={uZenith:{value:new T.Color()},uHorizon:{value:new T.Color()},uGround:{value:new T.Color()},uHazeCol:{value:new T.Color()},uHaze:{value:0.4},
@@ -510,7 +515,7 @@ function makeSky(opts){opts=opts||{};const q=qlv(opts),res=Res(),radius=opts.rad
     uStreaks:{value:0},uStreakAz:{value:Math.PI/2},uStreakSpan:{value:60},uStreakEl:{value:6},uStreakElRange:{value:6},uStreakThick:{value:0.5},
     uStreakLit:{value:new T.Color(0.9,0.5,0.6)},uStreakShade:{value:new T.Color(0.2,0.2,0.3)},uStreakSeed:{value:1},uStreakSpeed:{value:0.02},uStreakCount:{value:4},
     uArch:{value:0},uArchCol:{value:new T.Color(1,1,1)},uArchH:{value:0.07},uArchW:{value:2},uPurple:{value:0},uPurpleCol:{value:new T.Color(0.5,0.3,0.5)},
-    uMoonHalo:{value:0},uOvercast:{value:0}};
+    uMoonHalo:{value:0},uOvercast:{value:0},uSunDisc:{value:1}};
   const mat=res.own(new T.ShaderMaterial({uniforms:U,vertexShader:SKY_VS,fragmentShader:"#define SKYQ "+q+"\n"+SKY_FS,side:T.BackSide,depthWrite:false,depthTest:true,fog:false}));
   mat.extensions={derivatives:true};
   const geo=res.own(new T.SphereGeometry(radius,48,24));
@@ -534,7 +539,7 @@ function makeSky(opts){opts=opts||{};const q=qlv(opts),res=Res(),radius=opts.rad
     num("streakSpan","uStreakSpan");num("streakEl","uStreakEl");num("streakElRange","uStreakElRange");num("streakThick","uStreakThick");
     col("streakLit","uStreakLit");col("streakShade","uStreakShade");num("streakSeed","uStreakSeed");num("streakSpeed","uStreakSpeed");num("streakCount","uStreakCount");
     num("arch","uArch");col("archColor","uArchCol");if(typeof s.archHeight==="number"){U.uArchH.value=Math.max(0.05,s.archHeight)*Math.PI/180;state.archHeight=s.archHeight;}num("archWidth","uArchW");
-    num("purple","uPurple");col("purpleColor","uPurpleCol");num("moonHalo","uMoonHalo");num("overcast","uOvercast");}
+    num("purple","uPurple");col("purpleColor","uPurpleCol");num("moonHalo","uMoonHalo");num("overcast","uOvercast");num("sunDisc","uSunDisc");}
   setState(SKY_DEFAULT);if(opts.state)setState(opts.state);
   function center(cam){if(!cam)return;_v.setFromMatrixPosition(cam.matrixWorld);if(mesh.parent&&mesh.parent.type!=="Scene"){mesh.parent.updateMatrixWorld();mesh.parent.worldToLocal(_v);}
     mesh.position.copy(_v);mesh.updateMatrixWorld(true);}
@@ -643,10 +648,10 @@ const PRESET_SRC={
     stars:0.0,milkyWay:0.0,cloudCover:0.0,cirrus:0.0,scales:0.0,cloudColor:"#262d3a",cloudShade:"#10141c",wind:[0.6,0.3],beltColor:"#000000",belt:0.0,overcast:1.0,
     rim:{color:0x5a6a90,intensity:0.16},sunLight:{color:0x6a7898,intensity:0.04},hemi:{sky:0x262e3e,ground:0x0a0c10,intensity:0.18},ambient:{color:0x485268,intensity:0.06},
     fogDensity:0.014,hills:{near:"#11151e",far:"#202834",light:"#3a4252",haze:0.45},mist:{color:"#262e3a",glow:"#3a4252"}},
-  akiYuhi:{E:0.98,zenith:"#3f5f9e",horizon:"#9c90a8",hazeColor:"#a898a4",haze:0.5,ground:"#3e3630",
-    sun:[255,3],sunColor:"#ff8a30",sunIntensity:2.8,glow:0.9,shafts:0.22,
+  akiYuhi:{sunDisc:0.16,E:0.98,zenith:"#3f5f9e",horizon:"#9c90a8",hazeColor:"#a898a4",haze:0.5,ground:"#3e3630",
+    sun:[255,3],sunColor:"#ff7a28",sunIntensity:1.5,glow:0.35,shafts:0.1,
     stars:0.0,cloudCover:0.06,cirrus:0.25,scales:0.15,cloudColor:"#ffb070",cloudShade:"#6a5a7a",wind:[0.8,0.25],beltColor:"#5a4060",belt:0.6,
-    arch:1.05,archColor:"#ffaa50",archHeight:5.5,archWidth:2.6,
+    arch:1.1,archColor:"#ffb454",archHeight:7.0,archWidth:2.2,
     rim:{color:0xffb07a,intensity:0.34},sunLight:{color:0xffa45c,intensity:1.1},hemi:{sky:0xa8a8cc,ground:0x5a4a38,intensity:0.42},ambient:{color:0x9a98c0,intensity:0.14},
     fogDensity:0.004,hills:{near:"#3a3448",far:"#a08898",light:"#ffb070",glow:"#e8a888"},mist:{color:"#c8a8a8",glow:"#ffb27a"},smoke:{light:0xffa35c,ambient:0x6f6a8e}},
   akiHiiri:{E:1.0,zenith:"#14245a",horizon:"#46528a",hazeColor:"#5a5c86",haze:0.5,ground:"#14141c",
@@ -694,7 +699,7 @@ function buildPreset(name,s){const E=s.E;const L=h=>linearOf(h,E);
   p.streakThick=s.streakThick||0.5;p.streakLit=s.streakLit?LC(s.streakLit):[0.9,0.5,0.6];p.streakShade=s.streakShade?LC(s.streakShade):[0.2,0.2,0.3];
   p.streakSeed=s.streakSeed||1;p.streakSpeed=s.streakSpeed!==undefined?s.streakSpeed:0.02;p.streakCount=s.streakCount||4;
   p.arch=s.arch||0;p.archColor=s.archColor?LC(s.archColor):[1,1,1];p.archHeight=s.archHeight||4;p.archWidth=s.archWidth||2;
-  p.purple=s.purple||0;p.purpleColor=s.purpleColor?LC(s.purpleColor):[0.5,0.3,0.5];p.moonHalo=s.moonHalo||0;p.overcast=s.overcast||0;
+  p.purple=s.purple||0;p.purpleColor=s.purpleColor?LC(s.purpleColor):[0.5,0.3,0.5];p.moonHalo=s.moonHalo||0;p.overcast=s.overcast||0;p.sunDisc=s.sunDisc!==undefined?s.sunDisc:1;
   p.hills.glow=s.hills.glow?parseInt(s.hills.glow.slice(1),16):p.hills.far;
   p.hills.moon=s.moonVisible?1:0;p.hills.moonDir=moonDir.slice();p.hills.haze=s.hills.haze||0;   // haze: 降る雪・雨で山が霞む量   // 京の山並み: 日が沈んでいる時は月の向きで淡く照らす
   return p;}
@@ -1508,7 +1513,8 @@ const KYOTO_HILL_FS=HILL_FS
   .replace("col=mix(col,uFar,uAerial);",`vec3 farC=mix(uFar,uGlowCol,clamp(uGlowAmt*pow(max(dot(radial,sH),0.0),2.0),0.0,1.0));
   col=mix(col,farC,uAerial);`)
   .replace("col=mix(col,uFar,mist);","col=mix(col,farC,mist);")
-  .replace("col+=uLight*pow(back,3.0)*edge*sunUp*uRim;","col+=uLight*pow(back,24.0)*edge*sunUp*uRim;")
+  /* 稜線の樹冠が光るのは、日がちょうど稜線の上にかかる所だけ(方位と仰角の両方が合う所) */
+  .replace("col+=uLight*pow(back,3.0)*edge*sunUp*uRim;","vec3 tcv=normalize(vec3(vW.x,top,vW.z)-cameraPosition);float sAng=acos(clamp(dot(tcv,normalize(uSunDir)),-1.0,1.0));\n  col+=uLight*edge*sunUp*uRim*(1.6*exp(-pow(sAng/0.035,2.0))+0.3*exp(-sAng/0.09));")
   .replace("+relief*0.28*(0.4+0.6*uDetail);","+relief*0.28*(0.4+0.6*uDetail)*uRelief;")
   /* 色は表示色で作るが、出力は線形に戻して出力の符号化を通す: 画面へ直接描く時は従来と同じ見え方、
      夜のブルーム(EffectComposer の線形の描画先)を通る時に二重に明るくならない */
@@ -1556,7 +1562,7 @@ function makeKyotoRidges(opts){opts=opts||{};const q=qlv(opts);const sides=opts.
     ridgeU.forEach((U,i)=>{const r=extras[i]?extras[i].r:null;U.uAutumnAmt.value=S.autumn*(r&&r.side==="north"?0.7:1);U.uAutumn.value.setHex(S.autumnColor);U.uMist.value=S.mist;});}
   const moonD=new T.Vector3(0,1,0),sunD=new T.Vector3(0.3,0.5,0.4).normalize();let moonAmt=0,hazeAmt=0;
   function applyLight(){const useMoon=moonAmt>0.01&&sunD.y<0.0&&moonD.y>0.02; // 夜: 光の向きを月へ、稜線の縁の光は弱く
-    ridgeU.forEach(U=>{if(useMoon)U.uSunDir.value.copy(moonD);U.uRim.value=useMoon?0.12*moonAmt:0.45;U.uAerial.value=U.uAerial.value+(1-U.uAerial.value)*hazeAmt;});}
+    ridgeU.forEach(U=>{if(useMoon)U.uSunDir.value.copy(moonD);U.uRim.value=useMoon?0.12*moonAmt:0.35;U.uAerial.value=U.uAerial.value+(1-U.uAerial.value)*hazeAmt;});}
   function setTint(t){if(!t)return;base(t);if(t.far!==undefined)setC(tint.far,t.far);if(t.light!==undefined)setC(tint.light,t.light);
     if(t.glow!==undefined&&t.glow!==null){tint.glow=tint.glow||new T.Color();setC(tint.glow,t.glow);}
     if(t.sunDir){setV(sunD,t.sunDir);sunD.normalize();}if(t.moonDir){setV(moonD,t.moonDir);moonD.normalize();}if(typeof t.moon==="number")moonAmt=t.moon;hazeAmt=clamp(+t.haze||0,0,1);
@@ -2113,32 +2119,34 @@ function makeRain(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts.seed
 
 /* ---------- 雪(ぼたん雪と粉雪の混じり) ---------- */
 const SNOW_VS=`
-attribute vec4 iSeed;attribute vec4 iSeed2;
-uniform vec3 uBoxC;uniform vec3 uBox;uniform vec3 uEye;uniform float uTime;uniform vec2 uWind;uniform float uInt;uniform float uPx;uniform float uSize;uniform float uNear;uniform vec3 uAmb;uniform float uBig;
+attribute vec4 iSeed;attribute vec4 iSeed2;attribute float iLayer;
+uniform vec3 uBoxC;uniform vec3 uBox;uniform vec3 uBoxN;uniform vec3 uEye;uniform float uTime;uniform vec2 uWind;uniform float uInt;uniform float uPx;uniform float uSize;uniform float uNear;uniform vec3 uAmb;uniform float uBig;
 ${GL_PTLIGHT}${GL_SHELTER}
 varying vec2 vUv;varying float vA;varying float vBig;varying float vRot;varying float vSeed;varying vec3 vCol;
 #include <fog_pars_vertex>
 void main(){
   float big=step(iSeed2.y,uBig);
-  float sz=big>0.5?mix(0.016,0.032,iSeed2.x):mix(0.0035,0.008,iSeed2.x);
+  float sz=big>0.5?mix(0.02,0.038,iSeed2.x):mix(0.0045,0.0095,iSeed2.x);
   float fall=big>0.5?mix(0.8,1.3,iSeed.w):mix(0.45,0.9,iSeed.w);
   float drift=big>0.5?0.8:1.0;
-  vec3 lo=uBoxC-0.5*uBox;lo.y=uBoxC.y-uBox.y*0.4;
+  vec3 B=iLayer<0.5?uBoxN:uBox;   /* 近い箱(濃い)と広い箱 */
+  vec3 lo=uBoxC-0.5*B;lo.y=uBoxC.y-B.y*0.4;
   float f=mix(0.18,0.75,iSeed2.z),ph=iSeed2.w*6.2831853,t=uTime;
-  vec3 p=lo+mod(iSeed.xyz*uBox+vec3(uWind.x*drift,-fall,uWind.y*drift)*t-lo,uBox);
-  vec3 q=(p-lo)/uBox;vec3 eq=min(q,1.0-q);
+  vec3 p=lo+mod(iSeed.xyz*B+vec3(uWind.x*drift,-fall,uWind.y*drift)*t-lo,B);
+  vec3 q=(p-lo)/B;vec3 eq=min(q,1.0-q);
   float edge=smoothstep(0.0,0.1,min(eq.x,eq.z))*smoothstep(0.0,0.05,eq.y);
   p+=vec3(sin(t*f*6.2831853+ph),0.0,cos(t*f*4.7+ph*1.7))*mix(0.05,0.3,iSeed2.x)*(big>0.5?1.0:0.55);
   float on=step(fract(iSeed.w*17.31),uInt)*edge*(1.0-sheltered(p));
   vec3 V=uEye-p;float dist=max(length(V),1e-3);
   float pw=dist*uPx;float s=max(sz*uSize,pw*1.6);
   float cov=(sz*uSize)/s;cov=cov*0.65+cov*cov*0.35;
+  float el=max(fall*0.028,0.0);cov*=sqrt(s/(s+el));   /* 1 コマの間に落ちる分だけ縦に流れる(動きのぶれ) */
   vA=on*smoothstep(uNear*0.5,uNear,dist)*cov*(big>0.5?0.95:0.85);
   vec3 rgt=vec3(viewMatrix[0][0],viewMatrix[1][0],viewMatrix[2][0]),up=vec3(viewMatrix[0][1],viewMatrix[1][1],viewMatrix[2][1]);
   rgt=normalize(vec3(dot(modelMatrix[0].xyz,rgt),dot(modelMatrix[1].xyz,rgt),dot(modelMatrix[2].xyz,rgt)));
   up=normalize(vec3(dot(modelMatrix[0].xyz,up),dot(modelMatrix[1].xyz,up),dot(modelMatrix[2].xyz,up)));
   vRot=iSeed2.w*6.2831853+t*(big>0.5?mix(-1.2,1.2,iSeed2.z):0.0);
-  vec3 wp=p+(rgt*position.x+up*position.y)*s;
+  vec3 wp=p+rgt*position.x*s+up*position.y*(s+el);
   vUv=position.xy*2.0;vBig=big;vSeed=fract(iSeed2.x*3.7+iSeed.w*5.3);
   vCol=uAmb+ptLight(p,V/dist,0.25,1.2,3.0);
   vec4 mvPosition=modelViewMatrix*vec4(wp,1.0);gl_Position=projectionMatrix*mvPosition;
@@ -2171,10 +2179,10 @@ function makeSnowfall(opts){opts=opts||{};const q=qlv(opts),res=Res(),seed=opts.
   let intensity=clamp(opts.intensity!==undefined?opts.intensity:1,0,1),active=opts.active!==false,tAcc=0;
   const N=opts.count||[3200,6400,10500][q];
   const g=quadIGeo(res,-0.5,-0.5,0.5,0.5);const s1=new Float32Array(N*4),s2=new Float32Array(N*4);
-  for(let i=0;i<N;i++){for(let k=0;k<4;k++){s1[i*4+k]=rng.f();s2[i*4+k]=rng.f();}}
-  g.setAttribute("iSeed",new T.InstancedBufferAttribute(s1,4));g.setAttribute("iSeed2",new T.InstancedBufferAttribute(s2,4));g.instanceCount=N;
+  const lay=new Float32Array(N),nearN=Math.round(N*0.45);for(let i=0;i<N;i++){for(let k=0;k<4;k++){s1[i*4+k]=rng.f();s2[i*4+k]=rng.f();}lay[i]=i<nearN?0:1;}
+  g.setAttribute("iSeed",new T.InstancedBufferAttribute(s1,4));g.setAttribute("iSeed2",new T.InstancedBufferAttribute(s2,4));g.setAttribute("iLayer",new T.InstancedBufferAttribute(lay,1));g.instanceCount=N;
   const wind=opts.wind||[0.25,0.1];
-  const U=Object.assign(T.UniformsUtils.clone(T.UniformsLib.fog),LU,{uHull:{value:sh.arr},uHullN:{value:sh.n},uRoofY:{value:sh.top},uBoxC:{value:center0.clone()},uBox:{value:box.clone()},
+  const U=Object.assign(T.UniformsUtils.clone(T.UniformsLib.fog),LU,{uHull:{value:sh.arr},uHullN:{value:sh.n},uRoofY:{value:sh.top},uBoxC:{value:center0.clone()},uBox:{value:box.clone()},uBoxN:{value:new T.Vector3(Math.min(box.x,16),Math.min(box.y,10),Math.min(box.z,16))},
     uEye:{value:new T.Vector3()},uTime:{value:0},uWind:{value:new T.Vector2(wind[0],wind[1])},uInt:{value:intensity},uPx:{value:0.0015},uSize:{value:opts.size||1.35},uNear:{value:0.7},
     uAmb:{value:amb},uBig:{value:opts.botan!==undefined?opts.botan:0.3}});
   const mat=res.own(new T.ShaderMaterial({uniforms:U,vertexShader:SNOW_VS,fragmentShader:SNOW_FS,transparent:true,depthWrite:false,fog:true}));
