@@ -28447,6 +28447,48 @@ return{makeKenko,makeRoujin,makeMago,makeJuusha,makeNyobo,NYOBO_KASANE:Object.ke
      userData.anchors.basin = 閼伽桶の水面。※草庵には既に一基組み込み済み（anchors.basin）。
  TSURE_AN.makeKyoudai({quality})  経机（黒漆・筆返し付き、上に経巻・香炉・花瓶）。原点=机中心の床。
  すべて castShadow/receiveShadow 設定済み。描画コール: 草庵≈30、調度一式≈35。quality=low でテクスチャ・分割・数を削減。
+ ── 枕草子 第一段（中宮の御所）: 殿舎・渡殿・築地 ─────────────────────────────
+ TSURE_AN.makeDensha({bays=4, quality, kizahashi=true, season="spring", misu=.6, shitomi=1, seed}) -> THREE.Group
+   平安中期の寝殿造の殿舎（寝殿・対屋）。素木の円柱（径0.30）、檜皮葺の入母屋、二軒の繁垂木、黒漆の格子（蔀）に白い裏板、御簾。
+   原点 = 簀子の外縁の東端（南東の角）の真下の地面 y=0。建物は -X（西）へ、正面（庭）は +Z（南）。東の妻（+X）も見せる。
+   1間=3.0m。bays=南面の柱間数（既定4、2..9）。東西とも妻（入母屋）で閉じた完結した棟（西端も切れていない）。奥行は4間（廂+母屋2間+廂）。
+   寸法（bays=4）: 簀子の外縁 x=0（東）/ z=0（南）/ x=-14.7（西）/ z=-14.7（北）、簀子上面 y=1.14。
+     廂の柱列（側柱）: 南 z=-1.35, 柱 x=-1.35,-4.35,-7.35,-10.35,-13.35 / 東 x=-1.35 / 北 z=-13.35 / 西 x=-13.35。
+     廂（板敷）床上面 y=1.20（z=-1.35..-4.35）。母屋の前の柱列 z=-4.35、母屋は奥行1間だけ見せ z=-7.35 に壁代（奥は暗い）。母屋に置畳2枚（繧繝縁）。
+     内法長押の下端 y=3.50（御簾・蔀の上端）、側柱の頭 y=4.20（舟肘木）、桁上端 y=4.60。
+     軒先（軒付の前面）: 南 z=+0.82 / 東 x=+0.82 / 北 z=-15.52 / 西 x=-15.52、軒付の下端 y≈4.50・上端 y≈4.90（隅で約0.17反り上がる）。
+     棟 y≈10.0（z=-7.35）。妻の破風面 x≈-2.65 / -12.05（懸魚あり）。階（6段）は南面の bay=floor((bays-1)/2)（bays=4 で x=-5.85 中心、z=0..1.9）。
+     東西の角の間（南端の柱間）に妻戸、他の東・西・北の柱間は閉じた蔀。
+   userData.anchors（Object3D, 殿舎ローカル。rotation.y=0 は +Z 向き）:
+     seatHashi (-2.85, 1.20, -2.575) 清少納言の座（廂の端近・床面・+Z向き）。御簾の線から1.05m内側、前後左右1m以内に柱・御簾・几帳なし。
+     lamp      (-4.00, 1.20, -3.125) 燈台を置く床の点（座の右後ろ）。炎は lamp+(0.069,0.826,0)（makeToudai）。
+     kichou    (-2.70, 1.20, -3.775) 几帳の土居の中心（床面）。rotation.y=0（帷子の面が南を向く、幅1.8mまで可）。
+     uchiide   (-2.85, 1.20, -1.51)  座の前の柱間の御簾の裾（打出の衣を置く口。+Z=簀子側へこぼす）。
+     kizahashiTop (-5.85, 1.14, -0.35) 階の上り口（簀子の上）。kizahashi:false の時は無い。
+     eaveCorner (0.82, ≈4.67, 0.82) 南東の軒先の角（軒付の下端）。
+     sunokoPath Object3D（始点）。userData.points = Vector3[]（南の簀子の中心線を西→東、角を曲がって東の簀子を南→北。y=1.14, 0.5m間隔）。
+   userData.eaveDrips  Vector3[]（殿舎ローカル）南の軒先（西→東）と東の軒先（南→北）に沿って0.3mおき、軒付の下端の少し内側。
+   userData.setShitomi(v) 南面の蔀: 0=閉（上下二枚）…1=上を外へ水平近くまで吊り上げ下を外して全開（釣金具が見える）。
+                          途中値で上の格子を下ろしかけて止める（v<0.6 で下の格子が入る）。既定1。getShitomi()。
+   userData.setMisu(v)    南面の御簾: 0=下ろす（床まで）…1=巻き上げる。巻きは下端に筒状に溜まり、鉤丸緒（紅）と房（紫）が付く。帽額は固定。
+                          下ろした部分は細いひご越しに奥が透ける（影も縞で半ば透す）。既定0.6。getMisu()。
+   userData.setNight(v 0..1) 御簾の内側に暖かい灯が透ける（御簾の発光と裏の加算グロー。燈台の点光源は場面側で置くこと）。
+   userData.setSeason("spring"|"summer"|"autumn"|"winter") 冬=屋根（厚み・軒先で丸く垂れる）・棟・箕甲・高欄の架木・擬宝珠・簀子の外縁・階に雪、
+                          秋=簀子と階に落葉、春=花びら、夏=なし。既定 spring。
+   userData.update(dt,t)  御簾のかすかな揺れ・夜の灯のゆらぎ。userData.dispose()。userData.dims（主要寸法）。
+   描画コール≈26（high）/≈22（low）、三角形≈6.7万（high）。
+ TSURE_AN.makeWatadono({length=12, quality, season, seed}) -> THREE.Group
+   屋根付きの渡り廊下（透渡殿）。原点 = 一端（x=0）の床の中心線の真下の地面 y=0、+X 方向へ length まで延びる。幅方向は Z（中心 z=0）。
+   柱（素木円柱 径0.26）z=±1.35、柱間≈3m。床（板敷）上面 y=1.00（userData.floorY）、床の縁 z=±1.72、両側に高欄（端は擬宝珠の親柱）。
+   床下は柱と大引だけで中央が空く（遣水が通れる）。屋根は檜皮葺の切妻（棟は X 方向）、軒先 z=±2.81、軒付下端 y≈3.14、棟 y≈4.5、
+   妻（破風）は x=-0.55 と length+0.55。内側は化粧屋根裏（垂木と棟木）。
+   userData.anchors.walkPath = Vector3[]（床の中心線 x=0..length, 0.5m間隔, y=1.00）。userData.floorY=1.0, length, width。
+   setSeason（冬=屋根・棟・高欄・擬宝珠に雪、床の両端に吹き込んだ雪）、setNight(v)（現状は何もしない）、update, dispose, dims。描画コール≈8。
+   ※殿舎（makeDensha）の東の簀子の外縁は x=0。殿舎に接続するなら渡殿の原点を殿舎ローカル (0, 0, z) に置くとよい（床は殿舎の簀子より0.14低い）。
+ TSURE_AN.makeTsuiji({points:[[x,z],...], height=2.45, thickness=1.1, quality, season, seed}) -> THREE.Group
+   築地塀。points の折れ線（最初と最後が同じ点なら閉じた輪）の中心線上に建つ。地面 y=0。断面は台形（下幅1.1・上幅0.75）、
+   土壁の上端 y=2.0、その上に本瓦葺の笠（軒の出≈0.44, 棟 y≈2.5）。壁は版築の層・雨だれ・裾の汚れ・ひび（淡い黄土〜灰白）。
+   setSeason（冬=笠と棟に雪）、update, dispose, dims。描画コール3（雪を含む）。
 ============================================================================= */
 const TSURE_AN=(()=>{
 "use strict";
@@ -29455,11 +29497,573 @@ function makeKyoudai(opts){opts=opts||{};const q=QL(opts),res=new Res();const g=
   for(const k in B){const gg=B[k].build();if(!gg)continue;const me=new T.Mesh(res.geo(gg),mats[k]);me.castShadow=true;me.receiveShadow=true;g.add(me);}
   g.userData={update(){},dispose(){res.dispose();}};return g;}
 
+/* ============================================================================ 枕草子 第一段: 殿舎の一角・渡殿・築地 */
+/* ---------- textures */
+/* 檜皮葺の葺き面: u=軒と平行 1m, v=流れ方向 1m。約1.4cm ごとの葺足、上の段の端の下に陰、繊維は流れ方向 */
+function genHiwada(W){const sk=fbm(208,40,2,3),big=fbm(201,3,3,4),mid=fbm(202,10,6,3),fib=fbm(203,96,8,2),edg=fbm(204,64,16,2),pc=fbm(205,24,70,1),gr=fbm(206,128,128,1),mo=fbm(207,5,5,4);
+  const NC=72;
+  const o=imgLoop(W,W,(u,v,out)=>{const t=v*NC+1.1*(edg(u,v)-.5);const c=Math.floor(t),f=t-c;
+    const piece=pc((u+c*.137)%1,v),F=fib(u,v),G=gr(u,v);
+    let k=.8+.22*f+.13*(piece-.5)+.07*(F-.5)+.05*(G-.5);if(f<.16)k*=.5+.5*f/.16;
+    let R=104*k,Gc=80*k,Bc=66*k;const grey=.6*ss(.4,.75,big(u,v));R+=(98*k-R)*grey;Gc+=(92*k-Gc)*grey;Bc+=(86*k-Bc)*grey;
+    const red=.4*ss(.55,.85,mid(u,v));R*=1+.12*red;Gc*=1-.02*red;
+    const m=.45*ss(.72,.86,mo(u,v));if(m>0){R+=(72-R)*m;Gc+=(78-Gc)*m;Bc+=(54-Bc)*m;}
+    const sv=sk(u,v);const strk=1-.16*ss(.5,.8,sv)+.08*ss(.45,.15,sv);R*=strk;Gc*=strk;Bc*=strk;
+    out[0]=R;out[1]=Gc;out[2]=Bc;out[3]=255*clamp(.25+.55*f+.15*(F-.5)-(f<.16?.22:0),0,1);out[4]=255*(.9+.08*(F-.5));out[5]=0;});
+  return{map:mkTex(o.c,{aniso:8}),data:mkTex(o.d,{srgb:false,aniso:8})};}
+/* 軒付・棟の小口: 細かな層（u=1m 横, v=0.32m 縦） */
+function genNoki(W){const H=W>>1;const wv=fbm(211,6,3,3),ln=fbm(212,2,96,2),fb=fbm(213,128,4,2),bl=fbm(214,4,2,3),gr=fbm(215,96,48,1);
+  const o=imgLoop(W,H,(u,v,out)=>{const t=v*58+3*(wv(u,v)-.5);const f=t-Math.floor(t);const L=ln(u,v);
+    let k=.7+.32*Math.sin(f*PI)*(.6+.4*L)+.1*(fb(u,v)-.5)+.05*(gr(u,v)-.5);if(f<.13)k*=.6;
+    const b=bl(u,v);let R=96*k,G=60*k,B=44*k;R+=(92*k-R)*.45*b;G+=(78*k-G)*.45*b;B+=(70*k-B)*.45*b;
+    out[0]=R;out[1]=G;out[2]=B;out[3]=255*clamp(.3+.6*Math.sin(f*PI)-(f<.13?.3:0),0,1);out[4]=235;out[5]=0;});
+  return{map:mkTex(o.c,{aniso:8}),data:mkTex(o.d,{srgb:false,aniso:8})};}
+/* 白い小壁（漆喰） */
+function genShikkui(W){const a=fbm(221,4,4,4),b=fbm(222,32,32,2),s=fbm(223,6,2,3);
+  const o=imgLoop(W,W,(u,v,out)=>{const A=a(u,v),Bn=b(u,v),S=s(u,v);const k=.95+.05*(A-.5)+.025*(Bn-.5);const st=.09*ss(.55,.8,S)*v;
+    out[0]=238*k*(1-st);out[1]=234*k*(1-st*1.1);out[2]=224*k*(1-st*1.35);out[3]=255*(.5+.3*Bn);out[4]=245;out[5]=0;});
+  return{map:mkTex(o.c),data:mkTex(o.d,{srgb:false})};}
+/* 御簾: 竹ひご（横）と編み糸（縦）。256px = 幅0.5m × 高0.25m。αで透ける */
+function genMisu(){const W=256,H=256,c=cv(W,H),x=c.getContext("2d"),r=RNG(231);const id=x.createImageData(W,H),Dd=id.data;const n=fbm(231,6,64,2);
+  const sl=[];for(let i=0;i<H/4;i++)sl.push(r.r(.82,1.13));
+  for(let y=0;y<H;y++){const si=y>>2,f=y&3,S=sl[si];for(let xx=0;xx<W;xx++){const i=(y*W+xx)*4;let R,G,B,A;
+    if(xx%26===0){R=226;G=214;B=188;A=255;}
+    else if(f===3){R=36;G=26;B=14;A=30;}
+    else{const k=S*(f===1?1.07:f===0?.9:.99)*(.9+.2*n(xx/W,y/H));R=182*k;G=124*k;B=62*k;A=245;}
+    Dd[i]=R;Dd[i+1]=G;Dd[i+2]=B;Dd[i+3]=A;}}
+  x.putImageData(id,0,0);return mkTex(c);}
+/* 帽額: 淡い萌黄地に窠紋（512px = 1.28m × 0.19m） */
+function genMokou(){const W=512,H=64,c=cv(W,H),x=c.getContext("2d"),r=RNG(251);
+  x.fillStyle="#e4ecdf";x.fillRect(0,0,W,H);for(let i=0;i<1600;i++){x.fillStyle=`rgba(255,255,255,${r.r(.05,.2)})`;x.fillRect(r()*W,r()*H,r.r(1,3),1);}
+  for(let i=0;i<900;i++){x.fillStyle=`rgba(120,140,110,${r.r(.03,.1)})`;x.fillRect(r()*W,r()*H,1,r.r(1,2));}
+  x.fillStyle="#86a08c";x.fillRect(0,3,W,2);x.fillRect(0,H-5,W,2);
+  for(let k=0;k<8;k++){const cx=32+k*64,cy=H/2;x.strokeStyle="#33468e";x.lineWidth=2.4;x.beginPath();
+    for(let i=0;i<=128;i++){const a=i/128*TAU;const rr=16+4.5*Math.abs(Math.cos(a*2));const px=cx+Math.cos(a)*rr*1.15,py=cy+Math.sin(a)*rr*.8;if(i===0)x.moveTo(px,py);else x.lineTo(px,py);}x.stroke();
+    x.fillStyle="#3c52a0";for(let j=0;j<4;j++){const a=j*PI/2+PI/4;x.beginPath();x.ellipse(cx+Math.cos(a)*7.5,cy+Math.sin(a)*6,5,3.2,a,0,TAU);x.fill();}
+    x.fillStyle="#f6f1e2";x.beginPath();x.arc(cx,cy,3.4,0,TAU);x.fill();
+    x.fillStyle="#5568ae";x.beginPath();x.ellipse(cx+32,cy,2.6,5.5,0,0,TAU);x.fill();}
+  return mkTex(c);}
+/* 繧繝縁 */
+function genUngen(){const W=128,H=32,c=cv(W,H),x=c.getContext("2d");const band=["#26336b","#3e5aa0","#86a3d6","#f1ece0","#e8b850","#c96a2c","#7e1e1c"];
+  const seq=band.concat(band.slice(0,-1).reverse());const sh=H/seq.length;seq.forEach((cc,i)=>{x.fillStyle=cc;x.fillRect(0,i*sh,W,sh+.6);});
+  x.fillStyle="rgba(255,250,235,.95)";for(let i=0;i<8;i++){const cx=8+i*16;x.beginPath();x.arc(cx,H/2,1.7,0,TAU);x.fill();}return mkTex(c);}
+/* 築地の土壁: u=4m, v=2.4m（キャンバス上端=壁の上端）。版築の層・雨だれ・裾の汚れ・ひび */
+function genTsuiji(W){const r=RNG(241);const a=fbm(241,4,3,4),b=fbm(242,40,24,2),st=fbm(243,110,3,2),pl=fbm(244,3,2,4),lay=fbm(245,8,1,2);
+  const o=imgLoop(W,W,(u,v,out)=>{const A=a(u,v),Bn=b(u,v),S=st(u,v),P=pl(u,v);const L=v*20+1.2*(lay(u,v)-.5);const lf=L-Math.floor(L);const line=lf<.06?.9:1;
+    let k=(.93+.1*(A-.5)+.05*(Bn-.5))*line;let R=206,G=188,B=150;const wash=ss(.45,.7,P);R+=(234-R)*wash*.8;G+=(228-G)*wash*.8;B+=(212-B)*wash*.8;
+    k*=1-ss(.6,.8,S)*(1-ss(.02,.55,v))*.26;const base=ss(.8,.98,v);R+=(128-R)*base*.55;G+=(116-G)*base*.55;B+=(96-B)*base*.55;
+    out[0]=R*k;out[1]=G*k;out[2]=B*k;out[3]=255*clamp(.45+.3*Bn-(lf<.06?.2:0),0,1);out[4]=250;out[5]=0;});
+  const x=o.cx,d=o.dx;for(let i=0;i<14;i++){let sx=r()*W,sy=r()*W*.8;x.strokeStyle="rgba(70,56,40,.5)";d.strokeStyle="rgb(10,255,0)";x.lineWidth=d.lineWidth=W/600;x.beginPath();d.beginPath();x.moveTo(sx,sy);d.moveTo(sx,sy);
+    for(let k=0;k<10;k++){sx+=r.r(-5,5)*W/512;sy+=r.r(3,10)*W/512;x.lineTo(sx,sy);d.lineTo(sx,sy);}x.stroke();d.stroke();}
+  return{map:mkTex(o.c),data:mkTex(o.d,{srgb:false})};}
+/* 本瓦葺: u=1.2m（丸瓦4列）, v=0.6m */
+function genKawara(W){const H=W>>1;const n=fbm(261,8,4,3),g=fbm(262,64,32,1);
+  const o=imgLoop(W,H,(u,v,out)=>{const cu=(u*4)%1;const rd=Math.abs(cu-.5)<.17;const rr=rd?Math.cos((cu-.5)/.17*PI/2):0;const row=(v*4)%1;const lap=row>.9?.68:1;
+    const k=(rd?.8+.3*rr:.6+.1*Math.sin(cu*TAU))*lap*(.9+.2*(n(u,v)-.5))*(.95+.1*g(u,v));
+    out[0]=86*k;out[1]=88*k;out[2]=92*k;out[3]=255*(rd?.5+.5*rr:.3*(1-Math.abs(cu-.5)*2))*lap;out[4]=190;out[5]=0;});
+  return{map:mkTex(o.c),data:mkTex(o.d,{srgb:false})};}
+
+/* ---------- helpers */
+const WHITE3=[1,1,1];
+/* 向きの任意な直方体: M(s,y,t)->[x,y,z] はアフィン（せん断可）。c=中心, h=半寸法（枠の単位） */
+function obox(gb,M,c,h,col,o){o=o||{};const us=o.us!=null?o.us:US,vs=o.vs!=null?o.vs:VS,uo=o.uo||0,vo=o.vo||0;
+  const g=h[0]>=h[1]&&h[0]>=h[2]?0:h[1]>=h[2]?1:2;const ctr=M(c[0],c[1],c[2]);
+  for(let ax=0;ax<3;ax++)for(const sg of[-1,1]){if(o.skip&&o.skip.indexOf(ax*2+(sg>0?1:0))>=0)continue;
+    const a1=(ax+1)%3,a2=(ax+2)%3;const ua=a1===g?a1:a2===g?a2:a1,va=ua===a1?a2:a1;
+    const pt=(su,sv)=>{const d=[0,0,0];d[ax]=sg;d[ua]=su;d[va]=sv;return M(c[0]+d[0]*h[0],c[1]+d[1]*h[1],c[2]+d[2]*h[2]);};
+    const dc=[0,0,0];dc[ax]=sg;const fc=M(c[0]+dc[0]*h[0],c[1]+dc[1]*h[1],c[2]+dc[2]*h[2]);const U=2*h[ua]*us,V=2*h[va]*vs;
+    gb.face([pt(-1,-1),pt(1,-1),pt(1,1),pt(-1,1)],[[uo,vo],[uo+U,vo],[uo+U,vo+V],[uo,vo+V]],col,sub(fc,ctr));}}
+/* 軒先の周回: rect=[[x,z]..] 4隅（南東→南西→北西→北東）。各辺の点列（角は留め）を返す */
+function eaveRing(rect,step){const out=[],n=rect.length;const nrm=k=>{const A=rect[k],B=rect[(k+1)%n];const L=Math.hypot(B[0]-A[0],B[1]-A[1]);return[(B[1]-A[1])/L,-(B[0]-A[0])/L];};
+  for(let k=0;k<n;k++){const A=rect[k],Bq=rect[(k+1)%n];const L=Math.hypot(Bq[0]-A[0],Bq[1]-A[1]);const no=nrm(k),np=nrm((k+n-1)%n),nn=nrm((k+1)%n);const N=Math.max(2,Math.ceil(L/step));const pts=[];
+    for(let i=0;i<=N;i++){const t=i/N;const m=i===0?[no[0]+np[0],no[1]+np[1]]:i===N?[no[0]+nn[0],no[1]+nn[1]]:no;pts.push({x:A[0]+(Bq[0]-A[0])*t,z:A[1]+(Bq[1]-A[1])*t,m,s:L*t});}
+    out.push({pts,no});}
+  return out;}
+/* 屋根の高さ場パッチ（格子ごとに頂点を持ち、所属する流れの UV を与える。尾根は凸になる対角で割る） */
+function roofPatch(gb,x0,x1,nx,z0,z1,nz,fy,own,colf,keep){const dx=(x1-x0)/nx,dz=(z1-z0)/nz,e=.03,gx=nx+1,gz=nz+1;const PY=new Float32Array(gx*gz),NR=new Array(gx*gz);
+  for(let j=0;j<gz;j++)for(let i=0;i<gx;i++){const x=x0+i*dx,z=z0+j*dz,k=j*gx+i;PY[k]=fy(x,z);const hx=(fy(x+e,z)-fy(x-e,z))/(2*e),hz=(fy(x,z+e)-fy(x,z-e))/(2*e);NR[k]=nrmz([-hx,1,-hz]);}
+  for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const xa=x0+i*dx,za=z0+j*dz;if(keep&&!keep(xa+dx/2,za+dz/2))continue;const uvf=own(xa+dx/2,za+dz/2);const ids=[];
+    for(const[ii,jj]of[[i,j],[i+1,j],[i+1,j+1],[i,j+1]]){const x=x0+ii*dx,z=z0+jj*dz,k=jj*gx+ii;const uv=uvf(x,z);ids.push(gb.vtx([x,PY[k],z],NR[k],uv[0],uv[1],colf(x,z)));}
+    const[a,b,c,d]=ids;const ha=PY[j*gx+i],hb=PY[j*gx+i+1],hc=PY[(j+1)*gx+i+1],hd=PY[(j+1)*gx+i];
+    if(ha+hc>=hb+hd)gb.I.push(a,d,c,a,c,b);else gb.I.push(a,d,b,b,d,c);}}
+const GIBO=[[.072,0],[.075,.014],[.062,.028],[.064,.048],[.05,.064],[.046,.074],[.07,.1],[.085,.13],[.081,.16],[.064,.186],[.04,.207],[.022,.226],[.011,.25],[0,.272]];
+/* 格子（蔀）一枚: 黒漆の框と組子＋白い裏板。t0=裏板の面（外へ +t） */
+function shitomiPanel(lac,wht,M,s0,s1,yTop,yBot,t0,cell){const fw=.065,ft=.05,bw=.022,bt=.032;const c=[.034,.031,.029];
+  const sm=(s0+s1)/2,ym=(yTop+yBot)/2,hs=(s1-s0)/2,hy=Math.abs(yTop-yBot)/2;
+  obox(lac,M,[sm,ym+hy-fw/2,t0+ft/2],[hs,fw/2,ft/2],c);obox(lac,M,[sm,ym-hy+fw/2,t0+ft/2],[hs,fw/2,ft/2],c);
+  obox(lac,M,[s0+fw/2,ym,t0+ft/2],[fw/2,hy-fw,ft/2],c);obox(lac,M,[s1-fw/2,ym,t0+ft/2],[fw/2,hy-fw,ft/2],c);
+  obox(wht,M,[sm,ym,t0+ft/2],[hs-fw+.01,hy-fw+.01,.005],[.95,.94,.9],{us:.5,vs:.5});
+  const iw=2*hs-2*fw,ih=2*hy-2*fw;const nx=Math.max(2,Math.round(iw/cell)),ny=Math.max(2,Math.round(ih/cell));
+  for(const sd of[1,-1]){const tc=t0+ft/2+sd*(.005+bt*.35);
+    for(let i=1;i<nx;i++){const s=s0+fw+iw*i/nx;obox(lac,M,[s,ym,tc],[bw/2,ih/2,bt*.35],c);}
+    for(let j=1;j<ny;j++){const y=ym-hy+fw+ih*j/ny;obox(lac,M,[sm,y,tc-sd*.0015],[iw/2,bw/2,bt*.35],c);}}}
+/* 高欄の一続き（地覆・平桁・架木・斗束、端に親柱＋擬宝珠）。p0,p1=[x,z], y0=床面, o.slope=1mあたりの下がり */
+function railRun(K,p0,p1,y0,o){const{B,rng,q}=K,w=B.wood,mt=B.metal;o=o||{};const dx=p1[0]-p0[0],dz=p1[1]-p0[1],L=Math.hypot(dx,dz);const d=[dx/L,dz/L];const sl=o.slope||0;
+  const M=(s,y,t)=>[p0[0]+s*d[0]-t*d[1],y-sl*s,p0[1]+s*d[1]+t*d[0]];const c=()=>tint(rng,[.72,.6,.48],.04);
+  const e0=o.post0?0:(o.ext0||0),e1=o.post1?0:(o.ext1||0);const sc=(L+e1-e0)/2,hl=(L+e0+e1)/2;
+  if(!sl)obox(w,M,[L/2,y0+.04,0],[L/2,.04,.05],c(),{uo:rng(),vo:rng()});
+  obox(w,M,[sc,y0+.42,0],[hl,.032,.038],c(),{uo:rng(),vo:rng()});
+  const ka0=M(-e0,y0+.76,0),ka1=M(L+e1,y0+.76,0);w.cyl(ka0,ka1,.037,.037,q.lo?6:10,{col:c(),cap0:true,cap1:true,rings:[0,.25,.5,.75,1],uo:rng(),vo:rng()});
+  (K.railTops||(K.railTops=[])).push([ka0,ka1]);
+  const nb=Math.max(1,Math.round(L/.9));for(let i=0;i<nb;i++){const s=L*(i+.5)/nb;
+    obox(w,M,[s,y0+.575,0],[.026,.123,.026],c());obox(w,M,[s,y0+.705,0],[.05,.022,.042],c());obox(w,M,[s,y0+.24,0],[.024,.155,.024],c());}
+  const post=s=>{const b=M(s,y0,0),tp=M(s,y0+.86,0);w.cyl(b,tp,.068,.064,q.lo?8:12,{col:c(),cap1:true,uo:rng(),vo:rng()});
+    mt.lathe(GIBO,q.lo?10:16,tp[0],tp[1],tp[2],{col:[.86,.7,.42]});(K.gibos||(K.gibos=[])).push(tp);};
+  if(o.post0)post(0);if(o.post1)post(L);}
+
+/* ============================================================================ 殿舎 */
+function denDims(opts){const n=Math.max(2,Math.min(9,Math.round(opts.bays||4))),B=3.0;
+  const D={n,B,FL:1.20,FLS:1.14,ZP:-1.35,XP:-1.35,PR:.15,KT:4.60,PT:4.20,NB:3.50,NT:3.68,SL:.30,SL2:.18,DKE:2.17,YE0:4.50,YE1:4.90,RA:.28,RB:.046,UPL:.17,RS:.27,DG:3.5};
+  D.XWp=D.XP-n*B;D.ZNp=D.ZP-4*B;D.ZM=D.ZP-B;D.XM=D.XP-B;D.XMw=D.XWp+B;D.ZPART=D.ZP-2*B;D.MKT=D.KT+D.SL*B;
+  D.XS0=D.XWp-1.35;D.ZS0=D.ZNp-1.35;D.XE=D.XP+D.DKE;D.XW=D.XWp-D.DKE;D.ZS=D.ZP+D.DKE;D.ZN=D.ZNp-D.DKE;D.ZC=(D.ZS+D.ZN)/2;D.XC=(D.XP+D.XWp)/2;
+  return D;}
+function denSides(D){return[{k:"S",M:(s,y,t)=>[s,y,D.ZP+t],sA:D.XWp,sB:D.XP,inside:()=>true},{k:"N",M:(s,y,t)=>[s,y,D.ZNp-t],sA:D.XWp,sB:D.XP,inside:()=>false},
+  {k:"E",M:(s,y,t)=>[D.XP+t,y,s],sA:D.ZNp,sB:D.ZP,inside:s=>s>D.ZPART},{k:"W",M:(s,y,t)=>[D.XWp-t,y,s],sA:D.ZNp,sB:D.ZP,inside:s=>s>D.ZPART}];}
+function denAOf(D){return(p,n)=>{const x=p[0],y=p[1],z=p[2];
+  if(y<D.FLS-.05){const de=Math.min(-x,x-D.XS0,-z,z-D.ZS0);if(de>-.05)return .3+.45*(1-ss(0,1.6,de))+.2*ss(.5,0,y);return 1;}
+  if(y<D.MKT+.3){const dep=Math.min(D.ZP-z,D.XP-x,x-D.XWp,z-D.ZNp);if(dep>.17){let a=.3+.7*Math.exp(-(dep-.17)/1.7);if(n[1]>.5)a*=.9;return a;}}
+  if(y>D.KT-.95&&y<D.YE1+.25&&n[1]<.3){const de=Math.min(D.ZS-z,D.XE-x,x-D.XW,z-D.ZN);if(de>-.03)return .42+.48*(1-ss(0,2.3,de));}
+  return 1;};}
+function denCFf(D){return(p,n)=>{const x=p[0],y=p[1],z=p[2];
+  if(y>D.FL-.07&&y<D.MKT+.3){const dep=Math.min(D.ZP-z,D.XP-x,x-D.XWp,z-D.ZNp);if(dep>.17){const k=.55+.45*Math.exp(-(dep-.17)/2.4);return[k,k*.98,k*.96];}}
+  if(y<D.FLS-.1){const de=Math.min(-x,x-D.XS0,-z,z-D.ZS0);if(de>0){const k=.62+.38*(1-ss(0,1.5,de));return[k,k,k];}}
+  return WHITE3;};}
+
+/* ---------- 屋根（檜皮葺・入母屋）: 高さ場 + 軒付 + 妻（破風・懸魚・箕甲）+ 棟 */
+function denRoof(K){const{B,D,q,rng}=K,R=B.roof,NK=B.noki,w=B.wood,mt=B.metal;
+  const s0=q.hi?.25:q.md?.34:.5,Wd=D.ZS-D.ZN,nz=2*Math.max(6,Math.round(Wd/(2*s0))),sz=Wd/nz;
+  const nh=Math.max(4,Math.round(D.DG/sz)),DG=nh*sz,XGE=D.XE-DG,XGW=D.XW+DG,nxm=Math.max(2,Math.round((XGE-XGW)/sz));
+  const H=d=>D.YE1+D.RA*d+D.RB*d*d;const dS=z=>D.ZS-z,dN=z=>z-D.ZN,dE=x=>D.XE-x,dW=x=>x-D.XW;
+  const sm=(a,b)=>{const m=Math.min(a,b),k=.75*ss(.3,2.4,m);if(k<1e-4)return m;const h=clamp(.5+.5*(b-a)/k,0,1);return lerp(b,a,h)-k*h*(1-h);};
+  const cu=(a,b)=>(1-ss(0,3.4,a))*(1-ss(0,3.4,b));
+  const upl=(x,z)=>D.UPL*(cu(dS(z),dE(x))+cu(dS(z),dW(x))+cu(dN(z),dE(x))+cu(dN(z),dW(x)));
+  const yM=(x,z)=>H(sm(dS(z),dN(z)))+upl(x,z),yHE=(x,z)=>H(sm(sm(dS(z),dN(z)),dE(x)))+upl(x,z),yHW=(x,z)=>H(sm(sm(dS(z),dN(z)),dW(x)))+upl(x,z);
+  const NZ=lattice(311,64,64),NZ2=lattice(312,64,64);
+  const rcol=(x,z)=>{const k=.6+.2*(NZ(x*.21+32,z*.21+32)-.5)+.08*(NZ2(x*.9+32,z*.9+32)-.5);return[k,k*.99,k*.98];};
+  const ownMain=(xc,zc)=>zc>D.ZC?((x,z)=>[x,dS(z)]):((x,z)=>[-x,dN(z)]);
+  const ownHip=(dX,sg)=>(xc,zc)=>{const a=dS(zc),b=dN(zc),c=dX(xc);if(c<a&&c<b)return(x,z)=>[sg*z,dX(x)];return a<b?((x,z)=>[x,dS(z)]):((x,z)=>[-x,dN(z)]);};
+  roofPatch(R,XGW,XGE,nxm,D.ZN,D.ZS,nz,yM,ownMain,rcol);roofPatch(R,XGE,D.XE,nh,D.ZN,D.ZS,nz,yHE,ownHip(dE,1),rcol);roofPatch(R,D.XW,XGW,nh,D.ZN,D.ZS,nz,yHW,ownHip(dW,-1),rcol);
+  K.roof={H,dS,dN,dE,dW,sm,upl,yM,yHE,yHW,XGE,XGW,DG,nz,sz,nh,nxm,ownMain,ownHip,rcol};
+  /* 軒付（厚い檜皮の層） */
+  const rect=[[D.XE,D.ZS],[D.XW,D.ZS],[D.XW,D.ZN],[D.XE,D.ZN]];
+  for(const sd of eaveRing(rect,.25)){const V=sd.pts.map(p=>{const at=(o,y)=>{const x=p.x-p.m[0]*o,z=p.z-p.m[1]*o;return[x,y+upl(x,z),z];};return{t:at(0,D.YE1),b:at(.06,D.YE0),i:at(.42,D.YE0),s:p.s};});
+    for(let i=0;i<V.length-1;i++){const a=V[i],b=V[i+1];
+      NK.face([a.b,b.b,b.t,a.t],[[a.s,0],[b.s,0],[b.s,1],[a.s,1]],[1,1,1],[sd.no[0],-.15,sd.no[1]]);
+      NK.face([a.i,b.i,b.b,a.b],[[a.s,.1],[b.s,.1],[b.s,1.3],[a.s,1.3]],[1.05,1,.95],[0,-1,0]);}}
+  /* 妻: 箕甲（葺き面の端の巻き込み）・破風・妻板・豕扠首・懸魚 */
+  const hc=tint(rng,[.66,.55,.43],.03);
+  K.gables=[];
+  for(const sg of[1,-1]){const XG=sg>0?XGE:XGW,yH=sg>0?yHE:yHW,X=o=>XG+sg*o;
+    const za=D.ZS-(DG-.4),zb=D.ZN+(DG-.4),N=Math.max(10,Math.ceil((za-zb)/(q.lo?.35:.18)));
+    const PF=[[0,0],[.17,.014],[.31,-.03],[.375,-.12],[.37,-.2],[.33,-.25],[0,-.25]];const rings=[];
+    for(let i=0;i<=N;i++){const z=za-(za-zb)*i/N,y0=yM(XG,z);rings.push({z,y0,pts:PF.map(p=>[X(p[0]),y0+p[1],z])});}
+    K.gables.push({sg,XG,rings});
+    for(let i=0;i<N;i++){const A=rings[i],Bq=rings[i+1];
+      for(let k=0;k<PF.length-1;k++){const gb=k<2?R:NK;const pa=A.pts[k],pb=A.pts[k+1],pc=Bq.pts[k+1],pd=Bq.pts[k];
+        const hint=[(pa[0]+pb[0])/2-X(.15),(pa[1]+pb[1])/2-(A.y0-.12),0];
+        gb.face([pa,pb,pc,pd],[[A.z,k*.1+(k<2?A.z*0:0)],[A.z,(k+1)*.1],[Bq.z,(k+1)*.1],[Bq.z,k*.1]],k<2?rcol(pa[0],pa[2]):[1,1,1],hint);}
+      /* 破風 */
+      const t0=.262,t1=.33,hh=.44,P=(r,o,dy)=>[X(o),r.y0-.25+dy,r.z];
+      w.face([P(A,t1,0),P(Bq,t1,0),P(Bq,t1,-hh),P(A,t1,-hh)],[[A.z*US,0],[Bq.z*US,0],[Bq.z*US,hh*VS],[A.z*US,hh*VS]],hc,[sg,0,0]);
+      w.face([P(A,t0,0),P(Bq,t0,0),P(Bq,t0,-hh),P(A,t0,-hh)],[[A.z*US,0],[Bq.z*US,0],[Bq.z*US,hh*VS],[A.z*US,hh*VS]],mul3(hc,.8),[-sg,0,0]);
+      w.face([P(A,t0,-hh),P(Bq,t0,-hh),P(Bq,t1,-hh),P(A,t1,-hh)],[[A.z*US,0],[Bq.z*US,0],[Bq.z*US,.05],[A.z*US,.05]],mul3(hc,.85),[0,-1,0]);}
+    for(const[r,hz]of[[rings[0],1],[rings[N],-1]])NK.face(r.pts,r.pts.map(p=>[p[0],p[1]]),[1,1,1],[0,0,hz]);
+    /* 妻板（縦板） */
+    const zw0=D.ZS-DG+.05,zw1=D.ZN+DG-.05,bot=zz=>yH(X(.03),zz)-.03,top=zz=>yM(XG,zz)-.25;
+    for(let z=zw1;z<zw0-.01;z+=.24){const zA=z,zB=Math.min(zw0,z+.24);if(top(zA)-bot(zA)<.02&&top(zB)-bot(zB)<.02)continue;const c=tint(rng,[.62,.52,.41],.07);
+      w.face([[X(-.02),bot(zA),zA],[X(-.02),bot(zB),zB],[X(-.02),Math.max(bot(zB),top(zB)),zB],[X(-.02),Math.max(bot(zA),top(zA)),zA]],[[0,zA*.4],[0,zB*.4],[1.2,zB*.4],[1.2,zA*.4]],c,[sg,0,0]);}
+    const yb0=yH(X(.03),D.ZC),yA=yM(XG,D.ZC)-.25,span=zw0-zw1;const MB=(s,y,t)=>[X(t),y,s];
+    obox(w,MB,[D.ZC,yb0+.12,.05],[span/2-.15,.11,.065],hc,{uo:rng(),vo:rng()});
+    for(const side of[-1,1]){const p0=[D.ZC+side*(span/2-.55),yb0+.24],p1=[D.ZC,yA-.04];const ez=p1[0]-p0[0],ey=p1[1]-p0[1],L=Math.hypot(ez,ey);const e=[ez/L,ey/L];
+      const Ms=(s,v,t)=>[X(t),p0[1]+s*e[1]+v*e[0],p0[0]+s*e[0]-v*e[1]];obox(w,Ms,[L/2,0,.05],[L/2,.075,.05],hc);}
+    obox(w,MB,[D.ZC,(yb0+.24+yA)/2,.05],[.08,(yA-yb0-.24)/2,.05],hc);
+    /* 懸魚（猪目懸魚）と六葉 */
+    const sh=new T.Shape();sh.moveTo(-.14,0);sh.lineTo(.14,0);sh.bezierCurveTo(.23,-.05,.37,-.2,.32,-.39);sh.bezierCurveTo(.28,-.56,.12,-.66,0,-.84);
+    sh.bezierCurveTo(-.12,-.66,-.28,-.56,-.32,-.39);sh.bezierCurveTo(-.37,-.2,-.23,-.05,-.14,0);
+    for(const hx of[-.14,.14]){const ho=new T.Path();const cy=-.38;ho.moveTo(hx,cy-.08);ho.bezierCurveTo(hx+.1,cy,hx+.055,cy+.08,hx,cy+.035);ho.bezierCurveTo(hx-.055,cy+.08,hx-.1,cy,hx,cy-.08);sh.holes.push(ho);}
+    const eg=new T.ExtrudeGeometry(sh,{depth:.04,bevelEnabled:true,bevelThickness:.008,bevelSize:.008,bevelSegments:1,curveSegments:q.lo?6:12});
+    const m4=new T.Matrix4().makeBasis(new T.Vector3(0,0,-sg),new T.Vector3(0,1,0),new T.Vector3(sg,0,0));const gy=yA-.44+.01;m4.setPosition(X(.335),gy,D.ZC);
+    w.geom(eg,m4,{col:hc,us:1,vs:1});eg.dispose();
+    mt.cyl([X(.37),gy-.2,D.ZC],[X(.4),gy-.2,D.ZC],.055,.055,6,{cap1:true,col:[.82,.68,.42]});mt.cyl([X(.39),gy-.2,D.ZC],[X(.43),gy-.2,D.ZC],.018,.012,6,{cap1:true,col:[.82,.68,.42]});}
+  /* 棟（箱棟）と鬼板 */
+  const yR=yM(XGE-.8,D.ZC),cx=(XGE+XGW)/2,hx=(XGE-XGW)/2+.36;K.ridgeY=yR;
+  obox(NK,(s,y,t)=>[s,y,t],[cx,yR+.13,D.ZC],[hx,.3,.25],[.9,.86,.84],{us:1,vs:1/.32});
+  obox(w,(s,y,t)=>[s,y,t],[cx,yR+.47,D.ZC],[hx+.05,.045,.31],tint(rng,[.6,.52,.45],.03),{uo:rng(),vo:rng()});
+  for(const sg of[1,-1])obox(w,(s,y,t)=>[s,y,t],[cx+sg*(hx+.02),yR+.26,D.ZC],[.035,.27,.33],hc);}
+
+/* ---------- 柱・礎石・桁・頭貫・舟肘木・長押・小壁 */
+function denFrame(K){const{B,D,q,rng}=K,w=B.wood,S=B.stone,pl=B.plaster;const seg=q.hi?20:q.md?14:10;
+  const pc=()=>tint(rng,[.66,.54,.42],.05),bc=()=>tint(rng,[.64,.52,.41],.05);
+  const xs=[];for(let i=0;i<=D.n;i++)xs.push(D.XP-i*D.B);K.xs=xs;const posts=[];
+  for(const x of xs)posts.push([x,D.ZP,D.PT],[x,D.ZNp,D.PT]);
+  for(let j=1;j<4;j++){const z=D.ZP-j*D.B;posts.push([D.XP,z,D.PT],[D.XWp,z,D.PT]);}
+  for(let i=1;i<D.n;i++)posts.push([xs[i],D.ZM,D.MKT-.22],[xs[i],D.ZPART,D.MKT-.22]);
+  for(const[x,z,top]of posts){w.cyl([x,.12,z],[x,top,z],D.PR*1.03,D.PR,seg,{rings:[0,.03,.5,1],col:pc(),uo:rng(),vo:rng(),cap1:true});
+    S.stone(x,0,z,.34,.14,.32,rng,{flat:.62,col:tint(rng,[.56,.54,.5],.08),det:q.lo?1:2,rough:.45});}
+  const fun=[[-.52,.18],[-.52,.105],[-.43,.07],[-.32,.035],[-.2,.01],[-.12,0],[.12,0],[.2,.01],[.32,.035],[.43,.07],[.52,.105],[.52,.18]];
+  for(const Sd of denSides(D)){const M=Sd.M,mid=(Sd.sA+Sd.sB)/2,hl=(Sd.sB-Sd.sA)/2;
+    obox(w,M,[mid,D.KT-.11,0],[hl+.2,.11,.125],bc(),{uo:rng(),vo:rng()});
+    obox(w,M,[mid,D.PT-.09,0],[hl+.16,.09,.07],bc(),{uo:rng(),vo:rng()});
+    obox(w,M,[mid,(D.NB+D.NT)/2,.18],[hl+.21,(D.NT-D.NB)/2,.03],bc(),{uo:rng(),vo:rng()});
+    if(Sd.k!=="N")obox(w,M,[mid,(D.NB+D.NT)/2,-.18],[hl-.16,(D.NT-D.NB)/2,.03],bc(),{uo:rng(),vo:rng()});
+    obox(w,M,[mid,D.FL-.005,.175],[hl+.2,.075,.025],bc(),{uo:rng(),vo:rng()});
+    obox(w,M,[mid,D.FL-.07,0],[hl,.07,.13],bc(),{uo:rng(),vo:rng()});
+    obox(pl,M,[mid,(D.NT+D.KT-.22)/2,0],[hl,(D.KT-.22-D.NT)/2,.04],[.97,.96,.93],{us:.5,vs:.5});
+    const pos=Sd.k==="S"||Sd.k==="N"?xs:[0,1,2,3,4].map(j=>D.ZP-j*D.B);const line=M(0,0,0);
+    for(const s of pos){const c=bc();if(Sd.k==="S"||Sd.k==="N")w.prism(fun.map(p=>[s+p[0],D.PT+p[1]]),"z",line[2]-.09,line[2]+.09,{col:c,uo:rng(),vo:rng()});
+      else w.prism(fun.map(p=>[s+p[0],D.PT+p[1]]),"x",line[0]-.09,line[0]+.09,{col:c,uo:rng(),vo:rng()});}
+    /* 長押の釘隠（六角） */
+    for(const s of pos){const p=M(s,(D.NB+D.NT)/2,.215),p2=M(s,(D.NB+D.NT)/2,.235);B.metal.cyl(p,p2,.05,.05,6,{cap1:true,col:[.25,.22,.2],ph:PI/6});}}}
+
+/* ---------- 床・簀子・縁葛・縁束・床下 */
+function denFloors(K){const{B,D,q,rng}=K,f=B.floor,w=B.wood,S=B.stone;
+  let z=D.ZPART;while(z<D.ZP-.01){let wd=rng.r(.27,.34);if(z+wd>D.ZP-.1)wd=D.ZP-z;f.box((D.XP+D.XWp)/2,D.FL-.02,z+wd/2,D.XP-D.XWp,.04,wd-.004,"x",{seg:8,uo:rng(),vo:rng(),col:tint(rng,[.74,.6,.47],.05)});z+=wd;}
+  const sb=(along,c0,c1,lo,hi)=>{let p=lo;while(p<hi-.02){let wd=rng.r(.21,.25);if(p+wd>hi-.08)wd=hi-p;const col=tint(rng,[.7,.58,.46],.05);
+    if(along==="x")f.box((c0+c1)/2,D.FLS-.02,p+wd/2,c1-c0,.04,wd-.014,"x",{seg:8,uo:rng(),vo:rng(),col});else f.box(p+wd/2,D.FLS-.02,(c0+c1)/2,wd-.014,.04,c1-c0,"z",{seg:8,uo:rng(),vo:rng(),col});p+=wd;}};
+  sb("x",D.XS0+.15,-.15,D.ZP+.2,-.15);sb("x",D.XS0+.15,-.15,D.ZS0+.15,D.ZNp-.2);sb("z",D.ZNp-.2,D.ZP+.2,D.XP+.2,-.15);sb("z",D.ZNp-.2,D.ZP+.2,D.XS0+.15,D.XWp-.2);
+  const eg=()=>tint(rng,[.62,.52,.42],.04);
+  w.box(D.XS0/2,D.FLS-.1,-.08,-D.XS0,.2,.16,"x",{seg:8,uo:rng(),vo:rng(),col:eg(),ch:.01});w.box(D.XS0/2,D.FLS-.1,D.ZS0+.08,-D.XS0,.2,.16,"x",{seg:8,uo:rng(),vo:rng(),col:eg(),ch:.01});
+  w.box(-.08,D.FLS-.1,D.ZS0/2,.16,.2,-D.ZS0,"z",{seg:8,uo:rng(),vo:rng(),col:eg(),ch:.01});w.box(D.XS0+.08,D.FLS-.1,D.ZS0/2,.16,.2,-D.ZS0,"z",{seg:8,uo:rng(),vo:rng(),col:eg(),ch:.01});
+  const ring=(a,b,fixed,alongX)=>{const n=Math.max(2,Math.round(Math.abs(b-a)/1.5));for(let i=0;i<=n;i++){const v=a+(b-a)*i/n;const x=alongX?v:fixed,zz=alongX?fixed:v;
+      w.box(x,(.1+D.FLS-.2)/2,zz,.13,D.FLS-.3,.13,"y",{uo:rng(),vo:rng(),col:eg(),ch:.01});S.stone(x,0,zz,.17,.08,.16,rng,{flat:.5,col:tint(rng,[.5,.49,.46],.08),det:1});
+      if(alongX)w.box(x,D.FLS-.27,(zz+(zz>-1?D.ZP:D.ZNp))/2,.09,.1,Math.abs(zz-(zz>-1?D.ZP:D.ZNp)),"z",{uo:rng(),vo:rng(),col:eg()});
+      else w.box((x+(x>-1?D.XP:D.XWp))/2,D.FLS-.27,zz,Math.abs(x-(x>-1?D.XP:D.XWp)),.1,.09,"x",{uo:rng(),vo:rng(),col:eg()});}
+    if(alongX)w.box((a+b)/2,.55,fixed,Math.abs(b-a),.1,.035,"x",{seg:4,uo:rng(),vo:rng(),col:eg()});else w.box(fixed,.55,(a+b)/2,.035,.1,Math.abs(b-a),"z",{seg:4,uo:rng(),vo:rng(),col:eg()});};
+  ring(-.08,D.XS0+.08,-.08,true);ring(-.08,D.XS0+.08,D.ZS0+.08,true);ring(-.08-1.5,D.ZS0+.08+1.5,-.08,false);ring(-.08-1.5,D.ZS0+.08+1.5,D.XS0+.08,false);
+  /* 床下: 大引と床束（南半分のみ） */
+  for(let zz=D.ZP-.75;zz>D.ZPART;zz-=1.5){w.box((D.XP+D.XWp)/2,D.FL-.12,zz,D.XP-D.XWp,.14,.13,"x",{seg:6,uo:rng(),vo:rng(),col:eg()});
+    for(let x=D.XP-.75;x>D.XWp;x-=1.5){w.box(x,(.1+D.FL-.19)/2,zz,.11,D.FL-.29,.11,"y",{uo:rng(),vo:rng(),col:eg()});S.stone(x,0,zz,.15,.07,.14,rng,{flat:.5,col:tint(rng,[.48,.47,.44],.08),det:1});}}}
+
+/* ---------- 母屋の境・奥の壁代・天井・置畳 */
+function denInterior(K){const{B,D,q,rng}=K,w=B.wood,pl=B.plaster,sk=B.silk;const bc=()=>tint(rng,[.64,.53,.42],.05);
+  const lines=[{M:(s,y,t)=>[s,y,D.ZM+t],a:D.XMw,b:D.XM},{M:(s,y,t)=>[D.XM+t,y,s],a:D.ZPART,b:D.ZM},{M:(s,y,t)=>[D.XMw-t,y,s],a:D.ZPART,b:D.ZM},{M:(s,y,t)=>[s,y,D.ZPART+t],a:D.XWp,b:D.XP}];
+  for(const L of lines){const mid=(L.a+L.b)/2,hl=(L.b-L.a)/2;obox(w,L.M,[mid,D.MKT-.11,0],[hl+.1,.11,.12],bc(),{uo:rng(),vo:rng()});
+    obox(w,L.M,[mid,(D.NB+D.NT)/2,.15],[hl,.09,.03],bc(),{uo:rng(),vo:rng()});obox(w,L.M,[mid,(D.NB+D.NT)/2,-.15],[hl,.09,.03],bc(),{uo:rng(),vo:rng()});
+    obox(pl,L.M,[mid,(D.NT+D.MKT-.22)/2,0],[hl,(D.MKT-.22-D.NT)/2,.035],[.9,.89,.86],{us:.5,vs:.5});}
+  /* 壁代（奥の帳）: ひだのある絹と野筋 */
+  const n=Math.ceil((D.XP-D.XWp-.3)/.11),wc=[.26,.17,.2];
+  for(let i=0;i<n;i++){const s0=D.XWp+.15+i*(D.XP-D.XWp-.3)/n,s1=D.XWp+.15+(i+1)*(D.XP-D.XWp-.3)/n;const z0=D.ZPART+.07+.035*Math.sin(s0*19),z1=D.ZPART+.07+.035*Math.sin(s1*19);
+    sk.face([[s0,D.FL,z0],[s1,D.FL,z1],[s1,D.NB,z1],[s0,D.NB,z0]],[[0,0],[1,0],[1,1],[0,1]],wc,[0,0,1]);}
+  for(let x=D.XWp+.6;x<D.XP-.3;x+=.62){const c=((x*10|0)%2)?[.75,.22,.2]:[.12,.1,.12];sk.face([[x-.018,D.FL+.55,D.ZPART+.12],[x+.018,D.FL+.55,D.ZPART+.12],[x+.018,D.NB,D.ZPART+.12],[x-.018,D.NB,D.ZPART+.12]],[[0,0],[1,0],[1,1],[0,1]],c,[0,0,1]);}
+  /* 母屋の天井 */
+  w.face([[D.XMw,D.MKT+.01,D.ZPART],[D.XM,D.MKT+.01,D.ZPART],[D.XM,D.MKT+.01,D.ZM],[D.XMw,D.MKT+.01,D.ZM]],[[0,0],[2,0],[2,1],[0,1]],[.62,.54,.46],[0,-1,0]);
+  for(let x=D.XMw+.45;x<D.XM;x+=.45)w.box(x,D.MKT-.01,(D.ZM+D.ZPART)/2,.035,.035,D.ZM-D.ZPART,"z",{uo:rng(),vo:rng(),col:[.6,.52,.44]});
+  /* 置畳（繧繝縁）二枚 */
+  const ty=D.FL+.09;for(let k=0;k<2;k++){const x0=D.XM-.55-k*1.08-1.04,x1=x0+1.04,z0=D.ZM-2.55,z1=z0+2.08;
+    B.tatami.face([[x0+.07,ty,z1],[x1-.07,ty,z1],[x1-.07,ty,z0],[x0+.07,ty,z0]],[[0,0],[3.4,0],[3.4,7.6],[0,7.6]].map(u=>[u[1],u[0]]),[.8,.76,.62],[0,1,0]);
+    for(const[a,b]of[[z0,z1]])for(const zz of[a,b])B.tatami.face([[x0+.07,D.FL,zz],[x1-.07,D.FL,zz],[x1-.07,ty,zz],[x0+.07,ty,zz]],[[0,0],[3,0],[3,.2],[0,.2]],[.7,.66,.56],[0,0,zz===a?-1:1]);
+    for(const xs of[x0,x1]){const xi=xs===x0?x0+.07:x1-.07;B.heri.box((xs+xi)/2,(D.FL+ty)/2,(z0+z1)/2,.07,ty-D.FL,z1-z0,"z",{us:1/.26,vs:1/.07,col:[1,1,1],ek:.85});}}}
+
+/* ---------- 妻戸（東西の角の間）と閉じた蔀（東西北） */
+function denWalls(K){const{B,D,q,rng}=K,w=B.wood,mt=B.metal;const cell=q.lo?.2:.125;
+  for(const sd of[1,-1]){const xl=sd>0?D.XP:D.XWp,M=(s,y,t)=>[xl+sd*t,y,s];
+    const s0=D.ZP-D.B+D.PR+.01,s1=D.ZP-D.PR-.01,y0=D.FL+.07,y1=D.NB,smd=(s0+s1)/2;
+    for(const[a,b]of[[s0,smd],[smd,s1]]){const c=tint(rng,[.6,.49,.38],.04);
+      obox(w,M,[(a+b)/2,(y0+y1)/2,0],[(b-a)/2-.004,(y1-y0)/2,.024],c,{uo:rng(),vo:rng()});
+      obox(w,M,[a+.05,(y0+y1)/2,.034],[.05,(y1-y0)/2,.012],c);obox(w,M,[b-.05,(y0+y1)/2,.034],[.05,(y1-y0)/2,.012],c);
+      for(const yy of[y0+.07,y0+.8,y1-.8,y1-.07])obox(w,M,[(a+b)/2,yy,.034],[(b-a)/2-.1,.045,.012],c);
+      for(const yy of[y0+.3,y1-.3]){const hs=a<smd-.01?a+.03:b-.03;obox(mt,M,[hs+(a<smd-.01?.13:-.13),yy,.05],[.14,.035,.006],[.16,.14,.13]);}}
+    for(let j=1;j<4;j++){const s1b=D.ZP-j*D.B-.04,s0b=D.ZP-(j+1)*D.B+.04;shitomiPanel(B.lacq,B.plaster,M,s0b,s1b,D.NB,2.36,.165,cell);shitomiPanel(B.lacq,B.plaster,M,s0b,s1b,2.34,D.FL+.08,.165,cell);}}
+  const MN=(s,y,t)=>[s,y,D.ZNp-t];for(let i=0;i<D.n;i++){const s1=K.xs[i]-.04,s0=K.xs[i+1]+.04;shitomiPanel(B.lacq,B.plaster,MN,s0,s1,D.NB,2.36,.165,q.lo?.25:.16);shitomiPanel(B.lacq,B.plaster,MN,s0,s1,2.34,D.FL+.08,.165,q.lo?.25:.16);}}
+
+/* ---------- 階（きざはし）と高欄 */
+function denStairs(K){const{B,D,q,rng}=K,w=B.wood,S=B.stone;const kb=Math.floor((D.n-1)/2),xk=(K.xs[kb]+K.xs[kb+1])/2;K.xk=xk;
+  const zt=-.07,zb=1.72,run=zb-zt,yT=D.FLS,yB=.1,sl=(yT-yB)/run;K.stair={xk,zt,zb,run,yT,yB,sl};
+  for(const sx of[-1,1]){const x=xk+sx*1.06;const M=(s,y,t)=>[s,y-sl*(t-zt),t];obox(w,M,[x,yT-.13,(zt+zb+.12)/2],[.06,.15,(zb+.12-zt)/2],tint(rng,[.68,.56,.44],.04),{uo:rng(),vo:rng()});}
+  const N=6;for(let k=1;k<N;k++){const z=zt+run*k/N,y=yT-(yT-yB)*k/N;w.box(xk,y-.025,z,2.0,.05,.31,"x",{uo:rng(),vo:rng(),col:tint(rng,[.68,.56,.44],.05),ch:.006});}
+  S.stone(xk,.03,zb+.2,1.3,.12,.3,rng,{flat:.6,flatB:.6,col:[.52,.51,.48],det:q.lo?2:3,yaw:0,rough:.3});}
+function denRails(K){const{D}=K;const y=D.FLS,a=-.07,XW=D.XS0+.07,ZN=D.ZS0+.07;
+  if(K.xk!=null){const xk=K.xk;railRun(K,[XW,a],[xk-1.06,a],y,{ext0:.15,post1:true});railRun(K,[xk+1.06,a],[a,a],y,{post0:true,ext1:.15});
+    const st=K.stair;for(const sx of[-1,1])railRun(K,[xk+sx*1.06,st.zt],[xk+sx*1.06,st.zb],y,{slope:st.sl,post1:true});}
+  else railRun(K,[XW,a],[a,a],y,{ext0:.15,ext1:.15});
+  railRun(K,[a,a],[a,ZN],y,{ext0:.15,ext1:.15});railRun(K,[a,ZN],[XW,ZN],y,{ext0:.15,ext1:.15});railRun(K,[XW,ZN],[XW,a],y,{ext0:.15,ext1:.15});}
+
+/* ---------- 軒: 地垂木・飛檐垂木（二軒）・木負・茅負・裏甲・化粧裏板・隅木（隅は反り上がる） */
+function denEave(K){const{B,D,q,rng}=K,w=B.wood,mt=B.metal;const i0=w.n,m0=mt.n;const RS=D.RS,SL=D.SL,SL2=D.SL2,KT=D.KT;
+  const rc=()=>tint(rng,[.66,.54,.43],.04),sc=[.54,.45,.37];const rw=.0425,rh=.10,fw=.0375,fh=.085,U1=1.3,UF0=1.15,UF1=1.95,YF=4.38;
+  for(const S of denSides(D)){const M=S.M,Msl=(s,y,t)=>M(s,y-SL*t,t),Mfl=(s,y,t)=>M(s,y-SL2*(t-U1),t);
+    const mid=(S.sA+S.sB)/2,nR=Math.ceil(((S.sB-S.sA)/2+D.DKE)/RS),dg=s=>Math.max(S.sA-s,s-S.sB);
+    for(let k=-nR;k<nR;k++){const s=mid+(k+.5)*RS,uIn=S.inside(s)?-D.B:0,g=dg(s),u0=Math.max(uIn,g);
+      if(u0<U1-.05){obox(w,Msl,[s,KT+rh/2,(u0+U1)/2],[rw,rh/2,(U1-u0)/2],rc(),{uo:rng(),vo:rng()});
+        const sL=s-RS/2,sR=s+RS/2,aL=Math.min(U1,Math.max(uIn,dg(sL))),aR=Math.min(U1,Math.max(uIn,dg(sR)));
+        w.face([Msl(sL,KT+rh,aL),Msl(sR,KT+rh,aR),Msl(sR,KT+rh,U1),Msl(sL,KT+rh,U1)],[[s*.4,aL*.4],[s*.4+.1,aR*.4],[s*.4+.1,U1*.4],[s*.4,U1*.4]],sc,[0,-1,0]);}
+      const f0=Math.max(UF0,g);
+      if(f0<UF1-.05){obox(w,Mfl,[s,YF+fh/2,(f0+UF1)/2],[fw,fh/2,(UF1-f0)/2],rc(),{uo:rng(),vo:rng()});
+        const sL=s-RS/2,sR=s+RS/2,aL=Math.min(UF1,Math.max(U1+.04,dg(sL))),aR=Math.min(UF1,Math.max(U1+.04,dg(sR)));
+        w.face([Mfl(sL,YF+fh,aL),Mfl(sR,YF+fh,aR),Mfl(sR,YF+fh,UF1),Mfl(sL,YF+fh,UF1)],[[s*.4,aL*.4],[s*.4+.1,aR*.4],[s*.4+.1,UF1*.4],[s*.4,UF1*.4]],sc,[0,-1,0]);}}
+    const beam=(u,yb,hh,dd,len,col)=>{const L0=S.sA-len,L1=S.sB+len,ns=Math.max(1,Math.ceil((L1-L0)/.5));
+      for(let i=0;i<ns;i++){const a=L0+(L1-L0)*i/ns,b=L0+(L1-L0)*(i+1)/ns;obox(w,M,[(a+b)/2,yb+hh/2,u],[(b-a)/2+.001,hh/2,dd/2],col,{uo:a*.42,vo:u});}};
+    beam(U1,KT-SL*U1+rh,.09,.10,U1+.05,rc());beam(1.985,YF-SL2*(1.985-U1)+fh-.01,.12,.11,2.04,rc());beam(2.01,4.452,.05,.22,2.12,rc());}
+  /* 隅木 */
+  const corners=[[D.XP,D.ZP,1,1,true],[D.XWp,D.ZP,-1,1,true],[D.XWp,D.ZNp,-1,-1,false],[D.XP,D.ZNp,1,-1,false]];
+  for(const[xk,zk,sx,sz,inn]of corners){const r2=Math.SQRT1_2,px=sz*r2,pz=-sx*r2;
+    const MD=(s,y,t)=>[xk+s*sx+t*px,y-SL*s,zk+s*sz+t*pz],MD2=(s,y,t)=>[xk+s*sx+t*px,y-SL2*(s-U1),zk+s*sz+t*pz];const s0=inn?-D.B:0;
+    obox(w,MD,[(s0+U1+.02)/2,KT+.04,0],[(U1+.02-s0)/2,.11,.075],rc(),{uo:rng(),vo:rng()});
+    obox(w,MD2,[(1.2+2.08)/2,YF+.02,0],[(2.08-1.2)/2,.1,.07],rc(),{uo:rng(),vo:rng()});
+    obox(w,MD2,[2.088,YF+.02,0],[.01,.105,.075],[.36,.3,.24]);}
+  const up=K.roof.upl;w.xform(i0,(p,n)=>[[p[0],p[1]+up(p[0],p[2]),p[2]],n]);mt.xform(m0,(p,n)=>[[p[0],p[1]+up(p[0],p[2]),p[2]],n]);}
+
+/* ---------- 御簾の帽額と鉤（固定） */
+function denMisuStatic(K){const{B,D}=K;const tm=D.ZP-.163,yT=D.NB;
+  for(let i=0;i<D.n;i++){const s1=K.xs[i]-D.PR-.01,s0=K.xs[i+1]+D.PR+.01,w=s1-s0,N=Math.ceil(w/.05);
+    for(let k=0;k<N;k++){const a=s0+w*k/N,b=s0+w*(k+1)/N;const yb=s=>yT-.19-.028*Math.sin(PI*(((s-s0)/w*4)%1));
+      B.mokou.face([[a,yb(a),tm],[b,yb(b),tm],[b,yT,tm],[a,yT,tm]],[[a/1.28,0],[b/1.28,0],[b/1.28,1],[a/1.28,1]],WHITE3,[0,0,1]);}
+    for(let k=1;k<4;k++){const s=s0+w*k/4;B.metal.cyl([s,yT-.005,tm+.006],[s,yT-.04,tm+.01],.006,.004,5,{col:[.82,.66,.38]});}}}
+/* ---------- 御簾（動く部分）: 簾・縁・巻き・鉤丸緒・房＋夜の透け明かり */
+function denMisu(K,res,mat,root){const{D,q}=K;const top=D.NB-.19,Lc=top-(D.FL+.016),tm=D.ZP-.175,R0=.014,TH=.0062;
+  const mtex=res.tex(genMisu());
+  const mM=res.mat(new T.MeshStandardMaterial({map:mtex,transparent:true,depthWrite:false,side:T.DoubleSide,roughness:.72,metalness:0,emissive:C(0xffa860),emissiveMap:mtex,emissiveIntensity:0}));
+  const rtex=res.tex(mtex.clone());rtex.needsUpdate=true;rtex.repeat.set(1,6);
+  const mR=res.mat(new T.MeshStandardMaterial({map:rtex,roughness:.7,color:C(0xd9c9ae)}));
+  const cg=new GB(),bg=new GB(),rg=new GB(),kg=new GB(),tg=new GB(),gg=new GB();const lampX=D.XP-D.B/2-1.15;
+  for(let i=0;i<D.n;i++){const s1=K.xs[i]-D.PR-.01,s0=K.xs[i+1]+D.PR+.01,w=s1-s0;
+    cg.face([[s0,-1,0],[s1,-1,0],[s1,0,0],[s0,0,0]],[[s0/.5,0],[s1/.5,0],[s1/.5,1],[s0/.5,1]],WHITE3,[0,0,1]);
+    for(const bs of[s0+.022,s1-.022])bg.box(bs,-.5,.005,.044,1,.004,"y",{col:[.8,.87,.78],us:1,vs:1});
+    for(let k=1;k<4;k++)bg.box(s0+w*k/4,-.5,.004,.02,1,.003,"y",{col:[.86,.9,.84],us:1,vs:1});
+    rg.cyl([s0,0,0],[s1,0,0],1,1,q.hi?16:10,{col:WHITE3,cap0:true,cap1:true,us:2,vs:.5});
+    for(const f of[.25,.75]){const s=s0+w*f;kg.cyl([s,0,0],[s,-1,0],.005,.005,5,{col:[.66,.16,.2]});
+      tg.lathe([[0,-.26],[.024,-.24],[.032,-.13],[.022,-.035],[.013,-.004],[0,.004]],q.lo?6:10,s,0,0,{col:[.5,.36,.66]});
+      tg.cyl([s,.01,-.02],[s,.01,.02],.012,.012,6,{col:[.8,.62,.35],cap0:true,cap1:true});}
+    const nx=Math.max(2,Math.ceil(w/.3));for(let a=0;a<nx;a++)for(let b=0;b<4;b++){const sa=s0+w*a/nx,sb2=s0+w*(a+1)/nx,ya=-b/4,yb=-(b+1)/4;
+      const cf=(s,y)=>{const g=Math.exp(-((s-lampX)*(s-lampX))/7.5)*.9+.12;const v=Math.exp(-((y+.62)*(y+.62))/.12)*.85+.15;const k=g*v;return[1*k,.7*k,.42*k];};
+      gg.face([[sa,yb,0],[sb2,yb,0],[sb2,ya,0],[sa,ya,0]],[[0,0],[1,0],[1,1],[0,1]],[cf(sa,yb),cf(sb2,yb),cf(sb2,ya),cf(sa,ya)],[0,0,1]);}}
+  const mk=(gb,m,name)=>{const me=new T.Mesh(res.geo(gb.build()),m);me.name=name;root.add(me);return me;};
+  const curtain=mk(cg,mM,"den_misu");curtain.position.set(0,top,tm);curtain.renderOrder=3;curtain.castShadow=true;curtain.receiveShadow=true;
+  curtain.customDepthMaterial=res.mat(new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking,map:mtex,alphaTest:.5}));
+  const bands=mk(bg,mat.silk,"den_misuBands");bands.position.set(0,top,tm+.002);bands.castShadow=true;bands.receiveShadow=true;
+  const roll=mk(rg,mR,"den_misuRoll");roll.castShadow=true;roll.receiveShadow=true;
+  const cords=mk(kg,mat.silk,"den_misuCords");cords.position.set(0,D.NB-.02,tm+.035);cords.castShadow=true;
+  const tass=mk(tg,mat.silk,"den_misuTassels");tass.castShadow=true;
+  const gm=res.mat(new T.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:0,blending:T.AdditiveBlending,depthWrite:false,fog:false,side:T.DoubleSide}));
+  const glow=mk(gg,gm,"den_misuGlow");glow.position.set(0,top,tm-.05);glow.renderOrder=2;glow.visible=false;
+  let cur=-1,night=0;
+  function set(v){v=clamp(+v||0,0,1);cur=v;const hang=Math.max(.0005,1-v),Lh=Lc*hang;
+    curtain.scale.y=Lh;bands.scale.y=Lh;glow.scale.y=Lh;curtain.visible=bands.visible=v<.997;
+    mtex.repeat.set(1,Lh/.25);mtex.offset.set(0,(Lc-Lh)/.25);
+    const r=Math.sqrt(R0*R0+v*Lc*TH/PI),yb=top-Lh;roll.position.set(0,yb,tm+r*.35);roll.scale.set(1,r,r);
+    const cv_=v>.05;cords.visible=tass.visible=cv_;cords.scale.y=Math.max(.01,(D.NB-.02)-(yb-r));tass.position.set(0,yb-r-.004,tm+r*.35+.035);
+    glow.visible=night>.01&&v<.997;}
+  function setNight(n){night=clamp(+n||0,0,1);mM.emissiveIntensity=.22*night;gm.opacity=.42*night;glow.visible=night>.01&&cur<.997;}
+  set(.6);return{set,setNight,get:()=>cur,curtain,roll,glow,gm,mM};}
+
+/* ---------- 蔀（南面・動く） */
+function denShitomi(K,res,mat,root){const{D,q}=K;const xs=K.xs,zc=D.ZP+.165,hy=D.NB,hu=D.NB-2.36,OPEN=1.47;
+  const uL=new GB(),uW=new GB(),lL=new GB(),lW=new GB();uL.ao=uW.ao=()=>.78;const ao=denAOf(D);lL.ao=lW.ao=ao;const cell=q.lo?.2:.125;
+  const ML=(s,y,t)=>[s,y,t],MS=(s,y,t)=>[s,y,D.ZP+t];
+  for(let i=0;i<D.n;i++){const s1=xs[i]-.04,s0=xs[i+1]+.04;shitomiPanel(uL,uW,ML,s0,s1,0,-hu,0,cell);shitomiPanel(lL,lW,MS,s0,s1,2.34,D.FL+.08,.165,cell);}
+  const pivot=new T.Group();pivot.name="den_shitomiPivot";pivot.position.set(0,hy,zc);root.add(pivot);
+  const mk=(gb,m,par)=>{const me=new T.Mesh(res.geo(gb.build()),m);me.castShadow=me.receiveShadow=true;par.add(me);return me;};
+  mk(uL,mat.lacq,pivot);mk(uW,mat.plaster,pivot);const lo1=mk(lL,mat.lacq,root),lo2=mk(lW,mat.plaster,root);
+  const hk=new GB();const tipZ=zc+hu*Math.sin(OPEN)+.035,tipY=hy-hu*Math.cos(OPEN),u=tipZ-D.ZP,yr=u<1.3?D.KT-D.SL*u:4.38-D.SL2*(u-1.3);
+  for(let i=0;i<D.n;i++){const xm=(xs[i]+xs[i+1])/2;for(const dx of[-.8,.8]){const x=xm+dx;hk.cyl([x,yr,tipZ],[x,tipY+.03,tipZ],.0045,.0045,5,{col:[.22,.2,.18]});
+    hk.cyl([x,tipY+.03,tipZ],[x,tipY-.005,tipZ-.03],.0045,.0045,5,{col:[.22,.2,.18],cap1:true});}}
+  const hooks=new T.Mesh(res.geo(hk.build()),mat.metal);hooks.castShadow=true;root.add(hooks);
+  let cur=-1;function set(v){v=clamp(+v||0,0,1);cur=v;pivot.rotation.x=-OPEN*v;lo1.visible=lo2.visible=v<.6;hooks.visible=v>.985;}
+  set(1);return{set,get:()=>cur,pivot};}
+
+/* ---------- 季節: 冬=雪（屋根・棟・箕甲・高欄・簀子の外縁・階・擬宝珠）、秋=落葉、春=花びら */
+function denSeason(K,res,mat,root,tex){const{D,q,rng}=K;const G={spring:new T.Group(),summer:new T.Group(),autumn:new T.Group(),winter:new T.Group()};for(const k in G){G[k].name="den_"+k;root.add(G[k]);}
+  const sn=new GB(),RF=K.roof;const NS=lattice(401,64,64);const sc=(x,z)=>{const c=.94+.06*NS(x*1.7+32,z*1.7+32);return[c,c,c*1.015];};
+  const th=(x,z,d)=>(.11+.07*NS(x*.6+32,z*.6+32))*(1-.4*ss(3.5,8,d));
+  const dmin=(x,z)=>Math.min(RF.dS(z),RF.dN(z),RF.dE(x),RF.dW(x));
+  const own=()=>(x,z)=>[0,0];
+  roofPatch(sn,RF.XGW,RF.XGE,RF.nxm,D.ZN,D.ZS,RF.nz,(x,z)=>RF.yM(x,z)+th(x,z,dmin(x,z)),own,sc);
+  roofPatch(sn,RF.XGE,D.XE,RF.nh,D.ZN,D.ZS,RF.nz,(x,z)=>RF.yHE(x,z)+th(x,z,dmin(x,z)),own,sc);
+  roofPatch(sn,D.XW,RF.XGW,RF.nh,D.ZN,D.ZS,RF.nz,(x,z)=>RF.yHW(x,z)+th(x,z,dmin(x,z)),own,sc);
+  /* 軒先で丸く垂れる雪の縁 */
+  const PF=[[0,1],[-.05,.78],[-.08,.36],[-.07,-.25],[-.03,-.5]];
+  for(const sd of eaveRing([[D.XE,D.ZS],[D.XW,D.ZS],[D.XW,D.ZN],[D.XE,D.ZN]],.2)){const V=sd.pts.map(p=>{const t0=th(p.x,p.z,0);return PF.map(f=>{const x=p.x-p.m[0]*f[0],z=p.z-p.m[1]*f[0];return[x,D.YE1+RF.upl(x,z)+(f[1]>0?t0*f[1]:f[1]*.14),z];});});
+    for(let i=0;i<V.length-1;i++)for(let k=0;k<PF.length-1;k++)sn.face([V[i][k],V[i+1][k],V[i+1][k+1],V[i][k+1]],[[0,0],[0,0],[0,0],[0,0]],sc(V[i][k][0],V[i][k][2]),[sd.no[0],.6-k*.4,sd.no[1]]);}
+  /* 箕甲の上 */
+  for(const gab of K.gables){const X=o=>gab.XG+gab.sg*o;for(let i=0;i<gab.rings.length-1;i++){const A=gab.rings[i],Bq=gab.rings[i+1];
+    const P=(r,o,dy,t)=>[X(o),r.y0+dy+t,r.z];const ta=th(X(0),A.z,4),tb=th(X(0),Bq.z,4);
+    sn.face([P(A,0,0,ta),P(Bq,0,0,tb),P(Bq,.2,.012,tb*.8),P(A,.2,.012,ta*.8)],[[0,0],[0,0],[0,0],[0,0]],sc(X(0),A.z),[0,1,0]);
+    sn.face([P(A,.2,.012,ta*.8),P(Bq,.2,.012,tb*.8),P(Bq,.36,-.08,0),P(A,.36,-.08,0)],[[0,0],[0,0],[0,0],[0,0]],sc(X(0),A.z),[gab.sg,1,0]);}}
+  /* 棟 */
+  sn.cyl([RF.XGW-.4,K.ridgeY+.52,D.ZC],[RF.XGE+.4,K.ridgeY+.52,D.ZC],.17,.17,q.lo?8:12,{rings:[0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1],rf:t=>.8+.25*Math.abs(Math.sin(t*19))+.1*Math.sin(t*53),col:[.97,.97,.99],cap0:true,cap1:true,us:0,vs:0});
+  /* 高欄の架木 */
+  for(const[a,b]of K.railTops||[]){const L=vlen(sub(b,a));const rings=[];const nr=Math.max(2,Math.ceil(L/.25));for(let i=0;i<=nr;i++)rings.push(i/nr);const ph=rng()*9;
+    sn.cyl([a[0],a[1]+.036,a[2]],[b[0],b[1]+.036,b[2]],.034,.034,7,{rings,rf:t=>.7+.45*Math.abs(Math.sin(t*L*2.3+ph)),col:[.96,.96,.98],cap0:true,cap1:true,us:0,vs:0});}
+  for(const g of K.gibos||[])sn.lathe([[.072,.13],[.074,.16],[.06,.2],[.036,.24],[.012,.28],[0,.3]],10,g[0],g[1],g[2],{col:[.97,.97,.99]});
+  /* 簀子の外縁に吹き込んだ雪 */
+  const drift=(x0,x1,z0,z1,alongX,outSg)=>{const L=alongX?x1-x0:z1-z0,n=Math.max(2,Math.ceil(Math.abs(L)/.22));for(let i=0;i<n;i++){const a=i/n,b=(i+1)/n;const h=.022+.016*Math.abs(Math.sin((a*Math.abs(L))*3.1+1));
+      if(alongX){const xa=lerp(x0,x1,a),xb=lerp(x0,x1,b);sn.prism([[z0,D.FLS],[z0,D.FLS+h],[z0-outSg*.18,D.FLS+h*.55],[z0-outSg*.42,D.FLS]],"x",Math.min(xa,xb),Math.max(xa,xb)+.002,{col:[.95,.95,.97],us:0,vs:0});}
+      else{const za=lerp(z0,z1,a),zb=lerp(z0,z1,b);sn.prism([[x0,D.FLS],[x0,D.FLS+h],[x0-outSg*.18,D.FLS+h*.55],[x0-outSg*.42,D.FLS]],"z",Math.min(za,zb),Math.max(za,zb)+.002,{col:[.95,.95,.97],us:0,vs:0});}}};
+  drift(D.XS0+.3,-.3,-.13,0,true,1);drift(-.13,0,-.3,D.ZS0+.3,false,1);
+  /* 階 */
+  if(K.stair){const st=K.stair;for(let k=1;k<6;k++){const z=st.zt+st.run*k/6,y=st.yT-(st.yT-st.yB)*k/6;const f=ss(-.2,1.2,z);if(f<.05)continue;
+      sn.box(st.xk,y+.02*f,z+.01,1.98,.04*f+.004,.3,"x",{col:[.96,.96,.98],us:0,vs:0,ch:.012});}
+    sn.stone(st.xk,.13,st.zb+.2,1.3,.05,.3,rng,{flat:.2,flatB:0,det:2,col:[.96,.96,.98],rough:.4,yaw:0});}
+  const mS=new T.Mesh(res.geo(sn.build()),mat.snow);mS.castShadow=true;mS.receiveShadow=true;mS.name="den_snow";G.winter.add(mS);
+  /* 秋の落葉・春の花びら（簀子と階） */
+  const dm=new T.Object3D(),col=new T.Color();const spot=()=>{const r=rng();if(r<.62)return[rng.r(D.XS0+.4,-.3),D.FLS+.003,rng.r(D.ZP+.25,-.2)];if(r<.85)return[rng.r(D.XP+.25,-.2),D.FLS+.003,rng.r(D.ZP-6,D.ZP)];
+    if(K.stair){const st=K.stair,k=1+Math.floor(rng()*5);return[st.xk+rng.r(-.9,.9),st.yT-(st.yT-st.yB)*k/6+.003,st.zt+st.run*k/6+rng.r(-.12,.12)];}return[rng.r(-6,-.3),D.FLS+.003,rng.r(-1,-.2)];};
+  const nl=q.hi?70:q.md?45:24;const lm=new T.InstancedMesh(res.geo(new T.PlaneGeometry(.075,.075).rotateX(-PI/2)),mat.leaf,nl);const lc=[0xb5311c,0xc8471c,0xd96a1e,0xd8a02a,0x9c2a1a,0x8a5a2a];
+  for(let i=0;i<nl;i++){const p=spot();dm.position.set(p[0],p[1],p[2]);dm.rotation.set(rng.r(-.15,.15),rng()*TAU,rng.r(-.15,.15));dm.scale.setScalar(rng.r(.7,1.2));dm.updateMatrix();lm.setMatrixAt(i,dm.matrix);
+    col.set(rng.pick(lc)).convertSRGBToLinear().multiplyScalar(rng.r(.7,1.1));lm.setColorAt(i,col);}
+  lm.instanceMatrix.needsUpdate=true;if(lm.instanceColor)lm.instanceColor.needsUpdate=true;lm.receiveShadow=true;G.autumn.add(lm);
+  const np=q.hi?90:q.md?60:30;const pm=new T.InstancedMesh(res.geo(new T.PlaneGeometry(.014,.016).rotateX(-PI/2)),mat.petal,np);
+  for(let i=0;i<np;i++){const p=spot();dm.position.set(p[0],p[1]-.001,p[2]);dm.rotation.set(rng.r(-.2,.2),rng()*TAU,rng.r(-.2,.2));dm.scale.setScalar(rng.r(.8,1.25));dm.updateMatrix();pm.setMatrixAt(i,dm.matrix);}
+  pm.instanceMatrix.needsUpdate=true;pm.receiveShadow=true;G.spring.add(pm);
+  let cur=null;function set(k){if(!G[k])k="spring";cur=k;for(const n in G)G[n].visible=n===k;}
+  return{set,get:()=>cur,G};}
+
+function denMats(res,q){const M=woodMats(res,q),ts=q.ts,ramp=M.ramp;
+  const HW=res.sh("hiwada"+ts,()=>genHiwada(ts)),NK=res.sh("noki"+Math.min(ts,512),()=>genNoki(Math.min(ts,512))),SK=res.sh("shikkui"+(q.lo?128:256),()=>genShikkui(q.lo?128:256)),
+    ST=res.sh("stone"+(q.lo?128:256),()=>genStone(q.lo?128:256)),MK=res.sh("mokou",genMokou),TA=res.sh("tatami",genTatami),UG=res.sh("ungen",genUngen),LF=res.sh("leaf",genLeaf),PT=res.sh("petal",genPetal);
+  return{wood:M.wood,floor:M.floor,
+    roof:stdMat(res,{map:HW.map,bumpMap:HW.data,bumpScale:.004,roughnessMap:HW.data,roughness:1,vertexColors:true}),
+    noki:stdMat(res,{map:NK.map,bumpMap:NK.data,bumpScale:.003,roughness:.95,vertexColors:true,aoMap:ramp}),
+    plaster:stdMat(res,{map:SK.map,bumpMap:SK.data,bumpScale:.0008,roughness:.93,vertexColors:true,aoMap:ramp}),
+    lacq:res.mat(new T.MeshPhysicalMaterial({color:0xffffff,roughness:.36,clearcoat:.6,clearcoatRoughness:.28,vertexColors:true,aoMap:ramp})),
+    metal:stdMat(res,{color:0xffffff,roughness:.42,metalness:.6,vertexColors:true}),
+    stone:stdMat(res,{map:ST.map,bumpMap:ST.data,bumpScale:.0025,roughnessMap:ST.data,roughness:1,vertexColors:true,aoMap:ramp}),
+    mokou:stdMat(res,{map:MK,roughness:.8,vertexColors:true,side:T.DoubleSide}),
+    silk:stdMat(res,{color:0xffffff,roughness:.75,vertexColors:true,side:T.DoubleSide,aoMap:ramp}),
+    tatami:stdMat(res,{map:TA.map,bumpMap:TA.data,bumpScale:.0008,roughness:.82,vertexColors:true,aoMap:ramp}),
+    heri:stdMat(res,{map:UG,roughness:.7,vertexColors:true,aoMap:ramp}),
+    snow:stdMat(res,{color:C(0xf3f6fa),roughness:.8,metalness:0,vertexColors:true}),
+    leaf:stdMat(res,{map:LF,alphaTest:.5,side:T.DoubleSide,roughness:.75}),
+    petal:stdMat(res,{map:PT,alphaTest:.4,side:T.DoubleSide,roughness:.6,color:C(0xffeef2)})};}
+
+function makeDensha(opts){opts=opts||{};const q=QL(opts),res=new Res(),D=denDims(opts),rng=RNG(opts.seed||993);const mat=denMats(res,q);
+  const B={};["wood","floor","roof","noki","plaster","lacq","metal","stone","silk","tatami","heri","mokou"].forEach(k=>{B[k]=new GB();B[k].ao=denAOf(D);});B.roof.ao=null;
+  const cf=denCFf(D);["wood","floor","plaster","lacq","silk","tatami","heri"].forEach(k=>B[k].cf=cf);
+  const K={B,D,q,rng};
+  denRoof(K);denFrame(K);denFloors(K);denWalls(K);denInterior(K);if(opts.kizahashi!==false)denStairs(K);denRails(K);denMisuStatic(K);denEave(K);
+  const root=new T.Group();root.name="MakuraDensha";
+  for(const k in B){const g=B[k].build();if(!g)continue;res.geo(g);const me=new T.Mesh(g,mat[k]);me.castShadow=true;me.receiveShadow=true;me.name="den_"+k;root.add(me);}
+  const sh=denShitomi(K,res,mat,root),mi=denMisu(K,res,mat,root),se=denSeason(K,res,mat,root);
+  /* anchors */
+  const A={};const anc=(n,x,y,z,ry)=>{const o=new T.Object3D();o.name="anchor_"+n;o.position.set(x,y,z);o.rotation.y=ry||0;root.add(o);A[n]=o;return o;};
+  const sx=D.XP-D.B/2,sz=D.ZP-.175-1.05;
+  anc("seatHashi",sx,D.FL,sz);anc("lamp",sx-1.15,D.FL,sz-.55);anc("kichou",sx+.15,D.FL,sz-1.2);anc("uchiide",sx,D.FL,D.ZP-.16);
+  anc("eaveCorner",D.XE,D.YE0+K.roof.upl(D.XE,D.ZS),D.ZS);if(K.stair)anc("kizahashiTop",K.stair.xk,D.FLS,-.35);
+  const pz=(D.ZP+.2-.15)/2,px=(D.XP+.2-.15)/2,pts=[];for(let x=D.XS0+.6;x<px;x+=.5)pts.push(new T.Vector3(x,D.FLS,pz));for(let z=pz;z>D.ZS0+.6;z-=.5)pts.push(new T.Vector3(px,D.FLS,z));
+  const sp=anc("sunokoPath",pts[0].x,pts[0].y,pts[0].z,PI/2);sp.userData.points=pts;
+  const drips=[];for(let x=D.XW+.3;x<D.XE-.1;x+=.3)drips.push(new T.Vector3(x,D.YE0+K.roof.upl(x,D.ZS)-.01,D.ZS-.03));for(let z=D.ZS-.3;z>D.ZN+.1;z-=.3)drips.push(new T.Vector3(D.XE-.03,D.YE0+K.roof.upl(D.XE,z)-.01,z));
+  let night=0,season="spring",tAcc=0;
+  function setNight(v){night=clamp(+v||0,0,1);mi.setNight(night);}
+  function setSeason(k){se.set(k);season=se.get();}
+  root.userData={anchors:A,eaveDrips:drips,setSeason,setNight,setMisu:mi.set,setShitomi:sh.set,getMisu:mi.get,getShitomi:sh.get,
+    dims:{bays:D.n,bay:D.B,floorY:D.FL,sunokoY:D.FLS,sunokoEdge:{east:0,south:0,west:D.XS0,north:D.ZS0},pillarsX:K.xs.slice(),pillarSouthZ:D.ZP,pillarNorthZ:D.ZNp,moyaZ:D.ZM,partitionZ:D.ZPART,
+      eave:{east:D.XE,west:D.XW,south:D.ZS,north:D.ZN,y:D.YE0},ridgeY:K.ridgeY,ridgeZ:D.ZC,gableX:[K.roof.XGW,K.roof.XGE],kizahashiX:K.stair?K.stair.xk:null},
+    update(dt,t){tAcc=t!=null?t:tAcc+(dt||0);if(night>0){const f=.94+.06*Math.sin(tAcc*6.7)*Math.sin(tAcc*2.3+1);mi.gm.opacity=.42*night*f;}
+      mi.curtain.rotation.x=.006*Math.sin(tAcc*.8)+.003*Math.sin(tAcc*2.1);},
+    dispose(){res.dispose();}};
+  setSeason(opts.season||"spring");setNight(0);mi.set(opts.misu!=null?opts.misu:.6);sh.set(opts.shitomi!=null?opts.shitomi:1);return root;}
+
+/* ============================================================================ 渡殿 */
+function makeWatadono(opts){opts=opts||{};const q=QL(opts),res=new Res(),rng=RNG(opts.seed||1001);const L=Math.max(3,opts.length!=null?+opts.length:12);
+  const M0=denMats(res,q);const FLW=1.0,HW=1.35,EW=1.72,PT=2.92,KTW=3.3,SLW=.3,PR=.13,YE0=3.14,YE1=3.38,DK=1.46,RA=.3,RB=.035;
+  const nb=Math.max(1,Math.round(L/3)),sp=L/nb;const B={wood:new GB(),floor:new GB(),roof:new GB(),noki:new GB(),metal:new GB(),stone:new GB()};
+  const ZE=HW+DK;const _w=0;const aoW=(p,n)=>{const y=p[1];if(y<FLW-.05){const d=Math.min(p[0]+.3,L+.3-p[0],EW-Math.abs(p[2]));return d>-.05?.35+.45*(1-ss(0,1.2,d)):1;}
+    if(y>KTW-.6&&n[1]<.3){const d=ZE-Math.abs(p[2]);return .5+.45*(1-ss(0,1.8,d));}return 1;};
+  for(const k in B)B[k].ao=aoW;B.roof.ao=null;const w=B.wood,f=B.floor,S=B.stone,NK=B.noki;const K={B,rng,q};const bc=()=>tint(rng,[.66,.54,.42],.05);
+  const xs=[];for(let i=0;i<=nb;i++)xs.push(i*sp);
+  for(const x of xs)for(const z of[-HW,HW]){w.cyl([x,.1,z],[x,PT,z],PR*1.03,PR,q.hi?16:10,{rings:[0,.03,1],col:bc(),uo:rng(),vo:rng(),cap1:true});S.stone(x,0,z,.3,.13,.28,rng,{flat:.6,col:tint(rng,[.55,.53,.5],.08),det:q.lo?1:2,rough:.45});
+    w.prism([[-.42,.18],[-.42,.1],[-.33,.06],[-.2,.02],[-.1,0],[.1,0],[.2,.02],[.33,.06],[.42,.1],[.42,.18]].map(p=>[x+p[0],PT+p[1]]),"z",z-.08,z+.08,{col:bc(),uo:rng(),vo:rng()});}
+  for(const z of[-HW,HW]){w.box(L/2,KTW-.1,z,L+.5,.2,.22,"x",{seg:6,uo:rng(),vo:rng(),col:bc()});w.box(L/2,PT-.08,z,L+.3,.16,.12,"x",{seg:6,uo:rng(),vo:rng(),col:bc()});}
+  /* 梁・束・棟木 */
+  const yRB=KTW+SLW*HW;for(const x of xs){w.box(x,PT-.06,0,.14,.2,2*HW+.2,"z",{uo:rng(),vo:rng(),col:bc(),ch:.01});w.box(x,(PT+.04+yRB-.16)/2,0,.1,yRB-.16-PT-.04,.1,"y",{uo:rng(),vo:rng(),col:bc()});}
+  w.box(L/2,yRB-.08,0,L+.8,.16,.14,"x",{seg:6,uo:rng(),vo:rng(),col:bc()});
+  /* 床・縁葛・大引・根太 */
+  let z=-EW+.1;while(z<EW-.11){let wd=rng.r(.24,.3);if(z+wd>EW-.16)wd=EW-.1-z;f.box(L/2,FLW-.02,z+wd/2,L,.04,wd-.008,"x",{seg:8,uo:rng(),vo:rng(),col:tint(rng,[.68,.56,.44],.05)});z+=wd;}
+  for(const zs of[-1,1])w.box(L/2,FLW-.11,zs*(EW-.07),L,.18,.14,"x",{seg:6,uo:rng(),vo:rng(),col:bc(),ch:.01});
+  for(const x of xs)w.box(x,FLW-.27,0,.13,.15,2*EW-.1,"z",{uo:rng(),vo:rng(),col:bc()});
+  for(let x=.45;x<L;x+=.9)w.box(x,FLW-.1,0,.07,.08,2*EW-.3,"z",{uo:rng(),vo:rng(),col:bc()});
+  /* 高欄 */
+  for(const zs of[-1,1])railRun(K,[0,zs*(EW-.07)],[L,zs*(EW-.07)],FLW,{post0:true,post1:true});
+  /* 屋根（切妻・檜皮葺） */
+  const s0=q.hi?.22:q.md?.3:.45,nz=2*Math.max(4,Math.round(ZE/s0)),X0=-.55,X1=L+.55,nx=Math.max(2,Math.round((X1-X0)/s0));
+  const H=d=>YE1+RA*d+RB*d*d,sm=(a,b)=>{const m=Math.min(a,b),k=.5*ss(.3,1.6,m);if(k<1e-4)return m;const h=clamp(.5+.5*(b-a)/k,0,1);return lerp(b,a,h)-k*h*(1-h);};
+  const yR=(x,zz)=>H(sm(ZE-zz,zz+ZE));const NZ=lattice(321,64,64);const rcol=(x,zz)=>{const k=.6+.2*(NZ(x*.21+32,zz*.21+32)-.5);return[k,k*.99,k*.98];};
+  roofPatch(B.roof,X0,X1,nx,-ZE,ZE,nz,yR,(xc,zc)=>zc>0?((x,zz)=>[x,ZE-zz]):((x,zz)=>[-x,zz+ZE]),rcol);
+  for(const zs of[-1,1]){const at=(x,o,y)=>[x,y,zs*(ZE-o)];const N=Math.max(2,Math.ceil((X1-X0)/.3));
+    for(let i=0;i<N;i++){const xa=X0+(X1-X0)*i/N,xb=X0+(X1-X0)*(i+1)/N;
+      NK.face([at(xa,.05,YE0),at(xb,.05,YE0),at(xb,0,YE1),at(xa,0,YE1)],[[xa,0],[xb,0],[xb,1],[xa,1]],WHITE3,[0,-.15,zs]);
+      NK.face([at(xa,.36,YE0),at(xb,.36,YE0),at(xb,.05,YE0),at(xa,.05,YE0)],[[xa,.1],[xb,.1],[xb,1.2],[xa,1.2]],[1.05,1,.95],[0,-1,0]);}}
+  const gab=[];const hc=tint(rng,[.66,.55,.43],.03);
+  for(const sg of[-1,1]){const XG=sg>0?X1:X0,X=o=>XG+sg*o;const N=Math.max(8,Math.ceil(2*ZE/(q.lo?.3:.16)));const PF=[[0,0],[.12,.01],[.22,-.025],[.27,-.1],[.26,-.16],[.22,-.19],[0,-.19]];const rings=[];
+    for(let i=0;i<=N;i++){const zz=ZE-2*ZE*i/N,y0=yR(XG,zz);rings.push({z:zz,y0,pts:PF.map(p=>[X(p[0]),y0+p[1],zz])});}gab.push({sg,XG,rings});
+    for(let i=0;i<N;i++){const A=rings[i],Bq=rings[i+1];for(let k=0;k<PF.length-1;k++){const gb=k<2?B.roof:NK;const pa=A.pts[k],pb=A.pts[k+1],pc=Bq.pts[k+1],pd=Bq.pts[k];
+        gb.face([pa,pb,pc,pd],[[A.z,k*.1],[A.z,(k+1)*.1],[Bq.z,(k+1)*.1],[Bq.z,k*.1]],k<2?rcol(pa[0],pa[2]):WHITE3,[(pa[0]+pb[0])/2-X(.1),(pa[1]+pb[1])/2-(A.y0-.09),0]);}
+      const P=(r,o,dy)=>[X(o),r.y0-.19+dy,r.z],t0=.19,t1=.245,hh=.32;
+      w.face([P(A,t1,0),P(Bq,t1,0),P(Bq,t1,-hh),P(A,t1,-hh)],[[A.z*US,0],[Bq.z*US,0],[Bq.z*US,hh*VS],[A.z*US,hh*VS]],hc,[sg,0,0]);
+      w.face([P(A,t0,0),P(Bq,t0,0),P(Bq,t0,-hh),P(A,t0,-hh)],[[A.z*US,0],[Bq.z*US,0],[Bq.z*US,hh*VS],[A.z*US,hh*VS]],mul3(hc,.8),[-sg,0,0]);
+      w.face([P(A,t0,-hh),P(Bq,t0,-hh),P(Bq,t1,-hh),P(A,t1,-hh)],[[0,0],[.1,0],[.1,.05],[0,.05]],mul3(hc,.85),[0,-1,0]);}
+    for(const[r,hz]of[[rings[0],1],[rings[N],-1]])NK.face(r.pts,r.pts.map(p=>[p[0],p[1]]),WHITE3,[0,0,hz]);}
+  const yTop=yR(L/2,0);obox(NK,(s,y,t)=>[s,y,t],[L/2,yTop+.02,0],[L/2+.62,.14,.15],[.9,.86,.84],{us:1,vs:1/.32});obox(w,(s,y,t)=>[s,y,t],[L/2,yTop+.18,0],[L/2+.65,.03,.19],tint(rng,[.5,.42,.36],.03));
+  /* 垂木（一軒）・茅負・裏甲・化粧裏板 */
+  const rc=()=>tint(rng,[.66,.54,.43],.04),sc=[.54,.45,.37];
+  for(const zs of[-1,1]){const M=(s,y,t)=>[s,y-SLW*t,zs*(HW+t)];const Mf=(s,y,t)=>[s,y,zs*(HW+t)];
+    for(let x=X0+.15;x<X1-.1;x+=.27){obox(w,M,[x,KTW+.045,(-HW+1.38)/2],[.04,.045,(1.38+HW)/2],rc(),{uo:rng(),vo:rng()});
+      w.face([M(x-.135,KTW+.09,-HW),M(x+.135,KTW+.09,-HW),M(x+.135,KTW+.09,1.36),M(x-.135,KTW+.09,1.36)],[[x*.4,0],[x*.4+.1,0],[x*.4+.1,1],[x*.4,1]],sc,[0,-1,0]);}
+    obox(w,Mf,[L/2,KTW-SLW*1.31+.09+.05,1.31],[(X1-X0)/2,.05,.05],rc());obox(w,Mf,[L/2,YE0-.02,1.36],[(X1-X0)/2,.02,.1],rc());}
+  const root=new T.Group();root.name="MakuraWatadono";for(const k in B){const g=B[k].build();if(!g)continue;res.geo(g);const me=new T.Mesh(g,M0[k]);me.castShadow=me.receiveShadow=true;me.name="wata_"+k;root.add(me);}
+  /* 冬 */
+  const sn=new GB();const NS=lattice(402,64,64);const scol=(x,zz)=>{const c=.94+.06*NS(x*1.7+32,zz*1.7+32);return[c,c,c*1.015];};const th=(x,zz)=>(.1+.06*NS(x*.6+32,zz*.6+32))*(1-.3*ss(1.5,2.8,ZE-Math.abs(zz)));
+  roofPatch(sn,X0,X1,nx,-ZE,ZE,nz,(x,zz)=>yR(x,zz)+th(x,zz),()=>()=>[0,0],scol);
+  const PFs=[[0,1],[-.05,.78],[-.08,.36],[-.07,-.25],[-.03,-.5]];
+  for(const zs of[-1,1]){const N=Math.max(2,Math.ceil((X1-X0)/.2));const V=[];for(let i=0;i<=N;i++){const x=X0+(X1-X0)*i/N,t0=th(x,zs*ZE);V.push(PFs.map(p=>[x,YE1+(p[1]>0?t0*p[1]:p[1]*.12),zs*(ZE-p[0])]));}
+    for(let i=0;i<N;i++)for(let k=0;k<PFs.length-1;k++)sn.face([V[i][k],V[i+1][k],V[i+1][k+1],V[i][k+1]],[[0,0],[0,0],[0,0],[0,0]],scol(V[i][k][0],V[i][k][2]),[0,.6-k*.4,zs]);}
+  sn.cyl([X0-.5,yTop+.25,0],[X1+.5,yTop+.25,0],.12,.12,q.lo?8:12,{rings:[0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1],rf:t=>.8+.25*Math.abs(Math.sin(t*17)),col:[.97,.97,.99],cap0:true,cap1:true,us:0,vs:0});
+  for(const[a,b]of K.railTops||[]){const Lr=vlen(sub(b,a)),rings=[];const nr=Math.max(2,Math.ceil(Lr/.25));for(let i=0;i<=nr;i++)rings.push(i/nr);const ph=rng()*9;
+    sn.cyl([a[0],a[1]+.036,a[2]],[b[0],b[1]+.036,b[2]],.034,.034,7,{rings,rf:t=>.7+.45*Math.abs(Math.sin(t*Lr*2.3+ph)),col:[.96,.96,.98],cap0:true,cap1:true,us:0,vs:0});}
+  for(const g of K.gibos||[])sn.lathe([[.072,.13],[.074,.16],[.06,.2],[.036,.24],[.012,.28],[0,.3]],10,g[0],g[1],g[2],{col:[.97,.97,.99]});
+  for(const zs of[-1,1]){const N=Math.max(2,Math.ceil(L/.2));for(let i=0;i<N;i++){const xa=L*i/N,xb=L*(i+1)/N,h=.02+.025*Math.abs(Math.sin(xa*2.7+zs))+.02*Math.abs(Math.sin(xa*.9));const ze=zs*(EW-.15);
+      sn.prism([[ze,FLW],[ze,FLW+h],[ze-zs*.25,FLW+h*.4],[ze-zs*.6,FLW]],"x",xa,xb+.002,{col:[.95,.95,.97],us:0,vs:0});}}
+  const mS=new T.Mesh(res.geo(sn.build()),M0.snow);mS.castShadow=true;mS.receiveShadow=true;mS.name="wata_snow";mS.visible=false;root.add(mS);
+  const walk=[];for(let x=0;x<=L+1e-6;x+=.5)walk.push(new T.Vector3(Math.min(x,L),FLW,0));
+  let season="spring";
+  root.userData={anchors:{walkPath:walk},floorY:FLW,length:L,width:2*EW,
+    dims:{floorY:FLW,length:L,pillarZ:[-HW,HW],floorEdgeZ:[-EW,EW],eaveZ:[-ZE,ZE],eaveY:YE0,ridgeY:yTop,roofX:[X0,X1],pillarsX:xs.slice()},
+    setSeason(k){season=k;mS.visible=k==="winter";},setNight(v){},update(){},dispose(){res.dispose();}};
+  root.userData.setSeason(opts.season||"spring");return root;}
+
+/* ============================================================================ 築地 */
+function makeTsuiji(opts){opts=opts||{};const q=QL(opts),res=new Res(),rng=RNG(opts.seed||777);let pts=(opts.points&&opts.points.length>=2?opts.points:[[0,0],[20,0]]).map(p=>[+p[0],+p[1]]);
+  const Hw=(opts.height!=null?+opts.height:2.45)-.45,hb=(opts.thickness!=null?+opts.thickness:1.1)/2,ht=hb*.68,he=ht+.44,yE=Hw+.08,yRg=Hw+.5;
+  let closed=false;const f=pts[0],l=pts[pts.length-1];if(pts.length>2&&Math.hypot(f[0]-l[0],f[1]-l[1])<1e-3){closed=true;pts=pts.slice(0,-1);}
+  const n=pts.length,segN=closed?n:n-1;
+  const ET=res.sh("tsuiji"+(q.lo?256:512),()=>genTsuiji(q.lo?256:512)),KW=res.sh("kawara"+(q.lo?256:512),()=>genKawara(q.lo?256:512));
+  const mW=res.mat(new T.MeshStandardMaterial({map:ET.map,bumpMap:ET.data,bumpScale:.003,roughness:.97,vertexColors:true})),
+    mR=res.mat(new T.MeshStandardMaterial({map:KW.map,bumpMap:KW.data,bumpScale:.006,roughnessMap:KW.data,roughness:1,metalness:.05,vertexColors:true})),
+    mS=res.mat(new T.MeshStandardMaterial({color:C(0xf3f6fa),roughness:.8,vertexColors:true}));
+  const nrm=i=>{const a=pts[i],b=pts[(i+1)%n];const L=Math.hypot(b[0]-a[0],b[1]-a[1])||1;return[-(b[1]-a[1])/L,(b[0]-a[0])/L];};
+  const mit=i=>{if(!closed&&(i===0||i===n-1))return nrm(i===0?0:n-2);const a=nrm((i-1+n)%n),b=nrm(i%n);const d=1+a[0]*b[0]+a[1]*b[1];return[(a[0]+b[0])/d,(a[1]+b[1])/d];};
+  const M=pts.map((p,i)=>mit(i));const gw=new GB(),gr=new GB(),gs=new GB();const NZ=lattice(331,64,64);
+  const wcol=(x,y,z)=>{const k=(.9+.18*(NZ(x*.13+32,z*.13+32)-.5))*(.72+.28*ss(0,.5,y))*(1-.18*ss(Hw-.4,Hw,y));return[k,k*.99,k*.97];};
+  let acc=0;
+  for(let si=0;si<segN;si++){const i0=si,i1=(si+1)%n;const A=pts[i0],Bp=pts[i1],mA=M[i0],mB=M[i1];const L=Math.hypot(Bp[0]-A[0],Bp[1]-A[1]);const ns=Math.max(1,Math.ceil(L/2.5));
+    const P=(t,d,y)=>{const ax=A[0]+mA[0]*d,az=A[1]+mA[1]*d,bx=Bp[0]+mB[0]*d,bz=Bp[1]+mB[1]*d;return[lerp(ax,bx,t),y,lerp(az,bz,t)];};
+    const no=nrm(si);
+    for(let k=0;k<ns;k++){const ta=k/ns,tb=(k+1)/ns,ua=(acc+L*ta)/4,ub=(acc+L*tb)/4;
+      for(const sd of[1,-1]){const ys=[0,.45,Hw-.35,Hw];for(let j=0;j<3;j++){const y0=ys[j],y1=ys[j+1],d0=sd*lerp(hb,ht,y0/Hw),d1=sd*lerp(hb,ht,y1/Hw);
+          const p=[P(ta,d0,y0),P(tb,d0,y0),P(tb,d1,y1),P(ta,d1,y1)];gw.face(p,[[ua,1-y0/Hw],[ub,1-y0/Hw],[ub,1-y1/Hw],[ua,1-y1/Hw]].map(u=>[sd>0?u[0]:-u[0],1-u[1]]),p.map(v=>wcol(v[0],v[1],v[2])),[no[0]*sd,.2,no[1]*sd]);}
+        /* 笠（本瓦） */
+        const r=[P(ta,sd*he,yE),P(tb,sd*he,yE),P(tb,0,yRg),P(ta,0,yRg)];const sl=Math.hypot(he,yRg-yE)/.6;
+        gr.face(r,[[ua*4/1.2*(sd>0?1:-1),0],[ub*4/1.2*(sd>0?1:-1),0],[ub*4/1.2*(sd>0?1:-1),sl],[ua*4/1.2*(sd>0?1:-1),sl]],[[.95,.95,.95],[.95,.95,.95],[1,1,1],[1,1,1]],[no[0]*sd,1,no[1]*sd]);
+        gr.face([P(ta,sd*ht,Hw),P(tb,sd*ht,Hw),P(tb,sd*he,yE-.1),P(ta,sd*he,yE-.1)],[[0,0],[.1,0],[.1,.1],[0,.1]],[.35,.33,.3],[0,-1,0]);
+        gr.face([P(ta,sd*he,yE-.1),P(tb,sd*he,yE-.1),P(tb,sd*he,yE),P(ta,sd*he,yE)],[[0,0],[.1,0],[.1,.02],[0,.02]],[.5,.5,.52],[no[0]*sd,0,no[1]*sd]);
+        const t0=.07+.04*NZ(ua*3+32,sd*5+32);gs.face([P(ta,sd*(he+.03),yE+t0*.4),P(tb,sd*(he+.03),yE+t0*.4),P(tb,0,yRg+t0+.12),P(ta,0,yRg+t0+.12)],[[0,0],[0,0],[0,0],[0,0]],[.96,.96,.98],[no[0]*sd,1,no[1]*sd]);}
+      /* 棟（熨斗瓦） */
+      const c0=P(ta,0,yRg),c1=P(tb,0,yRg),dl=[c1[0]-c0[0],c1[2]-c0[2]],ll=Math.hypot(dl[0],dl[1])||1;const Mr=(s,y,t)=>[c0[0]+dl[0]/ll*s-dl[1]/ll*t,y,c0[2]+dl[1]/ll*s+dl[0]/ll*t];
+      obox(gr,Mr,[ll/2,yRg+.06,0],[ll/2+.01,.09,.11],[.55,.56,.6],{us:1,vs:1});obox(gs,Mr,[ll/2,yRg+.19,0],[ll/2+.01,.05,.12],[.96,.96,.98],{us:0,vs:0});}
+    acc+=L;}
+  if(!closed)for(const[i,sg]of[[0,-1],[n-1,1]]){const p=pts[i],no=nrm(i===0?0:n-2),dir=[no[1],-no[0]];const ex=(d,y)=>[p[0]+no[0]*d,y,p[1]+no[1]*d];
+    gw.face([ex(-hb,0),ex(hb,0),ex(ht,Hw),ex(-ht,Hw)],[[0,0],[.25,0],[.2,.85],[0,.85]],[.85,.84,.82],[-dir[0]*sg,0,-dir[1]*sg]);
+    gr.face([ex(-he,yE),ex(he,yE),ex(0,yRg)],[[0,0],[1,0],[.5,.5]],[.6,.6,.62],[-dir[0]*sg,0,-dir[1]*sg]);}
+  const g=new T.Group();g.name="MakuraTsuiji";const mk=(b,m,v)=>{const me=new T.Mesh(res.geo(b.build()),m);me.castShadow=me.receiveShadow=true;me.visible=v;g.add(me);return me;};
+  mk(gw,mW,true);mk(gr,mR,true);const snow=mk(gs,mS,false);
+  g.userData={dims:{height:yRg+.25,wallTop:Hw,baseHalfWidth:hb,topHalfWidth:ht,closed},setSeason(k){snow.visible=k==="winter";},setNight(){},update(){},dispose(){res.dispose();}};
+  g.userData.setSeason(opts.season||"spring");return g;}
+
 /* internal: texture preview for tuning (not part of the scene API) */
 function _tex(name,size){const f={wood:()=>genWood(size||512),roof:()=>genRoof(size||512),bamboo:()=>genBamboo(size||512),stone:()=>genStone(size||256),tatami:genTatami,earth:()=>genEarth(size||512),
-  ajiro:()=>genAjiro(size||512),shoji:genShoji,kana:()=>{const c=genCalligraphy(1024,832);const p=genPaper(1024,832);p.getContext('2d').drawImage(c.ink,0,0);return{c:p};},amida:genAmida,books:genBooks,enza:genEnza,clay:genClay,leaf:genLeaf}[name];if(!f)return null;const v=f();const o={};
+  ajiro:()=>genAjiro(size||512),shoji:genShoji,kana:()=>{const c=genCalligraphy(1024,832);const p=genPaper(1024,832);p.getContext('2d').drawImage(c.ink,0,0);return{c:p};},amida:genAmida,books:genBooks,enza:genEnza,clay:genClay,leaf:genLeaf,hiwada:()=>genHiwada(size||512),noki:()=>genNoki(size||512),misu:genMisu,mokou:genMokou,tsuiji:()=>genTsuiji(size||512),kawara:()=>genKawara(size||512)}[name];if(!f)return null;const v=f();const o={};
   if(v.isTexture)o.map=v.image;else{if(v.map)o.map=v.map.image;if(v.data)o.data=v.data.image;if(v.c)o.map=v.c;}return o;}
-return{makeAn,makeFuzukue,makeToudai,makeEnza,makeKyousoku,makeShibagaki,makeAkadana,makeKyoudai,_tex};
+return{makeAn,makeFuzukue,makeToudai,makeEnza,makeKyousoku,makeShibagaki,makeAkadana,makeKyoudai,makeDensha,makeWatadono,makeTsuiji,_tex};
 })();
 /* APP_TSUREZURE_AN_EMBED_END */
 /* APP_TSUREZURE_NATURE_EMBED_BEGIN (src/app/tsurezure-nature.js から自動生成。ここを直接編集しない) */
@@ -35752,7 +36356,7 @@ const SAIGEN_MAKURA=(()=>{
      築地: 東 x=30、南 z=46、西 x=-46、北 z=-34。その外に松の木立、遠くに東山・西山・北山。 */
   const MIYA={
     densha:[0,0,0],
-    watadono:{from:[1.6,-8.4],to:[15.6,-8.4]},
+    watadono:{from:[0,-8.4],to:[15.6,-8.4]},
     stream:[[23,-30],[19.5,-20],[15.2,-12.5],[12.6,-7.6],[10.4,-2.4],[8.2,3.2],[5.6,8.4],[1.6,12.6],[-3.6,16.2],[-8.4,19.4]],
     pond:{c:[-14,24.5],r:[10.5,6.8]},
     island:{c:[-16.5,26.2],r:2.6},
@@ -35780,7 +36384,7 @@ const SAIGEN_MAKURA=(()=>{
     if(f<1.35){const u=clamp01((1.35-f)/.55);h=lerp(h,-.9,u*u*(3-2*u));
       const I=MIYA.island,di=Math.hypot(x-I.c[0],z-I.c[1])/I.r;if(di<1.6)h=lerp(h,.35,ease(clamp01((1.6-di)/.9)));}
     // 殿舎・渡殿の下と前は平らに
-    if(x>-16&&x<17&&z>-11&&z<6.2){const w=clamp01(Math.min(x+16,17-x,z+11,6.2-z)/1.5);h*=1-w;}
+    if(x>-17&&x<17&&z>-17&&z<6.2){const w=clamp01(Math.min(x+17,17-x,z+17,6.2-z)/1.5);h*=1-w;}
     return h;
   }
 
@@ -35845,7 +36449,7 @@ const SAIGEN_MAKURA=(()=>{
     pond.position.set(P.c[0],POND_Y,P.c[1]);z.add(own(track("miya",pond)));S.assets.pond=pond;
     // 前栽(遣水のほとりの草。殿舎の前の白砂・流れ・池・渡殿の下には生やさない)
     const grass=safeMake("miya-grass",()=>M.FLO&&M.FLO.makeGrassField?M.FLO.makeGrassField({width:96,depth:92,center:[-6,4],focus:[4,4],heightAt:hMiya,season:"spring",dew:true,quality:down(q),
-      mask:(x,zz)=>{const sd=MIYA.sand;if(x>-16&&x<3.4&&zz>-9.6&&zz<.4)return 0;if(x>sd.x0-.4&&x<sd.x1+.4&&zz>sd.z0-.4&&zz<sd.z1+.4)return 0;
+      mask:(x,zz)=>{const sd=MIYA.sand;if(x>-16.5&&x<3.4&&zz>-16&&zz<.4)return 0;if(x>sd.x0-.4&&x<sd.x1+.4&&zz>sd.z0-.4&&zz<sd.z1+.4)return 0;
         if(x>0&&x<17&&zz>-10.4&&zz<-6.4)return .2;
         const d=polyDist(MIYA.stream,x,zz);if(d<.95)return 0;const pf=pondField(x,zz);
         const I=MIYA.island,di=Math.hypot(x-I.c[0],zz-I.c[1])/I.r;if(di<1)return .7;if(pf<1.12)return 0;

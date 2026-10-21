@@ -167,7 +167,7 @@ const SAIGEN_MAKURA=(()=>{
      築地: 東 x=30、南 z=46、西 x=-46、北 z=-34。その外に松の木立、遠くに東山・西山・北山。 */
   const MIYA={
     densha:[0,0,0],
-    watadono:{from:[1.6,-8.4],to:[15.6,-8.4]},
+    watadono:{from:[0,-8.4],to:[15.6,-8.4]},
     stream:[[23,-30],[19.5,-20],[15.2,-12.5],[12.6,-7.6],[10.4,-2.4],[8.2,3.2],[5.6,8.4],[1.6,12.6],[-3.6,16.2],[-8.4,19.4]],
     pond:{c:[-14,24.5],r:[10.5,6.8]},
     island:{c:[-16.5,26.2],r:2.6},
@@ -195,7 +195,7 @@ const SAIGEN_MAKURA=(()=>{
     if(f<1.35){const u=clamp01((1.35-f)/.55);h=lerp(h,-.9,u*u*(3-2*u));
       const I=MIYA.island,di=Math.hypot(x-I.c[0],z-I.c[1])/I.r;if(di<1.6)h=lerp(h,.35,ease(clamp01((1.6-di)/.9)));}
     // 殿舎・渡殿の下と前は平らに
-    if(x>-16&&x<17&&z>-11&&z<6.2){const w=clamp01(Math.min(x+16,17-x,z+11,6.2-z)/1.5);h*=1-w;}
+    if(x>-17&&x<17&&z>-17&&z<6.2){const w=clamp01(Math.min(x+17,17-x,z+17,6.2-z)/1.5);h*=1-w;}
     return h;
   }
 
@@ -260,7 +260,7 @@ const SAIGEN_MAKURA=(()=>{
     pond.position.set(P.c[0],POND_Y,P.c[1]);z.add(own(track("miya",pond)));S.assets.pond=pond;
     // 前栽(遣水のほとりの草。殿舎の前の白砂・流れ・池・渡殿の下には生やさない)
     const grass=safeMake("miya-grass",()=>M.FLO&&M.FLO.makeGrassField?M.FLO.makeGrassField({width:96,depth:92,center:[-6,4],focus:[4,4],heightAt:hMiya,season:"spring",dew:true,quality:down(q),
-      mask:(x,zz)=>{const sd=MIYA.sand;if(x>-16&&x<3.4&&zz>-9.6&&zz<.4)return 0;if(x>sd.x0-.4&&x<sd.x1+.4&&zz>sd.z0-.4&&zz<sd.z1+.4)return 0;
+      mask:(x,zz)=>{const sd=MIYA.sand;if(x>-16.5&&x<3.4&&zz>-16&&zz<.4)return 0;if(x>sd.x0-.4&&x<sd.x1+.4&&zz>sd.z0-.4&&zz<sd.z1+.4)return 0;
         if(x>0&&x<17&&zz>-10.4&&zz<-6.4)return .2;
         const d=polyDist(MIYA.stream,x,zz);if(d<.95)return 0;const pf=pondField(x,zz);
         const I=MIYA.island,di=Math.hypot(x-I.c[0],zz-I.c[1])/I.r;if(di<1)return .7;if(pf<1.12)return 0;
