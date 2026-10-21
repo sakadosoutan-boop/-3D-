@@ -35859,7 +35859,7 @@ const SAIGEN_MAKURA=(()=>{
     // 木々: 階の脇の桜、池の汀の松、遣水の楓、萩。築地の外の木立
     const Tr=(label,fn,x,zz,rot)=>{const t=safeMake(label,fn,()=>{const g=fbGroup(label);const b=fbBox(.3,4,.3,0x4a3a2a);b.position.y=2;g.add(b);return g;});
       t.position.set(x,hMiya(x,zz),zz);if(rot)t.rotation.y=rot;z.add(own(track("miya",t)));(S.assets.trees||(S.assets.trees=[])).push(t);return t;};
-    S.assets.cherry=Tr("miya-cherry",()=>M.TRE&&M.TRE.makeCherry?M.TRE.makeCherry({height:6.2,seed:301,quality:down(q)}):null,5.4,4.6,.6);
+    S.assets.cherry=Tr("miya-cherry",()=>M.TRE&&M.TRE.makeCherry?M.TRE.makeCherry({height:6.2,seed:301,quality:down(q)}):null,7.2,8.6,.6); // 開幕の庭からの構図の脇に
     Tr("miya-pine1",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:7.2,lean:.35,seed:302,quality:down(q)}):null,-9.6,15.6,2.4);
     Tr("miya-pine2",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:6.0,lean:.22,seed:303,quality:"low"}):null,-24.5,21,1.2);
     Tr("miya-pine3",()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:4.6,lean:.4,seed:308,quality:"low"}):null,MIYA.island.c[0]+.4,MIYA.island.c[1]-.3,.7);
@@ -35886,7 +35886,7 @@ const SAIGEN_MAKURA=(()=>{
     const lamp=safeMake("miya-lamp",()=>M.AN&&M.AN.makeToudai?M.AN.makeToudai({quality:q}):null,()=>{const g=fbGroup("lamp");const b=fbBox(.05,.8,.05,0x111111);b.position.y=.4;g.add(b);const f=new THREE.Object3D();f.position.y=.86;g.add(f);g.userData.flame=f;return g;});
     const la=anchorPos("lamp",[-2.6,1.26,-3.2]);lamp.position.copy(la.pos);lamp.visible=false;z.add(own(track("miya",lamp)));S.assets.lamp=lamp;
     const kichou=safeMake("miya-kichou",()=>M.PRO&&M.PRO.makeKichou?M.PRO.makeKichou({size:"4shaku",season:"spring",quality:down(q)}):null,()=>{const g=fbGroup("kichou");const b=fbBox(1.4,1.5,.04,0xb06070);b.position.y=.75;g.add(b);return g;});
-    const ka=anchorPos("kichou",[-3.4,1.26,-3.0]);kichou.position.copy(ka.pos);kichou.rotation.y=ka.rotY;z.add(own(track("miya",kichou)));S.assets.kichou=kichou;
+    const ka=anchorPos("kichou",[-3.4,1.26,-3.0]);kichou.position.copy(ka.pos);kichou.rotation.y=ka.rotY;if(kichou.userData.fallback)kichou.visible=false; // 仮の箱は出さないz.add(own(track("miya",kichou)));S.assets.kichou=kichou;
     // 季節の粒子(花びら・紅葉)
     const Pa=(kind,cx,cz)=>{const p=safeMake("miya-"+kind,()=>M.TRE&&M.TRE.makeFallingParticles?M.TRE.makeFallingParticles({kind,width:24,height:10,depth:20,quality:down(q)}):null,()=>fbGroup(kind));
       p.position.set(cx,0,cz);p.visible=false;if(p.userData&&p.userData.setActive)p.userData.setActive(false);z.add(own(track("miya",p)));return p;};
