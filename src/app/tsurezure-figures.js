@@ -1557,16 +1557,16 @@ function makeMago(opts){opts=opts||{};const R=Res();const q=opts.quality||"high"
 //  襲の色目は uniform（uNyG/uNyF/uNyP）だけで決まるので、setKasane(key) は形を作り直さない。
 // =====================================================================================
 const NY_HS=.93,NY_ARM=[.262,.222];
-const NYOBO_HEAD={seed:61,age:25,smile:.55,fem:1,lipU:.0042,lipL:.0056,lipUvol:.0020,lipLvol:.0027,mouthW:.0196,
+const NYOBO_HEAD={anime:true,irisC:[0x2a1712,0x8a5a3a],seed:61,age:25,smile:.55,fem:1,lipU:.0042,lipL:.0056,lipUvol:.0020,lipLvol:.0027,mouthW:.0196,
   scalp:"fem",hairC:0x15100d,beard:"none",whiskers:0,wrinkles:0,spots:0,
-  skin:0xe8bf9f,skinRed:0xdc9a82,skinLight:0xf2d5be,lip:0xb94a55,lipColL:0xc4565f,blush:.50,blushC:0xe2907f,noseRed:.35,
+  skin:0xfadccb,skinRed:0xf2b4a2,skinLight:0xf2d5be,lip:0xb94a55,lipColL:0xc4565f,blush:.50,blushC:0xe2907f,noseRed:.35,
   iris:[62,40,28],irisR:.17,pupilR:.058,sclera:[228,222,214],catchlight:true,
   eyeW:.0156,eyeOpenU:.0056,eyeOpenL:.0031,eyeTilt:.09,hood:.75,lash:1.15,
   browY:-.0012,browDrop:.0065,brow:0x2b211c,browHairs:220,browW:1.35,browAmt:.7,softBrow:.7,
   cran:[.95,.99,.975],taper:.21,faceW:.87,egg:.88,zygK:.90,jaw:.78,nose:.86,browK:.62,cheekFat:0,cheekK:.66,cheekHi:.8,muzK:.70,nlK:.35,foreK:1.03,ramK:.80,eyeR:.0121,earL:.92,noEars:true,neckR:1.02,
   nlfAmt:.3,underEyeAmt:.45,creaseAmt:.65,poreAmt:.55,lipLines:.35,lidAmt:.9,lidC:0xa8786a,rough:.42,gazePitch:0};
 // hair frame (head-local): the face is open in front of zF(y) and below the hairline yF(x) (centre parting, high forehead)
-function nyHairFrame(){return{zF:y=>.033+.011*sstep(-.07,.03,y)-.006*sstep(.05,.09,y),yF:x=>{const t=Math.min(1,ab(x)/.068);return .096-.066*Math.pow(t,1.4);}};}
+function nyHairFrame(){return{zF:y=>.033+.011*sstep(-.07,.03,y)-.006*sstep(.05,.09,y),yF:x=>{const t=Math.min(1,ab(x)/.066);return .083-.052*Math.pow(t,1.3);}};}
 const NY_HF=nyHairFrame();
 function nyHairline(x,y,z){return mx(NY_HF.zF(y)-z,y-NY_HF.yF(x));}// >0 under the hair (headPainter scalp:"fem")
 // 襲の色目 [地, 文様]: kara 唐衣 / kura 唐衣の裏(返し襟) / uwa 表着 / uchi 打衣 / itsu 五衣(外→内) / hitoe 単 / haka 袴 / mo 裳 ; uk 袿(外→内)×3 / uh 袿姿の単
@@ -1845,6 +1845,115 @@ function nyFanClosed(R,q){// closed hi-ougi: pivot at the origin, extends along 
     const tg=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),q==="low"?16:28,.0022,q==="low"?4:6,false);const c=lin(cols[i]);const a=new Float32Array(tg.attributes.position.count*3);for(let j=0;j<a.length/3;j++)a.set(c,j*3);tg.setAttribute("color",new THREE.BufferAttribute(a,3));tubes.push(tg);}
   const cords=new THREE.Mesh(mergeGeoms(R,tubes),R.add(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6,metalness:0})));cords.castShadow=true;cords.receiveShadow=true;g.add(cords);
   return g;}
+// ---- stylized (game / anime-like) head for the nyobo: soft egg face, tiny nose, big procedural eyes (gaze & blink by uniforms),
+//      warm soft "half-lambert" face shading. head-local frame as buildHead (origin between the ears, +Z face, metres).
+const NY_FACE={eyeX:.0305,eyeY:.0035,eyeZ:.0,ew:.0215,eh:.0182};
+function nyAnimeHeadSDF(P){const cr=P.cran||[1,1,1],co=P.cranOff||[0,0,0];
+  const cE=(c,r)=>sEll([c[0]*cr[0]+co[0],c[1]*cr[1]+co[1],c[2]*cr[2]+co[2]],[r[0]*cr[0],r[1]*cr[1],r[2]*cr[2]]);
+  const cran=U([K(cE([0,.044,-.010],[.0765,.084,.095]),0),K(cE([0,.040,.030],[.064,.070,.066]),.035),K(cE([0,.020,-.045],[.068,.064,.058]),.035)]);
+  const face=U([K(sEll([0,-.002,.040],[.062,.062,.058]),0),K(sEll([.031,-.019,.066],[.026,.024,.022]),.03),K(sEll([-.031,-.019,.066],[.026,.024,.022]),.03),
+    K(sEll([0,-.040,.066],[.024,.020,.022]),.03),K(sEll([0,-.060,.064],[.014,.011,.013]),.035)]);
+  const nose=U([K(sCone([0,.008,.093],[0,-.010,.0995],.0032,.0040),0),K(sSphere([0,-.0118,.0975],.0045),.004)]);
+  const neck=K(sCone([0,-.040,-.016],[0,-.170,-.008],.0405,.044),0);
+  let F=U([cran,K(face,.035),K(nose,.006),K(neck,.03)]);
+  // lips: a whisper of volume; mouth corners tucked in
+  F=U([F,K(sEll([0,-.0402,.0885],[.0080,.0026,.0030]),.004),K(sEll([0,-.0442,.0878],[.0070,.0030,.0032]),.004)]);
+  // chin taper (x shrinks toward the chin) -> small pointed chin, no jaw angle
+  const F0=F.f,sx=y=>1-.30*Math.pow(clamp((.000-y)/.068,0,1),1.2);
+  F={f:(x,y,z)=>{const s=sx(y);return F0(x/s,y,z)*s;},bs:F.bs};
+  return{F,sx};}
+// detail texture (multiplicative, planar x,y like faceTextures): blush, brows, nose tick, small smiling mouth with beni, double-lid line
+function nyAnimeFaceTex(R,P){const S=1024,X=x=>(x-FX0)/(FX1-FX0)*S,Y=y=>(FY1-y)/(FY1-FY0)*S,PX=S/(FX1-FX0);const E=NY_FACE;
+  return canvasTex(R,S,S,g=>{g.fillStyle="#fff";g.fillRect(0,0,S,S);
+    const blob=(x,y,rx,ry,col,al)=>{g.save();g.translate(X(x),Y(y));g.scale(rx*PX,ry*PX);const gr=g.createRadialGradient(0,0,0,0,0,1);gr.addColorStop(0,col);gr.addColorStop(1,"rgba(255,255,255,0)");g.globalAlpha=al;g.fillStyle=gr;g.beginPath();g.arc(0,0,1,0,7);g.fill();g.restore();g.globalAlpha=1;};
+    for(const s of[-1,1]){blob(s*.040,-.016,.022,.014,"rgb(244,165,162)",.85);blob(s*.040,-.015,.012,.007,"rgb(240,145,145)",.40);}
+    blob(0,-.012,.006,.004,"rgb(246,186,176)",.35);
+    // brows: thin soft arcs, a little high
+    for(const s of[-1,1]){g.save();g.lineCap="round";for(let k=2;k>=0;k--){g.strokeStyle="rgb(120,92,82)";g.globalAlpha=k?.10:.62;g.lineWidth=(.0011+k*.0012)*PX;g.beginPath();
+        for(let i=0;i<=24;i++){const t=i/24;const x=s*(.0125+.034*t),y=E.eyeY+.0262+.0055*Math.sin(PI*Math.min(1,t*1.15))-.004*t*t;const w=1;if(i)g.lineTo(X(x),Y(y));else g.moveTo(X(x),Y(y));}g.stroke();}g.restore();}
+    // nose: a tiny warm tick under the tip, no bridge shading
+    g.save();g.strokeStyle="rgb(214,150,138)";g.globalAlpha=.55;g.lineCap="round";g.lineWidth=.0011*PX;g.beginPath();g.moveTo(X(-.0033),Y(-.0156));g.quadraticCurveTo(X(0),Y(-.0168),X(.0028),Y(-.0158));g.stroke();g.restore();
+    // mouth: small smile line + beni on the lower lip centre
+    const my=-.0420,mw=.0095;
+    blob(0,my-.0028,.0058,.0026,"rgb(204,70,86)",.95);blob(0,my+.0012,.0052,.0017,"rgb(200,90,100)",.55);
+    g.save();g.strokeStyle="rgb(150,70,72)";g.lineCap="round";g.globalAlpha=.85;g.lineWidth=.0010*PX;g.beginPath();
+    for(let i=0;i<=20;i++){const t=i/20*2-1;const x=t*mw,y=my+.0016*t*t-.0004;if(i)g.lineTo(X(x),Y(y));else g.moveTo(X(x),Y(y));}g.stroke();
+    g.globalAlpha=.35;for(const s of[-1,1]){g.beginPath();g.moveTo(X(s*mw*.92),Y(my+.0012));g.lineTo(X(s*(mw+.0016)),Y(my+.0024));g.stroke();}g.restore();
+  },{clamp:true});}
+function nyFaceMat(R,map,skin){const uni={uShade:{value:new THREE.Color().setRGB(...mulc(lin(0xd88a7c),1))},uRim:{value:.18}};
+  const m=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,map,roughness:.62,metalness:0});
+  m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,uni);
+    sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nattribute float frontW;varying float vFrontW;").replace("#include <begin_vertex>","#include <begin_vertex>\nvFrontW=frontW;");
+    sh.fragmentShader=sh.fragmentShader.replace("#include <common>","#include <common>\nvarying float vFrontW;uniform vec3 uShade;uniform float uRim;")
+      .replace("#include <map_fragment>","#ifdef USE_MAP\n vec4 texelColor=mapTexelToLinear(texture2D(map,vUv));\n diffuseColor.rgb*=mix(vec3(1.0),texelColor.rgb,vFrontW);\n#endif")
+      .replace("#include <lights_physical_pars_fragment>",`#include <lights_physical_pars_fragment>
+void RE_Direct_NyFace(const in IncidentLight directLight,const in GeometricContext geometry,const in PhysicalMaterial material,inout ReflectedLight reflectedLight){
+  float ndl=dot(geometry.normal,directLight.direction);float w=smoothstep(-0.35,0.65,ndl);
+  vec3 tint=mix(uShade,vec3(1.0),smoothstep(-0.2,0.5,ndl));
+  reflectedLight.directDiffuse+=directLight.color*(0.25+0.75*w)*tint*material.diffuseColor;
+  vec3 H=normalize(directLight.direction+geometry.viewDir);reflectedLight.directSpecular+=directLight.color*0.035*pow(max(dot(geometry.normal,H),0.0),24.0)*w;
+}
+#undef RE_Direct
+#define RE_Direct RE_Direct_NyFace`)
+      .replace("#include <aomap_fragment>","#include <aomap_fragment>\n{float r=pow(1.0-max(dot(normalize(vNormal),normalize(vViewPosition)),0.0),3.0);reflectedLight.indirectDiffuse+=diffuseColor.rgb*r*uRim;}");};
+  m.customProgramCacheKey=()=>"nyFace1";R.add(m);return m;}
+// procedural eye drawn on a patch that hugs the face: sclera, vertical iris (gaze offset), pupil, 2 highlights, thick upper lash with a flick,
+// lower lash, double-lid line; uBlink closes the lid from the top (skin colour), the lash line follows.
+function nyEyeMat(R,skin,iris){const uni={uGaze:{value:new THREE.Vector2(0,0)},uBlink:{value:0},uSkin:{value:new THREE.Color().setRGB(...skin)},uIrisA:{value:new THREE.Color().setRGB(...lin(iris[0]))},uIrisB:{value:new THREE.Color().setRGB(...lin(iris[1]))}};
+  const m=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.35,metalness:0,transparent:true,depthWrite:false});m.extensions={derivatives:true};
+  m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,uni);
+    sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nattribute vec2 eyeP;attribute float eyeS;varying vec2 vEyeP;varying float vEyeS;").replace("#include <begin_vertex>","#include <begin_vertex>\nvEyeP=eyeP;vEyeS=eyeS;");
+    sh.fragmentShader=sh.fragmentShader.replace("#include <common>",`#include <common>
+varying vec2 vEyeP;varying float vEyeS;uniform vec2 uGaze;uniform float uBlink;uniform vec3 uSkin;uniform vec3 uIrisA;uniform vec3 uIrisB;
+float nyUp(float x){return 0.80*pow(max(0.0,1.0-pow(abs(x-0.06)/1.0,2.0)),0.62)-0.10+0.16*x;}
+float nyLo(float x){return -0.62*pow(max(0.0,1.0-pow(abs(x+0.03)/0.98,2.0)),0.75)+0.02+0.05*x;}`)
+      .replace("#include <map_fragment>",`{vec2 p=vEyeP;float fw=max(fwidth(p.y),0.004);
+ float yu=nyUp(p.x),yl=nyLo(p.x);float yb=mix(yu,yl,uBlink*0.98);
+ float inside=smoothstep(-fw,fw,p.y-yl)*smoothstep(-fw,fw,yb-p.y)*smoothstep(1.0+fw,1.0-fw,abs(p.x));
+ vec3 col=vec3(0.97,0.95,0.93);col*=mix(0.72,1.0,smoothstep(0.0,0.42,yu-p.y));col=mix(col,vec3(0.86,0.88,0.95),0.25*smoothstep(0.3,0.0,yu-p.y));
+ vec2 c=vec2(-0.02,-0.02)+vec2(uGaze.x*vEyeS,uGaze.y);vec2 q=(p-c)/vec2(0.46,0.66);float r=length(q);
+ float ir=smoothstep(1.0+fw*2.5,1.0-fw*2.5,r);
+ vec3 ic=mix(uIrisB,uIrisA,smoothstep(-0.7,0.6,q.y));ic=mix(ic,uIrisA*0.45,smoothstep(0.72,1.0,r));
+ float pu=smoothstep(0.45+fw*3.0,0.45-fw*3.0,length(q/vec2(1.0,1.15)));ic=mix(ic,vec3(0.025,0.018,0.016),pu);
+ ic+=vec3(0.22,0.16,0.12)*smoothstep(0.2,-0.7,q.y)*(1.0-pu)*smoothstep(0.95,0.5,r);
+ col=mix(col,ic,ir);
+ float h1=smoothstep(0.17,0.12,length((p-c-vec2(-0.15,0.27))/vec2(1.0,1.25)));float h2=smoothstep(0.075,0.05,length(p-c-vec2(0.17,-0.30)));
+ col=mix(col,vec3(1.0),max(h1,h2*0.85)*ir);
+ float a=inside;
+ // closed part of the lid: skin
+ float lid=smoothstep(-fw,fw,p.y-yb)*smoothstep(-fw,fw,yu+0.02-p.y)*smoothstep(1.0+fw,1.0-fw,abs(p.x));col=mix(col,uSkin,lid);a=max(a,lid);
+ // upper lash: thick dark band on the lid edge (thicker toward the outer corner) + flick
+ float lt=0.13+0.12*smoothstep(-0.6,0.9,p.x);float dl=p.y-yb;float lash=smoothstep(-fw,fw,dl+0.03)*smoothstep(lt+fw,lt-fw,dl)*smoothstep(1.06,0.9,abs(p.x-0.04));
+ vec2 f0=vec2(0.84,nyUp(0.84)),f1=vec2(1.20,nyUp(0.84)+0.26-0.20*uBlink);vec2 fd=f1-f0;float ft=clamp(dot(p-f0,fd)/dot(fd,fd),0.0,1.0);float fl=smoothstep(0.075*(1.0-ft)+fw,0.075*(1.0-ft)-fw+0.005,length(p-f0-fd*ft));
+ lash=max(lash,fl);
+ float ll=smoothstep(0.045+fw,0.045-fw,abs(p.y-yl+0.02))*smoothstep(-0.3,0.4,p.x)*smoothstep(1.0,0.85,p.x)*0.75;
+ float dbl=smoothstep(0.03+fw,0.03-fw,abs(p.y-(yu+0.24+0.04*p.x)))*smoothstep(-0.55,-0.2,p.x)*smoothstep(1.0,0.75,p.x)*0.55*(1.0-uBlink*0.5);
+ col=mix(col,vec3(0.07,0.045,0.04),lash);col=mix(col,vec3(0.25,0.15,0.13),ll);col=mix(col,vec3(0.55,0.36,0.32),dbl*(1.0-lash));
+ a=max(a,max(lash,max(ll,dbl)));
+ diffuseColor=vec4(col,a);}`)
+      .replace("#include <emissivemap_fragment>","#include <emissivemap_fragment>\ntotalEmissiveRadiance+=diffuseColor.rgb*0.22;");};
+  m.customProgramCacheKey=()=>"nyEye1";R.add(m);m.userData.uni=uni;return m;}
+function nyAnimeHead(R,P,q){const A=nyAnimeHeadSDF(P);const h=P.polyH||(q==="low"?.0050:q==="medium"?.0040:.0032);
+  const key="nyAhead|"+JSON.stringify(P)+"|"+q;let poly=GEO_CACHE.get(key);
+  const skin=lin(P.skin||0xf3d6c6),skinR=lin(P.skinRed||0xf0b8a8);
+  if(!poly){poly=polygonize(A.F.f,[-.105,-.180,-.115],[.105,.140,.130],h,{levels:3,lip:1.2,seedS:4,normals:"grid"});
+    const n=poly.n,pp=poly.pos,nn=poly.nrm;const fw=new Float32Array(n),uv=new Float32Array(n*2);
+    for(let v=0;v<n;v++){const x=pp[v*3],y=pp[v*3+1],z=pp[v*3+2],nz=nn[v*3+2];fw[v]=sstep(.10,.40,nz)*sstep(.025,.050,z)*sstep(.080,.066,ab(x))*sstep(-.115,-.100,y);uv[v*2]=(x-FX0)/(FX1-FX0);uv[v*2+1]=(y-FY0)/(FY1-FY0);}
+    const ao=bakeAO(poly,A.F.f,.0035,3,1.0);
+    paint(poly,(x,y,z)=>{let c=skin.slice();const ear=sstep(.06,.075,ab(x))*sstep(.02,-.02,z);c=mixc(c,skinR,ear*.3);
+      c=mixc(c,lin(P.hairC||0x17120f),.94*sstep(-.0035,.0025,nyHairline(x,y,z)));return mulc(c,1+.015*N1(x*200,y*200,z*200));},ao,.55);
+    poly.uv=uv;poly.fw=fw;GEO_CACHE.set(key,poly);}
+  const g=R.add(toGeom(poly));g.setAttribute("frontW",new THREE.BufferAttribute(poly.fw,1));
+  const grp=new THREE.Group();const mesh=new THREE.Mesh(g,nyFaceMat(R,nyAnimeFaceTex(R,P),skin));mesh.castShadow=true;mesh.receiveShadow=true;grp.add(mesh);
+  // eye patches: a grid over each eye rectangle projected onto the face (+0.5 mm), eyeP = eye-local coords (x: inner -1 .. outer +1)
+  const E=NY_FACE,eyeM=nyEyeMat(R,mulc(skin,.96),P.irisC||[0x2a1712,0x8a5a3a]);const eyes=[];
+  for(const s of[-1,1]){const nx=24,ny=16,pos=[],ep=[],idx=[];
+    for(let j=0;j<=ny;j++)for(let i=0;i<=nx;i++){const ex=-1.3+2.6*i/nx,ey=-1.2+2.8*j/ny;const x=s*(E.eyeX+ex*E.ew),y=E.eyeY+ey*E.eh;
+      const hit=nyProbe(A.F.f,[x,y,.16],[0,0,-1],.2,.0008)||[x,y,.08];const nr=nyGrad(A.F.f,hit);pos.push(hit[0]+nr[0]*.0005,hit[1]+nr[1]*.0005,hit[2]+nr[2]*.0005);ep.push(ex,ey);}
+    for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const a=j*(nx+1)+i,b=a+1,c=a+nx+1,d=c+1;if(s>0)idx.push(a,b,d,a,d,c);else idx.push(a,d,b,a,c,d);}
+    const eg=new THREE.BufferGeometry();eg.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));eg.setAttribute("eyeP",new THREE.Float32BufferAttribute(ep,2));eg.setAttribute("eyeS",new THREE.Float32BufferAttribute(new Array(ep.length/2).fill(s),1));eg.setIndex(idx);eg.computeVertexNormals();R.add(eg);
+    const em=new THREE.Mesh(eg,eyeM);em.renderOrder=2;em.receiveShadow=true;grp.add(em);eyes.push(em);}
+  return{group:grp,mesh,H:{F:A.F,eyes:[[-E.eyeX,E.eyeY,.085],[E.eyeX,E.eyeY,.085]],er:.012},eyeMat:eyeM,anime:true};}
 // =====================================================================================
 //  makeNyobo
 // =====================================================================================
@@ -1856,16 +1965,19 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   const rig=nyRig(pose,attire);
   const HP=Object.assign({},NYOBO_HEAD,{gazePitch:rig.gazeP,polyH:q==="low"?.0052:q==="medium"?.0042:.0034},opts.headParams||{});
   // ---- head (scaled), own eyes (runtime gaze) ----
-  const hd=buildHead(R,HP,q);T_.head=performance.now()-t0;
+  const anime=HP.anime!==false;const hd=anime?nyAnimeHead(R,HP,q):buildHead(R,HP,q);T_.head=performance.now()-t0;
   const pivot=new THREE.Object3D();placeObj(pivot,rig.headM,rig.pivot);pivot.scale.setScalar(NY_HS);hd.group.position.set(-HEAD_PIV[0],-HEAD_PIV[1],-HEAD_PIV[2]);pivot.add(hd.group);g.add(pivot);
   const headPt=v=>add3(rig.pivot,apM(rig.headM,scl3(sub3(v,HEAD_PIV),NY_HS)));
-  const eOld=hd.group.children.find(o=>o!==hd.mesh&&o.isMesh);const eyeMat=eOld.material;hd.group.remove(eOld);
-  const eyes=[];for(const e of hd.H.eyes){const sg=R.add(new THREE.SphereGeometry(hd.H.er,28,20));sg.rotateX(PI/2);const m=new THREE.Mesh(sg,eyeMat);m.position.set(e[0],e[1],e[2]);m.rotation.order="YXZ";m.rotation.set(HP.gazePitch||0,rig.gazeY,0);m.receiveShadow=true;hd.group.add(m);eyes.push(m);}
-  // blink lids (spherical patches just outside the eyeballs, hidden inside the upper lids until a blink)
-  const lidCol=lin(HP.skin),lash=lin(0x2a1c18);const lids=[];
-  for(const e of hd.H.eyes){const lg=R.add(new THREE.SphereGeometry(hd.H.er+.0011,22,10,PI*.06,PI*.88,.28,1.56));const pa=lg.attributes.position,n=pa.count,c=new Float32Array(n*3);
-    for(let i=0;i<n;i++){const y=pa.getY(i)/(hd.H.er+.0011);const k=sstep(-.10,-.22,y);c.set(mixc(mulc(lidCol,.92),lash,k),i*3);}lg.setAttribute("color",new THREE.BufferAttribute(c,3));
-    const m=new THREE.Mesh(lg,R.add(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6,metalness:0})));m.position.set(e[0],e[1],e[2]);m.rotation.x=-1.35;m.visible=false;hd.group.add(m);lids.push(m);}
+  const eyes=[],lids=[];
+  if(!anime){const eOld=hd.group.children.find(o=>o!==hd.mesh&&o.isMesh);const eyeMat=eOld.material;hd.group.remove(eOld);
+    for(const e of hd.H.eyes){const sg=R.add(new THREE.SphereGeometry(hd.H.er,28,20));sg.rotateX(PI/2);const m=new THREE.Mesh(sg,eyeMat);m.position.set(e[0],e[1],e[2]);m.rotation.order="YXZ";m.rotation.set(HP.gazePitch||0,rig.gazeY,0);m.receiveShadow=true;hd.group.add(m);eyes.push(m);}
+    const lidCol=lin(HP.skin),lash=lin(0x2a1c18);
+    for(const e of hd.H.eyes){const lg=R.add(new THREE.SphereGeometry(hd.H.er+.0011,22,10,PI*.06,PI*.88,.28,1.56));const pa=lg.attributes.position,n=pa.count,c=new Float32Array(n*3);
+      for(let i=0;i<n;i++){const y=pa.getY(i)/(hd.H.er+.0011);const k=sstep(-.10,-.22,y);c.set(mixc(mulc(lidCol,.92),lash,k),i*3);}lg.setAttribute("color",new THREE.BufferAttribute(c,3));
+      const m=new THREE.Mesh(lg,R.add(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6,metalness:0})));m.position.set(e[0],e[1],e[2]);m.rotation.x=-1.35;m.visible=false;hd.group.add(m);lids.push(m);}}
+  const eyeU=anime?hd.eyeMat.userData.uni:null;
+  const setEyes=(yaw,pitch)=>{if(eyeU){eyeU.uGaze.value.set(clamp(yaw*.9,-.42,.42),clamp(-pitch*.9,-.32,.26));}else for(const e of eyes){e.rotation.x=pitch;e.rotation.y=yaw;}};
+  const setBlink=c=>{if(eyeU)eyeU.uBlink.value=c;else for(const l of lids){l.visible=c>.02;l.rotation.x=-1.35*(1-c);}};
   // ---- garments (SDF) ----
   const body=nyBodySeated(rig,attire),nR=body.nR;
   const slv={};for(const k of["L","R"])slv[k]=nySleeve(rig.arm[k],{rU:.040,rE:.038,rC:.046,t:kara?.019:.016,back:.06,front:.022,center:rig.tp([0,.25,0]),ground:body.lap.H0,vbAbs:.03,flare:kara?.17:.13,seed:k==="L"?3:8});
@@ -1913,7 +2025,7 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   for(const k of["L","R"]){const H_=hands[k];const poly=buildPart(H_.F,[-.055,-.06,-.05],[.055,.17,.05],hh,H_.M,H_.W,(x,y,z)=>mn(fB(x,y,z),fSL(x,y,z),fSR(x,y,z)),.007,1.0,skinPainter(HP,"hand",null),{aoMin:.38,key:key+"|h"+k});
     const piv=new THREE.Object3D();placeObj(piv,H_.M,H_.W);piv.add(meshOf(R,poly,skinM));handPiv[k]=piv;g.add(piv);}
   // ---- props & anchors ----
-  const anchors={};const eyesA=new THREE.Object3D();eyesA.position.set(0,.0245,.085);hd.group.add(eyesA);anchors.eyes=eyesA;
+  const anchors={};const eyesA=new THREE.Object3D();eyesA.position.set(0,HP.anime!==false?NY_FACE.eyeY:.0245,.085);hd.group.add(eyesA);anchors.eyes=eyesA;
   const headTop=new THREE.Object3D();headTop.position.set(0,.135,0);hd.group.add(headTop);anchors.headTop=headTop;
   const chest=new THREE.Object3D();chest.position.set(...rig.tp([0,.36,.13]));g.add(chest);anchors.chest=chest;
   if(pose==="gaze"){const fan=nyFanClosed(R,q);const a=rig.arm.R.W,b=rig.arm.L.W;const dir=nrm3(sub3(b,a));const c=add3(lerp3(a,b,.5),[0,.012,.055]);
@@ -1929,12 +2041,12 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   g.userData.update=function(dt,t){dt=Math.min(dt||0,.1);const br=.0016*Math.sin(t*1.25);uni.uNyBreath.value=br;huni.uNyBreath.value=br;
     const k=1-Math.exp(-dt*4);gz.cy+=(gz.y-gz.cy)*k;gz.cp+=(gz.p-gz.cp)*k;
     pivot.position.set(pivP.x,pivP.y+br,pivP.z);eu.set(Math.sin(t*.37)*.008+gz.cp*.55,Math.sin(t*.23)*.012+gz.cy*.6,0);qq.setFromEuler(eu);pivot.quaternion.copy(pivR).multiply(qq);
-    for(const e of eyes){e.rotation.x=(HP.gazePitch||0)+gz.cp*.45;e.rotation.y=rig.gazeY+gz.cy*.4;}
+    setEyes(rig.gazeY+gz.cy*.4,(HP.gazePitch||0)+gz.cp*.45);
     for(const s of["L","R"])handPiv[s].position.set(hP0[s].x,hP0[s].y+br*.4,hP0[s].z);
     // blink: every 3-6 s
     if(blinkT<0&&t>=nextBlink){blinkT=0;}
-    if(blinkT>=0){blinkT+=dt;const u=blinkT/.17;const c=u<.35?sstep(0,.35,u):u<.5?1:sstep(1,.5,u);for(const l of lids){l.visible=c>.02;l.rotation.x=-1.35*(1-c);}
-      if(u>=1){blinkT=-1;nextBlink=t+3+rnd()*3;for(const l of lids)l.visible=false;}}};
+    if(blinkT>=0){blinkT+=dt;const u=blinkT/.17;const c=u<.35?sstep(0,.35,u):u<.5?1:sstep(1,.5,u);setBlink(c);
+      if(u>=1){blinkT=-1;nextBlink=t+3+rnd()*3;setBlink(0);}}};
   g.userData.dispose=function(){R.dispose();};
   let tris=0,ms=0;g.traverse(o=>{if(o.isMesh){ms++;const gg=o.geometry;tris+=(gg.index?gg.index.count:gg.attributes.position.count)/3;}});
   T_.total=performance.now()-t0;g.userData.timings=T_;g.userData.stats={ms:T_.total,tris,meshes:ms};
