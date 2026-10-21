@@ -1579,10 +1579,10 @@ function makeMago(opts){opts=opts||{};const R=Res();const q=opts.quality||"high"
 //  布はすべて 1 つのパレット・シェーダー（頂点の層番号 nyL: 0=表着/外の袿 … 単, 袴, 9=唐衣, 10=唐衣の裏, 11=裳 …）。
 //  襲の色目は uniform（uNyG/uNyF/uNyP）だけで決まるので、setKasane(key) は形を作り直さない。
 // =====================================================================================
-const NY_HS=1.02,NY_ARM=[.262,.222];
+const NY_HS=.97,NY_ARM=[.262,.222];
 const NYOBO_HEAD={anime:true,irisC:[0x2a1712,0x8a5a3a],seed:61,age:25,smile:.55,fem:1,lipU:.0042,lipL:.0056,lipUvol:.0020,lipLvol:.0027,mouthW:.0196,
   scalp:"fem",hairC:0x15100d,beard:"none",whiskers:0,wrinkles:0,spots:0,
-  skin:0xf3c9b0,skinRed:0xeca48e,skinLight:0xf2d5be,lip:0xb94a55,lipColL:0xc4565f,blush:.50,blushC:0xe2907f,noseRed:.35,
+  skin:0xf5d6c4,skinRed:0xeeb6a4,skinLight:0xf2d5be,lip:0xb94a55,lipColL:0xc4565f,blush:.50,blushC:0xe2907f,noseRed:.35,
   iris:[62,40,28],irisR:.17,pupilR:.058,sclera:[228,222,214],catchlight:true,
   eyeW:.0156,eyeOpenU:.0056,eyeOpenL:.0031,eyeTilt:.09,hood:.75,lash:1.15,
   browY:-.0012,browDrop:.0065,brow:0x2b211c,browHairs:220,browW:1.35,browAmt:.7,softBrow:.7,
@@ -1651,7 +1651,7 @@ diffuseColor.rgb*=nyC;`)
       .replace("#include <roughnessmap_fragment>","#include <roughnessmap_fragment>\nroughnessFactor=nyP.z*(1.0-0.18*nyM*nyP.y);");};
   m.customProgramCacheKey=()=>"nyCloth1";R.add(m);m.userData.uni=uni;return m;}
 // black hair: Kajiya-Kay style highlights along the strand direction (attribute hairDir), strand streaks from hairS.x
-function nyHairMat(R){const uni={uHs1:{value:new THREE.Color(.28,.25,.23)},uHs2:{value:new THREE.Color(.09,.06,.045)},uHsh:{value:new THREE.Vector4(-.06,.10,80,30)},
+function nyHairMat(R){const uni={uHs1:{value:new THREE.Color(.22,.20,.19)},uHs2:{value:new THREE.Color(.09,.06,.045)},uHsh:{value:new THREE.Vector4(-.06,.10,80,30)},
     uNyBreath:{value:0},uNyBY:{value:new THREE.Vector2(.30,.62)},uHairSw:{value:new THREE.Vector4(0,0,0,0)}};
   const m=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:.58,metalness:0});
   m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,uni);
@@ -1886,35 +1886,35 @@ function nyFanClosed(R,q){// closed hi-ougi: pivot at the origin, extends along 
   return g;}
 // ---- stylized (game / anime-like) head for the nyobo: soft egg face, tiny nose, big procedural eyes (gaze & blink by uniforms),
 //      warm soft "half-lambert" face shading. head-local frame as buildHead (origin between the ears, +Z face, metres).
-const NY_FACE={eyeX:.0305,eyeY:.0035,eyeZ:.0,ew:.0215,eh:.0182};
+const NY_FACE={eyeX:.0300,eyeY:.0050,eyeZ:.0,ew:.0190,eh:.0145};
 function nyAnimeHeadSDF(P){const cr=P.cran||[1,1,1],co=P.cranOff||[0,0,0];
   const cE=(c,r)=>sEll([c[0]*cr[0]+co[0],c[1]*cr[1]+co[1],c[2]*cr[2]+co[2]],[r[0]*cr[0],r[1]*cr[1],r[2]*cr[2]]);
   const cran=U([K(cE([0,.044,-.010],[.0765,.084,.095]),0),K(cE([0,.040,.030],[.064,.070,.066]),.035),K(cE([0,.020,-.045],[.068,.064,.058]),.035)]);
-  const face=U([K(sEll([0,-.002,.040],[.062,.062,.058]),0),K(sEll([.031,-.019,.066],[.026,.024,.022]),.03),K(sEll([-.031,-.019,.066],[.026,.024,.022]),.03),
-    K(sEll([0,-.040,.066],[.024,.020,.022]),.03),K(sEll([0,-.060,.064],[.014,.011,.013]),.035)]);
-  const nose=U([K(sCone([0,.008,.093],[0,-.010,.0995],.0032,.0040),0),K(sSphere([0,-.0118,.0975],.0045),.004)]);
+  const face=U([K(sEll([0,-.004,.040],[.062,.064,.058]),0),K(sEll([.032,-.026,.062],[.028,.027,.023]),.032),K(sEll([-.032,-.026,.062],[.028,.027,.023]),.032),
+    K(sEll([0,-.042,.063],[.031,.023,.025]),.032),K(sEll([0,-.058,.060],[.023,.016,.019]),.035)]);
+  const nose=U([K(sCone([0,.020,.0912],[0,-.009,.1018],.0031,.0040),0),K(sSphere([0,-.0115,.0992],.0045),.004)]);
   const neck=K(sCone([0,-.040,-.016],[0,-.170,-.008],.0405,.044),0);
   let F=U([cran,K(face,.035),K(nose,.006),K(neck,.03)]);
   // lips: a whisper of volume; mouth corners tucked in
   F=U([F,K(sEll([0,-.0402,.0885],[.0080,.0026,.0030]),.004),K(sEll([0,-.0442,.0878],[.0070,.0030,.0032]),.004)]);
   // chin taper (x shrinks toward the chin) -> small pointed chin, no jaw angle
-  const F0=F.f,sx=y=>1-.30*Math.pow(clamp((.000-y)/.068,0,1),1.2);
+  const F0=F.f,sx=y=>1-.13*Math.pow(clamp((-.010-y)/.060,0,1),1.6);
   F={f:(x,y,z)=>{const s=sx(y);return F0(x/s,y,z)*s;},bs:F.bs};
   return{F,sx};}
 // detail texture (multiplicative, planar x,y like faceTextures): blush, brows, nose tick, small smiling mouth with beni, double-lid line
 function nyAnimeFaceTex(R,P){const S=1024,X=x=>(x-FX0)/(FX1-FX0)*S,Y=y=>(FY1-y)/(FY1-FY0)*S,PX=S/(FX1-FX0);const E=NY_FACE;
   return canvasTex(R,S,S,g=>{g.fillStyle="#fff";g.fillRect(0,0,S,S);
     const blob=(x,y,rx,ry,col,al)=>{g.save();g.translate(X(x),Y(y));g.scale(rx*PX,ry*PX);const gr=g.createRadialGradient(0,0,0,0,0,1);gr.addColorStop(0,col);gr.addColorStop(1,"rgba(255,255,255,0)");g.globalAlpha=al;g.fillStyle=gr;g.beginPath();g.arc(0,0,1,0,7);g.fill();g.restore();g.globalAlpha=1;};
-    for(const s of[-1,1]){blob(s*.040,-.016,.025,.016,"rgb(238,132,130)",1.0);blob(s*.040,-.015,.014,.009,"rgb(230,112,112)",.62);}
+    for(const s of[-1,1]){blob(s*.040,-.018,.026,.017,"rgb(240,160,150)",.45);}
     blob(0,-.012,.006,.004,"rgb(246,186,176)",.35);
     // brows: thin soft arcs, a little high
-    for(const s of[-1,1]){g.save();g.lineCap="round";for(let k=2;k>=0;k--){g.strokeStyle="rgb(104,76,66)";g.globalAlpha=k?.14:.78;g.lineWidth=(.0013+k*.0013)*PX;g.beginPath();
-        for(let i=0;i<=24;i++){const t=i/24;const x=s*(.0125+.034*t),y=E.eyeY+.0262+.0055*Math.sin(PI*Math.min(1,t*1.15))-.004*t*t;const w=1;if(i)g.lineTo(X(x),Y(y));else g.moveTo(X(x),Y(y));}g.stroke();}g.restore();}
+    for(const s of[-1,1]){g.save();g.lineCap="round";for(let k=2;k>=0;k--){g.strokeStyle="rgb(88,64,56)";g.globalAlpha=k?.16:.58;g.lineWidth=(.0018+k*.0022)*PX;g.beginPath();
+        for(let i=0;i<=24;i++){const t=i/24;const x=s*(.0125+.029*t),y=E.eyeY+.0285+.0020*Math.sin(PI*Math.min(1,t*1.1))-.0035*t*t;const w=1;if(i)g.lineTo(X(x),Y(y));else g.moveTo(X(x),Y(y));}g.stroke();}g.restore();}
     // nose: a tiny warm tick under the tip, no bridge shading
     g.save();g.strokeStyle="rgb(214,150,138)";g.globalAlpha=.55;g.lineCap="round";g.lineWidth=.0011*PX;g.beginPath();g.moveTo(X(-.0033),Y(-.0156));g.quadraticCurveTo(X(0),Y(-.0168),X(.0028),Y(-.0158));g.stroke();g.restore();
     // mouth: small smile line + beni on the lower lip centre
-    const my=-.0420,mw=.0095;
-    blob(0,my-.0028,.0058,.0026,"rgb(204,70,86)",.95);blob(0,my+.0012,.0052,.0017,"rgb(200,90,100)",.55);
+    const my=-.0425,mw=.0085;
+    blob(0,my-.0026,.0050,.0023,"rgb(196,58,74)",.95);blob(0,my+.0012,.0044,.0015,"rgb(196,80,92)",.60);
     g.save();g.strokeStyle="rgb(150,70,72)";g.lineCap="round";g.globalAlpha=.85;g.lineWidth=.0010*PX;g.beginPath();
     for(let i=0;i<=20;i++){const t=i/20*2-1;const x=t*mw,y=my+.0016*t*t-.0004;if(i)g.lineTo(X(x),Y(y));else g.moveTo(X(x),Y(y));}g.stroke();
     g.globalAlpha=.35;for(const s of[-1,1]){g.beginPath();g.moveTo(X(s*mw*.92),Y(my+.0012));g.lineTo(X(s*(mw+.0016)),Y(my+.0024));g.stroke();}g.restore();
@@ -1929,7 +1929,7 @@ function nyFaceMat(R,map,skin){const uni={uShade:{value:new THREE.Color().setRGB
 void RE_Direct_NyFace(const in IncidentLight directLight,const in GeometricContext geometry,const in PhysicalMaterial material,inout ReflectedLight reflectedLight){
   float ndl=dot(geometry.normal,directLight.direction);float w=smoothstep(-0.35,0.65,ndl);
   vec3 tint=mix(uShade,vec3(1.0),smoothstep(-0.2,0.5,ndl));
-  reflectedLight.directDiffuse+=directLight.color*(0.10+0.90*w)*tint*material.diffuseColor;
+  reflectedLight.directDiffuse+=directLight.color*(0.28+0.72*w)*tint*material.diffuseColor;
   vec3 H=normalize(directLight.direction+geometry.viewDir);reflectedLight.directSpecular+=directLight.color*0.035*pow(max(dot(geometry.normal,H),0.0),24.0)*w;
 }
 #undef RE_Direct
@@ -1944,29 +1944,29 @@ function nyEyeMat(R,skin,iris){const uni={uGaze:{value:new THREE.Vector2(0,0)},u
     sh.vertexShader=sh.vertexShader.replace("#include <common>","#include <common>\nattribute vec2 eyeP;attribute float eyeS;varying vec2 vEyeP;varying float vEyeS;").replace("#include <begin_vertex>","#include <begin_vertex>\nvEyeP=eyeP;vEyeS=eyeS;");
     sh.fragmentShader=sh.fragmentShader.replace("#include <common>",`#include <common>
 varying vec2 vEyeP;varying float vEyeS;uniform vec2 uGaze;uniform float uBlink;uniform vec3 uSkin;uniform vec3 uIrisA;uniform vec3 uIrisB;
-float nyUp(float x){return 0.80*pow(max(0.0,1.0-pow(abs(x-0.06)/1.0,2.0)),0.62)-0.10+0.16*x;}
-float nyLo(float x){return -0.62*pow(max(0.0,1.0-pow(abs(x+0.03)/0.98,2.0)),0.75)+0.02+0.05*x;}`)
+float nyUp(float x){return 0.70*pow(max(0.0,1.0-pow(abs(x-0.10)/1.0,2.0)),0.80)-0.12+0.22*x;}
+float nyLo(float x){return -0.52*pow(max(0.0,1.0-pow(abs(x+0.02)/0.98,2.0)),0.85)+0.00+0.10*x;}`)
       .replace("#include <map_fragment>",`{vec2 p=vEyeP;float fw=max(fwidth(p.y),0.004);
  float yu=nyUp(p.x),yl=nyLo(p.x);float yb=mix(yu,yl,uBlink*0.98);
  float inside=smoothstep(-fw,fw,p.y-yl)*smoothstep(-fw,fw,yb-p.y)*smoothstep(1.0+fw,1.0-fw,abs(p.x));
  vec3 col=vec3(0.97,0.95,0.93);col*=mix(0.72,1.0,smoothstep(0.0,0.42,yu-p.y));col=mix(col,vec3(0.86,0.88,0.95),0.25*smoothstep(0.3,0.0,yu-p.y));
- vec2 c=vec2(-0.02,-0.02)+vec2(uGaze.x*vEyeS,uGaze.y);vec2 q=(p-c)/vec2(0.46,0.66);float r=length(q);
+ vec2 c=vec2(-0.02,-0.02)+vec2(uGaze.x*vEyeS,uGaze.y);vec2 q=(p-c)/vec2(0.44,0.66);float r=length(q);
  float ir=smoothstep(1.0+fw*2.5,1.0-fw*2.5,r);
  vec3 ic=mix(uIrisB,uIrisA,smoothstep(-0.7,0.6,q.y));ic=mix(ic,uIrisA*0.45,smoothstep(0.72,1.0,r));
  float pu=smoothstep(0.45+fw*3.0,0.45-fw*3.0,length(q/vec2(1.0,1.15)));ic=mix(ic,vec3(0.025,0.018,0.016),pu);
  ic+=vec3(0.22,0.16,0.12)*smoothstep(0.2,-0.7,q.y)*(1.0-pu)*smoothstep(0.95,0.5,r);
  col=mix(col,ic,ir);
  float h1=smoothstep(0.17,0.12,length((p-c-vec2(-0.15,0.27))/vec2(1.0,1.25)));float h2=smoothstep(0.075,0.05,length(p-c-vec2(0.17,-0.30)));
- col=mix(col,vec3(1.0),max(h1,h2*0.85)*ir);
+ col=mix(col,vec3(1.0),h1*0.45*ir);
  float a=inside;
  // closed part of the lid: skin
  float lid=smoothstep(-fw,fw,p.y-yb)*smoothstep(-fw,fw,yu+0.02-p.y)*smoothstep(1.0+fw,1.0-fw,abs(p.x));col=mix(col,uSkin,lid);a=max(a,lid);
  // upper lash: thick dark band on the lid edge (thicker toward the outer corner) + flick
- float lt=max(0.13+0.12*smoothstep(-0.6,0.9,p.x),fw*2.6);float dl=p.y-yb;float lash=smoothstep(-fw,fw,dl+0.03)*smoothstep(lt+fw,lt-fw,dl)*smoothstep(1.06,0.9,abs(p.x-0.04));
- vec2 f0=vec2(0.84,nyUp(0.84)),f1=vec2(1.20,nyUp(0.84)+0.26-0.20*uBlink);vec2 fd=f1-f0;float ft=clamp(dot(p-f0,fd)/dot(fd,fd),0.0,1.0);float fl=smoothstep(0.075*(1.0-ft)+fw,0.075*(1.0-ft)-fw+0.005,length(p-f0-fd*ft));
+ float lt=max(0.07+0.07*smoothstep(-0.6,0.9,p.x),fw*2.0);float dl=p.y-yb;float lash=smoothstep(-fw,fw,dl+0.03)*smoothstep(lt+fw,lt-fw,dl)*smoothstep(1.06,0.9,abs(p.x-0.04));
+ vec2 f0=vec2(0.86,nyUp(0.86)),f1=vec2(1.08,nyUp(0.86)+0.10-0.08*uBlink);vec2 fd=f1-f0;float ft=clamp(dot(p-f0,fd)/dot(fd,fd),0.0,1.0);float fl=smoothstep(0.075*(1.0-ft)+fw,0.075*(1.0-ft)-fw+0.005,length(p-f0-fd*ft));
  lash=max(lash,fl);
  float ll=smoothstep(max(0.045,fw*1.2)+fw,max(0.045,fw*1.2)-fw,abs(p.y-yl+0.02))*smoothstep(-0.3,0.4,p.x)*smoothstep(1.0,0.85,p.x)*0.75;
- float dbl=smoothstep(0.03+fw,0.03-fw,abs(p.y-(yu+0.24+0.04*p.x)))*smoothstep(-0.55,-0.2,p.x)*smoothstep(1.0,0.75,p.x)*0.55*(1.0-uBlink*0.5);
+ float dbl=smoothstep(0.025+fw,0.025-fw,abs(p.y-(yu+0.22+0.05*p.x)))*smoothstep(-0.2,0.2,p.x)*smoothstep(1.0,0.75,p.x)*0.28*(1.0-uBlink*0.5);
  col=mix(col,vec3(0.07,0.045,0.04),lash);col=mix(col,vec3(0.25,0.15,0.13),ll);col=mix(col,vec3(0.55,0.36,0.32),dbl*(1.0-lash));
  a=max(a,max(lash,max(ll,dbl)));
  diffuseColor=vec4(col,a);}`)
@@ -2024,7 +2024,7 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   let kas=NY_KASANE[opts.kasane]?opts.kasane:(kara?"sakura":"matsugasane");
   const t0=performance.now();const T_={};const g=new THREE.Group();g.name="nyobo_"+pose+"_"+attire;
   const rig=nyRig(pose,attire);
-  const HP=Object.assign({},NYOBO_HEAD,{gazePitch:rig.gazeP,polyH:q==="low"?.0056:q==="medium"?.0047:.0040},kara?{}:{eyeScale:.94,eyeSep:1.03,irisC:[0x22130e,0x6a4630],skin:0xefc2a6,hairC:0x1a1410},opts.headParams||{});
+  const HP=Object.assign({},NYOBO_HEAD,{gazePitch:rig.gazeP,polyH:q==="low"?.0056:q==="medium"?.0047:.0040},kara?{}:{eyeScale:.96,eyeSep:1.02,irisC:[0x22130e,0x5e3e2a],skin:0xf0cdb8,hairC:0x1a1410},opts.headParams||{});
   // ---- head (scaled), own eyes (runtime gaze) ----
   const anime=HP.anime!==false;const hd=anime?nyAnimeHead(R,HP,q):buildHead(R,HP,q);T_.head=performance.now()-t0;
   const pivot=new THREE.Object3D();placeObj(pivot,rig.headM,rig.pivot);pivot.scale.setScalar(NY_HS);hd.group.position.set(-HEAD_PIV[0],-HEAD_PIV[1],-HEAD_PIV[2]);pivot.add(hd.group);g.add(pivot);
@@ -2036,9 +2036,9 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
     for(const e of hd.H.eyes){const lg=R.add(new THREE.SphereGeometry(hd.H.er+.0011,22,10,PI*.06,PI*.88,.28,1.56));const pa=lg.attributes.position,n=pa.count,c=new Float32Array(n*3);
       for(let i=0;i<n;i++){const y=pa.getY(i)/(hd.H.er+.0011);const k=sstep(-.10,-.22,y);c.set(mixc(mulc(lidCol,.92),lash,k),i*3);}lg.setAttribute("color",new THREE.BufferAttribute(c,3));
       const m=new THREE.Mesh(lg,R.add(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6,metalness:0})));m.position.set(e[0],e[1],e[2]);m.rotation.x=-1.35;m.visible=false;hd.group.add(m);lids.push(m);}}
-  const eyeU=anime?hd.eyeMat.userData.uni:null;if(eyeU)eyeU.uBlink.value=HP.lidRest!=null?HP.lidRest:(rig.seated&&pose!=="tend"?.14:.24);
+  const eyeU=anime?hd.eyeMat.userData.uni:null;if(eyeU)eyeU.uBlink.value=HP.lidRest!=null?HP.lidRest:(rig.seated&&pose!=="tend"?.15:.24);
   const setEyes=(yaw,pitch)=>{if(eyeU){eyeU.uGaze.value.set(clamp(yaw*.9,-.42,.42),clamp(-pitch*.9,-.32,.26));}else for(const e of eyes){e.rotation.x=pitch;e.rotation.y=yaw;}};
-  const lidRest=HP.lidRest!=null?HP.lidRest:(rig.seated&&pose!=="tend"?.14:.24);const setBlink=c=>{c=mx(c,lidRest);if(eyeU)eyeU.uBlink.value=c;else for(const l of lids){l.visible=c>.02;l.rotation.x=-1.35*(1-c);}};
+  const lidRest=HP.lidRest!=null?HP.lidRest:(rig.seated&&pose!=="tend"?.15:.24);const setBlink=c=>{c=mx(c,lidRest);if(eyeU)eyeU.uBlink.value=c;else for(const l of lids){l.visible=c>.02;l.rotation.x=-1.35*(1-c);}};
   // ---- garments (SDF) ----
   // fan: the right hand holds the open fan so that its arc hides the mouth
   let fanFrame=null;
