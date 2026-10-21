@@ -27814,10 +27814,10 @@ function makeMago(opts){opts=opts||{};const R=Res();const q=opts.quality||"high"
 //  布はすべて 1 つのパレット・シェーダー（頂点の層番号 nyL: 0=表着/外の袿 … 単, 袴, 9=唐衣, 10=唐衣の裏, 11=裳 …）。
 //  襲の色目は uniform（uNyG/uNyF/uNyP）だけで決まるので、setKasane(key) は形を作り直さない。
 // =====================================================================================
-const NY_HS=.93,NY_ARM=[.262,.222];
+const NY_HS=1.02,NY_ARM=[.262,.222];
 const NYOBO_HEAD={anime:true,irisC:[0x2a1712,0x8a5a3a],seed:61,age:25,smile:.55,fem:1,lipU:.0042,lipL:.0056,lipUvol:.0020,lipLvol:.0027,mouthW:.0196,
   scalp:"fem",hairC:0x15100d,beard:"none",whiskers:0,wrinkles:0,spots:0,
-  skin:0xfadccb,skinRed:0xf2b4a2,skinLight:0xf2d5be,lip:0xb94a55,lipColL:0xc4565f,blush:.50,blushC:0xe2907f,noseRed:.35,
+  skin:0xf8d6c2,skinRed:0xf0ae9a,skinLight:0xf2d5be,lip:0xb94a55,lipColL:0xc4565f,blush:.50,blushC:0xe2907f,noseRed:.35,
   iris:[62,40,28],irisR:.17,pupilR:.058,sclera:[228,222,214],catchlight:true,
   eyeW:.0156,eyeOpenU:.0056,eyeOpenL:.0031,eyeTilt:.09,hood:.75,lash:1.15,
   browY:-.0012,browDrop:.0065,brow:0x2b211c,browHairs:220,browW:1.35,browAmt:.7,softBrow:.7,
@@ -27838,7 +27838,7 @@ const NY_KASANE={
   momiji:{kara:["#b02c22","#d8b25a"],kura:"#d89c30",uwa:["#a66f36","#d2a65e"],uchi:"#4a1a26",itsu:["#b3291e","#ca481c","#da7326","#e39f33","#e7c35d"],hitoe:"#547a39",haka:"#a31c28",mo:["#f1ede4","#d9c08a"],
     uk:[["#c8461e","#dc7a3a"],["#e09a34","#ecba5a"],["#b3291e","#c84a34"]],uh:"#547a39"},
   yukinoshita:{kara:["#a8243a","#e8c86c"],kura:"#f3f1ec",uwa:["#f6f4ef","#ffffff"],uchi:"#981a2e",itsu:["#f8f6f2","#f1eee9","#e9e3de","#e7a3b0","#c4394d"],hitoe:"#a01c2c",haka:"#a31c28",mo:["#f3f1ec","#c9d2dc"],
-    uk:[["#f6f4ef","#ffffff"],["#ebe5e0","#f6f2ee"],["#d14a5e","#de6e7e"]],uh:"#a01c2c"},
+    uk:[["#f4f0ea","#d9d2e4"],["#ece2e0","#f6f0ee"],["#cf4459","#de6e7e"]],uh:"#a01c2c"},
   matsugasane:{kara:["#5b3070","#b99bd0"],kura:"#4f6b35",uwa:["#4b6932","#7d9a52"],uchi:"#3c1a3c",itsu:["#3d5a2a","#577a38","#7e9b55","#795a8c","#5a3a72"],hitoe:"#4a2a62",haka:"#a31c28",mo:["#f1efe8","#c8cdd8"],
     uk:[["#4b6932","#7d9a52"],["#6f8f48","#93ad6c"],["#6a4a82","#8a6aa2"]],uh:"#4a2a62"}};
 const nyHex=s=>parseInt(s.slice(1),16);
@@ -27886,7 +27886,7 @@ diffuseColor.rgb*=nyC;`)
       .replace("#include <roughnessmap_fragment>","#include <roughnessmap_fragment>\nroughnessFactor=nyP.z*(1.0-0.18*nyM*nyP.y);");};
   m.customProgramCacheKey=()=>"nyCloth1";R.add(m);m.userData.uni=uni;return m;}
 // black hair: Kajiya-Kay style highlights along the strand direction (attribute hairDir), strand streaks from hairS.x
-function nyHairMat(R){const uni={uHs1:{value:new THREE.Color(.22,.19,.17)},uHs2:{value:new THREE.Color(.10,.07,.05)},uHsh:{value:new THREE.Vector4(-.06,.10,90,30)},
+function nyHairMat(R){const uni={uHs1:{value:new THREE.Color(.36,.32,.29)},uHs2:{value:new THREE.Color(.12,.08,.06)},uHsh:{value:new THREE.Vector4(-.06,.10,60,26)},
     uNyBreath:{value:0},uNyBY:{value:new THREE.Vector2(.30,.62)},uHairSw:{value:new THREE.Vector4(0,0,0,0)}};
   const m=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:.58,metalness:0});
   m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,uni);
@@ -28009,7 +28009,7 @@ function nyBodySeated(R,attire){const kara=attire==="karaginu",nR=kara?8:4;
   const torsoW=T(torso,R.TM,R.hip);
   const sup=[];for(const k of["L","R"]){sup.push({a:R.hipJ[k],b:R.knee[k],r:.088,sl:1.15});sup.push({a:R.knee[k],b:R.ankle[k],r:.062,sl:1.1});}
   sup.push({a:[-.14,.15,-.09],b:[.14,.15,-.09],r:.125,sl:1.0});
-  const lap=nyLapHF(sup,{floor:0,th:kara?.020:.016,k:.06,hem:kara?{c:[0,.02],rx:.60,rzF:.56,rzB:.54,waves:9,wamp:.028,seed:7}:{c:[0,.03],rx:.50,rzF:.48,rzB:.46,waves:8,wamp:.03,seed:5},folds:nyLapFolds(R)});
+  const lap=nyLapHF(sup,{floor:0,th:kara?.020:.016,k:.06,hem:kara?{c:[0,.02],rx:.60,rzF:R.pose==="tend"?.44:.56,rzB:.54,waves:9,wamp:.028,seed:7}:{c:[0,.03],rx:.50,rzF:R.pose==="tend"?.40:.48,rzB:.46,waves:8,wamp:.03,seed:5},folds:nyLapFolds(R)});
   const F=U([torsoW,K(lap,.05)]);
   const yc=.395,yn=.530,th0=.42,cosV=.30,dC=.0062,dF=kara?.0105:.014,dH=kara?.016:.022;
   const lam=(x,y,z)=>{const pl=R.tl(x,y,z);let L=-1;
@@ -28018,6 +28018,22 @@ function nyBodySeated(R,attire){const kara=attire==="karaginu",nR=kara?8:4;
     const hd=lap.hemD(x,z);if(hd>-nR*dH*1.2)L=mx(L,mn(nR-.5,nR+hd/dH));
     return clamp(L,.5,nR+.5);};
   return{F,torsoW,lap,lam,nR,collar:T(collarL,R.TM,R.hip)};}
+// ---- standing body: torso + robes falling to the floor (open in front over the nagabakama), trailing behind ----
+function nyBodyStanding(R,attire){const kara=attire==="karaginu",nR=kara?8:4;const seat=nyBodySeated(R,attire);
+  const yw=R.hip[1]+.19;const nz=makeNoise(53);
+  const geo=(x,y,z)=>{const t=clamp((yw-y)/yw,0,1);const c=-.03-.05*t;const rx=.150+.115*Math.pow(t,1.3),rzF=.125+.115*Math.pow(t,1.6),rzB=.140+.09*Math.pow(t,1.2)+.40*Math.pow(sstep(.12,0,y),1.4);
+    const dz=z-c,rz=dz>0?rzF:rzB,a=Math.atan2(x,dz);const r=mn(rx,rz);return{t,c,rx,rz,rzF,dz,a,r,qq:sq((x/rx)**2+(dz/rz)**2)};};
+  const phE=t=>.07+.30*t;
+  const bell={f:(x,y,z)=>{const G_=geo(x,y,z);const fold=.0075*Math.sin(G_.a*12+nz(G_.a*2,y*3,.5)*1.8)*sstep(.05,.5,G_.t);
+      const e=(phE(G_.t)-ab(G_.a))*G_.rzF;const rec=G_.dz>0?.014*sstep(-.01,.03,e)*sstep(.02,.10,G_.t):0;
+      const d=(G_.qq-1)*G_.r*.9-fold+rec;return mx(d,y-yw-.02,-.05-y);},bs:[0,.5,-.2,1.1]};
+  const F=U([seat.torsoW,K(bell,.06)]);
+  const dF=kara?.010:.013,dH=kara?.016:.020;
+  const lam=(x,y,z)=>{let L=-1;const pl=R.tl(x,y,z);
+    if(pl[1]>.23){L=seat.lam(x,y,z);return L;}
+    const G_=geo(x,y,z);if(G_.dz>0){const e=(phE(G_.t)-ab(G_.a))*G_.rzF*.95;if(e>0)L=mx(L,e/dF);}
+    const g0=geo(x,0,z);const din=mx(0,(1-g0.qq)*g0.r*.9);L=mx(L,mn(nR-.5,nR-(din+y*.9)/dH));return clamp(L,.5,nR+.5);};
+  return{F,torsoW:seat.torsoW,lap:{H0:()=>0,bs:[0,0,0,1]},lam,nR,collar:seat.collar};}
 // ---- sleeve: arm tubes + a big hanging bag resting on the robes; lam from the distance to the free edges ----
 function nySleeve(A,o){const S0=A.S,E=A.E,W=A.W;const fd=nrm3(sub3(W,E)),ud=nrm3(sub3(E,S0));
   const cuff=add3(W,scl3(fd,-.010)),Sx=add3(S0,scl3(ud,-.035));
@@ -28035,18 +28051,18 @@ function nySleeve(A,o){const S0=A.S,E=A.E,W=A.W;const fd=nrm3(sub3(W,E)),ud=nrm3
     const flare=o.flare*sstep(.05,.40,dep)*(.8+.2*Math.sin(PI*fu));return sg*(A_*Math.sin(ph)+belly+flare);};
   const sheet=sSheet(o0,hz,[0,1,0],ua,ub,vt,vb,o.t,fold,.045);
   let F=U([tubes,K(sheet,.035)]);
-  F=S(F,[K(sEll(add3(cuff,scl3(fd,-.030)),[.050,.046,.052],basisZY(fd,[0,1,0])),.006)]);
+  F=S(F,[K(sEll(add3(cuff,scl3(fd,-.022)),[.034,.032,.040],basisZY(fd,[0,1,0])),.006)]);
   const pts=[S0,Sx,E,W,cuff];for(const u of[ua,ub])for(const v of[vt(u),vb(u)])pts.push(add3(o0,add3(scl3(hz,u),[0,v,0])));
   const b0=[1e9,1e9,1e9],b1=[-1e9,-1e9,-1e9];for(const q of pts)for(let i=0;i<3;i++){b0[i]=mn(b0[i],q[i]);b1[i]=mx(b1[i],q[i]);}
   for(let i=0;i<3;i++){b0[i]-=.10;b1[i]+=.10;}b0[1]=mx(b0[1],-.006);
   const edge=(x,y,z)=>{const u=(x-o0[0])*hz[0]+(z-o0[2])*hz[2],v=y-o0[1];return mn(ub-u,v-vb(u),v<vt(u)-.05?u-ua:1);};
-  return{F,bb:[b0,b1],o0,hz,ua,ub,uC,vb,vt,edge};}
+  return{F,bb:[b0,b1],o0,hz,ua,ub,uC,vb,vt,edge,raised:W[1]>E[1]+.05};}
 // ---- karaginu (唐衣): short jacket over the torso & the upper sleeves, open in front, collar folded back (lining band) ----
 function nyKaraginu(R,body,slv){const Fb=body.F.f,sL=slv.L,sR=slv.R,sLf=sL.F.f,sRf=sR.F.f,tF=body.torsoW.f;
   const off=.006,yh=.205,xk=y=>.058+.30*mx(0,.47-y),lw=.042;
   const Sall=(x,y,z)=>mn(Fb(x,y,z),sLf(x,y,z),sRf(x,y,z));
   const regT=(x,y,z)=>{const pl=R.tl(x,y,z);let r=mx(yh-pl[1],pl[1]-.522);if(pl[2]>-.03)r=mx(r,xk(pl[1])-ab(pl[0]));return r;};
-  const regS=(s,sf,x,y,z)=>{const u=(x-s.o0[0])*s.hz[0]+(z-s.o0[2])*s.hz[2],v=y-s.o0[1];return mx(u-(s.uC-.13),(s.vt(u)-.20)-v);};
+  const regS=(s,sf,x,y,z)=>{const u=(x-s.o0[0])*s.hz[0]+(z-s.o0[2])*s.hz[2],v=y-s.o0[1];return mx(u-(s.uC-(s.raised?.24:.13)),(s.vt(u)-.20)-v,mn(u,v-(s.vt(u)-.012)));};
   const lapel=(x,y,z)=>{const pl=R.tl(x,y,z);if(pl[1]<yh-.02)return 0;if(pl[2]>-.03)return sstep(xk(pl[1])+lw+.003,xk(pl[1])+lw-.003,ab(pl[0]));const rN=sq(pl[0]*pl[0]+(pl[2]+.02)**2);return sstep(.452,.466,pl[1])*sstep(.125,.112,rN);};
   const f=(x,y,z)=>{const reg=mn(mx(regT(x,y,z),tF(x,y,z)-.05),mx(regS(sL,sLf,x,y,z),sLf(x,y,z)-.05),mx(regS(sR,sRf,x,y,z),sRf(x,y,z)-.05));
     if(reg>.03)return reg;return smax(Sall(x,y,z)-off-.002*lapel(x,y,z),reg,.003);};
@@ -28068,22 +28084,22 @@ function nyMo(R,body){const Fb=body.F.f;const top=R.tp([0,.255,-.150]);const ctr
 function nyHairCapSDF(P){const cr=P.cran||[1,1,1],co=P.cranOff||[0,0,0];
   const cE=(c,r)=>sEll([c[0]*cr[0]+co[0],c[1]*cr[1]+co[1],c[2]*cr[2]+co[2]],[r[0]*cr[0],r[1]*cr[1],r[2]*cr[2]]);
   const skull=U([K(cE([0,.044,-.010],[.0765,.084,.095]),0),K(cE([0,.040,.030],[.064,.070,.066]),.035),K(cE([0,.020,-.045],[.068,.064,.058]),.035)]);
-  const sf=skull.f,yW=.045,C0=[0,.044*cr[1]+co[1],-.010*cr[2]+co[2]],SV=[1.068,1.058,1.072];
+  const sf=skull.f,yW=.045,C0=[0,.044*cr[1]+co[1],-.010*cr[2]+co[2]],SV=[1.070,1.060,1.105];
   const hs=(x,y,z)=>sf((x-C0[0])/SV[0]+C0[0],(y-C0[1])/SV[1]+C0[1],(z-C0[2])/SV[2]+C0[2])*1.07;
   let F={f:(x,y,z)=>{const h0=hs(x,y,z);const dy=mx(yW-y,0);const side=sstep(.03,.075,ab(x));
-      return smin(h0,mx(y-yW,0)+mx(hs(x*(1-.06*side*sstep(.02,.12,dy)),yW,z+side*.62*sstep(0,.10,dy)*dy)-.0025*sstep(0,.15,dy),z-NY_HF.zF(y)-.003),.018);},bs:[0,0,-.01,.2]};
-  const cut={f:(x,y,z)=>y-lerp(-.165,-.085,sstep(-.06,.05,z)),bs:[0,-.15,0,.3]};
+      return smin(h0,mx(y-yW,0)+mx(hs(x*(1-.06*side*sstep(.02,.12,dy)),yW,z+side*.62*sstep(0,.10,dy)*dy)-.0025*sstep(0,.15,dy)-side*.0065*Math.sin(PI*clamp(dy/.15,0,1))*(1-sstep(.10,.15,dy)*.6),z-NY_HF.zF(y)-.003),.032);},bs:[0,0,-.01,.2]};
+  const cut={f:(x,y,z)=>y-lerp(-.165,-.085,sstep(-.06,.05,z))+.0014*ab(Math.sin(Math.atan2(x,z)*70)),bs:[0,-.15,0,.3]};
   F=S(F,[K({f:(x,y,z)=>nyHairline(x,y,z)-.0015,bs:[0,-.02,.09,.16]},.009),K(cut,.010)]);
-  const locks=[];for(const s of[-1,1]){const top=.075,bot=-.118;
+  const locks=[];for(const s of[-1,1]){const top=.058,bot=-.118;
     locks.push({f:(x,y,z)=>{const t=clamp((top-y)/(top-bot),0,1);const dz=z+.012,r=sq(x*x+dz*dz),th=Math.atan2(s*x,dz);
-      const band=ab(r-(.0850+.004*t))-(.0046-.0020*t*t),da=mx(.70-.05*t-th,th-1.10)*r;return smax(smax(band,da,.003),mx(y-top,bot-.003*Math.cos(z*80)-y),.004);},bs:[s*.077,-.04,.03,.11]});}
+      const a0=.66-.05*t,a1=1.12,u=clamp((th-a0)/(a1-a0),0,1),bul=Math.sin(PI*u);const band=ab(r-(.0850+.004*t+.0030*bul))-(.0022+.0042*bul)*(1-.45*t*t),da=mx(a0-th,th-a1)*r;return smax(smax(band,da,.003),mx(y-top,bot-.0012*ab(Math.sin(th*95))-y),.0025);},bs:[s*.077,-.04,.03,.11]});}
   F=U([F,K(U(locks),.006)]);
   const nz=makeNoise(73);
   F=D(F,(x,y,z)=>{const top=sstep(.06,.11,y);const a=Math.atan2(x,-z+.02);
-    return .00045*Math.sin(a*150+nz(x*40,y*10,z*40)*2.2)*(1-top)-.0018*gauss(x,.0030)*top*sstep(-.07,.0,z)+.0003*Math.sin(z*380+nz(x*30,y*30,z*50)*2.0)*top*sstep(.003,.012,ab(x));},.002);
+    return .00045*Math.sin(a*150+nz(x*40,y*10,z*40)*2.2)*(1-top)-.0009*gauss(x,.0042)*top*sstep(-.07,.0,z)+.0003*Math.sin(z*380+nz(x*30,y*30,z*50)*2.0)*top*sstep(.003,.012,ab(x));},.002);
   return F;}
 function nyHairPath(R,headPt,Fall,headBack){
-  const ctrl=[headPt([0,.030,-.092]),headPt([0,-.040,-.098])];let last=ctrl[1];
+  const ctrl=[headPt([0,-.020,-.096]),headPt([0,-.070,-.090])];let last=ctrl[1];
   const ys=R.seated?[.63,.57,.50,.43,.36,.29,.22]:[1.20,1.10,1.00,.90,.80,.70,.60,.50,.40,.30,.20];
   for(const y of ys){if(y>last[1]-.035)continue;const s=nyProbe(Fall,[last[0]*.5,y,-1.6],[0,0,1],2.0,.006);if(!s)continue;const nn=nyGrad(Fall,s);ctrl.push(add3(s,scl3(nn,.013)));last=ctrl[ctrl.length-1];}
   if(R.seated){const zl=last[2];for(const z of[zl-.07,zl-.18,zl-.34,zl-.52,zl-.70,zl-.86]){const s=nyProbe(Fall,[0,.9,z],[0,-1,0],1.2,.006);ctrl.push([0,mx(s?s[1]:0,0)+.011,z]);}}
@@ -28124,10 +28140,10 @@ function nyAnimeHeadSDF(P){const cr=P.cran||[1,1,1],co=P.cranOff||[0,0,0];
 function nyAnimeFaceTex(R,P){const S=1024,X=x=>(x-FX0)/(FX1-FX0)*S,Y=y=>(FY1-y)/(FY1-FY0)*S,PX=S/(FX1-FX0);const E=NY_FACE;
   return canvasTex(R,S,S,g=>{g.fillStyle="#fff";g.fillRect(0,0,S,S);
     const blob=(x,y,rx,ry,col,al)=>{g.save();g.translate(X(x),Y(y));g.scale(rx*PX,ry*PX);const gr=g.createRadialGradient(0,0,0,0,0,1);gr.addColorStop(0,col);gr.addColorStop(1,"rgba(255,255,255,0)");g.globalAlpha=al;g.fillStyle=gr;g.beginPath();g.arc(0,0,1,0,7);g.fill();g.restore();g.globalAlpha=1;};
-    for(const s of[-1,1]){blob(s*.040,-.016,.022,.014,"rgb(244,165,162)",.85);blob(s*.040,-.015,.012,.007,"rgb(240,145,145)",.40);}
+    for(const s of[-1,1]){blob(s*.040,-.016,.024,.015,"rgb(242,150,148)",1.0);blob(s*.040,-.015,.013,.008,"rgb(236,128,128)",.50);}
     blob(0,-.012,.006,.004,"rgb(246,186,176)",.35);
     // brows: thin soft arcs, a little high
-    for(const s of[-1,1]){g.save();g.lineCap="round";for(let k=2;k>=0;k--){g.strokeStyle="rgb(120,92,82)";g.globalAlpha=k?.10:.62;g.lineWidth=(.0011+k*.0012)*PX;g.beginPath();
+    for(const s of[-1,1]){g.save();g.lineCap="round";for(let k=2;k>=0;k--){g.strokeStyle="rgb(104,76,66)";g.globalAlpha=k?.14:.78;g.lineWidth=(.0013+k*.0013)*PX;g.beginPath();
         for(let i=0;i<=24;i++){const t=i/24;const x=s*(.0125+.034*t),y=E.eyeY+.0262+.0055*Math.sin(PI*Math.min(1,t*1.15))-.004*t*t;const w=1;if(i)g.lineTo(X(x),Y(y));else g.moveTo(X(x),Y(y));}g.stroke();}g.restore();}
     // nose: a tiny warm tick under the tip, no bridge shading
     g.save();g.strokeStyle="rgb(214,150,138)";g.globalAlpha=.55;g.lineCap="round";g.lineWidth=.0011*PX;g.beginPath();g.moveTo(X(-.0033),Y(-.0156));g.quadraticCurveTo(X(0),Y(-.0168),X(.0028),Y(-.0158));g.stroke();g.restore();
@@ -28181,10 +28197,10 @@ float nyLo(float x){return -0.62*pow(max(0.0,1.0-pow(abs(x+0.03)/0.98,2.0)),0.75
  // closed part of the lid: skin
  float lid=smoothstep(-fw,fw,p.y-yb)*smoothstep(-fw,fw,yu+0.02-p.y)*smoothstep(1.0+fw,1.0-fw,abs(p.x));col=mix(col,uSkin,lid);a=max(a,lid);
  // upper lash: thick dark band on the lid edge (thicker toward the outer corner) + flick
- float lt=0.13+0.12*smoothstep(-0.6,0.9,p.x);float dl=p.y-yb;float lash=smoothstep(-fw,fw,dl+0.03)*smoothstep(lt+fw,lt-fw,dl)*smoothstep(1.06,0.9,abs(p.x-0.04));
+ float lt=max(0.13+0.12*smoothstep(-0.6,0.9,p.x),fw*2.6);float dl=p.y-yb;float lash=smoothstep(-fw,fw,dl+0.03)*smoothstep(lt+fw,lt-fw,dl)*smoothstep(1.06,0.9,abs(p.x-0.04));
  vec2 f0=vec2(0.84,nyUp(0.84)),f1=vec2(1.20,nyUp(0.84)+0.26-0.20*uBlink);vec2 fd=f1-f0;float ft=clamp(dot(p-f0,fd)/dot(fd,fd),0.0,1.0);float fl=smoothstep(0.075*(1.0-ft)+fw,0.075*(1.0-ft)-fw+0.005,length(p-f0-fd*ft));
  lash=max(lash,fl);
- float ll=smoothstep(0.045+fw,0.045-fw,abs(p.y-yl+0.02))*smoothstep(-0.3,0.4,p.x)*smoothstep(1.0,0.85,p.x)*0.75;
+ float ll=smoothstep(max(0.045,fw*1.2)+fw,max(0.045,fw*1.2)-fw,abs(p.y-yl+0.02))*smoothstep(-0.3,0.4,p.x)*smoothstep(1.0,0.85,p.x)*0.75;
  float dbl=smoothstep(0.03+fw,0.03-fw,abs(p.y-(yu+0.24+0.04*p.x)))*smoothstep(-0.55,-0.2,p.x)*smoothstep(1.0,0.75,p.x)*0.55*(1.0-uBlink*0.5);
  col=mix(col,vec3(0.07,0.045,0.04),lash);col=mix(col,vec3(0.25,0.15,0.13),ll);col=mix(col,vec3(0.55,0.36,0.32),dbl*(1.0-lash));
  a=max(a,max(lash,max(ll,dbl)));
@@ -28204,7 +28220,7 @@ function nyAnimeHead(R,P,q){const A=nyAnimeHeadSDF(P);const h=P.polyH||(q==="low
   const g=R.add(toGeom(poly));g.setAttribute("frontW",new THREE.BufferAttribute(poly.fw,1));
   const grp=new THREE.Group();const mesh=new THREE.Mesh(g,nyFaceMat(R,nyAnimeFaceTex(R,P),skin));mesh.castShadow=true;mesh.receiveShadow=true;grp.add(mesh);
   // eye patches: a grid over each eye rectangle projected onto the face (+0.5 mm), eyeP = eye-local coords (x: inner -1 .. outer +1)
-  const E=NY_FACE,eyeM=nyEyeMat(R,mulc(skin,.96),P.irisC||[0x2a1712,0x8a5a3a]);const eyes=[];
+  const es=P.eyeScale||1,E={eyeX:NY_FACE.eyeX*(P.eyeSep||1),eyeY:NY_FACE.eyeY,ew:NY_FACE.ew*es,eh:NY_FACE.eh*es},eyeM=nyEyeMat(R,mulc(skin,.96),P.irisC||[0x2a1712,0x8a5a3a]);const eyes=[];
   for(const s of[-1,1]){const nx=24,ny=16,pos=[],ep=[],idx=[];
     for(let j=0;j<=ny;j++)for(let i=0;i<=nx;i++){const ex=-1.3+2.6*i/nx,ey=-1.2+2.8*j/ny;const x=s*(E.eyeX+ex*E.ew),y=E.eyeY+ey*E.eh;
       const hit=nyProbe(A.F.f,[x,y,.16],[0,0,-1],.2,.0008)||[x,y,.08];const nr=nyGrad(A.F.f,hit);pos.push(hit[0]+nr[0]*.0005,hit[1]+nr[1]*.0005,hit[2]+nr[2]*.0005);ep.push(ex,ey);}
@@ -28212,16 +28228,38 @@ function nyAnimeHead(R,P,q){const A=nyAnimeHeadSDF(P);const h=P.polyH||(q==="low
     const eg=new THREE.BufferGeometry();eg.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));eg.setAttribute("eyeP",new THREE.Float32BufferAttribute(ep,2));eg.setAttribute("eyeS",new THREE.Float32BufferAttribute(new Array(ep.length/2).fill(s),1));eg.setIndex(idx);eg.computeVertexNormals();R.add(eg);
     const em=new THREE.Mesh(eg,eyeM);em.renderOrder=2;em.receiveShadow=true;grp.add(em);eyes.push(em);}
   return{group:grp,mesh,H:{F:A.F,eyes:[[-E.eyeX,E.eyeY,.085],[E.eyeX,E.eyeY,.085]],er:.012},eyeMat:eyeM,anime:true};}
+function nyHibashi(R,len){// two iron chopsticks along +Y from the tips (origin) to the grip end
+  const parts=[];for(const s of[-1,1]){const c=new THREE.CylinderGeometry(.0024,.0012,len,8,1);c.translate(0,len/2,0);c.rotateZ(s*.018);c.translate(s*.004,0,0);parts.push(c);
+    const k=new THREE.CylinderGeometry(.0034,.0034,.03,8,1);k.translate(s*.004+s*len*.018*.9,len-.03,0);parts.push(k);}
+  const m=new THREE.Mesh(mergeGeoms(R,parts),R.add(new THREE.MeshStandardMaterial({color:0x2c2622,roughness:.42,metalness:.55})));m.castShadow=true;m.receiveShadow=true;return m;}
+function nyFanOpenTex(R){return canvasTex(R,512,256,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,"#efe2c0");gr.addColorStop(1,"#e4d2a8");g.fillStyle=gr;g.fillRect(0,0,w,h);
+    const rnd=mulberry32(21);g.globalAlpha=.85;for(let i=0;i<7;i++){g.fillStyle=rnd()<.5?"#d4ae52":"#e2c06a";g.beginPath();g.ellipse(rnd()*w,h*(.15+rnd()*.35),40+rnd()*60,10+rnd()*8,0,0,7);g.fill();}
+    g.globalAlpha=1;g.strokeStyle="#5a4a32";g.lineWidth=5;g.beginPath();g.moveTo(w*.2,h);g.quadraticCurveTo(w*.28,h*.6,w*.40,h*.45);g.stroke();
+    for(let i=0;i<9;i++){const x=w*(.30+.06*i+rnd()*.03),y=h*(.40+rnd()*.25);g.fillStyle=rnd()<.5?"#d65a74":"#f2f0ea";g.beginPath();g.arc(x,y,7+rnd()*5,0,7);g.fill();}
+    g.fillStyle="#3e6a3a";for(let i=0;i<14;i++){g.beginPath();g.ellipse(w*(.62+rnd()*.25),h*(.55+rnd()*.3),14,5,rnd()*3,0,7);g.fill();}
+    g.fillStyle="#b8323a";g.fillRect(0,0,w,10);g.fillStyle="#2f5a8a";g.fillRect(0,10,w,6);},{clamp:true});}
+function nyFanOpen(R,q){// open hi-ougi: pivot at the origin, blades fan out around +Y in the XY plane, painted face toward +Z
+  const N=q==="low"?17:27,spread=1.95,r0=.022,r1=.30,pos=[],uv=[],idx=[];
+  for(let i=0;i<N;i++){const a=-spread/2+spread*i/(N-1),w=spread/(N-1)*.62;const tw=.22;
+    for(let k=0;k<=6;k++){const r=lerp(r0,r1,k/6);for(const sd of[-1,1]){const aa=a+sd*w*lerp(.35,1,k/6);const x=-Math.sin(aa)*r,y=Math.cos(aa)*r,z=sd*tw*.006*r/r1+i*.00035;pos.push(x,y,z);uv.push((aa+spread/2)/spread,k/6);}}
+    const b=i*14;for(let k=0;k<6;k++){const a0=b+k*2,a1=a0+1,c0=a0+2,c1=a0+3;idx.push(a0,a1,c1,a0,c1,c0);}}
+  const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(pos,3));geo.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();R.add(geo);
+  const g=new THREE.Group();const m=new THREE.Mesh(geo,R.add(new THREE.MeshStandardMaterial({map:nyFanOpenTex(R),roughness:.55,metalness:0,side:THREE.DoubleSide})));m.castShadow=true;m.receiveShadow=true;g.add(m);
+  const cols=[0xf3f0e8,0xc23a3a,0xe0b84a,0x4a7a5a,0x6a4a8a,0xd06a8a],tubes=[];
+  for(const sd of[-1,1])for(let i=0;i<cols.length;i++){const a=sd*spread/2;const p0=[-Math.sin(a)*r1*.97,Math.cos(a)*r1*.97,.004];const z=(i-2.5)*.003;
+    const pts=[p0,[p0[0]+sd*.02,p0[1]-.06,z],[p0[0]+sd*.035,p0[1]-.20-.012*i,z+.01],[p0[0]+sd*.02,p0[1]-.33-.01*i,z]].map(p=>new THREE.Vector3(...p));
+    const tg=new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),q==="low"?12:20,.0018,4,false);const c=lin(cols[i]);const ca=new Float32Array(tg.attributes.position.count*3);for(let j=0;j<ca.length/3;j++)ca.set(c,j*3);tg.setAttribute("color",new THREE.BufferAttribute(ca,3));tubes.push(tg);}
+  const cords=new THREE.Mesh(mergeGeoms(R,tubes),R.add(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6})));cords.castShadow=true;g.add(cords);return g;}
 // =====================================================================================
 //  makeNyobo
 // =====================================================================================
 function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","low"].includes(opts.quality)?opts.quality:"high";
   const pose=["gaze","fan","carry","tend"].includes(opts.pose)?opts.pose:"gaze";
-  const attire=(opts.attire==="karaginu"||opts.attire==="uchiki")?opts.attire:((pose==="carry"||pose==="tend")?"uchiki":"karaginu");const kara=attire==="karaginu";
+  const attire=pose==="carry"?"uchiki":(opts.attire==="karaginu"||opts.attire==="uchiki")?opts.attire:(pose==="tend"?"uchiki":"karaginu");const kara=attire==="karaginu";
   let kas=NY_KASANE[opts.kasane]?opts.kasane:(kara?"sakura":"yukinoshita");
   const t0=performance.now();const T_={};const g=new THREE.Group();g.name="nyobo_"+pose+"_"+attire;
   const rig=nyRig(pose,attire);
-  const HP=Object.assign({},NYOBO_HEAD,{gazePitch:rig.gazeP,polyH:q==="low"?.0052:q==="medium"?.0042:.0034},opts.headParams||{});
+  const HP=Object.assign({},NYOBO_HEAD,{gazePitch:rig.gazeP,polyH:q==="low"?.0052:q==="medium"?.0042:.0034},kara?{}:{eyeScale:.94,eyeSep:1.03,irisC:[0x22130e,0x6a4630],skin:0xf6d2bc,hairC:0x1a1410},opts.headParams||{});
   // ---- head (scaled), own eyes (runtime gaze) ----
   const anime=HP.anime!==false;const hd=anime?nyAnimeHead(R,HP,q):buildHead(R,HP,q);T_.head=performance.now()-t0;
   const pivot=new THREE.Object3D();placeObj(pivot,rig.headM,rig.pivot);pivot.scale.setScalar(NY_HS);hd.group.position.set(-HEAD_PIV[0],-HEAD_PIV[1],-HEAD_PIV[2]);pivot.add(hd.group);g.add(pivot);
@@ -28233,13 +28271,19 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
     for(const e of hd.H.eyes){const lg=R.add(new THREE.SphereGeometry(hd.H.er+.0011,22,10,PI*.06,PI*.88,.28,1.56));const pa=lg.attributes.position,n=pa.count,c=new Float32Array(n*3);
       for(let i=0;i<n;i++){const y=pa.getY(i)/(hd.H.er+.0011);const k=sstep(-.10,-.22,y);c.set(mixc(mulc(lidCol,.92),lash,k),i*3);}lg.setAttribute("color",new THREE.BufferAttribute(c,3));
       const m=new THREE.Mesh(lg,R.add(new THREE.MeshStandardMaterial({vertexColors:true,roughness:.6,metalness:0})));m.position.set(e[0],e[1],e[2]);m.rotation.x=-1.35;m.visible=false;hd.group.add(m);lids.push(m);}}
-  const eyeU=anime?hd.eyeMat.userData.uni:null;
+  const eyeU=anime?hd.eyeMat.userData.uni:null;if(eyeU)eyeU.uBlink.value=HP.lidRest!=null?HP.lidRest:(rig.seated&&pose!=="tend"?.14:.24);
   const setEyes=(yaw,pitch)=>{if(eyeU){eyeU.uGaze.value.set(clamp(yaw*.9,-.42,.42),clamp(-pitch*.9,-.32,.26));}else for(const e of eyes){e.rotation.x=pitch;e.rotation.y=yaw;}};
-  const setBlink=c=>{if(eyeU)eyeU.uBlink.value=c;else for(const l of lids){l.visible=c>.02;l.rotation.x=-1.35*(1-c);}};
+  const lidRest=HP.lidRest!=null?HP.lidRest:(rig.seated&&pose!=="tend"?.14:.24);const setBlink=c=>{c=mx(c,lidRest);if(eyeU)eyeU.uBlink.value=c;else for(const l of lids){l.visible=c>.02;l.rotation.x=-1.35*(1-c);}};
   // ---- garments (SDF) ----
-  const body=nyBodySeated(rig,attire),nR=body.nR;
-  const slv={};for(const k of["L","R"])slv[k]=nySleeve(rig.arm[k],{rU:.040,rE:.038,rC:.046,t:kara?.019:.016,back:.06,front:.022,center:rig.tp([0,.25,0]),ground:body.lap.H0,vbAbs:.03,flare:kara?.17:.13,seed:k==="L"?3:8});
-  const KG=kara?nyKaraginu(rig,body,slv):null;const MO=kara?nyMo(rig,body):null;T_.sdf=performance.now()-t0;
+  // fan: the right hand holds the open fan so that its arc hides the mouth
+  let fanFrame=null;
+  if(pose==="fan"){const fwd=nrm3(apM(rig.headM,[0,0,1])),up=nrm3(apM(rig.headM,[.12,1,.10]));const side=nrm3(cross3(up,fwd));const mouth=headPt([0,-.040,.096]);
+    const P_=add3(add3(mouth,scl3(fwd,.075)),scl3(up,-.292));fanFrame={P:P_,up,side,fwd};
+    const hdat=handData(NY_HANDP.nyFan);const grip=scl3(lerp3(hdat.thumb[3],hdat.fings[0][2],.5),.86);const M=basisYZ(scl3(side,-1),fwd);const Wt=sub3(P_,apM(M,grip));
+    const ik=ik2(rig.sh.R,Wt,NY_ARM[0],NY_ARM[1],[-.7,-.5,-.3]);rig.arm.R={S:rig.sh.R,E:ik.E,W:ik.T,fwd:scl3(side,-1),dor:fwd,hp:"nyFan"};}
+  const body=rig.seated?nyBodySeated(rig,attire):nyBodyStanding(rig,attire),nR=body.nR;
+  const slv={};for(const k of["L","R"])slv[k]=nySleeve(rig.arm[k],{rU:.040,rE:.038,rC:.046,t:kara?.019:.016,back:.06,front:.022,center:rig.tp([0,.25,0]),ground:body.lap.H0,vbAbs:rig.seated?.03:rig.arm[k].W[1]-.44,flare:rig.seated?(kara?.17:.13):.03,seed:k==="L"?3:8});
+  const KG=kara?nyKaraginu(rig,body,slv):null;const MO=kara&&rig.seated?nyMo(rig,body):null;T_.sdf=performance.now()-t0;
   // ---- hands ----
   const hands={};for(const k of["L","R"]){const A=rig.arm[k];const hs=handSDF(NY_HANDP[A.hp]||HANDP.relax,{});let F=Sc(hs.F,.86);if(k==="L")F=mirrorX(F);hands[k]={F,M:basisYZ(A.fwd,A.dor),W:A.W};}
   const prox=U([T(Sc(U([sEll([0,.03,0],[.078,.10,.095]),sCap([0,-.03,-.015],[0,-.15,-.005],.045)]),NY_HS),rig.headM,headPt([0,0,0]))].concat(["L","R"].map(k=>T(sCap([0,-.03,0],[0,.09,0],.024),hands[k].M,hands[k].W))),0);
@@ -28252,11 +28296,11 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   const cloth=(lamF)=>(x,y,z,nx,ny,nz,v,o,a)=>{const s=a*shade(x,y,z);o.col[v*3]=o.col[v*3+1]=o.col[v*3+2]=s;o.lam[v]=lamF(x,y,z);};
   const AO=[.016,1.3,3,.14];
   const hm=body.lap.bs;
-  const pB=nyPart(key+"|body",body.F,[-.70,-.006,-.66],[.70,rig.pivot[1]+.03,.68],hB,Gall,AO,cloth(body.lam));
+  const pB=nyPart(key+"|body",body.F,rig.seated?[-.70,-.006,-.66]:[-.45,-.006,-.80],rig.seated?[.70,rig.pivot[1]+.03,.68]:[.45,rig.pivot[1]+.03,.45],hB,Gall,AO,cloth(body.lam));
   const meshes=[nyMesh(R,pB,clothM)];meshes[0].name="ny_body";T_.body=performance.now()-t0;
   {const cF=body.collar;meshes.push(nyMesh(R,nyPart(key+"|collar",cF,[-.12,rig.pivot[1]-.16,-.14],[.12,rig.pivot[1]+.03,.12],q==="low"?.0065:.0042,Gall,[.008,1.0,3,.25],cloth(body.lam)),clothM));meshes[meshes.length-1].name="ny_collar";}
-  for(const k of["L","R"]){const s=slv[k];const lamS=(x,y,z)=>clamp(nR-s.edge(x,y,z)/(kara?.016:.020),.5,nR-.5);
-    meshes.push(nyMesh(R,nyPart(key+"|sl"+k,s.F,s.bb[0],s.bb[1],hS,Gall,AO,cloth(lamS)),clothM));meshes[meshes.length-1].name="ny_sleeve"+k;}
+  for(const k of["L","R"]){const s=slv[k];const lamS=(x,y,z)=>(s.raised&&y>s.o0[1]-.01)?.5:clamp(nR-s.edge(x,y,z)/(kara?.016:.020),.5,nR-.5);
+    const cuffC=add3(rig.arm[k].W,scl3(nrm3(sub3(rig.arm[k].W,rig.arm[k].E)),-.03));const cl=cloth(lamS);meshes.push(nyMesh(R,nyPart(key+"|sl"+k,s.F,s.bb[0],s.bb[1],hS,Gall,AO,(x,y,z,nx,ny,nz,v,o,a)=>{cl(x,y,z,nx,ny,nz,v,o,a);const d=len3(sub3([x,y,z],cuffC));const k2=.45+.55*sstep(.025,.05,d);o.col[v*3]*=k2;o.col[v*3+1]*=k2;o.col[v*3+2]*=k2;}),clothM));meshes[meshes.length-1].name="ny_sleeve"+k;}
   T_.sleeves=performance.now()-t0;
   if(KG){meshes.push(nyMesh(R,nyPart(key+"|kara",KG.F,[-.66,.18,-.36],[.66,rig.pivot[1]+.02,.50],hK,Gall,[.012,1.2,3,.18],cloth(KG.lam)),clothM));meshes[meshes.length-1].name="ny_karaginu";T_.kara=performance.now()-t0;}
   if(MO){meshes.push(nyMesh(R,nyPart(key+"|mo",MO.F,[-.60,-.006,-1.32],[.60,.36,-.04],hMo,Gall,AO,cloth(()=>11.5)),clothM));meshes[meshes.length-1].name="ny_mo";T_.mo=performance.now()-t0;}
@@ -28271,13 +28315,17 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   const capMesh=nyMesh(R,pCap,hairM);capMesh.name="ny_hairCap";hd.group.add(capMesh);
   const Fall=(x,y,z)=>{let d=fB(x,y,z);if(fK)d=mn(d,fK(x,y,z));if(fM)d=mn(d,fM(x,y,z));return mn(d,y);};
   const hb=apM(rig.headM,[0,.25,-1]);const HPth=nyHairPath(rig,headPt,Fall,nrm3(hb));
-  const longF=nySweep(HPth.pts,HPth.nr,{w:t=>t<.15?lerp(.085,.150,sstep(0,.15,t)):lerp(.150,.048,sstep(.15,1,t)*(.35+.65*sstep(.40,1,t))),th:t=>lerp(.022,.010,sstep(0,1,t)),curv:t=>lerp(2.0,1.0,sstep(.0,.35,t))*(1-.7*sstep(.5,.7,t)),rr:.012,
+  const tie=kara?0:(rig.seated?.30:.36);const longF=nySweep(HPth.pts,HPth.nr,{w:tie?(t=>t<.12?lerp(.085,.120,sstep(0,.12,t)):t<tie?lerp(.120,.036,sstep(.12,tie,t)):lerp(.040,.024,sstep(tie,1,t))):(t=>t<.15?lerp(.085,.150,sstep(0,.15,t)):lerp(.150,.048,sstep(.15,1,t)*(.35+.65*sstep(.40,1,t)))),th:tie?(t=>t<tie?lerp(.020,.017,t/tie):lerp(.019,.012,sstep(tie,1,t))):(t=>lerp(.022,.010,sstep(0,1,t))),curv:t=>lerp(2.0,1.0,sstep(.0,.35,t))*(1-.7*sstep(.5,.7,t)),rr:.012,
     off:(t,b)=>(.0014*Math.sin(b*230+Math.sin(b*57)*2.2)+.0007*Math.sin(b*610+1.3))*sstep(.0,.08,t)});
   const lb0=[1e9,1e9,1e9],lb1=[-1e9,-1e9,-1e9];for(const p of HPth.pts)for(let i=0;i<3;i++){lb0[i]=mn(lb0[i],p[i]-.13);lb1[i]=mx(lb1[i],p[i]+.13);}lb0[1]=mx(lb0[1],-.006);
   const hL=q==="low"?.014:q==="medium"?.012:.0105;
   const pLong=nyPart(key+"|hlong",longF,lb0,lb1,hL,(x,y,z)=>mn(longF.f(x,y,z),Gall(x,y,z)),[.008,1.1,3,.35],(x,y,z,nx,ny,nz,v,o,a)=>{
       const qq=longF.loc(x,y,z);const c=mulc(hc,a*(.86+.14*N2(qq.b*60,qq.t*4,.5)));o.col.set(c,v*3);o.dir.set(qq.T,v*3);o.hs[v*2]=qq.b;o.hs[v*2+1]=qq.t;},{hair:true});
   const longMesh=nyMesh(R,pLong,hairM);longMesh.name="ny_hairLong";g.add(longMesh);T_.hair=performance.now()-t0;
+  if(tie){const P_=HPth.pts,iT=Math.round(tie*(P_.length-1)),c=P_[iT],Tt=nrm3(sub3(P_[iT+1],P_[iT-1])),Nn=HPth.nr[iT],Bb=cross3(Tt,Nn);
+    const band={f:(x,y,z)=>{const r=[x-c[0],y-c[1],z-c[2]];const a=ab(dot3(r,Tt))-.017,b=ab(dot3(r,Bb))-.046,n=ab(dot3(r,Nn))-.026;const rr=.006;return sq(mx(a,0)**2+mx(b+rr,0)**2+mx(n+rr,0)**2)+mn(mx(a,b+rr,n+rr),0)-rr;},bs:[c[0],c[1],c[2],.08]};
+    const pM=nyPart(key+"|motoyui",band,[c[0]-.09,c[1]-.09,c[2]-.09],[c[0]+.09,c[1]+.09,c[2]+.09],.0035,null,null,(x,y,z,nx,ny,nz,v,o)=>{o.col[v*3]=o.col[v*3+1]=o.col[v*3+2]=1;o.lam[v]=13.5;});
+    const mm=nyMesh(R,pM,clothM);mm.name="ny_motoyui";g.add(mm);}
   // ---- hands ----
   const skinM=skinMat(R,{rough:.55});const hh=q==="low"?.0058:q==="medium"?.0044:.0034;const handPiv={};
   for(const k of["L","R"]){const H_=hands[k];const poly=buildPart(H_.F,[-.055,-.06,-.05],[.055,.17,.05],hh,H_.M,H_.W,(x,y,z)=>mn(fB(x,y,z),fSL(x,y,z),fSR(x,y,z)),.007,1.0,skinPainter(HP,"hand",null),{aoMin:.38,key:key+"|h"+k});
@@ -28288,8 +28336,19 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   const chest=new THREE.Object3D();chest.position.set(...rig.tp([0,.36,.13]));g.add(chest);anchors.chest=chest;
   if(pose==="gaze"){const fan=nyFanClosed(R,q);const a=rig.arm.R.W,b=rig.arm.L.W;const dir=nrm3(sub3(b,a));const c=add3(lerp3(a,b,.5),[0,.012,.055]);
     const p0=sub3(c,scl3(dir,.15));fan.position.set(...p0);fan.quaternion.setFromUnitVectors(new THREE.Vector3(1,0,0),new THREE.Vector3(...dir));g.add(fan);anchors.fan=fan;}
+  if(pose==="fan"){const fan=nyFanOpen(R,q);const F_=fanFrame;const m=new THREE.Matrix4().makeBasis(new THREE.Vector3(...F_.side).negate(),new THREE.Vector3(...F_.up),new THREE.Vector3(...F_.fwd));
+    fan.quaternion.setFromRotationMatrix(m);fan.position.set(...F_.P);g.add(fan);anchors.fan=fan;}
+  let tongs=null,tongBase=null;
+  if(pose==="tend"){const hk=new THREE.Object3D();hk.position.set(.02,0,.60);g.add(hk);anchors.hioke=hk;
+    const H_=hands.R;const hdat=handData(NY_HANDP.nyTongs);const grip=add3(H_.W,apM(H_.M,scl3(lerp3(hdat.thumb[3],hdat.fings[0][2],.5),.86)));
+    const tip=[.0,.228,.60];const dir=nrm3(sub3(grip,tip));const len=len3(sub3(grip,tip))+.075;tongs=nyHibashi(R,len);
+    tongs.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(...dir));tongs.position.set(...tip);g.add(tongs);
+    const ta=new THREE.Object3D();tongs.add(ta);anchors.hibashiTip=ta;handPiv.R.attach(tongs);tongBase=handPiv.R.position.clone();}
+  if(pose==="carry"){const ca=new THREE.Object3D();ca.position.set(0,lerp(rig.arm.L.W[1],rig.arm.R.W[1],.5)-.045,lerp(rig.arm.L.W[2],rig.arm.R.W[2],.5)+.02);g.add(ca);anchors.carry=ca;}
+  // everything bobs together while walking
+  const root=new THREE.Group();while(g.children.length)root.add(g.children[0]);g.add(root);
   // ---- userData ----
-  const uni=clothM.userData.uni,huni=hairM.userData.uni;
+  const uni=clothM.userData.uni,huni=hairM.userData.uni;let walkPh=0,walkA=0;
   g.userData.anchors=anchors;g.userData.head=pivot;g.userData.kasane=kas;g.userData.attire=attire;g.userData.pose=pose;g.userData.walking=false;g.userData.walkSpeed=.8;
   g.userData.setKasane=function(key){if(!NY_KASANE[key])return false;kas=key;g.userData.kasane=key;nyApplyKasane(uni,key,attire);return true;};
   const gz={y:0,p:0,cy:0,cp:0};g.userData.setGaze=function(yaw,pitch){gz.y=clamp(+yaw||0,-.9,.9);gz.p=clamp(+pitch||0,-.6,.6);};
@@ -28301,6 +28360,10 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
     pivot.position.set(pivP.x,pivP.y+br,pivP.z);eu.set(Math.sin(t*.37)*.008+gz.cp*.55,Math.sin(t*.23)*.012+gz.cy*.6,0);qq.setFromEuler(eu);pivot.quaternion.copy(pivR).multiply(qq);
     setEyes(rig.gazeY+gz.cy*.4,(HP.gazePitch||0)+gz.cp*.45);
     for(const s of["L","R"])handPiv[s].position.set(hP0[s].x,hP0[s].y+br*.4,hP0[s].z);
+    if(pose==="tend"){const ph=Math.sin(t*1.1),k2=Math.sin(t*2.2);handPiv.R.position.set(hP0.R.x+.016*ph,hP0.R.y+.006*Math.max(0,k2),hP0.R.z+.010*ph);}
+    if(pose==="carry"){const on=!!g.userData.walking,sp=g.userData.walkSpeed||.8;walkA+=((on?1:0)-walkA)*(1-Math.exp(-dt*5));if(on)walkPh+=dt*2*PI*sp/.50;
+      root.position.set(walkA*.007*Math.sin(walkPh),walkA*.006*Math.abs(Math.sin(walkPh))-walkA*.004,0);root.rotation.z=walkA*.012*Math.sin(walkPh);
+      uni.uNyWalk.value.set(walkA*.014,walkPh,.45,0);huni.uHairSw.value.set(walkA*.03,walkPh,0,0);}
     // blink: every 3-6 s
     if(blinkT<0&&t>=nextBlink){blinkT=0;}
     if(blinkT>=0){blinkT+=dt;const u=blinkT/.17;const c=u<.35?sstep(0,.35,u):u<.5?1:sstep(1,.5,u);setBlink(c);
