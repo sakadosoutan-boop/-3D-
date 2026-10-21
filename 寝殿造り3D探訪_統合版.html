@@ -26257,7 +26257,7 @@ return{makeMinminZemi,makeMonKagerou,makeMayflySwarm};
 /* APP_TSUREZURE_INSECTS_EMBED_END */
 /* APP_TSUREZURE_FIGURES_EMBED_BEGIN (src/app/tsurezure-figures.js から自動生成。ここを直接編集しない) */
 /* =============================================================================
- tsurezure-figures.js — 徒然草 第七段の人物（兼好法師・老いた貴族・孫）   →  const TSURE_FIGURES
+ tsurezure-figures.js — 徒然草 第七段の人物（兼好法師・老いた貴族・孫）＋枕草子の女房（清少納言・袿姿の女房）   →  const TSURE_FIGURES
  依存: THREE (r128) のみ。形は SDF（符号付き距離関数）を CPU で多角形化して作る（髪・衣の襞・手指まで）。
  顔の細部（皺・眉・唇）は canvas の顔テクスチャ。乱数はシード付き。単位 m / +Y 上 / 人物は +Z が正面。
  生成は重い（1体 1〜4 秒）。多角形は GEO_CACHE（姿勢|品質ごと）に再利用される。
@@ -26280,6 +26280,29 @@ return{makeMinminZemi,makeMonKagerou,makeMayflySwarm};
    子どもの頭身は、共通の頭部 SDF を子ども向けの比率（大きな頭蓋・小さな顎と鼻・ふっくらした頬）にして全体を縮める。
    userData.anchors {eyes, doll?|mallet?, ball?} / update(dt,t) / dispose()
  注意: 頭部パラメータの brow は「眉の色」、browK は「眉骨の大きさ」（同名にすると頭部が壊れる）。
+ TSURE_FIGURES.makeNyobo({pose, attire?, kasane?, quality?, seed?, headParams?}) -> Group   （枕草子: 清少納言・女房）
+   pose: "gaze"（座って少し身をひねり遠く・やや上を見る。膝の上で閉じた檜扇を両手で持つ）| "fan"（座って開いた檜扇を右手で口元に掲げる）
+         | "carry"（立ってすり足で歩き、両手で器を胸〜腰の高さに捧げ持つ）| "tend"（火桶の前に座り、右手の火箸で炭を寄せる。身を前に傾ける）
+   attire: "karaginu"（女房装束＝十二単: 唐衣・裳・表着・打衣・五衣・単・長袴。gaze/fan の既定）| "uchiki"（袿姿: 袿3枚＋単＋長袴、唐衣と裳なし、
+         髪は背の中ほどを白い元結で束ねる。tend/carry の既定）。carry は常に uchiki（立ち姿の十二単は作らない）。
+   kasane（襲の色目）: "sakura" | "unohana" | "nadeshiko" | "momiji" | "yukinoshita" | "matsugasane"（既定 karaginu=sakura, uchiki=matsugasane）。
+         TSURE_FIGURES.NYOBO_KASANE に一覧。袖口・襟・裾・前の開きに重ねの色の段が出る（色は布シェーダーのパレット uniform）。
+   quality: "high"(約18万三角形以下/15メッシュ, 生成 約1.2〜2.5秒) | "medium" | "low"。形の多角形は GEO_CACHE（姿勢|装束|品質）に再利用。
+   headParams: 頭部の上書き（顔は nyobo 専用のアニメ調頭部。{anime:false} で写実頭部 buildHead に戻せる）。seed: まばたき間隔の乱数。
+   原点 = 座る床面（gaze/fan/tend）または立つ床面（carry）。+Z が正面、+Y 上、単位 m。座った頭頂 ≈ 0.86m、立った頭頂 ≈ 1.53m。
+   座り姿の床の広がり: 幅 約±0.6m、前 約+0.58m、後ろ 約-0.52m（karaginu は裳が後ろ約 -1.3m まで、垂髪は床を後ろへ約 -1.0m）。
+   userData.anchors: eyes（両目の間, 頭に追従）, headTop, chest,
+     fan（gaze: 閉じた檜扇 / fan: 開いた檜扇の Group）,
+     carry（carry: 両手の間・器の底の中心。+Y 上 +Z 前。ここに器を add する。高さ 約0.88m）,
+     hioke（tend: 火桶を置く床の点 [0.02,0,0.60]。火桶 径0.36m・高さ0.27m を想定）,
+     hibashiTip（tend: 右手の火箸の先。火桶の中の炭の上 約 y=0.23。手の往復に追従）。
+   userData.head = 頭のピボット。userData.setGaze(yaw, pitch)（rad, yaw>0 で人物の左, pitch>0 で下。頭と目が分担して滑らかに向く）。
+   userData.setKasane(key) -> boolean: 襲の色目を差し替える（形は作り直さない。パレット uniform だけを書き換えるので即時・軽量）。
+   userData.walking=true / walkSpeed（既定0.8, carry のみ）: 体の上下・左右の揺れと裾・袖の揺れ（位置の移動は呼び出し側）。
+   userData.update(dt,t): 呼吸（胸・肩）・まばたき（3〜6秒ごと）・頭の揺らぎ・tend の火箸の往復・carry の歩行。
+   userData.dispose() / userData.stats {ms,tris,meshes} / userData.kasane / attire / pose。
+   実装: 布はすべて 1 つのパレット・シェーダー（頂点属性 nyL=層番号: 0 表着/外の袿 … 単, 袴, 9 唐衣, 10 唐衣の裏, 11 裳, 13 元結）。
+   頭部の追加パラメータ（fem, taper, faceW, egg, zygK, cheekHi, muzK, nlK, foreK, ramK, polyH, softBrow, blush …）は既定で無効で、既存の人物の見た目は変わらない。
 ============================================================================= */
 const TSURE_FIGURES=(()=>{
 "use strict";
@@ -27817,7 +27840,7 @@ function makeMago(opts){opts=opts||{};const R=Res();const q=opts.quality||"high"
 const NY_HS=1.02,NY_ARM=[.262,.222];
 const NYOBO_HEAD={anime:true,irisC:[0x2a1712,0x8a5a3a],seed:61,age:25,smile:.55,fem:1,lipU:.0042,lipL:.0056,lipUvol:.0020,lipLvol:.0027,mouthW:.0196,
   scalp:"fem",hairC:0x15100d,beard:"none",whiskers:0,wrinkles:0,spots:0,
-  skin:0xf8d6c2,skinRed:0xf0ae9a,skinLight:0xf2d5be,lip:0xb94a55,lipColL:0xc4565f,blush:.50,blushC:0xe2907f,noseRed:.35,
+  skin:0xf3c9b0,skinRed:0xeca48e,skinLight:0xf2d5be,lip:0xb94a55,lipColL:0xc4565f,blush:.50,blushC:0xe2907f,noseRed:.35,
   iris:[62,40,28],irisR:.17,pupilR:.058,sclera:[228,222,214],catchlight:true,
   eyeW:.0156,eyeOpenU:.0056,eyeOpenL:.0031,eyeTilt:.09,hood:.75,lash:1.15,
   browY:-.0012,browDrop:.0065,brow:0x2b211c,browHairs:220,browW:1.35,browAmt:.7,softBrow:.7,
@@ -27830,23 +27853,23 @@ function nyHairline(x,y,z){return mx(NY_HF.zF(y)-z,y-NY_HF.yF(x));}// >0 under t
 // 襲の色目 [地, 文様]: kara 唐衣 / kura 唐衣の裏(返し襟) / uwa 表着 / uchi 打衣 / itsu 五衣(外→内) / hitoe 単 / haka 袴 / mo 裳 ; uk 袿(外→内)×3 / uh 袿姿の単
 const NY_KASANE={
   sakura:{kara:["#7b9645","#e6ebcf"],kura:"#c25a73",uwa:["#f1dce0","#fbf4f2"],uchi:"#981a2e",itsu:["#a33658","#c55c7c","#dc8da5","#edbdca","#f8e6eb"],hitoe:"#6b8a3a",haka:"#a31c28",mo:["#f2efe7","#c3ccd8"],
-    uk:[["#f4e8ea","#e4b6c2"],["#dd90a7","#eab0c0"],["#b2405f","#c86682"]],uh:"#6b8a3a"},
+    uk:[["#e7a3b4","#f6dbe2"],["#f2c9d3","#fae6ea"],["#b8405f","#cf6b86"]],uh:"#6b8a3a"},
   unohana:{kara:["#5e8656","#e9efe0"],kura:"#f1f0e8",uwa:["#f4f3ed","#ffffff"],uchi:"#981a2e",itsu:["#f5f4ee","#e7eedb","#cfe1b6","#a9c684","#7da155"],hitoe:"#557832",haka:"#a31c28",mo:["#f2f0e8","#c6d4d0"],
-    uk:[["#f5f4ee","#ffffff"],["#d3e3ba","#e4eed2"],["#88aa5c","#a3be7a"]],uh:"#557832"},
+    uk:[["#7ea35a","#d9e8c4"],["#e8efdc","#f6f9ee"],["#4f7a34","#7a9e58"]],uh:"#f2f1ea"},
   nadeshiko:{kara:["#cd6a85","#f4d4de"],kura:"#6a8b47",uwa:["#e8a1b3","#f7d9e1"],uchi:"#981a2e",itsu:["#c3486b","#d66b88","#e590a6","#f0b7c6","#f8dbe3"],hitoe:"#5c7f3f",haka:"#a31c28",mo:["#f3eee9","#d8c8d0"],
-    uk:[["#eaa4b6","#f6d4de"],["#d6708c","#e592a8"],["#b8486a","#c86a86"]],uh:"#5c7f3f"},
+    uk:[["#d8708c","#f4cdd8"],["#eaa4b6","#f6d4de"],["#5c7f3f","#7e9e5e"]],uh:"#f4eee8"},
   momiji:{kara:["#b02c22","#d8b25a"],kura:"#d89c30",uwa:["#a66f36","#d2a65e"],uchi:"#4a1a26",itsu:["#b3291e","#ca481c","#da7326","#e39f33","#e7c35d"],hitoe:"#547a39",haka:"#a31c28",mo:["#f1ede4","#d9c08a"],
-    uk:[["#c8461e","#dc7a3a"],["#e09a34","#ecba5a"],["#b3291e","#c84a34"]],uh:"#547a39"},
+    uk:[["#b8381f","#e0a25a"],["#e09a34","#f0c46e"],["#7a2a1e","#a04a30"]],uh:"#547a39"},
   yukinoshita:{kara:["#a8243a","#e8c86c"],kura:"#f3f1ec",uwa:["#f6f4ef","#ffffff"],uchi:"#981a2e",itsu:["#f8f6f2","#f1eee9","#e9e3de","#e7a3b0","#c4394d"],hitoe:"#a01c2c",haka:"#a31c28",mo:["#f3f1ec","#c9d2dc"],
-    uk:[["#f4f0ea","#d9d2e4"],["#ece2e0","#f6f0ee"],["#cf4459","#de6e7e"]],uh:"#a01c2c"},
+    uk:[["#b8324c","#e7a0ac"],["#e4a0b0","#f4ccd4"],["#8a1c2c","#a8384a"]],uh:"#f4f1ec"},
   matsugasane:{kara:["#5b3070","#b99bd0"],kura:"#4f6b35",uwa:["#4b6932","#7d9a52"],uchi:"#3c1a3c",itsu:["#3d5a2a","#577a38","#7e9b55","#795a8c","#5a3a72"],hitoe:"#4a2a62",haka:"#a31c28",mo:["#f1efe8","#c8cdd8"],
-    uk:[["#4b6932","#7d9a52"],["#6f8f48","#93ad6c"],["#6a4a82","#8a6aa2"]],uh:"#4a2a62"}};
+    uk:[["#4f7034","#a8c27e"],["#7e9b55","#b8cc94"],["#5a3a72","#8a6aa2"]],uh:"#efece4"}};
 const nyHex=s=>parseInt(s.slice(1),16);
 // palette uniforms <- kasane (pattern: 0 none, 1 roundels (R), 2 small diamonds (G), 3 hexagons+large roundels (B))
 function nyApplyKasane(uni,key,attire){const K_=NY_KASANE[key]||NY_KASANE.sakura;const G=uni.uNyG.value,F=uni.uNyF.value,P=uni.uNyP.value;
   const set=(i,gc,fc,pat,amt,rough,band)=>{G[i].setRGB(...lin(nyHex(gc)));F[i].setRGB(...lin(nyHex(fc||gc)));P[i].set(pat,amt,rough,band);};
   for(let i=0;i<16;i++)set(i,"#f4f1ea",null,0,0,.8,0);
-  if(attire==="uchiki"){set(0,K_.uk[0][0],K_.uk[0][1],1,.50,.62,1);set(1,K_.uk[1][0],K_.uk[1][1],2,.22,.66,1);set(2,K_.uk[2][0],K_.uk[2][1],2,.22,.66,1);
+  if(attire==="uchiki"){set(0,K_.uk[0][0],K_.uk[0][1],1,.72,.58,1);set(1,K_.uk[1][0],K_.uk[1][1],2,.22,.66,1);set(2,K_.uk[2][0],K_.uk[2][1],2,.22,.66,1);
     set(3,K_.uh,null,2,.30,.62,1);set(4,K_.haka,null,0,0,.50,1);for(let i=5;i<9;i++)set(i,K_.haka,null,0,0,.5,0);}
   else{set(0,K_.uwa[0],K_.uwa[1],1,.70,.56,1);set(1,K_.uchi,null,0,0,.32,1);for(let i=0;i<5;i++)set(2+i,K_.itsu[i],null,2,.20,.70,1);
     set(7,K_.hitoe,null,2,.32,.62,1);set(8,K_.haka,null,0,0,.42,1);set(9,K_.kara[0],K_.kara[1],3,.80,.55,1);set(10,K_.kura,null,0,0,.60,1);
@@ -27886,7 +27909,7 @@ diffuseColor.rgb*=nyC;`)
       .replace("#include <roughnessmap_fragment>","#include <roughnessmap_fragment>\nroughnessFactor=nyP.z*(1.0-0.18*nyM*nyP.y);");};
   m.customProgramCacheKey=()=>"nyCloth1";R.add(m);m.userData.uni=uni;return m;}
 // black hair: Kajiya-Kay style highlights along the strand direction (attribute hairDir), strand streaks from hairS.x
-function nyHairMat(R){const uni={uHs1:{value:new THREE.Color(.36,.32,.29)},uHs2:{value:new THREE.Color(.12,.08,.06)},uHsh:{value:new THREE.Vector4(-.06,.10,60,26)},
+function nyHairMat(R){const uni={uHs1:{value:new THREE.Color(.28,.25,.23)},uHs2:{value:new THREE.Color(.09,.06,.045)},uHsh:{value:new THREE.Vector4(-.06,.10,80,30)},
     uNyBreath:{value:0},uNyBY:{value:new THREE.Vector2(.30,.62)},uHairSw:{value:new THREE.Vector4(0,0,0,0)}};
   const m=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:.58,metalness:0});
   m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,uni);
@@ -27894,7 +27917,7 @@ function nyHairMat(R){const uni={uHs1:{value:new THREE.Color(.36,.32,.29)},uHs2:
       .replace("#include <beginnormal_vertex>","#include <beginnormal_vertex>\nvHT=normalize(normalMatrix*hairDir);vHS=hairS;")
       .replace("#include <begin_vertex>","#include <begin_vertex>\ntransformed.y+=uNyBreath*smoothstep(uNyBY.x,uNyBY.y,position.y);\n{float nyw=uHairSw.x*hairS.y*hairS.y*step(0.03,position.y);transformed.x+=nyw*sin(uHairSw.y+hairS.y*3.0);transformed.z+=nyw*0.5*sin(uHairSw.y*0.7+1.3);}");
     sh.fragmentShader=sh.fragmentShader.replace("#include <common>","#include <common>\nvarying vec3 vHT;varying vec2 vHS;uniform vec3 uHs1;uniform vec3 uHs2;uniform vec4 uHsh;\nfloat nyStrand(float s){return 0.5+0.25*sin(s*1150.0+sin(s*173.0)*2.0)+0.25*sin(s*523.0+1.7);}")
-      .replace("#include <color_fragment>","#include <color_fragment>\ndiffuseColor.rgb*=0.80+0.40*nyStrand(vHS.x);")
+      .replace("#include <color_fragment>","#include <color_fragment>\ndiffuseColor.rgb*=0.88+0.24*nyStrand(vHS.x);")
       .replace("#include <lights_physical_pars_fragment>",`#include <lights_physical_pars_fragment>
 void RE_Direct_NyHair(const in IncidentLight directLight,const in GeometricContext geometry,const in PhysicalMaterial material,inout ReflectedLight reflectedLight){
   RE_Direct_Physical(directLight,geometry,material,reflectedLight);
@@ -27972,7 +27995,7 @@ function nyMesh(R,P,mat,cast){const g=new THREE.BufferGeometry();g.setAttribute(
   if(P.dir){g.setAttribute("hairDir",new THREE.BufferAttribute(P.dir,3));g.setAttribute("hairS",new THREE.BufferAttribute(P.hs,2));}
   g.setIndex(new THREE.BufferAttribute(P.idx,1));g.computeBoundingSphere();R.add(g);const m=new THREE.Mesh(g,mat);m.castShadow=cast!==false;m.receiveShadow=true;return m;}
 // ---- rig ----
-const NY_HANDP={nyHold:{curl:[.50,.58,.66,.74],spread:-.04,thumb:[.30,.45,.55]},nyFan:{curl:[.95,1.05,1.1,1.15],spread:-.10,thumb:[.55,.55,.85]},
+const NY_HANDP={nyHold:{curl:[.50,.58,.66,.74],spread:-.04,thumb:[.30,.45,.55]},nyFan:{curl:[.42,.48,.55,.62],spread:-.12,thumb:[.15,.25,.75]},
   nyTongs:{curl:[.45,.62,.95,1.05],spread:-.05,thumb:[.65,.55,.9],fl:[[.55,.55,.35],[.75,.9,.5],[1.3,1.6,.9],[1.4,1.7,.9]]},nyRest:{curl:[.25,.30,.38,.45],spread:.05,thumb:[.3,.3,.3]},
   nyCarry:{curl:[.35,.45,.55,.62],spread:.10,thumb:[.25,.20,.25]}};
 function nyRig(pose,attire){const R={pose,attire,seated:pose!=="carry"};
@@ -28140,7 +28163,7 @@ function nyAnimeHeadSDF(P){const cr=P.cran||[1,1,1],co=P.cranOff||[0,0,0];
 function nyAnimeFaceTex(R,P){const S=1024,X=x=>(x-FX0)/(FX1-FX0)*S,Y=y=>(FY1-y)/(FY1-FY0)*S,PX=S/(FX1-FX0);const E=NY_FACE;
   return canvasTex(R,S,S,g=>{g.fillStyle="#fff";g.fillRect(0,0,S,S);
     const blob=(x,y,rx,ry,col,al)=>{g.save();g.translate(X(x),Y(y));g.scale(rx*PX,ry*PX);const gr=g.createRadialGradient(0,0,0,0,0,1);gr.addColorStop(0,col);gr.addColorStop(1,"rgba(255,255,255,0)");g.globalAlpha=al;g.fillStyle=gr;g.beginPath();g.arc(0,0,1,0,7);g.fill();g.restore();g.globalAlpha=1;};
-    for(const s of[-1,1]){blob(s*.040,-.016,.024,.015,"rgb(242,150,148)",1.0);blob(s*.040,-.015,.013,.008,"rgb(236,128,128)",.50);}
+    for(const s of[-1,1]){blob(s*.040,-.016,.025,.016,"rgb(238,132,130)",1.0);blob(s*.040,-.015,.014,.009,"rgb(230,112,112)",.62);}
     blob(0,-.012,.006,.004,"rgb(246,186,176)",.35);
     // brows: thin soft arcs, a little high
     for(const s of[-1,1]){g.save();g.lineCap="round";for(let k=2;k>=0;k--){g.strokeStyle="rgb(104,76,66)";g.globalAlpha=k?.14:.78;g.lineWidth=(.0013+k*.0013)*PX;g.beginPath();
@@ -28164,7 +28187,7 @@ function nyFaceMat(R,map,skin){const uni={uShade:{value:new THREE.Color().setRGB
 void RE_Direct_NyFace(const in IncidentLight directLight,const in GeometricContext geometry,const in PhysicalMaterial material,inout ReflectedLight reflectedLight){
   float ndl=dot(geometry.normal,directLight.direction);float w=smoothstep(-0.35,0.65,ndl);
   vec3 tint=mix(uShade,vec3(1.0),smoothstep(-0.2,0.5,ndl));
-  reflectedLight.directDiffuse+=directLight.color*(0.25+0.75*w)*tint*material.diffuseColor;
+  reflectedLight.directDiffuse+=directLight.color*(0.10+0.90*w)*tint*material.diffuseColor;
   vec3 H=normalize(directLight.direction+geometry.viewDir);reflectedLight.directSpecular+=directLight.color*0.035*pow(max(dot(geometry.normal,H),0.0),24.0)*w;
 }
 #undef RE_Direct
@@ -28256,10 +28279,10 @@ function nyFanOpen(R,q){// open hi-ougi: pivot at the origin, blades fan out aro
 function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","low"].includes(opts.quality)?opts.quality:"high";
   const pose=["gaze","fan","carry","tend"].includes(opts.pose)?opts.pose:"gaze";
   const attire=pose==="carry"?"uchiki":(opts.attire==="karaginu"||opts.attire==="uchiki")?opts.attire:(pose==="tend"?"uchiki":"karaginu");const kara=attire==="karaginu";
-  let kas=NY_KASANE[opts.kasane]?opts.kasane:(kara?"sakura":"yukinoshita");
+  let kas=NY_KASANE[opts.kasane]?opts.kasane:(kara?"sakura":"matsugasane");
   const t0=performance.now();const T_={};const g=new THREE.Group();g.name="nyobo_"+pose+"_"+attire;
   const rig=nyRig(pose,attire);
-  const HP=Object.assign({},NYOBO_HEAD,{gazePitch:rig.gazeP,polyH:q==="low"?.0052:q==="medium"?.0042:.0034},kara?{}:{eyeScale:.94,eyeSep:1.03,irisC:[0x22130e,0x6a4630],skin:0xf6d2bc,hairC:0x1a1410},opts.headParams||{});
+  const HP=Object.assign({},NYOBO_HEAD,{gazePitch:rig.gazeP,polyH:q==="low"?.0056:q==="medium"?.0047:.0040},kara?{}:{eyeScale:.94,eyeSep:1.03,irisC:[0x22130e,0x6a4630],skin:0xefc2a6,hairC:0x1a1410},opts.headParams||{});
   // ---- head (scaled), own eyes (runtime gaze) ----
   const anime=HP.anime!==false;const hd=anime?nyAnimeHead(R,HP,q):buildHead(R,HP,q);T_.head=performance.now()-t0;
   const pivot=new THREE.Object3D();placeObj(pivot,rig.headM,rig.pivot);pivot.scale.setScalar(NY_HS);hd.group.position.set(-HEAD_PIV[0],-HEAD_PIV[1],-HEAD_PIV[2]);pivot.add(hd.group);g.add(pivot);
@@ -28282,15 +28305,15 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
     const hdat=handData(NY_HANDP.nyFan);const grip=scl3(lerp3(hdat.thumb[3],hdat.fings[0][2],.5),.86);const M=basisYZ(scl3(side,-1),fwd);const Wt=sub3(P_,apM(M,grip));
     const ik=ik2(rig.sh.R,Wt,NY_ARM[0],NY_ARM[1],[-.7,-.5,-.3]);rig.arm.R={S:rig.sh.R,E:ik.E,W:ik.T,fwd:scl3(side,-1),dor:fwd,hp:"nyFan"};}
   const body=rig.seated?nyBodySeated(rig,attire):nyBodyStanding(rig,attire),nR=body.nR;
-  const slv={};for(const k of["L","R"])slv[k]=nySleeve(rig.arm[k],{rU:.040,rE:.038,rC:.046,t:kara?.019:.016,back:.06,front:.022,center:rig.tp([0,.25,0]),ground:body.lap.H0,vbAbs:rig.seated?.03:rig.arm[k].W[1]-.44,flare:rig.seated?(kara?.17:.13):.03,seed:k==="L"?3:8});
+  const slv={};for(const k of["L","R"])slv[k]=nySleeve(rig.arm[k],{rU:.040,rE:.038,rC:rig.seated?.046:.062,t:kara?.019:.016,back:rig.seated?.06:.11,front:rig.seated?.022:.05,center:rig.tp([0,.25,0]),ground:body.lap.H0,vbAbs:rig.seated?.03:rig.arm[k].W[1]-.46,flare:rig.seated?(kara?.17:.13):.07,seed:k==="L"?3:8});
   const KG=kara?nyKaraginu(rig,body,slv):null;const MO=kara&&rig.seated?nyMo(rig,body):null;T_.sdf=performance.now()-t0;
   // ---- hands ----
-  const hands={};for(const k of["L","R"]){const A=rig.arm[k];const hs=handSDF(NY_HANDP[A.hp]||HANDP.relax,{});let F=Sc(hs.F,.86);if(k==="L")F=mirrorX(F);hands[k]={F,M:basisYZ(A.fwd,A.dor),W:A.W};}
+  const hands={};for(const k of["L","R"]){const A=rig.arm[k];const hs=handSDF(NY_HANDP[A.hp]||HANDP.relax,{});let F=Sc(hs.F,.82);if(k==="L")F=mirrorX(F);hands[k]={F,M:basisYZ(A.fwd,A.dor),W:A.W};}
   const prox=U([T(Sc(U([sEll([0,.03,0],[.078,.10,.095]),sCap([0,-.03,-.015],[0,-.15,-.005],.045)]),NY_HS),rig.headM,headPt([0,0,0]))].concat(["L","R"].map(k=>T(sCap([0,-.03,0],[0,.09,0],.024),hands[k].M,hands[k].W))),0);
   const fB=body.F.f,fSL=slv.L.F.f,fSR=slv.R.F.f,fK=KG?KG.F.f:null,fM=MO?MO.F.f:null,fP=prox.f;
   const Gall=(x,y,z)=>{let d=mn(fB(x,y,z),fSL(x,y,z),fSR(x,y,z),fP(x,y,z),y+.0);if(fK)d=mn(d,fK(x,y,z));if(fM)d=mn(d,fM(x,y,z));return d;};
   const key="nyobo|"+pose+"|"+attire+"|"+q;
-  const hB=q==="low"?.020:q==="medium"?.016:.0135,hS=q==="low"?.017:q==="medium"?.0135:.0115,hK=q==="low"?.016:q==="medium"?.013:.011,hMo=q==="low"?.020:q==="medium"?.016:.014;
+  const hB=q==="low"?.021:q==="medium"?.017:.0148,hS=q==="low"?.017:q==="medium"?.0135:.0115,hK=q==="low"?.016:q==="medium"?.013:.011,hMo=q==="low"?.021:q==="medium"?.018:.0165;
   const clothM=nyClothMat(R,nyMaskTex(R));nyApplyKasane(clothM.userData.uni,kas,attire);
   const shade=(x,y,z)=>1+.05*N1(x*13,y*13,z*13)+.03*N2(x*41,y*41,z*41);
   const cloth=(lamF)=>(x,y,z,nx,ny,nz,v,o,a)=>{const s=a*shade(x,y,z);o.col[v*3]=o.col[v*3+1]=o.col[v*3+2]=s;o.lam[v]=lamF(x,y,z);};
@@ -28298,7 +28321,7 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   const hm=body.lap.bs;
   const pB=nyPart(key+"|body",body.F,rig.seated?[-.70,-.006,-.66]:[-.45,-.006,-.80],rig.seated?[.70,rig.pivot[1]+.03,.68]:[.45,rig.pivot[1]+.03,.45],hB,Gall,AO,cloth(body.lam));
   const meshes=[nyMesh(R,pB,clothM)];meshes[0].name="ny_body";T_.body=performance.now()-t0;
-  {const cF=body.collar;meshes.push(nyMesh(R,nyPart(key+"|collar",cF,[-.12,rig.pivot[1]-.16,-.14],[.12,rig.pivot[1]+.03,.12],q==="low"?.0065:.0042,Gall,[.008,1.0,3,.25],cloth(body.lam)),clothM));meshes[meshes.length-1].name="ny_collar";}
+  {const cF=body.collar;meshes.push(nyMesh(R,nyPart(key+"|collar",cF,[-.12,rig.pivot[1]-.16,-.14],[.12,rig.pivot[1]+.03,.12],q==="low"?.0065:q==="medium"?.0055:.0050,Gall,[.008,1.0,3,.25],cloth(body.lam)),clothM));meshes[meshes.length-1].name="ny_collar";}
   for(const k of["L","R"]){const s=slv[k];const lamS=(x,y,z)=>(s.raised&&y>s.o0[1]-.01)?.5:clamp(nR-s.edge(x,y,z)/(kara?.016:.020),.5,nR-.5);
     const cuffC=add3(rig.arm[k].W,scl3(nrm3(sub3(rig.arm[k].W,rig.arm[k].E)),-.03));const cl=cloth(lamS);meshes.push(nyMesh(R,nyPart(key+"|sl"+k,s.F,s.bb[0],s.bb[1],hS,Gall,AO,(x,y,z,nx,ny,nz,v,o,a)=>{cl(x,y,z,nx,ny,nz,v,o,a);const d=len3(sub3([x,y,z],cuffC));const k2=.45+.55*sstep(.025,.05,d);o.col[v*3]*=k2;o.col[v*3+1]*=k2;o.col[v*3+2]*=k2;}),clothM));meshes[meshes.length-1].name="ny_sleeve"+k;}
   T_.sleeves=performance.now()-t0;
@@ -28307,7 +28330,7 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   for(const m of meshes)g.add(m);
   // ---- hair ----
   const hairM=nyHairMat(R);const hc=lin(HP.hairC);
-  const capF=nyHairCapSDF(HP);const hq=q==="low"?.0062:q==="medium"?.0050:.0042;
+  const capF=nyHairCapSDF(HP);const hq=q==="low"?.0064:q==="medium"?.0056:.0050;
   const pCap=nyPart(key+"|hcap|"+HP.seed,capF,[-.115,-.18,-.135],[.115,.15,.125],hq,(x,y,z)=>mn(capF.f(x,y,z),hd.H.F.f(x,y,z)),[.004,1.2,3,.35],(x,y,z,nx,ny,nz,v,o,a)=>{
       const c=mulc(hc,a*(.88+.12*N2(x*300,y*60,z*300)));o.col.set(c,v*3);
       const top=sstep(.05,.11,y),sd=x<0?-1:1;let d=[sd*(.9*top+.25*(1-top)),-(.35*top+1)*(1-.0),-.30];const dn=d[0]*nx+d[1]*ny+d[2]*nz;d=nrm3([d[0]-nx*dn,d[1]-ny*dn,d[2]-nz*dn]);
@@ -28315,8 +28338,8 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   const capMesh=nyMesh(R,pCap,hairM);capMesh.name="ny_hairCap";hd.group.add(capMesh);
   const Fall=(x,y,z)=>{let d=fB(x,y,z);if(fK)d=mn(d,fK(x,y,z));if(fM)d=mn(d,fM(x,y,z));return mn(d,y);};
   const hb=apM(rig.headM,[0,.25,-1]);const HPth=nyHairPath(rig,headPt,Fall,nrm3(hb));
-  const tie=kara?0:(rig.seated?.30:.36);const longF=nySweep(HPth.pts,HPth.nr,{w:tie?(t=>t<.12?lerp(.085,.120,sstep(0,.12,t)):t<tie?lerp(.120,.036,sstep(.12,tie,t)):lerp(.040,.024,sstep(tie,1,t))):(t=>t<.15?lerp(.085,.150,sstep(0,.15,t)):lerp(.150,.048,sstep(.15,1,t)*(.35+.65*sstep(.40,1,t)))),th:tie?(t=>t<tie?lerp(.020,.017,t/tie):lerp(.019,.012,sstep(tie,1,t))):(t=>lerp(.022,.010,sstep(0,1,t))),curv:t=>lerp(2.0,1.0,sstep(.0,.35,t))*(1-.7*sstep(.5,.7,t)),rr:.012,
-    off:(t,b)=>(.0014*Math.sin(b*230+Math.sin(b*57)*2.2)+.0007*Math.sin(b*610+1.3))*sstep(.0,.08,t)});
+  const tie=kara?0:(rig.seated?.22:.36);const longF=nySweep(HPth.pts,HPth.nr,{w:tie?(t=>t<.12?lerp(.085,.120,sstep(0,.12,t)):t<tie?lerp(.120,.040,sstep(.12,tie,t)):(rig.seated?lerp(.044,.085,sstep(tie,.62,t))*(1-.35*sstep(.85,1,t)):lerp(.042,.026,sstep(tie,1,t)))):(t=>t<.15?lerp(.085,.150,sstep(0,.15,t)):lerp(.150,.048,sstep(.15,1,t)*(.35+.65*sstep(.40,1,t)))),th:tie?(t=>t<tie?lerp(.020,.017,t/tie):lerp(.019,.012,sstep(tie,1,t))):(t=>lerp(.022,.010,sstep(0,1,t))),curv:t=>lerp(2.0,1.0,sstep(.0,.35,t))*(1-.7*sstep(.5,.7,t)),rr:.012,
+    off:(t,b)=>(.0010*Math.sin(b*230+Math.sin(b*57)*2.2)+.0005*Math.sin(b*610+1.3))*sstep(.0,.08,t)+(tie?.004*Math.sin(b*95+t*7)*sstep(.75,1,t):0)});
   const lb0=[1e9,1e9,1e9],lb1=[-1e9,-1e9,-1e9];for(const p of HPth.pts)for(let i=0;i<3;i++){lb0[i]=mn(lb0[i],p[i]-.13);lb1[i]=mx(lb1[i],p[i]+.13);}lb0[1]=mx(lb0[1],-.006);
   const hL=q==="low"?.014:q==="medium"?.012:.0105;
   const pLong=nyPart(key+"|hlong",longF,lb0,lb1,hL,(x,y,z)=>mn(longF.f(x,y,z),Gall(x,y,z)),[.008,1.1,3,.35],(x,y,z,nx,ny,nz,v,o,a)=>{
@@ -28324,7 +28347,7 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   const longMesh=nyMesh(R,pLong,hairM);longMesh.name="ny_hairLong";g.add(longMesh);T_.hair=performance.now()-t0;
   if(tie){const P_=HPth.pts,iT=Math.round(tie*(P_.length-1)),c=P_[iT],Tt=nrm3(sub3(P_[iT+1],P_[iT-1])),Nn=HPth.nr[iT],Bb=cross3(Tt,Nn);
     const band={f:(x,y,z)=>{const r=[x-c[0],y-c[1],z-c[2]];const a=ab(dot3(r,Tt))-.017,b=ab(dot3(r,Bb))-.046,n=ab(dot3(r,Nn))-.026;const rr=.006;return sq(mx(a,0)**2+mx(b+rr,0)**2+mx(n+rr,0)**2)+mn(mx(a,b+rr,n+rr),0)-rr;},bs:[c[0],c[1],c[2],.08]};
-    const pM=nyPart(key+"|motoyui",band,[c[0]-.09,c[1]-.09,c[2]-.09],[c[0]+.09,c[1]+.09,c[2]+.09],.0035,null,null,(x,y,z,nx,ny,nz,v,o)=>{o.col[v*3]=o.col[v*3+1]=o.col[v*3+2]=1;o.lam[v]=13.5;});
+    const pM=nyPart(key+"|motoyui",band,[c[0]-.09,c[1]-.09,c[2]-.09],[c[0]+.09,c[1]+.09,c[2]+.09],.0055,null,null,(x,y,z,nx,ny,nz,v,o)=>{o.col[v*3]=o.col[v*3+1]=o.col[v*3+2]=1;o.lam[v]=13.5;});
     const mm=nyMesh(R,pM,clothM);mm.name="ny_motoyui";g.add(mm);}
   // ---- hands ----
   const skinM=skinMat(R,{rough:.55});const hh=q==="low"?.0058:q==="medium"?.0044:.0034;const handPiv={};
@@ -28363,7 +28386,7 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
     if(pose==="tend"){const ph=Math.sin(t*1.1),k2=Math.sin(t*2.2);handPiv.R.position.set(hP0.R.x+.016*ph,hP0.R.y+.006*Math.max(0,k2),hP0.R.z+.010*ph);}
     if(pose==="carry"){const on=!!g.userData.walking,sp=g.userData.walkSpeed||.8;walkA+=((on?1:0)-walkA)*(1-Math.exp(-dt*5));if(on)walkPh+=dt*2*PI*sp/.50;
       root.position.set(walkA*.007*Math.sin(walkPh),walkA*.006*Math.abs(Math.sin(walkPh))-walkA*.004,0);root.rotation.z=walkA*.012*Math.sin(walkPh);
-      uni.uNyWalk.value.set(walkA*.014,walkPh,.45,0);huni.uHairSw.value.set(walkA*.03,walkPh,0,0);}
+      uni.uNyWalk.value.set(walkA*.016,walkPh,.98,0);huni.uHairSw.value.set(walkA*.03,walkPh,0,0);}
     // blink: every 3-6 s
     if(blinkT<0&&t>=nextBlink){blinkT=0;}
     if(blinkT>=0){blinkT+=dt;const u=blinkT/.17;const c=u<.35?sstep(0,.35,u):u<.5?1:sstep(1,.5,u);setBlink(c);
