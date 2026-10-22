@@ -132,7 +132,14 @@ const BOKEH_STYLES={
     grad:[[0,"#0b1224"],[.5,"#101a2e"],[1,"#05080f"]],
     blobs:["#1c2a48","#26385c","#0e1628","#2a2440"],
     sun:[.7,.15,.3,"#4a5a8a"],disc:["#b8c8ff","#dfe6ff","#9fb0e8"],
-    band:[.1,.7],sunBias:.2,hex:.2,rim:.3,nd:24,shapes:"none",bright:.6}
+    band:[.1,.7],sunBias:.2,hex:.2,rim:.3,nd:24,shapes:"none",bright:.6},
+  /* Makura additions (new keys only) */
+  fireflyNight:{grad:[[0,"#03070f"],[.4,"#060c18"],[.6,"#09111d"],[.72,"#0a121b"],[1,"#020305"]],blobs:["#0a1610","#0c1620","#08120c","#101a28"],
+    sun:[.72,.2,.2,"#122030"],disc:["#c6ff5a","#d4ff7a","#b4f048"],band:[.15,.62],sunBias:0,hex:.1,rim:.5,nd:6,shapes:"nightWater",bright:.9},
+  frostMorning:{grad:[[0,"#c4d2e8"],[.22,"#e2e9f2"],[.45,"#f4f2ec"],[.62,"#dfe5ef"],[.8,"#aebdd6"],[1,"#8a9cbc"]],blobs:["#ffffff","#e2eaf6","#a6b6d2","#f8f0e4","#7c8fb2","#ffe8d0"],
+    sun:[.82,.25,.3,"#fff2dc"],disc:["#ffffff","#fff6ea","#eaf2ff","#fff0dc"],band:[.12,.8],sunBias:.45,hex:.3,rim:.6,nd:40,shapes:"snowGarden",bright:.85},
+  duskBlue:{grad:[[0,"#18244a"],[.3,"#26365f"],[.52,"#3e4672"],[.64,"#7a6276"],[.72,"#c88458"],[.78,"#d89458"],[.86,"#2e2a3a"],[1,"#0e0e16"]],blobs:["#24345e","#34447a","#6a5a7e","#d08a5a","#141622"],
+    sun:[.3,.74,.22,"#ffb070"],disc:["#ffd8a0","#c4d0ff","#ffe8c8"],band:[.5,.8],sunBias:.5,hex:.2,rim:.5,nd:14,shapes:"duskField",bright:.75}
 };
 function paintBokeh(o){
   const W=o.w,H=o.h,R=RNG((o.seed||7)*7919+13),st0=BOKEH_STYLES[o.style]||BOKEH_STYLES.meadowDawn;
@@ -164,6 +171,21 @@ function paintBokeh(o){
     for(let i=0;i<46;i++){const cy=H*R.r(st.band[0],st.band[1]),cx=R()*W,ww=W*R.r(.06,.3),hh=H*R.r(.005,.02);
       x.fillStyle=rgbCss(hexRgb(R.pick(["#ffb460","#e08838","#ffd08c","#9a5a28"])),R.r(.15,.4));x.beginPath();x.ellipse(cx,cy,ww,hh,0,0,TAU);x.fill();}
     for(let i=0;i<10;i++)blob(R()*W,H*R.r(.82,1.0),H*R.r(.1,.25),"#100f0a",R.r(.4,.7));
+  }else if(st.shapes==="nightWater"){/* dark foliage above, a faintly lit stream band below with wavering reflections */
+    for(let i=0;i<26;i++)blob(R()*W,H*R.r(-.05,.5),H*R.r(.08,.22),R()<.5?"#0a140e":"#0e1a14",R.r(.3,.6));
+    for(let i=0;i<40;i++){const cy=H*R.r(.64,.8),cx=R()*W;x.fillStyle=rgbCss(hexRgb(R.pick(["#1a2638","#22324a","#142030","#2a4a30"])),R.r(.12,.35));x.beginPath();x.ellipse(cx,cy,W*R.r(.03,.16),H*R.r(.003,.01),0,0,TAU);x.fill();}
+    for(let i=0;i<5;i++){const cx=R()*W,cy=H*R.r(.66,.78);for(let k=0;k<5;k++){x.fillStyle=rgbCss([150,220,80],R.r(.06,.16));x.beginPath();x.ellipse(cx+R.s()*W*.01,cy+k*H*.012,W*R.r(.006,.016),H*.004,0,0,TAU);x.fill();}}
+    for(let i=0;i<8;i++)blob(R()*W,H*R.r(.85,1.05),H*R.r(.1,.25),"#010203",R.r(.5,.8));
+  }else if(st.shapes==="snowGarden"){/* snow-covered shrubs, blue shadows, a dark pine mass */
+    for(let i=0;i<14;i++)blob(R()*W,H*R.r(.0,.3),H*R.r(.08,.2),R()<.6?"#5a6a64":"#3e4c4a",R.r(.25,.5));
+    for(let i=0;i<22;i++)blob(R()*W,H*R.r(.25,.6),H*R.r(.1,.25),R()<.6?"#ffffff":"#eef2f8",R.r(.3,.6));
+    for(let i=0;i<18;i++){x.fillStyle=rgbCss(hexRgb(R.pick(["#9aaccc","#8ea2c4","#b4c2dc"])),R.r(.15,.35));x.beginPath();x.ellipse(R()*W,H*R.r(.55,.95),W*R.r(.05,.2),H*R.r(.02,.06),R.s()*.2,0,TAU);x.fill();}
+  }else if(st.shapes==="duskField"){/* silhouettes of grasses and susuki plumes against the afterglow */
+    for(let i=0;i<70;i++){const x0=R()*W*1.2-W*.1,y0=H*(1.05+R()*.1),len=H*R.r(.25,.8),ang=-PI/2+R.s()*.35,bend=R.s()*.6;
+      x.strokeStyle=rgbCss(hexRgb(R()<.7?"#12121c":"#1c1c2a"),R.r(.5,.9));x.lineWidth=H*R.r(.004,.014);x.beginPath();x.moveTo(x0,y0);
+      const x2=x0+Math.cos(ang+bend)*len,y2=y0+Math.sin(ang+bend)*len;x.quadraticCurveTo(x0+Math.cos(ang)*len*.5,y0+Math.sin(ang)*len*.5,x2,y2);x.stroke();
+      if(R()<.3){for(let k=0;k<10;k++){x.strokeStyle=rgbCss([40,36,48],R.r(.3,.6));x.lineWidth=H*.005;x.beginPath();x.moveTo(x2,y2);x.lineTo(x2+R.s()*H*.04+H*.03,y2+R.r(.0,.12)*H);x.stroke();}}}
+    for(let i=0;i<6;i++)blob(R()*W,H*R.r(.68,.78),H*R.r(.06,.12),"#ffb878",R.r(.15,.3),"lighter");
   }
   /* blur */
   const fb=new Float32Array(W*H*3);{const d=x.getImageData(0,0,W,H).data;for(let i=0,j=0;i<d.length;i+=4,j+=3){fb[j]=d[i];fb[j+1]=d[i+1];fb[j+2]=d[i+2];}}
@@ -364,13 +386,20 @@ function bladeTextures(kind,ql,seed){
 function surfMaterial(U,o){
   const uni=Object.assign({},U,{uMap:{value:o.map},uNrm:{value:o.nrm},uTint:{value:o.tint||new T.Color(1,1,1)},uTransCol:{value:o.transCol||lin(0xc8e060)},
     uHaze:{value:o.haze||0},uHazeCol:{value:o.hazeCol||lin(0x9a8a50)},uShin:{value:o.shin||70},uSpecK:{value:o.specK!==undefined?o.specK:1},uNrmK:{value:o.nrmK||1},uTransK:{value:o.transK!==undefined?o.transK:1},uTipCol:{value:o.tipCol||lin(0xb89a5a)},uTipK:{value:o.tipK||0}});
-  return new T.ShaderMaterial({uniforms:uni,side:T.DoubleSide,fog:false,
+  const defs={};if(o.glow){defs.GLOWL=1;}if(o.frost){defs.FROST=1;uni.uFrost={value:+o.frost};}
+  return new T.ShaderMaterial({uniforms:uni,side:T.DoubleSide,fog:false,defines:defs,
     vertexShader:`attribute vec4 aTan;attribute vec4 aM;attribute vec3 aCol;
       varying vec3 vWP,vN,vT,vCol;varying vec2 vUv;varying vec4 vM;
       void main(){vec4 wp=modelMatrix*vec4(position,1.0);vWP=wp.xyz;vN=normalize(mat3(modelMatrix)*normal);vT=normalize(mat3(modelMatrix)*aTan.xyz);
         vUv=uv;vM=aM;vCol=aCol;gl_Position=projectionMatrix*viewMatrix*wp;}`,
     fragmentShader:`${GLSL_RIG}${GLSL_NOISE}
       uniform sampler2D uMap,uNrm;uniform vec3 uTint,uTransCol,uTipCol,uHazeCol;uniform float uShin,uSpecK,uNrmK,uTransK,uTipK,uHaze;
+      #ifdef FROST
+      uniform float uFrost;
+      #endif
+      #ifdef GLOWL
+      uniform vec3 uGlowP,uGlowC;uniform float uGlowI,uGlowR;
+      #endif
       varying vec3 vWP,vN,vT,vCol;varying vec2 vUv;varying vec4 vM;
       void main(){
         vec3 Ng=normalize(vN);vec3 V=normalize(cameraPosition-vWP);
@@ -381,6 +410,11 @@ function surfMaterial(U,o){
         vec4 tc=texture2D(uMap,vUv);vec3 alb=flLin(tc.rgb)*uTint*vCol;
         alb=mix(alb,uTipCol,uTipK*smoothstep(0.72,1.0,vM.x));
         float thick=tc.a;
+        #ifdef FROST
+        float frA=0.0;{vec2 fu=vUv*vec2(1.0,3.0);float n1=flN2(fu*vec2(40.0,40.0)),n2=flN2(fu*vec2(160.0,150.0)),sp=flH2(floor(fu*vec2(420.0,420.0)));
+          frA=clamp((n1*0.55+n2*0.45-0.38)*2.2+smoothstep(0.82,1.0,vM.z)*0.7,0.0,1.0);frA=clamp(frA*uFrost+step(0.82,sp)*0.5*uFrost,0.0,1.0);
+          alb=mix(alb,vec3(0.78,0.83,0.9),frA*0.88);thick=mix(thick,1.0,frA*0.7);}
+        #endif
         vec3 L=uSunDir;float NL=dot(Np,L),NLg=dot(N,L);
         vec3 col=alb*uSunCol*uSunI*max(NL,0.0)*smoothstep(-0.05,0.25,NLg)*0.95;
         col+=alb*mix(uGndCol,uSkyCol,Np.y*0.5+0.5)*uAmbI;
@@ -399,6 +433,16 @@ function surfMaterial(U,o){
         col+=uSunCol*uSunI*fr*(uShin+8.0)/25.0*pow(NH,uShin)*max(NL,0.0)*uSpecK;
         vec3 H2=normalize(uFillDir+V);col+=uFillCol*uFillI*fr*(uShin+8.0)/25.0*pow(max(dot(Np,H2),0.0),uShin)*0.5*uSpecK;
         float rim=pow(1.0-max(dot(N,V),0.0),4.0);col+=uSkyCol*uAmbI*rim*0.12;
+        #ifdef FROST
+        {vec2 cc=floor(vUv*vec2(300.0,900.0));float hh=flH2(cc+11.0);vec3 fn=normalize(Np+(vec3(flH2(cc+3.0),flH2(cc+5.0),flH2(cc+7.0))-0.5)*1.4);
+          float g=pow(max(dot(reflect(-V,fn),L),0.0),160.0)*step(0.6,hh)*frA;col+=uSunCol*uSunI*g*7.0;}
+        #endif
+        #ifdef GLOWL
+        {vec3 Lg=uGlowP-vWP;float dg=length(Lg);Lg/=max(dg,1e-6);float q=dg/max(uGlowR,1e-6);float att=uGlowI/((1.0+q*q)*(1.0+0.015*q*q));
+          float nl=dot(Np,Lg),nlg=dot(N,Lg);col+=alb*uGlowC*att*max(nl,0.0)*smoothstep(-0.05,0.2,nlg)*1.2;
+          col+=mix(alb*alb*5.0,uTransCol,0.35)*(1.15-thick*0.9)*uGlowC*att*max(-nlg,0.0)*0.9*uTransK;
+          vec3 Hg=normalize(Lg+V);col+=uGlowC*att*pow(max(dot(Np,Hg),0.0),uShin)*0.35*uSpecK*max(nl,0.0);}
+        #endif
         col=mix(col,uHazeCol,uHaze);
         gl_FragColor=vec4(col,1.0);
         ${GLSL_OUT}}`});
@@ -1605,6 +1649,253 @@ function makeWaterMacroSet(opts){
     dispose(){bag.dispose();bd.userData.dispose();}};
   return root;
 }
+
+/* ------------------------------------------------------------------
+   9. Makura macro sets: night leaf (firefly), frost (winter morning), dusk stalk (suzumushi)
+   ------------------------------------------------------------------ */
+/* point glow (a firefly lantern) for surfMaterial({glow:true}); rig.uGlow* are shared by every glow material of a set */
+function glowRig(U){return Object.assign(U,{uGlowP:{value:new V3(0,-1e4,0)},uGlowC:{value:lin(0xc6ff5a)},uGlowI:{value:0},uGlowR:{value:.08}});}
+/* blinking firefly bokeh discs / glints as camera-facing sprites (spriteMaterial: aSp=[kind,phase,rate,twinkle], aSc=[r,g,b,a]) */
+function spriteLayer(bag,U,list,ro){const n=list.length,spr=new T.InstancedMesh(bag.add(new T.PlaneGeometry(1,1)),bag.add(spriteMaterial(U)),Math.max(1,n));spr.count=n;
+  const aSp=new Float32Array(Math.max(1,n)*4),aSc=new Float32Array(Math.max(1,n)*4);
+  list.forEach((s,i)=>{const M=new T.Matrix4().makeScale(s.size,s.size,s.size);M.setPosition(s.p[0],s.p[1],s.p[2]);spr.setMatrixAt(i,M);aSp.set(s.sp,i*4);aSc.set(s.sc,i*4);});
+  spr.geometry.setAttribute("aSp",new T.InstancedBufferAttribute(aSp,4));spr.geometry.setAttribute("aSc",new T.InstancedBufferAttribute(aSc,4));
+  spr.frustumCulled=false;spr.renderOrder=ro||15;spr.castShadow=spr.receiveShadow=false;return spr;}
+/* find a perched object exposing userData.lightAnchor and drive the set's glow uniforms from it */
+const _gp=new V3();
+function driveGlow(U,perch,root,manual){let g=0,col=null,found=false;
+  if(manual&&manual.on){_gp.copy(manual.p);g=manual.i;col=manual.c;found=true;}
+  else perch.traverse(o=>{if(found)return;const ud=o.userData;if(ud&&ud.lightAnchor&&ud.glow!==undefined){ud.lightAnchor.updateMatrixWorld();_gp.setFromMatrixPosition(ud.lightAnchor.matrixWorld);g=ud.glow;col=ud.lightHint?ud.lightHint.color:null;found=true;}});
+  root.updateMatrixWorld();const s=new V3().setFromMatrixScale(root.matrixWorld).x;
+  U.uGlowP.value.copy(found?_gp:new V3(0,-1e4,0));U.uGlowI.value=found?g*2.6:0;U.uGlowR.value=.0055*s;if(col!=null)U.uGlowC.value.copy(lin(col));}
+/* perch helper on a blade: frame at (s,u) on the upper surface, +Z toward the tip (or base if back) */
+function bladePerch(bl,s,u,back,name){const S=bl.surf(s,u);return perchFrame(S.p,S.n,back?S.t.clone().negate():S.t,name);}
+/* frost crystal (dendritic feather) texture + crossed-quad geometry + ice material with sun sparkles */
+function frostFeatherTex(ql){const W=QS(ql,32,64,64),H=W*2,cv=mkCanvas(W,H),x=cv.getContext("2d"),R=RNG(77);x.clearRect(0,0,W,H);x.lineCap="round";
+  const sp=(x0,y0,ang,len,w,depth)=>{const x1=x0+Math.sin(ang)*len,y1=y0-Math.cos(ang)*len;x.strokeStyle="rgba(255,255,255,1)";x.lineWidth=w;x.beginPath();x.moveTo(x0,y0);x.lineTo(x1,y1);x.stroke();
+    if(depth>0){const nb=depth>1?7:4;for(let i=1;i<=nb;i++){const t=i/(nb+1),bx=x0+(x1-x0)*t,by=y0+(y1-y0)*t,bl=len*(1-t)*.42*R.r(.7,1.1);sp(bx,by,ang+1.05,bl,w*.6,depth-1);sp(bx,by,ang-1.05,bl,w*.6,depth-1);}}};
+  sp(W/2,H-1,0,H*.95,Math.max(1.4,W/22),2);
+  const d=x.getImageData(0,0,W,H).data,o=new Uint8Array(W*H*4);for(let y=0;y<H;y++)for(let xx=0;xx<W;xx++){const s=((H-1-y)*W+xx)*4,t=(y*W+xx)*4;o[t]=255;o[t+1]=255;o[t+2]=255;o[t+3]=d[s+3];}
+  return dataTex(o,W,H,{srgb:false});}
+function featherGeo(){const pos=[],uv=[],nor=[],idx=[];const q=(ax)=>{const b=pos.length/3;for(const[u,v]of[[0,0],[1,0],[1,1],[0,1]]){const s=u-.5;pos.push(ax?0:s,v,ax?s:0);uv.push(u,v);nor.push(ax?1:0,0,ax?0:1);}idx.push(b,b+1,b+2,b,b+2,b+3);};
+  q(0);q(1);return geo({position:{a:pos,n:3},uv:{a:uv,n:2},normal:{a:nor,n:3}},idx);}
+function frostMaterial(U,tex){
+  return new T.ShaderMaterial({uniforms:Object.assign({},U,{uTex:{value:tex}}),side:T.DoubleSide,fog:false,
+    vertexShader:`attribute vec4 aCr;varying vec3 vWP,vN,vAx;varying vec2 vUv;varying vec4 vCr;
+      void main(){mat4 M=modelMatrix*instanceMatrix;vec4 wp=M*vec4(position,1.0);vWP=wp.xyz;vN=normalize(mat3(M)*normal);vAx=normalize(mat3(M)*vec3(0.0,1.0,0.0));vUv=uv;vCr=aCr;gl_Position=projectionMatrix*viewMatrix*wp;}`,
+    fragmentShader:`${GLSL_RIG}${GLSL_NOISE}uniform sampler2D uTex;varying vec3 vWP,vN,vAx;varying vec2 vUv;varying vec4 vCr;
+      void main(){float a=texture2D(uTex,vUv).a;if(a<0.42)discard;
+        vec3 V=normalize(cameraPosition-vWP);vec3 N=normalize(vN);if(dot(N,V)<0.0)N=-N;vec3 L=uSunDir;
+        vec3 ice=vec3(0.80,0.86,0.95);
+        vec3 col=ice*(mix(uGndCol,uSkyCol,0.6+0.4*N.y)*uAmbI*1.25+uFillCol*uFillI*0.35);
+        col+=ice*uSunCol*uSunI*(max(dot(N,L),0.0)*0.45+0.25);
+        float fw=max(dot(-V,L),0.0);col+=uSunCol*uSunI*vec3(0.9,0.95,1.0)*pow(fw,6.0)*0.9*(0.4+0.6*vUv.y);
+        /* facet glints: each crystal has a few mirror facets around its axis; a slow wobble makes them come and go */
+        float h=vCr.x;float ang=h*6.2831+uTime*(0.25+0.5*vCr.y)+vUv.y*1.7;vec3 Tt=normalize(cross(vAx,N));
+        vec3 Nf=normalize(N*cos(ang)+Tt*sin(ang)*0.9+vAx*(vCr.z-0.5)*0.8);vec3 Rr=reflect(-V,Nf);float sp=pow(max(dot(Rr,L),0.0),220.0);
+        col+=uSunCol*uSunI*sp*14.0*step(0.35,vCr.y);
+        col*=0.85+0.15*vUv.y;
+        gl_FragColor=vec4(col,1.0);
+        ${GLSL_OUT}}`});}
+/* collect crystals: p (set-local V3), grow dir, side dir, length, width */
+function crystalMesh(bag,U,tex,list){const n=list.length,g=bag.add(featherGeo());const im=new T.InstancedMesh(g,bag.add(frostMaterial(U,tex)),Math.max(1,n));im.count=n;const R=RNG(n+5);
+  const aCr=new Float32Array(Math.max(1,n)*4),M=new T.Matrix4();
+  list.forEach((c,i)=>{const Y=c.d.clone().normalize(),X=c.s.clone().addScaledVector(Y,-c.s.dot(Y)).normalize(),Z=new V3().crossVectors(X,Y);
+    M.makeBasis(X.multiplyScalar(c.w),Y.multiplyScalar(c.l),Z.multiplyScalar(c.w));M.setPosition(c.p);im.setMatrixAt(i,M);aCr.set([R(),R(),R(),0],i*4);});
+  im.geometry=bag.add(new T.InstancedBufferGeometry().copy(g));im.geometry.setAttribute("aCr",new T.InstancedBufferAttribute(aCr,4));
+  im.frustumCulled=false;im.castShadow=im.receiveShadow=false;return im;}
+/* polar-grid maple leaf (イロハモミジ, 7 lobes) for surfMaterial; lies in the local XZ plane, +Y up, petiole toward -Z */
+function mapleGeo(Rad,nr,ns,curl,seed){const R=RNG(seed||3);const lobes=[[90,1.0],[90+50,.9],[90-50,.9],[90+98,.72],[90-98,.72],[90+140,.42],[90-140,.42]].map(l=>[l[0]*PI/180,l[1]*R.r(.92,1.05)]);
+  const rOf=th=>{let r=.26;for(const l of lobes){let d=th-l[0];d=Math.atan2(Math.sin(d),Math.cos(d));const k=Math.max(0,Math.cos(d*PI/(2*.6)));r=Math.max(r,l[1]*Math.pow(k,.85));}
+    return r*(1+.035*Math.abs(Math.sin(th*64))*sstep(.4,.7,r));};
+  const pos=[],uv=[],tan=[],am=[],col=[],idx=[];
+  for(let i=0;i<=nr;i++){const k=i/nr;for(let j=0;j<=ns;j++){const th=j/ns*TAU-PI/2;const r=rOf(th)*Rad*Math.max(k,1e-4);const x=Math.cos(th)*r,z=-Math.sin(th)*r;
+      const rr=r/Rad;const y=Rad*(curl*rr*rr-.012*Math.abs(Math.sin(th*3.5))*rr+.02*Math.pow(rr,4)*Math.sin(th*2+1));
+      pos.push(x,y,z);uv.push(x/(2*Rad)+.5,-z/(2*Rad)+.5);tan.push(Math.cos(th),0,-Math.sin(th),1);am.push(k,0,k,0);col.push(1,1,1);}}
+  for(let i=0;i<nr;i++)for(let j=0;j<ns;j++){const a=i*(ns+1)+j,b=(i+1)*(ns+1)+j;idx.push(a,a+1,b,a+1,b+1,b);}
+  const g=geo({position:{a:pos,n:3},uv:{a:uv,n:2},aTan:{a:tan,n:4},aM:{a:am,n:4},aCol:{a:col,n:3}},idx);g.computeVertexNormals();return {geometry:g,rOf,lobes};}
+function mapleTex(ql,seed){const S=QS(ql,256,512,512),cv=mkCanvas(S,S),x=cv.getContext("2d"),R=RNG(seed||9);const C=[S/2,S/2],P=(u,v)=>[S/2+u*S/2,S/2-v*S/2];
+  const g=x.createRadialGradient(C[0],C[1],0,C[0],C[1],S*.55);g.addColorStop(0,"#d8a038");g.addColorStop(.12,"#c4501c");g.addColorStop(.5,"#a8261a");g.addColorStop(.85,"#8c1c18");g.addColorStop(1,"#5a2414");x.fillStyle=g;x.fillRect(0,0,S,S);
+  for(let i=0;i<60;i++){const c=P(R.s(),R.s());const r=S*R.r(.01,.05);const gg=x.createRadialGradient(c[0],c[1],0,c[0],c[1],r);gg.addColorStop(0,R()<.5?"rgba(70,24,16,.55)":"rgba(220,120,50,.35)");gg.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=gg;x.fillRect(c[0]-r,c[1]-r,2*r,2*r);}
+  x.lineCap="round";
+  for(const a of[90,140,40,188,-8,230,-50]){const t=a*PI/180;const L=a===90?1:(a===140||a===40)?.9:(a===188||a===-8)?.72:.42;
+    x.strokeStyle="rgba(232,170,90,.75)";x.lineWidth=S*.007;x.beginPath();x.moveTo(C[0],C[1]);x.lineTo(...P(Math.cos(t)*L*.98,Math.sin(t)*L*.98));x.stroke();
+    for(let k=1;k<7;k++){const f=k/7*L;const b=P(Math.cos(t)*f,Math.sin(t)*f);for(const sd of[-1,1]){const t2=t+sd*.75;x.strokeStyle="rgba(210,140,80,.4)";x.lineWidth=S*.003;x.beginPath();x.moveTo(b[0],b[1]);x.lineTo(b[0]+Math.cos(t2)*S*.07*(1-f),b[1]-Math.sin(t2)*S*.07*(1-f));x.stroke();}}}
+  const d=x.getImageData(0,0,S,S).data,o=new Uint8Array(S*S*4);for(let y=0;y<S;y++)for(let xx=0;xx<S;xx++){const s=((S-1-y)*S+xx)*4,t=(y*S+xx)*4;const n=(h2(xx,y,5)-.5)*10;o[t]=clamp(d[s]+n,0,255);o[t+1]=clamp(d[s+1]+n*.6,0,255);o[t+2]=clamp(d[s+2]+n*.4,0,255);o[t+3]=150;}
+  const hf=new Float32Array(S*S);for(let i=0;i<S*S;i++)hf[i]=(o[i*4]+o[i*4+1])/510;
+  return {map:dataTex(o,S,S,{srgb:true}),nrm:dataTex(normalBytes(hf,S,S,1.2,false,false),S,S,{srgb:false})};}
+/* moss bed texture (tiny star-shaped shoots) */
+function mossTex(ql,seed){const S=QS(ql,128,256,256),R=RNG(seed||4),alb=new Uint8Array(S*S*4),hf=new Float32Array(S*S);
+  for(let y=0;y<S;y++)for(let x=0;x<S;x++){const u=x/S,v=y/S,a=fbm(u*6,v*6,seed+3,4,6,6),b=vn(u*S*.35,v*S*.35,seed+7,S*.35,S*.35),c=h2(x,y,seed);
+    const sh=Math.pow(b,1.5);const i=(y*S+x)*4;alb[i]=clamp(40+a*50+sh*60+c*10,0,255);alb[i+1]=clamp(52+a*55+sh*80+c*10,0,255);alb[i+2]=clamp(18+a*14+sh*20,0,255);alb[i+3]=180;hf[y*S+x]=sh*.8+a*.3;}
+  return {map:dataTex(alb,S,S,{srgb:true,wrapS:T.RepeatWrapping,wrapT:T.RepeatWrapping}),nrm:dataTex(normalBytes(hf,S,S,2.2,true,true),S,S,{srgb:false,wrapS:T.RepeatWrapping,wrapT:T.RepeatWrapping})};}
+function gridSurfF(nx,nz,x0,x1,z0,z1,hf){const pos=[],uv=[],tan=[],am=[],col=[],idx=[];
+  for(let j=0;j<=nz;j++)for(let i=0;i<=nx;i++){const x=lerp(x0,x1,i/nx),z=lerp(z0,z1,j/nz);pos.push(x,hf(x,z),z);uv.push(i/nx*4,j/nz*3);tan.push(1,0,0,1);am.push(.5,0,0,0);col.push(1,1,1);}
+  for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){const a=j*(nx+1)+i,b=(j+1)*(nx+1)+i;idx.push(a,b,a+1,a+1,b,b+1);}
+  const g=geo({position:{a:pos,n:3},uv:{a:uv,n:2},aTan:{a:tan,n:4},aM:{a:am,n:4},aCol:{a:col,n:3}},idx);g.computeVertexNormals();return g;}
+/* a few dew drops on a blade (instanced, refractive) */
+function bladeDrops(bag,U,dropGeo,bl,b,R,n,o){o=o||{};const drops=[];let tries=0;
+  while(drops.length<n&&tries<n*80){tries++;const r=R.r(o.r0||.00025,o.r1||.0009),s=R.r(o.s0||.1,o.s1||.9),S=bl.surf(s,0),hw=S.w*.5;if(r*.9>hw*.8)continue;const u=R.s()*Math.max(0,(hw-r*1.1)/hw);const P=bl.surf(s,u);
+    let ok=true;for(const d of drops)if(d.p.distanceTo(P.p)<(d.r+r)*1.1+.0002){ok=false;break;}if(ok&&o.avoid&&P.p.distanceTo(o.avoid)<o.avoidR)ok=false;if(!ok)continue;
+    drops.push({s,u,p:P.p,n:P.n,t:P.t,w:P.w,r,c:-Math.cos(R.r(1.95,2.3)),f:1-.15*sstep(.0006,.0015,r)});}
+  const mat=bag.add(dropMaterial(U,{leafMap:b.tex.map,uvLen:.06,leafTint:new T.Color(...(b.tint||[1,1,1])),transCol:lin(b.trans||0xb8d050),haze:b.haze||0,hazeCol:b.hazeCol}));
+  const dm=new T.InstancedMesh(dropGeo,mat,Math.max(1,drops.length));dm.count=drops.length;const aD=new Float32Array(Math.max(1,drops.length)*4),aL=new Float32Array(Math.max(1,drops.length)*3);
+  drops.forEach((d,i)=>{setDropInstance(dm,i,d.p,d.n,d.t,d.r,d.f,d.c);aD.set([-d.c,R(),1,0],i*4);aL.set([(d.u+1)/2,d.s*bl.len/.06,-d.w],i*3);});
+  const ig=new T.InstancedBufferGeometry();ig.index=dropGeo.index;for(const k in dropGeo.attributes)ig.setAttribute(k,dropGeo.attributes[k]);
+  ig.setAttribute("aDrop",new T.InstancedBufferAttribute(aD,4));ig.setAttribute("aLeaf",new T.InstancedBufferAttribute(aL,3));dm.geometry=bag.add(ig);dm.frustumCulled=false;dm.castShadow=dm.receiveShadow=false;return dm;}
+function setSunOn(U,sunL,base){return function(dir,color,intensity){if(dir){const d=dir.isVector3?dir.clone():new V3(dir[0],dir[1],dir[2]);if(d.lengthSq()>0)sunL.copy(d.normalize());}
+  if(color!==undefined&&color!==null)U.uSunCol.value.copy(lin(color));if(intensity!==undefined)U.uSunI.value=base*intensity;};}
+
+/* ---------- 9a. summer night: grass leaf by the stream, a perch for a Genji firefly ---------- */
+function makeNightLeafMacroSet(opts){
+  opts=opts||{};const ql=qlevel(opts),bag=Bag(),seed=opts.seed||21,R=RNG(seed*97+5);
+  const root=new T.Group();root.name="flora_nightleaf_macro";
+  const U=glowRig(macroRig({sunCol:0x8ea4e0,sunI:.32,fillCol:0x4a5a8a,fillI:.12,sky:0x101a30,hor:0x0c1420,gnd:0x020304,ambI:.55}));
+  const sunL=new V3(-.35,.75,-.55).normalize(),fillL=new V3(.4,.5,.75).normalize();
+  const bd=makeBokehBackdrop({width:.9,height:.52,style:"fireflyNight",seed:seed+3,quality:opts.quality,highlights:QS(ql,2,3,3)});root.add(bd);
+  const texB=bladeTextures("grass",ql,seed+11),texS=bladeTextures("susuki",ql,seed+13);[texB,texS].forEach(t=>{bag.add(t.map);bag.add(t.nrm);});
+  const hazeCol=lin(0x060a12);
+  const mk=(tx,tint,o)=>bag.add(surfMaterial(U,Object.assign({map:tx.map,nrm:tx.nrm,tint:new T.Color(...tint),transCol:lin(0xb8f060),glow:true},o||{})));
+  const W=(w0,p,q)=>s=>w0*Math.min(1,Math.pow(Math.max(s,0)/.04,.5))*Math.pow(Math.max(0,1-Math.pow(s,p)),q);
+  const segs=QS(ql,70,110,160);const blades=[];
+  const addBlade=(pts,o)=>{const p0=new V3(...pts[0]);const piv=new T.Group();piv.position.copy(p0);root.add(piv);
+    const bl=buildBlade({pts:pts.map(p=>[p[0]-p0.x,p[1]-p0.y,p[2]-p0.z]),up:o.up||[0,1,.3],segs,nu:QS(ql,7,9,11),width:o.width,twist:o.twist||(s=>.12*s),fold:o.fold||.14,cup:.0001,groove:.00007,
+      serr:ql>0?{amp:.00003,period:.0005}:null,uvLen:.06,thick:(s,u)=>(.00028-.00012*u*u)*(1-.5*s)});bag.add(bl.geometry);
+    const m=new T.Mesh(bl.geometry,mk(o.tex||texB,o.tint||[.7,.82,.62],{haze:o.haze||0,hazeCol,shin:70,specK:1.2,transK:1.1}));m.castShadow=m.receiveShadow=false;piv.add(m);
+    const e={piv,bl,m,ph:R()*TAU,amp:o.amp||1,tex:o.tex||texB,tint:o.tint||[.7,.82,.62]};blades.push(e);return e;};
+  const hero=addBlade([[-.12,-.045,-.02],[-.075,-.01,-.012],[-.025,.006,-.004],[.025,.008,.002],[.07,-.004,.006],[.11,-.024,.008]],{width:W(.0125,1.8,.8),amp:.5});
+  addBlade([[-.15,-.1,-.11],[-.07,-.03,-.115],[.0,.0,-.12],[.08,-.006,-.125],[.17,-.04,-.13]],{width:W(.011,1.8,.8),haze:.55,tint:[.55,.66,.5],amp:1.3});
+  addBlade([[.09,-.12,-.045],[.07,-.05,-.04],[.06,0,-.036],[.058,.035,-.034],[.066,.06,-.036]],{width:W(.006,1.5,.85),haze:.3,tint:[.6,.72,.55],amp:1.1,up:[-.6,.1,1],tex:texS});
+  /* perch: upper surface of the hero blade, facing the tip */
+  const perch=bladePerch(hero.bl,.47,.0,false,"perch");hero.piv.add(perch);
+  hero.piv.updateMatrixWorld(true);const pw=perch.position.clone().add(hero.piv.position),nw=perch.up.clone().applyQuaternion(perch.quaternion);
+  const tgt=pw.clone().addScaledVector(nw,.003);const camPos=tgt.clone().add(new V3(-.016,.019,.046));
+  const cameraHint={position:camPos.toArray(),target:tgt.toArray(),fov:30};
+  {const vd=tgt.clone().sub(camPos).normalize();bd.position.copy(tgt).addScaledVector(vd,.42);faceTo(bd,camPos);rigBindBackdrop(U,bd,[.9,.9,.6]);}
+  /* a little dew on the hero blade */
+  const dropGeo=bag.add(new T.SphereGeometry(1,QS(ql,16,24,32),QS(ql,12,16,22)));
+  hero.piv.add(bladeDrops(bag,U,dropGeo,hero.bl,{tex:hero.tex,tint:hero.tint,haze:0,hazeCol},R,QS(ql,5,8,11),{s0:.12,s1:.92,avoid:perch.position,avoidR:.012}));
+  /* distant fireflies as large soft bokeh discs that slowly blink, and their wavering reflections low in the frame */
+  {const vd=tgt.clone().sub(camPos).normalize(),rr=new V3().crossVectors(vd,new V3(0,1,0)).normalize(),uu=new V3().crossVectors(rr,vd);const L=[];
+    for(let i=0;i<QS(ql,6,9,12);i++){const d=R.r(.18,.36),x=R.r(-1,1)*d*.55,y=R.r(-.05,.45)*d*.6;const p=tgt.clone().addScaledVector(vd,d).addScaledVector(rr,x).addScaledVector(uu,y);
+      const sz=R.r(.006,.016)*d/.25;L.push({p:p.toArray(),size:sz,sp:[0,R()*TAU,R.r(2.2,3.4),1],sc:[.62,1,.25,R.r(.25,.6)]});
+      if(R()<.6){const q=p.clone().addScaledVector(uu,-R.r(.06,.1)*d/.25);L.push({p:q.toArray(),size:sz*.7,sp:[1,R()*TAU,R.r(2.2,3.4),1],sc:[.5,.9,.3,R.r(.06,.14)]});}}
+    root.add(spriteLayer(bag,U,L,14));}
+  const manual={on:false,p:new V3(),i:0,c:0xc6ff5a};
+  let time=0;bd.onBeforeRender=()=>{rigRefresh(U,root,bd,sunL,fillL);driveGlow(U,perch,root,manual);};
+  function update(dt,t,camera){if(t===undefined){time+=dt||0;t=time;}else time=t;U.uTime.value=t;bd.userData.update(dt,t);
+    for(const e of blades){const a=.003*e.amp*Math.sin(t*.6+e.ph)+.0015*e.amp*Math.sin(t*1.7+e.ph*2);e.piv.rotation.set(a*.5,a*.2,a);}
+    rigRefresh(U,root,bd,sunL,fillL);driveGlow(U,perch,root,manual);}
+  update(0,0);
+  root.userData={perch,cameraHint,update,
+    setSun:(()=>{const f=setSunOn(U,sunL,.32);return(d,c,i)=>f(d,null,i===undefined?undefined:Math.min(1.5,i));})(),
+    setGlowLight(pos,color,intensity){if(!pos){manual.on=false;return;}manual.on=true;manual.p.copy(pos.isVector3?pos:new V3(...pos));manual.i=intensity==null?1:+intensity;if(color!=null)manual.c=color;},
+    dispose(){bag.dispose();bd.userData.dispose();}};
+  return root;}
+
+/* ---------- 9b. winter dawn: hoar frost on grass blades, a fallen maple leaf and moss ---------- */
+function makeFrostMacroSet(opts){
+  opts=opts||{};const ql=qlevel(opts),bag=Bag(),seed=opts.seed||31,R=RNG(seed*61+9);
+  const root=new T.Group();root.name="flora_frost_macro";
+  const U=macroRig({sunCol:0xffe0b8,sunI:2.6,fillCol:0xb4c8f0,fillI:.75,sky:0xc8d6ee,hor:0xe8e4dc,gnd:0x5a6478,ambI:.95});
+  const sunL=new V3(.55,.22,-.8).normalize(),fillL=new V3(-.4,.8,.45).normalize();
+  const bd=makeBokehBackdrop({width:.6,height:.34,style:"frostMorning",seed:seed+3,quality:opts.quality,sunPos:[.8,.3],highlights:QS(ql,30,45,60)});root.add(bd);
+  const texG=bladeTextures("grass",ql,seed+5),texS=bladeTextures("susuki",ql,seed+7);[texG,texS].forEach(t=>{bag.add(t.map);bag.add(t.nrm);});
+  const hazeCol=lin(0xdfe6f0);
+  const mk=(tx,tint,o)=>bag.add(surfMaterial(U,Object.assign({map:tx.map,nrm:tx.nrm,tint:new T.Color(...tint),transCol:lin(0xa8c860),frost:.85},o||{})));
+  const W=(w0,p,q)=>s=>w0*Math.min(1,Math.pow(Math.max(s,0)/.04,.5))*Math.pow(Math.max(0,1-Math.pow(s,p)),q);
+  const segs=QS(ql,60,100,140);const crystals=[];const blades=[];
+  const addBlade=(pts,o)=>{const p0=new V3(...pts[0]);const piv=new T.Group();piv.position.copy(p0);root.add(piv);
+    const bl=buildBlade({pts:pts.map(p=>[p[0]-p0.x,p[1]-p0.y,p[2]-p0.z]),up:o.up||[0,1,.4],segs,nu:QS(ql,7,9,11),width:o.width,twist:o.twist||(s=>.15*s),fold:o.fold||.16,cup:.00008,groove:.00006,
+      serr:ql>0?{amp:.00003,period:.00045}:null,uvLen:.05,thick:(s,u)=>(.00026-.00012*u*u)*(1-.5*s)});bag.add(bl.geometry);
+    const m=new T.Mesh(bl.geometry,mk(o.tex||texG,o.tint||[.62,.74,.56],{haze:o.haze||0,hazeCol,shin:60,transK:.6,tipCol:lin(0x9a8a60),tipK:.35}));m.castShadow=m.receiveShadow=false;piv.add(m);
+    /* hoar frost: feathery crystals bristling from both margins, smaller ones standing on the upper surface */
+    const dens=o.dens||1,nM=Math.round(QS(ql,90,170,260)*dens),nS=Math.round(QS(ql,40,90,140)*dens);
+    for(const side of[-1,1])for(let i=0;i<nM;i++){const s=lerp(.04,.97,(i+R())/nM),S=bl.surf(s,side);const out=S.a.clone().multiplyScalar(side);
+      const d=out.clone().multiplyScalar(R.r(.5,1)).addScaledVector(S.n,R.r(-.2,.9)).addScaledVector(S.t,R.r(-.35,.35)).normalize();
+      crystals.push({p:S.p.clone().add(p0),d,s:S.t.clone(),l:R.r(.0007,.0021)*(1-.35*s),w:R.r(.0004,.0009)});}
+    for(let i=0;i<nS;i++){const s=R.r(.05,.95),u=R.s()*.9,S=bl.surf(s,u);const d=S.n.clone().addScaledVector(S.a,R.s()*.6).addScaledVector(S.t,R.s()*.6).normalize();
+      crystals.push({p:S.p.clone().add(p0),d,s:S.a.clone(),l:R.r(.00025,.0008),w:R.r(.0002,.0005)});}
+    blades.push({piv,bl});return {piv,bl};};
+  /* moss bed and the fallen maple leaf */
+  const mt=mossTex(ql,seed+9);bag.add(mt.map);bag.add(mt.nrm);
+  const mossH=(x,z)=>-.016+.0025*fbm(x*90+3,z*90,seed,3)+.0012*Math.sin(x*140+z*60);
+  const mg=bag.add(gridSurfF(QS(ql,40,70,100),QS(ql,30,50,70),-.11,.11,-.12,.03,mossH));
+  root.add(new T.Mesh(mg,bag.add(surfMaterial(U,{map:mt.map,nrm:mt.nrm,tint:new T.Color(.62,.68,.52),transCol:lin(0x6a8030),transK:.2,shin:30,specK:.3,nrmK:1.4,frost:.55,haze:.42,hazeCol}))));
+  for(let i=0;i<QS(ql,250,500,800);i++){const x=R.r(-.1,.1),z=R.r(-.11,.02),y=mossH(x,z);crystals.push({p:new V3(x,y,z),d:new V3(R.s()*.5,1,R.s()*.5).normalize(),s:new V3(1,0,0),l:R.r(.0006,.0018),w:R.r(.0004,.0009)});}
+  const mp=mapleGeo(.026,QS(ql,10,16,22),QS(ql,90,140,200),.12,seed);bag.add(mp.geometry);const mtx=mapleTex(ql,seed+2);bag.add(mtx.map);bag.add(mtx.nrm);
+  const leaf=new T.Mesh(mp.geometry,bag.add(surfMaterial(U,{map:mtx.map,nrm:mtx.nrm,tint:new T.Color(1,1,1),transCol:lin(0xff5020),transK:.5,shin:45,specK:.5,frost:.7,haze:.22,hazeCol})));
+  leaf.position.set(.016,-.0135,-.03);leaf.rotation.set(.08,.7,.05);root.add(leaf);leaf.updateMatrix();
+  for(let i=0;i<QS(ql,260,520,800);i++){const th=R()*TAU-PI/2;const k=R()<.65?1:R.r(.2,.95);const r=mp.rOf(th)*.026*k;const lp=new V3(Math.cos(th)*r,.0026*.12*(r/.026)*(r/.026)*10,-Math.sin(th)*r);
+    const p=lp.clone().applyMatrix4(leaf.matrix);const out=new V3(Math.cos(th),0,-Math.sin(th)).transformDirection(leaf.matrix);const up=new V3(0,1,0).transformDirection(leaf.matrix);
+    const d=k>.99?out.clone().multiplyScalar(R.r(.4,1)).addScaledVector(up,R.r(0,.9)).normalize():up.clone().addScaledVector(out,R.s()*.5).normalize();
+    crystals.push({p,d,s:new V3(-out.z,0,out.x),l:R.r(.0005,.0016),w:R.r(.0003,.0008)});}
+  const hero=addBlade([[-.06,-.016,.004],[-.035,-.002,.002],[-.012,.007,0],[.008,.009,-.001],[.026,.004,-.002],[.04,-.004,-.002]],{width:W(.0068,1.6,.85),dens:1.6});
+  addBlade([[.03,-.016,-.006],[.022,-.004,-.006],[.014,.006,-.007],[.004,.013,-.008],[-.004,.016,-.009]],{width:W(.0042,1.4,.85),up:[.5,.2,1],tex:texS});
+  addBlade([[-.02,-.016,-.05],[-.01,.0,-.052],[.008,.012,-.055],[.03,.016,-.058],[.05,.01,-.06]],{width:W(.005,1.6,.85),haze:.35,tint:[.6,.7,.58],dens:.7});
+  addBlade([[-.05,-.016,-.02],[-.045,-.002,-.022],[-.038,.012,-.024],[-.03,.022,-.026]],{width:W(.0038,1.3,.85),up:[1,.2,.4]});
+  const fTex=bag.add(frostFeatherTex(ql));root.add(crystalMesh(bag,U,fTex,crystals));
+  const tgt=new V3(-.006,.0075,0),camPos=new V3(-.001,.02,.042);
+  const cameraHint={position:camPos.toArray(),target:tgt.toArray(),fov:30};
+  {const vd=tgt.clone().sub(camPos).normalize();bd.position.copy(tgt).addScaledVector(vd,.3).add(new V3(0,.01,0));faceTo(bd,camPos);rigBindBackdrop(U,bd,[1.0,1.0,.8]);}
+  /* sun glints twinkling on crystal tips */
+  {const L=[];for(let i=0;i<QS(ql,10,18,26);i++){const c=crystals[(R()*crystals.length)|0];const p=c.p.clone().addScaledVector(c.d,c.l);
+      L.push({p:p.toArray(),size:R.r(.0005,.0012),sp:[1,R()*TAU,R.r(1.5,4),1],sc:[1,.96,.86,R.r(1.5,3.5)]});}root.add(spriteLayer(bag,U,L,16));}
+  let time=0;bd.onBeforeRender=()=>rigRefresh(U,root,bd,sunL,fillL);
+  function update(dt,t){if(t===undefined){time+=dt||0;t=time;}else time=t;U.uTime.value=t;bd.userData.update(dt,t);rigRefresh(U,root,bd,sunL,fillL);}
+  update(0,0);
+  root.userData={cameraHint,update,setSun:setSunOn(U,sunL,2.6),crystals:crystals.length,dispose(){bag.dispose();bd.userData.dispose();}};
+  return root;}
+
+/* ---------- 9c. autumn blue hour: susuki leaf and hagi stem, perch for a singing suzumushi ---------- */
+function makeStalkMacroSet(opts){
+  opts=opts||{};const ql=qlevel(opts),bag=Bag(),seed=opts.seed||41,R=RNG(seed*43+7);
+  const root=new T.Group();root.name="flora_stalk_macro";
+  const U=macroRig({sunCol:0xffa060,sunI:1.3,fillCol:0x8ea2e8,fillI:.7,sky:0x45588e,hor:0xb88066,gnd:0x161620,ambI:.7});
+  const sunL=new V3(-.3,.12,-.95).normalize(),fillL=new V3(.3,.85,.4).normalize();
+  const bd=makeBokehBackdrop({width:1.0,height:.58,style:"duskBlue",seed:seed+3,quality:opts.quality,sunPos:[.3,.72],highlights:QS(ql,5,6,7),discGain:.45});root.add(bd);
+  const texS=bladeTextures("susuki",ql,seed+5),texB=bladeTextures("broad",ql,seed+9);[texS,texB].forEach(t=>{bag.add(t.map);bag.add(t.nrm);});
+  const hazeCol=lin(0x3a4468);
+  const mk=(tx,tint,o)=>bag.add(surfMaterial(U,Object.assign({map:tx.map,nrm:tx.nrm,tint:new T.Color(...tint),transCol:lin(0xd0b860)},o||{})));
+  const W=(w0,p,q)=>s=>w0*Math.min(1,Math.pow(Math.max(s,0)/.05,.5))*Math.pow(Math.max(0,1-Math.pow(s,p)),q);
+  const segs=QS(ql,70,110,160);const blades=[];
+  const addBlade=(pts,o)=>{const p0=new V3(...pts[0]);const piv=new T.Group();piv.position.copy(p0);root.add(piv);
+    const bl=buildBlade({pts:pts.map(p=>[p[0]-p0.x,p[1]-p0.y,p[2]-p0.z]),up:o.up||[0,1,.25],segs,nu:QS(ql,7,9,11),width:o.width,twist:o.twist||(s=>.08*s),fold:o.fold||.08,cup:.00012,groove:.0001,
+      serr:ql>0?{amp:.00004,period:.0006}:null,uvLen:.07,thick:(s,u)=>(.0003-.00013*u*u)*(1-.5*s)});bag.add(bl.geometry);
+    const m=new T.Mesh(bl.geometry,mk(o.tex||texS,o.tint||[.86,.86,.76],{haze:o.haze||0,hazeCol,shin:55,transK:1.0,tipCol:lin(0xa88a50),tipK:.4}));m.castShadow=m.receiveShadow=false;piv.add(m);
+    const e={piv,bl,m,ph:R()*TAU,amp:o.amp||1};blades.push(e);return e;};
+  /* hero susuki blade: broad, nearly level where the cricket sits, drooping to the tip */
+  const hero=addBlade([[-.14,-.06,-.02],[-.09,-.018,-.012],[-.04,-.002,-.004],[.01,.002,.0],[.06,-.006,.004],[.11,-.03,.006],[.15,-.065,.006]],{width:W(.019,2.0,.7),amp:.7});
+  addBlade([[-.17,-.12,-.13],[-.08,-.04,-.14],[.02,-.01,-.15],[.12,-.03,-.155],[.2,-.08,-.16]],{width:W(.014,1.8,.8),haze:.6,tint:[.6,.62,.6],amp:1.4});
+  /* hagi (bush clover) stem with small trifoliate leaves, behind right, slightly out of focus */
+  const hagi=new T.Group();hagi.position.set(.07,-.12,-.06);root.add(hagi);
+  {const stem=tubeGeo([[0,0,0],[-.004,.05,-.002],[-.012,.1,-.004],[-.026,.15,-.006],[-.045,.19,-.008]],s=>.0011*(1-.4*s),QS(ql,6,8,10),{segs:QS(ql,24,36,48),col0:[.42,.26,.2],col1:[.5,.32,.24],vRep:5});
+    bag.add(stem.geometry);const sm=mk(texB,[.8,.62,.5],{haze:.25,hazeCol,transK:.3});hagi.add(new T.Mesh(stem.geometry,sm));
+    const lg=[];for(let k=0;k<QS(ql,4,6,7);k++){const s=.25+k*.12,P=stem.curve.getPointAt(Math.min(1,s)),Tt=stem.curve.getTangentAt(Math.min(1,s));const side=k%2?1:-1;
+      for(let j=0;j<3;j++){const dir=new V3(side*(.7+(j-1)*.5),.35+.3*(j===1?1:0),(j-1)*.4).normalize();const L=R.r(.011,.016)*(j===1?1.15:.9);
+        const pts=[P.clone(),P.clone().addScaledVector(dir,L*.5).add(new V3(0,L*.06,0)),P.clone().addScaledVector(dir,L)];
+        const bl=buildBlade({pts:pts.map(p=>[p.x,p.y,p.z]),up:[0,1,.2],segs:QS(ql,8,12,16),nu:QS(ql,5,7,7),width:s2=>.0072*Math.pow(Math.sin(PI*Math.min(1,s2*.95+.05)),.8),fold:.1,uvLen:.05});lg.push(bl.geometry);}}
+    const lgm=bag.add(mergeGeo(lg));hagi.add(new T.Mesh(lgm,mk(texB,[.62,.7,.5],{haze:.3,hazeCol,transK:.8})));}
+  /* perch: upper surface of the hero blade, head toward the leaf base (looking left, into the light) */
+  const perch=bladePerch(hero.bl,.4,0,true,"perch");hero.piv.add(perch);
+  hero.piv.updateMatrixWorld(true);const pw=perch.position.clone().add(hero.piv.position);
+  const tgt=pw.clone().add(new V3(-.006,.007,0));const camPos=tgt.clone().add(new V3(-.05,.034,.062));
+  const cameraHint={position:camPos.toArray(),target:tgt.toArray(),fov:30};
+  {const vd=tgt.clone().sub(camPos).normalize();bd.position.copy(tgt).addScaledVector(vd,.45).add(new V3(0,-.02,0));faceTo(bd,camPos);rigBindBackdrop(U,bd,[1.0,1.0,1.1]);}
+  /* soft foreground susuki stroke (blurred) */
+  const fgT=bag.add(blurPlaneTex({w:QS(ql,64,128,128),h:QS(ql,128,256,256),seed:seed+3,blur:QS(ql,6,10,12),strokes:[{col:"#2a2c3a",a:.9,w:.18,p:[.75,1.05,.5,.5,.4,-.05]},{col:"#d89060",a:.35,w:.04,p:[.68,1.0,.46,.5,.36,-.05]}],discs:[]}));
+  const fg=new T.Mesh(bag.add(new T.PlaneGeometry(.026,.05)),bag.add(blurPlaneMaterial(fgT,.8)));fg.position.copy(camPlace(cameraHint,.07,.86,-.5));faceTo(fg,camPos);fg.renderOrder=20;fg.castShadow=fg.receiveShadow=false;root.add(fg);
+  let time=0,wind=opts.wind!=null?+opts.wind:1;bd.onBeforeRender=()=>rigRefresh(U,root,bd,sunL,fillL);
+  function update(dt,t){if(t===undefined){time+=dt||0;t=time;}else time=t;U.uTime.value=t;bd.userData.update(dt,t);
+    const gust=.6+.4*Math.sin(t*.37)*Math.sin(t*.23+1);
+    for(const e of blades){const a=wind*gust*(.006*e.amp*Math.sin(t*1.1+e.ph)+.003*e.amp*Math.sin(t*2.3+e.ph*2));e.piv.rotation.set(a*.6,a*.25,a);}
+    hagi.rotation.set(wind*gust*.01*Math.sin(t*1.4+1),0,wind*gust*.014*Math.sin(t*.9));
+    rigRefresh(U,root,bd,sunL,fillL);}
+  update(0,0);
+  root.userData={perch,cameraHint,update,setSun:setSunOn(U,sunL,1.3),setWind(v){wind=+v;},dispose(){bag.dispose();bd.userData.dispose();}};
+  return root;}
+
 return {makeGrassField:(typeof makeGrassField!=="undefined"?makeGrassField:null),makeDewMacroSet,makeBarkMacroSet:(typeof makeBarkMacroSet!=="undefined"?makeBarkMacroSet:null),
-  makeLeafMacroSet:(typeof makeLeafMacroSet!=="undefined"?makeLeafMacroSet:null),makeWaterMacroSet:(typeof makeWaterMacroSet!=="undefined"?makeWaterMacroSet:null),makeBokehBackdrop};
+  makeLeafMacroSet:(typeof makeLeafMacroSet!=="undefined"?makeLeafMacroSet:null),makeWaterMacroSet:(typeof makeWaterMacroSet!=="undefined"?makeWaterMacroSet:null),makeBokehBackdrop,
+  makeNightLeafMacroSet,makeFrostMacroSet,makeStalkMacroSet};
 })();
