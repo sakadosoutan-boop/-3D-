@@ -11,6 +11,26 @@
    userData.anchors {head,thorax,wingTip,center} / update(dt,t) / dispose()
  TSURE_INSECTS.makeMayflySwarm({count?:40, radius?:1.2, height?:2.0, glow?, quality, seed?}) -> Group
    夕暮れの婚姻飛翔の群れ（InstancedMesh）。原点 = 群れの下端中心。逆光で翅が光る。update(dt,t) / dispose()
+ ── 枕草子の追加 ─────────────────────────────────────────────────────
+ TSURE_INSECTS.makeGenjiBotaru({pose:"rest"|"fly", flashing?:true, glow?:0, period?:2.0, light?:false, color?:0xc6ff5a, haloRadius?:.0095, quality, seed?}) -> Group
+   ゲンジボタル雄（体長 ≈15.7mm・幅 3.9mm）。原点 = 脚の接地面、+Z 頭、+Y 背。止まり場所の Object3D（+Y=面の法線, +Z=前）へ add する。
+   前胸背板は桃色に黒い十字紋、上翅は艶消しの黒（縁は細く淡い）、腹端の2節が発光器（雄）。
+   userData.glow（いまの発光 0..1）/ flashing（true で西日本型の明滅: 0.3s で光り 0.3s とどまり 0.6s で消える、period 秒周期）/ setGlow(v)（手動の発光、flashing 中は下限）
+   userData.lightAnchor（発光器の中心の Object3D。場面側の PointLight をここに置く）/ lightHint {color,intensity,distance,decay}
+     （intensity は ×glow、distance は実寸 m なのでセットの倍率を掛ける。opts.light=true なら自前の PointLight を lightAnchor に持ち毎フレーム自動で合わせる＝userData.light）
+   userData.halo（発光器の暈のビルボード、加算合成）/ takeOff(sec=1.6)（上翅を開き後翅を広げ、sec*0.5 秒後に前上方へ飛び去る。以後 pose "fly"）/ resetPose()
+   userData.anchors {head,pronotum,lantern,center}（group 座標 m）/ size / update(dt,t) / dispose()。描画 ≈12 draw call。
+ TSURE_INSECTS.makeFireflySwarm({count?:60, area?:{center:[x,y,z],width,depth,height}, path?:[[x,y,z],..], pathWidth?:2.4, groundY?|heightAt?(x,z),
+     water?:{y, mask?(x,z)->0..1, strength?:.38, rough?:1}, restingFrac?:.18, period?:2, sync?:.35, size?:.15, brightness?:1.3, color?, focus?, aperture?, quality, seed?}) -> Group
+   蛍の群れ（光の点と暈だけ。1 draw call の InstancedBufferGeometry、加算合成、FogExp2/Fog に沈む）。座標は group 局所（group は原点のまま置くのが簡単）。
+   path を渡すと流路に沿って幅 pathWidth に分布、無ければ area。高さは地面から 0.2〜area.height(既定2.5)m（低め優先）。
+   1匹ごとに蛇行飛跡・明滅（光っている間はゆっくり、消えている間に速く移る）・近いほど大きく・最小 1.6px の芯。
+   water: 水面 y の鏡像位置に暗く・縦に伸びた映りを描く（深度は水面上の反射点の値を書くので不透明な水面でも見える。mask は反射点の x,z で 0 なら映さない）。
+   userData.update(dt,t,camera)（camera は water.mask に使う）/ setActive(v 0..1) / setFocus(dist,aperture)（近景のぼけ円。aperture≈0.03〜0.06）/ setBrightness(v) / positions / dispose()
+ TSURE_INSECTS.makeSuzumushi({singing?:0, quality, seed?}) -> Group
+   スズムシ雄（体長 ≈20.5mm、触角 ≈50mm）。原点 = 脚の接地面、+Z 頭、+Y 背。体は艶の少ない黒、脚は淡褐〜白っぽく膝が黒い、触角は白に黒い帯。
+   userData.setSinging(v 0..1)（前翅を ≈78° まで立てハート形に開き、鳴く拍子に細かく震わせる）/ singing / update(dt,t)（触角のゆっくりした揺れ）
+   anchors {head,thorax,wingTip,center} / size / dispose()。描画 ≈9 draw call。
 ============================================================================= */
 const TSURE_INSECTS=(()=>{
 "use strict";
@@ -954,7 +974,7 @@ function ik2(c1,ank,a,b,pole){const d0=new V3().subVectors(ank,c1);const d=Math.
    body frame (mm): +z head, +y dorsal; head front z≈+7.9, elytral tips z=-8.2; root scaled 0.001
    ================================================================== */
 const GB_TR=table([// trunk (meso/metathorax underside + abdomen): z, cy, w, ht, hb
-  [-7.95,-.45,.3,.3,.3],[-7.6,-.42,.95,.45,.55],[-6.8,-.36,1.36,.62,.8],[-5.2,-.3,1.6,.7,.95],[-2,-.22,1.68,.74,1.0],[1.0,-.14,1.62,.76,1.0],[3.2,-.06,1.45,.8,1.05],[4.6,0,1.28,.8,.98],[5.6,.05,1.02,.74,.84],[6.3,.1,.75,.6,.6]]);
+  [-7.95,-.45,.3,.3,.3],[-7.6,-.42,.95,.45,.55],[-6.8,-.36,1.36,.62,.8],[-5.2,-.3,1.75,.7,.95],[-2,-.22,1.85,.74,1.0],[1.0,-.14,1.8,.76,1.0],[3.2,-.06,1.6,.8,1.05],[4.6,0,1.28,.8,.98],[5.6,.05,1.02,.74,.84],[6.3,.1,.75,.6,.6]]);
 const GB_SEG=[3.1,1.7,.3,-1.15,-2.6,-4.0,-4.75,-6.15,-7.6];
 function gbSec(z){const r=GB_TR(z);let k=1;for(let i=0;i<GB_SEG.length-1;i++){if(z<=GB_SEG[i]&&z>GB_SEG[i+1]){const t=(GB_SEG[i]-z)/(GB_SEG[i]-GB_SEG[i+1]);k=1+.03*Math.pow(t,1.5)*(1-sstep(.85,1,t));break;}}
   const f=capF(z,-7.95,6.3,.25,.35);return{cy:r[0],w:r[1]*Math.sqrt(f)*k,ht:r[2]*f,hb:r[3]*f*k,pt:2.3,pb:2.2};}
@@ -995,14 +1015,14 @@ function makeGenjiBotaru(opts){opts=opts||{};const ql=qlevel(opts),seed=(opts.se
   { const g=ellip([0,0,6.95],[1.05,.95,1.0],QS(ql,14,20,28),QS(ql,10,14,20),null);uvRect(g,[0,0,.4,.4]);vcol(g,()=>[20,18,18]);parts.push(g);
     for(const sg of[1,-1]){const pts=curvePts([new V3(sg*.35,-.55,7.75),new V3(sg*.42,-.85,8.0),new V3(sg*.3,-1.15,7.9)],6);const s=sweep({pts,m:5,r:t=>.14*(1-.5*t),cap1:1});vcol(s,()=>[40,30,26]);parts.push(s);}}
   /* pronotum shield: rose pink with the black cross, pale translucent anterior-lateral margins */
-  { const Z0=3.75,Z1=6.95,wOf=z=>1.95*(z<5.25?1:Math.sqrt(Math.max(0,1-Math.pow((z-5.25)/(Z1-5.25),2))))*(.9+.1*sstep(Z0,Z0+.35,z));
+  { const Z0=3.75,Z1=6.95,wOf=z=>2.18*(z<5.25?1:Math.sqrt(Math.max(0,1-Math.pow((z-5.25)/(Z1-5.25),2))))*(.9+.1*sstep(Z0,Z0+.35,z));
     const yOf=(u,z)=>.32+1.05*Math.pow(Math.max(0,1-u*u),.72)*(1-.36*sstep(5,Z1,z))+.07*sstep(.78,1,Math.abs(u))-.05*Math.exp(-Math.pow(u/.12,2))*sstep(4.2,6.5,z);
     const g=gridSurf(QS(ql,24,40,56),QS(ql,16,26,36),(s,v)=>{const u=s*2-1,z=lerp(Z0,Z1,v);return new V3(u*wOf(z),yOf(u,z),z);});
     vcol(g,(x,y,z,s,v)=>{const u=Math.abs(s*2-1),zz=z;let c=PINK.slice();
       c=mix3(c,CREAM,sstep(.62,.98,u)*sstep(4.4,6.2,zz)*.75+sstep(6.2,6.9,zz)*.5);
       const nz=(vn(x*3,z*3)-.5)*.08;
-      const bar=sstep(.22+nz,.13+nz,Math.abs(x)-.16*sstep(4.6,3.75,zz))*sstep(3.7,3.85,zz)*sstep(6.2,5.85,zz);
-      const arm=sstep(.22,.1,Math.abs(zz-5.0+.22*Math.abs(x))+nz)*sstep(.95,.62,Math.abs(x));
+      const bar=sstep(.26+nz,.1+nz,Math.abs(x)-.2*sstep(4.7,3.75,zz)-.05*Math.exp(-Math.pow((zz-5)/.4,2)))*sstep(3.7,3.9,zz)*sstep(6.25,5.75,zz);
+      const arm=sstep(.24,.06,Math.abs(zz-4.98+.26*Math.abs(x)-.05*x*x)+nz)*sstep(1.0,.55,Math.abs(x));
       const k=clamp(Math.max(bar,arm),0,1);c=mix3(c,[34,20,24],k*.94);c=mix3(c,[120,40,52],sstep(.02,.4,k)*(1-k)*.5);
       c=mix3(c,[150,70,80],sstep(.9,1,u)*.25);return c;});parts.push(g);}
   /* lantern-free ventral sclerites already in the trunk; legs/antennae below */
@@ -1010,9 +1030,9 @@ function makeGenjiBotaru(opts){opts=opts||{};const ql=qlevel(opts),seed=(opts.se
   const bodyMesh=new THREE.Mesh(bodyGeo,bodyMat);bodyMesh.castShadow=true;bodyMesh.receiveShadow=true;body.add(bodyMesh);
   /* elytra (each on its own hinge so they can open) */
   const EH=new V3(0,1.24,4.05);const elytra=[];
-  { const W=z=>1.92*(z>-6.2?1:Math.sqrt(Math.max(0,1-Math.pow((z+6.2)/2.02,2))))*(.93+.07*sstep(4.05,3.1,z));
+  { const W=z=>2.12*(z>-6.2?1:Math.sqrt(Math.max(0,1-Math.pow((z+6.2)/2.02,2))))*(.93+.07*sstep(4.05,3.1,z));
     const surf=(u,v)=>{const z=lerp(4.05,-8.22,v),ph=u*1.8,H=.98*(1-.3*sstep(-3,-8.2,z)),yb=.26-.1*sstep(-4,-8.2,z);
-      const sp=Math.sin(ph),cp=Math.cos(ph),e=2/2.7;const xin=.42*Math.pow(sstep(-6.7,-8.22,z),.7);
+      const sp=Math.sin(ph),cp=Math.cos(ph),e=2/2.7;const xin=.22*Math.pow(sstep(-6.9,-8.22,z),.8);
       let x=xin+(W(z)-xin)*Math.sign(sp)*Math.pow(Math.abs(sp),e)*(1+.035*sstep(.88,1,u)),y=yb+H*Math.sign(cp)*Math.pow(Math.abs(cp),e);
       y+=(.032*Math.exp(-Math.pow((u-.3)/.05,2))+.028*Math.exp(-Math.pow((u-.56)/.05,2))+.02*Math.exp(-Math.pow((u-.76)/.045,2)))*sstep(4,3,z)*sstep(-7.8,-6,z);
       return new V3(x,y,z).sub(EH);};
@@ -1075,7 +1095,7 @@ function makeGenjiBotaru(opts){opts=opts||{};const ql=qlevel(opts),seed=(opts.se
   /* state */
   const period=opts.period||2.0;let tAcc=0,glow=0,manual=opts.glow!=null?+opts.glow:0,flashPh=rng()*period;
   const st={mode:pose0,tk:0,dur:1.6,open:pose0==="fly"?1:0,wing:pose0==="fly"?1:0,lift:0,beat:0,fly:new V3()};
-  const setOpen=(o,w)=>{elytra.forEach(e=>{e.piv.rotation.set(.42*o,0,e.sg*.95*o);});wings.forEach(wg=>{wg.piv.visible=w>.02;wg.piv.scale.set(1,1,Math.max(.05,w));});};
+  const setOpen=(o,w)=>{elytra.forEach(e=>{e.piv.rotation.set(.55*o,0,e.sg*.55*o);});wings.forEach(wg=>{wg.piv.visible=w>.02;wg.piv.scale.set(1,1,Math.max(.05,w));});};
   const ud={kind:"genji-botaru",pose:pose0,flashing:opts.flashing!==false,glow:0,lightAnchor,lightHint,light:plight,halo,
     size:{length:.0157,width:.0039,height:.0028},
     anchors:{head:new V3(0,LIFT*.001,.0072),pronotum:new V3(0,(LIFT+1.3)*.001,.005),lantern:LC.clone(),center:new V3(0,LIFT*.001,-.0005)},
@@ -1133,7 +1153,7 @@ function makeFireflySwarm(opts){opts=opts||{};const ql=qlevel(opts),rng=RNG(((op
   const attP=new THREE.InstancedBufferAttribute(aP,4);attP.setUsage(THREE.DynamicDrawUsage);geo.setAttribute("aP",attP);
   const attQ=new THREE.InstancedBufferAttribute(aQ,4);attQ.setUsage(THREE.DynamicDrawUsage);geo.setAttribute("aQ",attQ);
   geo.instanceCount=water?N2:count;disposables.push(geo,base);
-  const U=THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{uCol:{value:new THREE.Color(opts.color||0xc6ff5a).convertSRGBToLinear()},uSize:{value:opts.size||.085},uBright:{value:opts.brightness||1.3},
+  const U=THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{uCol:{value:new THREE.Color(opts.color||0xc6ff5a).convertSRGBToLinear()},uSize:{value:opts.size||.15},uBright:{value:opts.brightness||1.3},
     uVpH:{value:720},uWaterY:{value:water?+water.y:-1e5},uRefl:{value:water&&water.strength!=null?+water.strength:.38},uRough:{value:water&&water.rough!=null?+water.rough:1},
     uMinPx:{value:1.6},uFocus:{value:opts.focus||0},uAper:{value:opts.aperture||0},uActive:{value:1}}]);
   const mat=new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,depthTest:true,blending:THREE.AdditiveBlending,fog:true,
@@ -1167,7 +1187,7 @@ function makeFireflySwarm(opts){opts=opts||{};const ql=qlevel(opts),rng=RNG(((op
     fragmentShader:`uniform vec3 uCol;uniform float uBright;varying vec2 vQ;varying float vI,vCore,vBlur;
       void main(){float r2=dot(vQ,vQ);if(r2>=1.0)discard;float r=sqrt(r2);float w=(1.0-r2)*(1.0-r2);
         float c=vCore;float core=exp(-r2/(c*c)*1.6)*1.0;
-        float halo=(exp(-r2*12.0)*0.55+exp(-r2*3.5)*0.2)*w;
+        float halo=(exp(-r2*9.0)*0.42+exp(-r2*2.6)*0.16)*w;
         float disc=smoothstep(1.0,0.86,r)*(0.7+0.3*smoothstep(0.55,0.95,r));
         float v=mix(core*2.2+halo,disc*0.8+halo*0.3,vBlur);
         vec3 col=mix(uCol,vec3(0.92,1.0,0.75),core*0.35*(1.0-vBlur))*v*vI*uBright;
@@ -1211,7 +1231,7 @@ function szWingTex(W,seed){const rng=RNG(seed),H=W/2,c=mkCanvas(W,H),x=c.getCont
   const out=[];for(let i=0;i<=48;i++){const a=i/48*13.6;out.push(P(a,szWingW(a)));}for(let i=48;i>=0;i--){const a=i/48*13.6;out.push(P(a,-.35));}
   // membrane: smoky glass, darker at the base and in the lateral field
   x.save();tracePath(x,out,true);x.clip();
-  const g=x.createLinearGradient(P(0,0)[0],0,P(13.6,0)[0],0);g.addColorStop(0,"rgba(40,32,26,.92)");g.addColorStop(.18,"rgba(70,60,50,.7)");g.addColorStop(.4,"rgba(120,110,96,.42)");g.addColorStop(1,"rgba(132,122,108,.36)");x.fillStyle=g;x.fillRect(0,0,W,H);
+  const g=x.createLinearGradient(P(0,0)[0],0,P(13.6,0)[0],0);g.addColorStop(0,"rgba(26,22,18,.96)");g.addColorStop(.16,"rgba(46,40,34,.78)");g.addColorStop(.36,"rgba(78,70,62,.58)");g.addColorStop(1,"rgba(104,96,86,.5)");x.fillStyle=g;x.fillRect(0,0,W,H);
   for(let i=0;i<=40;i++){const a=i/40*13.6,w=szWingW(a);fillPoly(x,[P(a-.2,w-1.5),P(a+.4,w-1.5),P(a+.4,w+.2),P(a-.2,w+.2)],"rgba(36,28,22,.12)");}
   const vein=(pts,w,col)=>strokePoly(x,crPts(pts.map(p=>P(p[0],p[1])),false,6),col||"rgba(30,22,16,.98)",Math.max(1,w*s));
   // harp: oblique curved veins (stridulatory field)
@@ -1269,7 +1289,7 @@ function makeSuzumushi(opts){opts=opts||{};const ql=qlevel(opts),seed=(opts.seed
   const gl=[];const PALE=[214,200,176],DK=[50,40,32],MID=[150,132,110];
   const LEG=[{c:new V3(1.0,-1.25,6.4),foot:new V3(4.6,0,10.8),fl:3.6,tl:3.9,ta:2.4,fr:.36,tr:.22,pole:new V3(.7,1,.4)},
     {c:new V3(1.35,-1.45,3.6),foot:new V3(6.6,0,4.4),fl:4.0,tl:4.3,ta:2.6,fr:.38,tr:.24,pole:new V3(.8,1,0)},
-    {c:new V3(1.45,-1.45,1.1),foot:new V3(5.4,0,-11.2),fl:9.2,tl:9.6,ta:3.0,fr:.95,tr:.3,pole:new V3(.45,1,.05),hind:true}];
+    {c:new V3(1.45,-1.45,1.1),foot:new V3(5.9,0,-13.6),fl:8.0,tl:8.5,ta:3.0,fr:.92,tr:.3,pole:new V3(.85,1,-.25),hind:true}];
   for(const L of LEG)for(const sg of[1,-1]){const sx=v=>new V3(v.x*sg,v.y,v.z);const c1=toRoot(sx(L.c)),foot=sx(L.foot);
     const tdir=new V3(foot.x-c1.x,0,foot.z-c1.z).normalize();const ank=foot.clone().addScaledVector(tdir,-L.ta*.85);ank.y=.45;
     const S=ik2(c1,ank,L.fl,L.tl,sx(L.pole).normalize());
