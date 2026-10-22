@@ -43,6 +43,19 @@ CC BY 等を採用する場合は出典・作者・ライセンスを明記す�
 | semi_minmin.mp3 | 再現モード「徒然草 第七段」専用ループ | 「夏の蝉の春秋を知らぬ」の場面（ミンミンゼミの大写し） |
 | semi_chorus.mp3 | 再現モード「徒然草 第七段」専用ループ | 同場面の遠い蝉時雨（小音量で重ねる） |
 | kane_bonsho.mp3 | 再現モード「徒然草 第七段」専用（一回鳴らし） | 鳥部山の夕暮れ・あだし野の夜明けに遠く響く梵鐘 |
+| makura_yoake.mp3 | 再現モード「枕草子 第一段」専用ループ | 春の夜明けの場（目覚めの小鳥） |
+| makura_uguisu.mp3 | 再現モード「枕草子 第一段」専用（一回鳴らし） | 春の夜明けの鶯 |
+| makura_natsuyoru.mp3 | 再現モード「枕草子 第一段」専用ループ | 夏の夜（蛙） |
+| makura_water.mp3 | 再現モード「枕草子 第一段」専用ループ | 遣水のせせらぎ |
+| makura_ame.mp3 | 再現モード「枕草子 第一段」専用ループ | 雨の夜（軒と樋に落ちる雨） |
+| makura_kaze.mp3 | 再現モード「枕草子 第一段」専用ループ | 秋の夕暮れ・日入り果てての風 |
+| makura_karasu.mp3 | 再現モード「枕草子 第一段」専用（一回鳴らし） | 寝所へ行く烏 |
+| makura_kari.mp3 | 再現モード「枕草子 第一段」専用（一回鳴らし） | 雁の列 |
+| makura_mushi.mp3 | 再現モード「枕草子 第一段」専用ループ | 虫の音（鈴虫） |
+| makura_mushi2.mp3 | 再現モード「枕草子 第一段」専用ループ | 虫の音（松虫） |
+| makura_fuyu.mp3 | 再現モード「枕草子 第一段」専用ループ | 冬の早朝の風 |
+| makura_kinuzure.mp3 | 再現モード「枕草子 第一段」専用（一回鳴らし） | 女房の衣擦れ |
+| makura_sumi.mp3 | 再現モード「枕草子 第一段」専用ループ | 火桶の炭火 |
 
 ## 出典・ライセンス（確定済み: 再現モード「徒然草 第七段」用）
 
@@ -66,6 +79,99 @@ CC BY 等を採用する場合は出典・作者・ライセンスを明記す�
 - **作者**: Vurca（2017年3月、飛騨の里で録音）
 - **ライセンス**: CC0 1.0（パブリックドメイン）
 - **変更点**: 撞いた瞬間から27.5秒を切り出し、末尾5.5秒をフェードアウト、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+## 出典・ライセンス（確定済み: 再現モード「枕草子 第一段」用）
+
+### makura_yoake.mp3 — 夜明けに目覚める小鳥（フランスでの録音。近似）
+
+- **出典**: BigSoundBank #222 https://bigsoundbank.com/awakening-birds-s0222.html
+- **作者**: Joseph Sardin
+- **ライセンス**: CC0 1.0（パブリックドメイン。https://bigsoundbank.com/licenses.html）
+- **変更点**: 切り出し、低域を除去、20秒程度に詰めて1.5秒のクロスフェードでループ化、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+### makura_uguisu.mp3 — ウグイス（Horornis diphone）のさえずり
+
+- **出典**: iNaturalist 観察 https://www.inaturalist.org/observations/206776175（音声 ID 964225）
+- **作者**: ahikar（iNaturalist ユーザー）
+- **ライセンス**: CC0 1.0（https://creativecommons.org/publicdomain/zero/1.0/）
+- **変更点**: 切り出し、低域を除去、前後をフェード、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+### makura_natsuyoru.mp3 — シュレーゲルアオガエル（夜。東京・多摩）
+
+- **出典**: iNaturalist 観察 https://www.inaturalist.org/observations/117165815（音声 ID 439585）
+- **作者**: WATANABE Hitoshi 渡辺仁
+- **ライセンス**: CC BY 4.0（https://creativecommons.org/licenses/by/4.0/）
+- **変更点**: 切り出し、低域を除去、20秒程度に詰めて1.5秒のクロスフェードでループ化、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+### makura_water.mp3 — 小川のせせらぎ
+
+- **出典**: BigSoundBank #864 https://bigsoundbank.com/brooklet-s0864.html
+- **作者**: Joseph Sardin
+- **ライセンス**: CC0 1.0（パブリックドメイン。https://bigsoundbank.com/licenses.html）
+- **変更点**: 切り出し、低域を除去、20秒程度に詰めて1.5秒のクロスフェードでループ化、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+### makura_ame.mp3 — 屋根と樋に降る雨
+
+- **出典**: OpenGameArt「Rain in the Gutter Loop」 https://opengameart.org/content/rain-gutter-loop
+- **作者**: Ogrebane
+- **ライセンス**: CC0 1.0（パブリックドメイン）
+- **変更点**: 切り出し、低域を除去、20秒程度に詰めて1.5秒のクロスフェードでループ化、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+### makura_kaze.mp3 — 丈の高い草を渡る風
+
+- **出典**: BigSoundBank #908 https://bigsoundbank.com/wind-in-tall-grass-s0908.html
+- **作者**: Joseph Sardin
+- **ライセンス**: CC0 1.0（パブリックドメイン。https://bigsoundbank.com/licenses.html）
+- **変更点**: 切り出し、低域を除去、20秒程度に詰めて1.5秒のクロスフェードでループ化、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+### makura_karasu.mp3 — カラスの群れ（欧州での録音。近似）
+
+- **出典**: BigSoundBank #754 https://bigsoundbank.com/crows-s0754.html
+- **作者**: Joseph Sardin
+- **ライセンス**: CC0 1.0（パブリックドメイン。https://bigsoundbank.com/licenses.html）
+- **変更点**: 切り出し、低域を除去、前後をフェード、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+### makura_kari.mp3 — マガン（Anser albifrons）の群れの飛翔通過（ルーマニア）
+
+- **出典**: iNaturalist 観察 https://www.inaturalist.org/observations/324160173（音声 ID 1682768）
+- **作者**: plucian / Patrascu Lucian-Marius
+- **ライセンス**: CC0 1.0（https://creativecommons.org/publicdomain/zero/1.0/）
+- **変更点**: 切り出し、低域を除去、前後をフェード、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+### makura_mushi.mp3 — スズムシ（Meloimorpha japonica）の鳴き声（宇都宮）
+
+- **出典**: iNaturalist 観察 https://www.inaturalist.org/observations/395193494（音声 ID 2137393）
+- **作者**: Yoshihiro Tokue
+- **ライセンス**: CC BY 4.0（https://creativecommons.org/licenses/by/4.0/）
+- **変更点**: 高域通過で低域を除去し、クロスフェードでループ化、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+### makura_mushi2.mp3 — マツムシ（Xenogryllus marmoratus）の合唱（つくば）
+
+- **出典**: iNaturalist 観察 https://www.inaturalist.org/observations/136037801（音声 ID 539593）
+- **作者**: Yoshihiro Tokue
+- **ライセンス**: CC BY 4.0（https://creativecommons.org/licenses/by/4.0/）
+- **変更点**: 高域通過で低域を除去し、クロスフェードでループ化、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+### makura_fuyu.mp3 — 冬枯れの木々を渡る風（近似）
+
+- **出典**: BigSoundBank #904 https://bigsoundbank.com/wind-in-the-trees-s0904.html
+- **作者**: Joseph Sardin
+- **ライセンス**: CC0 1.0（パブリックドメイン。https://bigsoundbank.com/licenses.html）
+- **変更点**: 切り出し、低域を除去、20秒程度に詰めて1.5秒のクロスフェードでループ化、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+### makura_kinuzure.mp3 — 布の擦れる音（合成繊維。衣擦れの近似）
+
+- **出典**: BigSoundBank #1104 https://bigsoundbank.com/synthetic-coat-rubbed-s1104.html
+- **作者**: Joseph Sardin
+- **ライセンス**: CC0 1.0（パブリックドメイン。https://bigsoundbank.com/licenses.html）
+- **変更点**: 切り出し、低域を除去、前後をフェード、ラウドネスを調整、モノラル64kbpsに再エンコード。
+
+### makura_sumi.mp3 — 暖炉の火のはぜる音（炭火の近似）
+
+- **出典**: BigSoundBank #2855 https://bigsoundbank.com/fireplace-3-s2855.html
+- **作者**: Joseph Sardin
+- **ライセンス**: CC0 1.0（パブリックドメイン。https://bigsoundbank.com/licenses.html）
+- **変更点**: 切り出し、低域を除去、20秒程度に詰めて1.5秒のクロスフェードでループ化、ラウドネスを調整、モノラル64kbpsに再エンコード。
 
 ## 出典・ライセンス（要確定）
 
