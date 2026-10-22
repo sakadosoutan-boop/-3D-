@@ -25179,7 +25179,7 @@ function renderSaigenBeat(){
   $("sgSpeaker").textContent=spkName?("— "+spkName+" —"):"地の文（語り）";
   $("sgPrev").disabled=(S.i<=0);
   $("sgPrev").textContent="◀ 前の"+unit;
-  $("sgNext").textContent=(S.i>=sc.beats.length-1)?"終演 ▶":"次の"+unit+" ▶";
+  updateSaigenNextLabel();
   const grp=b.group||(sc.world?"moya":null);
   const hud=$("saigenHud");if(hud)hud.classList.toggle("sg-flashcut",grp==="uta");
   fitSaigenHonbun(); // 本文枠の高さは sg-flashcut で変わるので、その後で収まりを調整する
@@ -25249,8 +25249,18 @@ function fitSaigenHonbun(){
   hw.scrollLeft=hw.scrollWidth; // 縦書きは右端(冒頭)から、収まる時は中央寄せ
 }
 addEventListener("resize",()=>{if(APP.mode==="saigen"&&APP.saigen)fitSaigenHonbun();},{passive:true});
+/* 場の中にまだ見ていないショット(カット)が残っている時は、「次へ」で次のショットへ進む(残りを飛ばさない)。
+   場面側(徒然草・枕草子など)は scene.hasMoreShots() / scene.nextShot() を持ち、ショットが替わるたびにこのラベルを更新する */
+function updateSaigenNextLabel(){
+  const S=APP.saigen,btn=$("sgNext");if(!S||!btn)return;const sc=S.scene,unit=sc.unit||"段";
+  let more=false;try{more=!!(sc.hasMoreShots&&sc.hasMoreShots());}catch(e){}
+  btn.textContent=more?"続き ▶":(S.i>=sc.beats.length-1)?"終演 ▶":"次の"+unit+" ▶";
+  btn.classList.toggle("sg-more",more);
+}
 function saigenNext(){
   const S=APP.saigen;if(!S||S._ending)return;
+  let moved=false;try{moved=!!(S.scene.nextShot&&S.scene.nextShot());}catch(e){console.error("[saigen] nextShot:",e);}
+  if(moved){if(!saigenSilenceUiSe())beep(600,.05,"triangle",.08);updateSaigenNextLabel();return;}
   if(S.i>=S.scene.beats.length-1){endSaigen();return;}
   S.i++;if(!saigenSilenceUiSe())beep(648,.06,"triangle",.1);renderSaigenBeat();
 }
@@ -36737,7 +36747,11 @@ const SAIGEN_TSUREZURE=(()=>{
     setCamera(c.from.pos,c.from.look,frameUpOf(sh),S.fovFrom);
     if(typeof camera!=="undefined"&&camera){camera.fov=S.fovFrom;camera.near=sh.macro?.05:.1;camera.updateProjectionMatrix();}
     if(typeof snapSaigenCamera==="function")snapSaigenCamera();
+    if(typeof updateSaigenNextLabel==="function")updateSaigenNextLabel();
   }
+  // 「次へ」: 場の中に残りのショットがあれば次のショットへ(場の準備中・ゾーン外では何もしない)
+  function hasMoreShots(){return !!(S.active&&!S.pendingBeat&&S.shots&&S.shotIdx<S.shots.length-1);}
+  function nextShot(){if(!hasMoreShots())return false;startShot(S.shotIdx+1,false);return true;}
   function tickShot(dt){
     const sh=S.shots[S.shotIdx];if(!sh)return;
     S.shotT+=dt;
@@ -37039,7 +37053,7 @@ const SAIGEN_TSUREZURE=(()=>{
   BEATS.forEach(b=>{b.speaker="kenko";});
   if(!SAIGEN_SCENES.some(s=>s.id===SCENE_ID)){
     SAIGEN_SCENES.push({id:SCENE_ID,work:"徒然草",title:"第七段 あだし野の露消ゆる時なく",author:"兼好法師",unit:"場",
-      env:"tsurezure",buildProps:"tsurezure",quietBg:true,quietUi:true,cast:[],beats:BEATS});
+      env:"tsurezure",buildProps:"tsurezure",quietBg:true,quietUi:true,cast:[],beats:BEATS,hasMoreShots,nextShot});
   }
   return {S,ZONES,BEAT_SHOTS,BEATS,presetState,MACRO_SCALE,hAn,hAdashi,hToribe,anStreamZ,createHermitage};
 })();
@@ -38344,7 +38358,11 @@ const SAIGEN_MAKURA=(()=>{
     setCamera(c.from.pos,c.from.look,frameUpOf(sh),S.fovFrom);
     if(typeof camera!=="undefined"&&camera){camera.fov=S.fovFrom;camera.near=sh.macro?.05:.1;camera.updateProjectionMatrix();}
     if(typeof snapSaigenCamera==="function")snapSaigenCamera();
+    if(typeof updateSaigenNextLabel==="function")updateSaigenNextLabel();
   }
+  // 「次へ」: 場の中に残りのショットがあれば次のショットへ(場の準備中・ゾーン外では何もしない)
+  function hasMoreShots(){return !!(S.active&&!S.pendingBeat&&S.shots&&S.shotIdx<S.shots.length-1);}
+  function nextShot(){if(!hasMoreShots())return false;startShot(S.shotIdx+1,false);return true;}
   function tickShot(dt){
     const sh=S.shots[S.shotIdx];if(!sh)return;
     S.shotT+=dt;
@@ -38607,7 +38625,7 @@ const SAIGEN_MAKURA=(()=>{
   BEATS.forEach(b=>{b.speaker="seishonagon";});
   {
     const def={id:SCENE_ID,work:"枕草子",title:"第一段 春はあけぼの",author:"清少納言",unit:"場",
-      env:"makura",buildProps:"makura",quietBg:true,quietUi:true,cast:[],beats:BEATS};
+      env:"makura",buildProps:"makura",quietBg:true,quietUi:true,cast:[],beats:BEATS,hasMoreShots,nextShot};
     const i=SAIGEN_SCENES.findIndex(s=>s.id===SCENE_ID);
     if(i>=0)SAIGEN_SCENES[i]=def;else SAIGEN_SCENES.unshift(def);
   }

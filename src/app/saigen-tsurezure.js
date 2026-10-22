@@ -722,7 +722,11 @@ const SAIGEN_TSUREZURE=(()=>{
     setCamera(c.from.pos,c.from.look,frameUpOf(sh),S.fovFrom);
     if(typeof camera!=="undefined"&&camera){camera.fov=S.fovFrom;camera.near=sh.macro?.05:.1;camera.updateProjectionMatrix();}
     if(typeof snapSaigenCamera==="function")snapSaigenCamera();
+    if(typeof updateSaigenNextLabel==="function")updateSaigenNextLabel();
   }
+  // 「次へ」: 場の中に残りのショットがあれば次のショットへ(場の準備中・ゾーン外では何もしない)
+  function hasMoreShots(){return !!(S.active&&!S.pendingBeat&&S.shots&&S.shotIdx<S.shots.length-1);}
+  function nextShot(){if(!hasMoreShots())return false;startShot(S.shotIdx+1,false);return true;}
   function tickShot(dt){
     const sh=S.shots[S.shotIdx];if(!sh)return;
     S.shotT+=dt;
@@ -1024,7 +1028,7 @@ const SAIGEN_TSUREZURE=(()=>{
   BEATS.forEach(b=>{b.speaker="kenko";});
   if(!SAIGEN_SCENES.some(s=>s.id===SCENE_ID)){
     SAIGEN_SCENES.push({id:SCENE_ID,work:"徒然草",title:"第七段 あだし野の露消ゆる時なく",author:"兼好法師",unit:"場",
-      env:"tsurezure",buildProps:"tsurezure",quietBg:true,quietUi:true,cast:[],beats:BEATS});
+      env:"tsurezure",buildProps:"tsurezure",quietBg:true,quietUi:true,cast:[],beats:BEATS,hasMoreShots,nextShot});
   }
   return {S,ZONES,BEAT_SHOTS,BEATS,presetState,MACRO_SCALE,hAn,hAdashi,hToribe,anStreamZ,createHermitage};
 })();

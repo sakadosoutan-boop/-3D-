@@ -765,7 +765,11 @@ const SAIGEN_MAKURA=(()=>{
     setCamera(c.from.pos,c.from.look,frameUpOf(sh),S.fovFrom);
     if(typeof camera!=="undefined"&&camera){camera.fov=S.fovFrom;camera.near=sh.macro?.05:.1;camera.updateProjectionMatrix();}
     if(typeof snapSaigenCamera==="function")snapSaigenCamera();
+    if(typeof updateSaigenNextLabel==="function")updateSaigenNextLabel();
   }
+  // 「次へ」: 場の中に残りのショットがあれば次のショットへ(場の準備中・ゾーン外では何もしない)
+  function hasMoreShots(){return !!(S.active&&!S.pendingBeat&&S.shots&&S.shotIdx<S.shots.length-1);}
+  function nextShot(){if(!hasMoreShots())return false;startShot(S.shotIdx+1,false);return true;}
   function tickShot(dt){
     const sh=S.shots[S.shotIdx];if(!sh)return;
     S.shotT+=dt;
@@ -1028,7 +1032,7 @@ const SAIGEN_MAKURA=(()=>{
   BEATS.forEach(b=>{b.speaker="seishonagon";});
   {
     const def={id:SCENE_ID,work:"枕草子",title:"第一段 春はあけぼの",author:"清少納言",unit:"場",
-      env:"makura",buildProps:"makura",quietBg:true,quietUi:true,cast:[],beats:BEATS};
+      env:"makura",buildProps:"makura",quietBg:true,quietUi:true,cast:[],beats:BEATS,hasMoreShots,nextShot};
     const i=SAIGEN_SCENES.findIndex(s=>s.id===SCENE_ID);
     if(i>=0)SAIGEN_SCENES[i]=def;else SAIGEN_SCENES.unshift(def);
   }
