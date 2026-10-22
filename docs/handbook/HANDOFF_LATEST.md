@@ -152,6 +152,28 @@ npm run verify:public
 - 既知: この種のコンテナではページの load が30秒を超えることがあり、`test:quality` などの既定30秒の goto が時間切れになる。
   `test:visual-backlog` の「四季×四時刻でジオメトリを再利用」は origin/main でも同じく失敗する（今回の変更とは無関係）。
 
+## 再現モード「枕草子 第一段 春はあけぼの」
+
+- 場面は `src/app/saigen-makura.js`（`SAIGEN_MAKURA`。徒然草と同じ骨組み: ゾーン・`BEAT_SHOTS`・`JOB_DEFS`/`BEAT_JOBS`・`syncBuild`・暗幕）。
+  作品一覧の先頭に登録する（`makura_haru`、15場、話者は全場 `seishonagon`）。設計は docs/plans/MAKURA_SAIGEN_PLAN.md。
+- 舞台は中宮の御所の庭（`miya` ゾーン: 殿舎の一角・渡殿・築地・遣水・池・中島・桜・松・竹・京の山並み）と接写セット3種
+  （`hotaru` 夜の葉の蛍・`shimo` 霜・`suzu` 薄の鈴虫。実寸で作り×20で置く）。
+- 素材（各ファイル先頭に API）:
+  - 建物 `TSURE_AN.makeDensha / makeWatadono / makeTsuiji`（原点＝簀子の外縁の南東角の地面。`setMisu`・`setShitomi`・`setNight`・`setSeason`。
+    座の位置は `anchors.seatHashi`。東の妻は閉じているので、座から東の山ぎはは見えない＝第2・3場は簀子や庭から撮る）。
+  - 人物 `TSURE_FIGURES.makeNyobo`（十二単の清少納言・袿の女房。姿勢 gaze/fan/carry/tend、`setKasane`）。顔は「アニメ調すぎる」
+    「大人っぽく写実寄りに」との指摘で写実の頭（`softFace`・`shadeAcc`）が既定。`headParams:{anime:true}` で旧の様式化した顔。
+  - 調度 `MAKURA_PROPS.makeHioke`（`setBurn(0..1)` で炭火→白い灰、`emberLight` を場面の `interiorLight` に写す）・`makeSumitori`・`makeKichou`。
+  - 生き物 `TSURE_INSECTS.makeFireflySwarm / makeGenjiBotaru / makeSuzumushi`、接写セット `TSURE_FLORA.makeNightLeafMacroSet / makeFrostMacroSet / makeStalkMacroSet`。
+  - 空と天候 `TSURE_NATURE`（たなびく雲の空・12プリセット・`makeKyotoRidges`・`makeRain`・`makeSnowfall`・`makeGeese`・`makeCrowFlock`）。
+    山並みは線形色で書いて出力時に変換する（夜・高画質の UnrealBloom 経路で暗部が持ち上がり白く見えていた）。
+- 音は `SND` 表（`sounds/makura_*.mp3` 13本＋既存の梵鐘）。出典は sounds/CREDITS.md（CC0 と CC BY 4.0。衣擦れ・炭火・冬の風・
+  烏・雁は近似の録音）。場ごとの音量は `BEAT_AUDIO`。
+- 検証は `npm run test:saigen-makura`（15場の早送り・素材が代替の箱に落ちていないか・終了の後始末）。`test:saigen`（徒然草）は
+  このコンテナで約11分かかる。
+- 既知: ゲーム全体でブルームの最後の写しに色調補正が二重にかかっている（夜の場面が少し暗く潰れる）。直すなら本体側で
+  `bp.basic.toneMapped=false` だが全体に効くので未対応。
+
 ## 未統合ブランチの扱い
 
 - `git fetch origin --prune` 後に `git branch -r --no-merged origin/main` で毎回確認する。固定リストは古くなるので正本にしない。
