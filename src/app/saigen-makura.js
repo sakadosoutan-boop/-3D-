@@ -282,7 +282,8 @@ const SAIGEN_MAKURA=(()=>{
     Tr("miya-maple2",()=>M.TRE&&M.TRE.makeMaple?M.TRE.makeMaple({height:4.0,seed:305,quality:"low"}):null,3.6,14.6);
     Tr("miya-hagi1",()=>M.TRE&&M.TRE.makeHagi?M.TRE.makeHagi({seed:306,quality:down(q)}):null,8.6,7.2);
     Tr("miya-hagi2",()=>M.TRE&&M.TRE.makeHagi?M.TRE.makeHagi({seed:307,quality:"low"}):null,-.6,12.8);
-    [[36,-22,8.5],[38.5,-6,9.5],[35.5,9,8],[41,22,10],[36.5,36,8.5],[44,-12,11],[47,4,9.5],[45,30,10.5],[52,16,12],[50,-28,10],
+    [[36,-22,8.5],[6,-44,9.5],[35.5,9,8],[41,22,10],[36.5,36,8.5],[-28,-42,11],[47,4,9.5],[45,30,10.5],[52,16,12],[50,-28,10],
+     // (東北東の夜明けの窓 = 方位70〜90° には背の高い松を置かない。山ぎはと紫の雲を隠さないため)
      [-54,8,9],[-55,30,8],[-52,-14,10],[-58,42,9.5],[2,55,8.5],[-22,55,9],[22,53,8],[-38,57,10],[12,60,11],[34,58,9]].forEach((p,i)=>
       Tr("miya-bgpine"+i,()=>M.TRE&&M.TRE.makePine?M.TRE.makePine({height:p[2],lean:.1,seed:320+i,quality:"low"}):null,p[0],p[1],i*.9));
     S.assets.bamboo=Tr("miya-bamboo",()=>M.TRE&&M.TRE.makeBambooGrove?M.TRE.makeBambooGrove({width:14,depth:4,height:9,seed:340,quality:"low"}):null,22,-27);
@@ -301,7 +302,8 @@ const SAIGEN_MAKURA=(()=>{
     const lamp=safeMake("miya-lamp",()=>M.AN&&M.AN.makeToudai?M.AN.makeToudai({quality:q}):null,()=>{const g=fbGroup("lamp");const b=fbBox(.05,.8,.05,0x111111);b.position.y=.4;g.add(b);const f=new THREE.Object3D();f.position.y=.86;g.add(f);g.userData.flame=f;return g;});
     const la=anchorPos("lamp",[-2.6,1.26,-3.2]);lamp.position.copy(la.pos);lamp.visible=false;z.add(own(track("miya",lamp)));S.assets.lamp=lamp;
     const kichou=safeMake("miya-kichou",()=>M.PRO&&M.PRO.makeKichou?M.PRO.makeKichou({size:"4shaku",season:"spring",quality:down(q)}):null,()=>{const g=fbGroup("kichou");const b=fbBox(1.4,1.5,.04,0xb06070);b.position.y=.75;g.add(b);return g;});
-    const ka=anchorPos("kichou",[-3.4,1.26,-3.0]);kichou.position.copy(ka.pos);kichou.rotation.y=ka.rotY;if(kichou.userData.fallback)kichou.visible=false; // 仮の箱は出さないz.add(own(track("miya",kichou)));S.assets.kichou=kichou;
+    const ka=anchorPos("kichou",[-3.4,1.26,-3.0]);kichou.position.copy(ka.pos);kichou.rotation.y=ka.rotY;if(kichou.userData.fallback)kichou.visible=false; // 仮の箱は出さない
+    z.add(own(track("miya",kichou)));S.assets.kichou=kichou;
     // 季節の粒子(花びら・紅葉)
     const Pa=(kind,cx,cz)=>{const p=safeMake("miya-"+kind,()=>M.TRE&&M.TRE.makeFallingParticles?M.TRE.makeFallingParticles({kind,width:24,height:10,depth:20,quality:down(q)}):null,()=>fbGroup(kind));
       p.position.set(cx,0,cz);p.visible=false;if(p.userData&&p.userData.setActive)p.userData.setActive(false);z.add(own(track("miya",p)));return p;};
@@ -343,7 +345,7 @@ const SAIGEN_MAKURA=(()=>{
     const f=S.assets.sei;if(!f)return null;
     const k=KASANE[season]||"sakura";
     if(k!==S.assets.seiKasane&&f.userData.setKasane){try{f.userData.setKasane(k);}catch(e){}S.assets.seiKasane=k;}
-    const a=anchorPos("seatHashi",[-1.6,1.26,-2.1]);f.position.copy(a.pos);f.rotation.y=(rotY!=null?rotY:a.rotY);f.visible=true;
+    const a=anchorPos("seatHashi",[-2.85,1.2,-2.575]);f.position.copy(a.pos);f.rotation.y=(rotY!=null?rotY:a.rotY);f.visible=true;
     S.labelFig.sei=f;return f;
   }
   function buildNyoboCarry(){
@@ -371,7 +373,7 @@ const SAIGEN_MAKURA=(()=>{
   }
   // 冬の場の配置: 火桶は廂の端近、女房はその前に座る
   function placeHiokeScene(){
-    const h=S.assets.hioke,t=S.assets.nyoboTend;const a=anchorPos("seatHashi",[-1.6,1.26,-2.1]);
+    const h=S.assets.hioke,t=S.assets.nyoboTend;const a=anchorPos("seatHashi",[-2.85,1.2,-2.575]);
     const base=a.pos.clone();base.x-=1.6;
     if(t){t.position.copy(base);t.rotation.y=Math.PI*.5;t.visible=true;
       const ha=t.userData&&t.userData.anchors&&t.userData.anchors.hioke;
@@ -408,17 +410,20 @@ const SAIGEN_MAKURA=(()=>{
   }
   function buildCrows(){
     const M=MODS(),q=S.quality,z=S.zones.miya;if(!z)return;
-    // 夕焼けの西の空を、ねぐら(北西の山)へ急ぐ三、四羽と二、三羽
-    const groups=[{count:4,center:[34,26,-30],dir:[-1,-.32],speed:9.5,delay:0},{count:3,center:[46,22,-14],dir:[-1,-.28],speed:10.5,delay:3.2}];
+    // 殿舎の上(北東)から来て、夕焼けの西南西の空を横切り、夕日の方の山(ねぐら)へ急ぐ三、四羽と二、三羽。
+    // 池の東の汀(2,1.6,19)から西を見た時、4秒目に方位285°・仰角28°、11秒目に方位258°・仰角14°(夕日の上)を通る。汀の松(仰角10°まで)より上を飛ぶ
+    const groups=[{count:4,center:[-41.5,25,7.4],dir:[-.843,.537],speed:8.5,delay:4},{count:3,center:[-47,27,2],dir:[-.8,.6],speed:9,delay:7}];
     const cr=safeMake("miya-crows",()=>{if(M.NAT&&M.NAT.makeCrowFlock)return M.NAT.makeCrowFlock({groups,quality:q});
       if(M.NAT&&M.NAT.makeCrows){const g=new THREE.Group();g.name="crow-groups";const subs=groups.map(G=>{const c=M.NAT.makeCrows({count:G.count,center:G.center,dir:G.dir,spread:3.5,speed:G.speed,quality:q});g.add(c);return c;});
         g.userData.update=(dt,t)=>subs.forEach(s=>{if(s.userData.update)s.userData.update(dt,t);});g.userData.dispose=()=>subs.forEach(s=>{if(s.userData.dispose)s.userData.dispose();});return g;}
       return null;},()=>fbGroup("crows"));
     cr.visible=false;z.add(own(track("miya",cr)));S.assets.crows=cr;
   }
+  // 北から南へ渡る雁の列。南の簀子の西端(-12,2.4,-.6)から見て、始めは方位310°・仰角18°(右の柱の陰から現れる)、9秒で方位254°・仰角16°(夕日の上)、16秒で方位232°・仰角11°。
+  // 霧に溶けないよう、いちばん近い所で約90m、終わりでも約170m
   function buildGeese(){
     const M=MODS(),q=S.quality,z=S.zones.miya;if(!z)return;
-    const ge=safeMake("miya-geese",()=>M.NAT&&M.NAT.makeGeese?M.NAT.makeGeese({count:11,formation:"hook",center:[30,92,-120],dir:[-1,.18],speed:13,spacing:2.6,quality:q}):null,()=>fbGroup("geese"));
+    const ge=safeMake("miya-geese",()=>M.NAT&&M.NAT.makeGeese?M.NAT.makeGeese({count:11,formation:"hook",center:[-85.3,34,-62.4],dir:[-.342,.94],speed:11,spacing:2.6,quality:q}):null,()=>fbGroup("geese"));
     ge.visible=false;z.add(own(track("miya",ge)));S.assets.geese=ge;
   }
 
@@ -495,8 +500,20 @@ const SAIGEN_MAKURA=(()=>{
        enter(ctx)/tick(ctx,u,t): 演出の差し込み
   ============================================================ */
   // 清少納言の頭のまわりから撮る(座の位置が殿舎のアンカーで決まるため、場の頭で計算する)
-  function seiCam(dx,dy,dz,lx,ly,lz){const a=anchorPos("seatHashi",[-1.6,1.26,-2.1]).pos;return {pos:[a.x+dx,a.y+dy,a.z+dz],look:[a.x+lx,a.y+ly,a.z+lz]};}
+  function seiCam(dx,dy,dz,lx,ly,lz){const a=anchorPos("seatHashi",[-2.85,1.2,-2.575]).pos;return {pos:[a.x+dx,a.y+dy,a.z+dz],look:[a.x+lx,a.y+ly,a.z+lz]};}
   function seiShot(from,to){return ()=>({cam:seiCam(...from),to:seiCam(...to)});}
+  // 方位(北=0°・東=90°)と仰角(度)で、カメラ位置 p から見る先(ゾーン局所)
+  function azLook(p,az,el,R){R=R||120;const a=az*Math.PI/180,e=el*Math.PI/180;return [p[0]+R*Math.sin(a)*Math.cos(e),p[1]+R*Math.sin(e),p[2]-R*Math.cos(a)*Math.cos(e)];}
+  function azShot(from,to,ae0,ae1){return {cam:{pos:from,look:azLook(from,ae0[0],ae0[1])},to:{pos:to,look:azLook(to,ae1[0],ae1[1])}};}
+  // 清少納言が顔を向ける方位(度) → rotation.y(+Z 向きが 0)
+  const faceAz=(az)=>(180-az)*Math.PI/180;
+  // 火桶の位置(placeHiokeScene の後に呼ぶ)
+  function hiokePos(){const h=S.assets.hioke;if(h)return h.position.clone();const a=anchorPos("seatHashi",[-2.85,1.2,-2.575]).pos;return new THREE.Vector3(a.x-1.0,a.y,a.z);}
+  // 鳥の群れを追う望遠(track: ゾーン局所の点を返す)
+  const _tc=new THREE.Vector3(),_tc2=new THREE.Vector3();
+  function crowCenter(){const c=S.assets.crows,u=c&&c.userData;if(!u||!u.groupCenter)return null;u.groupCenter(0,_tc);u.groupCenter(1,_tc2);return _tc.lerp(_tc2,.5);}
+  function geeseCenter(){const g=S.assets.geese,u=g&&g.userData;if(!u||!u.getCenter)return null;return u.getCenter(_tc);}
+  function trackLook(sh,look){if(!sh.track)return;let p=null;try{p=sh.track();}catch(e){}if(!p)return;look.lerp(zoneWorld(sh.zone,[p.x,p.y,p.z],false),sh.trackK!=null?sh.trackK:1);}
   function resetDynamic(){
     ["swarm","rain","crows","geese"].forEach(k=>{const o=S.assets[k];if(o)o.visible=false;});
     const sn=S.assets.snowfall;if(sn){sn.visible=false;if(sn.userData.setActive)sn.userData.setActive(false);}
@@ -509,84 +526,101 @@ const SAIGEN_MAKURA=(()=>{
 
   const BEAT_SHOTS=[
     /* 1 春はあけぼの。 */
-    [{zone:"miya",light:"akebonoDark",fov:42,camFn:seiShot([7.5,1.2,9.5,-1.2,.25,-.6],[6.4,1.15,8.2,-1.2,.25,-.6]),dur:7,shadow:{center:[-2,0,-1],half:16},lamp:{on:true,intensity:.9,distance:5,decay:2},
-      enter(){seasonMiya("spring");setNight(.55);setMisu(.55);setShitomi(1);showSei("spring",Math.PI*.42);S.assets.lamp.visible=true;S.labelFig.sei=S.assets.sei;S.assets.sei.userData.hideLabel=false;playOnce(SND.kane,.32,1.2);}},
-     {zone:"miya",light:"akebonoDark",fade:"black",fov:30,frameUp:.18,camFn:seiShot([1.15,.95,.85,0,.78,0],[1.0,.93,.75,0,.78,0]),dur:6,shadow:{center:[-1.6,1.2,-2],half:4},lamp:{on:true,intensity:.8,distance:5,decay:2},
+    // 南庭の東寄りの低い所から、夜明け前の殿舎の南東の角。御簾の内に燈台の灯、端近に座る清少納言(東南を向く)
+    // → 簀子から巻き上げた御簾の下をくぐって、斜め前からの寄り(背に燈台の灯)
+    [{zone:"miya",light:"akebonoDark",fov:42,frameUp:0,cam:{pos:[3.6,1.7,9.4],look:[-4.0,3.0,-3.0]},to:{pos:[3.1,1.7,8.2],look:[-3.8,2.8,-3.0]},dur:7,shadow:{center:[-2,0,-1],half:16},lamp:{on:true,intensity:.9,distance:5,decay:2},
+      enter(){seasonMiya("spring");setNight(.55);setMisu(.62);setShitomi(1);showSei("spring",faceAz(135));S.assets.lamp.visible=true;S.labelFig.sei=S.assets.sei;S.assets.sei.userData.hideLabel=false;playOnce(SND.kane,.32,1.2);}},
+     {zone:"miya",light:"akebonoDark",fade:"black",fov:30,frameUp:.25,camFn:seiShot([.62,1.0,2.05,0,.72,0],[.52,.98,1.8,0,.72,0]),dur:6,shadow:{center:[-2.85,1.2,-2.6],half:4},lamp:{on:true,intensity:.8,distance:5,decay:2},
       enter(){S.labelFig={};}}],
     /* 2 やうやう白くなりゆく山ぎは、すこしあかりて、 */
-    [{zone:"miya",light:"akebonoDark",lightTo:{preset:"akebonoWhite",dur:9,delay:.8},fov:44,camFn:seiShot([-.9,1.0,-.6,40,6,-10],[-.7,1.0,-.5,40,6.5,-10]),dur:11,shadow:{center:[2,0,0],half:22},lamp:{on:true,intensity:.6,fadeTo:.35,fadeDur:10,distance:5,decay:2},
-      enter(){seasonMiya("spring");setNight(.4);setMisu(.55);showSei("spring",Math.PI*.42);S.assets.lamp.visible=true;}}],
+    // 座からは殿舎の東の妻(蔀・妻戸)が東を塞ぐので、南庭の白砂から殿舎の南東の軒の角越しに東北東(方位65〜70°)の東山を見る。
+    // 左上を軒の出、左を東へ延びる渡殿が縁取り、築地の向こうの稜線の上が白んでいく(早回し)
+    [{zone:"miya",light:"akebonoDark",lightTo:{preset:"akebonoWhite",dur:9,delay:.8},fov:48,frameUp:0,camFn:()=>azShot([-3.5,1.75,4.6],[-3.1,2.05,4.2],[64,7],[69,6.5]),dur:11,shadow:{center:[4,0,-4],half:22},lamp:{on:true,intensity:.6,fadeTo:.35,fadeDur:10,distance:5,decay:2},
+      enter(){seasonMiya("spring");setNight(.4);setMisu(.62);setShitomi(1);showSei("spring",faceAz(135));S.assets.lamp.visible=true;}}],
     /* 3 紫だちたる雲のほそくたなびきたる。 */
-    // 望遠: 東山の稜線の上(方位およそ 72°→88°、仰角 7〜8°)にたなびく紫の雲
-    [{zone:"miya",light:"akebonoWhite",lightTo:{preset:"akebonoAkari",dur:7,delay:.3},fov:15,fovTo:13.5,frameUp:0,cam:{pos:[2,2.2,0],look:[382,56,-123]},to:{pos:[2,2.2,0],look:[402,56,-14]},dur:9,shadow:{center:[0,0,0],half:22},
-      enter(){seasonMiya("spring");setNight(.2);}},
-     {zone:"miya",light:"akebonoAkari",fade:"black",fov:28,frameUp:.15,camFn:seiShot([1.0,.92,.55,0,.8,0],[.92,.9,.5,0,.8,0]),dur:7,shadow:{center:[-1.6,1.2,-2],half:4},
-      enter(){showSei("spring",Math.PI*.42);setMisu(.55);playOnce(SND.uguisu,.34,1.4);}}],
+    // 望遠: 東山の稜線の上(方位 74°→86°、仰角 4〜5°)にたなびく紫の雲 → 簀子の南西から、朝の光を受けた清少納言の横顔
+    [{zone:"miya",light:"akebonoWhite",lightTo:{preset:"akebonoAkari",dur:7,delay:.3},fov:15,fovTo:13.5,frameUp:0,camFn:()=>azShot([2,2.2,0],[2,2.2,0],[74,4.5],[86,5]),dur:9,shadow:{center:[0,0,0],half:22},
+      enter(){seasonMiya("spring");setNight(.2);setMisu(.62);setShitomi(1);}},
+     {zone:"miya",light:"akebonoAkari",fade:"black",fov:26,frameUp:.25,camFn:seiShot([-.75,1.0,1.85,0,.72,0],[-.68,.98,1.7,0,.72,0]),dur:7,shadow:{center:[-2.85,1.2,-2.6],half:4},
+      enter(){showSei("spring",faceAz(135));setMisu(.62);playOnce(SND.uguisu,.34,1.4);}}],
     /* 4 夏は夜。月のころはさらなり、 */
-    [{zone:"miya",light:"natsuTsukiyo",fov:46,cam:{pos:[6.5,1.6,24],look:[-12,1,8]},to:{pos:[5.5,1.5,22],look:[-12,1,8]},dur:9,shadow:{center:[-8,0,14],half:26},lamp:{on:true,intensity:.7,distance:5,decay:2},
-      enter(){seasonMiya("summer");setNight(.7);setMisu(.35);setShitomi(1);showSei("summer",Math.PI*.15);S.assets.lamp.visible=true;}},
-     {zone:"miya",light:"natsuTsukiyo",fade:"black",fov:34,frameUp:.2,camFn:seiShot([1.4,.6,2.2,0,.75,0],[1.25,.6,1.95,0,.75,0]),dur:7,shadow:{center:[-1.6,1.2,-2],half:5},lamp:{on:true,intensity:.7,distance:5,decay:2}}],
+    // 池の北西の汀から南南東の月(方位150°・仰角30°)。月の下に中島の松、池、南の築地 → 簀子から、月の方を向く清少納言(卯の花の襲)
+    [{zone:"miya",light:"natsuTsukiyo",fov:50,frameUp:0,camFn:()=>azShot([-19,1.3,15.0],[-18.6,1.3,15.4],[152,16],[150,18]),dur:9,shadow:{center:[-12,0,22],half:20},lamp:{on:true,intensity:.7,distance:5,decay:2},
+      enter(){seasonMiya("summer");setNight(.7);setMisu(.62);setShitomi(1);showSei("summer",faceAz(153));S.assets.lamp.visible=true;}},
+     {zone:"miya",light:"natsuTsukiyo",fade:"black",fov:32,frameUp:.25,camFn:seiShot([-.6,.98,2.2,0,.72,0],[-.52,.96,1.98,0,.72,0]),dur:7,shadow:{center:[-2.85,1.2,-2.6],half:5},lamp:{on:true,intensity:.7,distance:5,decay:2}}],
     /* 5 闇もなほ、蛍の多く飛びちがひたる。 */
-    [{zone:"miya",light:"natsuYami",fov:48,cam:{pos:[4.8,.9,11.2],look:[12.4,.6,-4.5]},to:{pos:[5.6,.85,9.8],look:[12.2,.6,-5.2]},dur:11,shadow:{center:[9,0,2],half:16},lamp:{on:true,intensity:.45,distance:5,decay:2},
-      enter(){seasonMiya("summer");setNight(.85);setMisu(.2);act(S.assets.swarm,true);S.assets.lamp.visible=true;}},
-     {zone:"miya",light:"natsuYami",fade:"black",fov:52,cam:{pos:[18,2.4,4],look:[6,1.2,-7]},to:{pos:[17,2.3,3],look:[6,1.2,-7.5]},dur:8,shadow:{center:[10,0,-4],half:16},lamp:{on:true,intensity:.45,distance:5,decay:2},
+    // 遣水の汀の低い所から流れを遡る(北東)。前栽の上を飛びかう蛍、奥を渡殿が横切る
+    // → 渡殿の上(遣水をまたぐ所)から、南南西へ流れ下る遣水を見下ろす。流れに沿って明滅する蛍、右奥に灯のともる殿舎
+    [{zone:"miya",light:"natsuYami",fov:50,frameUp:0,cam:{pos:[5.2,.95,9.6],look:[12.4,1.2,-6]},to:{pos:[5.8,.95,8.6],look:[12.4,1.2,-6.4]},dur:10,shadow:{center:[9,0,0],half:16},lamp:{on:true,intensity:.45,distance:5,decay:2},
+      enter(){seasonMiya("summer");setNight(.85);setMisu(.2);setShitomi(1);act(S.assets.swarm,true);S.assets.lamp.visible=true;}},
+     {zone:"miya",light:"natsuYami",fade:"black",fov:50,frameUp:0,camFn:()=>azShot([13.4,2.3,-7.2],[13.4,2.25,-7.3],[210,-12],[214,-11]),dur:9,shadow:{center:[8,0,0],half:16},lamp:{on:true,intensity:.45,distance:5,decay:2},
       enter(){act(S.assets.swarm,true);}}],
     /* 6 また、ただ一つ二つなど、ほのかにうち光りて行くもをかし。 */
     [{zone:"hotaru",macro:true,light:{preset:"natsuYami",over:{hemi:{intensity:.06},ambient:{intensity:.03}}},fov:30,useHint:true,drift:[.003,.0015,-.004],dur:11,shadow:{center:[0,0,0],half:3},
       enter(){const h=S.assets.hotaru;if(h&&h.userData){h.userData.flashing=true;if(h.userData.setGlow)h.userData.setGlow(1);}S._flew=false;},
       tick(ctx,u,t){const h=S.assets.hotaru,L=S.assets.hotaruLight;const g=(h&&h.userData&&h.userData.glow!=null)?h.userData.glow:(.5+.5*Math.sin(t*3.1));if(L)L.intensity=.9*g;
         if(!S._flew&&t>7.2&&h&&h.userData&&h.userData.takeOff){S._flew=true;try{h.userData.takeOff(2.5);}catch(e){}}}},
-     {zone:"miya",light:"natsuYami",fade:"black",fov:40,cam:{pos:[3.6,1.9,4.6],look:[-1.2,1.4,-1.2]},to:{pos:[3.2,1.85,4.2],look:[-1.2,1.4,-1.2]},dur:7,shadow:{center:[-1,0,0],half:10},lamp:{on:true,intensity:.55,distance:5,decay:2},
-      enter(){setNight(.85);const sw=S.assets.swarm;act(sw,true);if(sw&&sw.userData.setActive)sw.userData.setActive(.08);S.assets.lamp.visible=true;}}],
+     // 遣水の東の汀から、流れ越しに灯のともる殿舎。闇の中をひとつふたつ
+     {zone:"miya",light:"natsuYami",fade:"black",fov:42,frameUp:.05,cam:{pos:[10.2,1.0,3.4],look:[-2.6,2.0,-2.2]},to:{pos:[9.7,1.0,3.0],look:[-2.6,2.0,-2.2]},dur:7,shadow:{center:[2,0,0],half:12},lamp:{on:true,intensity:.55,distance:5,decay:2},
+      enter(){setNight(.85);setMisu(.2);setShitomi(1);const sw=S.assets.swarm;act(sw,true);if(sw&&sw.userData.setActive)sw.userData.setActive(.08);S.assets.lamp.visible=true;}}],
     /* 7 雨など降るもをかし。 */
-    [{zone:"miya",light:"natsuAmeYoru",fov:44,cam:{pos:[-6,1.2,15.5],look:[-13,-.2,24]},to:{pos:[-6.4,1.15,15.9],look:[-13,-.25,24]},dur:8,shadow:{center:[-12,0,22],half:16},
-      enter(){seasonMiya("summer");setNight(.9);setMisu(0);act(S.assets.rain,true);setIntensity(S.assets.rain,1);const p=S.assets.pond;if(p&&p.userData.setRipple)p.userData.setRipple(.9);}},
-     {zone:"miya",light:"natsuAmeYoru",fade:"black",fov:40,frameUp:.1,camFn:seiShot([1.6,.35,3.4,0,1.0,-.2],[1.45,.35,3.15,0,1.0,-.2]),dur:8,shadow:{center:[-1.6,1.2,-2],half:6},lamp:{on:true,intensity:1.0,distance:6,decay:2},
-      enter(){act(S.assets.rain,true);setIntensity(S.assets.rain,1);showSei("summer",Math.PI*.1);setMisu(0);S.assets.lamp.visible=true;}}],
+    // 池の南の汀から、雨の輪紋の立つ池越しに、灯のともる殿舎 → 南の簀子の東の端から西へ見通す。右に灯の透ける御簾の柱間、左に軒から落ちる雫
+    [{zone:"miya",light:"natsuAmeYoru",fov:46,frameUp:0,cam:{pos:[-12,1.3,33],look:[-6,2.2,0]},to:{pos:[-11.6,1.3,32.2],look:[-6,2.2,0]},dur:8,shadow:{center:[-10,0,16],half:22},lamp:{on:true,intensity:1.0,distance:6,decay:2},
+      enter(){seasonMiya("summer");setNight(.9);setMisu(0);setShitomi(1);act(S.assets.rain,true);setIntensity(S.assets.rain,1);const p=S.assets.pond;if(p&&p.userData.setRipple)p.userData.setRipple(.9);showSei("summer",faceAz(165));S.assets.lamp.visible=true;}},
+     {zone:"miya",light:"natsuAmeYoru",fade:"black",fov:48,frameUp:0,cam:{pos:[-.9,2.15,-.5],look:[-12,2.2,.5]},to:{pos:[-1.3,2.12,-.5],look:[-12,2.15,.5]},dur:8,shadow:{center:[-5,1.2,-1],half:8},lamp:{on:true,intensity:1.0,distance:6,decay:2},
+      enter(){act(S.assets.rain,true);setIntensity(S.assets.rain,1);showSei("summer",faceAz(165));setMisu(0);S.assets.lamp.visible=true;}}],
     /* 8 秋は夕暮れ。夕日のさして山の端いと近うなりたるに、 */
-    [{zone:"miya",light:"akiYuhi",fov:46,cam:{pos:[6,1.5,20],look:[-60,9,-4]},to:{pos:[5,1.5,19],look:[-60,7,-4]},dur:10,shadow:{center:[-4,0,8],half:28},
-      enter(){seasonMiya("autumn");setNight(0);setMisu(.6);setShitomi(1);showSei("autumn",-Math.PI*.35);const p=S.assets.pond;if(p&&p.userData.setRipple)p.userData.setRipple(.1);}},
-     {zone:"miya",light:"akiYuhi",fade:"black",fov:30,frameUp:.15,camFn:seiShot([.6,.88,1.15,0,.78,0],[.52,.86,1.02,0,.78,0]),dur:7,shadow:{center:[-1.6,1.2,-2],half:4}}],
+    // 南庭の南東から西(方位 272〜276°)。西山の稜線に近づく夕日、池、汀の松、右に殿舎の南東の角 → 簀子の南西から、夕日を受ける清少納言(紅葉の襲)
+    [{zone:"miya",light:"akiYuhi",fov:52,frameUp:0,camFn:()=>azShot([5,1.5,19],[4.4,1.5,18.4],[276,4],[272,4]),dur:10,shadow:{center:[-6,0,10],half:28},
+      enter(){seasonMiya("autumn");setNight(0);setMisu(.62);setShitomi(1);showSei("autumn",faceAz(225));const p=S.assets.pond;if(p&&p.userData.setRipple)p.userData.setRipple(.1);}},
+     {zone:"miya",light:"akiYuhi",fade:"black",fov:30,frameUp:.25,camFn:seiShot([-.75,1.0,2.07,0,.72,0],[-.66,.98,1.88,0,.72,0]),dur:7,shadow:{center:[-2.85,1.2,-2.6],half:4}}],
     /* 9 烏の寝どころへ行くとて、三つ四つ、二つ三つなど飛びいそぐさへあはれなり。 */
-    [{zone:"miya",light:"akiYuhi",fov:52,cam:{pos:[4,1.4,14],look:[-30,22,-30]},to:{pos:[4,1.4,14],look:[-36,20,-34]},dur:11,shadow:{center:[0,0,4],half:24},
-      enter(){seasonMiya("autumn");act(S.assets.crows,true);if(S.assets.crows.userData.reset)S.assets.crows.userData.reset();playOnce(SND.karasu,.5,.8);}},
-     {zone:"miya",light:"akiYuhi",fade:"black",fov:20,cam:{pos:[4,1.4,14],look:[-10,24,-30]},to:{pos:[4,1.4,14],look:[-24,23,-36]},dur:7,shadow:{center:[0,0,4],half:24},
+    // 池の東の汀から西の夕空。池に映る夕焼け、中島と汀の松の影。右上(北東)から烏の群れが入り、夕日の方の山へ急ぐ → 望遠で群れを追う
+    [{zone:"miya",light:"akiYuhi",fov:54,frameUp:0,fov:46,camFn:()=>azShot([2,1.6,19],[1.6,1.6,19.2],[270,12],[263,10]),dur:11,shadow:{center:[-8,0,16],half:24},
+      enter(){seasonMiya("autumn");setMisu(.62);setShitomi(1);act(S.assets.crows,true);if(S.assets.crows.userData.reset)S.assets.crows.userData.reset();playOnce(SND.karasu,.5,.8);}},
+     {zone:"miya",light:"akiYuhi",fade:"black",fov:10,frameUp:0,camFn:()=>azShot([1.6,1.6,19.2],[1.6,1.6,19.2],[262,14],[254,12]),track:crowCenter,trackK:.85,dur:7,shadow:{center:[-8,0,16],half:24},
       enter(){act(S.assets.crows,true);}}],
     /* 10 まいて雁などの連ねたるが、いと小さく見ゆるは、いとをかし。 */
-    [{zone:"miya",light:{preset:"akiYuhi",over:{sun:{intensity:.8}}},lightTo:{preset:"akiHiiri",dur:14,delay:1},fov:54,cam:{pos:[2,1.4,12],look:[-10,60,-90]},to:{pos:[2,1.4,12],look:[-26,58,-90]},dur:9,shadow:{center:[0,0,4],half:24},
-      enter(){seasonMiya("autumn");act(S.assets.geese,true);if(S.assets.geese.userData.reset)S.assets.geese.userData.reset();playOnce(SND.kari,.42,.6);}},
-     {zone:"miya",light:"akiHiiri",fade:"black",fov:16,cam:{pos:[2,1.4,12],look:[-24,86,-118]},to:{pos:[2,1.4,12],look:[-44,86,-118]},dur:7,shadow:{center:[0,0,4],half:24},
+    // 南の簀子の西端から、軒の出と高欄に縁取られた西南西の高い空。北から南へ渡る雁の列がごく小さく → 望遠で列を追う
+    [{zone:"miya",light:{preset:"akiYuhi",over:{sun:{intensity:.8}}},lightTo:{preset:"akiHiiri",dur:14,delay:1},fov:54,frameUp:0,camFn:()=>azShot([-12,2.4,-.6],[-12.3,2.4,-.5],[264,15],[258,14]),dur:9,shadow:{center:[-12,0,0],half:24},
+      enter(){seasonMiya("autumn");setNight(0);setMisu(.62);setShitomi(1);act(S.assets.geese,true);if(S.assets.geese.userData.reset)S.assets.geese.userData.reset();playOnce(SND.kari,.42,.6);}},
+     {zone:"miya",light:"akiHiiri",fade:"black",fov:12,frameUp:0,camFn:()=>azShot([-12.3,2.4,-.5],[-12.3,2.4,-.5],[254,16],[234,11]),track:geeseCenter,trackK:1,dur:7,shadow:{center:[-12,0,0],half:24},
       enter(){act(S.assets.geese,true);}}],
     /* 11 日入り果てて、風の音、虫の音など、はた言ふべきにあらず。 */
-    [{zone:"miya",light:"akiHiiri",fov:44,cam:{pos:[9.5,.9,9.8],look:[2,1.6,-1.5]},to:{pos:[8.8,.9,9.0],look:[2,1.6,-1.5]},dur:9,shadow:{center:[2,0,2],half:14},lamp:{on:true,intensity:.8,distance:6,decay:2},
-      enter(){seasonMiya("autumn");setNight(.6);setMisu(.3);S.assets.lamp.visible=true;const g=S.assets.grass;if(g&&g.userData.setWind)g.userData.setWind(1);}},
+    // 遣水のほとりの前栽(薄・萩)の間から、日の入り果てた青い時刻の殿舎。灯がともり、草が風に揺れる → 接写: 鳴く鈴虫
+    [{zone:"miya",light:"akiHiiri",fov:42,frameUp:.1,cam:{pos:[6.6,1.1,4.4],look:[-3,2.1,-2.6]},to:{pos:[6.2,1.1,3.9],look:[-3,2.1,-2.6]},dur:9,shadow:{center:[2,0,2],half:14},lamp:{on:true,intensity:.8,distance:6,decay:2},
+      enter(){seasonMiya("autumn");setNight(.6);setMisu(.3);setShitomi(1);S.assets.lamp.visible=true;const g=S.assets.grass;if(g&&g.userData.setWind)g.userData.setWind(1);}},
      {zone:"suzu",macro:true,light:"akiHiiri",fade:"black",fov:30,useHint:true,drift:[.002,.001,-.003],dur:10,shadow:{center:[0,0,0],half:3},
       enter(){const s=S.assets.suzumushi;if(s&&s.userData.setSinging)s.userData.setSinging(1);}}],
     /* 12 冬はつとめて。雪の降りたるは言ふべきにもあらず、 */
-    [{zone:"miya",light:"fuyuYukiAsa",fov:46,cam:{pos:[8.5,2.0,18],look:[-4,2.2,-2]},to:{pos:[7.6,1.9,16.6],look:[-4,2.2,-2]},dur:10,shadow:{center:[-2,0,4],half:22},
-      enter(){S.snowCover=1;seasonMiya("winter");setNight(.15);setMisu(.4);setShitomi(1);act(S.assets.snowfall,true);setIntensity(S.assets.snowfall,1);showSei("winter",Math.PI*.2);}},
-     {zone:"miya",light:"fuyuYukiAsa",fade:"black",fov:30,frameUp:.15,camFn:seiShot([1.2,.85,.9,0,.8,0],[1.08,.84,.8,0,.8,0]),dur:7,shadow:{center:[-1.6,1.2,-2],half:4},
+    // 池の南の汀から、凍りかけた池と雪の松越しに、雪の積もった殿舎 → 廂の内、清少納言の背から御簾の下を通して雪の南庭
+    [{zone:"miya",light:"fuyuYukiAsa",fov:42,frameUp:0,cam:{pos:[-8,1.5,34],look:[-5,3.5,-3]},to:{pos:[-7.6,1.5,32.8],look:[-5,3.4,-3]},dur:10,shadow:{center:[-6,0,14],half:24},
+      enter(){S.snowCover=1;seasonMiya("winter");setNight(.15);setMisu(.7);setShitomi(1);act(S.assets.snowfall,true);setIntensity(S.assets.snowfall,1);showSei("winter",faceAz(168));}},
+     {zone:"miya",light:"fuyuYukiAsa",fade:"black",fov:40,frameUp:.3,camFn:seiShot([-.25,1.05,-.85,.35,.45,2.6],[-.22,1.02,-.76,.35,.42,2.6]),dur:7,shadow:{center:[-2.85,1.2,-1.5],half:6},
       enter(){act(S.assets.snowfall,true);}}],
     /* 13 霜のいと白きも、またさらでもいと寒きに、 */
     [{zone:"shimo",macro:true,light:"fuyuShimoAsa",fov:30,useHint:true,drift:[.003,.001,-.004],dur:10,shadow:{center:[0,0,0],half:3}},
-     {zone:"miya",light:"fuyuShimoAsa",fade:"white",fov:48,cam:{pos:[12,1.1,12],look:[-2,1.2,-2]},to:{pos:[11,1.05,11],look:[-2,1.2,-2]},dur:8,shadow:{center:[2,0,2],half:20},
-      enter(){S.snowCover=.35;seasonMiya("winter");setNight(0);setMisu(.4);}}],
+     // 朝日(方位115°)を受けて霜の白い南庭。萩の株越しに殿舎
+     {zone:"miya",light:"fuyuShimoAsa",fade:"white",fov:48,frameUp:0,cam:{pos:[0,1.2,18.5],look:[-6,2.6,-3]},to:{pos:[-.2,1.25,17.6],look:[-6,2.6,-3]},dur:8,shadow:{center:[-3,0,8],half:20},
+      enter(){S.snowCover=.35;seasonMiya("winter");setNight(0);setMisu(.55);setShitomi(1);}}],
     /* 14 火など急ぎおこして、炭持て渡るも、いとつきづきし。 */
-    [{zone:"miya",light:{preset:"fuyuShimoAsa",over:{exposure:1.0}},fov:42,cam:{pos:[9.5,2.0,-3.2],look:[6,1.8,-8.4]},to:{pos:[9.0,2.0,-3.6],look:[3.5,1.8,-8.4]},dur:10,shadow:{center:[8,0,-8],half:12},
-      enter(){S.snowCover=1;seasonMiya("winter");setNight(0);setMisu(.4);const f=S.assets.nyoboCarry;if(f){f.visible=true;f.userData.walking=true;f.userData.walkSpeed=.55;S._walk={t:0};S.labelFig.nyobo=f;f.userData.hideLabel=false;}playOnce(SND.kinuzure,.35,.4);},
+    // 殿舎の東の簀子から渡殿を東へ見通す(柱と高欄と化粧屋根裏の一点透視)。奥から炭取を捧げた女房が急ぎ来る
+    // → 簀子から御簾の裾の下をくぐって、火桶に炭を熾す女房の手元
+    [{zone:"miya",light:{preset:"fuyuShimoAsa",over:{exposure:1.0}},fov:44,frameUp:0,cam:{pos:[-.7,2.35,-8.4],look:[14,1.9,-8.4]},to:{pos:[-.7,2.3,-8.4],look:[14,1.85,-8.4]},dur:10,shadow:{center:[8,0,-8],half:12},
+      enter(){S.snowCover=1;seasonMiya("winter");setNight(0);setMisu(.4);setShitomi(1);const f=S.assets.nyoboCarry;if(f){f.visible=true;f.userData.walking=true;f.userData.walkSpeed=.55;S._walk={t:0};S.labelFig.nyobo=f;f.userData.hideLabel=false;}playOnce(SND.kinuzure,.35,.4);},
       tick(ctx,u,t){const f=S.assets.nyoboCarry,W=MIYA.watadono;if(!f)return;const k=Math.min(1,t/10);
         const wa=S.assets.watadono,path=wa&&wa.userData&&wa.userData.anchors&&wa.userData.anchors.walkPath;
         const fy=(path&&path.isObject3D)?null:1.0;
-        const x=lerp(W.to[0]-1.2,W.from[0]+1.0,k),zz=lerp(W.to[1],W.from[1],k);
+        const x=lerp(W.to[0]-1.2,W.from[0]+3.6,k),zz=lerp(W.to[1],W.from[1],k);
         f.position.set(x,fy!=null?(wa&&wa.userData&&wa.userData.floorY!=null?wa.userData.floorY:1.0):1.0,zz);f.rotation.y=-Math.PI/2;f.userData.walking=k<1;}},
-     {zone:"miya",light:{preset:"fuyuShimoAsa",over:{exposure:1.0}},fade:"black",fov:34,frameUp:.1,camFn(){const a=anchorPos("seatHashi",[-1.6,1.26,-2.1]).pos;const x=a.x-1.6;
-        return {cam:{pos:[x+1.25,a.y+.95,a.z+1.15],look:[x+.55,a.y+.2,a.z]},to:{pos:[x+1.12,a.y+.9,a.z+1.0],look:[x+.55,a.y+.2,a.z]}};},dur:8,shadow:{center:[-3.2,1.2,-2],half:4},
+     {zone:"miya",light:{preset:"fuyuShimoAsa",over:{exposure:1.0}},fade:"black",fov:36,frameUp:.1,camFn(){const h=hiokePos();
+        return {cam:{pos:[h.x+.55,h.y+.65,h.z+2.1],look:[h.x-.2,h.y+.25,h.z]},to:{pos:[h.x+.5,h.y+.6,h.z+1.85],look:[h.x-.2,h.y+.25,h.z]}};},dur:8,shadow:{center:[-3.8,1.2,-2.2],half:4},
       enter(){placeHiokeScene();const h=S.assets.hioke;if(h&&h.userData.setBurn)h.userData.setBurn(.05);S.labelFig={};playOnce(SND.sumi,.4,.3);},
       tick(ctx,u,t){const h=S.assets.hioke;if(h&&h.userData.setBurn)h.userData.setBurn(.05+.08*u);}}],
     /* 15 昼になりて、ぬるくゆるびもていけば、火桶の火も白き灰がちになりてわろし。 */
-    [{zone:"miya",light:"fuyuShimoAsa",lightTo:{preset:"fuyuHiru",dur:12,delay:.5},fov:24,frameUp:0,camFn(){const a=anchorPos("seatHashi",[-1.6,1.26,-2.1]).pos;const x=a.x-1.6+.55;
-        return {cam:{pos:[x+.42,a.y+.62,a.z+.36],look:[x,a.y+.2,a.z]},to:{pos:[x+.36,a.y+.55,a.z+.30],look:[x,a.y+.2,a.z]}};},dur:13,shadow:{center:[-2.6,1.2,-2],half:3},
-      enter(){S.snowCover=.6;seasonMiya("winter");setNight(0);placeHiokeScene();const t=S.assets.nyoboTend;if(t)t.visible=false;const h=S.assets.hioke;if(h&&h.userData.setBurn)h.userData.setBurn(.2);},
+    [{zone:"miya",light:"fuyuShimoAsa",lightTo:{preset:"fuyuHiru",dur:12,delay:.5},fov:24,frameUp:0,camFn(){const h=hiokePos();
+        return {cam:{pos:[h.x+.45,h.y+.62,h.z+.38],look:[h.x,h.y+.2,h.z]},to:{pos:[h.x+.39,h.y+.55,h.z+.32],look:[h.x,h.y+.2,h.z]}};},dur:13,shadow:{center:[-3.8,1.2,-2.4],half:3},
+      enter(){S.snowCover=.6;seasonMiya("winter");setNight(0);setMisu(.4);setShitomi(1);placeHiokeScene();const t=S.assets.nyoboTend;if(t)t.visible=false;const h=S.assets.hioke;if(h&&h.userData.setBurn)h.userData.setBurn(.2);},
       tick(ctx,u,t){const h=S.assets.hioke;if(h&&h.userData.setBurn)h.userData.setBurn(lerp(.2,1,clamp01(t/11)));}}]
   ];
 
@@ -703,7 +737,7 @@ const SAIGEN_MAKURA=(()=>{
     if(sh.enter)try{sh.enter({S});}catch(e){console.error("[makura] shot enter:",e);}
     if(sh.camFn){try{const cf=sh.camFn();sh.cam=cf.cam;sh.to=cf.to;}catch(e){console.error("[makura] camFn:",e);}}
     if(!sh.cam&&!sh.useHint)sh.cam={pos:[6,1.6,10],look:[0,1.4,0]};
-    const c=shotCam(sh);S.camPath=c;
+    const c=shotCam(sh);S.camPath=c;trackLook(sh,c.from.look);
     S.fovFrom=sh.fov||c.fov||50;S.fovTo=sh.fovTo||S.fovFrom;
     if(sh.light){const L=typeof sh.light==="string"?presetState(sh.light):presetState(sh.light.preset,sh.light.over);
       if(sh.sunRel){const f=c.from.look.clone().sub(c.from.pos).normalize(),up=new THREE.Vector3(0,1,0),r=new THREE.Vector3().crossVectors(f,up).normalize(),u=new THREE.Vector3().crossVectors(r,f).normalize();
@@ -724,6 +758,7 @@ const SAIGEN_MAKURA=(()=>{
     const c=S.camPath;
     if(c){
       const pos=S.tmpV.copy(c.from.pos).lerp(c.to.pos,u),look=S.tmpV2.copy(c.from.look).lerp(c.to.look,u);
+      trackLook(sh,look);
       setCamera(pos,look,frameUpOf(sh),lerp(S.fovFrom,S.fovTo,u));
     }
     if(typeof camera!=="undefined"&&camera&&S.fovTo!==S.fovFrom){camera.fov=lerp(S.fovFrom,S.fovTo,u);camera.updateProjectionMatrix();}
