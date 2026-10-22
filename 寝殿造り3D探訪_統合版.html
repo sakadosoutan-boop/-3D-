@@ -30536,7 +30536,8 @@ return{makeAn,makeFuzukue,makeToudai,makeEnza,makeKyousoku,makeShibagaki,makeAka
    streaks(たなびく雲の量 0..1), streakAz(帯の中心の方位°), streakSpan(方位の広がり°), streakEl(帯の中心の仰角°), streakElRange(帯の仰角の幅°),
    streakThick(帯の厚み°), streakLit(下面の色・線形RGB), streakShade(本体・上面の色), streakSeed, streakSpeed(°/秒), streakCount(本数 1..6)
    arch(薄明の弧: 地平近くの空をこの色で覆う割合), archColor, archHeight(°), archWidth(方位の絞り) / purple(紫の光), purpleColor /
-   moonHalo(月の暈) / overcast(全天の雲 0..1) / sunDisc(日の円盤の明るさの倍率、既定 1。夕日を白く飛ばさない)
+   moonHalo(月の暈) / overcast(全天の雲 0..1) / sunDisc(日の円盤の明るさの倍率、既定 1。夕日を白く飛ばさない) /
+   moonCloud(月のそばの雲が月光を前へ散らす強さの倍率、既定 1。natsuTsukiyo は 0.22 で薄く柔らかい縁の光)
    blendPresets は量が 0 の側から帯の形(方位・高さ・種・色)を補間しない(帯が動きながら現れない)。
    プリセットの hills に glow(日の側の霞の色)・moon(0/1)・moonDir・haze(雨雪で山が霞む 0..1) を足した(既存の makeHills は無視する)。
    夜明けの帯の位置: 方位 80°±23°、仰角 5〜10.5°(東山の稜線 4〜5° のすぐ上)。望遠は方位 74°・仰角 4°前後・fov 11〜15 で帯と稜線が収まる。
@@ -30735,7 +30736,7 @@ uniform sampler2D tNoise;
 uniform float uStreaks;uniform float uStreakAz;uniform float uStreakSpan;uniform float uStreakEl;uniform float uStreakElRange;uniform float uStreakThick;
 uniform vec3 uStreakLit;uniform vec3 uStreakShade;uniform float uStreakSeed;uniform float uStreakSpeed;uniform float uStreakCount;
 uniform float uArch;uniform vec3 uArchCol;uniform float uArchH;uniform float uArchW;uniform float uPurple;uniform vec3 uPurpleCol;
-uniform float uMoonHalo;uniform float uOvercast;
+uniform float uMoonHalo;uniform float uOvercast;uniform float uMoonCloud;
 varying vec3 vWorldPos;
 ${GL_HASH}
 vec3 starLayer(vec3 d,float sc,float dens,float px,float gain){
@@ -30918,7 +30919,7 @@ void main(){
     cc=mix(cc,uCShade,thick*0.3);
     float edge=clamp(1.0-tau*0.5,0.0,1.0);
     cc+=uSunCol*uSunInt*(0.03*nhg(cosS,0.7)+0.006*nhg(cosS,0.92))*(0.25+0.75*edge)*sunVis;
-    cc+=uMoonCol*uMoonVis*mUp*illum*0.04*nhg(dot(d,md),0.85)*(0.3+0.7*edge);
+    cc+=uMoonCol*uMoonVis*mUp*illum*0.04*uMoonCloud*nhg(dot(d,md),0.85)*(0.3+0.7*edge);
     vec3 horizonC=mix(uHorizon,hazeC,clamp(uHaze*1.15,0.0,1.0));
     cc=mix(cc,horizonC,exp(-hp*6.0)*0.72);
     float ca=(1.0-exp(-tau))*uCOpacity*smoothstep(0.0,0.085,h)*step(0.002,D);
@@ -31007,7 +31008,7 @@ const SKY_DEFAULT={zenith:[0.06,0.15,0.42],horizon:[0.36,0.61,0.96],haze:0.4,haz
   moonDir:[-0.4,0.5,-0.6],moonColor:[1.5,1.45,1.35],moonPhase:0.5,moonVisible:0,moonSize:0.022,
   stars:0,milkyWay:0,cloudCover:0.25,cloudColor:[1.1,1.1,1.12],cloudShade:[0.55,0.6,0.7],cloudScale:1.0,cloudSpeed:1.0,cloudOpacity:1.0,
   cirrus:0,scales:0,wind:[1.0,0.3],belt:1.0,beltColor:[0.35,0.18,0.25],
-  streaks:0,arch:0,purple:0,moonHalo:0,overcast:0,sunDisc:1};
+  streaks:0,arch:0,purple:0,moonHalo:0,overcast:0,sunDisc:1,moonCloud:1};
 
 function makeSky(opts){opts=opts||{};const q=qlv(opts),res=Res(),radius=opts.radius||700;
   const U={uZenith:{value:new T.Color()},uHorizon:{value:new T.Color()},uGround:{value:new T.Color()},uHazeCol:{value:new T.Color()},uHaze:{value:0.4},
@@ -31019,7 +31020,7 @@ function makeSky(opts){opts=opts||{};const q=qlv(opts),res=Res(),radius=opts.rad
     uStreaks:{value:0},uStreakAz:{value:Math.PI/2},uStreakSpan:{value:60},uStreakEl:{value:6},uStreakElRange:{value:6},uStreakThick:{value:0.5},
     uStreakLit:{value:new T.Color(0.9,0.5,0.6)},uStreakShade:{value:new T.Color(0.2,0.2,0.3)},uStreakSeed:{value:1},uStreakSpeed:{value:0.02},uStreakCount:{value:4},
     uArch:{value:0},uArchCol:{value:new T.Color(1,1,1)},uArchH:{value:0.07},uArchW:{value:2},uPurple:{value:0},uPurpleCol:{value:new T.Color(0.5,0.3,0.5)},
-    uMoonHalo:{value:0},uOvercast:{value:0},uSunDisc:{value:1}};
+    uMoonHalo:{value:0},uOvercast:{value:0},uSunDisc:{value:1},uMoonCloud:{value:1}};
   const mat=res.own(new T.ShaderMaterial({uniforms:U,vertexShader:SKY_VS,fragmentShader:"#define SKYQ "+q+"\n"+SKY_FS,side:T.BackSide,depthWrite:false,depthTest:true,fog:false}));
   mat.extensions={derivatives:true};
   const geo=res.own(new T.SphereGeometry(radius,48,24));
@@ -31043,7 +31044,7 @@ function makeSky(opts){opts=opts||{};const q=qlv(opts),res=Res(),radius=opts.rad
     num("streakSpan","uStreakSpan");num("streakEl","uStreakEl");num("streakElRange","uStreakElRange");num("streakThick","uStreakThick");
     col("streakLit","uStreakLit");col("streakShade","uStreakShade");num("streakSeed","uStreakSeed");num("streakSpeed","uStreakSpeed");num("streakCount","uStreakCount");
     num("arch","uArch");col("archColor","uArchCol");if(typeof s.archHeight==="number"){U.uArchH.value=Math.max(0.05,s.archHeight)*Math.PI/180;state.archHeight=s.archHeight;}num("archWidth","uArchW");
-    num("purple","uPurple");col("purpleColor","uPurpleCol");num("moonHalo","uMoonHalo");num("overcast","uOvercast");num("sunDisc","uSunDisc");}
+    num("purple","uPurple");col("purpleColor","uPurpleCol");num("moonHalo","uMoonHalo");num("overcast","uOvercast");num("sunDisc","uSunDisc");num("moonCloud","uMoonCloud");}
   setState(SKY_DEFAULT);if(opts.state)setState(opts.state);
   function center(cam){if(!cam)return;_v.setFromMatrixPosition(cam.matrixWorld);if(mesh.parent&&mesh.parent.type!=="Scene"){mesh.parent.updateMatrixWorld();mesh.parent.worldToLocal(_v);}
     mesh.position.copy(_v);mesh.updateMatrixWorld(true);}
@@ -31137,11 +31138,11 @@ const PRESET_SRC={
     streaks:0.85,streakAz:80,streakSpan:46,streakEl:7.8,streakElRange:5.5,streakThick:0.75,streakLit:"#f4c8a0",streakShade:"#8c8aa8",streakSeed:3,streakSpeed:0.025,streakCount:5,
     rim:{color:0xffd2b0,intensity:0.3},sunLight:{color:0xffcf9a,intensity:0.85},hemi:{sky:0xc4c4dc,ground:0x6a6050,intensity:0.5},ambient:{color:0xb8b8d0,intensity:0.15},
     fogDensity:0.006,hills:{near:"#3c4054",far:"#7c7e98",light:"#ffd0a0",glow:"#b4a8b0"},mist:{color:"#e4d4d0",glow:"#ffd8b0"}},
-  natsuTsukiyo:{E:1.0,zenith:"#0b1838",horizon:"#26385a",hazeColor:"#304266",haze:0.55,ground:"#0b0f17",
+  natsuTsukiyo:{moonCloud:0.22,E:1.0,zenith:"#0b1838",horizon:"#26385a",hazeColor:"#304266",haze:0.55,ground:"#0b0f17",
     sun:[330,-35],sunColor:"#ffffff",sunIntensity:0.0,glow:0.0,moon:[150,30],moonPhase:0.5,moonVisible:1,moonColor:"#fff6e0",moonBoost:2.0,moonHalo:0.6,
-    stars:0.32,milkyWay:0.0,cloudCover:0.06,cirrus:0.18,scales:0.0,cloudColor:"#5a6a8c",cloudShade:"#18213a",wind:[0.5,0.2],beltColor:"#000000",belt:0.0,
+    stars:0.32,milkyWay:0.0,cloudCover:0.0,cirrus:0.12,scales:0.12,cloudColor:"#56627e",cloudShade:"#1a2236",wind:[0.5,0.2],beltColor:"#000000",belt:0.0,
     rim:{color:0x8fb0ff,intensity:0.45},sunLight:{color:0xa8bce8,intensity:0.45,dirFrom:"moon"},hemi:{sky:0x32446c,ground:0x0e1016,intensity:0.24},ambient:{color:0x6c7cae,intensity:0.07},
-    fogDensity:0.006,hills:{near:"#111a2c",far:"#2a3858",light:"#8ea2cc"},mist:{color:"#4a5a7a",glow:"#a8b8d8"}},
+    fogDensity:0.006,hills:{near:"#0f1626",far:"#243250",light:"#6a7ca4"},mist:{color:"#4a5a7a",glow:"#a8b8d8"}},
   natsuYami:{E:1.0,zenith:"#060b1a",horizon:"#141c30",hazeColor:"#1a2236",haze:0.5,ground:"#05070c",
     sun:[200,-40],sunColor:"#ffffff",sunIntensity:0.0,glow:0.0,
     stars:0.35,milkyWay:0.12,cloudCover:0.0,cirrus:0.0,scales:0.0,cloudColor:"#1a2236",cloudShade:"#080c16",wind:[0.3,0.1],beltColor:"#000000",belt:0.0,
@@ -31203,7 +31204,7 @@ function buildPreset(name,s){const E=s.E;const L=h=>linearOf(h,E);
   p.streakThick=s.streakThick||0.5;p.streakLit=s.streakLit?LC(s.streakLit):[0.9,0.5,0.6];p.streakShade=s.streakShade?LC(s.streakShade):[0.2,0.2,0.3];
   p.streakSeed=s.streakSeed||1;p.streakSpeed=s.streakSpeed!==undefined?s.streakSpeed:0.02;p.streakCount=s.streakCount||4;
   p.arch=s.arch||0;p.archColor=s.archColor?LC(s.archColor):[1,1,1];p.archHeight=s.archHeight||4;p.archWidth=s.archWidth||2;
-  p.purple=s.purple||0;p.purpleColor=s.purpleColor?LC(s.purpleColor):[0.5,0.3,0.5];p.moonHalo=s.moonHalo||0;p.overcast=s.overcast||0;p.sunDisc=s.sunDisc!==undefined?s.sunDisc:1;
+  p.purple=s.purple||0;p.purpleColor=s.purpleColor?LC(s.purpleColor):[0.5,0.3,0.5];p.moonHalo=s.moonHalo||0;p.overcast=s.overcast||0;p.sunDisc=s.sunDisc!==undefined?s.sunDisc:1;p.moonCloud=s.moonCloud!==undefined?s.moonCloud:1;
   p.hills.glow=s.hills.glow?parseInt(s.hills.glow.slice(1),16):p.hills.far;
   p.hills.moon=s.moonVisible?1:0;p.hills.moonDir=moonDir.slice();p.hills.haze=s.hills.haze||0;   // haze: 降る雪・雨で山が霞む量   // 京の山並み: 日が沈んでいる時は月の向きで淡く照らす
   return p;}
@@ -32006,7 +32007,7 @@ function makeHills(opts){opts=opts||{};const q=qlv(opts),res=Res();const center=
 
 /* ---- 京の山並み(東山・西山・北山): makeHills の帯に、季節の色・頂の雪・日の側の明るい霞を足した版 ---- */
 const KYOTO_HILL_FS=HILL_FS
-  .replace("uniform float uGround;","uniform float uGround;uniform float uRelief;uniform vec3 uSeasonTint;uniform float uSnow;uniform vec3 uSnowCol;uniform float uSnowLine;uniform vec3 uGlowCol;uniform float uGlowAmt;")
+  .replace("uniform float uGround;","uniform float uGround;uniform float uRelief;uniform float uMoonRim;uniform vec3 uSeasonTint;uniform float uSnow;uniform vec3 uSnowCol;uniform float uSnowLine;uniform vec3 uGlowCol;uniform float uGlowAmt;")
   .replace("col=mix(col,uAutumn*(0.75+0.5*tc),am*0.8);",`col=mix(col,uAutumn*(0.75+0.5*tc),am*0.8);
   col*=uSeasonTint;
   /* 頂の雪: 尾根の上ほど白く、谷筋と樹冠の黒みが残る */
@@ -32018,7 +32019,7 @@ const KYOTO_HILL_FS=HILL_FS
   col=mix(col,farC,uAerial);`)
   .replace("col=mix(col,uFar,mist);","col=mix(col,farC,mist);")
   /* 稜線の樹冠が光るのは、日がちょうど稜線の上にかかる所だけ(方位と仰角の両方が合う所) */
-  .replace("col+=uLight*pow(back,3.0)*edge*sunUp*uRim;","vec3 tcv=normalize(vec3(vW.x,top,vW.z)-cameraPosition);float sAng=acos(clamp(dot(tcv,normalize(uSunDir)),-1.0,1.0));\n  col+=uLight*edge*sunUp*uRim*(1.6*exp(-pow(sAng/0.035,2.0))+0.3*exp(-sAng/0.09));")
+  .replace("col+=uLight*pow(back,3.0)*edge*sunUp*uRim;","vec3 tcv=normalize(vec3(vW.x,top,vW.z)-cameraPosition);float sAng=acos(clamp(dot(tcv,normalize(uSunDir)),-1.0,1.0));\n  col+=uLight*edge*sunUp*uRim*(1.6*exp(-pow(sAng/0.035,2.0))+0.3*exp(-sAng/0.09));\n  col+=uLight*edge*uMoonRim;")
   .replace("+relief*0.28*(0.4+0.6*uDetail);","+relief*0.28*(0.4+0.6*uDetail)*uRelief;")
   /* 色は表示色で作るが、出力は線形に戻して出力の符号化を通す: 画面へ直接描く時は従来と同じ見え方、
      夜のブルーム(EffectComposer の線形の描画先)を通る時に二重に明るくならない */
@@ -32053,7 +32054,7 @@ function makeKyotoRidges(opts){opts=opts||{};const q=qlv(opts);const sides=opts.
     list.push(R(326,394,610,wrap([[334,3.0,7],[347,3.3,6],[359,2.9,7],[11,3.2,6],[23,2.9,7],[32,2.7,7]]),2.1,33,0.28,{side:"north",mist:0.66}));}
   const extras=[];
   const grp=makeHills({center:opts.center||[0,0],quality:opts.quality,ridges:list,near:opts.near,far:opts.far,light:opts.light,_fs:KYOTO_HILL_FS,
-    _uniforms:(r)=>{const u={uRelief:{value:0.45},uSeasonTint:{value:new T.Vector3(1,1,1)},uSnow:{value:0},uSnowCol:{value:new T.Color(0.9,0.92,0.95)},uSnowLine:{value:0.62},
+    _uniforms:(r)=>{const u={uMoonRim:{value:0},uRelief:{value:0.45},uSeasonTint:{value:new T.Vector3(1,1,1)},uSnow:{value:0},uSnowCol:{value:new T.Color(0.9,0.92,0.95)},uSnowLine:{value:0.62},
       uGlowCol:{value:new T.Color()},uGlowAmt:{value:0}};extras.push({r,u});return u;}});
   grp.name="TSURE_kyoto_ridges";
   grp.userData.ridges.forEach(U=>{U.uDetail.value*=0.12;U.uRim.value=0.45;}); // 遠い山は斑を弱く(稜線の樹冠の起伏は残す)
@@ -32066,7 +32067,8 @@ function makeKyotoRidges(opts){opts=opts||{};const q=qlv(opts);const sides=opts.
     ridgeU.forEach((U,i)=>{const r=extras[i]?extras[i].r:null;U.uAutumnAmt.value=S.autumn*(r&&r.side==="north"?0.7:1);U.uAutumn.value.setHex(S.autumnColor);U.uMist.value=S.mist;});}
   const moonD=new T.Vector3(0,1,0),sunD=new T.Vector3(0.3,0.5,0.4).normalize();let moonAmt=0,hazeAmt=0;
   function applyLight(){const useMoon=moonAmt>0.01&&sunD.y<0.0&&moonD.y>0.02; // 夜: 光の向きを月へ、稜線の縁の光は弱く
-    ridgeU.forEach(U=>{if(useMoon)U.uSunDir.value.copy(moonD);U.uRim.value=useMoon?0.12*moonAmt:0.35;U.uAerial.value=U.uAerial.value+(1-U.uAerial.value)*hazeAmt;});}
+    ridgeU.forEach(U=>{if(useMoon)U.uSunDir.value.copy(moonD);U.uRim.value=useMoon?0.12*moonAmt:0.35;U.uAerial.value=U.uAerial.value+(1-U.uAerial.value)*hazeAmt;});
+    extras.forEach(({u})=>{u.uMoonRim.value=useMoon?0.10*moonAmt:0;});}
   function setTint(t){if(!t)return;base(t);if(t.far!==undefined)setC(tint.far,t.far);if(t.light!==undefined)setC(tint.light,t.light);
     if(t.glow!==undefined&&t.glow!==null){tint.glow=tint.glow||new T.Color();setC(tint.glow,t.glow);}
     if(t.sunDir){setV(sunD,t.sunDir);sunD.normalize();}if(t.moonDir){setV(moonD,t.moonDir);moonD.normalize();}if(typeof t.moon==="number")moonAmt=t.moon;hazeAmt=clamp(+t.haze||0,0,1);
@@ -38055,7 +38057,7 @@ const SAIGEN_MAKURA=(()=>{
     // 殿舎の東の簀子から渡殿を東へ見通す(柱と高欄と化粧屋根裏の一点透視)。奥から炭取を捧げた女房が急ぎ来る
     // → 簀子から御簾の裾の下をくぐって、火桶に炭を熾す女房の手元
     [{zone:"miya",light:{preset:"fuyuShimoAsa",over:{exposure:1.0}},fov:44,frameUp:0,cam:{pos:[-.7,2.35,-8.4],look:[14,1.9,-8.4]},to:{pos:[-.7,2.3,-8.4],look:[14,1.85,-8.4]},dur:10,shadow:{center:[8,0,-8],half:12},
-      enter(){S.snowCover=1;seasonMiya("winter");setNight(0);setMisu(.4);setShitomi(1);const f=S.assets.nyoboCarry;if(f){f.visible=true;f.userData.walking=true;f.userData.walkSpeed=.55;S._walk={t:0};S.labelFig.nyobo=f;f.userData.hideLabel=false;}playOnce(SND.kinuzure,.35,.4);},
+      enter(){S.snowCover=1;seasonMiya("winter");setNight(0);setMisu(.4);setShitomi(1);playOnce(SND.kinuzure,.35,1.5);const f=S.assets.nyoboCarry;if(f){f.visible=true;f.userData.walking=true;f.userData.walkSpeed=.55;S._walk={t:0};S.labelFig.nyobo=f;f.userData.hideLabel=false;}playOnce(SND.kinuzure,.35,.4);},
       tick(ctx,u,t){const f=S.assets.nyoboCarry,W=MIYA.watadono;if(!f)return;const k=Math.min(1,t/10);
         const wa=S.assets.watadono,path=wa&&wa.userData&&wa.userData.anchors&&wa.userData.anchors.walkPath;
         const fy=(path&&path.isObject3D)?null:1.0;
@@ -38076,8 +38078,8 @@ const SAIGEN_MAKURA=(()=>{
      音(実録音のループと一回鳴らし)
   ============================================================ */
   // 環境音(仮): 枕草子用の実録音(CC0/CC BY)が揃うまで、収録済みの環境音で代える。差し替える時は sounds/CREDITS.md も更新する
-  const SND={yoake:"night_wind2.mp3",uguisu:"ani_ge_uguisu01.mp3",natsuYoru:"frogs2.mp3",water:"spring_water_on_Mt2.mp3",ame:null,
-    kaze:"night_wind2.mp3",karasu:null,kari:"kari.mp3",mushi:"suzumushi.mp3",mushi2:"matumsuhi.mp3",fuyu:"night_wind2.mp3",kinuzure:null,sumi:"takibi.mp3",kane:"kane_bonsho.mp3"};
+  const SND={yoake:"makura_yoake.mp3",uguisu:"makura_uguisu.mp3",natsuYoru:"makura_natsuyoru.mp3",water:"makura_water.mp3",ame:"makura_ame.mp3",
+    kaze:"makura_kaze.mp3",karasu:"makura_karasu.mp3",kari:"makura_kari.mp3",mushi:"makura_mushi.mp3",mushi2:"makura_mushi2.mp3",fuyu:"makura_fuyu.mp3",kinuzure:"makura_kinuzure.mp3",sumi:"makura_sumi.mp3",kane:"kane_bonsho.mp3"};
   const mix=(o)=>{const r={};Object.keys(o).forEach(k=>{const f=SND[k];if(f)r[f]=Math.max(r[f]||0,o[k]);});return r;};
   const BEAT_AUDIO=[
     mix({yoake:.06}),                       // 1 夜明け前の静けさ(暁の鐘は一回鳴らし)

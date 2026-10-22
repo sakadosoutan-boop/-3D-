@@ -607,7 +607,7 @@ const SAIGEN_MAKURA=(()=>{
     // 殿舎の東の簀子から渡殿を東へ見通す(柱と高欄と化粧屋根裏の一点透視)。奥から炭取を捧げた女房が急ぎ来る
     // → 簀子から御簾の裾の下をくぐって、火桶に炭を熾す女房の手元
     [{zone:"miya",light:{preset:"fuyuShimoAsa",over:{exposure:1.0}},fov:44,frameUp:0,cam:{pos:[-.7,2.35,-8.4],look:[14,1.9,-8.4]},to:{pos:[-.7,2.3,-8.4],look:[14,1.85,-8.4]},dur:10,shadow:{center:[8,0,-8],half:12},
-      enter(){S.snowCover=1;seasonMiya("winter");setNight(0);setMisu(.4);setShitomi(1);const f=S.assets.nyoboCarry;if(f){f.visible=true;f.userData.walking=true;f.userData.walkSpeed=.55;S._walk={t:0};S.labelFig.nyobo=f;f.userData.hideLabel=false;}playOnce(SND.kinuzure,.35,.4);},
+      enter(){S.snowCover=1;seasonMiya("winter");setNight(0);setMisu(.4);setShitomi(1);playOnce(SND.kinuzure,.35,1.5);const f=S.assets.nyoboCarry;if(f){f.visible=true;f.userData.walking=true;f.userData.walkSpeed=.55;S._walk={t:0};S.labelFig.nyobo=f;f.userData.hideLabel=false;}playOnce(SND.kinuzure,.35,.4);},
       tick(ctx,u,t){const f=S.assets.nyoboCarry,W=MIYA.watadono;if(!f)return;const k=Math.min(1,t/10);
         const wa=S.assets.watadono,path=wa&&wa.userData&&wa.userData.anchors&&wa.userData.anchors.walkPath;
         const fy=(path&&path.isObject3D)?null:1.0;
@@ -628,8 +628,8 @@ const SAIGEN_MAKURA=(()=>{
      音(実録音のループと一回鳴らし)
   ============================================================ */
   // 環境音(仮): 枕草子用の実録音(CC0/CC BY)が揃うまで、収録済みの環境音で代える。差し替える時は sounds/CREDITS.md も更新する
-  const SND={yoake:"night_wind2.mp3",uguisu:"ani_ge_uguisu01.mp3",natsuYoru:"frogs2.mp3",water:"spring_water_on_Mt2.mp3",ame:null,
-    kaze:"night_wind2.mp3",karasu:null,kari:"kari.mp3",mushi:"suzumushi.mp3",mushi2:"matumsuhi.mp3",fuyu:"night_wind2.mp3",kinuzure:null,sumi:"takibi.mp3",kane:"kane_bonsho.mp3"};
+  const SND={yoake:"makura_yoake.mp3",uguisu:"makura_uguisu.mp3",natsuYoru:"makura_natsuyoru.mp3",water:"makura_water.mp3",ame:"makura_ame.mp3",
+    kaze:"makura_kaze.mp3",karasu:"makura_karasu.mp3",kari:"makura_kari.mp3",mushi:"makura_mushi.mp3",mushi2:"makura_mushi2.mp3",fuyu:"makura_fuyu.mp3",kinuzure:"makura_kinuzure.mp3",sumi:"makura_sumi.mp3",kane:"kane_bonsho.mp3"};
   const mix=(o)=>{const r={};Object.keys(o).forEach(k=>{const f=SND[k];if(f)r[f]=Math.max(r[f]||0,o[k]);});return r;};
   const BEAT_AUDIO=[
     mix({yoake:.06}),                       // 1 夜明け前の静けさ(暁の鐘は一回鳴らし)
