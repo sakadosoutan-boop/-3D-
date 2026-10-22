@@ -41,7 +41,7 @@ CODEX_VIEWER=(()=>{
     labels.forEach(l=>setVisible(l.sp,false));renderer.shadowMap.needsUpdate=true;
     roots.forEach(root=>{
       let p=root;while(p&&p!==scene){setVisible(p,true);p=p.parent;}
-      root.traverse(o=>{if(o.userData.heianDetail||o.userData.expression||o.userData.detail)setVisible(o,true);});
+      root.traverse(o=>{if(o.userData.heianDetail||o.userData.expression||o.userData.detail||o.userData.creatureDetail)setVisible(o,true);});
     });
     // Face groups are distance LODs; an inspection camera should always expose close details.
     for(const rig of HEIAN_EXPRESSIONS)if(isPart(rig.g))for(const node of [rig.detail,rig.face,rig.eyes])setVisible(node,true);
@@ -74,6 +74,7 @@ CODEX_VIEWER=(()=>{
   }
   function close(restoreFocus=true,notifyCancel=true){
     if(!active)return;const abandoned=notifyCancel?question?.cancel:null;active=false;question=null;comparison=null;restoreVisibility();pointers.clear();pinch=0;dialog.hidden=true;document.body.classList.remove("codex-viewing");
+    if(typeof VISUAL_EXPERIENCE!=="undefined"&&VISUAL_EXPERIENCE?.updateFoliageLOD)VISUAL_EXPERIENCE.updateFoliageLOD(camera);
     APP.labelMode=oldLabelMode;APP.codexOpen=oldCodexOpen;resetInputState();clock.oldTime=performance.now();
     renderer.shadowMap.needsUpdate=true;renderer.setScissorTest(false);renderer.setViewport(0,0,innerWidth,innerHeight);if(restoreFocus&&previousFocus?.isConnected)previousFocus.focus();
     if(abandoned)abandoned();
@@ -101,6 +102,27 @@ CODEX_VIEWER=(()=>{
     if(m?.dataUrl&&image.dataset.inlineFallback!=="1"){image.dataset.inlineFallback="1";image.src=m.dataUrl;return;}
     document.getElementById("viewerPhotoError").hidden=false;
   };
+  function withCamelliaFlowers(panelRoots,draw){
+    const batch=SEASONAL.tsubakiFlowers,trees=SEASONAL.tsubaki;
+    if(!isolated||!batch?.isInstancedMesh||!trees.length)return draw();
+    // The world owns one contiguous flower range per tree, outside that tree's root.
+    const perTree=batch.instanceMatrix.count/trees.length,selected=[];
+    if(!Number.isInteger(perTree))return draw();
+    trees.forEach(({tree},i)=>{let node=tree;while(node){if(panelRoots.includes(node)){selected.push(i);break;}node=node.parent;}});
+    if(!selected.length)return draw();
+    const array=batch.instanceMatrix.array,saved=array.slice(),count=batch.count,visible=batch.visible;
+    const seasonalVisible=visibility.has(batch)?visibility.get(batch):visible;
+    try{
+      let written=0;
+      for(const index of selected)for(let i=index*perTree;i<Math.min((index+1)*perTree,count);i++){
+        array.set(saved.subarray(i*16,(i+1)*16),written++*16);
+      }
+      batch.count=written;batch.visible=seasonalVisible&&written>0;batch.instanceMatrix.needsUpdate=true;
+      return draw();
+    }finally{
+      array.set(saved);batch.count=count;batch.visible=visible;batch.instanceMatrix.needsUpdate=true;
+    }
+  }
   function render(){
     if(!active||tab!=="game"||!roots.length)return;
     const r=stage.getBoundingClientRect();if(r.width<1||r.height<1)return;
@@ -115,9 +137,11 @@ CODEX_VIEWER=(()=>{
         const safeDistance=panel.base*(distance/baseDistance)/Math.min(1,width/r.height);
         viewCamera.aspect=width/r.height;viewCamera.position.set(panel.target.x+Math.sin(azimuth)*Math.cos(elevation)*safeDistance,panel.target.y+Math.sin(elevation)*safeDistance,panel.target.z+Math.cos(azimuth)*Math.cos(elevation)*safeDistance);
         viewCamera.lookAt(panel.target);viewCamera.updateProjectionMatrix();viewCamera.updateMatrixWorld(true);
-        renderer.setViewport(left,innerHeight-r.bottom,width,r.height);renderer.setScissor(left,innerHeight-r.bottom,width,r.height);renderer.setScissorTest(true);renderer.render(scene,viewCamera);
+        if(typeof VISUAL_EXPERIENCE!=="undefined"&&VISUAL_EXPERIENCE?.updateFoliageLOD)VISUAL_EXPERIENCE.updateFoliageLOD(viewCamera,panel.roots);
+        if(typeof NIGHT_LIGHTING!=="undefined"&&NIGHT_LIGHTING)NIGHT_LIGHTING.update(viewCamera,false,isolated?panel.roots:null);
+        renderer.setViewport(left,innerHeight-r.bottom,width,r.height);renderer.setScissor(left,innerHeight-r.bottom,width,r.height);renderer.setScissorTest(true);withCamelliaFlowers(panel.roots,()=>renderer.render(scene,viewCamera));
       });}finally{roots=originalRoots;if(comparison)mask();}
-    }finally{renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(wasScissor);}
+    }finally{try{if(typeof NIGHT_LIGHTING!=="undefined"&&NIGHT_LIGHTING)NIGHT_LIGHTING.update(camera);}finally{renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(wasScissor);}}
   }
   // Render original world models in two scissored views. No clones, owned GPU resources or world transforms.
   function compare(other){

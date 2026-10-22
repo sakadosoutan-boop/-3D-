@@ -1,3 +1,105 @@
+/* Single leaves share a shoot origin with their petioles and branch. No detached leaf shell. */
+var ESTATE_FOLIAGE;
+ESTATE_FOLIAGE=(()=>{
+  const geometries=new Map(),up=new THREE.Vector3(0,1,0);
+  // TSURE_TREES' terminal sprays are the model: opposite maple leaves with deep,
+  // lanceolate lobes, growing from a twig rather than a spherical sampling shell.
+  const mapleAngles=[-2.05,-1.36,-.68,0,.68,1.36,2.05],mapleLengths=[.50,.80,.95,1,.95,.80,.50];
+  const mapleOutline=[[0,0]];
+  mapleAngles.forEach((a,i)=>{
+    const length=.46*mapleLengths[i],sx=Math.sin(a),sy=Math.cos(a),width=length*.12;
+    mapleOutline.push([sx*length*.62-sy*width,.095+sy*length*.62+sx*width],
+      [sx*length,.095+sy*length],[sx*length*.62+sy*width,.095+sy*length*.62-sx*width]);
+    if(i<6){const gap=(a+mapleAngles[i+1])*.5;mapleOutline.push([Math.sin(gap)*.105,.095+Math.cos(gap)*.105]);}
+  });
+  const outlines={
+    palmate:mapleOutline,
+    elliptic:[[0,0],[.05,.035],[.09,.095],[.12,.19],[.095,.30],[.035,.40],[0,.44],[-.035,.40],[-.095,.30],[-.12,.19],[-.09,.095],[-.05,.035]]
+  };
+  function build(maple){
+    const key=maple?"palmate":"elliptic";if(geometries.has(key))return geometries.get(key);
+    const leafCount=maple?7:6,positions=[],uv=[],colors=[],indices=[],hinges=[],flex=[],joints=[];
+    const woodPositions=[],woodUV=[],woodIndices=[],v=new THREE.Vector3(),q=new THREE.Quaternion();
+    const unit=new THREE.CylinderGeometry(.008,.012,1,5,1,true);unit.translate(0,.5,0);
+    function segment(a,b){
+      const delta=b.clone().sub(a),length=delta.length(),base=woodPositions.length/3;
+      q.setFromUnitVectors(up,delta.normalize());
+      for(let i=0;i<unit.attributes.position.count;i++){
+        v.fromBufferAttribute(unit.attributes.position,i);v.y*=length;v.applyQuaternion(q).add(a);woodPositions.push(v.x,v.y,v.z);
+        woodUV.push(unit.attributes.uv.getX(i),unit.attributes.uv.getY(i));
+      }
+      for(const index of unit.index.array)woodIndices.push(base+index);
+    }
+    segment(new THREE.Vector3(),new THREE.Vector3(0,1,0));
+    for(let i=0;i<leafCount;i++){
+      const terminal=maple&&i===6,side=terminal?0:i%2?1:-1,t=maple?(terminal?.97:.26+Math.floor(i/2)*.25):.22+i*.13;
+      const node=new THREE.Vector3(0,t,0),base=new THREE.Vector3(side*(.135+.012*(i%3)),t+(terminal?.06:.035),.035*Math.sin(i*1.7));
+      segment(node,base);
+      const direction=new THREE.Vector3(terminal?.12:side*.82,terminal?1:.28,.12*Math.cos(i*1.7)).normalize();
+      q.setFromUnitVectors(up,direction);const first=positions.length/3;
+      const fold=(x,y)=>.032*Math.sin(y*Math.PI/.56)*(1-Math.min(1,Math.abs(x)/.40));
+      function vertex(x,y,z,vein=false){
+        v.set(x,y,z).multiplyScalar(.70+(i%3)*.045).applyQuaternion(q).add(base);positions.push(v.x,v.y,v.z);
+        uv.push(x*1.2+.5,y*1.7);const tone=(vein?.94:.76)+.18*Math.min(1,y/.56);colors.push(tone,tone,tone*.97);
+        hinges.push(base.x,base.y,base.z);flex.push(1);return positions.length/3-1;
+      }
+      outlines[key].forEach(([x,y])=>vertex(x,y,fold(x,y)));
+      for(const triangle of THREE.ShapeUtils.triangulateShape(outlines[key].map(p=>new THREE.Vector2(...p)),[]))indices.push(...triangle.map(n=>first+n));
+      // Fine palmate veins follow the folded surface and share its material/draw call.
+      const veins=maple?mapleAngles.map((a,j)=>[Math.sin(a)*.46*mapleLengths[j]*.84,.095+Math.cos(a)*.46*mapleLengths[j]*.84]):[[0,.40]];
+      veins.forEach(([x,y])=>{const width=.0025,a=vertex(-width,.095,fold(-width,.095)+.001,true),b=vertex(width,.095,fold(width,.095)+.001,true),c=vertex(x,y,fold(x,y)+.001,true);indices.push(a,b,c);});
+      joints.push({branch:node.toArray(),petiole:base.toArray(),leafVertex:first});
+    }
+    function geometry(p,u,index,c){
+      const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(p,3));g.setAttribute("uv",new THREE.Float32BufferAttribute(u,2));
+      g.setAttribute("color",new THREE.Float32BufferAttribute(c||new Float32Array(p.length).fill(1),3));g.setIndex(index);
+      g.computeVertexNormals();g.computeBoundingBox();g.computeBoundingSphere();return g;
+    }
+    const leaf=geometry(positions,uv,indices,colors),wood=geometry(woodPositions,woodUV,woodIndices);
+    leaf.setAttribute("estateLeafHinge",new THREE.Float32BufferAttribute(hinges,3));leaf.setAttribute("estateLeafFlex",new THREE.Float32BufferAttribute(flex,1));
+    wood.setAttribute("estateLeafHinge",new THREE.Float32BufferAttribute(new Float32Array(woodPositions.length),3));
+    wood.setAttribute("estateLeafFlex",new THREE.Float32BufferAttribute(new Float32Array(woodPositions.length/3),1));
+    leaf.userData.estateLeaf=key;leaf.userData.singleLeaf=true;leaf.userData.leavesPerShoot=leafCount;
+    wood.userData.connectedLeafWood=true;unit.dispose();
+    const result={leaf,wood,joints,leafCount};geometries.set(key,result);return result;
+  }
+  function attach(root,{maple=false,material,woodMaterial}={}){
+    if(root.userData.connectedLeafSprays)return root.userData.connectedLeafSprays;
+    const tips=root.userData.crownTips;if(!tips?.length)return null;
+    const shape=build(maple),count=tips.length*4,leaves=new THREE.InstancedMesh(shape.leaf,material,count),twigs=new THREE.InstancedMesh(shape.wood,woodMaterial,count);
+    const pose=new THREE.Object3D(),direction=new THREE.Vector3();
+    // Each prefix includes every crown tip, so LOD never removes an entire side of a tree.
+    for(let layer=0;layer<4;layer++)tips.forEach((tip,j)=>{
+      const a=Math.atan2(tip.pos[2],tip.pos[0])+(layer-1.5)*.58+.13*Math.sin(j*2.4);
+      direction.set(Math.cos(a),.20+.16*((layer+j)%3),Math.sin(a)).normalize();
+      pose.position.set(...tip.pos);pose.quaternion.setFromUnitVectors(up,direction);pose.scale.setScalar(tip.radius*(.88+.035*(layer%2)));pose.updateMatrix();
+      const n=layer*tips.length+j;leaves.setMatrixAt(n,pose.matrix);twigs.setMatrixAt(n,pose.matrix);
+    });
+    for(const mesh of [leaves,twigs]){mesh.instanceMatrix.needsUpdate=true;mesh.userData.noAutoShadow=true;mesh.castShadow=false;mesh.receiveShadow=true;root.add(mesh);}
+    leaves.userData.estateLeaves=true;leaves.userData.leafCount=count*shape.leafCount;twigs.userData.estateLeafTwigs=true;
+    const handle={root,leaves,twigs,maple,tips,shape,capacity:count,lod:"near",normalLOD:"near",setLOD(lod,winter=false){
+      const layers=lod==="far"?0:lod==="eco"?1:lod==="middle"?2:4,n=layers*tips.length;
+      this.lod=lod;twigs.count=n;twigs.visible=n>0;leaves.count=n;leaves.visible=n>0&&!(maple&&winter);
+    }};
+    root.userData.connectedLeafSprays=handle;return handle;
+  }
+  function fitBounds(handles){
+    // r128 tests the geometry sphere before instance raycasts; shared owners need a union.
+    for(const g of new Set(handles.flatMap(h=>[h.leaves.geometry,h.twigs.geometry]))){
+      g.computeBoundingBox();const base=g.boundingBox.clone(),all=new THREE.Box3().makeEmpty(),part=new THREE.Box3(),matrix=new THREE.Matrix4();
+      for(const h of handles)for(const mesh of [h.leaves,h.twigs])if(mesh.geometry===g){for(let i=0;i<h.capacity;i++){mesh.getMatrixAt(i,matrix);all.union(part.copy(base).applyMatrix4(matrix));}}
+      if(!all.isEmpty()){g.boundingSphere=all.getBoundingSphere(new THREE.Sphere());g.boundingSphere.radius+=.075;}
+    }
+  }
+  function selectLOD(distance,eco=false,quality=0,previous="near"){
+    if(eco||quality>1)return distance<30?"eco":"far";
+    // Hysteresis prevents flickering leaf clusters at distance boundaries.
+    if(distance>(previous==="far"?39:43))return "far";
+    if(distance>(previous==="near"?19:16))return "middle";
+    return "near";
+  }
+  return {attach,fitBounds,build,selectLOD};
+})();
 /* Shared animation field, bounded surface detail and reusable seasonal resources. */
 var VISUAL_EXPERIENCE;
 VISUAL_EXPERIENCE=(()=>{
@@ -6,7 +108,7 @@ VISUAL_EXPERIENCE=(()=>{
   const pose=new THREE.Object3D(),point=new THREE.Vector3(),local=new THREE.Vector3();
   const detail=new THREE.Group();detail.name="estate-visual-experience";world.add(detail);
   let progress=.5,lastSeason=APP.season,active=true,lastLight="",lastRigRefresh=-Infinity;
-  const foliage=[],flowers=[],litBays=[],fish=[],materials=new Set(),originals=new Map();
+  const foliage=[],foliageSprays=[],flowers=[],litBays=[],fish=[],materials=new Set(),originals=new Map();
   function chain(mat,key,fn){
     if(!mat||materials.has(key+mat.id))return;
     materials.add(key+mat.id);const old=mat.onBeforeCompile,cache=mat.customProgramCacheKey();
@@ -28,9 +130,15 @@ VISUAL_EXPERIENCE=(()=>{
       s.uniforms.uEstateWindTime=wind.time;s.uniforms.uEstateWindStrength=wind.strength;
       s.uniforms.uEstateWindDir={value:wind.direction};
       s.vertexShader="uniform float uEstateWindTime,uEstateWindStrength;\nuniform vec2 uEstateWindDir;\n"+s.vertexShader;
-      const weight=kind==="cloth"?"(1.0-smoothstep(.20,.70,position.y))*.012":
+      if(kind==="shoot")s.vertexShader="attribute vec3 estateLeafHinge;\nattribute float estateLeafFlex;\n"+s.vertexShader;
+      const weight=kind==="shoot"?"smoothstep(0.0,.24,max(position.y,0.0))*.020":kind==="cloth"?"(1.0-smoothstep(.20,.70,position.y))*.012":
         kind==="bamboo"?"pow(max(position.y-.3,0.0),2.0)*.0015":"max(position.y+.3,0.0)*.028";
       s.vertexShader=s.vertexShader.replace("#include <begin_vertex>",`#include <begin_vertex>
+        ${kind==="shoot"?`vec3 estateBlade=transformed-estateLeafHinge;
+        float estateFlutter=sin(uEstateWindTime*2.7+estateLeafHinge.y*13.0+estateLeafHinge.x*17.0)*.055*estateLeafFlex*uEstateWindStrength;
+        float estateC=cos(estateFlutter),estateS=sin(estateFlutter);
+        estateBlade.yz=mat2(estateC,estateS,-estateS,estateC)*estateBlade.yz;
+        transformed=estateLeafHinge+estateBlade;`:""}
         vec4 estateWindPos=vec4(position,1.0);
         #ifdef USE_INSTANCING
         estateWindPos=instanceMatrix*estateWindPos;
@@ -46,24 +154,10 @@ VISUAL_EXPERIENCE=(()=>{
         transformed+=estatePush;`);
     });
   }
-  function leafGeometry(maple){
-    const p=[],uv=[],indices=[];
-    for(let k=0;k<3;k++){
-      const angle=(k-1)*.83,co=Math.cos(angle),si=Math.sin(angle),base=p.length/3;
-      const pts=maple?[[0,0],[.025,.07],[.15,.05],[.10,.14],[.22,.18],[.13,.21],[.17,.34],[.07,.28],[0,.46],[-.07,.28],[-.17,.34],[-.13,.21],[-.22,.18],[-.10,.14],[-.15,.05],[-.025,.07]]:
-        [[0,0],[.065,.06],[.115,.14],[.13,.23],[.09,.34],[0,.44],[-.09,.34],[-.13,.23],[-.115,.14],[-.065,.06]];
-      // A folded central vein gives glossy evergreen leaves a visible change of normal.
-      p.push(0,.18,.035);uv.push(.5,.45);
-      pts.forEach(([x,y])=>{const z=.04+Math.sin(y*6)*.05;p.push(co*x+si*z,y,-si*x+co*z);uv.push(x*.9+.5,y*2.0);});
-      for(let j=0;j<pts.length;j++)indices.push(base,base+1+j,base+1+(j+1)%pts.length);
-    }
-    const g=new THREE.BufferGeometry();g.setAttribute("position",new THREE.Float32BufferAttribute(p,3));
-    g.setAttribute("uv",new THREE.Float32BufferAttribute(uv,2));g.setAttribute("color",new THREE.Float32BufferAttribute(new Float32Array(p.length).fill(1),3));
-    g.setIndex(indices);g.computeVertexNormals();g.computeBoundingSphere();g.userData.estateLeaf=maple?"palmate":"elliptic";return g;
-  }
-  const mapleGeo=leafGeometry(true),camelliaGeo=leafGeometry(false);
-  const leafMat=M({color:0x496337,roughness:.36,metalness:.01,side:THREE.DoubleSide,envMapIntensity:.35});
-  const mapleMat=M({color:0x678c38,roughness:.78,side:THREE.DoubleSide});
+  const leafMat=M({color:0x496337,roughness:.36,metalness:.01,vertexColors:true,side:THREE.DoubleSide,envMapIntensity:.35});
+  const mapleMat=M({color:0x678c38,roughness:.78,vertexColors:true,side:THREE.DoubleSide});
+  const twigMat=M({color:0x65503b,roughness:.94,vertexColors:true});
+  windy(twigMat,"shoot");windy(leafMat,"shoot");windy(mapleMat,"shoot");
   if(APP.map!=="kamakura"){
     const trees=[...SEASONAL.maples,...SEASONAL.tsubaki.map(t=>t.tree)];
     trees.forEach((r,i)=>{
@@ -71,29 +165,17 @@ VISUAL_EXPERIENCE=(()=>{
       if(i===0||i===SEASONAL.maples.length){r.getWorldPosition(point);register(r,maple?"kaede":"tsubaki",point.clone().add(new THREE.Vector3(0,2.4,0)));}
       const sprig=r.userData.foliage?.find(m=>m.geometry.index?.count===36);
       if(sprig){
-        const tips=r.userData.crownTips||[],count=tips.length*(maple?28:24);
-        const leaves=new THREE.InstancedMesh(maple?mapleGeo:camelliaGeo,maple?mapleMat:leafMat,count);
-        let n=0;
-        tips.forEach((tip,j)=>{for(let k=0;k<(maple?28:24);k++){
-          const a=k*2.399+j*.73,v=1-2*(k+.5)/(maple?28:24),rad=Math.sqrt(1-v*v),reach=tip.radius*(.87+.15*(k%3));
-          pose.position.set(tip.pos[0]+Math.cos(a)*rad*reach,tip.pos[1]+v*reach*.77,tip.pos[2]+Math.sin(a)*rad*reach);
-          pose.rotation.set(.32*Math.sin(a),a,(k%3-1)*.28);pose.scale.setScalar(Math.max(.42,tip.radius*.71));pose.updateMatrix();leaves.setMatrixAt(n++,pose.matrix);
-        }});
-        leaves.instanceMatrix.needsUpdate=true;leaves.userData.estateLeaves=true;markFoliageNoShadow(leaves);fitDetailInstances(leaves);r.add(leaves);
+        const spray=ESTATE_FOLIAGE.attach(r,{maple,material:maple?mapleMat:leafMat,woodMaterial:twigMat});
+        if(!spray)return;const leaves=spray.leaves;foliageSprays.push(spray);
         // Old private winter references remain harmless; the current crown uses this denser shared batch.
         sprig.count=0;sprig.visible=false;r.userData.foliage=r.userData.foliage.map(m=>m===sprig?leaves:m);
       }
       (r.userData.foliage||[]).forEach(m=>{
         if(!m.userData.estateLeaves&&m.isInstancedMesh)originals.set(m,m.instanceMatrix.array.slice());
-        foliage.push({mesh:m,maple,index:i});windy(m.material,"leaf");
+        foliage.push({mesh:m,maple,index:i});if(!m.userData.estateLeaves)windy(m.material,"leaf");
       });
     });
-    // Shared leaf geometry needs a union of every owner's instance bounds in r128.
-    for(const geo of [mapleGeo,camelliaGeo]){
-      geo.computeBoundingBox();const base=geo.boundingBox.clone(),all=new THREE.Box3().makeEmpty(),part=new THREE.Box3(),matrix=new THREE.Matrix4();
-      foliage.filter(f=>f.mesh.geometry===geo).forEach(({mesh})=>{for(let i=0;i<mesh.count;i++){mesh.getMatrixAt(i,matrix);all.union(part.copy(base).applyMatrix4(matrix));}});
-      if(!all.isEmpty())geo.boundingSphere=all.getBoundingSphere(new THREE.Sphere());
-    }
+    ESTATE_FOLIAGE.fitBounds(foliageSprays);
     // Needles retain narrow paired blades at every branch tip instead of broad generic leaflets.
     scene.traverse(o=>{if(o.userData.pineNeedles){windy(o.material,"leaf");o.userData.estateLeaves=true;}});
     VISUAL_FINISH.batches.forEach(m=>{if(m.userData.finishBatch==="ground-sprigs")windy(m.material,"grass");});
@@ -179,7 +261,8 @@ VISUAL_EXPERIENCE=(()=>{
         roughnessFactor=mix(roughnessFactor,1.0,estateSnow);`);
     });
   }
-  snowShader(MAT.roof,true);snowShader(MAT.grass,false);snowShader(leafMat,true);if(MAT.grassGround)snowShader(MAT.grassGround,false);
+  // Snow colours upward surfaces. Displacing blade bases independently would break petiole joints.
+  snowShader(MAT.roof,true);snowShader(MAT.grass,false);snowShader(leafMat,false);snowShader(twigMat,false);if(MAT.grassGround)snowShader(MAT.grassGround,false);
   chain(MAT.roof,"bark-courses",s=>{
     s.fragmentShader=s.fragmentShader.replace("#include <normal_fragment_maps>",`#include <normal_fragment_maps>
       float estateRoofNear=1.0-smoothstep(7.0,13.0,distance(cameraPosition,vEstateWorld));
@@ -210,16 +293,18 @@ VISUAL_EXPERIENCE=(()=>{
     MAT.roof.needsUpdate=true;MAT.grass.needsUpdate=true;
     foliage.forEach(({mesh,maple,index})=>{
       if(!mesh.userData.estateLeaves&&originals.has(mesh)){
-        const matrix=new THREE.Matrix4(),scale=new THREE.Vector3().setScalar(maple&&k==="winter"?.20:.76),original=originals.get(mesh);
+        const matrix=new THREE.Matrix4(),scale=new THREE.Vector3().setScalar(.65),original=originals.get(mesh);
         for(let i=0;i<mesh.count;i++){matrix.fromArray(original,i*16);matrix.scale(scale);mesh.setMatrixAt(i,matrix);}mesh.instanceMatrix.needsUpdate=true;
+        mesh.visible=!(maple&&k==="winter");
       }
       if(!maple){if(mesh.userData.estateLeaves)mesh.material=leafMat;return;}
       if(mesh.userData.estateLeaves){mesh.material=mapleMat;mesh.visible=k!=="winter";}
       const col=new THREE.Color(k==="autumn"?0x668d3c:(SEASONS[k].maple||SEASONS[k].leaf));
       if(k==="autumn")col.lerp(new THREE.Color(0xd74222),THREE.MathUtils.clamp(progress*1.2+.045*(index%3-1),0,1));
       mesh.material.color.copy(col);
-      if(mesh.isInstancedMesh){for(let i=0;i<mesh.count;i++)mesh.setColorAt(i,new THREE.Color().setScalar(.87+.13*((i*7+index)%11)/10));mesh.instanceColor.needsUpdate=true;}
+      if(mesh.isInstancedMesh){for(let i=0;i<mesh.instanceMatrix.count;i++)mesh.setColorAt(i,new THREE.Color().setScalar(.87+.13*((i*7+index)%11)/10));mesh.instanceColor.needsUpdate=true;}
     });
+    updateFoliageLOD();
     flowers.forEach(m=>{
       const original=originals.get(m),matrix=new THREE.Matrix4(),scale=new THREE.Vector3();
       for(let i=0;i<m.count;i++){
@@ -258,6 +343,7 @@ VISUAL_EXPERIENCE=(()=>{
     const motion=active&&!REDUCED_MOTION&&APP.mode!=="title";
     wind.time.value=motion?t:0;wind.strength.value=motion?1:0;
     if(APP.season!==lastSeason)season(APP.season);
+    updateFoliageLOD();
     expressions(t,motion);lightUpdate();
     gimmicks.misu.forEach(st=>{const v=sample(st.root.position.x,st.root.position.z,t);st.pivot.rotation.x=st.up||!motion?0:v*.030;});
     (SEASONAL.fuji||[]).forEach(r=>{r.rotation.z=motion?sample(r.position.x,r.position.z,t)*.008:0;});
@@ -273,7 +359,26 @@ VISUAL_EXPERIENCE=(()=>{
     });
   }
   function sample(x,z,t){return Math.sin((x*wind.direction.x+z*wind.direction.y)*.075-t*.82)*(.65+.35*Math.sin(t*.31));}
+  function updateFoliageLOD(viewCamera=camera,roots=null){
+    const inspection=roots!==null;
+    if(inspection&&!Array.isArray(roots))return;
+    const eco=!!(window.LOW_POWER&&LOW_POWER.active),quality=typeof QUALITY!=="undefined"?QUALITY.level:0;
+    for(const spray of foliageSprays){
+      if(inspection){
+        // The viewer masks every other model. Never change a non-target's visible/count.
+        let node=spray.root,selected=false;
+        while(node){if(roots.includes(node)){selected=true;break;}node=node.parent;}
+        if(!selected)continue;
+        spray.setLOD("near",APP.season==="winter");continue;
+      }
+      spray.root.getWorldPosition(point);const distance=point.distanceTo(viewCamera.position);
+      const lod=ESTATE_FOLIAGE.selectLOD(distance,eco,quality,spray.normalLOD);
+      // Temporary low-power/inspection detail must not erase normal hysteresis history.
+      if(!eco&&quality<=1)spray.normalLOD=lod;
+      spray.setLOD(lod,APP.season==="winter");
+    }
+  }
   season(APP.season);update(0);
-  return {update,season,setProgress,sample,wind,detail,foliage,flowers,fish,litBays,floorLight,wallShade,
+  return {update,season,setProgress,sample,wind,detail,foliage,foliageSprays,updateFoliageLOD,flowers,fish,litBays,floorLight,wallShade,
     get progress(){return progress;},get snowAmount(){return amount.value;},get active(){return active;}};
 })();

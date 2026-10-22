@@ -308,5 +308,54 @@
     "kind": "markers-exist",
     "begin": "/* APP_SAIGEN_MAKURA_EMBED_BEGIN (src/app/saigen-makura.js から自動生成。ここを直接編集しない) */",
     "end": "/* APP_SAIGEN_MAKURA_EMBED_END */"
+  },
+  {
+    "name": "creature-refinement",
+    "src": "src/app/creature-refinement.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_CREATURE_REFINEMENT_EMBED_BEGIN (src/app/creature-refinement.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_CREATURE_REFINEMENT_EMBED_END */"
+  },
+  {
+    "name": "night-lighting",
+    "src": "src/app/night-lighting.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_NIGHT_LIGHTING_EMBED_BEGIN (src/app/night-lighting.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_NIGHT_LIGHTING_EMBED_END */"
+  },
+  {
+    "name": "kamakura-customs-css",
+    "src": "src/app/kamakura-customs.css",
+    "kind": "markers-exist",
+    "begin": "/* APP_KAMAKURA_CUSTOMS_CSS_EMBED_BEGIN (src/app/kamakura-customs.css から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_KAMAKURA_CUSTOMS_CSS_EMBED_END */"
+  },
+  {
+    "name": "kenko-hermitage-css",
+    "src": "src/app/kenko-hermitage.css",
+    "kind": "markers-exist",
+    "begin": "/* APP_KENKO_HERMITAGE_CSS_EMBED_BEGIN (src/app/kenko-hermitage.css から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_KENKO_HERMITAGE_CSS_EMBED_END */"
+  },
+  {
+    "name": "kamakura-games",
+    "src": "src/app/kamakura-games.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_KAMAKURA_GAMES_EMBED_BEGIN (src/app/kamakura-games.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_KAMAKURA_GAMES_EMBED_END */"
+  },
+  {
+    "name": "kamakura-customs",
+    "src": "src/app/kamakura-customs.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_KAMAKURA_CUSTOMS_EMBED_BEGIN (src/app/kamakura-customs.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_KAMAKURA_CUSTOMS_EMBED_END */"
+  },
+  {
+    "name": "kenko-hermitage",
+    "src": "src/app/kenko-hermitage.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_KENKO_HERMITAGE_EMBED_BEGIN (src/app/kenko-hermitage.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_KENKO_HERMITAGE_EMBED_END */"
   }
 ]

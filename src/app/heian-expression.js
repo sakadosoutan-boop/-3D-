@@ -1,6 +1,32 @@
 /* Head, eyes and held objects retain independent pivots before static parts are batched. */
 var HEIAN_EXPRESSIONS=[],HEIAN_EXPRESSION_REGISTRY=new WeakMap(),HEIAN_FINGER_GEO,HEIAN_SHAKU_GEO,HEIAN_SHAKU_MAT;
+function refineHeianHeadTemplate(){
+  const geo=HEIAN_GEO.head;if(geo.userData.softJaw)return;
+  const pos=geo.attributes.position;
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i),y=pos.getY(i),z=pos.getZ(i);
+    if(z<.16)continue;
+    // A continuous cheek-to-chin relief, scaled by the existing head mesh.
+    const cheek=Math.exp(-Math.pow((Math.abs(x)-.46)/.25,2)-Math.pow((y+.08)/.30,2));
+    const chin=Math.exp(-Math.pow(x/.36,2)-Math.pow((y+.68)/.24,2));
+    pos.setZ(i,z+Math.max(0,z)*(.055*cheek+.045*chin));
+  }
+  pos.needsUpdate=true;geo.computeVertexNormals();geo.computeBoundingBox();geo.computeBoundingSphere();geo.userData.softJaw=true;
+}
+function heianTempleLockGeometry(){
+  const rings=[[.100,.110,.019],[.022,.135,.029],[-.105,.104,.026],[-.246,.030,.007]],N=8,p=[],ix=[];
+  for(const [y,z,r] of rings)for(let j=0;j<N;j++){
+    const a=j/N*Math.PI*2;p.push(Math.cos(a)*r,y,z+Math.sin(a)*r);
+  }
+  for(let i=0;i<rings.length-1;i++)for(let j=0;j<N;j++){
+    const a=i*N+j,b=i*N+(j+1)%N,c=(i+1)*N+j,d=(i+1)*N+(j+1)%N;
+    ix.push(a,b,c,b,d,c);
+  }
+  const geo=new THREE.BufferGeometry();geo.setAttribute("position",new THREE.Float32BufferAttribute(p,3));geo.setIndex(ix);
+  geo.computeVertexNormals();return geo;
+}
 function rigHeianExpression(g,detail,prop,standing,hime){
+  refineHeianHeadTemplate();
   const hy=standing?1.62:1.01,head=new THREE.Group(),face=new THREE.Group(),eyes=new THREE.Group();
   head.name="heian-head-pivot";head.position.set(0,hy,.02);head.add(face,eyes);eyes.position.set(0,.025,.155);
   const take=(o,target)=>{o.position.sub(head.position);if(target===eyes)o.position.sub(eyes.position);target.add(o);};
@@ -9,6 +35,19 @@ function rigHeianExpression(g,detail,prop,standing,hime){
     const eye=o.geometry===HEIAN_GEO.sphere&&o.position.z>.16&&
       (o.material===HEIAN_FACE||o.scale.x<.006);
     take(o,eye?eyes:o.userData.heianDetail?face:head);
+  }
+  // A tapered neck overlaps both head and collar; the long back hair stays on
+  // the torso while these short temple locks move with the conversation pivot.
+  HEIAN_GEO.neck=HEIAN_GEO.neck||new THREE.LatheGeometry([
+    new THREE.Vector2(.058,-.302),new THREE.Vector2(.073,-.265),
+    new THREE.Vector2(.075,-.190),new THREE.Vector2(.064,-.130)],12);
+  const neck=new THREE.Mesh(HEIAN_GEO.neck,HEIAN_SKIN);neck.position.z=.018;noTinyShadow(neck);head.add(neck);
+  if(prop!=="shaku"){
+    HEIAN_GEO.templeLock=HEIAN_GEO.templeLock||heianTempleLockGeometry();
+    for(const side of [-1,1]){
+      const lock=new THREE.Mesh(HEIAN_GEO.templeLock,HEIAN_HAIR);
+      lock.position.x=side*.151;lock.rotation.z=-side*.045;noTinyShadow(lock);head.add(lock);
+    }
   }
   mergeIndexedCharacterDetail(head,"heian-head-shell");
   mergeIndexedCharacterDetail(face,"heian-face");face.traverse(noTinyShadow);

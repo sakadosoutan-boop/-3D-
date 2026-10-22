@@ -1,0 +1,11 @@
+body.kenko-hermitage-mode #topbar,body.kenko-hermitage-mode #worldStatusBar,body.kenko-hermitage-mode #minimapWrap,body.kenko-hermitage-mode #homeChoices,body.kenko-hermitage-mode #renaiWorldStatus{display:none!important}
+body.kenko-hermitage-mode #kamaKyudoHud,body.kenko-hermitage-mode #kamaGamesPrompt,body.kenko-hermitage-mode #kamaGamesHud,body.kenko-hermitage-mode #kamaLettersPrompt{display:none!important}
+body.kenko-hermitage-mode #selectedWorldOpen,body.kenko-hermitage-mode #selectedWorldPanel{display:none!important}
+body.kenko-hermitage-mode #modeBrief{display:none!important}
+#kenkoVisitHud[hidden],#kenkoVisitNote[hidden]{display:none!important}
+#kenkoVisitHud{position:fixed;z-index:110;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(760px,calc(100vw - 24px));padding:12px 16px;background:rgba(26,22,17,.88);border:1px solid #a18448;border-radius:12px;color:#f4ead5;box-sizing:border-box;pointer-events:auto}
+#kenkoVisitHud header,#kenkoVisitNote header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#kenkoVisitHud h2{margin:2px 0;font-size:18px}#kenkoVisitHud small{color:#d6bc86}#kenkoVisitHud p{font-size:12px;margin:8px 0;line-height:1.6}#kenkoVisitHud nav{display:flex;gap:6px;flex-wrap:wrap}
+#kenkoVisitHud button,#kenkoVisitNote button{padding:9px 12px;min-height:40px;border:1px solid #a18448;border-radius:6px;background:#30291e;color:#f6e8c7;font:inherit;font-size:12px;cursor:pointer}#kenkoVisitHud button:focus-visible,#kenkoVisitNote button:focus-visible,#kenkoVisitNote a:focus-visible{outline:3px solid #f8d982;outline-offset:3px}
+#kenkoVisitNote{position:fixed;z-index:500;left:50%;top:50%;transform:translate(-50%,-50%);width:min(540px,calc(100vw - 32px));max-height:75vh;overflow:auto;box-sizing:border-box;padding:22px;background:#211d17;color:#f4ead5;border:1px solid #b29458;border-radius:12px;box-shadow:0 0 0 100vmax #0009}#kenkoVisitNote h2{font-size:18px;margin:0}#kenkoVisitNote p{font-size:14px;line-height:1.9}#kenkoVisitNote a{color:#e7c77d}
+@media(max-width:600px){#kenkoVisitHud{padding:8px 10px}#kenkoVisitHud nav{gap:4px}#kenkoVisitHud button{padding:8px;font-size:11px}#kenkoVisitHud h2{font-size:16px}}

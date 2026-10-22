@@ -1,0 +1,2609 @@
+{
+  "measuredUTC": "2026-10-13T13:33:04.255Z",
+  "baseCommit": "bebc306bd9099ebc9771b39162c19ecbc9609e05",
+  "localAppSHA256": "fa0e543d3b94ac5fdafd5baf41a85d5022349354db29702dc0e342e307da2899",
+  "conditions": {
+    "browser": "Chrome / Playwright 1.61.1",
+    "viewport": [
+      1280,
+      800
+    ],
+    "seed": "0x5eed1234",
+    "adaptive": false,
+    "bloom": false,
+    "nightFrames": 42,
+    "transitionSamples": 12,
+    "steadySamples": 30,
+    "gpuFinish": true,
+    "phoneHardware": false,
+    "visualUUIDStreamIsolated": true,
+    "visualCamerasMatch": true
+  },
+  "night": {
+    "before": {
+      "label": "before",
+      "sourceBytes": 10020616,
+      "phases": [
+        {
+          "eco": false,
+          "cycle": 0,
+          "time": "dawn",
+          "lights": 8,
+          "programsBefore": 0,
+          "programsAfter": 56,
+          "transitionMaxMs": 8473.2,
+          "medianMs": 15.9
+        },
+        {
+          "eco": false,
+          "cycle": 0,
+          "time": "day",
+          "lights": 8,
+          "programsBefore": 56,
+          "programsAfter": 56,
+          "transitionMaxMs": 226,
+          "medianMs": 17.2
+        },
+        {
+          "eco": false,
+          "cycle": 0,
+          "time": "dusk",
+          "lights": 8,
+          "programsBefore": 56,
+          "programsAfter": 56,
+          "transitionMaxMs": 19.1,
+          "medianMs": 12.2
+        },
+        {
+          "eco": false,
+          "cycle": 0,
+          "time": "night",
+          "lights": 14,
+          "programsBefore": 56,
+          "programsAfter": 99,
+          "transitionMaxMs": 10091.7,
+          "medianMs": 12.4
+        },
+        {
+          "eco": false,
+          "cycle": 1,
+          "time": "dawn",
+          "lights": 8,
+          "programsBefore": 99,
+          "programsAfter": 99,
+          "transitionMaxMs": 16.5,
+          "medianMs": 11.1
+        },
+        {
+          "eco": false,
+          "cycle": 1,
+          "time": "day",
+          "lights": 8,
+          "programsBefore": 99,
+          "programsAfter": 99,
+          "transitionMaxMs": 13.8,
+          "medianMs": 11.2
+        },
+        {
+          "eco": false,
+          "cycle": 1,
+          "time": "dusk",
+          "lights": 8,
+          "programsBefore": 99,
+          "programsAfter": 99,
+          "transitionMaxMs": 14.8,
+          "medianMs": 11.5
+        },
+        {
+          "eco": false,
+          "cycle": 1,
+          "time": "night",
+          "lights": 14,
+          "programsBefore": 99,
+          "programsAfter": 99,
+          "transitionMaxMs": 15.3,
+          "medianMs": 12.1
+        },
+        {
+          "eco": true,
+          "cycle": 0,
+          "time": "dawn",
+          "lights": 8,
+          "programsBefore": 99,
+          "programsAfter": 137,
+          "transitionMaxMs": 5553.1,
+          "medianMs": 7.7
+        },
+        {
+          "eco": true,
+          "cycle": 0,
+          "time": "day",
+          "lights": 8,
+          "programsBefore": 137,
+          "programsAfter": 138,
+          "transitionMaxMs": 14.2,
+          "medianMs": 8.5
+        },
+        {
+          "eco": true,
+          "cycle": 0,
+          "time": "dusk",
+          "lights": 8,
+          "programsBefore": 138,
+          "programsAfter": 138,
+          "transitionMaxMs": 11.3,
+          "medianMs": 8.2
+        },
+        {
+          "eco": true,
+          "cycle": 0,
+          "time": "night",
+          "lights": 14,
+          "programsBefore": 138,
+          "programsAfter": 176,
+          "transitionMaxMs": 7987.5,
+          "medianMs": 8.8
+        },
+        {
+          "eco": true,
+          "cycle": 1,
+          "time": "dawn",
+          "lights": 8,
+          "programsBefore": 176,
+          "programsAfter": 176,
+          "transitionMaxMs": 14.8,
+          "medianMs": 7.9
+        },
+        {
+          "eco": true,
+          "cycle": 1,
+          "time": "day",
+          "lights": 8,
+          "programsBefore": 176,
+          "programsAfter": 176,
+          "transitionMaxMs": 12.2,
+          "medianMs": 8
+        },
+        {
+          "eco": true,
+          "cycle": 1,
+          "time": "dusk",
+          "lights": 8,
+          "programsBefore": 176,
+          "programsAfter": 176,
+          "transitionMaxMs": 12.2,
+          "medianMs": 8
+        },
+        {
+          "eco": true,
+          "cycle": 1,
+          "time": "night",
+          "lights": 14,
+          "programsBefore": 176,
+          "programsAfter": 176,
+          "transitionMaxMs": 12.1,
+          "medianMs": 8
+        }
+      ],
+      "errors": []
+    },
+    "after": {
+      "label": "after",
+      "sourceBytes": 10066283,
+      "phases": [
+        {
+          "eco": false,
+          "cycle": 0,
+          "time": "dawn",
+          "lights": 4,
+          "programsBefore": 0,
+          "programsAfter": 57,
+          "transitionMaxMs": 5872.4,
+          "medianMs": 13
+        },
+        {
+          "eco": false,
+          "cycle": 0,
+          "time": "day",
+          "lights": 4,
+          "programsBefore": 57,
+          "programsAfter": 57,
+          "transitionMaxMs": 152.5,
+          "medianMs": 12.8
+        },
+        {
+          "eco": false,
+          "cycle": 0,
+          "time": "dusk",
+          "lights": 4,
+          "programsBefore": 57,
+          "programsAfter": 57,
+          "transitionMaxMs": 15.3,
+          "medianMs": 11.8
+        },
+        {
+          "eco": false,
+          "cycle": 0,
+          "time": "night",
+          "lights": 4,
+          "programsBefore": 57,
+          "programsAfter": 58,
+          "transitionMaxMs": 58,
+          "medianMs": 12
+        },
+        {
+          "eco": false,
+          "cycle": 1,
+          "time": "dawn",
+          "lights": 4,
+          "programsBefore": 58,
+          "programsAfter": 58,
+          "transitionMaxMs": 13.4,
+          "medianMs": 11.5
+        },
+        {
+          "eco": false,
+          "cycle": 1,
+          "time": "day",
+          "lights": 4,
+          "programsBefore": 58,
+          "programsAfter": 58,
+          "transitionMaxMs": 12.9,
+          "medianMs": 11.3
+        },
+        {
+          "eco": false,
+          "cycle": 1,
+          "time": "dusk",
+          "lights": 4,
+          "programsBefore": 58,
+          "programsAfter": 58,
+          "transitionMaxMs": 14.1,
+          "medianMs": 10.9
+        },
+        {
+          "eco": false,
+          "cycle": 1,
+          "time": "night",
+          "lights": 4,
+          "programsBefore": 58,
+          "programsAfter": 58,
+          "transitionMaxMs": 18.7,
+          "medianMs": 11.4
+        },
+        {
+          "eco": true,
+          "cycle": 0,
+          "time": "dawn",
+          "lights": 2,
+          "programsBefore": 58,
+          "programsAfter": 98,
+          "transitionMaxMs": 3150.1,
+          "medianMs": 7.8
+        },
+        {
+          "eco": true,
+          "cycle": 0,
+          "time": "day",
+          "lights": 2,
+          "programsBefore": 98,
+          "programsAfter": 98,
+          "transitionMaxMs": 11.9,
+          "medianMs": 8.2
+        },
+        {
+          "eco": true,
+          "cycle": 0,
+          "time": "dusk",
+          "lights": 2,
+          "programsBefore": 98,
+          "programsAfter": 98,
+          "transitionMaxMs": 12.8,
+          "medianMs": 8
+        },
+        {
+          "eco": true,
+          "cycle": 0,
+          "time": "night",
+          "lights": 2,
+          "programsBefore": 98,
+          "programsAfter": 98,
+          "transitionMaxMs": 12,
+          "medianMs": 8.5
+        },
+        {
+          "eco": true,
+          "cycle": 1,
+          "time": "dawn",
+          "lights": 2,
+          "programsBefore": 98,
+          "programsAfter": 98,
+          "transitionMaxMs": 10,
+          "medianMs": 7.5
+        },
+        {
+          "eco": true,
+          "cycle": 1,
+          "time": "day",
+          "lights": 2,
+          "programsBefore": 98,
+          "programsAfter": 98,
+          "transitionMaxMs": 10.3,
+          "medianMs": 8.7
+        },
+        {
+          "eco": true,
+          "cycle": 1,
+          "time": "dusk",
+          "lights": 2,
+          "programsBefore": 98,
+          "programsAfter": 98,
+          "transitionMaxMs": 12.8,
+          "medianMs": 7.9
+        },
+        {
+          "eco": true,
+          "cycle": 1,
+          "time": "night",
+          "lights": 2,
+          "programsBefore": 98,
+          "programsAfter": 98,
+          "transitionMaxMs": 10.8,
+          "medianMs": 8.2
+        }
+      ],
+      "errors": []
+    }
+  },
+  "visual": {
+    "before": {
+      "label": "refinement-matched-before",
+      "sourceBytes": 10020616,
+      "uuidStreamIsolated": true,
+      "cameraBaseline": null,
+      "profiles": [
+        {
+          "name": "high",
+          "readyMs": 9645,
+          "scenes": [
+            {
+              "name": "front",
+              "camera": {
+                "position": [
+                  0,
+                  1.62,
+                  26
+                ],
+                "quaternion": [
+                  -0.024997395914712332,
+                  0,
+                  0,
+                  0.9996875162757026
+                ],
+                "fov": 62
+              },
+              "pointLights": 7,
+              "calls": 1221,
+              "triangles": 560451,
+              "geometries": 775,
+              "textures": 143,
+              "geometryBytes": 14383350,
+              "instanceBytes": 1151156,
+              "texturePixels": 15746080,
+              "programs": 56,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 9.5,
+              "p95Ms": 12.4,
+              "fog": 0.012
+            },
+            {
+              "name": "tree",
+              "camera": {
+                "position": [
+                  -46.49793403646909,
+                  2.1,
+                  35.556150211486965
+                ],
+                "quaternion": [
+                  0.056817731952062356,
+                  0.29718826862022324,
+                  -0.01771902784803484,
+                  0.9529621788835368
+                ],
+                "fov": 62
+              },
+              "pointLights": 7,
+              "calls": 497,
+              "triangles": 344062,
+              "geometries": 1089,
+              "textures": 150,
+              "geometryBytes": 14383350,
+              "instanceBytes": 1151156,
+              "texturePixels": 15746080,
+              "programs": 60,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 5.2,
+              "p95Ms": 6.3,
+              "fog": 0.012
+            },
+            {
+              "name": "tree-autumn",
+              "camera": {
+                "position": [
+                  -46.49793403646909,
+                  2.1,
+                  35.556150211486965
+                ],
+                "quaternion": [
+                  0.056817731952062356,
+                  0.29718826862022324,
+                  -0.01771902784803484,
+                  0.9529621788835368
+                ],
+                "fov": 62
+              },
+              "pointLights": 7,
+              "calls": 506,
+              "triangles": 340002,
+              "geometries": 1090,
+              "textures": 152,
+              "geometryBytes": 14556122,
+              "instanceBytes": 1151156,
+              "texturePixels": 15893536,
+              "programs": 60,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 7,
+              "p95Ms": 8.3,
+              "fog": 0.012
+            },
+            {
+              "name": "camellia-winter",
+              "camera": {
+                "position": [
+                  50.2,
+                  2.7,
+                  17.5
+                ],
+                "quaternion": [
+                  0.05779338410506218,
+                  0.27641333475272145,
+                  -0.01665514231034211,
+                  0.9591549402256067
+                ],
+                "fov": 62
+              },
+              "pointLights": 8,
+              "calls": 1150,
+              "triangles": 521023,
+              "geometries": 1161,
+              "textures": 157,
+              "geometryBytes": 14556122,
+              "instanceBytes": 1151156,
+              "texturePixels": 15893536,
+              "programs": 105,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 10.7,
+              "p95Ms": 11.4,
+              "fog": 0.014
+            },
+            {
+              "name": "lantern",
+              "camera": {
+                "position": [
+                  5.666748244872833,
+                  0.85,
+                  49.85728123269221
+                ],
+                "quaternion": [
+                  -0.13851656375885407,
+                  0.2567152110416804,
+                  0.03720426963753682,
+                  0.9557856999898053
+                ],
+                "fov": 62
+              },
+              "pointLights": 17,
+              "calls": 1872,
+              "triangles": 621345,
+              "geometries": 1459,
+              "textures": 169,
+              "geometryBytes": 14556122,
+              "instanceBytes": 1151156,
+              "texturePixels": 15893536,
+              "programs": 157,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 13.5,
+              "p95Ms": 17.7,
+              "fog": 0.013
+            },
+            {
+              "name": "fire",
+              "camera": {
+                "position": [
+                  -7.6,
+                  2.2,
+                  20.5
+                ],
+                "quaternion": [
+                  -0.06705159904779476,
+                  0.25187472466973854,
+                  0.017496145223545922,
+                  0.9652756554684231
+                ],
+                "fov": 62
+              },
+              "pointLights": 15,
+              "calls": 977,
+              "triangles": 451605,
+              "geometries": 1481,
+              "textures": 169,
+              "geometryBytes": 14383350,
+              "instanceBytes": 1151156,
+              "texturePixels": 15746080,
+              "programs": 197,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 8.4,
+              "p95Ms": 10.3,
+              "fog": 0.013
+            },
+            {
+              "name": "night",
+              "camera": {
+                "position": [
+                  0,
+                  1.62,
+                  26
+                ],
+                "quaternion": [
+                  -0.024997395914712332,
+                  0,
+                  0,
+                  0.9996875162757026
+                ],
+                "fov": 62
+              },
+              "pointLights": 17,
+              "calls": 1236,
+              "triangles": 552858,
+              "geometries": 1481,
+              "textures": 169,
+              "geometryBytes": 14383350,
+              "instanceBytes": 1151156,
+              "texturePixels": 15746080,
+              "programs": 197,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 10.7,
+              "p95Ms": 12,
+              "fog": 0.013
+            },
+            {
+              "name": "hime",
+              "camera": {
+                "position": [
+                  3.7,
+                  2.789878223555398,
+                  -0.5300000000000002
+                ],
+                "quaternion": [
+                  -0.03898144320789247,
+                  0.1889584541796898,
+                  0.007507140027496265,
+                  0.9811823441787257
+                ],
+                "fov": 62
+              },
+              "pointLights": 8,
+              "calls": 617,
+              "triangles": 442042,
+              "geometries": 1486,
+              "textures": 169,
+              "geometryBytes": 14383350,
+              "instanceBytes": 1151156,
+              "texturePixels": 15746080,
+              "programs": 200,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 7.7,
+              "p95Ms": 8.9,
+              "fog": 0.012
+            },
+            {
+              "name": "duck",
+              "camera": {
+                "position": [
+                  32.33613667894274,
+                  0.7532935467511677,
+                  42.88830306115262
+                ],
+                "quaternion": [
+                  -0.08690703314413314,
+                  0.2583447084599856,
+                  0.023342426398344766,
+                  0.9618525408453458
+                ],
+                "fov": 62
+              },
+              "pointLights": 8,
+              "calls": 1736,
+              "triangles": 637874,
+              "geometries": 1535,
+              "textures": 171,
+              "geometryBytes": 14383350,
+              "instanceBytes": 1151156,
+              "texturePixels": 15746080,
+              "programs": 204,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 14.3,
+              "p95Ms": 15.5,
+              "fog": 0.012
+            },
+            {
+              "name": "crane",
+              "camera": {
+                "position": [
+                  -17.9,
+                  2.6,
+                  42.8
+                ],
+                "quaternion": [
+                  -0.04880933499688153,
+                  0.18584619355323528,
+                  0.009243680089661328,
+                  0.9813222689500812
+                ],
+                "fov": 62
+              },
+              "pointLights": 8,
+              "calls": 1164,
+              "triangles": 488711,
+              "geometries": 1540,
+              "textures": 171,
+              "geometryBytes": 14383350,
+              "instanceBytes": 1151156,
+              "texturePixels": 15746080,
+              "programs": 204,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 10.8,
+              "p95Ms": 14,
+              "fog": 0.012
+            }
+          ]
+        },
+        {
+          "name": "eco",
+          "readyMs": 2254,
+          "scenes": [
+            {
+              "name": "front",
+              "camera": {
+                "position": [
+                  0,
+                  1.62,
+                  26
+                ],
+                "quaternion": [
+                  -0.024997395914712332,
+                  0,
+                  0,
+                  0.9996875162757026
+                ],
+                "fov": 62
+              },
+              "pointLights": 7,
+              "calls": 1185,
+              "triangles": 449553,
+              "geometries": 765,
+              "textures": 125,
+              "geometryBytes": 13804058,
+              "instanceBytes": 1151156,
+              "texturePixels": 15057952,
+              "programs": 46,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 8.2,
+              "p95Ms": 9.8,
+              "fog": 0.012
+            },
+            {
+              "name": "tree",
+              "camera": {
+                "position": [
+                  -46.49793403646909,
+                  2.1,
+                  35.556150211486965
+                ],
+                "quaternion": [
+                  0.056817731952062356,
+                  0.29718826862022324,
+                  -0.01771902784803484,
+                  0.9529621788835368
+                ],
+                "fov": 62
+              },
+              "pointLights": 7,
+              "calls": 470,
+              "triangles": 271042,
+              "geometries": 936,
+              "textures": 131,
+              "geometryBytes": 13804058,
+              "instanceBytes": 1151156,
+              "texturePixels": 15057952,
+              "programs": 48,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 4.3,
+              "p95Ms": 5.7,
+              "fog": 0.012
+            },
+            {
+              "name": "tree-autumn",
+              "camera": {
+                "position": [
+                  -46.49793403646909,
+                  2.1,
+                  35.556150211486965
+                ],
+                "quaternion": [
+                  0.056817731952062356,
+                  0.29718826862022324,
+                  -0.01771902784803484,
+                  0.9529621788835368
+                ],
+                "fov": 62
+              },
+              "pointLights": 7,
+              "calls": 478,
+              "triangles": 266902,
+              "geometries": 936,
+              "textures": 132,
+              "geometryBytes": 13804058,
+              "instanceBytes": 1151156,
+              "texturePixels": 15057952,
+              "programs": 48,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 5,
+              "p95Ms": 5.3,
+              "fog": 0.012
+            },
+            {
+              "name": "camellia-winter",
+              "camera": {
+                "position": [
+                  50.2,
+                  2.7,
+                  17.5
+                ],
+                "quaternion": [
+                  0.05779338410506218,
+                  0.27641333475272145,
+                  -0.01665514231034211,
+                  0.9591549402256067
+                ],
+                "fov": 62
+              },
+              "pointLights": 8,
+              "calls": 1113,
+              "triangles": 420399,
+              "geometries": 1020,
+              "textures": 135,
+              "geometryBytes": 13812650,
+              "instanceBytes": 1151156,
+              "texturePixels": 15057952,
+              "programs": 85,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 8.8,
+              "p95Ms": 9.1,
+              "fog": 0.014
+            },
+            {
+              "name": "lantern",
+              "camera": {
+                "position": [
+                  6.817229229050838,
+                  0.85,
+                  54.4361795793457
+                ],
+                "quaternion": [
+                  -0.13851656375885407,
+                  0.25671521104168016,
+                  0.0372042696375368,
+                  0.9557856999898054
+                ],
+                "fov": 62
+              },
+              "pointLights": 15,
+              "calls": 1855,
+              "triangles": 530079,
+              "geometries": 1389,
+              "textures": 147,
+              "geometryBytes": 13804058,
+              "instanceBytes": 1151156,
+              "texturePixels": 15057952,
+              "programs": 132,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 11.1,
+              "p95Ms": 13.8,
+              "fog": 0.013
+            },
+            {
+              "name": "fire",
+              "camera": {
+                "position": [
+                  -7.6,
+                  2.2,
+                  20.5
+                ],
+                "quaternion": [
+                  -0.06705159904779476,
+                  0.25187472466973854,
+                  0.017496145223545922,
+                  0.9652756554684231
+                ],
+                "fov": 62
+              },
+              "pointLights": 15,
+              "calls": 946,
+              "triangles": 360393,
+              "geometries": 1390,
+              "textures": 147,
+              "geometryBytes": 13804058,
+              "instanceBytes": 1151156,
+              "texturePixels": 15057952,
+              "programs": 132,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 8.3,
+              "p95Ms": 9.5,
+              "fog": 0.013
+            },
+            {
+              "name": "night",
+              "camera": {
+                "position": [
+                  0,
+                  1.62,
+                  26
+                ],
+                "quaternion": [
+                  -0.024997395914712332,
+                  0,
+                  0,
+                  0.9996875162757026
+                ],
+                "fov": 62
+              },
+              "pointLights": 15,
+              "calls": 1201,
+              "triangles": 453798,
+              "geometries": 1390,
+              "textures": 147,
+              "geometryBytes": 13804058,
+              "instanceBytes": 1151156,
+              "texturePixels": 15057952,
+              "programs": 132,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 7.7,
+              "p95Ms": 10.3,
+              "fog": 0.013
+            },
+            {
+              "name": "hime",
+              "camera": {
+                "position": [
+                  3.7,
+                  2.7898792454355723,
+                  -0.5300000000000002
+                ],
+                "quaternion": [
+                  -0.038981443207892354,
+                  0.1889584541796898,
+                  0.007507140027496243,
+                  0.9811823441787257
+                ],
+                "fov": 62
+              },
+              "pointLights": 8,
+              "calls": 585,
+              "triangles": 344164,
+              "geometries": 1390,
+              "textures": 147,
+              "geometryBytes": 13953386,
+              "instanceBytes": 1151156,
+              "texturePixels": 15057952,
+              "programs": 135,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 6.6,
+              "p95Ms": 7.6,
+              "fog": 0.012
+            },
+            {
+              "name": "duck",
+              "camera": {
+                "position": [
+                  32.33621503984615,
+                  0.7532944192039001,
+                  42.88834931274782
+                ],
+                "quaternion": [
+                  -0.08690703314413324,
+                  0.258344708459985,
+                  0.023342426398344728,
+                  0.9618525408453458
+                ],
+                "fov": 62
+              },
+              "pointLights": 8,
+              "calls": 1696,
+              "triangles": 528664,
+              "geometries": 1446,
+              "textures": 147,
+              "geometryBytes": 13804058,
+              "instanceBytes": 1151156,
+              "texturePixels": 15057952,
+              "programs": 138,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 12.9,
+              "p95Ms": 13.5,
+              "fog": 0.012
+            },
+            {
+              "name": "crane",
+              "camera": {
+                "position": [
+                  -17.9,
+                  2.6,
+                  42.8
+                ],
+                "quaternion": [
+                  -0.04880933499688153,
+                  0.18584619355323528,
+                  0.009243680089661328,
+                  0.9813222689500812
+                ],
+                "fov": 62
+              },
+              "pointLights": 8,
+              "calls": 1126,
+              "triangles": 390885,
+              "geometries": 1458,
+              "textures": 147,
+              "geometryBytes": 13804058,
+              "instanceBytes": 1151156,
+              "texturePixels": 15057952,
+              "programs": 138,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 9.4,
+              "p95Ms": 9.9,
+              "fog": 0.012
+            }
+          ]
+        }
+      ],
+      "errors": []
+    },
+    "after": {
+      "label": "refinement-matched-after",
+      "sourceBytes": 10066283,
+      "uuidStreamIsolated": true,
+      "cameraBaseline": "artifacts/review/visual-refinement-matched-before.json",
+      "profiles": [
+        {
+          "name": "high",
+          "readyMs": 9634,
+          "scenes": [
+            {
+              "name": "front",
+              "camera": {
+                "position": [
+                  0,
+                  1.62,
+                  26
+                ],
+                "quaternion": [
+                  -0.024997395914712332,
+                  0,
+                  0,
+                  0.9996875162757026
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 1244,
+              "triangles": 548009,
+              "geometries": 788,
+              "textures": 143,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 57,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 9.1,
+              "p95Ms": 11.4,
+              "fog": 0.012
+            },
+            {
+              "name": "tree",
+              "camera": {
+                "position": [
+                  -46.49793403646909,
+                  2.1,
+                  35.556150211486965
+                ],
+                "quaternion": [
+                  0.056817731952062356,
+                  0.29718826862022324,
+                  -0.01771902784803484,
+                  0.9529621788835368
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 497,
+              "triangles": 337502,
+              "geometries": 1104,
+              "textures": 150,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 62,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 8.3,
+              "p95Ms": 8.7,
+              "fog": 0.012
+            },
+            {
+              "name": "tree-autumn",
+              "camera": {
+                "position": [
+                  -46.49793403646909,
+                  2.1,
+                  35.556150211486965
+                ],
+                "quaternion": [
+                  0.056817731952062356,
+                  0.29718826862022324,
+                  -0.01771902784803484,
+                  0.9529621788835368
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 506,
+              "triangles": 333442,
+              "geometries": 1105,
+              "textures": 152,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 62,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 7.5,
+              "p95Ms": 8.8,
+              "fog": 0.012
+            },
+            {
+              "name": "camellia-winter",
+              "camera": {
+                "position": [
+                  50.2,
+                  2.7,
+                  17.5
+                ],
+                "quaternion": [
+                  0.05779338410506218,
+                  0.27641333475272145,
+                  -0.01665514231034211,
+                  0.9591549402256067
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 1163,
+              "triangles": 506799,
+              "geometries": 1172,
+              "textures": 157,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 64,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 8.9,
+              "p95Ms": 10.6,
+              "fog": 0.014
+            },
+            {
+              "name": "lantern",
+              "camera": {
+                "position": [
+                  5.666748244872833,
+                  0.85,
+                  49.85728123269221
+                ],
+                "quaternion": [
+                  -0.13851656375885407,
+                  0.2567152110416804,
+                  0.03720426963753682,
+                  0.9557856999898053
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 1896,
+              "triangles": 603083,
+              "geometries": 1472,
+              "textures": 169,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 68,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 14.6,
+              "p95Ms": 18.9,
+              "fog": 0.013
+            },
+            {
+              "name": "fire",
+              "camera": {
+                "position": [
+                  -7.6,
+                  2.2,
+                  20.5
+                ],
+                "quaternion": [
+                  -0.06705159904779476,
+                  0.25187472466973854,
+                  0.017496145223545922,
+                  0.9652756554684231
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 991,
+              "triangles": 449005,
+              "geometries": 1494,
+              "textures": 169,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 68,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 9.4,
+              "p95Ms": 10.8,
+              "fog": 0.013
+            },
+            {
+              "name": "night",
+              "camera": {
+                "position": [
+                  0,
+                  1.62,
+                  26
+                ],
+                "quaternion": [
+                  -0.024997395914712332,
+                  0,
+                  0,
+                  0.9996875162757026
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 1260,
+              "triangles": 540434,
+              "geometries": 1494,
+              "textures": 169,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 68,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 11.3,
+              "p95Ms": 13.2,
+              "fog": 0.013
+            },
+            {
+              "name": "hime",
+              "camera": {
+                "position": [
+                  3.7,
+                  2.789878223555398,
+                  -0.5300000000000002
+                ],
+                "quaternion": [
+                  -0.03898144320789247,
+                  0.1889584541796898,
+                  0.007507140027496265,
+                  0.9811823441787257
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 629,
+              "triangles": 445058,
+              "geometries": 1499,
+              "textures": 169,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 68,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 10.3,
+              "p95Ms": 16,
+              "fog": 0.012
+            },
+            {
+              "name": "duck",
+              "camera": {
+                "position": [
+                  32.33613667894274,
+                  0.7532935467511677,
+                  42.88830306115262
+                ],
+                "quaternion": [
+                  -0.08690703314413314,
+                  0.2583447084599856,
+                  0.023342426398344766,
+                  0.9618525408453458
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 1765,
+              "triangles": 637640,
+              "geometries": 1550,
+              "textures": 171,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 68,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 13.8,
+              "p95Ms": 17.6,
+              "fog": 0.012
+            },
+            {
+              "name": "crane",
+              "camera": {
+                "position": [
+                  -17.9,
+                  2.6,
+                  42.8
+                ],
+                "quaternion": [
+                  -0.04880933499688153,
+                  0.18584619355323528,
+                  0.009243680089661328,
+                  0.9813222689500812
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 1170,
+              "triangles": 473279,
+              "geometries": 1557,
+              "textures": 171,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 68,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 11.3,
+              "p95Ms": 12.6,
+              "fog": 0.012
+            },
+            {
+              "name": "duck-front",
+              "camera": {
+                "position": [
+                  29.254033729077026,
+                  0.8532944192039001,
+                  40.8054360785695
+                ],
+                "quaternion": [
+                  -0.08145090464792293,
+                  -0.7220055904940821,
+                  -0.08627454367167296,
+                  0.6816380128349441
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 192,
+              "triangles": 177034,
+              "geometries": 1559,
+              "textures": 171,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 68,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 5.1,
+              "p95Ms": 5.5,
+              "fog": 0.012
+            },
+            {
+              "name": "crane-front",
+              "camera": {
+                "position": [
+                  -17.927755137507365,
+                  3.1,
+                  43.272658087069004
+                ],
+                "quaternion": [
+                  -0.0954512650531147,
+                  0.16660112649462536,
+                  0.016205994408775418,
+                  0.9812596427020244
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 1202,
+              "triangles": 485783,
+              "geometries": 1588,
+              "textures": 174,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 68,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 10.8,
+              "p95Ms": 11.4,
+              "fog": 0.012
+            },
+            {
+              "name": "ox",
+              "camera": {
+                "position": [
+                  -46.4,
+                  1.8,
+                  22.1
+                ],
+                "quaternion": [
+                  -0.1055709922011687,
+                  0.5097978266218993,
+                  0.06320972800035295,
+                  0.8514490424349365
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 431,
+              "triangles": 218221,
+              "geometries": 1615,
+              "textures": 174,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 68,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 7.1,
+              "p95Ms": 8.2,
+              "fog": 0.012
+            },
+            {
+              "name": "kappa",
+              "camera": {
+                "position": [
+                  -8.494622488536871,
+                  1.4213093774161165,
+                  28.690324997808553
+                ],
+                "quaternion": [
+                  -0.11590353693732793,
+                  -0.09016878845797172,
+                  -0.010566021716083774,
+                  0.9891027847997064
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 1375,
+              "triangles": 560074,
+              "geometries": 1621,
+              "textures": 174,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 68,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 14,
+              "p95Ms": 17.4,
+              "fog": 0.013
+            },
+            {
+              "name": "chochin",
+              "camera": {
+                "position": [
+                  27.097751520364863,
+                  4.590558220339084,
+                  8.6
+                ],
+                "quaternion": [
+                  -0.08655910830295065,
+                  0.1735931296180004,
+                  0.015318863983801112,
+                  0.9808864758602149
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 872,
+              "triangles": 471574,
+              "geometries": 1623,
+              "textures": 174,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 68,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 8.6,
+              "p95Ms": 9.4,
+              "fog": 0.013
+            },
+            {
+              "name": "yukionna",
+              "camera": {
+                "position": [
+                  -6.043765708995261,
+                  1.5509237638123234,
+                  -46.43716641572133
+                ],
+                "quaternion": [
+                  -0.11453371988066305,
+                  0.17640464350524077,
+                  0.02067118041586157,
+                  0.977412978766039
+                ],
+                "fov": 62
+              },
+              "pointLights": 4,
+              "calls": 180,
+              "triangles": 147894,
+              "geometries": 1650,
+              "textures": 174,
+              "geometryBytes": 14564520,
+              "instanceBytes": 1088948,
+              "texturePixels": 15746080,
+              "programs": 68,
+              "pixelRatio": 1,
+              "shadows": true,
+              "shadowSize": 1024,
+              "touch": false,
+              "ibl": false,
+              "normal": true,
+              "ao": true,
+              "medianMs": 4.3,
+              "p95Ms": 4.7,
+              "fog": 0.013
+            }
+          ]
+        },
+        {
+          "name": "eco",
+          "readyMs": 2237,
+          "scenes": [
+            {
+              "name": "front",
+              "camera": {
+                "position": [
+                  0,
+                  1.62,
+                  26
+                ],
+                "quaternion": [
+                  -0.024997395914712332,
+                  0,
+                  0,
+                  0.9996875162757026
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 1208,
+              "triangles": 436023,
+              "geometries": 778,
+              "textures": 125,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 47,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 10,
+              "p95Ms": 12,
+              "fog": 0.012
+            },
+            {
+              "name": "tree",
+              "camera": {
+                "position": [
+                  -46.49793403646909,
+                  2.1,
+                  35.556150211486965
+                ],
+                "quaternion": [
+                  0.056817731952062356,
+                  0.29718826862022324,
+                  -0.01771902784803484,
+                  0.9529621788835368
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 470,
+              "triangles": 257018,
+              "geometries": 951,
+              "textures": 131,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 50,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 5.1,
+              "p95Ms": 6.3,
+              "fog": 0.012
+            },
+            {
+              "name": "tree-autumn",
+              "camera": {
+                "position": [
+                  -46.49793403646909,
+                  2.1,
+                  35.556150211486965
+                ],
+                "quaternion": [
+                  0.056817731952062356,
+                  0.29718826862022324,
+                  -0.01771902784803484,
+                  0.9529621788835368
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 478,
+              "triangles": 252878,
+              "geometries": 951,
+              "textures": 132,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 50,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 5,
+              "p95Ms": 5.4,
+              "fog": 0.012
+            },
+            {
+              "name": "camellia-winter",
+              "camera": {
+                "position": [
+                  50.2,
+                  2.7,
+                  17.5
+                ],
+                "quaternion": [
+                  0.05779338410506218,
+                  0.27641333475272145,
+                  -0.01665514231034211,
+                  0.9591549402256067
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 1124,
+              "triangles": 407151,
+              "geometries": 1035,
+              "textures": 135,
+              "geometryBytes": 13993820,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 51,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 9.1,
+              "p95Ms": 9.5,
+              "fog": 0.014
+            },
+            {
+              "name": "lantern",
+              "camera": {
+                "position": [
+                  6.817229229050838,
+                  0.85,
+                  54.4361795793457
+                ],
+                "quaternion": [
+                  -0.13851656375885407,
+                  0.25671521104168016,
+                  0.0372042696375368,
+                  0.9557856999898054
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 1878,
+              "triangles": 509659,
+              "geometries": 1406,
+              "textures": 147,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 55,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 11.2,
+              "p95Ms": 14.7,
+              "fog": 0.013
+            },
+            {
+              "name": "fire",
+              "camera": {
+                "position": [
+                  -7.6,
+                  2.2,
+                  20.5
+                ],
+                "quaternion": [
+                  -0.06705159904779476,
+                  0.25187472466973854,
+                  0.017496145223545922,
+                  0.9652756554684231
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 960,
+              "triangles": 356705,
+              "geometries": 1407,
+              "textures": 147,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 55,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 8.6,
+              "p95Ms": 8.9,
+              "fog": 0.013
+            },
+            {
+              "name": "night",
+              "camera": {
+                "position": [
+                  0,
+                  1.62,
+                  26
+                ],
+                "quaternion": [
+                  -0.024997395914712332,
+                  0,
+                  0,
+                  0.9996875162757026
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 1225,
+              "triangles": 440286,
+              "geometries": 1407,
+              "textures": 147,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 55,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 9.6,
+              "p95Ms": 10.4,
+              "fog": 0.013
+            },
+            {
+              "name": "hime",
+              "camera": {
+                "position": [
+                  3.7,
+                  2.7898792454355723,
+                  -0.5300000000000002
+                ],
+                "quaternion": [
+                  -0.038981443207892354,
+                  0.1889584541796898,
+                  0.007507140027496243,
+                  0.9811823441787257
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 597,
+              "triangles": 346092,
+              "geometries": 1407,
+              "textures": 147,
+              "geometryBytes": 14134556,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 55,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 6.8,
+              "p95Ms": 7.2,
+              "fog": 0.012
+            },
+            {
+              "name": "duck",
+              "camera": {
+                "position": [
+                  32.33621503984615,
+                  0.7532944192039001,
+                  42.88834931274782
+                ],
+                "quaternion": [
+                  -0.08690703314413324,
+                  0.258344708459985,
+                  0.023342426398344728,
+                  0.9618525408453458
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 1721,
+              "triangles": 521590,
+              "geometries": 1465,
+              "textures": 147,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 55,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 11.1,
+              "p95Ms": 13.7,
+              "fog": 0.012
+            },
+            {
+              "name": "crane",
+              "camera": {
+                "position": [
+                  -17.9,
+                  2.6,
+                  42.8
+                ],
+                "quaternion": [
+                  -0.04880933499688153,
+                  0.18584619355323528,
+                  0.009243680089661328,
+                  0.9813222689500812
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 1131,
+              "triangles": 381229,
+              "geometries": 1479,
+              "textures": 147,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 55,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 9.2,
+              "p95Ms": 9.9,
+              "fog": 0.012
+            },
+            {
+              "name": "duck-front",
+              "camera": {
+                "position": [
+                  29.25396016526799,
+                  0.8532935467511678,
+                  40.80533784960617
+                ],
+                "quaternion": [
+                  -0.0814497734807404,
+                  -0.7220145275036743,
+                  -0.08627561158088909,
+                  0.6816285464385464
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 162,
+              "triangles": 101892,
+              "geometries": 1487,
+              "textures": 147,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 55,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 3.2,
+              "p95Ms": 3.9,
+              "fog": 0.012
+            },
+            {
+              "name": "crane-front",
+              "camera": {
+                "position": [
+                  -17.927755137507365,
+                  3.1,
+                  43.272658087069004
+                ],
+                "quaternion": [
+                  -0.0954512650531147,
+                  0.16660112649462536,
+                  0.016205994408775418,
+                  0.9812596427020244
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 1163,
+              "triangles": 393661,
+              "geometries": 1533,
+              "textures": 150,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 55,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 9.6,
+              "p95Ms": 10.7,
+              "fog": 0.012
+            },
+            {
+              "name": "ox",
+              "camera": {
+                "position": [
+                  -46.4,
+                  1.8,
+                  22.1
+                ],
+                "quaternion": [
+                  -0.1055709922011687,
+                  0.5097978266218993,
+                  0.06320972800035295,
+                  0.8514490424349365
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 403,
+              "triangles": 130309,
+              "geometries": 1562,
+              "textures": 150,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 55,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 4.3,
+              "p95Ms": 4.8,
+              "fog": 0.012
+            },
+            {
+              "name": "kappa",
+              "camera": {
+                "position": [
+                  -8.494622488536871,
+                  1.4213093774161165,
+                  28.690324997808553
+                ],
+                "quaternion": [
+                  -0.11590353693732793,
+                  -0.09016878845797172,
+                  -0.010566021716083774,
+                  0.9891027847997064
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 1336,
+              "triangles": 454686,
+              "geometries": 1564,
+              "textures": 150,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 55,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 12.1,
+              "p95Ms": 13.8,
+              "fog": 0.013
+            },
+            {
+              "name": "chochin",
+              "camera": {
+                "position": [
+                  27.097751520364863,
+                  4.590558220339084,
+                  8.6
+                ],
+                "quaternion": [
+                  -0.08655910830295065,
+                  0.1735931296180004,
+                  0.015318863983801112,
+                  0.9808864758602149
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 840,
+              "triangles": 371502,
+              "geometries": 1566,
+              "textures": 150,
+              "geometryBytes": 13985228,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 55,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 6.3,
+              "p95Ms": 7.8,
+              "fog": 0.013
+            },
+            {
+              "name": "yukionna",
+              "camera": {
+                "position": [
+                  -6.043765708995261,
+                  1.5509237638123234,
+                  -46.43716641572133
+                ],
+                "quaternion": [
+                  -0.11453371988066305,
+                  0.17640464350524077,
+                  0.02067118041586157,
+                  0.977412978766039
+                ],
+                "fov": 62
+              },
+              "pointLights": 2,
+              "calls": 155,
+              "triangles": 85962,
+              "geometries": 1593,
+              "textures": 150,
+              "geometryBytes": 13994716,
+              "instanceBytes": 1088948,
+              "texturePixels": 15057952,
+              "programs": 55,
+              "pixelRatio": 0.56,
+              "shadows": false,
+              "shadowSize": 512,
+              "touch": true,
+              "ibl": false,
+              "normal": false,
+              "ao": false,
+              "medianMs": 2.8,
+              "p95Ms": 3.4,
+              "fog": 0.013
+            }
+          ]
+        }
+      ],
+      "errors": []
+    },
+    "excluded": "Initial refinement-claude-before/refinement-after comparison used UUID-coupled moving actors and unmatched subject cameras; those runs are excluded."
+  },
+  "acceptance": {
+    "npmTest": "passed 2026-10-13",
+    "tsurezureBeats": 13,
+    "foliage": {
+      "ranAt": "2026-10-13T13:26:30.006Z",
+      "geometry": {
+        "sharing": 4,
+        "branches": true,
+        "single": true,
+        "finite": true,
+        "leaves": [
+          {
+            "kind": "maple",
+            "capacity": 32,
+            "leaves": 224
+          },
+          {
+            "kind": "maple",
+            "capacity": 32,
+            "leaves": 224
+          },
+          {
+            "kind": "maple",
+            "capacity": 32,
+            "leaves": 224
+          },
+          {
+            "kind": "camellia",
+            "capacity": 32,
+            "leaves": 192
+          },
+          {
+            "kind": "camellia",
+            "capacity": 32,
+            "leaves": 192
+          },
+          {
+            "kind": "camellia",
+            "capacity": 32,
+            "leaves": 192
+          }
+        ]
+      },
+      "maple": {
+        "lod": "near",
+        "count": 32,
+        "visible": true,
+        "twigs": true,
+        "wind": 1,
+        "sharedWind": true,
+        "flutterHinge": true,
+        "snowDoesNotDisplace": true
+      },
+      "camellia": {
+        "lod": "near",
+        "count": 32,
+        "visible": true,
+        "twigs": true,
+        "wind": 1,
+        "sharedWind": true,
+        "flutterHinge": true,
+        "snowDoesNotDisplace": true
+      },
+      "lifecycle": {
+        "winter": true,
+        "evergreen": true,
+        "finite": true,
+        "near": 32,
+        "middle": 16,
+        "far": 0,
+        "eco": 8,
+        "ecoWind": 0,
+        "restored": 32,
+        "qualityBoundaryRestored": true,
+        "ecoBoundaryRestored": true,
+        "reuse": true,
+        "flowers": true
+      },
+      "inspection": {
+        "detail": true,
+        "maskPreserved": true,
+        "emptyPreserved": true,
+        "normalRestored": true
+      },
+      "flowerInspection": {
+        "single": true,
+        "comparison": true,
+        "context": true,
+        "photo": true,
+        "close": true,
+        "exception": true,
+        "season": true,
+        "reuse": true
+      },
+      "errors": []
+    },
+    "kamakura": {
+      "status": "ok",
+      "passed": [
+        "sculpture",
+        "statueAboveFloor",
+        "sculptureNotBlack",
+        "statuePick",
+        "attachedGate",
+        "clearGate",
+        "hallDoors",
+        "stairHeights",
+        "well",
+        "wellRopeVisible",
+        "horseShape",
+        "horseSharedGeometry",
+        "horseConnected",
+        "saddle",
+        "bow",
+        "matchingHitatare",
+        "roleColorsRemain",
+        "codex",
+        "entryRoute",
+        "shrineRoute",
+        "stableRoute",
+        "wallStops",
+        "moatStops",
+        "dryMoat",
+        "modeGate",
+        "night light budget high",
+        "night light budget eco",
+        "no browser exceptions: "
+      ],
+      "views": [
+        [
+          "gate-inside",
+          [
+            0,
+            1.8,
+            29
+          ],
+          [
+            0,
+            2.2,
+            35
+          ]
+        ],
+        [
+          "buddha-front",
+          [
+            -20,
+            2.1,
+            -15.9
+          ],
+          [
+            -20,
+            1.95,
+            -18.55
+          ]
+        ],
+        [
+          "buddha-three-quarter",
+          [
+            -18.75,
+            2.25,
+            -16.5
+          ],
+          [
+            -20,
+            1.8,
+            -18.55
+          ]
+        ],
+        [
+          "shrine-approach",
+          [
+            -17,
+            2.5,
+            -11.5
+          ],
+          [
+            -20,
+            1.9,
+            -18
+          ]
+        ],
+        [
+          "well",
+          [
+            9,
+            2.7,
+            -12.4
+          ],
+          [
+            6,
+            1.4,
+            -16
+          ]
+        ],
+        [
+          "stable",
+          [
+            11,
+            2.6,
+            6
+          ],
+          [
+            18,
+            1.3,
+            0
+          ]
+        ],
+        [
+          "horse-close",
+          [
+            14.2,
+            2.15,
+            3.8
+          ],
+          [
+            16,
+            1.85,
+            1.5
+          ]
+        ],
+        [
+          "main-hall",
+          [
+            0,
+            3,
+            7
+          ],
+          [
+            0,
+            2,
+            -5
+          ]
+        ],
+        [
+          "compound-overview",
+          [
+            49,
+            57,
+            61
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ]
+      ]
+    },
+    "memory": {
+      "warmups": 4,
+      "cycles": 24,
+      "checks": {
+        "noReload": true,
+        "noExceptions": true,
+        "allInitializationAndCleanup": true,
+        "geometryStable": true,
+        "textureStable": true,
+        "sceneStable": true,
+        "registriesStable": true,
+        "heapStable": true,
+        "domStablePerCondition": true,
+        "domBoardMatchesDifficulty": true
+      },
+      "metrics": {
+        "webglGeometries": {
+          "first": 1245,
+          "last": 1355,
+          "growth": 110,
+          "range": 110
+        },
+        "webglTextures": {
+          "first": 177,
+          "last": 178,
+          "growth": 1,
+          "range": 1
+        },
+        "sceneObjects": {
+          "first": 5852,
+          "last": 5852,
+          "growth": 0,
+          "range": 0
+        },
+        "liveSceneGeometries": {
+          "first": 2571,
+          "last": 2571,
+          "growth": 0,
+          "range": 0
+        },
+        "liveSceneMaterials": {
+          "first": 1604,
+          "last": 1604,
+          "growth": 0,
+          "range": 0
+        },
+        "liveSceneTextures": {
+          "first": 300,
+          "last": 300,
+          "growth": 0,
+          "range": 0
+        },
+        "rayTargets": {
+          "first": 3541,
+          "last": 3541,
+          "growth": 0,
+          "range": 0
+        },
+        "floorZones": {
+          "first": 24,
+          "last": 24,
+          "growth": 0,
+          "range": 0
+        },
+        "expressions": {
+          "first": 18,
+          "last": 18,
+          "growth": 0,
+          "range": 0
+        },
+        "dom": {
+          "first": 2481,
+          "last": 2509,
+          "growth": 28,
+          "range": 28
+        },
+        "heapBytes": {
+          "first": 32324916,
+          "last": 33438360,
+          "growth": 1113444,
+          "range": 1113444
+        }
+      },
+      "notes": "GC-assisted JS heap is Chromium retained heap, not total process/GPU memory. First render warm-up is excluded; late world/cache GPU registrations are identified by resource ID. DOM is compared after 300ms and two animation frames within identical difficulty/target conditions, with zero range required."
+    }
+  }
+}

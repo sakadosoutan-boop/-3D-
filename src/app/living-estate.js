@@ -95,7 +95,7 @@
   const ESTATE_TAG="〔屋敷の一日〕";
   function notify(message,ms){say(ESTATE_TAG+" "+message,ms);}
   function sound(f){if(typeof beep==="function")beep(f,.045,"sine",.055);}
-  function walkMode(){return !!(APP&&APP.mode==="walk");}
+  function walkMode(){return !!(APP&&APP.mode==="walk"&&APP.map!=="kamakura");}
   function blocked(){return !walkMode()||!!(APP&&APP.gisshaCarry&&APP.gisshaCarry.active);}
   function actorFor(id){return state.actors[id]||null;}
   function actorDistance(root){

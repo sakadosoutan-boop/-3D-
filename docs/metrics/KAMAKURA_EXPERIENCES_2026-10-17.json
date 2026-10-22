@@ -1,0 +1,138 @@
+{
+  "recordedAt": "2026-10-17T10:40:37.813Z",
+  "branch": "codex/kamakura-experiences-20261013",
+  "integratedMain": "60921d531319324d2ef4bbff2227ea56bdf301f7",
+  "html": {
+    "bytes": 10155700,
+    "sha256": "cf92864df68395c91758bee35fea356d4531636b4478fa17d80d18561a243547",
+    "normalizedBytes": 10155431,
+    "normalizedSha256": "c775fb92e93891292d28d0e4cff46cafef73ce3b20d836fe5369d9e1bf0458ce"
+  },
+  "verification": {
+    "command": "npm test",
+    "exitCode": 0,
+    "logSha256": "e1d3fe3f717ea0d7d3d0a261828855c04d953fa1c0e50172286e097e2f3f7bd7",
+    "platform": "win32",
+    "architecture": "x64",
+    "games": {
+      "checks": 40,
+      "score": 12,
+      "sixShots": true,
+      "bowAsymmetry": true,
+      "nockContact": true
+    },
+    "content": {
+      "checks": 35,
+      "views": [
+        "documents",
+        "writing-close",
+        "deliveries",
+        "serving",
+        "life-overview"
+      ]
+    },
+    "customs": {
+      "checks": 20
+    },
+    "hermitage": {
+      "walking": {
+        "position": [
+          0.55,
+          2.17,
+          0.5999999999999961
+        ],
+        "floor": 0.55
+      },
+      "restoration": {
+        "active": false,
+        "stage": false,
+        "hook": true,
+        "world": true,
+        "position": true,
+        "camera": true,
+        "lighting": true,
+        "auto": true,
+        "bg": true,
+        "celestial": true,
+        "floors": true,
+        "ownedReleased": true,
+        "materialsReleased": true,
+        "texturesReleased": true,
+        "ownedCounts": {
+          "geometries": 124,
+          "materials": 143,
+          "textures": 55
+        },
+        "background": true,
+        "hud": true,
+        "loops": 0
+      },
+      "modeExits": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "direct": true,
+      "delayedVisibility": true,
+      "mobile": true,
+      "replayRoute": true,
+      "seasonal": {
+        "heian": true,
+        "visit": true,
+        "restored": true,
+        "kamakura": true
+      },
+      "errors": []
+    },
+    "replayLayout": {
+      "loadingOverlayButtons": [
+        {
+          "id": "sgQuit",
+          "hit": true,
+          "actual": "sgQuit"
+        },
+        {
+          "id": "sgMenu",
+          "hit": true,
+          "actual": "sgMenu"
+        },
+        {
+          "id": "sgView",
+          "hit": true,
+          "actual": "sgView"
+        }
+      ],
+      "viewports": [
+        {
+          "width": 844,
+          "height": 390,
+          "beats": 19,
+          "minimumToolbarGapPx": 23,
+          "allTextAndButtonsFit": true
+        },
+        {
+          "width": 568,
+          "height": 320,
+          "beats": 19,
+          "minimumToolbarGapPx": 2.91,
+          "allTextAndButtonsFit": true
+        },
+        {
+          "width": 390,
+          "height": 844,
+          "beats": 19,
+          "minimumToolbarGapPx": 72.16,
+          "allTextAndButtonsFit": true
+        }
+      ],
+      "errors": []
+    }
+  },
+  "limitations": [
+    "iPhone/iPad physical-device performance is not measured.",
+    "Second story and new bosses remain proposals."
+  ]
+}

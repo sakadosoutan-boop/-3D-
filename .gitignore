@@ -23,6 +23,13 @@ debug.log
 artifacts/review/
 artifacts/learning/
 artifacts/selected-memory/
+artifacts/night-lighting/
+artifacts/foliage-refinement/
+artifacts/kamakura-refinement/
+artifacts/kamakura-content/
+artifacts/kamakura-customs/
+artifacts/kamakura-games/
+artifacts/kenko-hermitage/
 
 # 参照資料・並行ツール設定（コード本体ではない・PDF等で重い）
 素材/
