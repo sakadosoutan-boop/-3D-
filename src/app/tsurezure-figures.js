@@ -429,7 +429,7 @@ function headSDF(P){
   if(P.egg){const e=P.egg;fp.push(K(sEll([0,-.004,.028],[.054*e,.046,.040]),.030));}
   if(P.foreK)fp.push(K(sEll([0,.052,.040],[.052,.040,.052*P.foreK]),.03));
   if(P.softFace){// smooth adult female face masses (replaces the male bony set; nose, lids, eyes and lips are unchanged)
-    fp.length=0;fp.push(K(sEll([0,.006,.050],[.063,.050,.042]),0),K(sEll([0,-.041,.056],[.040,.040,.037]),.035),K(sEll([0,-.046,.077],[.024,.020,.017]),.025),
+    fp.length=0;fp.push(K(sEll([0,.006,.050],[.063,.050,.039]),0),K(sEll([0,-.041,.056],[.040,.040,.037]),.035),K(sEll([0,-.046,.080],[.023,.020,.017]),.025),K(sEll([0,.056,.044],[.050,.038,.049]),.03),
       K(sEll([0,-.077,.072],[.0170,.0140,.0150]),.03));
     for(const s of[-1,1])fp.push(K(sEll([s*.036,-.014,.066],[.022,.024,.020]),.03),K(sCap([s*.045,.040,.074],[s*.012,.042,.089],.0075),.02),K(sEll([s*.033,.002,.078],[.016,.011,.010]),.016),
       K(sEll([s*.050,.006,.058],[.016,.014,.018]),.025));}
@@ -564,7 +564,9 @@ function faceTextures(R,P,C){
         for(let i=0;i<=24;i++){const t=i/24*.94;const b=C.brow(t);const yy=b[1]-.0004*Math.sin(PI*t);if(i)g.lineTo(X(sx*b[0]),Y(yy));else g.moveTo(X(sx*b[0]),Y(yy));}g.stroke();}g.restore();}
     if(!kid&&P.blush&&!mode){const bl=(x,y,rx,ry,al)=>{g.save();g.translate(X(x),Y(y));g.scale(rx*PX,ry*PX);const gr=g.createRadialGradient(0,0,0,0,0,1);
         gr.addColorStop(0,rel(P.blushC||0xe09080,1));gr.addColorStop(1,rel(P.blushC||0xe09080,0));g.globalAlpha=al*P.blush;g.fillStyle=gr;g.beginPath();g.arc(0,0,1,0,7);g.fill();g.restore();g.globalAlpha=1;};
-      for(const sx of[-1,1])bl(sx*.043,-.014,.024,.017,.55);bl(0,-.075,.010,.006,.20);}
+      for(const sx of[-1,1])bl(sx*.043,-.014,.024,.017,.55);bl(0,-.075,.010,.006,.20);
+      if(P.shadeAcc){const sh=(x,y,rx,ry,al)=>{g.save();g.translate(X(x),Y(y));g.scale(rx*PX,ry*PX);const gr=g.createRadialGradient(0,0,0,0,0,1);gr.addColorStop(0,rel(0xa0705c,1));gr.addColorStop(1,rel(0xa0705c,0));g.globalAlpha=al*P.shadeAcc;g.fillStyle=gr;g.beginPath();g.arc(0,0,1,0,7);g.fill();g.restore();g.globalAlpha=1;};
+        sh(0,-.0315,.010,.0035,.45);sh(0,-.0665,.009,.0035,.40);for(const sx of[-1,1])sh(sx*.020,.020,.009,.012,.25);}}
     for(const sx of[-1,1]){const n=P.browHairs||260;
       for(let i=0;i<n;i++){const t=Math.pow(rnd(),.85);const b=C.brow(t);const w=(.0032-.0016*t)*(P.browW||1);const off=(rnd()-.5)*w;
         const x=sx*b[0],y=b[1]+off;const ang=t<.15?1.2-t*3:.18-.15*t+(rnd()-.5)*.25;// flow up at inner end, then outward
@@ -1585,14 +1587,14 @@ function makeMago(opts){opts=opts||{};const R=Res();const q=opts.quality||"high"
 //  襲の色目は uniform（uNyG/uNyF/uNyP）だけで決まるので、setKasane(key) は形を作り直さない。
 // =====================================================================================
 const NY_HS=.95,NY_ARM=[.262,.222];
-const NYOBO_HEAD={anime:false,irisC:[0x2a1712,0x8a5a3a],seed:61,age:25,smile:.55,fem:1,lipU:.0044,lipL:.0058,lipUvol:.0024,lipLvol:.0030,mouthW:.0192,
+const NYOBO_HEAD={anime:false,irisC:[0x2a1712,0x8a5a3a],seed:61,age:25,smile:.55,fem:1,lipU:.0046,lipL:.0062,lipUvol:.0028,lipLvol:.0035,mouthW:.0192,
   scalp:"fem",hairC:0x15100d,beard:"none",whiskers:0,wrinkles:0,spots:0,
-  skin:0xe9c3aa,skinRed:0xdc9c88,skinLight:0xf4dccb,lip:0xb5434f,lipColL:0xbf515b,blush:.15,blushC:0xe2907f,noseRed:.2,
-  iris:[66,42,28],irisR:.17,pupilR:.056,sclera:[226,220,212],catchlight:false,
-  eyeW:.0162,eyeOpenU:.0055,eyeOpenL:.0031,eyeTilt:.10,hood:.75,lash:1.15,
+  skin:0xe9c3aa,skinRed:0xdc9c88,skinLight:0xf4dccb,lip:0xb5434f,lipColL:0xbf515b,blush:.32,blushC:0xe39a7c,noseRed:.2,shadeAcc:1,
+  iris:[46,28,18],irisR:.17,pupilR:.056,sclera:[226,220,212],catchlight:true,
+  eyeW:.0164,eyeOpenU:.0061,eyeOpenL:.0033,eyeTilt:.10,hood:.75,lash:1.6,
   browY:-.0012,browDrop:.0065,brow:0x2b211c,browHairs:220,browW:1.35,browAmt:.7,softBrow:.7,
-  cran:[.95,.99,.975],softFace:1,kidWarp:.97,taper:.05,nose:.93,browK:.62,cheekFat:0,nlK:.35,foreK:1.03,ramK:.80,eyeR:.0121,earL:.92,noEars:true,neckR:1.02,
-  nlfAmt:0,underEyeAmt:.20,creaseAmt:.85,poreAmt:.25,lipLines:.20,lidAmt:.9,lidC:0xa8786a,rough:.46,gazePitch:0};
+  cran:[.95,.99,.975],softFace:1,kidWarp:.97,taper:.05,nose:1.05,browK:.62,cheekFat:0,nlK:.35,foreK:1.03,ramK:.80,eyeR:.0124,earL:.92,noEars:true,neckR:1.02,
+  nlfAmt:0,underEyeAmt:.38,creaseAmt:.85,poreAmt:.25,lipLines:.20,lidAmt:1.5,lidC:0x9a6a5c,rough:.46,gazePitch:0};
 // hair frame (head-local): the face is open in front of zF(y) and below the hairline yF(x) (centre parting, high forehead)
 function nyHairFrame(){return{zF:y=>.033+.011*sstep(-.07,.03,y)-.006*sstep(.05,.09,y),yF:x=>{const t=Math.min(1,ab(x)/.066);return .083-.052*Math.pow(t,1.3);}};}
 const NY_HF=nyHairFrame();
@@ -1747,7 +1749,7 @@ const NY_HANDP={nyHold:{curl:[.50,.58,.66,.74],spread:-.04,thumb:[.30,.45,.55]},
   nyCarry:{curl:[.35,.45,.55,.62],spread:.10,thumb:[.25,.20,.25]}};
 function nyRig(pose,attire){const R={pose,attire,seated:pose!=="carry"};
   let lean=.05,twist=0,roll=0,hP=0,hY=0,hR=0,gP=0,gY=0;
-  if(pose==="gaze"){lean=.05;twist=.08;hP=-.12;hY=.18;hR=.03;gP=-.08;gY=.10;}
+  if(pose==="gaze"){lean=.05;twist=.08;hP=-.12;hY=.18;hR=.03;gP=.03;gY=.10;}
   else if(pose==="fan"){lean=.03;twist=-.05;hP=.03;hY=-.12;hR=-.03;gP=.02;gY=-.06;}
   else if(pose==="tend"){lean=.32;twist=-.06;hP=.40;hY=-.04;gP=.32;}
   else{lean=.12;hP=.14;gP=.12;}
@@ -2029,7 +2031,7 @@ function makeNyobo(opts){opts=opts||{};const R=Res();const q=["high","medium","l
   let kas=NY_KASANE[opts.kasane]?opts.kasane:(kara?"sakura":"matsugasane");
   const t0=performance.now();const T_={};const g=new THREE.Group();g.name="nyobo_"+pose+"_"+attire;
   const rig=nyRig(pose,attire);
-  const HP=Object.assign({},NYOBO_HEAD,{gazePitch:rig.gazeP,polyH:q==="low"?.0056:q==="medium"?.0047:.0040},kara?{}:{eyeScale:.96,eyeSep:1.02,irisC:[0x22130e,0x5e3e2a],skin:0xe8c4ac,hairC:0x1a1410,seed:67,eyeW:.0150,eyeOpenU:.0048,nose:.84,lipU:.0040,mouthW:.0190,taper:.03},opts.headParams||{});
+  const HP=Object.assign({},NYOBO_HEAD,{gazePitch:rig.gazeP,polyH:q==="low"?.0056:q==="medium"?.0047:.0040},kara?{}:{eyeScale:.96,eyeSep:1.02,irisC:[0x22130e,0x5e3e2a],skin:0xe8c4ac,hairC:0x1a1410,seed:67,eyeW:.0152,eyeOpenU:.0056,nose:.88,lipU:.0042,mouthW:.0188,taper:.03,smile:1.0,browAmt:.45,browDrop:.003,browW:1.1,softBrow:.35},opts.headParams||{});
   // ---- head (scaled), own eyes (runtime gaze) ----
   const anime=HP.anime!==false;const hd=anime?nyAnimeHead(R,HP,q):buildHead(R,HP,q);T_.head=performance.now()-t0;
   const pivot=new THREE.Object3D();placeObj(pivot,rig.headM,rig.pivot);pivot.scale.setScalar(NY_HS);hd.group.position.set(-HEAD_PIV[0],-HEAD_PIV[1],-HEAD_PIV[2]);pivot.add(hd.group);g.add(pivot);

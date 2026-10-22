@@ -616,11 +616,11 @@ const SAIGEN_MAKURA=(()=>{
      {zone:"miya",light:{preset:"fuyuShimoAsa",over:{exposure:1.0}},fade:"black",fov:36,frameUp:.1,camFn(){const h=hiokePos();
         return {cam:{pos:[h.x+.55,h.y+.65,h.z+2.1],look:[h.x-.2,h.y+.25,h.z]},to:{pos:[h.x+.5,h.y+.6,h.z+1.85],look:[h.x-.2,h.y+.25,h.z]}};},dur:8,shadow:{center:[-3.8,1.2,-2.2],half:4},
       enter(){placeHiokeScene();const h=S.assets.hioke;if(h&&h.userData.setBurn)h.userData.setBurn(.05);S.labelFig={};playOnce(SND.sumi,.4,.3);},
-      tick(ctx,u,t){const h=S.assets.hioke;if(h&&h.userData.setBurn)h.userData.setBurn(.05+.08*u);}}],
+      tick(ctx,u,t){const h=S.assets.hioke;if(h&&h.userData.setBurn)h.userData.setBurn(.05+.08*u);if(h&&h.userData.setStoke)h.userData.setStoke(1-u*.7);}}],
     /* 15 昼になりて、ぬるくゆるびもていけば、火桶の火も白き灰がちになりてわろし。 */
     [{zone:"miya",light:"fuyuShimoAsa",lightTo:{preset:"fuyuHiru",dur:12,delay:.5},fov:24,frameUp:0,camFn(){const h=hiokePos();
         return {cam:{pos:[h.x+.45,h.y+.62,h.z+.38],look:[h.x,h.y+.2,h.z]},to:{pos:[h.x+.39,h.y+.55,h.z+.32],look:[h.x,h.y+.2,h.z]}};},dur:13,shadow:{center:[-3.8,1.2,-2.4],half:3},
-      enter(){S.snowCover=.6;seasonMiya("winter");setNight(0);setMisu(.4);setShitomi(1);placeHiokeScene();const t=S.assets.nyoboTend;if(t)t.visible=false;const h=S.assets.hioke;if(h&&h.userData.setBurn)h.userData.setBurn(.2);},
+      enter(){S.snowCover=.6;seasonMiya("winter");setNight(0);setMisu(.4);setShitomi(1);placeHiokeScene();const t=S.assets.nyoboTend;if(t)t.visible=false;const h=S.assets.hioke;if(h&&h.userData.setBurn)h.userData.setBurn(.2);if(h&&h.userData.setStoke)h.userData.setStoke(0);},
       tick(ctx,u,t){const h=S.assets.hioke;if(h&&h.userData.setBurn)h.userData.setBurn(lerp(.2,1,clamp01(t/11)));}}]
   ];
 
