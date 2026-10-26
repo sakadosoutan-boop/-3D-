@@ -13,6 +13,8 @@ SELECTED_UX=(()=>{
   const home=document.createElement('section');home.id='homeNext';home.setAttribute('aria-label','次の遊びとお気に入り');
   home.innerHTML='<div class="home-next-copy"><span>次のひとつ</span><b id="homeNextTitle"></b><p id="homeNextReason"></p></div><button id="homeNextStart" class="t-btn"></button><div id="homeFavorites"></div><button id="homeFavoriteEdit" class="tb-btn">☆ お気に入りを選ぶ</button><div id="homeFavoriteChoices" hidden></div>';
   $id('mainModes').before(home);
+  // お気に入りの選び直しは表紙の「そのほか」へ畳む(選んだ★の近道だけを表紙に残す)。
+  {const drawer=$id('titleMore');if(drawer){const fav=document.createElement('div');fav.className='t-more-fav';fav.append($id('homeFavoriteEdit'),$id('homeFavoriteChoices'));drawer.prepend(fav);}}
   function due(){return window.LEARNING_EXTENSION?.dueIds?.()||[];}
   function refresh(){
     home.hidden=APP.mode!=='title';

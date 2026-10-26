@@ -1095,7 +1095,6 @@ button{font-family:var(--serif);cursor:pointer}
 .kamon-circle{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;
   border-radius:50%;border:1.5px solid rgba(201,162,63,.75);color:rgba(201,162,63,.9);font-size:18px;
   box-shadow:0 0 0 3px rgba(14,9,5,.8),0 0 0 5px rgba(201,162,63,.22),0 0 14px rgba(201,162,63,.12)}
-.t-eyebrow{color:var(--kin);letter-spacing:.42em;font-size:10.5px;margin-bottom:8px}
 @keyframes goldShimmer{0%,100%{text-shadow:0 0 0 transparent}50%{text-shadow:0 0 22px rgba(201,162,63,.4),0 0 48px rgba(201,162,63,.12)}}
 h1.t-main{color:var(--gofun);font-size:clamp(26px,6vw,50px);font-weight:600;letter-spacing:.22em;
   line-height:1.22;margin:2px 0;animation:goldShimmer 5s ease-in-out infinite}
@@ -1109,7 +1108,6 @@ h1.t-main .shu{color:var(--shu-bright)}
 .title-badge b::before{content:"";width:14px;height:14px;flex:0 0 auto;border-radius:50%;
   background:radial-gradient(circle at 34% 30%,#fff2c4,#c9a23f 55%,#8a6a26 100%);
   border:1px solid rgba(255,244,208,.85);box-shadow:0 0 0 2px rgba(20,13,6,.6),0 0 7px rgba(201,162,63,.55),inset 0 1px 1px rgba(255,255,255,.5)}
-.t-divider{color:rgba(201,162,63,.42);font-size:13px;margin:10px auto;letter-spacing:.9em}
 .daily-quest-panel{position:relative;margin:12px auto 6px;padding:9px 10px 10px;text-align:left;
   background:linear-gradient(180deg,rgba(21,15,10,.82),rgba(11,8,6,.72));border:1px solid rgba(201,162,63,.32);
   border-radius:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
@@ -2383,15 +2381,6 @@ body.taiji-mode #vignette{box-shadow:inset 0 0 150px 24px rgba(0,0,0,.34)}
   font-family:var(--sans);font-size:12px;padding:9px 14px;border-radius:999px;cursor:pointer;letter-spacing:.06em}
 .onboard-skip:hover{color:#3a2510;border-color:#8a3b2a}
 @media (prefers-reduced-motion:reduce){.onboard-card{animation:none}}
-/* [UX]「はじめての方へ」。以前は表紙の最下部・高さ22pxの小さな下線文字で、
-   スマホでは2画面ぶんスクロールしないと現れなかった。モード一覧の直前へ上げ、
-   指で押せる高さの札にする(表紙の色調は変えず、控えめな枠だけを足す)。 */
-.t-onboard-help{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin:8px 0 2px;
-  background:rgba(0,0,0,.18);border:1px solid rgba(201,162,63,.26);border-radius:999px;color:#c0ab86;
-  font-family:var(--sans);font-size:11px;letter-spacing:.08em;
-  cursor:pointer;padding:9px 14px;min-width:unset;min-height:38px;box-shadow:none!important;transform:none!important}
-.t-onboard-help:hover{color:var(--gofun);border-color:var(--kin)}
-.t-onboard-help .tci{width:16px;height:16px;color:var(--kin);flex:0 0 auto}
 
 /* 和歌収集エフェクト — 巻物・縦書き */
 #wakaReveal{position:fixed;z-index:90;inset:0;display:flex;align-items:center;justify-content:center;
@@ -2489,11 +2478,9 @@ body.taiji-mode #vignette{box-shadow:inset 0 0 150px 24px rgba(0,0,0,.34)}
   #title{padding-top:max(8px,env(safe-area-inset-top));padding-bottom:10px}
   .t-frame{padding:14px 14px 12px}
   .t-kamon{margin-bottom:4px}.kamon-circle{width:32px;height:32px;font-size:15px}
-  .t-eyebrow{font-size:9px;margin-bottom:4px;letter-spacing:.28em}
   h1.t-main{font-size:clamp(24px,8vw,34px);letter-spacing:.14em}
   .t-sub{font-size:10px;letter-spacing:.12em;margin-top:4px}
   .title-badge{margin-top:6px;padding:4px 10px;font-size:10px}.title-badge b{font-size:12px}
-  .t-divider{margin:6px auto;font-size:11px;letter-spacing:.55em}
   #title .t-modes{gap:7px;margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(128px,1fr))}
   #title .t-btn{min-height:58px;padding:9px 10px;border-radius:6px}.mode-meta{font-size:8.5px;min-height:15px;padding:1px 6px}.mode-name{font-size:12px}
   .mode-time{font-size:8.5px;min-height:15px;padding:1px 6px}.mode-tags{gap:3px}
@@ -2503,7 +2490,6 @@ body.taiji-mode #vignette{box-shadow:inset 0 0 150px 24px rgba(0,0,0,.34)}
   #title #titleSubEntries .t-btn{min-height:52px;padding:8px 9px;font-size:11.5px;letter-spacing:.06em}
   #titleSubEntries .tci{width:15px;height:15px;margin-right:6px;vertical-align:-3px}
   .oc-entry-mark{width:17px;height:17px;font-size:10px;margin-right:6px}
-  .t-onboard-help{font-size:10.5px;min-height:36px;padding:8px 10px;margin:6px 0 2px}
   .daily-quest-panel{padding:7px;margin-top:8px}.dq-head{margin-bottom:5px}.dq-list{gap:6px}.dq-item{flex-basis:min(202px,76vw);min-height:72px;padding:7px 8px}
   .dq-item .dq-title{font-size:10.5px}.dq-item .dq-desc{font-size:9.5px;line-height:1.35}.dq-start{min-height:23px}
   .first-route-panel{padding:8px 9px}.fr-steps{grid-template-columns:1fr;gap:6px}.fr-step{min-height:0}
@@ -4188,58 +4174,149 @@ body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf
 @media(max-width:600px){.online-coop-settings{grid-template-columns:1fr}.coop-hunt-hud{top:calc(env(safe-area-inset-top) + 112px);right:8px;width:min(218px,calc(100vw - 16px));padding:8px 9px}.coop-hunt-head{grid-template-columns:30px 1fr 10px}.coop-hunt-sigil{width:28px;height:28px;font-size:15px}.coop-hunt-head b{font-size:12px}.coop-hunt-hud p{font-size:9px}}
 @media(prefers-reduced-motion:reduce){#coopHuntConnection.is-reconnecting{animation:none}.coop-hunt-track i{transition:none}}
 
-/* 読みやすさと入口の整理。五つの遊びを同じ階層で比較できるようにする。 */
-#title .t-frame{width:min(94vw,1060px);max-width:1060px;background:rgba(22,15,9,.88)}
-#title #mainModes .t-modes{grid-template-columns:repeat(5,minmax(0,1fr))}
-#title .t-btn small{font-family:var(--sans);font-size:11px;line-height:1.65;color:#d2c2a0;letter-spacing:.03em}
-#title .mode-time{color:#d2bd8d;font-size:10px}
-#title .mode-meta{font-size:10px}
-#title .t-sub,#title .t-note,#title .t-changelog summary{color:#c3b292}
-#title .t-note{font-size:11px}
-#title .cl-list{color:#c3b292;font-size:11px}
-#title .t-back-btn{color:#d8c6a1;min-height:44px;font-size:12px}
-#title .t-btn:focus-visible,.tb-btn:focus-visible{outline:2px solid #ffe2a0;outline-offset:3px}
-#titleAudioHint{bottom:4px;font-size:10px;padding:3px 10px}
 .info-body{touch-action:pan-y}
 .info-name{padding-right:30px}
 .info-desc{font-size:14px;line-height:1.95}
-@media(max-width:900px){
-  #title #mainModes .t-modes{grid-template-columns:repeat(2,minmax(0,1fr))}
-  #title #mainModes #btnWalk{grid-column:1/-1;min-height:100px;border-color:#dfbc64;
-    background:linear-gradient(115deg,#604918,#33240e)}
-  #title #mainModes #btnWalk .cat-icon{position:absolute;right:24px;font-size:34px;opacity:.75}
-  #title #mainModes #btnWalk small{padding-right:38px}
-}
 @media(max-width:520px){
-  #title #titleSubEntries{grid-template-columns:repeat(2,minmax(0,1fr))}
-  #title #titleSubEntries .t-btn{padding:10px;min-height:82px}
-  #title .t-btn{padding:12px}
-  #title .mode-name{letter-spacing:.07em}
   body:has(#info.open) #toast{bottom:calc(38vh + 28px)}
+}
+
+/* ===== 表紙(トップ画面)の整理 =====
+   表紙は「題 → 次のひとつ → 遊び方5枚 → 記録の札 → そのほか」の五段だけにし、PC・スマホとも一画面に収める。
+   ・称号と官位は丸札をやめ、題の下の一行に。区切り飾りと副見出しは置かない。
+   ・遊び方の5枚は名前と一行の説明だけ(ジャンル札・所要時間はサブ選択の側で見せる)。
+   ・図鑑/立身伝/あゆみ/暦/時代移動/御前試合は名前だけの小さな札。進捗の文言はそれぞれの画面の中で見せる。
+   ・本日の任務・はじめの一巻・お気に入り設定・更新履歴・推奨環境・クレジットは「そのほか」(#titleMore)に畳む。
+   色は金×墨の一系統にそろえ、モードごとの紫・桃の縁取りは使わない。 */
+#title .t-frame{width:min(calc(100vw - 24px),880px);max-width:880px;padding:22px 28px 16px;background:rgba(20,14,8,.86);box-sizing:border-box}
+#title .t-head{display:flex;flex-direction:column;align-items:center}
+#title .t-kamon{margin-bottom:6px}
+#title .kamon-circle{width:34px;height:34px;font-size:15px}
+#title h1.t-main{font-size:clamp(28px,4.6vw,42px);letter-spacing:.2em;line-height:1.2;margin:0}
+#title .t-sub{margin-top:6px;color:#c3b292;font-size:12.5px;letter-spacing:.2em}
+#title .t-status{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;margin-top:10px}
+#title .title-badge{margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;gap:6px;
+  color:#a8977a;font-size:11px;letter-spacing:.16em}
+#title .title-badge b{font-size:12.5px;color:#ecdcb2;gap:5px}
+#title .title-badge b::before{width:9px;height:9px;box-shadow:0 0 5px rgba(201,162,63,.45)}
+#title #titleCareerBadgeWrap{margin-left:0}
+#title .t-head{position:relative}
+/* 音のヒントは流れの外(枠の右上)に置き、消えても表紙の配置が動かないようにする */
+#title #titleAudioHint{top:-10px;right:-14px;bottom:auto;left:auto;transform:none;padding:3px 10px;font-size:10.5px;border-radius:999px}
+#title #titleAudioHint.hide{opacity:0;visibility:hidden;animation:none}
+/* 遊び方5枚: 散策を筆頭に大きく、残り4枚は同じ地色でそろえる */
+#title #mainModes{margin-top:16px}
+#title .t-mode-kicker{margin:0 0 10px;text-align:center;font-size:11px;font-weight:400;letter-spacing:.32em;color:rgba(218,190,120,.82)}
+#title #mainModes .t-modes{display:grid;grid-template-columns:1.3fr repeat(4,minmax(0,1fr));gap:10px;margin-top:0}
+#title #mainModes .t-cat-btn{min-height:118px;padding:14px 14px 13px;justify-content:flex-start;gap:6px;
+  background:linear-gradient(160deg,#3b2615,#21150b);border-color:rgba(201,162,63,.5)}
+#title #mainModes .t-cat-btn .cat-icon{margin-bottom:2px}
+#title #mainModes .cat-icon .wic{width:24px;height:24px}
+#title #mainModes .mode-name{font-size:16px;letter-spacing:.16em}
+#title #mainModes .t-btn small{font-family:var(--sans);font-size:11px;line-height:1.6;letter-spacing:.03em;color:#cdbd9b}
+#title #mainModes #btnWalk{background:linear-gradient(140deg,#6a5019,#36260b);border-color:#e3c169}
+#title #mainModes #btnWalk .mode-name{font-size:19px}
+#title #mainModes #btnWalk small{color:#e6d4a6}
+html.map-kamakura #title #mainModes .t-modes{grid-template-columns:minmax(0,1fr);max-width:440px;margin-inline:auto}
+/* サブ選択: 所要時間だけ残し、ジャンル札は外す */
+#title .t-subpanel{margin-top:16px}
+#title .sp-title{margin:0 0 10px;font-size:12px;letter-spacing:.24em;color:#d6b86e}
+#title .t-subpanel .t-modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:0}
+#title .t-subpanel .t-btn{min-height:68px;padding:10px 13px}
+#title .t-subpanel .t-btn small{font-family:var(--sans);font-size:11px;line-height:1.55;color:#d2c2a0;letter-spacing:.03em}
+#title .t-subpanel .mode-meta{display:none}
+#title .t-subpanel .t-modes .t-btn:not(.recommended){background:linear-gradient(160deg,#3b2615,#21150b)}
+#title .t-subpanel .t-modes .t-btn .cat-icon{display:none}
+#title .mode-time{color:#d2bd8d;font-size:10px}
+#title .t-back-btn{min-height:44px;margin-top:12px;padding:8px 20px;color:#d8c6a1;font-size:12px}
+/* 記録と時代移動: 名前だけの小さな札 */
+#title #titleSubEntries{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(201,162,63,.18)}
+#title #titleSubEntries .t-btn{width:auto;height:auto;min-height:44px;margin:0;padding:8px 15px;flex:0 1 auto;flex-direction:row;align-items:center;justify-content:center;gap:7px;
+  border-radius:999px;border-color:rgba(201,162,63,.42);background:rgba(255,246,220,.04);color:#e6d6b0;font-size:13px;letter-spacing:.12em;box-shadow:none}
+#title #titleSubEntries .t-btn::before{display:none}
+#title #titleSubEntries .t-btn:hover,#title #titleSubEntries .t-btn:focus-visible{background:rgba(201,162,63,.14);border-color:rgba(232,191,86,.8)}
+#title #titleSubEntries .t-btn small{display:none}
+#title #titleSubEntries .tci{width:16px;height:16px;margin:0;flex:0 0 auto}
+#title #titleSubEntries .t-entry-name{white-space:nowrap}
+#title #titleSubEntries .online-entry{color:#e6d6b0}
+#title #titleSubEntries .oc-entry-mark{width:17px;height:17px;margin:0;font-size:10px;border-color:rgba(201,162,63,.55);color:#e6d6b0}
+html:not(.map-kamakura) #btnEraTitle .era-to-heian,html.map-kamakura #btnEraTitle .era-to-kamakura{display:none}
+html.map-kamakura #title #titleSubEntries .t-btn{background:rgba(26,34,44,.6)!important;border-color:rgba(111,147,184,.55)!important;color:#d5d9cb}
+/* 足もと: はじめての方へ / そのほか */
+#title .t-foot{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;margin-top:10px}
+.t-foot-btn{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 14px;background:none;border:1px solid transparent;border-radius:6px;
+  color:#c7b58f;font-family:var(--sans);font-size:12px;letter-spacing:.14em;cursor:pointer;transition:color .15s,border-color .15s}
+.t-foot-btn:hover,.t-foot-btn:focus-visible{color:var(--gofun);border-color:rgba(201,162,63,.45);outline:none}
+.t-foot-btn .tci{width:16px;height:16px;color:var(--kin);flex:0 0 auto}
+.t-foot-caret{display:inline-block;font-size:10px;transition:transform .2s}
+#btnTitleMore[aria-expanded="true"]{color:var(--gofun);border-color:rgba(201,162,63,.35)}
+#btnTitleMore[aria-expanded="true"] .t-foot-caret{transform:rotate(180deg)}
+/* そのほか(引き出し) */
+#titleMore{margin-top:6px;padding:12px;border:1px solid rgba(201,162,63,.22);border-radius:8px;background:rgba(8,5,3,.42);text-align:left;animation:fadeInUp .2s ease}
+#titleMore[hidden]{display:none}
+#titleMore .daily-quest-panel{margin-top:0}
+#titleMore .first-route-panel{margin-top:10px}
+#titleMore .dq-start{min-height:44px;padding:0 18px;border-radius:8px}
+#titleMore .fr-start{min-height:44px}
+.t-more-fav{display:flex;flex-direction:column;align-items:flex-start;margin-bottom:10px}
+#title .t-changelog{margin-top:12px}
+#title .t-changelog summary{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0;color:#c3b292;font-size:11px}
+#title .cl-list{color:#c3b292;font-size:11px}
+#title .t-note{text-align:center;color:#a8977a;font-size:11px}
+#title .t-credit{display:block;min-height:44px;margin:6px auto 0;padding:0 14px;color:#a8977a}
+#title .t-btn:focus-visible,.tb-btn:focus-visible{outline:2px solid #ffe2a0;outline-offset:3px}
+@media(max-width:600px){
+  #title{padding-top:max(10px,env(safe-area-inset-top))}
+  #title .t-frame{width:calc(100vw - 16px);padding:16px 12px 10px}
+  #title .t-kamon{margin-bottom:4px}
+  #title .kamon-circle{width:30px;height:30px;font-size:13px}
+  #title h1.t-main{font-size:30px;letter-spacing:.16em}
+  #title .t-sub{font-size:11px;letter-spacing:.12em;margin-top:4px}
+  #title .t-status{margin-top:8px;gap:2px 14px}
+  #title #mainModes{margin-top:12px}
+  #title .t-mode-kicker{margin-bottom:8px;font-size:10.5px}
+  #title #titleAudioHint{top:-8px;right:-4px;font-size:10px;padding:2px 8px}
+  #title #mainModes .t-modes{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  #title #mainModes .t-cat-btn{min-height:96px;padding:11px 11px 10px;gap:4px}
+  #title #mainModes .cat-icon .wic{width:21px;height:21px}
+  #title #mainModes .mode-name{font-size:15px;letter-spacing:.1em}
+  #title #mainModes .t-btn small{font-size:10.5px;line-height:1.5}
+  #title #mainModes #btnWalk{grid-column:1/-1;min-height:0;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:12px;row-gap:2px;align-items:center;padding:12px 14px}
+  #title #mainModes #btnWalk .cat-icon{grid-row:1/3;margin:0}
+  #title #mainModes #btnWalk .cat-icon .wic{width:28px;height:28px}
+  #title #mainModes #btnWalk .mode-name{font-size:18px}
+  #title .t-subpanel .t-modes{grid-template-columns:minmax(0,1fr)}
+  #title .t-subpanel .t-btn{min-height:60px}
+  #title #titleSubEntries{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px;padding-top:12px}
+  #title #titleSubEntries .t-btn{padding:8px 6px;gap:5px;font-size:12px;letter-spacing:.06em}
+  #title .t-foot{margin-top:6px;gap:0 4px}
+  .t-foot-btn{padding:8px 10px;letter-spacing:.08em}
+  #titleMore{padding:10px 8px}
 }
 @media(orientation:landscape) and (max-height:520px){
   #title .t-frame{padding:10px 16px}
-  #title .t-kamon,#title .t-eyebrow,#title .t-divider,#title .t-sub{display:none}
-  #title h1.t-main{font-size:26px;line-height:1.15}
-  #title .title-badge{margin-top:4px;padding:2px 9px;font-size:10px}
-  #title .title-badge b{font-size:11px}
-  #title .t-mode-kicker{margin-top:6px}
-  #title #mainModes .t-modes{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-top:8px}
-  #title #mainModes #btnWalk{grid-column:auto;min-height:100px}
-  #title #mainModes #btnWalk .cat-icon{position:static;font-size:21px;opacity:1}
-  #title #mainModes #btnWalk small{padding-right:0}
-  #title #mainModes .t-btn{padding:9px}
+  #title .t-kamon,#title .t-sub{display:none}
+  #title h1.t-main{font-size:24px;line-height:1.15}
+  #title .t-status{margin-top:4px}
+  #title #titleAudioHint{margin-top:4px}
+  #title #mainModes{margin-top:8px}
+  #title .t-mode-kicker{display:none}
+  #title #mainModes .t-modes{grid-template-columns:1.3fr repeat(4,minmax(0,1fr));gap:7px}
+  #title #mainModes #btnWalk{grid-column:auto;display:flex}
+  #title #mainModes .t-cat-btn{min-height:84px;padding:9px 10px;gap:3px}
+  #title #mainModes .t-btn small{font-size:10px;line-height:1.45}
+  #title #titleSubEntries{margin-top:8px;padding-top:8px}
 }
 /* APP_CSS_EMBED_END */
 /* APP_SELECTED_UX_CSS_EMBED_BEGIN (src/app/selected-ux.css から自動生成。ここを直接編集しない) */
-#homeNext{display:grid;grid-template-columns:1fr auto;gap:10px 18px;text-align:left;padding:16px;margin:16px 0;background:#342612;border:1px solid #bd9851;border-radius:9px;color:#f4ead5}
+#homeNext{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;text-align:left;padding:10px 12px 10px 14px;margin:14px 0 0;background:rgba(52,38,18,.55);border:1px solid rgba(201,162,63,.38);border-left:3px solid #c9a23f;border-radius:8px;color:#f4ead5}
 #homeNext[hidden],#homeFavoriteChoices[hidden],#touchLayoutEditor[hidden]{display:none!important}
-.home-next-copy>span{font-size:11px;color:#d8be81}.home-next-copy>b{display:block;font-size:18px;margin:5px 0}.home-next-copy p{font-size:12px;line-height:1.65}
-#homeNext .t-btn{min-width:140px;align-self:center}#homeFavorites{display:flex;flex-wrap:wrap;gap:6px}#homeFavoriteEdit{justify-self:end}#homeFavoriteChoices{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}#homeFavoriteChoices button[aria-pressed=true]{background:#704723;border-color:#f5d171}
+.home-next-copy{flex:1 1 220px;min-width:0}.home-next-copy>span{font-size:10.5px;letter-spacing:.2em;color:#d8be81}.home-next-copy>b{display:block;font-size:16px;letter-spacing:.06em;margin:2px 0 1px}.home-next-copy p{font-size:11.5px;line-height:1.55;color:#cdbb95}
+#title #homeNext .t-btn{flex:0 0 auto;min-width:0;min-height:44px;padding:8px 18px;align-items:center;font-size:13.5px;letter-spacing:.1em;background:linear-gradient(155deg,#654d16,#35250a);border-color:rgba(232,191,86,.9)}#homeFavorites{flex:1 1 100%;display:flex;flex-wrap:wrap;gap:6px}#homeFavorites:empty{display:none}#homeFavorites .tb-btn{min-height:44px}#homeFavoriteChoices{flex:1 1 100%;display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}#homeFavoriteChoices .tb-btn{min-height:44px}#homeFavoriteEdit{min-height:44px}#homeFavoriteChoices button[aria-pressed=true]{background:#704723;border-color:#f5d171}
 .selected-settings{padding:12px 0;border-top:1px solid #bda67555}.selected-settings label{display:block;margin:10px 0;font-size:13px}.selected-settings p{font-size:11px;line-height:1.6}.selected-settings button{margin:5px}
 #runToggleButton{display:none;position:fixed;bottom:150px;left:28px;z-index:44;min-height:42px}body.run-toggle-enabled:not(.taiji-mode):not(.utakai-mode):not(.renai-mode) #runToggleButton:not([hidden]){display:block}#runToggleButton[aria-pressed=true]{background:#825e1e}
 #touchLayoutEditor{position:fixed;inset:0;z-index:10000;background:#15201dec;color:#fff;touch-action:none}#touchLayoutEditor header{display:flex;align-items:center;gap:12px;padding:12px;background:#182720}#touchLayoutEditor p{flex:1;font-size:13px}#touchLayoutEditor header button{padding:10px 14px;border:1px solid #dcb76c;background:#48351a;color:white;border-radius:6px}.layout-handle{border:2px dashed #e8c374;border-radius:50%;background:#735323;color:#fff;touch-action:none;font-size:14px;cursor:move}.layout-handle:focus{outline:3px solid white;outline-offset:3px}
-@media(max-width:600px){#homeNext{grid-template-columns:1fr;padding:12px}#homeNext .t-btn{justify-self:stretch}#homeFavoriteEdit{justify-self:start}.home-next-copy>b{font-size:16px}#touchLayoutEditor header{flex-wrap:wrap}#touchLayoutEditor p{flex-basis:100%}}
+@media(max-width:600px){#homeNext{padding:9px 10px 9px 12px;gap:8px 10px;margin-top:12px}.home-next-copy{flex-basis:150px}.home-next-copy>b{font-size:14.5px}.home-next-copy p{font-size:11px}#title #homeNext .t-btn{padding:8px 12px;font-size:12.5px;letter-spacing:.06em}#touchLayoutEditor header{flex-wrap:wrap}#touchLayoutEditor p{flex-basis:100%}}
 /* APP_SELECTED_UX_CSS_EMBED_END */
 /* APP_LEARNING_EXTENSION_CSS_EMBED_BEGIN (src/app/learning-extension.css から自動生成。ここを直接編集しない) */
 .learning-tools{margin:12px 0;padding:12px;border:1px solid #a48a56;border-radius:9px;background:#f6efd9;font-family:var(--sans);line-height:1.6}
@@ -4391,47 +4468,45 @@ body.kenko-hermitage-mode #modeBrief{display:none!important}
 <div id="letterboxBottom" class="letterbox-bar" aria-hidden="true"></div>
 
 <div id="title">
-  <div id="titleAudioHint">🎵 画面をタップすると音楽が流れます</div>
   <div class="t-frame">
-    <div class="t-kamon"><div class="kamon-circle">✿</div></div>
-    <div class="t-eyebrow">古文・日本史　3D 学習シミュレーター</div>
-    <h1 class="t-main">寝殿造り<span class="shu">探訪</span></h1>
-    <div class="t-sub">平安貴族の住まいを　歩いて　触れて　覚える</div>
-    <div class="title-badge">現在の称号 <b id="titleCurrentBadge">平安入門者</b></div>
-    <div class="title-badge" id="titleCareerBadgeWrap">現在の官位 <b id="titleCareerBadge">童殿上</b></div>
-    <div class="t-divider">✦　✦　✦</div>
+    <!-- 表紙は「題 → 次のひとつ → 遊び方(5枚) → 記録の入口 → そのほか」の順に絞る。
+         任務・はじめの一巻・更新履歴・推奨環境・クレジットは「そのほか」に畳み、表紙の一画面に収める。 -->
+    <header class="t-head">
+      <div class="t-kamon" aria-hidden="true"><div class="kamon-circle">✿</div></div>
+      <h1 class="t-main">寝殿造り<span class="shu">探訪</span></h1>
+      <div class="t-sub">平安貴族の住まいを　歩いて　触れて　覚える</div>
+      <div class="t-status" aria-label="現在の称号と官位">
+        <span class="title-badge">称号 <b id="titleCurrentBadge">平安入門者</b></span>
+        <span class="title-badge" id="titleCareerBadgeWrap">官位 <b id="titleCareerBadge">童殿上</b></span>
+      </div>
+      <div id="titleAudioHint">♪ 触れると楽の音</div>
+    </header>
 
-    <!-- メインモード選択(5カテゴリ)。物語は体験へ、対戦は下段へ寄せ、表紙の一画面に収まる枚数にしている -->
+    <!-- 遊び方の入口。散策を筆頭に、物語・遊ぶ・学ぶ・恋文の4つへ。細かな種目は各サブ選択に置く -->
     <div id="mainModes">
-      <div class="t-mode-kicker">遊び方を選ぶ</div>
-      <button class="t-onboard-help" id="btnOnboardHelp"><svg class="wic tci"><use href="#ic-help"/></svg>はじめての方へ ─ 何から始めるか迷ったら</button>
+      <h2 class="t-mode-kicker">遊び方を選ぶ</h2>
       <div class="t-modes">
-        <button class="t-btn t-cat-btn" id="btnWalk">
-          <span class="mode-tags"><span class="mode-meta">探索 / 収集</span><span class="mode-time">🕐 5分〜</span></span>
-          <div class="cat-icon"><svg class="wic ci"><use href="#ic-walk"/></svg></div><span class="mode-name">散策モード</span><small>邸内と庭を自由に歩き回る</small>
+        <button class="t-btn t-cat-btn recommended" id="btnWalk">
+          <div class="cat-icon"><svg class="wic ci"><use href="#ic-walk"/></svg></div><span class="mode-name">散策</span><small>邸と庭を自由に歩く。はじめはここから</small>
         </button>
-        <button class="t-btn t-cat-btn gold recommended" id="btnQuizMode">
-          <span class="mode-tags"><span class="mode-meta">学習 / 短時間</span><span class="mode-time">🕐 3分〜</span></span>
-          <div class="cat-icon"><svg class="wic ci"><use href="#ic-scroll"/></svg></div><span class="mode-name">クイズモード</span><small>名称当て・タイムアタック・小テスト</small>
+        <button class="t-btn t-cat-btn" id="btnTaikenMode">
+          <div class="cat-icon"><svg class="wic ci"><use href="#ic-robe"/></svg></div><span class="mode-name">物語・古典</span><small>御簾の向こうへ・名場面の再現・一日体験</small>
         </button>
-        <button class="t-btn t-cat-btn" id="btnTaikenMode" style="border-color:rgba(170,100,50,.7)">
-          <span class="mode-tags"><span class="mode-meta">物語 / 実技</span><span class="mode-time">🕐 10分〜</span></span>
-          <div class="cat-icon"><svg class="wic ci"><use href="#ic-robe"/></svg></div><span class="mode-name">物語・体験モード</span><small>御簾の向こうへ・一日体験・歌合・再現</small>
+        <button class="t-btn t-cat-btn" id="btnMiniGameMode">
+          <div class="cat-icon"><svg class="wic ci"><use href="#ic-mask"/></svg></div><span class="mode-name">遊ぶ</span><small>物の怪退治・蹴鞠・香合わせ ほか</small>
         </button>
-        <button class="t-btn t-cat-btn combat" id="btnMiniGameMode" style="border-color:rgba(150,80,200,.7)">
-          <span class="mode-tags"><span class="mode-meta">挑戦 / アクション</span><span class="mode-time">🕐 3分〜</span></span>
-          <div class="cat-icon"><svg class="wic ci"><use href="#ic-mask"/></svg></div><span class="mode-name">ミニゲームモード</span><small>物の怪退治・垣間見ほか全5種</small>
+        <button class="t-btn t-cat-btn" id="btnQuizMode">
+          <div class="cat-icon"><svg class="wic ci"><use href="#ic-scroll"/></svg></div><span class="mode-name">学ぶ</span><small>名称当て・タイムアタック・小テスト</small>
         </button>
-        <button class="t-btn t-cat-btn" id="btnRenaiMode" style="border-color:rgba(190,80,110,.7)">
-          <span class="mode-tags"><span class="mode-meta">恋愛 / 和歌</span><span class="mode-time">🕐 10分〜</span></span>
-          <div class="cat-icon"><svg class="wic ci"><use href="#ic-letter"/></svg></div><span class="mode-name">恋愛モード</span><small>恋文・和歌で姫君に想いを伝える</small>
+        <button class="t-btn t-cat-btn" id="btnRenaiMode">
+          <div class="cat-icon"><svg class="wic ci"><use href="#ic-letter"/></svg></div><span class="mode-name">恋文</span><small>和歌で姫君に想いを伝える</small>
         </button>
       </div>
     </div>
 
     <!-- クイズのサブ選択 -->
     <div id="quizSubPanel" class="t-subpanel" style="display:none">
-      <div class="sp-title">── クイズモードを選択 ──</div>
+      <div class="sp-title">学ぶ ─ 名称と古文を覚える</div>
       <div class="t-modes">
         <button class="t-btn" id="btnQuiz"><span class="mode-tags"><span class="mode-meta">基礎</span><span class="mode-time">🕐 約3分</span></span><span class="mode-name">名称当てクイズ</span><small>部位・調度品を探せ</small></button>
         <button class="t-btn gold" id="btnQuizTA"><span class="mode-tags"><span class="mode-meta">挑戦</span><span class="mode-time">🕐 約5分</span></span><span class="mode-name">⏱ タイムアタック</span><small>10問を最速タイムで</small></button>
@@ -4442,7 +4517,7 @@ body.kenko-hermitage-mode #modeBrief{display:none!important}
 
     <!-- 物語・体験のサブ選択(物語モードはここへ差し込まれる) -->
     <div id="taikenSubPanel" class="t-subpanel" style="display:none">
-      <div class="sp-title">── 物語・体験モードを選択 ──</div>
+      <div class="sp-title">物語・古典 ─ 読んで、演じて、訪ねる</div>
       <div class="t-modes">
         <button class="t-btn" id="btnQuestEntry"><span class="mode-tags"><span class="mode-meta">男女選択</span><span class="mode-time">🕐 約10分</span></span><span class="mode-name">👘 貴族の一日体験</span><small>男性・女性を選んで生活を体験</small></button>
         <button class="t-btn gold" id="btnUtakai"><span class="mode-tags"><span class="mode-meta">和歌 / 対戦</span><span class="mode-time">🕐 約10分</span></span><span class="mode-name">🎴 <ruby>歌合<rt>うたあわせ</rt></ruby>モード</span><small>集めた和歌で左方として競う</small></button>
@@ -4453,7 +4528,7 @@ body.kenko-hermitage-mode #modeBrief{display:none!important}
 
     <!-- ミニゲームのサブ選択 -->
     <div id="miniGameSubPanel" class="t-subpanel" style="display:none">
-      <div class="sp-title">── ミニゲームモードを選択 ──</div>
+      <div class="sp-title">遊ぶ ─ 平安の遊びと勝負</div>
       <div class="t-modes">
         <button class="t-btn combat" id="btnTaiji" style="border-color:rgba(150,80,200,.7)"><span class="mode-tags"><span class="mode-meta">戦闘 / ボス</span><span class="mode-time">🕐 約8分</span></span><span class="mode-name">⚡ <ruby>物の怪<rt>もののけ</rt></ruby><ruby>退治<rt>たいじ</rt></ruby></span><small>夜の邸に潜む怪異を弓矢で退散</small></button>
         <button class="t-btn gold" id="btnKaimami"><span class="mode-tags"><span class="mode-meta">潜入 / 物語</span><span class="mode-time">🕐 約5分</span></span><span class="mode-name">🌙 <ruby>垣間見<rt>かいまみ</rt></ruby>ミッション</span><small>女房と侍従の目を避けて忍ぶ</small></button>
@@ -4466,104 +4541,112 @@ body.kenko-hermitage-mode #modeBrief{display:none!important}
 
     <!-- 恋愛モードのサブ選択 -->
     <div id="renaiSubPanel" class="t-subpanel" style="display:none">
-      <div class="sp-title">── 恋愛モードを選択 ──</div>
+      <div class="sp-title">恋文 ─ 和歌で想いを伝える</div>
       <div class="t-modes">
         <button class="t-btn gold" id="btnRenaiShort"><span class="mode-tags"><span class="mode-meta">恋文 / 和歌</span><span class="mode-time">🕐 約10分</span></span><span class="mode-name">💌 <ruby>恋文<rt>こいぶみ</rt></ruby>ショート体験</span><small><ruby>御簾<rt>みす</rt></ruby>ごしの姫君へ恋の手順を7段で体験</small></button>
         <button class="t-btn" id="btnRenaiSim"><span class="mode-tags"><span class="mode-meta">長期 / 30日</span><span class="mode-time">🕐 30分〜</span></span><span class="mode-name">📖 恋愛シミュレーション</span><small>30日を通して意中の姫君と恋を育てる</small></button>
       </div>
       <button class="t-back-btn" id="renaiBack">← 戻る</button>
     </div>
+    <!-- 記録と時代移動の入口(オンライン御前試合もここへ差し込まれる)。名前だけの小さな札にして表紙を静かに保つ -->
+    <nav id="titleSubEntries" aria-label="記録と時代移動">
+      <button class="t-btn t-codex-btn" id="btnCodex" title="平安ものしり図鑑"><svg class="wic tci"><use href="#ic-book"/></svg><span class="t-entry-name">図鑑</span><small id="titleCodexProgress">図鑑 0 / 0</small></button>
+      <button class="t-btn t-codex-btn" id="btnCareer" title="平安立身伝"><svg class="wic tci"><use href="#ic-cap"/></svg><span class="t-entry-name">立身伝</span><small id="titleCareerProgress">官位 童殿上</small></button>
+      <button class="t-btn t-codex-btn" id="btnHistory" title="あゆみ(これまでの記録)"><svg class="wic tci"><use href="#ic-steps"/></svg><span class="t-entry-name">あゆみ</span><small id="titleHistoryProgress">まだ記録がありません</small></button>
+      <button class="t-btn t-codex-btn" id="btnKoyomi" title="平安の暦(今日の行事)"><svg class="wic tci"><use href="#ic-calendar"/></svg><span class="t-entry-name">暦</span><small id="titleKoyomiProgress">今日の行事を見る</small></button>
+      <button class="t-btn t-codex-btn" id="btnEraTitle" title="時代を移動する(平安の寝殿造り ⇄ 鎌倉の武家屋敷)"><svg class="wic tci"><use href="#ic-era"/></svg><span class="t-entry-name"><span class="era-to-kamakura">鎌倉の館へ</span><span class="era-to-heian">平安の邸へ</span></span><small>堀と土塁に囲まれた主殿を歩く(散策専用)</small></button>
+    </nav>
 
-    <!-- 図鑑ほかの常設入口(オンライン御前試合もここへ差し込まれる)。スマホでは2列に畳んで縦の長さを抑える -->
-    <div id="titleSubEntries">
-      <button class="t-btn t-codex-btn" id="btnCodex"><svg class="wic tci"><use href="#ic-book"/></svg>平安ものしり図鑑<small id="titleCodexProgress">図鑑 0 / 0</small></button>
-      <button class="t-btn t-codex-btn" id="btnCareer"><svg class="wic tci"><use href="#ic-cap"/></svg>平安立身伝<small id="titleCareerProgress">官位 童殿上</small></button>
-      <button class="t-btn t-codex-btn" id="btnHistory"><svg class="wic tci"><use href="#ic-steps"/></svg>あゆみ<small id="titleHistoryProgress">まだ記録がありません</small></button>
-      <button class="t-btn t-codex-btn" id="btnKoyomi"><svg class="wic tci"><use href="#ic-calendar"/></svg>平安の暦<small id="titleKoyomiProgress">今日の行事を見る</small></button>
-      <button class="t-btn t-codex-btn" id="btnEraTitle"><svg class="wic tci"><use href="#ic-era"/></svg>時代を移動 ─ 鎌倉の武家屋敷へ<small>堀と土塁に囲まれた主殿を歩く(散策専用)</small></button>
+    <div class="t-foot">
+      <button class="t-foot-btn" id="btnOnboardHelp" type="button"><svg class="wic tci"><use href="#ic-help"/></svg>はじめての方へ</button>
+      <button class="t-foot-btn" id="btnTitleMore" type="button" aria-expanded="false" aria-controls="titleMore"><svg class="wic tci"><use href="#ic-more"/></svg>そのほか<span class="t-foot-caret" aria-hidden="true">▾</span></button>
     </div>
 
-    <div id="dailyQuestPanel" class="daily-quest-panel">
-      <div class="dq-head"><span>本日の平安任務</span><b id="dqDate">--</b></div>
-      <div class="dq-list" id="dqList"></div>
-      <div class="dq-foot" id="dqFoot"></div>
-    </div>
+    <!-- そのほか: 今日の任務・はじめの一巻・お気に入りの設定・更新履歴・推奨環境・クレジット -->
+    <div id="titleMore" class="t-more" hidden>
 
-    <div id="firstRoutePanel" class="first-route-panel">
-      <div class="fr-head"><span>はじめの一巻</span><b id="frState">散策から物語へ</b></div>
-      <div class="fr-steps" id="frSteps"></div>
-      <button class="fr-start" id="btnFirstRoute" type="button">おすすめ導線を進める</button>
-    </div>
-
-    <!-- 更新履歴 -->
-    <details class="t-changelog">
-      <summary>▸ 最近の更新</summary>
-      <div class="cl-list">
-        <div>⚽ 蹴鞠の操作を作り直しました。「寄る→技を選ぶ→蹴る」の三手をやめ、<b>指ひとつ</b>で遊べます。画面を横に払えば寄り、タップ＝受け・上へ払う＝高蹴り・下へ払う＝渡し。下の札も押した技でそのまま蹴るので、選び直す手間がありません。求められている技は札が光り、落下輪の中にも出るようにしました</div>
-        <div>🔥 香合わせを「勝負」に作り直しました。目指す香りの姿を四つの軸で最初から見せ、香材は合わせて8目までの配分パズルに。火加減は選ぶだけでなく、炭を扇いで狙った帯に保つ実技になりました。毎局、右方（相手）が香を出してきて判者が優劣を決める三番勝負です</div>
-        <div>⚽ 蹴鞠を作り直しました。スマホ縦画面で鞠足や鞠が縦に伸びていたのを直し、余った下の空きは空と白砂を広げて埋めています。蹴るのは画面のどこを触ってもよくなり（移動は左右ボタン）、鞠庭は屋根だけだった建物を高欄・御簾・床下まで描いた寝殿にして、屋根の上に立って見えていた鞠足を白砂の上へ下ろしました</div>
-        <div>☁ 空の雲を描き直しました。真上を向くと天頂に筋が集まって点々が散っているように見えていたのを、雲の層を下から見上げる形へ改め、綿のような塊に見えるようにしました</div>
-        <div>🔈 散策中の楽の音（箏・琵琶の重ね鳴らし）を既定で切にしました。虫や鳥、せせらぎが聞き取りやすくなります。設定の「音」からいつでも入にできます（表紙のメインテーマはこれまでどおり流れます）</div>
-        <div>📶 音源を配信向けに再エンコードし（38MB→18MB。表紙テーマも4.4MB→2.4MB）、読み込みを「いま鳴る音を先に、残りは後から少しずつ」に変更。表紙のテーマと、その場面で鳴る環境音を最優先で取りに行くので、音が遅れて追いかけてくることがなくなりました</div>
-        <div>📱 スマホのトップバーを整理。横スクロールしないと届かなかった図鑑・設定・ヘルプ・時代移動を「⋯」メニューへ移しました。縦画面ではミッションカードも薄い帯に畳み、3Dと操作ボタンを隠さないようにしています</div>
-        <div>🧭 表紙の入口を5枚にまとめ、物語は体験モードへ、オンライン対戦は図鑑と同じ常設入口の段へ。各モードに所要時間の目安と、垣間見・蹴鞠・歌合などのふりがなを添えました。「はじめての方へ」も一覧の直前へ引き上げています</div>
-        <div>📚 図鑑に分類ごとの進捗（建築 3/19 など）を表示。未解放の札は分類共通の同じ文ではなく、その項目自身の説明の書き出しを手がかりに出すようにし、「未解放を隠す」切替も追加しました</div>
-        <div>🎯 名称当てクイズの出題を39項目から70項目へ拡張し、初級＝建物の骨格／中級＝室内の調度と主要人物／上級＝全項目と難易度で範囲を分けました。追加分にも「受験の窓」の解説を用意しています</div>
-        <div>⚙ 動きが重い端末では、実測フレームレートを見て省電力モードを一度だけ提案するようにしました（断れば二度と出ません）</div>
-        <div>💾 図鑑が10件たまった時に、引き継ぎコードの控えを勧めるようにしました。記録は端末のブラウザにしか無いため、機種変更や共用パソコンでも続けられるようにするためです</div>
-        <div>📊 全モード共通パラメータを追加。知識・雅・武勇・忍び・社交・集中をレーダーチャートで表示し、各モードや失敗から少しずつ成長するようにしました。実績・称号を大幅追加し、選択ミスには笑える一言と復習成長を付与。夜の散策中に開く隠し称号の入口も追加しました</div>
-        <div>📱 タイトル画面と縦画面HUDを調整。デイリー追加後もタイトルが見切れないよう全体を圧縮し、現在の称号を目立つバッジで表示。体験モードなどの指示文はスマホ縦画面でコンパクト表示にし、実績解除通知も追加しました</div>
-        <div>🏅 実績・称号機能を追加。図鑑内の「実績・称号」タブから称号を確認・設定でき、各称号カードの挑戦ボタンから対応モードへ直接移動できるようにしました。デイリー任務はトップページ下部のカルーセル式に変更し、用語カードなど極小ハードルの任務を追加しました</div>
-        <div>🎯 本日の平安任務と結果後の次目標を追加。日替わりの小目標で散策・クイズ・一日体験・垣間見・歌合・物の怪退治へ自然に誘導し、完了時に進捗が保存されるようにしました</div>
-        <div>🧾 結果画面を共通仕様に調整。長い判詞や結果詳細でもカード内をスクロールでき、再挑戦・散策・表紙へ戻るボタンが下部で見切れないようにしました。垣間見の視線ゲージも画面中央最下部へ移動しました</div>
-        <div>🎮 非恋愛モードの開始導線を調整。散策・クイズ・一日体験・垣間見で、目的・上達目標・操作を短く示す任務カードを追加しました</div>
-        <div>🧰 トップバーをさらに整理。表紙・俯瞰・開始位置・地図をアイコン化し、名称札は設定内へ移動。結果画面には表紙へ戻るボタンを追加し、ミニマップをトップバー直下左端へ小型配置しました</div>
-        <div>🧭 メインメニューとトップバーを整理。貴族の一日体験は男女選択式に統合し、物の怪退治・垣間見ミッションをミニゲームモードへ移動。時間帯と季節はトップバー直下の独立チップにしました</div>
-        <div>🎥 「能は歌詠み」のカット割りを再調整。大臣が南殿の廂へ出て虫の音を聞き、次場で御簾の内へ戻る動線にし、侍が高欄へ食い込まない配置と歌合の判者演出・雅楽BGMを追加しました</div>
-        <div>🦗 「能は歌詠み」のはたおり虫を小さなキリギリス表現に修正。再現中の環境音は水音・風・他の秋虫を止め、キリギリスの鳴き声だけが響くようにしました</div>
-        <div>🎬 「能は歌詠み」の再現度を強化。名簿、はたおり虫、侍の参上、女房二人の早合点、格子を下ろしかけて止める所作を追加し、和歌詠唱は縦書き2行で表示するよう調整しました</div>
-        <div>📜 「能は歌詠み」の再現を調整。侍を立位の姿に直し、下ろした格子越しでも場面が見えるよう半透明の格子建具にしました</div>
-        <div>📜 「再現モード」を強化。古今著聞集「能は歌詠み」を実際の寝殿（母屋）を舞台に再現。場ごとにカメラが切り替わり、侍が格子を下ろす／女房が「青柳の」で笑う／大臣が御簾の下から直垂を差し出す所作や、寛平歌合の場面も演出。収録：枕草子「春はあけぼの」／古今著聞集「能は歌詠み」（全文・全九場）。本文＋現代語訳を渡せば随時シーンを増やせます</div>
-        <div>🎯 名称当てクイズの難易度選択画面を調整。各難易度の内容を読みやすくしました</div>
-        <div>🔮 物の怪退治の破魔の札UIを調整。鬼退治後の二連札の残数がボタン上でわかるようになりました</div>
-        <div>🏆 物の怪退治の結果画面を調整。再挑戦と季節・難易度選択へ戻る導線を見やすくしました</div>
-        <div>⚔ 物の怪退治の季節・難易度選択画面を調整。スマホでも押しやすく、選択状態が見やすくなりました</div>
-        <div>🗺 ミニマップと名称札の見た目を調整。現在地と調べられる対象を見分けやすくしました</div>
-        <div>💬 NPC会話の吹き出しとモード起動ロード画面を調整。物語中のテキストを読みやすくしました</div>
-        <div>🎋 和歌短冊の入手演出と撮影モード解除ボタンを調整。収集時の巻物表示を読みやすくしました</div>
-        <div>⚙ 設定・ヘルプ・クレジット画面を調整。画質、音声、操作設定のボタンを押しやすくしました</div>
-        <div>🧭 一日体験・垣間見の進行HUD、危険メーター、トースト表示を読みやすく調整しました</div>
-        <div>📝 クイズ中のHUDと結果画面を調整。問題、得点、ランク表示を見やすくしました</div>
-        <div>📚 図鑑・和歌集・用語カードのUIを調整。検索、分類ボタン、カード一覧を読みやすくしました</div>
-        <div>🔎 散策中の「調べる」ボタン、照準、解説カードを調整。調度品や建築部位の説明を読みやすくしました</div>
-        <div>📱 ゲーム中の上部バーを調整。スマホでもボタン状態と設定・図鑑への入口が見つけやすくなりました</div>
-        <div>✨ タイトルのモード選択をカードUIに刷新。探索・学習・体験・戦闘の入口を見分けやすく調整</div>
-        <div>🕊 春の燕、夏のカモメ、秋の雁、冬の千鳥を追加。季節ごとの邸宅風景を強化</div>
-        <div>⚔ 物の怪退治にシネマ演出、ダメージ表示、コンボ/ランク表示、ボス状態表示を追加</div>
-        <div>🎴 「歌合モード」を追加。集めた和歌短冊を札に、題と場・技法・返歌・精神統一で左方として競う。判者の判詞で古文・和歌技法を学べる</div>
-        <div>🎮 物の怪退治の戦闘UIを刷新：HP左上・武器左下・回避/ガード/攻撃ボタンを右下に。ガード好機でパリィ（成功時は演出＆効果音／全画面・横向き・PC共通）</div>
-        <div>🎮 物の怪退治の操作を一新：ローリング回避(無敵)・ガード・スマホ親指パッド。ボス戦を東の広い庭へ移し鬼の乱入を停止</div>
-        <div>🐸 夏ボスを河童の主と提灯お化けに分離（別々のHPバー・動き・攻撃）</div>
-        <div>⚔ 物の怪退治に「ボスラッシュ」を追加。春→夏→秋→冬の四ボスを連続討伐</div>
-        <div>💾 図鑑に収集データの引き継ぎ（バックアップ／復元コード）を追加</div>
-        <div>❄ 雪女の姿を一新（白の十二単・漆黒の垂髪・氷の簪）。建物にめり込む不具合も修正</div>
-        <div>📖 図鑑に「用語カード」を追加。古文の重要語・敬語・文法を検索／暗記モードで学べる</div>
-        <div>⚡ 物の怪退治にハード/百鬼夜行、回避、晴明の一度回復、鬼討伐ボーナスを追加</div>
-        <div>👹 秋ボスが第2形態の大鬼へ変化。ボス戦を南庭の広場へ移動</div>
-        <div>📱 スマホ横向きのトップバー横スクロールと退治HUD下部表示を修正</div>
-        <div>📜 和歌短冊5枚を邸内に設置。集めると図鑑登録（百人一首より）</div>
-        <div>🗾 ミニマップを絵巻物風にリデザイン（和紙風・墨絵風建物）</div>
-        <div>🏯 建物の壁に当たり判定を追加（正面の階段・渡殿から入場）</div>
-        <div>🌸 桜の演出強化（吹き抜けエフェクト・頻度アップ）</div>
-        <div>🕐 時間帯が自動で朝→昼→夕→夜と移り変わる（4分サイクル）</div>
-        <div>🔈 せせらぎは屋外・池のそばでのみ聞こえる</div>
-        <div>🎵 朝の時間帯に季節ごとの暁の音風景を追加</div>
+      <div id="dailyQuestPanel" class="daily-quest-panel">
+        <div class="dq-head"><span>本日の平安任務</span><b id="dqDate">--</b></div>
+        <div class="dq-list" id="dqList"></div>
+        <div class="dq-foot" id="dqFoot"></div>
       </div>
-    </details>
 
-    <div class="t-note">推奨: タブレット横向き / PC　　建具・調度品をタップで解説</div>
+      <div id="firstRoutePanel" class="first-route-panel">
+        <div class="fr-head"><span>はじめの一巻</span><b id="frState">散策から物語へ</b></div>
+        <div class="fr-steps" id="frSteps"></div>
+        <button class="fr-start" id="btnFirstRoute" type="button">おすすめ導線を進める</button>
+      </div>
+
+      <!-- 更新履歴 -->
+      <details class="t-changelog">
+        <summary>▸ 最近の更新</summary>
+        <div class="cl-list">
+          <div>🧭 表紙を整理しました。入口を「散策・物語と古典・遊ぶ・学ぶ・恋文」の5枚に絞り、図鑑・立身伝・あゆみ・暦・時代移動は名前だけの小さな札に。本日の任務・はじめの一巻・お気に入りの設定・更新履歴・クレジットは下の「そのほか」に畳み、香合わせは「遊ぶ」、兼好の草庵は「物語・古典」へ移しました</div>
+          <div>⚽ 蹴鞠の操作を作り直しました。「寄る→技を選ぶ→蹴る」の三手をやめ、<b>指ひとつ</b>で遊べます。画面を横に払えば寄り、タップ＝受け・上へ払う＝高蹴り・下へ払う＝渡し。下の札も押した技でそのまま蹴るので、選び直す手間がありません。求められている技は札が光り、落下輪の中にも出るようにしました</div>
+          <div>🔥 香合わせを「勝負」に作り直しました。目指す香りの姿を四つの軸で最初から見せ、香材は合わせて8目までの配分パズルに。火加減は選ぶだけでなく、炭を扇いで狙った帯に保つ実技になりました。毎局、右方（相手）が香を出してきて判者が優劣を決める三番勝負です</div>
+          <div>⚽ 蹴鞠を作り直しました。スマホ縦画面で鞠足や鞠が縦に伸びていたのを直し、余った下の空きは空と白砂を広げて埋めています。蹴るのは画面のどこを触ってもよくなり（移動は左右ボタン）、鞠庭は屋根だけだった建物を高欄・御簾・床下まで描いた寝殿にして、屋根の上に立って見えていた鞠足を白砂の上へ下ろしました</div>
+          <div>☁ 空の雲を描き直しました。真上を向くと天頂に筋が集まって点々が散っているように見えていたのを、雲の層を下から見上げる形へ改め、綿のような塊に見えるようにしました</div>
+          <div>🔈 散策中の楽の音（箏・琵琶の重ね鳴らし）を既定で切にしました。虫や鳥、せせらぎが聞き取りやすくなります。設定の「音」からいつでも入にできます（表紙のメインテーマはこれまでどおり流れます）</div>
+          <div>📶 音源を配信向けに再エンコードし（38MB→18MB。表紙テーマも4.4MB→2.4MB）、読み込みを「いま鳴る音を先に、残りは後から少しずつ」に変更。表紙のテーマと、その場面で鳴る環境音を最優先で取りに行くので、音が遅れて追いかけてくることがなくなりました</div>
+          <div>📱 スマホのトップバーを整理。横スクロールしないと届かなかった図鑑・設定・ヘルプ・時代移動を「⋯」メニューへ移しました。縦画面ではミッションカードも薄い帯に畳み、3Dと操作ボタンを隠さないようにしています</div>
+          <div>🧭 表紙の入口を5枚にまとめ、物語は体験モードへ、オンライン対戦は図鑑と同じ常設入口の段へ。各モードに所要時間の目安と、垣間見・蹴鞠・歌合などのふりがなを添えました。「はじめての方へ」も一覧の直前へ引き上げています</div>
+          <div>📚 図鑑に分類ごとの進捗（建築 3/19 など）を表示。未解放の札は分類共通の同じ文ではなく、その項目自身の説明の書き出しを手がかりに出すようにし、「未解放を隠す」切替も追加しました</div>
+          <div>🎯 名称当てクイズの出題を39項目から70項目へ拡張し、初級＝建物の骨格／中級＝室内の調度と主要人物／上級＝全項目と難易度で範囲を分けました。追加分にも「受験の窓」の解説を用意しています</div>
+          <div>⚙ 動きが重い端末では、実測フレームレートを見て省電力モードを一度だけ提案するようにしました（断れば二度と出ません）</div>
+          <div>💾 図鑑が10件たまった時に、引き継ぎコードの控えを勧めるようにしました。記録は端末のブラウザにしか無いため、機種変更や共用パソコンでも続けられるようにするためです</div>
+          <div>📊 全モード共通パラメータを追加。知識・雅・武勇・忍び・社交・集中をレーダーチャートで表示し、各モードや失敗から少しずつ成長するようにしました。実績・称号を大幅追加し、選択ミスには笑える一言と復習成長を付与。夜の散策中に開く隠し称号の入口も追加しました</div>
+          <div>📱 タイトル画面と縦画面HUDを調整。デイリー追加後もタイトルが見切れないよう全体を圧縮し、現在の称号を目立つバッジで表示。体験モードなどの指示文はスマホ縦画面でコンパクト表示にし、実績解除通知も追加しました</div>
+          <div>🏅 実績・称号機能を追加。図鑑内の「実績・称号」タブから称号を確認・設定でき、各称号カードの挑戦ボタンから対応モードへ直接移動できるようにしました。デイリー任務はトップページ下部のカルーセル式に変更し、用語カードなど極小ハードルの任務を追加しました</div>
+          <div>🎯 本日の平安任務と結果後の次目標を追加。日替わりの小目標で散策・クイズ・一日体験・垣間見・歌合・物の怪退治へ自然に誘導し、完了時に進捗が保存されるようにしました</div>
+          <div>🧾 結果画面を共通仕様に調整。長い判詞や結果詳細でもカード内をスクロールでき、再挑戦・散策・表紙へ戻るボタンが下部で見切れないようにしました。垣間見の視線ゲージも画面中央最下部へ移動しました</div>
+          <div>🎮 非恋愛モードの開始導線を調整。散策・クイズ・一日体験・垣間見で、目的・上達目標・操作を短く示す任務カードを追加しました</div>
+          <div>🧰 トップバーをさらに整理。表紙・俯瞰・開始位置・地図をアイコン化し、名称札は設定内へ移動。結果画面には表紙へ戻るボタンを追加し、ミニマップをトップバー直下左端へ小型配置しました</div>
+          <div>🧭 メインメニューとトップバーを整理。貴族の一日体験は男女選択式に統合し、物の怪退治・垣間見ミッションをミニゲームモードへ移動。時間帯と季節はトップバー直下の独立チップにしました</div>
+          <div>🎥 「能は歌詠み」のカット割りを再調整。大臣が南殿の廂へ出て虫の音を聞き、次場で御簾の内へ戻る動線にし、侍が高欄へ食い込まない配置と歌合の判者演出・雅楽BGMを追加しました</div>
+          <div>🦗 「能は歌詠み」のはたおり虫を小さなキリギリス表現に修正。再現中の環境音は水音・風・他の秋虫を止め、キリギリスの鳴き声だけが響くようにしました</div>
+          <div>🎬 「能は歌詠み」の再現度を強化。名簿、はたおり虫、侍の参上、女房二人の早合点、格子を下ろしかけて止める所作を追加し、和歌詠唱は縦書き2行で表示するよう調整しました</div>
+          <div>📜 「能は歌詠み」の再現を調整。侍を立位の姿に直し、下ろした格子越しでも場面が見えるよう半透明の格子建具にしました</div>
+          <div>📜 「再現モード」を強化。古今著聞集「能は歌詠み」を実際の寝殿（母屋）を舞台に再現。場ごとにカメラが切り替わり、侍が格子を下ろす／女房が「青柳の」で笑う／大臣が御簾の下から直垂を差し出す所作や、寛平歌合の場面も演出。収録：枕草子「春はあけぼの」／古今著聞集「能は歌詠み」（全文・全九場）。本文＋現代語訳を渡せば随時シーンを増やせます</div>
+          <div>🎯 名称当てクイズの難易度選択画面を調整。各難易度の内容を読みやすくしました</div>
+          <div>🔮 物の怪退治の破魔の札UIを調整。鬼退治後の二連札の残数がボタン上でわかるようになりました</div>
+          <div>🏆 物の怪退治の結果画面を調整。再挑戦と季節・難易度選択へ戻る導線を見やすくしました</div>
+          <div>⚔ 物の怪退治の季節・難易度選択画面を調整。スマホでも押しやすく、選択状態が見やすくなりました</div>
+          <div>🗺 ミニマップと名称札の見た目を調整。現在地と調べられる対象を見分けやすくしました</div>
+          <div>💬 NPC会話の吹き出しとモード起動ロード画面を調整。物語中のテキストを読みやすくしました</div>
+          <div>🎋 和歌短冊の入手演出と撮影モード解除ボタンを調整。収集時の巻物表示を読みやすくしました</div>
+          <div>⚙ 設定・ヘルプ・クレジット画面を調整。画質、音声、操作設定のボタンを押しやすくしました</div>
+          <div>🧭 一日体験・垣間見の進行HUD、危険メーター、トースト表示を読みやすく調整しました</div>
+          <div>📝 クイズ中のHUDと結果画面を調整。問題、得点、ランク表示を見やすくしました</div>
+          <div>📚 図鑑・和歌集・用語カードのUIを調整。検索、分類ボタン、カード一覧を読みやすくしました</div>
+          <div>🔎 散策中の「調べる」ボタン、照準、解説カードを調整。調度品や建築部位の説明を読みやすくしました</div>
+          <div>📱 ゲーム中の上部バーを調整。スマホでもボタン状態と設定・図鑑への入口が見つけやすくなりました</div>
+          <div>✨ タイトルのモード選択をカードUIに刷新。探索・学習・体験・戦闘の入口を見分けやすく調整</div>
+          <div>🕊 春の燕、夏のカモメ、秋の雁、冬の千鳥を追加。季節ごとの邸宅風景を強化</div>
+          <div>⚔ 物の怪退治にシネマ演出、ダメージ表示、コンボ/ランク表示、ボス状態表示を追加</div>
+          <div>🎴 「歌合モード」を追加。集めた和歌短冊を札に、題と場・技法・返歌・精神統一で左方として競う。判者の判詞で古文・和歌技法を学べる</div>
+          <div>🎮 物の怪退治の戦闘UIを刷新：HP左上・武器左下・回避/ガード/攻撃ボタンを右下に。ガード好機でパリィ（成功時は演出＆効果音／全画面・横向き・PC共通）</div>
+          <div>🎮 物の怪退治の操作を一新：ローリング回避(無敵)・ガード・スマホ親指パッド。ボス戦を東の広い庭へ移し鬼の乱入を停止</div>
+          <div>🐸 夏ボスを河童の主と提灯お化けに分離（別々のHPバー・動き・攻撃）</div>
+          <div>⚔ 物の怪退治に「ボスラッシュ」を追加。春→夏→秋→冬の四ボスを連続討伐</div>
+          <div>💾 図鑑に収集データの引き継ぎ（バックアップ／復元コード）を追加</div>
+          <div>❄ 雪女の姿を一新（白の十二単・漆黒の垂髪・氷の簪）。建物にめり込む不具合も修正</div>
+          <div>📖 図鑑に「用語カード」を追加。古文の重要語・敬語・文法を検索／暗記モードで学べる</div>
+          <div>⚡ 物の怪退治にハード/百鬼夜行、回避、晴明の一度回復、鬼討伐ボーナスを追加</div>
+          <div>👹 秋ボスが第2形態の大鬼へ変化。ボス戦を南庭の広場へ移動</div>
+          <div>📱 スマホ横向きのトップバー横スクロールと退治HUD下部表示を修正</div>
+          <div>📜 和歌短冊5枚を邸内に設置。集めると図鑑登録（百人一首より）</div>
+          <div>🗾 ミニマップを絵巻物風にリデザイン（和紙風・墨絵風建物）</div>
+          <div>🏯 建物の壁に当たり判定を追加（正面の階段・渡殿から入場）</div>
+          <div>🌸 桜の演出強化（吹き抜けエフェクト・頻度アップ）</div>
+          <div>🕐 時間帯が自動で朝→昼→夕→夜と移り変わる（4分サイクル）</div>
+          <div>🔈 せせらぎは屋外・池のそばでのみ聞こえる</div>
+          <div>🎵 朝の時間帯に季節ごとの暁の音風景を追加</div>
+        </div>
+      </details>
+      <div class="t-note">推奨: タブレット横向き / PC　　建具・調度品をタップで解説</div>
+      <button id="creditsLink" class="t-credit">ⓘ クレジット・ライセンス</button>
+    </div>
     <div id="loading">— 邸宅を造営中 —</div>
-    <button id="creditsLink" class="t-credit">ⓘ クレジット・ライセンス</button>
   </div>
 </div>
 
@@ -16282,6 +16365,14 @@ $("qtCopyCsv").onclick=qtCopyCsv;
 $("qtDownloadCsv").onclick=qtDownloadCsv;
 
 $("btnOnboardHelp").onclick=()=>{onboardOpen();};
+/* 表紙の「そのほか」: 任務・はじめの一巻・お気に入り設定・更新履歴・クレジットを畳んだ引き出し */
+function titleMoreToggle(open){
+  const panel=$("titleMore"),btn=$("btnTitleMore");if(!panel||!btn)return;
+  const next=typeof open==="boolean"?open:panel.hidden;
+  panel.hidden=!next;btn.setAttribute("aria-expanded",String(next));
+  if(next)requestAnimationFrame(()=>{try{panel.scrollIntoView({block:"nearest",behavior:"smooth"});}catch(e){}});
+}
+if($("btnTitleMore"))$("btnTitleMore").onclick=()=>{beep(480,.04);titleMoreToggle();};
 $("onboardSkip").onclick=onboardClose;
 $("onboardStartWalk").onclick=()=>{
   onboardClose();
@@ -20104,7 +20195,7 @@ window.KEMARI_GAME={
     state.open = false; modal?.classList.remove("is-open"); if (stop) stopPolling();
   }
   function injectEntry() {
-    // 表紙の「遊び方を選ぶ」は5枚に絞ったので、対戦は図鑑などと同じ常設入口の段へ置く。
+    // 表紙の「遊び方を選ぶ」は5枚に絞ったので、対戦は図鑑などと同じ常設入口の段(名前だけの小さな札)へ置く。
     // 旧構成(#titleSubEntriesが無いHTML)へ戻された場合はメインのモード欄へフォールバックする。
     const host = document.getElementById("titleSubEntries") || document.querySelector("#mainModes .t-modes");
     if (!host || document.getElementById(ENTRY_ID)) return !!host;
@@ -20112,7 +20203,8 @@ window.KEMARI_GAME={
     const entry = create("button", sub ? "t-btn t-codex-btn online-entry" : "t-btn t-cat-btn online-entry");
     entry.id = ENTRY_ID; entry.type = "button";
     if (sub) {
-      entry.append(create("span", "oc-entry-mark", "競"), document.createTextNode("オンライン御前試合"), create("small", null, "六文字の部屋番号で二人共闘・対戦。共同討伐・五番勝負・クイズ・蹴鞠・香合わせ"));
+      entry.title = "オンライン御前試合(六文字の部屋番号で二人共闘・対戦)";
+      entry.append(create("span", "oc-entry-mark", "競"), create("span", "t-entry-name", "御前試合"), create("small", null, "六文字の部屋番号で二人共闘・対戦。共同討伐・五番勝負・クイズ・蹴鞠・香合わせ"));
     } else {
       entry.append(create("span", "mode-meta", "共闘 / 対戦 / 共有順位"), create("div", "cat-icon", "競"), create("span", "mode-name", "オンライン御前試合"), create("small", null, "共同討伐・五番勝負・クイズ・蹴鞠・香合わせ"));
     }
@@ -41302,7 +41394,7 @@ if($("rnExitTop"))$("rnExitTop").onclick=()=>{
     const round=session&&!session.complete?session.rounds[session.index]:null;return {bestScore:stored.bestScore,plays:stored.plays,masteredQuestionIds:stored.masteredQuestionIds.slice(),session:session?{index:session.index,score:session.score,wins:session.wins,losses:session.losses,draws:session.draws,answered:session.answered,complete:session.complete,phase:session.phase,questionId:round?round.scenario.id:null,answer:session?session.answer:null,rounds:session.rounds.map(item=>({scenarioId:item.scenario.id,titleId:item.selectedTitle,heat:item.heat,blend:Object.assign({},item.blend),heatScore:item.heatScore,earned:item.earned,won:item.won,rivalScore:item.rival&&item.rival.score,blendResult:item.blendResult&&Object.assign({},item.blendResult)}))}:null};}
   function getTestState(){const state=getState();return {ready:true,phase:state.session&&state.session.phase,round:state.session&&state.session.index,answer:state.session&&state.session.answer,modalOpen:!!(modal&&modal.classList.contains("is-open")),scenarioCount:SCENARIOS.length,materialCount:MATERIALS.length,rounds:state.session&&state.session.rounds};}
   function reset(){stored=defaultStore();session=null;try{if(window.localStorage)window.localStorage.removeItem(STORAGE_KEY);}catch(error){}return getState();}
-  function injectEntry(){const host=document.querySelector("#taikenSubPanel .t-modes");if(!host||document.getElementById(ENTRY_ID))return !!host;const button=create("button","t-btn koh-awase-entry");button.id=ENTRY_ID;button.type="button";button.title="薫物合を学ぶ";button.setAttribute("aria-label","薫物合 香合わせを開く");const tags=create("span","mode-tags");tags.append(create("span","mode-meta","香文化 / 調香"),create("span","mode-time","🕐 約10分"));const nm=create("span","mode-name");nm.innerHTML='<ruby>香合<rt>こうあ</rt></ruby>わせ';button.append(tags,create("span","cat-icon","香"),nm,create("small",null,"景を読み、香材と火加減を調える三局勝負"));button.addEventListener("click",open);host.append(button);return true;}
+  function injectEntry(){const host=document.querySelector("#miniGameSubPanel .t-modes")||document.querySelector("#taikenSubPanel .t-modes");if(!host||document.getElementById(ENTRY_ID))return !!host;const button=create("button","t-btn koh-awase-entry");button.id=ENTRY_ID;button.type="button";button.title="薫物合を学ぶ";button.setAttribute("aria-label","薫物合 香合わせを開く");const tags=create("span","mode-tags");tags.append(create("span","mode-meta","香文化 / 調香"),create("span","mode-time","🕐 約10分"));const nm=create("span","mode-name");nm.innerHTML='<ruby>香合<rt>こうあ</rt></ruby>わせ';button.append(tags,create("span","cat-icon","香"),nm,create("small",null,"景を読み、香材と火加減を調える三局勝負"));button.addEventListener("click",open);host.append(button);return true;}
   function boot(){stored=readState();injectStyle();if(injectEntry())return;let attempts=0;const timer=window.setInterval(()=>{attempts+=1;if(injectEntry()||attempts>=40)window.clearInterval(timer);},250);}
 
   window.KOH_AWASE={open,close,start,answer,next,getState,getTestState,setBlend,setTitle,setHeat,submitBlend,fanHeat,finishHeat,finishRound,questionBank:SCENARIOS.slice(),scenarioBank:SCENARIOS.slice(),materials:MATERIALS.slice(),titles:TITLES.slice(),reset};
@@ -49763,6 +49855,8 @@ SELECTED_UX=(()=>{
   const home=document.createElement('section');home.id='homeNext';home.setAttribute('aria-label','次の遊びとお気に入り');
   home.innerHTML='<div class="home-next-copy"><span>次のひとつ</span><b id="homeNextTitle"></b><p id="homeNextReason"></p></div><button id="homeNextStart" class="t-btn"></button><div id="homeFavorites"></div><button id="homeFavoriteEdit" class="tb-btn">☆ お気に入りを選ぶ</button><div id="homeFavoriteChoices" hidden></div>';
   $id('mainModes').before(home);
+  // お気に入りの選び直しは表紙の「そのほか」へ畳む(選んだ★の近道だけを表紙に残す)。
+  {const drawer=$id('titleMore');if(drawer){const fav=document.createElement('div');fav.className='t-more-fav';fav.append($id('homeFavoriteEdit'),$id('homeFavoriteChoices'));drawer.prepend(fav);}}
   function due(){return window.LEARNING_EXTENSION?.dueIds?.()||[];}
   function refresh(){
     home.hidden=APP.mode!=='title';
@@ -51053,8 +51147,11 @@ var KENKO_HERMITAGE=(()=>{
   const basePick=pick;pick=function(...args){if(stage)return inspect(...args);return basePick.apply(this,args);};
   const baseBlocking=pauseBlockingOverlayOpen;pauseBlockingOverlayOpen=function(){return !note.hidden||loading||baseBlocking();};
   note.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();closeNote();}if(e.key==='Tab'){const list=[...note.querySelectorAll('button,a[href]')];let index=list.indexOf(document.activeElement);index=(index+(e.shiftKey?-1:1)+list.length)%list.length;e.preventDefault();list[index].focus();}},true);
-  const entry=document.createElement('button');entry.id='kenkoVisitEntry';entry.className='tb-btn';entry.textContent='兼好の草庵を訪ねる';entry.onclick=open;
-  ($('homeNext')||$('mainModes')||$('title')).append(entry);
+  // 表紙では「物語・古典」の一枚として並べる(サブ選択が無い旧構成では表紙の推薦欄へ)。
+  const entry=document.createElement('button');entry.id='kenkoVisitEntry';entry.type='button';
+  const entryHost=document.querySelector('#taikenSubPanel .t-modes');
+  if(entryHost){entry.className='t-btn';entry.innerHTML='<span class="mode-tags"><span class="mode-meta">徒然草 / 散策</span></span><span class="mode-name">兼好の草庵を訪ねる</span><small>徒然草の庵を歩き、原文と模型を見比べる</small>';entry.onclick=()=>{if(typeof hideSubPanel==='function')hideSubPanel('taikenSubPanel');open();};entryHost.append(entry);}
+  else{entry.className='tb-btn';entry.textContent='兼好の草庵を訪ねる';entry.onclick=open;($('homeNext')||$('mainModes')||$('title')).append(entry);}
   const walkMenu=$('tbmTour')?.parentNode;
   if(walkMenu){const button=document.createElement('button');button.id='kenkoVisitWalkEntry';button.className=$('tbmTour').className;button.textContent='兼好の草庵を訪ねる';button.onclick=open;walkMenu.append(button);}
   // Parse the route once; returning to the title must not reopen it.
