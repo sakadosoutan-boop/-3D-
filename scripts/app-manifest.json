@@ -107,6 +107,13 @@
     "end": "/* APP_VISUAL_EXPERIENCE_EMBED_END */"
   },
   {
+    "name": "estate-hall-detail",
+    "src": "src/app/estate-hall-detail.js",
+    "kind": "markers-exist",
+    "begin": "/* APP_ESTATE_HALL_DETAIL_EMBED_BEGIN (src/app/estate-hall-detail.js から自動生成。ここを直接編集しない) */",
+    "end": "/* APP_ESTATE_HALL_DETAIL_EMBED_END */"
+  },
+  {
     "name": "photo-tools",
     "src": "src/app/photo-tools.js",
     "kind": "markers-exist",
