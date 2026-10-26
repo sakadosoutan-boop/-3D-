@@ -42,7 +42,6 @@ button{font-family:var(--serif);cursor:pointer}
 .kamon-circle{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;
   border-radius:50%;border:1.5px solid rgba(201,162,63,.75);color:rgba(201,162,63,.9);font-size:18px;
   box-shadow:0 0 0 3px rgba(14,9,5,.8),0 0 0 5px rgba(201,162,63,.22),0 0 14px rgba(201,162,63,.12)}
-.t-eyebrow{color:var(--kin);letter-spacing:.42em;font-size:10.5px;margin-bottom:8px}
 @keyframes goldShimmer{0%,100%{text-shadow:0 0 0 transparent}50%{text-shadow:0 0 22px rgba(201,162,63,.4),0 0 48px rgba(201,162,63,.12)}}
 h1.t-main{color:var(--gofun);font-size:clamp(26px,6vw,50px);font-weight:600;letter-spacing:.22em;
   line-height:1.22;margin:2px 0;animation:goldShimmer 5s ease-in-out infinite}
@@ -56,7 +55,6 @@ h1.t-main .shu{color:var(--shu-bright)}
 .title-badge b::before{content:"";width:14px;height:14px;flex:0 0 auto;border-radius:50%;
   background:radial-gradient(circle at 34% 30%,#fff2c4,#c9a23f 55%,#8a6a26 100%);
   border:1px solid rgba(255,244,208,.85);box-shadow:0 0 0 2px rgba(20,13,6,.6),0 0 7px rgba(201,162,63,.55),inset 0 1px 1px rgba(255,255,255,.5)}
-.t-divider{color:rgba(201,162,63,.42);font-size:13px;margin:10px auto;letter-spacing:.9em}
 .daily-quest-panel{position:relative;margin:12px auto 6px;padding:9px 10px 10px;text-align:left;
   background:linear-gradient(180deg,rgba(21,15,10,.82),rgba(11,8,6,.72));border:1px solid rgba(201,162,63,.32);
   border-radius:8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
@@ -1330,15 +1328,6 @@ body.taiji-mode #vignette{box-shadow:inset 0 0 150px 24px rgba(0,0,0,.34)}
   font-family:var(--sans);font-size:12px;padding:9px 14px;border-radius:999px;cursor:pointer;letter-spacing:.06em}
 .onboard-skip:hover{color:#3a2510;border-color:#8a3b2a}
 @media (prefers-reduced-motion:reduce){.onboard-card{animation:none}}
-/* [UX]「はじめての方へ」。以前は表紙の最下部・高さ22pxの小さな下線文字で、
-   スマホでは2画面ぶんスクロールしないと現れなかった。モード一覧の直前へ上げ、
-   指で押せる高さの札にする(表紙の色調は変えず、控えめな枠だけを足す)。 */
-.t-onboard-help{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin:8px 0 2px;
-  background:rgba(0,0,0,.18);border:1px solid rgba(201,162,63,.26);border-radius:999px;color:#c0ab86;
-  font-family:var(--sans);font-size:11px;letter-spacing:.08em;
-  cursor:pointer;padding:9px 14px;min-width:unset;min-height:38px;box-shadow:none!important;transform:none!important}
-.t-onboard-help:hover{color:var(--gofun);border-color:var(--kin)}
-.t-onboard-help .tci{width:16px;height:16px;color:var(--kin);flex:0 0 auto}
 
 /* 和歌収集エフェクト — 巻物・縦書き */
 #wakaReveal{position:fixed;z-index:90;inset:0;display:flex;align-items:center;justify-content:center;
@@ -1436,11 +1425,9 @@ body.taiji-mode #vignette{box-shadow:inset 0 0 150px 24px rgba(0,0,0,.34)}
   #title{padding-top:max(8px,env(safe-area-inset-top));padding-bottom:10px}
   .t-frame{padding:14px 14px 12px}
   .t-kamon{margin-bottom:4px}.kamon-circle{width:32px;height:32px;font-size:15px}
-  .t-eyebrow{font-size:9px;margin-bottom:4px;letter-spacing:.28em}
   h1.t-main{font-size:clamp(24px,8vw,34px);letter-spacing:.14em}
   .t-sub{font-size:10px;letter-spacing:.12em;margin-top:4px}
   .title-badge{margin-top:6px;padding:4px 10px;font-size:10px}.title-badge b{font-size:12px}
-  .t-divider{margin:6px auto;font-size:11px;letter-spacing:.55em}
   #title .t-modes{gap:7px;margin-top:8px;grid-template-columns:repeat(auto-fit,minmax(128px,1fr))}
   #title .t-btn{min-height:58px;padding:9px 10px;border-radius:6px}.mode-meta{font-size:8.5px;min-height:15px;padding:1px 6px}.mode-name{font-size:12px}
   .mode-time{font-size:8.5px;min-height:15px;padding:1px 6px}.mode-tags{gap:3px}
@@ -1450,7 +1437,6 @@ body.taiji-mode #vignette{box-shadow:inset 0 0 150px 24px rgba(0,0,0,.34)}
   #title #titleSubEntries .t-btn{min-height:52px;padding:8px 9px;font-size:11.5px;letter-spacing:.06em}
   #titleSubEntries .tci{width:15px;height:15px;margin-right:6px;vertical-align:-3px}
   .oc-entry-mark{width:17px;height:17px;font-size:10px;margin-right:6px}
-  .t-onboard-help{font-size:10.5px;min-height:36px;padding:8px 10px;margin:6px 0 2px}
   .daily-quest-panel{padding:7px;margin-top:8px}.dq-head{margin-bottom:5px}.dq-list{gap:6px}.dq-item{flex-basis:min(202px,76vw);min-height:72px;padding:7px 8px}
   .dq-item .dq-title{font-size:10.5px}.dq-item .dq-desc{font-size:9.5px;line-height:1.35}.dq-start{min-height:23px}
   .first-route-panel{padding:8px 9px}.fr-steps{grid-template-columns:1fr;gap:6px}.fr-step{min-height:0}
@@ -3135,45 +3121,136 @@ body.cb-assist #kaimamiEye.watched .eye-label::before{content:"⚠ ";color:#ffcf
 @media(max-width:600px){.online-coop-settings{grid-template-columns:1fr}.coop-hunt-hud{top:calc(env(safe-area-inset-top) + 112px);right:8px;width:min(218px,calc(100vw - 16px));padding:8px 9px}.coop-hunt-head{grid-template-columns:30px 1fr 10px}.coop-hunt-sigil{width:28px;height:28px;font-size:15px}.coop-hunt-head b{font-size:12px}.coop-hunt-hud p{font-size:9px}}
 @media(prefers-reduced-motion:reduce){#coopHuntConnection.is-reconnecting{animation:none}.coop-hunt-track i{transition:none}}
 
-/* 読みやすさと入口の整理。五つの遊びを同じ階層で比較できるようにする。 */
-#title .t-frame{width:min(94vw,1060px);max-width:1060px;background:rgba(22,15,9,.88)}
-#title #mainModes .t-modes{grid-template-columns:repeat(5,minmax(0,1fr))}
-#title .t-btn small{font-family:var(--sans);font-size:11px;line-height:1.65;color:#d2c2a0;letter-spacing:.03em}
-#title .mode-time{color:#d2bd8d;font-size:10px}
-#title .mode-meta{font-size:10px}
-#title .t-sub,#title .t-note,#title .t-changelog summary{color:#c3b292}
-#title .t-note{font-size:11px}
-#title .cl-list{color:#c3b292;font-size:11px}
-#title .t-back-btn{color:#d8c6a1;min-height:44px;font-size:12px}
-#title .t-btn:focus-visible,.tb-btn:focus-visible{outline:2px solid #ffe2a0;outline-offset:3px}
-#titleAudioHint{bottom:4px;font-size:10px;padding:3px 10px}
 .info-body{touch-action:pan-y}
 .info-name{padding-right:30px}
 .info-desc{font-size:14px;line-height:1.95}
-@media(max-width:900px){
-  #title #mainModes .t-modes{grid-template-columns:repeat(2,minmax(0,1fr))}
-  #title #mainModes #btnWalk{grid-column:1/-1;min-height:100px;border-color:#dfbc64;
-    background:linear-gradient(115deg,#604918,#33240e)}
-  #title #mainModes #btnWalk .cat-icon{position:absolute;right:24px;font-size:34px;opacity:.75}
-  #title #mainModes #btnWalk small{padding-right:38px}
-}
 @media(max-width:520px){
-  #title #titleSubEntries{grid-template-columns:repeat(2,minmax(0,1fr))}
-  #title #titleSubEntries .t-btn{padding:10px;min-height:82px}
-  #title .t-btn{padding:12px}
-  #title .mode-name{letter-spacing:.07em}
   body:has(#info.open) #toast{bottom:calc(38vh + 28px)}
+}
+
+/* ===== 表紙(トップ画面)の整理 =====
+   表紙は「題 → 次のひとつ → 遊び方5枚 → 記録の札 → そのほか」の五段だけにし、PC・スマホとも一画面に収める。
+   ・称号と官位は丸札をやめ、題の下の一行に。区切り飾りと副見出しは置かない。
+   ・遊び方の5枚は名前と一行の説明だけ(ジャンル札・所要時間はサブ選択の側で見せる)。
+   ・図鑑/立身伝/あゆみ/暦/時代移動/御前試合は名前だけの小さな札。進捗の文言はそれぞれの画面の中で見せる。
+   ・本日の任務・はじめの一巻・お気に入り設定・更新履歴・推奨環境・クレジットは「そのほか」(#titleMore)に畳む。
+   色は金×墨の一系統にそろえ、モードごとの紫・桃の縁取りは使わない。 */
+#title .t-frame{width:min(calc(100vw - 24px),880px);max-width:880px;padding:22px 28px 16px;background:rgba(20,14,8,.86);box-sizing:border-box}
+#title .t-head{display:flex;flex-direction:column;align-items:center}
+#title .t-kamon{margin-bottom:6px}
+#title .kamon-circle{width:34px;height:34px;font-size:15px}
+#title h1.t-main{font-size:clamp(28px,4.6vw,42px);letter-spacing:.2em;line-height:1.2;margin:0}
+#title .t-sub{margin-top:6px;color:#c3b292;font-size:12.5px;letter-spacing:.2em}
+#title .t-status{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;margin-top:10px}
+#title .title-badge{margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;gap:6px;
+  color:#a8977a;font-size:11px;letter-spacing:.16em}
+#title .title-badge b{font-size:12.5px;color:#ecdcb2;gap:5px}
+#title .title-badge b::before{width:9px;height:9px;box-shadow:0 0 5px rgba(201,162,63,.45)}
+#title #titleCareerBadgeWrap{margin-left:0}
+#title .t-head{position:relative}
+/* 音のヒントは流れの外(枠の右上)に置き、消えても表紙の配置が動かないようにする */
+#title #titleAudioHint{top:-10px;right:-14px;bottom:auto;left:auto;transform:none;padding:3px 10px;font-size:10.5px;border-radius:999px}
+#title #titleAudioHint.hide{opacity:0;visibility:hidden;animation:none}
+/* 遊び方5枚: 散策を筆頭に大きく、残り4枚は同じ地色でそろえる */
+#title #mainModes{margin-top:16px}
+#title .t-mode-kicker{margin:0 0 10px;text-align:center;font-size:11px;font-weight:400;letter-spacing:.32em;color:rgba(218,190,120,.82)}
+#title #mainModes .t-modes{display:grid;grid-template-columns:1.3fr repeat(4,minmax(0,1fr));gap:10px;margin-top:0}
+#title #mainModes .t-cat-btn{min-height:118px;padding:14px 14px 13px;justify-content:flex-start;gap:6px;
+  background:linear-gradient(160deg,#3b2615,#21150b);border-color:rgba(201,162,63,.5)}
+#title #mainModes .t-cat-btn .cat-icon{margin-bottom:2px}
+#title #mainModes .cat-icon .wic{width:24px;height:24px}
+#title #mainModes .mode-name{font-size:16px;letter-spacing:.16em}
+#title #mainModes .t-btn small{font-family:var(--sans);font-size:11px;line-height:1.6;letter-spacing:.03em;color:#cdbd9b}
+#title #mainModes #btnWalk{background:linear-gradient(140deg,#6a5019,#36260b);border-color:#e3c169}
+#title #mainModes #btnWalk .mode-name{font-size:19px}
+#title #mainModes #btnWalk small{color:#e6d4a6}
+html.map-kamakura #title #mainModes .t-modes{grid-template-columns:minmax(0,1fr);max-width:440px;margin-inline:auto}
+/* サブ選択: 所要時間だけ残し、ジャンル札は外す */
+#title .t-subpanel{margin-top:16px}
+#title .sp-title{margin:0 0 10px;font-size:12px;letter-spacing:.24em;color:#d6b86e}
+#title .t-subpanel .t-modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:0}
+#title .t-subpanel .t-btn{min-height:68px;padding:10px 13px}
+#title .t-subpanel .t-btn small{font-family:var(--sans);font-size:11px;line-height:1.55;color:#d2c2a0;letter-spacing:.03em}
+#title .t-subpanel .mode-meta{display:none}
+#title .t-subpanel .t-modes .t-btn:not(.recommended){background:linear-gradient(160deg,#3b2615,#21150b)}
+#title .t-subpanel .t-modes .t-btn .cat-icon{display:none}
+#title .mode-time{color:#d2bd8d;font-size:10px}
+#title .t-back-btn{min-height:44px;margin-top:12px;padding:8px 20px;color:#d8c6a1;font-size:12px}
+/* 記録と時代移動: 名前だけの小さな札 */
+#title #titleSubEntries{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(201,162,63,.18)}
+#title #titleSubEntries .t-btn{width:auto;height:auto;min-height:44px;margin:0;padding:8px 15px;flex:0 1 auto;flex-direction:row;align-items:center;justify-content:center;gap:7px;
+  border-radius:999px;border-color:rgba(201,162,63,.42);background:rgba(255,246,220,.04);color:#e6d6b0;font-size:13px;letter-spacing:.12em;box-shadow:none}
+#title #titleSubEntries .t-btn::before{display:none}
+#title #titleSubEntries .t-btn:hover,#title #titleSubEntries .t-btn:focus-visible{background:rgba(201,162,63,.14);border-color:rgba(232,191,86,.8)}
+#title #titleSubEntries .t-btn small{display:none}
+#title #titleSubEntries .tci{width:16px;height:16px;margin:0;flex:0 0 auto}
+#title #titleSubEntries .t-entry-name{white-space:nowrap}
+#title #titleSubEntries .online-entry{color:#e6d6b0}
+#title #titleSubEntries .oc-entry-mark{width:17px;height:17px;margin:0;font-size:10px;border-color:rgba(201,162,63,.55);color:#e6d6b0}
+html:not(.map-kamakura) #btnEraTitle .era-to-heian,html.map-kamakura #btnEraTitle .era-to-kamakura{display:none}
+html.map-kamakura #title #titleSubEntries .t-btn{background:rgba(26,34,44,.6)!important;border-color:rgba(111,147,184,.55)!important;color:#d5d9cb}
+/* 足もと: はじめての方へ / そのほか */
+#title .t-foot{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;margin-top:10px}
+.t-foot-btn{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 14px;background:none;border:1px solid transparent;border-radius:6px;
+  color:#c7b58f;font-family:var(--sans);font-size:12px;letter-spacing:.14em;cursor:pointer;transition:color .15s,border-color .15s}
+.t-foot-btn:hover,.t-foot-btn:focus-visible{color:var(--gofun);border-color:rgba(201,162,63,.45);outline:none}
+.t-foot-btn .tci{width:16px;height:16px;color:var(--kin);flex:0 0 auto}
+.t-foot-caret{display:inline-block;font-size:10px;transition:transform .2s}
+#btnTitleMore[aria-expanded="true"]{color:var(--gofun);border-color:rgba(201,162,63,.35)}
+#btnTitleMore[aria-expanded="true"] .t-foot-caret{transform:rotate(180deg)}
+/* そのほか(引き出し) */
+#titleMore{margin-top:6px;padding:12px;border:1px solid rgba(201,162,63,.22);border-radius:8px;background:rgba(8,5,3,.42);text-align:left;animation:fadeInUp .2s ease}
+#titleMore[hidden]{display:none}
+#titleMore .daily-quest-panel{margin-top:0}
+#titleMore .first-route-panel{margin-top:10px}
+#titleMore .dq-start{min-height:44px;padding:0 18px;border-radius:8px}
+#titleMore .fr-start{min-height:44px}
+.t-more-fav{display:flex;flex-direction:column;align-items:flex-start;margin-bottom:10px}
+#title .t-changelog{margin-top:12px}
+#title .t-changelog summary{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0;color:#c3b292;font-size:11px}
+#title .cl-list{color:#c3b292;font-size:11px}
+#title .t-note{text-align:center;color:#a8977a;font-size:11px}
+#title .t-credit{display:block;min-height:44px;margin:6px auto 0;padding:0 14px;color:#a8977a}
+#title .t-btn:focus-visible,.tb-btn:focus-visible{outline:2px solid #ffe2a0;outline-offset:3px}
+@media(max-width:600px){
+  #title{padding-top:max(10px,env(safe-area-inset-top))}
+  #title .t-frame{width:calc(100vw - 16px);padding:16px 12px 10px}
+  #title .t-kamon{margin-bottom:4px}
+  #title .kamon-circle{width:30px;height:30px;font-size:13px}
+  #title h1.t-main{font-size:30px;letter-spacing:.16em}
+  #title .t-sub{font-size:11px;letter-spacing:.12em;margin-top:4px}
+  #title .t-status{margin-top:8px;gap:2px 14px}
+  #title #mainModes{margin-top:12px}
+  #title .t-mode-kicker{margin-bottom:8px;font-size:10.5px}
+  #title #titleAudioHint{top:-8px;right:-4px;font-size:10px;padding:2px 8px}
+  #title #mainModes .t-modes{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  #title #mainModes .t-cat-btn{min-height:96px;padding:11px 11px 10px;gap:4px}
+  #title #mainModes .cat-icon .wic{width:21px;height:21px}
+  #title #mainModes .mode-name{font-size:15px;letter-spacing:.1em}
+  #title #mainModes .t-btn small{font-size:10.5px;line-height:1.5}
+  #title #mainModes #btnWalk{grid-column:1/-1;min-height:0;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:12px;row-gap:2px;align-items:center;padding:12px 14px}
+  #title #mainModes #btnWalk .cat-icon{grid-row:1/3;margin:0}
+  #title #mainModes #btnWalk .cat-icon .wic{width:28px;height:28px}
+  #title #mainModes #btnWalk .mode-name{font-size:18px}
+  #title .t-subpanel .t-modes{grid-template-columns:minmax(0,1fr)}
+  #title .t-subpanel .t-btn{min-height:60px}
+  #title #titleSubEntries{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px;padding-top:12px}
+  #title #titleSubEntries .t-btn{padding:8px 6px;gap:5px;font-size:12px;letter-spacing:.06em}
+  #title .t-foot{margin-top:6px;gap:0 4px}
+  .t-foot-btn{padding:8px 10px;letter-spacing:.08em}
+  #titleMore{padding:10px 8px}
 }
 @media(orientation:landscape) and (max-height:520px){
   #title .t-frame{padding:10px 16px}
-  #title .t-kamon,#title .t-eyebrow,#title .t-divider,#title .t-sub{display:none}
-  #title h1.t-main{font-size:26px;line-height:1.15}
-  #title .title-badge{margin-top:4px;padding:2px 9px;font-size:10px}
-  #title .title-badge b{font-size:11px}
-  #title .t-mode-kicker{margin-top:6px}
-  #title #mainModes .t-modes{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-top:8px}
-  #title #mainModes #btnWalk{grid-column:auto;min-height:100px}
-  #title #mainModes #btnWalk .cat-icon{position:static;font-size:21px;opacity:1}
-  #title #mainModes #btnWalk small{padding-right:0}
-  #title #mainModes .t-btn{padding:9px}
+  #title .t-kamon,#title .t-sub{display:none}
+  #title h1.t-main{font-size:24px;line-height:1.15}
+  #title .t-status{margin-top:4px}
+  #title #titleAudioHint{margin-top:4px}
+  #title #mainModes{margin-top:8px}
+  #title .t-mode-kicker{display:none}
+  #title #mainModes .t-modes{grid-template-columns:1.3fr repeat(4,minmax(0,1fr));gap:7px}
+  #title #mainModes #btnWalk{grid-column:auto;display:flex}
+  #title #mainModes .t-cat-btn{min-height:84px;padding:9px 10px;gap:3px}
+  #title #mainModes .t-btn small{font-size:10px;line-height:1.45}
+  #title #titleSubEntries{margin-top:8px;padding-top:8px}
 }

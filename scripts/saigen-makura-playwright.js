@@ -77,6 +77,14 @@ function ignorable(text) {
       startSaigen('makura_haru'); await wait(200);
       const S = SAIGEN_MAKURA.S;
       out.active = S.active; out.hook = window.SAIGEN_ENV_HOOK != null;
+      // 「次へ」は場の中の残りのショットを飛ばさず、まず次のショットへ進む
+      APP.saigen.i = 0; renderSaigenBeat(); await wait(60);
+      const lbl = () => document.getElementById('sgNext').textContent;
+      out.next = { n: S.shots.length, l0: lbl() };
+      saigenNext(); await wait(40);
+      Object.assign(out.next, { i1: APP.saigen.i, shot1: S.shotIdx, l1: lbl() });
+      saigenNext(); await wait(60);
+      Object.assign(out.next, { i2: APP.saigen.i, shot2: S.shotIdx });
       for (let i = 0; i < 15; i++) {
         APP.saigen.i = i; renderSaigenBeat(); await wait(60);
         const n = S.shots.length; const zones = [];
@@ -111,6 +119,9 @@ function ignorable(text) {
       return out;
     });
     if (!run.active) failures.push('makura scene did not become active');
+    const nx = run.next || {};
+    if (!(nx.n >= 2 && /続き/.test(nx.l0) && nx.i1 === 0 && nx.shot1 === 1 && /次の場/.test(nx.l1) && nx.i2 === 1 && nx.shot2 === 0))
+      failures.push(`next button should play the remaining shots before moving on: ${JSON.stringify(nx)}`);
     if (!run.hook) failures.push('environment hook was not installed');
     if (run.bad.length) failures.push(`beats with problems: ${run.bad.join(', ')}`);
     run.fallbacks.forEach((f) => {

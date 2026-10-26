@@ -83,6 +83,9 @@
    userData.anchors.walkPath = Vector3[]（床の中心線 x=0..length, 0.5m間隔, y=1.00）。userData.floorY=1.0, length, width。
    setSeason（冬=屋根・棟・高欄・擬宝珠に雪、床の両端に吹き込んだ雪）、setNight(v)（現状は何もしない）、update, dispose, dims。描画コール≈8。
    ※殿舎（makeDensha）の東の簀子の外縁は x=0。殿舎に接続するなら渡殿の原点を殿舎ローカル (0, 0, z) に置くとよい（床は殿舎の簀子より0.14低い）。
+ TSURE_AN.parts  散策モードへ流用する部品（src/app/estate-hall-detail.js が使う）:
+   tex("hiwada"|"noki"|"tsuiji"|"kawara"|"wood"|"mokou", size) -> {map,data}|Texture  殿舎と同じ CACHE 鍵で共有。
+   misuImage(W,H,seed) -> canvas（御簾の竹ひご・編み糸、αで透ける）/ GIBO（擬宝珠の断面）/ MISU_FUSA（鉤丸緒の房の断面）。
  TSURE_AN.makeTsuiji({points:[[x,z],...], height=2.45, thickness=1.1, quality, season, seed}) -> THREE.Group
    築地塀。points の折れ線（最初と最後が同じ点なら閉じた輪）の中心線上に建つ。地面 y=0。断面は台形（下幅1.1・上幅0.75）、
    土壁の上端 y=2.0、その上に本瓦葺の笠（軒の出≈0.44, 棟 y≈2.5）。壁は版築の層・雨だれ・裾の汚れ・ひび（淡い黄土〜灰白）。
@@ -1122,14 +1125,16 @@ function genShikkui(W){const a=fbm(221,4,4,4),b=fbm(222,32,32,2),s=fbm(223,6,2,3
     out[0]=238*k*(1-st);out[1]=234*k*(1-st*1.1);out[2]=224*k*(1-st*1.35);out[3]=255*(.5+.3*Bn);out[4]=245;out[5]=0;});
   return{map:mkTex(o.c),data:mkTex(o.d,{srgb:false})};}
 /* 御簾: 竹ひご（横）と編み糸（縦）。256px = 幅0.5m × 高0.25m。αで透ける */
-function genMisu(){const W=256,H=256,c=cv(W,H),x=c.getContext("2d"),r=RNG(231);const id=x.createImageData(W,H),Dd=id.data;const n=fbm(231,6,64,2);
+function genMisu(){return mkTex(misuImage(256,256,231));}
+/* 御簾の画像（任意の大きさ・4px で竹ひご1本、26px おきに編み糸）。散策モードの御簾も同じ描き方を使う */
+function misuImage(W,H,seed){const c=cv(W,H),x=c.getContext("2d"),r=RNG(seed);const id=x.createImageData(W,H),Dd=id.data;const n=fbm(seed,6,64,2);
   const sl=[];for(let i=0;i<H/4;i++)sl.push(r.r(.82,1.13));
   for(let y=0;y<H;y++){const si=y>>2,f=y&3,S=sl[si];for(let xx=0;xx<W;xx++){const i=(y*W+xx)*4;let R,G,B,A;
     if(xx%26===0){R=226;G=214;B=188;A=255;}
     else if(f===3){R=36;G=26;B=14;A=30;}
     else{const k=S*(f===1?1.07:f===0?.9:.99)*(.9+.2*n(xx/W,y/H));R=182*k;G=124*k;B=62*k;A=245;}
     Dd[i]=R;Dd[i+1]=G;Dd[i+2]=B;Dd[i+3]=A;}}
-  x.putImageData(id,0,0);return mkTex(c);}
+  x.putImageData(id,0,0);return c;}
 /* 帽額: 淡い萌黄地に窠紋（512px = 1.28m × 0.19m） */
 function genMokou(){const W=512,H=64,c=cv(W,H),x=c.getContext("2d"),r=RNG(251);
   x.fillStyle="#e4ecdf";x.fillRect(0,0,W,H);for(let i=0;i<1600;i++){x.fillStyle=`rgba(255,255,255,${r.r(.05,.2)})`;x.fillRect(r()*W,r()*H,r.r(1,3),1);}
@@ -1184,6 +1189,8 @@ function roofPatch(gb,x0,x1,nx,z0,z1,nz,fy,own,colf,keep){const dx=(x1-x0)/nx,dz
     for(const[ii,jj]of[[i,j],[i+1,j],[i+1,j+1],[i,j+1]]){const x=x0+ii*dx,z=z0+jj*dz,k=jj*gx+ii;const uv=uvf(x,z);ids.push(gb.vtx([x,PY[k],z],NR[k],uv[0],uv[1],colf(x,z)));}
     const[a,b,c,d]=ids;const ha=PY[j*gx+i],hb=PY[j*gx+i+1],hc=PY[(j+1)*gx+i+1],hd=PY[(j+1)*gx+i];
     if(ha+hc>=hb+hd)gb.I.push(a,d,c,a,c,b);else gb.I.push(a,d,b,b,d,c);}}
+/* 鉤丸緒の房（紫）の旋盤断面。y=0 が結び目 */
+const MISU_FUSA=[[0,-.26],[.024,-.24],[.032,-.13],[.022,-.035],[.013,-.004],[0,.004]];
 const GIBO=[[.072,0],[.075,.014],[.062,.028],[.064,.048],[.05,.064],[.046,.074],[.07,.1],[.085,.13],[.081,.16],[.064,.186],[.04,.207],[.022,.226],[.011,.25],[0,.272]];
 /* 格子（蔀）一枚: 黒漆の框と組子＋白い裏板。t0=裏板の面（外へ +t） */
 function shitomiPanel(lac,wht,M,s0,s1,yTop,yBot,t0,cell){const fw=.065,ft=.05,bw=.022,bt=.032;const c=[.034,.031,.029];
@@ -1420,7 +1427,7 @@ function denMisu(K,res,mat,root){const{D,q}=K;const top=D.NB-.19,Lc=top-(D.FL+.0
     for(let k=1;k<4;k++)bg.box(s0+w*k/4,-.5,.004,.02,1,.003,"y",{col:[.86,.9,.84],us:1,vs:1});
     rg.cyl([s0,0,0],[s1,0,0],1,1,q.hi?16:10,{col:WHITE3,cap0:true,cap1:true,us:2,vs:.5});
     for(const f of[.25,.75]){const s=s0+w*f;kg.cyl([s,0,0],[s,-1,0],.005,.005,5,{col:[.66,.16,.2]});
-      tg.lathe([[0,-.26],[.024,-.24],[.032,-.13],[.022,-.035],[.013,-.004],[0,.004]],q.lo?6:10,s,0,0,{col:[.5,.36,.66]});
+      tg.lathe(MISU_FUSA,q.lo?6:10,s,0,0,{col:[.5,.36,.66]});
       tg.cyl([s,.01,-.02],[s,.01,.02],.012,.012,6,{col:[.8,.62,.35],cap0:true,cap1:true});}
     const nx=Math.max(2,Math.ceil(w/.3));for(let a=0;a<nx;a++)for(let b=0;b<4;b++){const sa=s0+w*a/nx,sb2=s0+w*(a+1)/nx,ya=-b/4,yb=-(b+1)/4;
       const cf=(s,y)=>{const g=Math.exp(-((s-lampX)*(s-lampX))/7.5)*.9+.12;const v=Math.exp(-((y+.62)*(y+.62))/.12)*.85+.15;const k=g*v;return[1*k,.7*k,.42*k];};
@@ -1661,5 +1668,11 @@ function makeTsuiji(opts){opts=opts||{};const q=QL(opts),res=new Res(),rng=RNG(o
 function _tex(name,size){const f={wood:()=>genWood(size||512),roof:()=>genRoof(size||512),bamboo:()=>genBamboo(size||512),stone:()=>genStone(size||256),tatami:genTatami,earth:()=>genEarth(size||512),
   ajiro:()=>genAjiro(size||512),shoji:genShoji,kana:()=>{const c=genCalligraphy(1024,832);const p=genPaper(1024,832);p.getContext('2d').drawImage(c.ink,0,0);return{c:p};},amida:genAmida,books:genBooks,enza:genEnza,clay:genClay,leaf:genLeaf,hiwada:()=>genHiwada(size||512),noki:()=>genNoki(size||512),misu:genMisu,mokou:genMokou,tsuiji:()=>genTsuiji(size||512),kawara:()=>genKawara(size||512)}[name];if(!f)return null;const v=f();const o={};
   if(v.isTexture)o.map=v.image;else{if(v.map)o.map=v.map.image;if(v.data)o.data=v.data.image;if(v.c)o.map=v.c;}return o;}
-return{makeAn,makeFuzukue,makeToudai,makeEnza,makeKyousoku,makeShibagaki,makeAkadana,makeKyoudai,makeDensha,makeWatadono,makeTsuiji,_tex};
+/* 散策モード（本体の寝殿・対屋・廊・築地）へ流用する部品。tex() は CACHE で殿舎と同じ鍵を使い、同じ大きさなら画像を共有する
+   （呼び出し側は参照を1つ持ち続ける＝殿舎の dispose で消えない）。 */
+const parts={
+  tex(name,size){const S=size||512;const b={hiwada:()=>genHiwada(S),noki:()=>genNoki(Math.min(S,512)),tsuiji:()=>genTsuiji(S),kawara:()=>genKawara(S),wood:()=>genWood(S),mokou:genMokou}[name];
+    if(!b)return null;return shared(name==="mokou"?"mokou":name==="noki"?"noki"+Math.min(S,512):name+S,b);},
+  misuImage,GIBO,MISU_FUSA};
+return{makeAn,makeFuzukue,makeToudai,makeEnza,makeKyousoku,makeShibagaki,makeAkadana,makeKyoudai,makeDensha,makeWatadono,makeTsuiji,parts,_tex};
 })();
