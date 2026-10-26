@@ -145,8 +145,11 @@ var KENKO_HERMITAGE=(()=>{
   const basePick=pick;pick=function(...args){if(stage)return inspect(...args);return basePick.apply(this,args);};
   const baseBlocking=pauseBlockingOverlayOpen;pauseBlockingOverlayOpen=function(){return !note.hidden||loading||baseBlocking();};
   note.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();closeNote();}if(e.key==='Tab'){const list=[...note.querySelectorAll('button,a[href]')];let index=list.indexOf(document.activeElement);index=(index+(e.shiftKey?-1:1)+list.length)%list.length;e.preventDefault();list[index].focus();}},true);
-  const entry=document.createElement('button');entry.id='kenkoVisitEntry';entry.className='tb-btn';entry.textContent='兼好の草庵を訪ねる';entry.onclick=open;
-  ($('homeNext')||$('mainModes')||$('title')).append(entry);
+  // 表紙では「物語・古典」の一枚として並べる(サブ選択が無い旧構成では表紙の推薦欄へ)。
+  const entry=document.createElement('button');entry.id='kenkoVisitEntry';entry.type='button';
+  const entryHost=document.querySelector('#taikenSubPanel .t-modes');
+  if(entryHost){entry.className='t-btn';entry.innerHTML='<span class="mode-tags"><span class="mode-meta">徒然草 / 散策</span></span><span class="mode-name">兼好の草庵を訪ねる</span><small>徒然草の庵を歩き、原文と模型を見比べる</small>';entry.onclick=()=>{if(typeof hideSubPanel==='function')hideSubPanel('taikenSubPanel');open();};entryHost.append(entry);}
+  else{entry.className='tb-btn';entry.textContent='兼好の草庵を訪ねる';entry.onclick=open;($('homeNext')||$('mainModes')||$('title')).append(entry);}
   const walkMenu=$('tbmTour')?.parentNode;
   if(walkMenu){const button=document.createElement('button');button.id='kenkoVisitWalkEntry';button.className=$('tbmTour').className;button.textContent='兼好の草庵を訪ねる';button.onclick=open;walkMenu.append(button);}
   // Parse the route once; returning to the title must not reopen it.
